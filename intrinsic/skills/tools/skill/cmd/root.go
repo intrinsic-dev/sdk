@@ -29,8 +29,8 @@ var SkillCmd = &cobra.Command{
 }
 
 func init() {
-	SkillCmd.PersistentFlags().StringP(KeyProject, "p", "", `The Google Cloud Project (GCP) project to use.
-	You can set the environment variable INTRINSIC_PROJECT=project_name to set a default project name.`)
+	SkillCmd.PersistentFlags().StringP(KeyProject, "p", "", `The Google Cloud Platform (GCP) project to use.
+	You can set the environment variable PROJECT=project_name to set a default project name.`)
 
 	viper.BindPFlag(KeyProject, SkillCmd.PersistentFlags().Lookup(KeyProject))
 	viper.BindEnv(KeyProject)

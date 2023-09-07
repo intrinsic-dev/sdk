@@ -11,16 +11,15 @@ import (
 	"log"
 	"strings"
 
-	tagpb "intrinsic/assets/proto/tag_go_proto"
-	skillcataloggrpcpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
-	skillcatalogpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
-
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	tagpb "intrinsic/assets/proto/tag_go_proto"
+	skillcataloggrpcpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
+	skillcatalogpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillCmd "intrinsic/skills/tools/skill/cmd/cmd"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/imagetransfer"
@@ -28,10 +27,11 @@ import (
 )
 
 var (
-	flagAuthPassword string
-	flagAuthUser     string
-	flagRegistry     string
-	flagType         string
+	flagAuthPassword   string
+	flagAuthUser       string
+	flagCatalogAddress string
+	flagRegistry       string
+	flagType           string
 
 	flagDocString    string
 	flagReleaseNotes string
@@ -39,9 +39,6 @@ var (
 	flagVersion      string
 	flagDefault      bool
 	flagDryRun       bool
-
-	flagUseInProcCatalog bool
-	flagEnv              string
 )
 
 // release puts the skill into the skill catalog. This version is the default
@@ -50,19 +47,18 @@ var (
 //
 // If the skill is already present in the catalog, this function will
 // pass-through an AlreadyExists error from the skill catalog.
-func release(ctx context.Context, req *skillcatalogpb.CreateSkillReleaseRequest, skillID string, project string) error {
-	catalogAddress := "dns:///www.endpoints." + project + ".cloud.goog:443"
+func release(ctx context.Context, req *skillcatalogpb.CreateSkillReleaseRequest, skillID string, address string, project string) error {
+	log.Printf("Releasing skill %q to the skill catalog %q", skillID, address)
 
-	log.Printf("Releasing skill %q to the skill catalog %q", skillID, project)
 	ctx, dialerOpts, err := dialerutil.DialInfoCtx(ctx, dialerutil.DialInfoParams{
-		Address:  catalogAddress,
+		Address:  address,
 		CredName: project,
 	})
 	if err != nil {
 		return fmt.Errorf("could not release the skill: %v", err)
 	}
 
-	conn, err := grpc.DialContext(ctx, catalogAddress, *dialerOpts...)
+	conn, err := grpc.DialContext(ctx, address, *dialerOpts...)
 	if err != nil {
 		return fmt.Errorf("failed to create client connection: %v", err)
 	}
@@ -154,7 +150,14 @@ $ inctl skill release --type=image gcr.io/my-workcell/abc@sha256:20ab4f --vendor
 		}
 		// Release the skill to the skill catalog
 
-		return release(cmd.Context(), req, skillID, project)
+		var catalogAddress string
+		if flagCatalogAddress != "" {
+			catalogAddress = flagCatalogAddress
+		} else {
+			catalogAddress = fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", project)
+		}
+
+		return release(cmd.Context(), req, skillID, catalogAddress, project)
 	},
 }
 
@@ -173,12 +176,12 @@ func init() {
 		"",
 	)
 
-	f.StringVar(&flagDocString, "doc_string", "", "Skill documentation")
-	f.StringVar(&flagReleaseNotes, "release_notes", "", "Release notes")
-	f.StringVar(&flagVendor, "vendor", "", "(required) Skill vendor")
-	f.StringVar(&flagVersion, "version", "", "(required) Version for this skill release in sem-ver format")
-	f.BoolVar(&flagDefault, "default", false, "Whether this version of the skill should be tagged as default")
-	f.BoolVar(&flagDryRun, "dry_run", false, "Dry-run the release by performing validation, but not calling the catalog")
+	f.StringVar(&flagDocString, "doc_string", "", "Skill documentation.")
+	f.StringVar(&flagReleaseNotes, "release_notes", "", "Release notes.")
+	f.StringVar(&flagVendor, "vendor", "", "(required) Skill vendor.")
+	f.StringVar(&flagVersion, "version", "", "(required) Version for this skill release in sem-ver format.")
+	f.BoolVar(&flagDefault, "default", false, "Whether this version of the skill should be tagged as default.")
+	f.BoolVar(&flagDryRun, "dry_run", false, "Dry-run the release by performing validation, but not calling the catalog.")
 
 	releaseCmd.MarkPersistentFlagRequired("type")
 	releaseCmd.MarkPersistentFlagRequired("vendor")
