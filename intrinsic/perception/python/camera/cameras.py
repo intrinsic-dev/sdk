@@ -116,15 +116,11 @@ class Camera:
 
   @classmethod
   def create(
-      cls,
-      request: skill_interface.ExecuteRequest,
-      context: skill_interface.ExecutionContext,
-      slot: str,
+      cls, context: skill_interface.ExecutionContext, slot: str
   ) -> Camera:
-    """Creates a Camera object from the skill's execution context and current execution request.
+    """Creates a Camera object from the skill's execution context.
 
     Args:
-      request: The skill's current skill_interface.ExecuteRequest.
       context: The skill's current skill_interface.ExecutionContext.
       slot: The camera slot created in skill's required_equipment
         implementation.
@@ -132,7 +128,7 @@ class Camera:
     Returns:
       A connected Camera object with sensor information cached.
     """
-    camera_equipment = request.instance.equipment_handles[slot]
+    camera_equipment = context.equipment_handles[slot]
     world_client = context.get_object_world()
 
     return cls(
