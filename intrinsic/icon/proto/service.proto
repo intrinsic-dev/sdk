@@ -1,0 +1,490 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+// This file defines the ICON Application Layer GRPC service.
+
+package intrinsic_proto.icon;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/rpc/status.proto";
+import "intrinsic/icon/proto/joint_space.proto";
+import "intrinsic/icon/proto/part_status.proto";
+import "intrinsic/icon/proto/safety_status.proto";
+import "intrinsic/icon/proto/streaming_output.proto";
+import "intrinsic/icon/proto/types.proto";
+import "intrinsic/logging/proto/context.proto";
+
+// GetActionSignatureByName() request.
+message GetActionSignatureByNameRequest {
+  // Action type name, e.g. "xfa.joint_move".
+  string name = 1;
+}
+// GetActionSignatureByName() response.
+message GetActionSignatureByNameResponse {
+  // Description of the action type, or unset if the action type name is not
+  // found.
+  ActionSignature action_signature = 1;
+}
+
+// GetConfig() request.
+message GetConfigRequest {}
+// GetConfig() response.
+message GetConfigResponse {
+  repeated PartConfig part_configs = 1;
+
+  // This is the frequency at which ICON's control loop is running.
+  double control_frequency_hz = 2;
+  ServerConfig server_config = 3;
+}
+
+// GetStatus() request.
+message GetStatusRequest {}
+// GetStatus() response.
+message GetStatusResponse {
+  message SessionStatus {
+    PartGroup part_group = 1;
+    repeated int64 action_ids = 2;
+  }
+  map<string, intrinsic_proto.icon.PartStatus> part_status = 1;
+  // Information about all currently active Sessions.
+  map<uint64, SessionStatus> sessions = 2;
+  // The current speed override value, see SetSpeedOverride for more
+  // details.
+  double current_speed_override = 3;
+  // The current status of the safety system.
+  intrinsic_proto.icon.SafetyStatus safety_status = 4;
+}
+
+message SetSpeedOverrideRequest {
+  // Must be between 0 and 1, and modifies the execution speed of compatible
+  // actions.
+  double override_factor = 1;
+}
+
+message SetSpeedOverrideResponse {}
+
+message GetSpeedOverrideRequest {}
+
+message GetSpeedOverrideResponse {
+  double override_factor = 1;
+}
+
+// IsActionCompatible() request.
+message IsActionCompatibleRequest {
+  // Action type to check for compatibility.
+  string action_type_name = 1;
+  oneof slot_data {
+    SlotPartMap slot_part_map = 3;
+    string part_name = 4;
+  }
+  reserved 2;
+  reserved "parts";
+}
+// IsActionCompatible() response.
+message IsActionCompatibleResponse {
+  // True iff the action type named `action_type_name` can be commanded for the
+  // part or SlotPartMap.
+  bool is_compatible = 1;
+}
+
+// ListActionSignatures() request.
+message ListActionSignaturesRequest {}
+// ListActionSignatures() response.
+message ListActionSignaturesResponse {
+  // List of available action types.
+  repeated ActionSignature action_signatures = 1;
+}
+
+// ListCompatibleParts() request.
+message ListCompatiblePartsRequest {
+  // List of action types to get compatible parts for. A part is considered
+  // compatible if it is compatible with every action type in the list.
+  repeated string action_type_names = 1;
+}
+// ListCompatibleParts() response.
+message ListCompatiblePartsResponse {
+  // Parts that are compatible with all listed `action_type_names`.
+  repeated string parts = 1;
+}
+
+// ListParts() request.
+message ListPartsRequest {}
+// ListParts() response.
+message ListPartsResponse {
+  // Parts that are available.
+  repeated string parts = 1;
+}
+
+// OpenSession() request. It is valid to send `initial_session_data`, an
+// ActionRequest, and a `start_actions_request` all in the same
+// OpenSessionRequest. These fields will always be evaluated in the
+// following order:
+// 1) `initial_session_data`
+// 2) ActionRequest's are applied
+// 3) `start_actions_request`
+// Evaluation is stopped at the first error encountered. For example, if there
+// is an error in the ActionRequest, `start_actions_request` will not be
+// applied.
+message OpenSessionRequest {
+  message InitialSessionData {
+    // A list of parts to allocate for this session. Parts allocated by a
+    // session cannot be allocated by other sessions until they are freed. All
+    // parts allocated by a session are freed when the session ends.
+    PartList allocate_parts = 1;
+  }
+  // Initial data for opening a session that must be sent with the first
+  // OpenSessionRequest. If this field specified in later requests or
+  // unspecified in the initial request, the session is closed and an error is
+  // returned in the call status.
+  InitialSessionData initial_session_data = 1;
+
+  message ClearAllActions {}
+
+  oneof action_request {
+    // Adds the actions and reactions in the ActionsAndReactions to the
+    // existing action state machine on the server. The entire
+    // ActionsAndReactions is added, or none of the ActionsAndReactions is
+    // added. An ActionsAndReactions will never be partially applied. If the
+    // entire ActionsAndReactions is not applied, then an error is returned.
+    //
+    // For example, if any action_instance_id or  reaction_instance_id specified
+    // by the ActionsAndReactions is already in use then none of the
+    // ActionsAndReactions will be added. If any Reaction refers to an
+    // action_instance_id that does not already exist, or is not in this
+    // ActionsAndReactions, then none of the ActionsAndReactions will be added.
+    ActionsAndReactions add_actions_and_reactions = 5;
+    // Removes the actions and reactions referred to by the ActionAndReactionIds
+    // from the action state machine on the server. If any action id or reaction
+    // id specified in the ActionAndReactionIds does not exist, then the
+    // existing action set is unmodified, and an error is returned.
+    ActionAndReactionIds remove_action_and_reaction_ids = 6;
+    // If set removes all existing actions and reactions.
+    ClearAllActions clear_all_actions_reactions = 7;
+  }
+
+  // Configuration needed when starting a set of actions.
+  message StartActionsRequestData {
+    // Actions to start. Those actions must not have overlapping part sets.
+    repeated int64 action_instance_ids = 1;
+    // If true, all active actions are stopped. Otherwise they continue
+    // to run, unless they are preempted by an action in `action_instance_ids`
+    // that has an overlapping part set.
+    bool stop_active_actions = 2;
+  }
+
+  // If specified, starts the action instances in `action_instance_ids`. Note
+  // this does not need to be specified in the first request sent, and may be
+  // specified by multiple Requests over the course of a single session. For
+  // example, a client may wish to start a new action in response to a
+  // non-real-time reaction.
+  optional StartActionsRequestData start_actions_request = 12;
+
+  // If specified, ICON will tag all logs coming from parts used by this session
+  // with this context.
+  intrinsic_proto.data_logger.Context log_context = 11;
+
+  reserved 10;
+  reserved "start_action_instance_id";
+}
+// OpenSession() response.
+message OpenSessionResponse {
+  // Returns an aborted error if the session should end. May return other
+  // errors for non-session ending failures.
+  google.rpc.Status status = 1;
+
+  message InitialSessionData {
+    // The unique identifier for the session. This can be used to watch
+    // reactions corresponding to this session.
+    int64 session_id = 1;
+  }
+
+  // Contains information regarding session initialization, will only be sent in
+  // response to the first request.
+  InitialSessionData initial_session_data = 2;
+
+  message ActionResponse {}
+
+  oneof response_type {
+    // This is a response to an ActionRequest
+    ActionResponse action_response = 5;
+  }
+}
+
+message WatchReactionsRequest {
+  // The unique identifier of the action session. This should be the session id
+  // returned in the `initial_session_data` in the OpenSession response.
+  int64 session_id = 1;
+}
+
+// The reaction event will be empty for the first message sent to the client.
+message WatchReactionsResponse {
+  // The time when the Reaction occurred.
+  google.protobuf.Timestamp timestamp = 1;
+
+  // The reaction that occurred.
+  ReactionEvent reaction_event = 2;
+}
+
+message AddStreamRequest {
+  // The action this request is tied to.
+  uint64 action_id = 1;
+
+  // The name of the field.
+  string field_name = 2;
+}
+
+// OpenWriteStream() request.
+//
+//
+// In the initial message, the client must write `session_id` and
+// `add_write_stream` in the first message to set up the stream.
+//
+// Subsequent calls must set the `write_value` field to send a value to the
+// corresponding stream.
+message OpenWriteStreamRequest {
+  // Adds a write stream.
+  // This field must be set in the first message and unset in subsequent ones.
+  AddStreamRequest add_write_stream = 1;
+
+  // The ID of the session this stream belongs to.
+  int64 session_id = 4;
+
+  message WriteValue {
+    google.protobuf.Any value = 2;
+  }
+  // The value to write to an already-set-up write stream.
+  WriteValue write_value = 3;
+}
+
+message AddStreamResponse {
+  google.rpc.Status status = 1;
+}
+
+message OpenWriteStreamResponse {
+  // The response to AddStream requests.
+  oneof stream_operation_response {
+    AddStreamResponse add_stream_response = 1;
+  }
+
+  // If the previous message wrote a value, this field contains the status of
+  // that write operation.
+  //
+  // Note that an OK status means that the value was *written* but does not
+  // guarantee that the message has been received or consumed by the underlying
+  // implementation of the corresponding action.
+  google.rpc.Status write_value_response = 2;
+}
+
+message EnableRequest {}
+message EnableResponse {}
+
+message DisableRequest {}
+message DisableResponse {}
+
+message ClearFaultsRequest {}
+message ClearFaultsResponse {}
+
+message GetOperationalStatusRequest {}
+message GetOperationalStatusResponse {
+  OperationalStatus operational_status = 1;
+}
+
+message GetLatestStreamingOutputRequest {
+  // The ID of the session that the Action we're querying belongs to.
+  int64 session_id = 1;
+  // The action whose streaming output we're interested in.
+  uint64 action_id = 2;
+}
+
+message GetLatestStreamingOutputResponse {
+  StreamingOutput output = 1;
+}
+
+message GetPlannedTrajectoryRequest {
+  // The ID of the session that the Action we're querying belongs to.
+  int64 session_id = 1;
+  // The action whose planned trajectory we're interested in.
+  uint64 action_id = 2;
+}
+
+message GetPlannedTrajectoryResponse {
+  intrinsic_proto.icon.JointTrajectoryPVA planned_trajectory_segment = 1;
+}
+
+message GetPartPropertiesRequest {}
+
+// The value of a single part property. These can be scalar boolean or double
+// values.
+// If a part needs to expose more complex data as a property, it will use
+// multiple values. You can read and write multiple values atomically using the
+// GetPartProperties and SetPartProperties methods.
+message PartPropertyValue {
+  oneof value {
+    bool bool_value = 1;
+    double double_value = 2;
+  }
+}
+
+// Contains the values of all part properties for a single part.
+message PartPropertyValues {
+  map<string, PartPropertyValue> property_values_by_name = 1;
+}
+
+message GetPartPropertiesResponse {
+  // Control timestamp when the property values were collected. This differs
+  // from wall time in two ways:
+  // 1. The control timestamp is initialized to 0 on startup
+  // 2. The control timestamp may advance slower or faster than wall time,
+  //    especially in simulation.
+  google.protobuf.Duration timestamp_control = 1;
+  // Wall timestamp when the property values were collected.
+  google.protobuf.Timestamp timestamp_wall = 2;
+  map<string, PartPropertyValues> part_properties_by_part_name = 3;
+}
+
+message SetPartPropertiesRequest {
+  map<string, PartPropertyValues> part_properties_by_part_name = 1;
+}
+
+message SetPartPropertiesResponse {}
+
+service IconApi {
+  // Gets details of an action type by name. The response's `action_signature`
+  // field will be unset if the requested action type is not found.
+  rpc GetActionSignatureByName(GetActionSignatureByNameRequest)
+      returns (GetActionSignatureByNameResponse);
+
+  // Gets server configuration, including part-specific configuration info for
+  // all parts (e.g. a robot arm might report its number of DOFs).
+  rpc GetConfig(GetConfigRequest) returns (GetConfigResponse);
+
+  // Gets a snapshot of the server's status, including part-specific status info
+  // for all parts. (e.g. a robot arm might report its joint angles).
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+
+  // Reports whether an action is compatible with a part or a group of parts.
+  rpc IsActionCompatible(IsActionCompatibleRequest)
+      returns (IsActionCompatibleResponse);
+
+  // Lists details of all available action types.
+  rpc ListActionSignatures(ListActionSignaturesRequest)
+      returns (ListActionSignaturesResponse);
+
+  // Lists all parts that are compatible with a list of action types. Each
+  // returned part is compatible with all listed action types. If the list of
+  // action types is empty, returns all parts.
+  rpc ListCompatibleParts(ListCompatiblePartsRequest)
+      returns (ListCompatiblePartsResponse);
+
+  // Lists all available parts.
+  rpc ListParts(ListPartsRequest) returns (ListPartsResponse);
+
+  // Starts an action session, the parts associated with this session will
+  // remain stopped until a starting action is specified for the part in the
+  // request or an action for the part becomes active due to a reaction. A new
+  // action session starts with a clean slate of actions. The only actions that
+  // will be created initially are those specified in the initial
+  // `OpenSessionRequest`. Multiple action sessions may be active a time,
+  // but any given part can only be associated with one session at a time.
+  //
+  // The client can signal the end of a session by indicating that writes are
+  // done using the grpc::ClientReaderWriter. When writes are done, the server
+  // will end the session and return the calls finishing status.
+  //
+  // If an action session ends for any reason, including the client or server
+  // dropping the call, or a request to end the session, the server will stop
+  // all parts associated with the session and clear the existing action
+  // state machine, removing all existing actions and reactions.
+  //
+  // Returns an `OpenSessionResponse` in response to each
+  // `OpenSessionRequest` and whenever a reaction occurs.
+  rpc OpenSession(stream OpenSessionRequest)
+      returns (stream OpenSessionResponse);
+
+  // Opens a write stream scoped to the originating action session.
+  rpc OpenWriteStream(stream OpenWriteStreamRequest)
+      returns (stream OpenWriteStreamResponse);
+
+  // Requests the latest streaming output value for a given Action. Make sure to
+  // set the gRPC deadline if you do not want the request to block for too long!
+  //
+  // Blocks until an initial value is written (or the request deadline expires),
+  // but returns an error immediately if the corresponding Action does not exist
+  // at all. May also return an error immediately if a different instance of the
+  // same Action type is active at the time it is called.
+  rpc GetLatestStreamingOutput(GetLatestStreamingOutputRequest)
+      returns (GetLatestStreamingOutputResponse);
+
+  // Requests the planned trajectory for a given Action.
+  // Returns a kFailedPrecondition if the requested Action/Session combination
+  // does not exist, and a kNotFound one if there's no trajectory for an Action
+  // existing in the given Session.
+  rpc GetPlannedTrajectory(GetPlannedTrajectoryRequest)
+      returns (stream GetPlannedTrajectoryResponse);
+
+  // Watches reactions that occur during the action session. The server will
+  // stop sending responses and end the call when the associated action session
+  // ends. The action session must have started prior to making a request. When
+  // the server finishes setting up the reaction watcher, it will send a single
+  // WatchReactionsResponse to indicate readiness.
+  // For each session, only one WatchReactions stream can be open at a time;
+  // otherwise, this returns kUnavailable.
+  rpc WatchReactions(WatchReactionsRequest)
+      returns (stream WatchReactionsResponse);
+
+  // Enables all parts on the server, which performs all steps necessary to get
+  // the parts ready to receive commands.
+  rpc Enable(EnableRequest) returns (EnableResponse);
+
+  // Disables all parts on the server. Ends all currently-active sessions.
+  rpc Disable(DisableRequest) returns (DisableResponse);
+
+  // Clears all faults and returns the server to a disabled state.
+  // Returns an OkStatus if faults were successfully cleared.
+  rpc ClearFaults(ClearFaultsRequest) returns (ClearFaultsResponse);
+
+  // Returns the operational status of the server.
+  rpc GetOperationalStatus(GetOperationalStatusRequest)
+      returns (GetOperationalStatusResponse);
+
+  // Requests restarting the entire server.
+  rpc RestartServer(google.protobuf.Empty) returns (google.protobuf.Empty);
+
+  // Updates the speed override value. Illegal values (not between 0 and 1)
+  // will be rejected.
+  // The speed override value acts as a multiplier to the "nominal" velocity
+  // of compatible actions.
+  // If an action is compatible, it will adjust its motion (even during
+  // execution) accordingly when the speed override changes. For example,
+  // setting a speed override value of 0.1 means that all compatible actions
+  // move at 10% of their original velocity.
+  //
+  // Note that actions may not apply the new value instantaneously. This is
+  // because instantaneous changes in velocity would violate acceleration and
+  // jerk limits. Instead, actions will adjust their velocity as quickly as
+  // allowed within the robot's limits.
+  rpc SetSpeedOverride(SetSpeedOverrideRequest)
+      returns (SetSpeedOverrideResponse);
+
+  // Returns the current speed override value.
+  rpc GetSpeedOverride(GetSpeedOverrideRequest)
+      returns (GetSpeedOverrideResponse);
+
+  // Returns the current values of all part properties.
+  // Note that all values are collected at the same point in time.
+  rpc GetPartProperties(GetPartPropertiesRequest)
+      returns (GetPartPropertiesResponse);
+
+  // Sets the part properties defined in the request. Use this to set parameters
+  // on parts.
+  // Guarantees that all values in the request are applied on the server at the
+  // same time.
+  rpc SetPartProperties(SetPartPropertiesRequest)
+      returns (SetPartPropertiesResponse);
+}

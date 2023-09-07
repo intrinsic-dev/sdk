@@ -1,0 +1,27 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+// This contains the individual configurations for limits under each necessary
+// ModeOfSafeOperation ( as defined in
+// intrinsic/icon/proto/safety_status.proto ). All configurations are
+// optional and if omitted these limits are filled from the hardware modules
+// application and system limits.
+message ModeOfSafeOperationLimitsConfig {
+  // A set of maximum velocities for the TEACHING_1 (T1) mode of safe operation.
+  // These velocities are used by the part to create a full set of limits.
+  message T1Limits {
+    // The maximal velocity of a joint rotation in rad/s.
+    double joint_max_velocity = 1;
+    // The maximal velocity of the tcp translation in m/s.
+    double tcp_max_translational_velocity = 2;
+    // The maximal velocity of the tcp rotation in rad/s.
+    double tcp_max_rotational_velocity = 3;
+  }
+
+  optional T1Limits t1_limits = 1;
+}

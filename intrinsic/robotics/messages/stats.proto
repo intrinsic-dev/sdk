@@ -1,0 +1,23 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+// For duration type, the double values below are nanoseconds.
+message Stats {
+  message Quantile {
+    float quantile = 1;
+    double sample = 2;
+  }
+  uint64 count = 1;
+  uint64 stored_count = 2;
+  optional double mean = 3;
+  optional double stdev = 4;
+  optional double min = 5;
+  optional double max = 6;
+  repeated Quantile quantiles = 7;
+  optional double rms = 8;
+}

@@ -1,0 +1,23 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.geometry;
+
+// Represents a triangle mesh with faces and vertices specified within. The
+// expectation is three dimensional vertices and triangles for the faces.
+// Specified in row major order.
+message TriangleMesh {
+  // The vertices as a flat array, in row major order.
+  // Example ordering: x1, y1, z1, x2, y2, z2. This produces vertices like
+  // v1=(x1, y1, z1) and v2=(x2,y2,z2)
+  repeated double vertices = 3;
+
+  // The faces as a flat array, in row major order.
+  // Example ordering: v1, v2, v3, v4, v5, v6. This produces faces
+  // like f1=(v1, v2, v3) and f2=(v4, v5, v6). Where v1-v6 are indexes into the
+  // parsed set of vertices produced from the vertices field.
+  repeated int32 faces = 6;
+}

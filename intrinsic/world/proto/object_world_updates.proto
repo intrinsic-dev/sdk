@@ -1,0 +1,480 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.world;
+
+import "google/protobuf/wrappers.proto";
+import "intrinsic/icon/proto/cart_space.proto";
+import "intrinsic/kinematics/types/joint_limits.proto";
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/world/proto/collision_action.proto";
+import "intrinsic/world/proto/collision_settings.proto";
+import "intrinsic/world/proto/geometry_component.proto";
+import "intrinsic/world/proto/object_world_refs.proto";
+import "intrinsic/world/proto/physics_component.proto";
+import "intrinsic/world/proto/simulation_component.proto";
+import "intrinsic/world/proto/spawner_component.proto";
+
+// A single update to an object world resource such as a frame or object.
+message ObjectWorldUpdate {
+  oneof update {
+    DeleteObjectRequest delete_object = 11;
+    UpdateObjectNameRequest update_object_name = 1;
+    UpdateObjectJointsRequest update_object_joints = 2;
+    UpdateKinematicObjectPropertiesRequest update_kinematic_object_properties =
+        18;
+    UpdateObjectPropertiesRequest update_object_properties = 13;
+    UpdateEntityPropertiesRequest update_entity_properties = 14;
+    UpdateCollisionSettingsRequest update_collision_settings = 15;
+    CreateFrameRequest create_frame = 7;
+    DeleteFrameRequest delete_frame = 8;
+    UpdateFrameNameRequest update_frame_name = 3;
+    ReparentFrameRequest reparent_frame = 12;
+    UpdateFramePropertiesRequest update_frame_properties = 17;
+    UpdateTransformRequest update_transform = 4;
+    ReparentObjectRequest reparent_object = 5;
+    ToggleCollisionsRequest toggle_collisions = 6;
+  }
+}
+
+// A sequence of ObjectWorldUpdate's that can, e.g., be included in a
+// batch-update operation (see UpdateWorldResources()) or be stored somewhere.
+message ObjectWorldUpdates {
+  repeated ObjectWorldUpdate updates = 1;
+}
+
+// Indicates at which level-of-detail to return objects when querying them. See
+// the documentation of 'Object' and its child messages to find out which parts
+// are included at which view-level of detail.
+enum ObjectView {
+  // Defaults to the BASIC view.
+  OBJECT_VIEW_UNSPECIFIED = 0;
+  // Contains enough of an object to understand its place within the
+  // hierarchical structure of a world (object id/name, parent id/name,
+  // ids/names of child objects and child frames). E.g., listing all objects in
+  // a world with the BASIC view makes it possible to print a text- or UI-based
+  // tree view of the objects and frames in the world.
+  BASIC = 1;
+  // Contains all available details of an object including its relative pose,
+  // geometry, physical parameters and other metadata.
+  FULL = 2;
+}
+
+message NamedJointConfiguration {
+  // Name for this joint configuration which is unique under the parent
+  // kinematic object.
+  string name = 1;
+
+  // Joint positions in radians (for revolute joints) or meters (for prismatic
+  // joints).
+  repeated double joint_positions = 2;
+}
+
+// Mode for requests that allows to enable or disable something.
+enum ToggleMode {
+  // Leaving ToggleMode unspecified will result in an error.
+  TOGGLE_MODE_UNSPECIFIED = 0;
+  TOGGLE_MODE_ENABLE = 1;
+  TOGGLE_MODE_DISABLE = 2;
+}
+
+message UpdateCollisionSettingsRequest {
+  // The id of the world to update
+  string world_id = 1;
+
+  oneof type {
+    // The collision settings to use with the given world. Overrides any
+    // previous settings that were used with the world.
+    CollisionSettings collision_settings = 2;
+  }
+}
+
+// Specifies to create an object by instantiating a ProductPart.
+message ObjectSpecFromProduct {
+  // Name of the product part in the Product document of the running
+  // application.
+  string product_part_name = 1;
+}
+
+// Request to create an object. This is currently limited to a very simple use
+// case: The request must specify at least one collision or visual geometry
+// from which an object with ObjectType==PHYSICAL_OBJECT will be created which
+// consists of a single entity and some default physics parameters.
+message CreateObjectRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // Desired name of the created object. An error will be returned if the name
+  // is already used in the world.
+  string name = 2;
+
+  // If the object created will have a name that is a global alias.
+  // See Object.name_is_global_alias for more info.
+  bool name_is_global_alias = 9;
+
+  // The parent object, including an entity filter specifying to which part of
+  // the parent object the created object shall be attached to. The entity
+  // filter must be set and match exactly one object entity.
+  ObjectReferenceWithEntityFilter parent_object = 3;
+
+  // Optional pose of the created object in the space of the parent object. If
+  // left unset, the default behavior depends on the 'object_spec' case below:
+  // - 'clone_from_existing_object': If no pose is given, the new
+  //   object will be created at the same position as the existing object it is
+  //   cloned from.
+  // - All other cases: Defaults to identity.
+  intrinsic_proto.Pose parent_object_t_created_object = 4;
+
+  // Options for specifying the contents and properties of the object.
+  oneof object_spec {
+    ObjectSpecFromProduct create_from_product = 8;
+  }
+
+  // Requested object view for the returned, created object.
+  ObjectView view = 7;
+}
+
+message CreateObjectsRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // The parent object, including an entity filter specifying to which part of
+  // the parent object the created objects shall be attached to. The entity
+  // filter must be set and match exactly one object entity.
+  ObjectReferenceWithEntityFilter parent_object = 2;
+
+  // If the objects created will have names that are global alias.
+  // In case of name conflicts, the request will automatically choose unique
+  // object names for the newly created objects. See Object.name_is_global_alias
+  // for more info.
+  bool name_is_global_alias = 6;
+
+  // Requested object view for the returned created objects.
+  ObjectView view = 5;
+}
+
+// Request to delete an object including any frames that are grouped under it.
+message DeleteObjectRequest {
+  // Id of the world to be queried.
+  string world_id = 1;
+
+  // The object to be deleted.
+  ObjectReference object = 2;
+
+  // If set to true, any objects that are (directly or indirectly) attached to
+  // the deleted object will also be deleted recursively, as well as any frames
+  // attached to these objects. If set to false, the request will only work if
+  // the deleted object has no child objects.
+  //
+  // This setting does *not* affect the frames grouped under the deleted object
+  // itself. Those frames will always be deleted regardless of this setting.
+  bool force = 3;
+}
+
+message UpdateObjectNameRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // The object to be updated.
+  ObjectReference object = 2;
+
+  // The new name for the object.
+  // For allowed characters see Object.name.
+  string name = 3;
+
+  // If set to true, the new object name will be enforced to be unique among all
+  // other objects which have 'name_is_global_alias' enabled and can be used in
+  // an ObjectReferenceByName or in ObjectReference.by_name. If set to false,
+  // the new object name will still be enforced to be unique within its parent
+  // object's namespace among sibling frames and objects.
+  bool name_is_global_alias = 5;
+
+  // Requested object view for the returned, updated object.
+  ObjectView view = 4;
+}
+
+// Request to reparent an object to a new parent object. The global pose of the
+// reparented object (="root_t_object") will remain unaffected while the
+// relative pose of the object to its parent object (="parent_t_this") will
+// usually change.
+message ReparentObjectRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // The object to be reparented (needs to have ObjectType!=ROOT).
+  ObjectReference object = 2;
+
+  // The new parent object, including a entity filter specifying to which part
+  // of the parent object the child object shall be attached to. The entity
+  // filter must be set and match exactly one object entity.
+  ObjectReferenceWithEntityFilter new_parent = 3;
+
+  // Requested object view for the returned, reparented object.
+  ObjectView view = 4;
+}
+
+// Request to enable or disable collisions between two objects.
+message ToggleCollisionsRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // Whether to enable or disable collisions. If collisions are already enabled/
+  // disabled (as desired) the operation will be a no-op and will succeed.
+  ToggleMode toggle_mode = 2;
+
+  // The first object, including a entity filter specifying for which entities
+  // collisions should be enabled/disabled. The entity filter must be set and
+  // should match at least one object entity.
+  ObjectReferenceWithEntityFilter object_a = 3;
+
+  // The second object, including a entity filter specifying for which entities
+  // collisions should be enabled/disabled. The entity filter must be set and
+  // should match at least one object entity.
+  ObjectReferenceWithEntityFilter object_b = 5;
+
+  // Requested object view for the returned objects with changed collision
+  // properties.
+  ObjectView view = 8;
+}
+
+message UpdateObjectJointsRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // The object to be updated. Must have ObjectType==KINEMATIC_OBJECT.
+  ObjectReference object = 2;
+
+  // If non-empty, new joint positions in degrees (for revolute joints) or
+  // meters (for prismatic joints) that should be applied. At least one of
+  // 'joint_positions' and 'joint_limits' must be set.
+  repeated double joint_positions = 3;
+
+  // If non empty, the joint names will be used to generate the correct ordering
+  // for the 'joint_position', 'joint_application_limits' and
+  // 'joint_system_limits' fields.
+  repeated string joint_names = 7;
+
+  // If set, new joint application limits that should be applied. At least one
+  // of 'joint_positions', 'joint_application_limits', 'joint_system_limits'
+  // must be set.
+  intrinsic_proto.JointLimitsUpdate joint_application_limits = 4;
+
+  // If set, new joint system limits that should be applied. At least one
+  // of 'joint_positions', 'joint_application_limits', 'joint_system_limits'
+  // must be set.
+  intrinsic_proto.JointLimitsUpdate joint_system_limits = 5;
+
+  // Requested object view for the returned, updated kinematic object.
+  ObjectView view = 6;
+}
+
+// Request to update the properties for an object with
+// ObjectType==KINEMATIC_OBJECT.
+message UpdateKinematicObjectPropertiesRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // The object to be updated. Must have ObjectType==KINEMATIC_OBJECT.
+  ObjectReference object = 2;
+
+  // Names of joint configurations that should be removed. An error will be
+  // returned if no existing, matching joint configuration can be found.
+  repeated string named_joint_configurations_to_remove = 3;
+
+  // Named joint configurations that should be updated. Existing named
+  // configurations with equal names will be overridden. For non-existing names
+  // new configurations will be added.
+  repeated NamedJointConfiguration named_joint_configurations_to_set = 4;
+
+  // If set these will be the updated limits to use.
+  intrinsic_proto.icon.CartesianLimits cartesian_limits = 5;
+
+  // If set this will be the updated control frequency to use
+  optional double control_frequency_hz = 6;
+
+  // Requested object view for the returned, updated kinematic object.
+  ObjectView view = 7;
+}
+
+// Request to update advanced properties of an object such as its optional
+// components.
+message UpdateObjectPropertiesRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // The object to be updated.
+  ObjectReference object = 2;
+
+  // If set, updates the object's simulation component to the given one. Creates
+  // a new simulation component if none exists or otherwise overrides the
+  // existing simulation component.
+  intrinsic_proto.world.SimulationComponent simulation_component = 3;
+
+  // If set, updates the object's spawner component to the given one. Returns an
+  // error if the object did not have a spawner component previously.
+  intrinsic_proto.world.SpawnerComponent spawner_component = 6;
+
+  // Requested object view for the returned, updated object.
+  ObjectView view = 5;
+}
+
+// Request to update advanced properties of an entity such as its optional
+// components.
+// Next tag: 6
+message UpdateEntityPropertiesRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // The entity to be updated.
+  EntityReference entity = 2;
+
+  // DEPRECATED. Use 'UpdateCollisionSettingsRequest' instead
+  CollisionAction collision_action = 5 [deprecated = true];
+
+  // If set, updates the object's geometry component to the given one. Creates a
+  // new geometry component if none exists or otherwise overrides the existing
+  // geometry component.
+  intrinsic_proto.world.GeometryComponent geometry_component = 4;
+
+  // If set, updates the object's physics component to the given one. Creates a
+  // new physics component if none exists or otherwise overrides the existing
+  // physics component.
+  intrinsic_proto.world.PhysicsComponent physics_component = 3;
+}
+
+message CreateFrameRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  oneof attach_to {
+    // The object under which the frame shall be created. The frame will be
+    // attached to the base entity of the object.
+    ObjectReference parent_object = 2;
+
+    // The frame to which the new frame shall be attached to (instead of being
+    // attached directly to an object entity). The new frame will be grouped
+    // under the same object as the given frame.
+    FrameReference parent_frame = 3;
+  }
+
+  // Name of the new frame to be created. Must be unique amongst all frames
+  // under the same object.
+  string new_frame_name = 4;
+
+  // Pose of the frame in the space of the parent object's origin (if
+  // 'parent_object' is set) or frame (if 'parent_frame' is set).
+  intrinsic_proto.Pose parent_t_new_frame = 5;
+
+  // If attached to an object we can mark this frame as an attachment frame when
+  // creating it.
+  bool designate_as_attachment_frame = 6;
+}
+
+message DeleteFrameRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // The frame to be deleted.
+  FrameReference frame = 2;
+
+  // If set to true, any frames that are (directly or indirectly) attached to
+  // the deleted frame will also be deleted recursively. Otherwise, the request
+  // will only work if the deleted frame has no child frames attached.
+  bool force = 3;
+}
+
+message UpdateFrameNameRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // The frame to be updated.
+  FrameReference frame = 2;
+
+  // The new name for the frame. Must be unique within all frames under the
+  // parent object. For allowed characters see Frame.name.
+  string name = 3;
+}
+
+// Request to reparent a frame and all of its child frames to a new parent
+// object or frame. The global pose (="root_t_this") of the reparented frames
+// remains unaffected.
+message ReparentFrameRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // The frame to be reparented.
+  FrameReference frame = 2;
+
+  oneof attach_to {
+    // The object under which the frame shall be grouped and a entity filter
+    // specifying to which part of the object the frame shall be attached to.
+    // The entity filter must match exactly one object entity.
+    ObjectReferenceWithEntityFilter parent_object = 3;
+
+    // The parent frame to which the frame shall be attached to (instead of
+    // being attached directly to an object entity). The frame will be grouped
+    // under the same object as the given parent frame.
+    FrameReference parent_frame = 4;
+  }
+}
+
+// Request to update advanced properties of a frame such as its attachment frame
+// designation.
+// Next tag: 4
+message UpdateFramePropertiesRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // The frame to be updated.
+  FrameReference frame = 2;
+
+  // If present, will set the value of the attachment frame designation for this
+  // frame.
+  google.protobuf.BoolValue is_attachment_frame = 3;
+}
+
+// Request to update the transform 'a_t_b' between 'node_a' and 'node_b' in
+// the transform tree (a node can be a frame or an object). If 'node_a' or
+// 'node_b' reference an object, the returned transform is with respect to the
+// origin of the referenced object.
+//
+// If 'node_a' and 'node_b' are not neighbors in the transform tree (i.e.
+// 'node_a' is not a child of 'node_b' and 'node_b' is not a child of 'node_a'),
+// then only the pose between the given node 'node_to_update' and its parent is
+// updated so that the overall transform 'a_t_b' matches the desired one.
+//  Next ID: 10
+message UpdateTransformRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // First transform node.
+  TransformNodeReference node_a = 2;
+
+  // Optional node_a filter to further specify the entity within the node.
+  ObjectEntityFilter node_a_filter = 7;
+
+  // Second transform node.
+  TransformNodeReference node_b = 3;
+
+  // Optional node_b filter to further specify the entity within the node.
+  ObjectEntityFilter node_b_filter = 8;
+
+  // Optional transform node whose pose (between itself and its parent) shall be
+  // updated. Can be left out if 'node_a' and 'node_b' are neighbors in the
+  // transform tree, then the pose of the child node will be updated.
+  TransformNodeReference node_to_update = 4;
+
+  // Optional node_b filter to further specify the entity within the node.
+  ObjectEntityFilter node_to_update_filter = 9;
+
+  // The desired transform between the two nodes 'node_a' and 'node_b' or their
+  // respective entity based on the given filters.
+  intrinsic_proto.Pose a_t_b = 5;
+
+  // Requested object view for the returned, updated object in case the update
+  // node is an object (see 'node_to_update').
+  ObjectView view = 6;
+}

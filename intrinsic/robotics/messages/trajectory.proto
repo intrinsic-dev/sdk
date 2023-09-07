@@ -1,0 +1,35 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+import "google/protobuf/timestamp.proto";
+import "intrinsic/robotics/messages/pose.proto";
+import "intrinsic/robotics/messages/twist.proto";
+
+// A pose and velocity in three-dimensional space.
+message PoseWithVelocity3d {
+  google.protobuf.Timestamp timestamp = 1;
+  Pose3d pose = 2;
+  Twist3d velocity = 3;
+}
+
+// A pose and velocity in three-dimensional space.
+message PoseWithVelocity3f {
+  google.protobuf.Timestamp timestamp = 1;
+  Pose3f pose = 2;
+  Twist3f velocity = 3;
+}
+
+// A trajectory in three-dimensional space.
+message Trajectory3d {
+  repeated PoseWithVelocity3d points = 1;
+}
+
+// A trajectory in three-dimensional space.
+message Trajectory3f {
+  repeated PoseWithVelocity3f points = 1;
+}

@@ -1,0 +1,33 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+option cc_enable_arenas = true;
+
+// A double precision quaternion.
+message Quaterniond {
+  // The x-component.
+  double x = 1;
+  // The y-component.
+  double y = 2;
+  // The z-component.
+  double z = 3;
+  // The w-component.
+  double w = 4;
+}
+
+// A single precision quaternion.
+message Quaternionf {
+  // The x-component.
+  float x = 1;
+  // The y-component.
+  float y = 2;
+  // The z-component.
+  float z = 3;
+  // The w-component.
+  float w = 4;
+}

@@ -1,0 +1,111 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+import "intrinsic/robotics/messages/frame_context.proto";
+import "intrinsic/robotics/messages/interval.proto";
+import "intrinsic/robotics/messages/pose.proto";
+import "intrinsic/robotics/messages/stats.proto";
+import "intrinsic/robotics/messages/vector.proto";
+
+// ---------------------------------------------------------------------------
+// Stats - Error statistics for calibration.
+//
+// Where error is represented as a Stats protobuf, the represented value is the
+// per-pixel error of the metric.
+//
+// The average per-pixel scalar error will be saved in Stats.mean.
+// The total error can be calculated as Stats.mean * Stats.count
+// ---------------------------------------------------------------------------
+
+// Specifications for an ideal camera.
+message CameraSpecification {
+  message ImageSpec {
+    // Dimensions and encoding type of camera images.
+    int32 cols = 1;
+    int32 rows = 2;
+    int32 channels = 3;
+  }
+  ImageSpec image_spec = 1;
+
+  // Field of View in screen radians for width and height.
+  Vector2d fov = 2;
+
+  // Positive distance to near and far clip planes in meters.
+  // This is only used for rendering synthetic cameras as real cameras do not
+  // have clip planes.
+  Intervald clip = 3;
+}
+
+// Camera matrix and distortion parameters.
+//
+// https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html
+// https://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
+//
+message CameraIntrinsics {
+  // Camera matrix:
+  //    |  fx   0   cx |
+  //    |   0  fy   cy |
+  //    |   0   0    1 |
+
+  optional double fx = 1;  // Focal length in x.
+  optional double fy = 2;  // Focal length in y.
+  optional double cx = 3;  // Center in x.
+  optional double cy = 4;  // Center in y.
+
+  // (x,y) are projected coordinates in the z=1 plane.
+
+  // f = (1 + k1r^2 + k2r^4 + k3r^6) / (1 + k4r^2 + k5r^4 + k6r^6)
+  // x' = x * f
+  // y' = y * f
+  optional double k1 = 5;  // r^2 distortion coefficient.
+  optional double k2 = 6;  // r^4 distortion coefficient.
+  optional double k3 = 9;  // r^6 distortion coefficient.
+  // Denominator coefficients.
+  optional double k4 = 10;  // r^2 distortion coefficient.
+  optional double k5 = 11;  // r^4 distortion coefficient.
+  optional double k6 = 12;  // r^6 distortion coefficient.
+
+  // x' += 2p1xy + p2(r^2 + 2x^2)
+  // y' += 2p2xy + p1(r^2 + 2y^2)
+  optional double p1 = 7;  // y distortion coefficient.
+  optional double p2 = 8;  // x distortion coefficient.
+
+  // Additional distortion parameters beyond k6.
+  repeated double extra = 13;
+
+  // Accumulated scalar error for intrinsics.
+  Stats error_stats = 14;
+
+  // Camera specification includes image size in pixels and field-of-view
+  // angles.
+  CameraSpecification camera_spec = 15;
+}
+
+// Pose of a camera in the world frame or with respect to a named object.
+message CameraExtrinsics {
+  oneof extrinsic_type {
+    // Places the camera at an absolute position in the world.
+    Pose3d world_pose_camera = 1;
+
+    // Describes the camera pose relative to a, possibly moving, named frame of
+    // reference.
+    FrameContextRelative frame_context = 2;
+  }
+
+  // Accumulated scalar error for extrinsics.
+  Stats error_stats = 3;
+}
+
+// Total calibration data for a camera.
+message CameraCalibration {
+  // Intrinsics: image size, distortion, center, focal length
+  CameraIntrinsics intrinsics = 1;
+
+  // Extrinsics: 3D position of the camera with orientation, may be relative.
+  CameraExtrinsics extrinsics = 2;
+}

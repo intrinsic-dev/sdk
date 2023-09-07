@@ -1,0 +1,180 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+// Cartesian state.
+// Unused fields are empty.
+message CartState {
+  uint64 timepoint_nsec = 1;     // absolute or relative timestamp.
+  repeated double pose = 2;      // 7 values: x,y,z quaternion qx, qy, qz, qw
+  repeated double velocity = 3;  // 6 values: x,y,z,RX,RY,RZ
+  repeated double acceleration = 4;  // 6 values: x,y,z,RX,RY,RZ
+}
+
+// Cartesian limits.
+message CartesianLimits {
+  // units are meters or radians per s, s^2, or s^3.
+  repeated double min_translational_position = 7;
+  repeated double max_translational_position = 8;
+  repeated double min_translational_velocity = 1;
+  repeated double max_translational_velocity = 2;
+  repeated double min_translational_acceleration = 3;
+  repeated double max_translational_acceleration = 4;
+  repeated double min_translational_jerk = 5;
+  repeated double max_translational_jerk = 6;
+  double max_rotational_velocity = 9;
+  double max_rotational_acceleration = 10;
+  double max_rotational_jerk = 11;
+}
+
+// Admittance gain for each cartesian DOF.
+message CartesianAdmittance {
+  repeated double gain = 1;  // m/Ns (translation) or rad/Nms (rotation)
+}
+
+// Frame/Pose/Transform Terminology:
+//
+// Pose: An abstract absolute 3D position and orientation.
+// Frame: A (possibly moving/rotating) frame of reference (coordinate system).
+// Transform: The relationship between 2 frames at a particular time.
+// FrameId: An integer name for a Frame.
+//
+// An *absolute* pose is an abstract concept.  It cannot be represented in a
+// computer.  The *relative* pose of one frame with respect to the pose of
+// another frame at a particular point in time can be expressed as a transform.
+//
+// A Frame's pose is always specified with respect to some other frame.
+// A transform describes the pose of one frame with respect to another frame.
+// This transform will change over time if the two frames move/rotate relative
+// to each other.
+//
+// Some frames are "well known frames".  Examples are the base and tip of the
+// robot arm.
+//
+// Other frames may be defined by some API outside the scope of this document.
+//
+// Other frames can be defined by the L2Command, either in the Graph or in the
+// Node.  The lifetime of an AnchoredFrame defined in the Graph (a Graph Frame)
+// lasts from when the Graph becomes current until another Graph becomes
+// current.  The lifetime of an AnchoredFrame defined in a Node (a Node Frame)
+// lasts from the time that Node becomes current until the time another Node
+// becomes current.
+//
+// Variable naming conventions:
+// a_pose_b is the transform describing the pose of b_frame with respect to
+// a_frame.
+// a_trans_b is the point b (or origin of b_frame) expressed in a_frame's
+// coordinate system.
+// a_rot_b is the orientation of b_frame expressed in a_frame's coordinate
+// system.
+
+// A point in 3D space expressed as a vector with respect to some coordinate
+// frame.
+message Point {
+  // DEPRECATED: Use intrinsic_proto::Point in
+  // //intrinsic/math/proto/point.proto instead.
+  option deprecated = true;
+
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
+
+// A rotation expressed as a quaternion with respect to some coordinate frame.
+message Rotation {
+  // DEPRECATED: Use intrinsic_proto::Quaternion in
+  // //intrinsic/math/proto/quaternion.proto instead.
+  option deprecated = true;
+
+  double qx = 1;
+  double qy = 2;
+  double qz = 3;
+  double qw = 4;
+}
+
+// A twist is a 6DOF velocity specified in m/s (x,y,z) and rad/s (RX,RY,RZ).
+message Twist {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+  double rx = 4;
+  double ry = 5;
+  double rz = 6;
+}
+
+// An acceleration is a 6DOF acceleration specified in m/s^2 (x,y,z) and rad/s^2
+// (RX,RY,RZ).
+message Acceleration {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+  double rx = 4;
+  double ry = 5;
+  double rz = 6;
+}
+
+// x,y,z force and rx, ry, rz torque.
+// Unless otherwise noted, the wrench represents the force and torque that the
+// robot is exerting on the world, expressed in some cartesian frame.
+// The frame used to express the wrench should be documented for each use of
+// Wrench (it is often either the control_frame or the TIP frame of the part).
+message Wrench {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+  double rx = 4;
+  double ry = 5;
+  double rz = 6;
+}
+
+// One double per cartesian DOF.
+message CartVec6 {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+  double rx = 4;
+  double ry = 5;
+  double rz = 6;
+}
+
+// One bool per cartesian DOF.
+message CartVec6b {
+  bool x = 1;
+  bool y = 2;
+  bool z = 3;
+  bool rx = 4;
+  bool ry = 5;
+  bool rz = 6;
+}
+
+// Transform.
+//
+// A transform is a concrete representation of the pose of one frame with
+// respect to another frame.  It is represented as a translation and
+// a rotation.
+//
+// For example the transform a_pose_b describes the pose of frame b with respect
+// to frame a.  The translation is the position of the origin of b's
+// coordinate system expressed in a's coordinate system.  The rotation is the
+// orientation of b expressed in a's coordinate system.
+//
+// A point Pb expressed in b's coordinate system can be premultiplied by the
+// transform
+//     Pa = a_pose_b * Pb
+// to get the same point Pa expressed in a's coordinate system.
+//
+// A transform is represented here as a translation and a rotation.
+// This can be converted to other representations (e.g. a 4x4 homogeneous
+// matrix).
+message Transform {
+  // DEPRECATED: Use intrinsic_proto::Pose in //intrinsic/math/proto/pose.proto
+  // instead.
+  option deprecated = true;
+
+  Point pos = 1;     // required
+  Rotation rot = 2;  // required
+}

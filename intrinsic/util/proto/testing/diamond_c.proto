@@ -1,0 +1,13 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.test;
+
+import "intrinsic/util/proto/testing/diamond_a.proto";
+
+message C {
+  A a = 1;
+}

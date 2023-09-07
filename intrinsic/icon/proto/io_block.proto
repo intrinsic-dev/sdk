@@ -1,0 +1,48 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+message AnalogSignal {
+  string unit = 1;
+  double value = 2;
+}
+
+message DigitalSignal {
+  bool value = 1;
+}
+
+message DioBlock {
+  // The state of a DioBlock as 'bit_index, signal' pair.
+  map<uint32, DigitalSignal> signals = 1;
+}
+
+message AnalogBlock {
+  // The state of an AnalogBlock as 'bit_index, signal' pair.
+  map<uint32, AnalogSignal> signals = 1;
+}
+
+// The state of all analog and digital inputs and outputs managed by this part.
+message ADIOState {
+  // The state of all analog input output blocks as 'name, AnalogBlock' pair.
+  map<string, AnalogBlock> analog_inputs = 1;
+  // The state of all digital input blocks as 'name, DioBlock' pair.
+  map<string, DioBlock> digital_inputs = 2;
+  // The state of all digital output blocks as 'name, DioBlock' pair.
+  map<string, DioBlock> digital_outputs = 3;
+}
+
+message ADIOSignals {
+  message Signals {
+    repeated string signal_names = 1;
+  }
+
+  // The names of all digital input blocks.
+  map<string, Signals> digital_input_blocks = 1;
+
+  // The names of all digital output blocks.
+  map<string, Signals> digital_output_blocks = 2;
+}

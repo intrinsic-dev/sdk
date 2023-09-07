@@ -1,0 +1,10 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+bazel-bin
+bazel-icon
+bazel-intrinsic_sdks
+bazel-out
+bazel-testlogs
+.release_version

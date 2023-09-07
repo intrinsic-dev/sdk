@@ -1,0 +1,21 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+# proto-file: intrinsic/icon/hal/proto/hardware_module_config.proto
+# proto-message: intrinsic_proto.icon.HardwareModuleConfig
+
+name: "loopback_hardware_module"
+module_config {
+  [type.googleapis.com/intrinsic_proto.icon.LoopbackConfig] {
+    joint_limits {
+      min_position: { values: [-3.0, -3.0, -2.0, -3.0, -2.0, -6.0] }
+      max_position: { values: [3.0, 0.75, 2.0, 3.0, 2.0, 6.0] }
+      max_velocity: { values: [6.0, 5.0, 6.0, 6.0, 7.0, 11.0] }
+      max_acceleration: { values: [50.0, 50.0, 50.0, 50.0, 50.0, 50.0] }
+      max_jerk: { values: [200, 200, 200, 200, 200, 200] }
+      max_effort: { values: [100, 100, 100, 100, 100, 100] }
+    }
+  }
+}
+drives_realtime_clock: false

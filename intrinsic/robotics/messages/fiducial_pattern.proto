@@ -1,0 +1,152 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+import "intrinsic/robotics/messages/array_format.proto";
+import "intrinsic/robotics/messages/coordinate_frame.proto";
+import "intrinsic/robotics/messages/vector.proto";
+
+// FiducialPatternConfig defines a block of patterns.
+//
+// An April Tag pattern consists of a rows x cols grid of tags.  The ids and
+// TagFamily specify the exact tag patterns.
+//
+//      +--------------------------+
+//      |                          |  April Tag
+//      |  ######  ######  ######  |  rows: 2
+//      |  # # ##  #   ##  ##   #  |  cols: 3
+//      |  # ## #  #  # #  # ## #  |  ids: [, , , , ,]
+//      |  ######  ######  ######  |  square_spacing_bits: 2
+//      |                          |
+//      |  ######  ######  ######  |
+//      |  ##  ##  #  ###  #  ###  |
+//      |  # ## #  ###  #  #### #  |
+//      |  ######  ######  ######  |
+//      |                          |
+//      +--------------------------+
+//
+//      +------------------------+    Chessboard
+//      |####    ####    ####    |    rows: 4
+//      |####    ####    ####    |    cols: 6
+//      |####    ####    ####    |
+//      |    ####    ####    ####|
+//      |    ####    ####    ####|
+//      |    ####    ####    ####|
+//      |####    ####    ####    |
+//      |####    ####    ####    |
+//      |####    ####    ####    |
+//      |    ####    ####    ####|
+//      |    ####    ####    ####|
+//      |    ####    ####    ####|
+//      +------------------------+
+
+message AprilTagPatternConfig {
+  // The AprilTag specific TagFamily.  The first value is the number of bits per
+  // fiducial, and the second value (after H) is the minimum Hamming distance
+  // between two fiducials in the same family.
+  enum TagFamily {
+    UNSPECIFIED_TAG_FAMILY = 0;
+    TAG16H5 = 1;
+    TAG25H7 = 2;
+    TAG25H9 = 3;
+    TAG36H10 = 4;
+    TAG36H11 = 5;
+  }
+  TagFamily tag_family = 1;
+
+  // The list of AprilTag IDs to fill the rows*cols grid (row-major).
+  repeated int32 ids = 2;
+
+  // The number of bits between AprilTags in the grid (must be >= 2).
+  uint32 square_spacing_bits = 4;
+
+  // Whether or not to render a black square between and outside AprilTag
+  // corners.  For rendering only.
+  bool intertag_black_square = 5;
+}
+
+// A chessboard of MxN will provide (M-1)x(N-1) corners.
+message ChessboardPatternConfig {}
+
+message FiducialPatternConfig {
+  uint32 rows = 1;
+  uint32 cols = 2;
+
+  oneof bit_sizing_type {
+    // The size (in meters) of one side of a solid bit in the fiducial pattern.
+    //
+    // For AprilTag: this represents the size (in meters) of 1 bit in the
+    // AprilTag fiducial.  For example, if bit_square_size_m = 0.01 or 1cm, then
+    // an AprilTag from TagFamily TAG16H5 will be 4cm square.
+    //
+    // For chessboard, this represents the size (in meters) of a chessboard
+    // square (each square is a bit).
+    double meters_per_bit = 3;  // For geometry.
+
+    // The size (in pixels) of one side of a solid bit in the fiducial pattern
+    // output pattern image.
+    //
+    // For AprilTag: this represents the size (in pixels) of 1 bit in the
+    // AprilTag fiducial.  For example, if pixels_per_bit = 1, then an AprilTag
+    // from TagFamily TAG16H5 will be 4x4 pixel square.
+    //
+    // For chessboard, this represents the size (in pixels) of a chessboard
+    // square (each square is a bit).
+    uint32 pixels_per_bit = 4;  // For rendering.
+  }
+
+  oneof pattern_specific_config {
+    ChessboardPatternConfig chessboard_pattern_config = 5;
+    AprilTagPatternConfig april_tag_pattern_config = 6;
+  }
+
+  // Offset vector to be added to all 3D pattern points.  This can be used to
+  // represent the thickness of the fiducial board.
+  //
+  // The coordinate frame of the offset is the frame implicitly defined in
+  // GenerateFiducialPattern.  For April and chessboard patterns, the origin is
+  // at the center of the pattern with x-axis along rows, y-axis along columns,
+  // and z-axis pointing up.
+  //
+  // For example, if the pose of the fiducial board is given with respect to its
+  // bottom center, then the offset vector should be (0, 0, board_thickness).
+  robotics.messages.Vector3d offset = 7;
+}
+
+message FiducialPatternGeometry {
+  message Point {
+    repeated float data = 1
+        [packed = true, (.robotics.messages.array_format) = { shape: [ 3 ] }];
+  }
+  message Points {
+    repeated Point point = 1;
+  }
+
+  // Map of fiducial IDs to the points that comprise it.
+  map<int32, Points> points = 1;
+}
+
+// This is meant to be static.
+// Storage for the configuration of a multi-planar fiducial pattern with known
+// gemeotry between ID'ed planes.
+message MultiFiducialConfig {
+  message FiducialPlaneConfig {
+    oneof fiducial_geometry_type {
+      // Points generated from a pattern configuration.
+      FiducialPatternConfig fiducial_pattern_config = 1;
+      // An explicit list of fiducial points.
+      FiducialPatternGeometry fiducial_pattern_geometry = 2;
+    }
+    optional CoordinateFrameId fiducial_plane_id = 3;
+  }
+
+  repeated FiducialPlaneConfig fiducial_plane_configs = 1;
+  repeated CoordinateFrameTransform3d fiducial_plane_transforms = 2;
+
+  // Name of the multi-fiducial object coordinate frame.
+  optional CoordinateFrameId multi_fiducial_id = 3;
+}

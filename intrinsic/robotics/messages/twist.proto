@@ -1,0 +1,27 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+import "intrinsic/robotics/messages/vector.proto";
+
+// A three-dimensional double precision twist.
+message Twist3d {
+  Vector3d linear = 1;
+  Vector3d angular = 2;
+}
+
+// A three-dimensional single precision twist.
+message Twist3f {
+  Vector3f linear = 1;
+  Vector3f angular = 2;
+}
+
+// Movement command for a differential drive robot;
+message DiffDriveTwist {
+  double forward_speed = 1;   // m/s
+  double rotation_speed = 2;  // rad/s; possitive = clockwise
+}

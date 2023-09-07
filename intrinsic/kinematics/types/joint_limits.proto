@@ -1,0 +1,40 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+// We wrap the repeated double into its own message so we can have optional and
+// repeated
+message RepeatedDouble {
+  repeated double values = 1 [packed = true];
+}
+
+message JointLimits {
+  // Units are radians, newton-meter or meter, newton
+  // When not specified, it is assumed to be unlimited and unenfforced
+  // velocity, acceleration, jerk and effort are symmetrical limits.
+  RepeatedDouble min_position = 1;
+  RepeatedDouble max_position = 2;
+  optional RepeatedDouble max_velocity = 3;
+  optional RepeatedDouble max_acceleration = 4;
+  optional RepeatedDouble max_jerk = 5;
+  optional RepeatedDouble max_effort = 6;
+}
+
+// Specifies an update to apply on top of an existing JointLimits message. While
+// the fields are "the same", they have different usage.
+//   * Any field may be not provided (or empty) in which case no update is made
+//     to the JointLimits this update is applied on.
+//   * Any field that is not empty, must have the same size as the field it
+//     replaces in JointLimits.
+message JointLimitsUpdate {
+  optional RepeatedDouble min_position = 1;
+  optional RepeatedDouble max_position = 2;
+  optional RepeatedDouble max_velocity = 3;
+  optional RepeatedDouble max_acceleration = 4;
+  optional RepeatedDouble max_jerk = 5;
+  optional RepeatedDouble max_effort = 6;
+}

@@ -1,0 +1,16 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.test;
+
+import "google/protobuf/empty.proto";
+
+service PingService {
+  // Returns an empty message (or the standard out-of-bounds error).  Useful for
+  // testing gRPC related utilties where the data sent does not matter, such as
+  // the behavior of the channel or interceptors.
+  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}

@@ -1,0 +1,48 @@
+{{/*
+Copyright 2023 Intrinsic Innovation LLC
+Intrinsic Proprietary and Confidential
+Provided subject to written agreement between the parties.
+*/ -}}
+
+{{/*empty line at top since this template is appended to an existing file*/}}
+proto_library(
+    name = "{{.SkillNameSnakeCase}}_proto",
+    srcs = ["{{.SkillNameSnakeCase}}.proto"],
+)
+
+py_proto_library(
+    name = "{{.SkillNameSnakeCase}}_py_pb2",
+    deps = [":{{.SkillNameSnakeCase}}_proto"],
+)
+
+skill_manifest(
+    name = "{{.SkillNameSnakeCase}}_py_manifest",
+    src = "{{.SkillNameSnakeCase}}.manifest.textproto",
+    deps = [":{{.SkillNameSnakeCase}}_proto"],
+)
+
+py_library(
+    name = "{{.SkillNameSnakeCase}}",
+    srcs = ["{{.SkillNameSnakeCase}}.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":{{.SkillNameSnakeCase}}_py_pb2",
+        "@ai_intrinsic_sdks//intrinsic/skills/proto:equipment_py_pb2",
+        "@ai_intrinsic_sdks//intrinsic/skills/proto:skill_service_py_pb2",
+        "@ai_intrinsic_sdks//intrinsic/skills/python:proto_utils",
+        "@ai_intrinsic_sdks//intrinsic/skills/python:skill_interface",
+        "@ai_intrinsic_sdks//intrinsic/util:decorators",
+        "@com_google_absl_py//absl/logging",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_skill(
+    name = "{{.SkillNameSnakeCase}}_image",
+    manifest = ":{{.SkillNameSnakeCase}}_py_manifest",
+    proto = ":{{.SkillNameSnakeCase}}_proto",
+    deps = [
+      ":{{.SkillNameSnakeCase}}",
+      ":{{.SkillNameSnakeCase}}_py_pb2",
+    ]
+)

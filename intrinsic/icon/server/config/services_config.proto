@@ -1,0 +1,52 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+message DynamicsServiceConfig {
+  // Optional – if missing, we will try to use the resource ID instead.
+  optional string part_name = 1;
+  // This defines the library used to solve the robot Dynamics. The library
+  // which must expose a  RigidBodyInterface should be linked as a MainLoop
+  // dependency. By default the "robotics_library_dynamics" is used.
+  optional string solver_name = 2;
+  optional bool use_zero_gravity = 3;
+}
+
+message WorldServiceFromGrpcServiceConfig {
+  string world_id = 1;
+  reserved 2, 3;
+}
+
+// Configuration parameters defining the real-time services to be exposed.
+message ServicesConfig {
+  // If not empty a WorldService that reads information from a WorldFragment
+  // .gzf file, found at the given path, is registered.
+  //
+  // If this is not empty then world_service_from_grpc should not be provided.
+  string world_fragment_gzf_path = 1;
+
+  // If present a WorldService is registered from a gRPC
+  // WorldService (see intrinsic/world/service/world_service.proto)
+  // and Geometry service
+  // (intrinsic/geometry/service/geometry_service.proto).
+  //
+  // If this is specified world_fragment_gzf_path should be left empty.
+  optional WorldServiceFromGrpcServiceConfig world_service_from_grpc = 2;
+
+  // If true a KinematicsService is registered from the world service. This
+  // requires a valid world service to be registered.
+  optional bool kinematics_from_world_service = 3;
+
+  // If true a AssemblyService is registered from the world service. This
+  // requires a valid world service to be registered.
+  optional bool assembly_from_world_service = 4;
+
+  // If a valid DynamicsServiceConfig is supplied a DynamicsService is
+  // registered from the KinematicsService. This requires a valid kinematics
+  // service to be registered.
+  optional DynamicsServiceConfig dynamics_from_kinematics_service_config = 5;
+}

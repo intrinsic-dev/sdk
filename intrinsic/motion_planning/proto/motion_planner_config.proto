@@ -1,0 +1,16 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.motion_planning;
+
+import "google/protobuf/duration.proto";
+
+// Contains motion planning specific configurations.
+message MotionPlannerConfiguration {
+  // Maximum time in seconds available for motion planning. Default is 180
+  // seconds.
+  optional google.protobuf.Duration timeout_sec = 1;
+}

@@ -1,0 +1,27 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+From 404e2ac491dd202952462bbe915c6f847bbc3990 Mon Sep 17 00:00:00 2001
+From: ferstl
+Date: Tue, 1 Aug 2023 15:07:17 +0200
+Subject: [PATCH] Add -Wno-unused-function
+
+---
+ build_defs/cpp_opts.bzl | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/build_defs/cpp_opts.bzl b/build_defs/cpp_opts.bzl
+index 5a32371da..703bb8c06 100644
+--- a/build_defs/cpp_opts.bzl
++++ b/build_defs/cpp_opts.bzl
+@@ -22,6 +22,7 @@ COPTS = select({
+         "-Wno-sign-compare",
+         "-Wno-nonnull",
+         "-Werror",
++        "-Wno-unused-function",
+     ],
+ })
+
+--
+2.41.0.585.gd2178a4bd4-goog

@@ -1,0 +1,39 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.data_logger;
+
+// Data that would be better represented by a file than in structured storage
+// (eg. BigQuery).
+// As a rule of thumb, if you need to use a ‘bytes’ field to represent your
+// data, and it could contain kilobytes or more of data, use a Blob instead.
+// This allows it to be logged to file by the Datalogger and be referenced by
+// structured logs. The `data` field will be unset in structured storage, and
+// readers can use `blob_id` to retrieve it from the filesystem.
+message Blob {
+  // A globally unique identifier for this blob that is used as the filename of
+  // the object backing it (might be on local disk or a distributed filesystem
+  // in the cloud such as GCS).
+  //
+  // The recommended way to generate a blob_id is to concatenate a random 64-bit
+  // integer with a directory and a file-extension.
+  // For example:
+  //   const std::string blob_id = absl::StrCat(
+  //      “my_blob_dir/”,
+  //      DataLoggerClient::GenerateUid(),
+  //      “_detection.jpg”);
+  //   log_item.mutable_blob_payload->set_id(blob_id);
+  //
+  // Readers should handle the case when the object backing this blob does
+  // not exist, e.g. when the data was just written or has been garbage
+  // collected.
+  string blob_id = 1;
+
+  // The contents of the file. Will be unset when reading from structured
+  // storage. Should be cleared on the client side when sent to the DataLogger,
+  // except when logging the blob itself (i.e.  in LogItem.blob_payload).
+  bytes data = 2;
+}

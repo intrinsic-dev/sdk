@@ -1,0 +1,30 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+From a007b971a0ad3939cf4467d1e3406a65b7b59785 Mon Sep 17 00:00:00 2001
+From: ferstl
+Date: Tue, 1 Aug 2023 13:58:36 +0200
+Subject: [PATCH 2/5] cython
+
+---
+ bazel/cython_library.bzl | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/bazel/cython_library.bzl b/bazel/cython_library.bzl
+index 8e003c2246..044a09988e 100644
+--- a/bazel/cython_library.bzl
++++ b/bazel/cython_library.bzl
+@@ -71,6 +71,10 @@ def pyx_library(name, deps = [], py_deps = [], srcs = [], **kwargs):
+         native.cc_binary(
+             name = shared_object_name,
+             srcs = [stem + ".cpp"],
++            copts = [
++                "-Wno-deprecated-declarations",
++                "-Wno-unused-function",
++            ],
+             deps = deps + ["@local_config_python//:python_headers"],
+             linkshared = 1,
+         )
+--
+2.41.0.585.gd2178a4bd4-goog

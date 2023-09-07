@@ -1,0 +1,19 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.skills;
+
+// This message describes more detailed information about an error during
+// interacting with a skill. It is returned as a payload in the status of
+// Project and Execute.
+message SkillErrorInfo {
+  enum ErrorType {
+    ERROR_TYPE_UNKNOWN = 0;
+    ERROR_TYPE_GRPC = 1;
+    ERROR_TYPE_SKILL = 2;
+  }
+  ErrorType error_type = 1;
+}

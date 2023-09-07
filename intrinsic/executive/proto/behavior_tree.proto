@@ -1,0 +1,511 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+import "intrinsic/executive/proto/any_list.proto";
+import "intrinsic/executive/proto/any_with_assignments.proto";
+import "intrinsic/executive/proto/behavior_call.proto";
+import "intrinsic/executive/proto/domain.proto";
+import "intrinsic/executive/proto/executive_execution_mode.proto";
+import "intrinsic/skills/proto/skills.proto";
+
+// Message to encode an entire Behavior Tree.
+// Example: says "Good morning" in the morning, "Good day" otherwise
+// name: "bt1"
+// root {
+//   selector {
+//     children {
+//       condition_formula {
+//         fact {
+//           predicate_name: "is-morning"
+//         }
+//       }
+//       task {
+//         call_behavior {
+//           name: "ai.intrinsic.say"
+//           parameters {
+//             [type.googleapis.com/intrinsic_proto.skills.SayParams] {
+//               text: "Good morning"
+//             }
+//           }
+//         }
+//       }
+//     }
+//     children {
+//       condition_formula {
+//         not {
+//           sub_formula {
+//             fact {
+//               predicate_name: "is-morning"
+//             }
+//           }
+//         }
+//       }
+//       task {
+//         call_behavior {
+//           name: "say"
+//           parameters {
+//             [type.googleapis.com/intrinsic_proto.skills.SayParams] {
+//               text: "Good day"
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
+message BehaviorTree {
+  // This represents a condition (and is not a node).
+  message Condition {
+    enum State {
+      UNSPECIFIED = 0;
+      ACCEPTED = 1;
+      EVALUATING = 2;
+      SUSPENDING = 3;
+      SUSPENDED = 4;
+      CLEANUP = 5;
+      FINISHED = 6;
+      ERROR = 7;
+      CANCELED = 8;
+    }
+
+    message BlackboardExpression {
+      oneof expression_type {
+        string cel_expression = 1;  // go/cel
+      }
+    }
+
+    message LogicalCompound {
+      repeated Condition conditions = 1;
+    }
+
+    oneof condition_type {
+      Node tree = 1;  // root of a tree to evaluate
+      BlackboardExpression blackboard = 2;
+      intrinsic_proto.executive.DomainFormula domain_formula = 3;
+      LogicalCompound all_of = 4;
+      LogicalCompound any_of = 5;
+      Condition not = 6;
+    }
+
+    // This is only set by the executive on retrieval. It is ignored when
+    // uploading a tree.
+    optional State state = 7;
+  }
+
+  // Children in the sequence will be executed in the given order.
+  // If any child fails, the sequence fails. If all children have succeeded, the
+  // sequence succeeds.
+  message SequenceNode {
+    repeated Node children = 1;
+  }
+
+  // Children will be executed concurrently.
+  // If any child fails, the Parallel fails. Depending on the set failure
+  // behavior, the node will either preempt other running children, or wait
+  // for them to complete. If all children have succeeded, the Parallel
+  // succeeds.
+  message ParallelNode {
+    repeated Node children = 1;
+    enum FailureBehavior {
+      DEFAULT = 0;  // defaults to WAIT_FOR_REMAINING_CHILDREN, to be changed
+      ABORT_REMAINING_CHILDREN = 1;
+      WAIT_FOR_REMAINING_CHILDREN = 2;
+    }
+    FailureBehavior failure_behavior = 2;
+  }
+
+  // Try each child in the given order, only advance on unsatisfied condition.
+  // If a condition of a node is unsatisfied, continue and try the next node.
+  // If a condition of a node is satisfied, execute the child. The outcome of
+  // the child determines the outcome of the SelectorNode, i.e., if it fails,
+  // the selector node fails, if the child succeeds, the selector node succeeds.
+  // If the conditions of all children are unsatisfied, the selector node fails.
+  message SelectorNode {
+    repeated Node children = 1;
+  }
+
+  // Try each child in the given order, advance on any failure reason. This
+  // tries each child one in a sequence. If a child succeeds, the fallback node
+  // succeeds. If the child fails (for any reason, unsatisfied condition or
+  // failed execution) the next child is tried. If all children fail, the
+  // fallback node fails.
+  message FallbackNode {
+    repeated Node children = 1;
+  }
+
+  // Evaluate the "if" condition. If it is satisfied, execute the "then" branch,
+  // else execute the "else" branch.
+  message BranchNode {
+    Condition if = 1;
+    Node then = 2;
+    Node else = 3;
+  }
+
+  // Try the single child node for the given number of tries.
+  // On success of the child, the retry node succeeds. If the child fails:
+  // - the maximum number of tries has been reached: fail
+  // - max_tries = 0 or num_tries < max_tries:
+  //   - if a recovery node exists: run recovery node
+  //     - if recovery fails: fail
+  //     - else reset the retry node and run the next try
+  //   - if there is no recovery node: reset and re-run child
+  message RetryNode {
+    Node child = 1;
+    uint32 max_tries = 2;
+    optional uint32 num_tries = 3;
+    string retry_counter_blackboard_key = 4;
+    Node recovery = 5;
+  }
+
+  // Creates, updates, or deletes data on the blackboard.
+  message DataNode {
+    // Creates or updates data on the blackboard.
+    message CreateOrUpdate {
+      // Blackboard key where to store the data.
+      string blackboard_key = 1;
+
+      // future additions to general fields
+      reserved 2 to 9;
+
+      oneof input_type {
+        // Expression to create a proto to store, must evaluate to a proto, not
+        // to a basic type such as an integer (these can be stored using wrapper
+        // messages such as IntValue).
+        string cel_expression = 10;
+        // The Any proto MUST be of type intrinsic_proto.executive.WorldQuery.
+        AnyWithAssignments from_world = 11;
+
+        // When the proto is created/updated in the blackboard it is stored
+        // unpacked, i.e., the type within the Any proto must be accessible
+        // through the merge descriptor pool (retrieved from all skills).
+        google.protobuf.Any proto = 12;
+        // Protos must be of a type that is in the transitive closure of all
+        // well-known or skill proto types. The protos are stored packed in
+        // the blackboard.
+        AnyList protos = 13;
+      }
+    }
+
+    message Remove {
+      string blackboard_key = 1;
+    }
+
+    oneof operation_type {
+      CreateOrUpdate create_or_update = 1;
+      Remove remove = 2;
+    }
+  }
+
+  // Repeatedly execute a sub-tree.
+  // Exit conditions are one of:
+  // - condition does not hold
+  // - "do" child (sub-tree) fails
+  // - if max_times is set, repeat tree has been executed that number of times
+  // Omitting condition and max_times leads to a potentially infinite loop, it
+  // only exits if the do child fails.
+  // The loop succeeds if:
+  // - "while" condition is unsatisfied
+  // - "do" child has been executed successfully "max_times" times
+  message LoopNode {
+    // Specification to iterate over a number of protos in the blackboard.
+    message ForEach {
+      // Generate a list of protos.
+      oneof for_each_generator_type {
+        // A list of protos, where the loop node executes one cycle for each
+        // proto. In the n-th cycle the n-th proto is available with the key
+        // specified in value_blackboard_key. The protos must be of a type that
+        // is in the transitive closure of all well-known or skill proto
+        // types. The value is internally unpacked, e.g., if a Pose proto is
+        // specified, its values are accessible and within a for_each loop an
+        // expression like current_value.x would be valid (assuming the
+        // value_blackboard_key is "current_value").
+        AnyList protos = 1;
+
+        // A CEL expression to generate an array of protos, e.g., retrieving a
+        // repeated field of some proto in the blackboard. If the data is
+        // generated, e.g., by a DataNode, this is simply the data node's
+        // blackboard_key to which the result was written (using
+        // create_or_update).
+        string generator_cel_expression = 2;  // go/cel
+      }
+
+      // Blackboard key that the currently looped over value will be available
+      // on.  This is one entry of the for_each field.
+      string value_blackboard_key = 3;
+    }
+
+    oneof loop_type {
+      Condition while = 1;
+      ForEach for_each = 6;
+    }
+
+    Node do = 2;
+    // Maximum number of iterations to perform. This cannot be set in the case
+    // of a for_each loop.
+    optional uint32 max_times = 3;
+    optional uint32 num_times = 4;
+    string loop_counter_blackboard_key = 5;
+  }
+
+  // Leaf node encoding a single action to be executed.
+  // Succeeds if the action succeeds, fails otherwise.
+  message TaskNode {
+    // Represents the state of the enclosed execution item, i.e., skill or
+    // parameterizable behavior tree.
+    enum State {
+      ACCEPTED = 0;
+      SELECTED = 1;
+      PROJECTING = 2;
+      PROJECTED = 3;
+      CHECKING_FOOTPRINT = 4;
+      READY = 5;
+      PENDING = 6;
+      RUNNING = 7;
+      CANCELING = 10;
+      CANCELED = 11;
+      SUCCEEDED = 8;
+      FAILED = 9;
+    }
+
+    // This is only set by the executive on retrieval. It is ignored when
+    // uploading a tree.
+    optional State state = 1;
+
+    oneof task_type {
+      intrinsic_proto.executive.BehaviorCall call_behavior = 3;
+    }
+
+    // Exports the BehaviorTree and its state, if this task node executes a
+    // parameterizable behavior tree.
+    // This is only set by the executive on retrieval. It is an error when
+    // uploading a tree.
+    optional BehaviorTree called_tree_state = 4;
+
+    reserved "call_skill";
+    reserved 2;
+  }
+
+  // Leaf node for throwing execution failures, to direct the control flow
+  message FailNode {
+    string failure_message = 1;
+  }
+
+  message SubtreeNode {
+    BehaviorTree tree = 11;
+  }
+
+  // Control an application-level tree (process) from a system tree.
+  // This node type may only appear in system-level trees, not in process trees.
+  message ProcessControlNode {
+    message Load {
+      // similar to the ExecutiveService.Create call, loads a tree for execution
+      oneof load_type {
+        string behavior_tree_name = 1;
+      }
+    }
+    message Start {
+      // if unspecified uses SIMULATION_MODE_REALITY
+      optional intrinsic_proto.executive.SimulationMode simulation_mode = 1;
+    }
+    message Cancel {}
+    message Suspend {}
+    message Resume {}
+    message Reset {}
+
+    oneof control_type {
+      // In the following, state refers to the process tree state, not the
+      // executive state.
+      // Load a named BT (from the process catalog), error if BT cannot be
+      // loaded.
+      // Precondition: no tree loaded, or the loaded tree's state must be
+      //               ACCEPTED, SUSPENDED, FAILED, or SUCCEEDED
+      // Post: Plan is loaded, state is ACCEPTED
+      Load load = 1;
+      // Start a loaded BT.
+      // Precondition: state must be ACCEPTED
+      // Post: state is RUNNING
+      Start start = 2;
+      // Abort a running BT, error if cancellation fails.
+      // Precondition: state must be RUNNING
+      // Post: state is FAILED
+      Cancel cancel = 3;
+      // Suspend a running BT.
+      // Precondition: state must be RUNNING
+      // Post: state is SUSPENDING (may become SUSPENDED too quick to observe)
+      Suspend suspend = 4;
+      // Resume a suspended BT.
+      // Precondition: state must be SUSPENDED
+      // Post: state is RUNNING
+      Resume resume = 5;
+      // Reset a finished BT.
+      // Precondition: state must be SUSPENDED, FAILED, or SUCCEEDED
+      // Post: state is ACCEPTED
+      Reset reset = 6;
+    }
+  }
+
+  message Breakpoint {
+    enum Type {
+      TYPE_UNSPECIFIED = 0;
+      BEFORE = 1;
+      AFTER = 2;
+    }
+    string tree_id = 1;
+    uint32 node_id = 2;
+    Type type = 3;
+  }
+
+  // The tree nodes to formulate the tree.
+  message Node {
+    // These enum values need to be kept in sync with the states of the
+    // behavior-tree-node CLIPS template.
+    enum State {
+      UNSPECIFIED = 0;
+      ACCEPTED = 1;
+      SELECTED = 2;
+      EVALUATING_CONDITION = 3;
+      READY = 4;
+      RUNNING = 5;
+      CANCELING = 9;
+      CANCELED = 10;
+      SUCCEEDED = 6;
+      FAILED = 7;
+      SUSPENDED = 8;
+    }
+
+    enum FailureReason {
+      UNKNOWN_FAILURE = 0;   // an unknown error occurred
+      FAILED_CONDITION = 1;  // condition decorator unsatisfied
+      FAILED_EXECUTION = 2;  // error while executing the tree
+    }
+
+    message Decorators {
+      // Condition to denote whether a SELECTED node can transition to RUNNING.
+      // If the condition is unsatisfied when a node is selected the node
+      // transitions to FAILED.
+      Condition condition = 1;
+
+      // A sequence or parallel node in a system tree can become an extension
+      // node. Additional nodes will be added as a child.  Each extension point
+      // may be used at most once per sBT. An extension node must not have
+      // children nodes specified. System trees in resource types and resource
+      // sets cannot define an extension point.
+      enum ExtensionPointType {
+        EXTENSION_POINT_TYPE_UNSPECIFIED = 0;
+        // Initialization, expected to be executed once before pBTs can run.
+        EXTENSION_POINT_TYPE_SYSTEM_TREE_INIT = 1;
+        // Run-time, expected to run continuously and concurrently with pBTs.
+        EXTENSION_POINT_TYPE_SYSTEM_TREE_RUN = 2;
+      }
+      optional ExtensionPointType extension_point = 2;
+
+      optional Breakpoint.Type breakpoint = 3;
+    }
+
+    oneof node_type {
+      SequenceNode sequence = 1;
+      ParallelNode parallel = 2;
+      TaskNode task = 3;
+      FailNode fail = 4;
+      SelectorNode selector = 5;
+      FallbackNode fallback = 6;
+      BranchNode branch = 7;
+      LoopNode loop = 8;
+      RetryNode retry = 9;
+      SubtreeNode sub_tree = 11;
+      ProcessControlNode control_process = 16;
+      DataNode data = 18;
+    }
+
+    Decorators decorators = 12;
+
+    // This is only set on retrieval by the executive. It is ignored when
+    // uploading a tree.
+    optional State state = 13;
+    optional FailureReason failure_reason = 14;
+
+    // An optional (display) name for the node.
+    optional string name = 15;
+
+    // An identifier for the node. The identifier must be unique for the
+    // behavior tree containing the node.
+    // Given a subtree (TREE-A), which gets used in another tree (TREE-B),
+    // both TREE-A and TREE-B may contain a node with id 1, but TREE-A
+    // (and TREE-B) may both only contain one node with id 1.
+    // This would be forbidden:
+    //    --------------
+    //    | sequence a |
+    //    | id: 1      |
+    //    --------------
+    //           |
+    //      ----------
+    //      | task a |
+    //      | id: 1  |
+    //      ----------
+    // While this would be allowed:
+    //    --------------
+    //    | sequence a |
+    //    | id: 1      |
+    //    --------------
+    //           |
+    //    ------------
+    //    | subtree a |
+    //    | id: 2     |
+    //    ------------
+    //          |
+    //      ----------
+    //      | task b |
+    //      | id: 1  |
+    //      ----------
+    uint32 id = 17;
+
+    reserved "import_tree";
+    reserved 10;
+  }
+
+  // Data provided by the user associated with the tree.
+  // It can be stored in a catalog or to disk and is returned as provided
+  // in the executive state. It is not further examined or used.
+  message UserData {
+    map<string, bytes> data_bytes = 1;
+  }
+
+  // Describes the overall state of the Behavior Tree.
+  enum State {
+    UNSPECIFIED = 0;  // Default value, will not occur on retrieval.
+    ACCEPTED = 1;     // Tree has been loaded successfully.
+    RUNNING = 2;      // Tree is currently executing.
+    SUSPENDING = 3;   // Tree is waiting for in-flight actions to complete.
+    SUSPENDED = 4;    // Tree has been paused (and can be resumed),
+    CANCELING = 5;    // Tree is waiting for cancellation to finish.
+    SUCCEEDED = 6;    // Tree has finished execution successfully.
+    FAILED = 7;       // Tree has failed to execute.
+    CANCELED = 8;     // Tree was canceled as requested.
+  }
+
+  // A name for the tree that may be used for referencing in the future.
+  string name = 1;
+  Node root = 2;
+
+  string blackboard_scope = 8;
+
+  // This is only set on retrieval by the executive. It is ignored when
+  // uploading a tree.
+  optional State state = 7;
+
+  intrinsic_proto.skills.Skill description = 4;
+  string return_value_expression = 5;
+  google.protobuf.Timestamp update_time = 6;
+
+  // User provided data that is treated opaquely by the executive.
+  // The data is assumed to be small (all data combined in the order of
+  // kilobytes) as to not slow down state retrieval.
+  optional UserData user_data = 3;
+}

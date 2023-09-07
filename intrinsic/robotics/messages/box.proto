@@ -1,0 +1,64 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+import "intrinsic/robotics/messages/vector.proto";
+
+option cc_enable_arenas = true;
+
+// Axis-aligned boxes in 2, 3, or 4 dimensions with float, double, or integer
+// values.
+// Each box is defined by a minimum corner and a maximum corner.
+// If any dimension of a box is empty, the box is considered to be empty.
+
+// A box in two-dimensional space.
+message Box2d {
+  Vector2d min_corner = 1;
+  Vector2d max_corner = 2;
+}
+
+message Box2f {
+  Vector2f min_corner = 1;
+  Vector2f max_corner = 2;
+}
+
+message Box2i {
+  Vector2i min_corner = 1;
+  Vector2i max_corner = 2;
+}
+
+// A box in three-dimensional space.
+message Box3d {
+  Vector3d min_corner = 1;
+  Vector3d max_corner = 2;
+}
+
+message Box3f {
+  Vector3f min_corner = 1;
+  Vector3f max_corner = 2;
+}
+
+message Box3i {
+  Vector3i min_corner = 1;
+  Vector3i max_corner = 2;
+}
+
+// A box in four-dimensional space.
+message Box4d {
+  Vector4d min_corner = 1;
+  Vector4d max_corner = 2;
+}
+
+message Box4f {
+  Vector4f min_corner = 1;
+  Vector4f max_corner = 2;
+}
+
+message Box4i {
+  Vector4i min_corner = 1;
+  Vector4i max_corner = 2;
+}

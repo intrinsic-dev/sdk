@@ -1,0 +1,14 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+// Encapsulates pose estimator id.
+// This message type allows the UI to interpret the field as a pose estimator
+// and automatically hook it up to the available pose estimators.
+message PoseEstimatorId {
+  string id = 1;
+}

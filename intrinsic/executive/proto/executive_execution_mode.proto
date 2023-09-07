@@ -1,0 +1,29 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+// Execution mode enum (normal or draft mode)
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+enum SimulationMode {
+  SIMULATION_MODE_UNSPECIFIED = 0;
+
+  // Executes in real or with simulator as close to reality as possible.
+  SIMULATION_MODE_REALITY = 1;
+
+  // Executes skills in kinematics simulation.
+  SIMULATION_MODE_DRAFT = 2;
+}
+
+enum ExecutionMode {
+  EXECUTION_MODE_UNSPECIFIED = 0;
+
+  // Execute normally, i.e., process loaded behavior tree.
+  EXECUTION_MODE_NORMAL = 1;
+
+  // Execute step-wise, i.e., stop after the execution of a node.
+  EXECUTION_MODE_STEP_WISE = 2;
+}

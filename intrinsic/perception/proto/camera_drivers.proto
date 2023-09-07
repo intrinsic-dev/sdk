@@ -1,0 +1,86 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+// This message declares different camera drivers. Each driver references a
+// specific implementation which is used to control and communicate with
+// cameras.
+message CameraDrivers {
+  // A camera which serves images from files.
+  message FileCamera {
+    message FilesList {
+      repeated string filename = 1;
+    }
+
+    // This message matches multiple files following the pattern:
+    //   <directory>.*<color|depth|gray|point|normal_suffix>$
+    // The suffix must contain the file extension.
+    message DirectoryWithRgbd {
+      string directory = 1;
+      // Each suffix is optional. The internal decoder expect the format as
+      // written by intrinsic::perception::WriteImage.
+      string color_suffix = 2;  // Suffix of color images. (e.g. "color.png")
+      string depth_suffix = 3;  // Suffix of depth images. (e.g. "depth.png")
+      string gray_suffix = 4;   // Suffix of gray images. (e.g. "gray.png")
+      // Suffix of point images. (e.g. "point.png"). Images are encoded as a
+      // concatenated x, y, and z image.
+      string point_suffix = 5;
+      // Suffix of normal images.
+      string normal_suffix = 6;
+      // If set, removes all frames which don't have all specified channels.
+      bool remove_incomplete_frames = 7;
+    }
+
+    oneof source {
+      string directory = 1;  // A directory containing JPEG, PNG, or WEBP files.
+      FilesList files_list =
+          2;  // A list of JPEG, PNG, or WEBP files (.*\.(jpeg|jpg|png|webp)$)
+      DirectoryWithRgbd directory_with_rgbd = 3;
+    }
+  }
+
+  // The default driver which is used when communicating with GenICam cameras
+  // (Aravis).
+  message GenICam {
+    string device_id = 1;
+  }
+
+  // The driver which is used to communicate with OpenNI compliant cameras.
+  message OpenNi {
+    string device_id = 1;
+  }
+
+  // A video 4 linux driver to use e.g. web-cams.
+  message Video4Linux {
+    int32 device_id = 1;
+  }
+
+  // The driver which is used to communicate with the Photoneo.
+  message Photoneo {
+    // Note that the driver (PhoXiControl) must be running on the workstation to
+    // be able to connect to the Photoneo.
+    string device_id = 1;
+  }
+
+  message FakeGenICam {
+    // The existence of this message indicates that a fake camera will be used.
+    // No additional parameters are required as there can only exist a single
+    // fake camera.
+  }
+
+  // The Intel Realsense driver
+  message Realsense {
+    // The realsense serial number. Get it with `rs-fw-update -l`.
+    string device_id = 1;
+  }
+
+  // The IPS driver
+  message PlenopticUnit {
+    // The PlenopticUnit serial number.
+    string device_id = 1;
+  }
+}

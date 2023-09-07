@@ -1,0 +1,43 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+import "google/protobuf/duration.proto";
+import "intrinsic/kinematics/types/dynamic_limits_check_mode.proto";
+
+// Joint state.
+// Unused fields are empty.
+message JointState {
+  uint64 timepoint_nsec = 1;         // absolute or relative timestamp.
+  repeated double position = 2;      // Position of each joint.
+  repeated double velocity = 3;      // Velocity of each joint.
+  repeated double acceleration = 4;  // Acceleration of each joint.
+  repeated double torque = 5;        // Torque that a joint is applying
+                                     //  to its subordinate link.
+}
+
+// One double per joint
+message JointVec {
+  repeated double joints = 1;
+}
+
+message JointStatePV {
+  repeated double position = 1;  // Position of each joint.
+  repeated double velocity = 2;  // Velocity of each joint.
+}
+
+message JointStatePVA {
+  repeated double position = 1;      // Position of each joint.
+  repeated double velocity = 2;      // Velocity of each joint.
+  repeated double acceleration = 3;  // Acceleration of each joint.
+}
+
+message JointTrajectoryPVA {
+  repeated JointStatePVA state = 1;
+  repeated google.protobuf.Duration time_since_start = 2;
+  intrinsic_proto.DynamicLimitsCheckMode joint_dynamic_limits_check_mode = 3;
+}

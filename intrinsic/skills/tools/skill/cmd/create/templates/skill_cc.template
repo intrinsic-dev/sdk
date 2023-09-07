@@ -1,0 +1,79 @@
+{{/*
+Copyright 2023 Intrinsic Innovation LLC
+Intrinsic Proprietary and Confidential
+Provided subject to written agreement between the parties.
+*/ -}}
+
+#include "{{.SkillNameSnakeCase}}.h"
+
+#include <memory>
+#include <string>
+
+#include "absl/container/flat_hash_map.h"
+#include "absl/log/log.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "{{strJoin .BazelPackage "/"}}{{if .BazelPackage}}/{{end}}{{.SkillNameSnakeCase}}.pb.h"
+#include "google/protobuf/message.h"
+#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/skills/cc/skill_utils.h"
+#include "intrinsic/skills/proto/skill_service.pb.h"
+
+{{- /* Don't use a namespace when creating a skill adjacent to WORKSPACE because
+it will be an anonymous namespace. It would prevent CreateSkill from being
+callable from outside this translation unit. */}}
+{{if .BazelPackage }}
+namespace {{strJoin .BazelPackage "::"}} {
+{{end}}
+using ::{{strJoin .ProtoPackage "::"}}::{{.SkillNameUpperCamelCase}}Params;
+
+using ::intrinsic_proto::skills::ExecuteRequest;
+using ::intrinsic_proto::skills::ExecuteResult;
+using ::intrinsic_proto::skills::PredictResult;
+using ::intrinsic::skills::SkillInterface;
+using ::intrinsic::skills::SkillProjectInterface;
+using ::intrinsic::skills::ProjectionContext;
+using ::intrinsic::skills::ExecutionContext;
+using ::intrinsic::skills::UnpackParams;
+
+// -----------------------------------------------------------------------------
+// Skill signature.
+// -----------------------------------------------------------------------------
+
+std::unique_ptr<SkillInterface> {{.SkillNameUpperCamelCase}}::CreateSkill() {
+  return std::make_unique<{{.SkillNameUpperCamelCase}}>();
+}
+
+absl::StatusOr<PredictResult> {{.SkillNameUpperCamelCase}}::Predict(
+    const SkillProjectInterface::ProjectParams& params, 
+    ProjectionContext& context) const {
+
+  LOG(WARNING) 
+    << "Missing `{{.SkillNameUpperCamelCase}}.Predict` implementation. "
+       "For a production-ready skill, this method needs to be implemented by "
+       "the skill author.";
+
+  PredictResult result;
+  result.add_outcomes()->set_probability(1.0);
+  return std::move(result); 
+}
+
+// -----------------------------------------------------------------------------
+// Skill execution.
+// -----------------------------------------------------------------------------
+
+absl::StatusOr<ExecuteResult> {{.SkillNameUpperCamelCase}}::Execute(
+    const ExecuteRequest& execute_request, ExecutionContext& context) {
+  
+  // Get parameters.
+  INTRINSIC_ASSIGN_OR_RETURN(
+      auto params, UnpackParams<{{.SkillNameUpperCamelCase}}Params>(execute_request));
+
+  // Log the text provided.
+  LOG(INFO) << params.text();
+
+  return ExecuteResult();
+}
+{{if .BazelPackage }}
+}  // namespace {{strJoin .BazelPackage "::"}}
+{{- end}}

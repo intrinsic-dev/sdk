@@ -1,0 +1,18 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.geometry;
+
+import "intrinsic/geometry/proto/axis_aligned_bounding_box.proto";
+
+// Octree representation.
+message Octree {
+  bytes is_child_k_leaf = 2;
+  bytes has_child_k = 3;
+  repeated uint64 morton_list = 4;
+  AxisAlignedBoundingBox3 workspace_bounding_box = 6;
+  uint32 max_depth = 7;
+}

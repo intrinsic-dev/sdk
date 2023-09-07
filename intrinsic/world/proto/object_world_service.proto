@@ -1,0 +1,718 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.world;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/rpc/status.proto";
+import "intrinsic/icon/proto/cart_space.proto";
+import "intrinsic/kinematics/types/joint_limits.proto";
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/skills/proto/footprint.proto";
+import "intrinsic/world/proto/collision_action.proto";
+import "intrinsic/world/proto/collision_settings.proto";
+import "intrinsic/world/proto/geometry_component.proto";
+import "intrinsic/world/proto/kinematics_component.proto";
+import "intrinsic/world/proto/object_world_refs.proto";
+import "intrinsic/world/proto/object_world_updates.proto";
+import "intrinsic/world/proto/physics_component.proto";
+import "intrinsic/world/proto/simulation_component.proto";
+import "intrinsic/world/proto/spawner_component.proto";
+
+// Provides access to a managed set of world objects.
+//
+// Offers a simplified/high-level view onto the entities in a world by exposing
+// them as objects and frames.
+service ObjectWorldService {
+  // ---------------------------------------------------------------------------
+  // WorldMetadata methods.
+
+  // Returns the metadata about a single world.
+  rpc GetWorld(GetWorldRequest) returns (WorldMetadata) {}
+
+  // Clones a world and creates a new copy.
+  rpc CloneWorld(CloneWorldRequest) returns (WorldMetadata) {}
+
+  // Deletes a world from the service.
+  rpc DeleteWorld(DeleteWorldRequest) returns (google.protobuf.Empty) {}
+
+  // Lists the metadatas of the worlds currently stored in the world service.
+  rpc ListWorlds(ListWorldsRequest) returns (ListWorldsResponse) {}
+
+  // ---------------------------------------------------------------------------
+  // World-level methods.
+
+  // Updates the collision settings used for the given world. This will override
+  // the previous settings and will not attempt to merge anything.
+  rpc UpdateCollisionSettings(UpdateCollisionSettingsRequest) returns (World) {}
+
+  // ---------------------------------------------------------------------------
+  // Object resource methods.
+
+  // Returns a single object.
+  rpc GetObject(GetObjectRequest) returns (Object) {}
+
+  // Lists objects in a world.
+  rpc ListObjects(ListObjectsRequest) returns (ListObjectsResponse) {}
+
+  // Deletes an object in the world.
+  rpc DeleteObject(DeleteObjectRequest) returns (google.protobuf.Empty) {}
+
+  // Updates the name of an object.
+  rpc UpdateObjectName(UpdateObjectNameRequest) returns (Object) {}
+
+  // Reparents an object to another parent object.
+  rpc ReparentObject(ReparentObjectRequest) returns (Object) {}
+
+  // Enables or disables collisions between two objects.
+  rpc ToggleCollisions(ToggleCollisionsRequest) returns (Objects) {}
+
+  // Updates the current joint positions and/or limits of an object with
+  // ObjectType==KINEMATIC_OBJECT.
+  rpc UpdateObjectJoints(UpdateObjectJointsRequest) returns (Object) {}
+
+  // Updates the properties stored on an object with
+  // ObjectType==KINEMATIC_OBJECT.
+  rpc UpdateKinematicObjectProperties(UpdateKinematicObjectPropertiesRequest)
+      returns (Object) {}
+
+  // Updates advanced properties of an object.
+  rpc UpdateObjectProperties(UpdateObjectPropertiesRequest) returns (Object) {}
+
+  // ---------------------------------------------------------------------------
+  // Entity resource methods.
+
+  // Updates properties of an entity.
+  rpc UpdateEntityProperties(UpdateEntityPropertiesRequest) returns (Entity) {}
+
+  // ---------------------------------------------------------------------------
+  // Frame resource methods.
+
+  // Returns a single frame.
+  rpc GetFrame(GetFrameRequest) returns (Frame) {}
+
+  // Lists frames in a world.
+  rpc ListFrames(ListFramesRequest) returns (ListFramesResponse) {}
+
+  // Creates a new frame.
+  rpc CreateFrame(CreateFrameRequest) returns (Frame) {}
+
+  // Deletes a frame.
+  rpc DeleteFrame(DeleteFrameRequest) returns (google.protobuf.Empty) {}
+
+  // Updates the name of a frame.
+  rpc UpdateFrameName(UpdateFrameNameRequest) returns (Frame) {}
+
+  // Reparents a frame to another parent object or frame.
+  rpc ReparentFrame(ReparentFrameRequest) returns (Frame) {}
+
+  // Updates properties of a frame.
+  rpc UpdateFrameProperties(UpdateFramePropertiesRequest) returns (Frame) {}
+
+  // ---------------------------------------------------------------------------
+  // Mixed-resource methods.
+
+  // Returns a transform between objects or frames.
+  rpc GetTransform(GetTransformRequest) returns (GetTransformResponse) {}
+
+  // Updates a transform between objects or frames.
+  rpc UpdateTransform(UpdateTransformRequest)
+      returns (UpdateTransformResponse) {}
+
+  // Performs a sequence of update operations on various resources in a single
+  // world.
+  //
+  // The update is atomic. Either all or, in case of an error, none of the given
+  // updates will be applied.
+  rpc UpdateWorldResources(UpdateWorldResourcesRequest)
+      returns (UpdateWorldResourcesResponse) {}
+
+  // ---------------------------------------------------------------------------
+  // Footprint methods.
+
+  // Compares footprints against each other to determine if they are compatible
+  // with respect to a given world.
+  rpc AreFootprintsCompatible(AreFootprintsCompatibleRequest)
+      returns (AreFootprintsCompatibleResponse) {}
+
+  // Compares two worlds objectwise.
+  // Added, modified and removed objects are returned.
+  rpc CompareWorlds(CompareWorldsRequest) returns (CompareWorldsResponse) {}
+
+  // Syncs a object state from one world to another.
+  // The complete object with all entities is copied from the from_world to the
+  // to_world. If the object exists in the to_world, but not in the from_world,
+  // it is removed from the to_world.
+  // The synced object will keep the IDs and all parent
+  // relationships. It fails if:
+  // - The parent does not exist in the destination world.
+  // - The ID of this object already is used by another object.
+  //
+  // If the object already exists in the destination world, it is overwritten.
+  rpc SyncObject(SyncObjectRequest) returns (SyncObjectResponse) {}
+}
+
+// -----------------------------------------------------------------------------
+// WorldMetadata resource.
+
+// General information about a world managed by the world service.
+message WorldMetadata {
+  // Unique id of the world.
+  string id = 1;
+
+  // Optional. The id of the world in persistent global storage.
+  string db_world_id = 4;
+
+  // Whether the world is out of sync with persistent global storage.
+  bool dirty = 5;
+
+  // A hash representing the current structure portion of the world data. This
+  // hash will change when there are structural changes to the world, but may
+  // not change when state is updated. State in this case could mean pose values
+  // for parent_t_this or dof values for joints.
+  string world_structure_hash = 6;
+
+  // The timestamp of the most recent update to this world.
+  google.protobuf.Timestamp last_update = 7;
+}
+
+// -----------------------------------------------------------------------------
+// Object resource.
+
+// Type of an object. Indicates which components will be present when querying
+// an object.
+enum ObjectType {
+  OBJECT_TYPE_UNSPECIFIED = 0;
+  // Type of the root object which is present in every world.
+  ROOT = 1;
+  // Type of non-virtual objects such as a robot, camera, workpiece, fixture
+  // etc.
+  PHYSICAL_OBJECT = 2;
+  // Subtype for physical objects that have moveable joints (prismatic or
+  // revolute). This includes not only robots but also, e.g., finger grippers or
+  // fixtures with moveable clamps.
+  KINEMATIC_OBJECT = 3;
+}
+
+// Details common to all objects.
+message ObjectComponent {
+  // Transform between the parent object and this frame.
+  intrinsic_proto.Pose parent_t_this = 2;
+
+  // Name of the equipment the object is associated with. Empty if this object
+  // is not associated with an equipment.
+  string equipment_name = 4;
+
+  // Properties for how this object should be treated in simulation. Will not be
+  // set if there are no special properties to be considered in simulation.
+  intrinsic_proto.world.SimulationComponent simulation_component = 5;
+
+  // Properties for how this object spawns objects in simulation. Will not be
+  // set if this object is not a spawner resource.
+  intrinsic_proto.world.SpawnerComponent spawner_component = 6;
+}
+
+// A reference to a world resource that includes both its resource id as well as
+// a name (e.g., object name or frame name).
+message IdAndName {
+  // Id of the world resource. Non-human readable and unique within a world.
+  string id = 1;
+
+  // Name of the world resource. Human readable. Might require additional
+  // context to uniquely identify a resource (e.g., the name of a frame is only
+  // unique in the context of a specific object).
+  string name = 2;
+}
+
+// Details for objects with ObjectType==KINEMATIC_OBJECT.
+message KinematicObjectComponent {
+  // Joint positions in radians (for revolute joints) or meters (for prismatic
+  // joints).
+  repeated double joint_positions = 1;
+
+  // Joint system limits. Note that the field JointLimits.max_effort is not
+  // supported and will always be filled with zeroes.
+  intrinsic_proto.JointLimits joint_system_limits = 8;
+
+  // Joint application limits. Note that the field JointLimits.max_effort is not
+  // supported and will always be filled with zeroes.
+  intrinsic_proto.JointLimits joint_application_limits = 9;
+
+  // Ids of the enties (see 'Object.entities') modelling the individual joints
+  // of the kinematic object. These entities are guaranteed to have a
+  // 'KinematicsComponent' (see 'Entity.kinematics_component'). The order of
+  // this field matches the joint order of 'joint_positions' and 'joint_limits'.
+  repeated string joint_entity_ids = 5;
+
+  // Ids and names of frames which mark flanges according to the ISO 9787
+  // standard. Not every kinematic object has flange frames, but one flange
+  // frame for every "robot arm" contained in the kinematic object can be
+  // expected.
+  repeated IdAndName iso_flange_frames = 3;
+
+  // Named joint configurations associated with this kinematic object.
+  repeated NamedJointConfiguration named_joint_configurations = 4;
+
+  // If set these will be the updated limits to use.
+  intrinsic_proto.icon.CartesianLimits cartesian_limits = 6;
+
+  // If set this will be the updated control frequency to use
+  optional double control_frequency_hz = 7;
+}
+
+// Basic resource in a world. An Object is part of exactly one world, has
+// exactly one parent object, can have multiple child objects and can have
+// multiple child frames.
+// Each world contains one special object - the root object (ObjectType==ROOT) -
+// which is always present and has no parent.
+message Object {
+  // Id of the world which the object is part of.
+  string world_id = 1;
+
+  // Id of the object which is unique among all resources in a world (i.e.
+  // frames & objects). Equal to "root" for the root object. Cannot be set by
+  // the user.
+  // Treat this as an opaque string - other than for the root object there are
+  // no guarantees on format, length or human-readability.
+  string id = 2;
+
+  // Human-readable name of the object. Guaranteed to be non-empty and unique
+  // among all objects and frames under the same parent object. If
+  // name_is_global_alias is true, guaranteed to be unique globally. Equal to
+  // "root" for the root object. Allowed characters are letters, numbers, and
+  // underscore, with the first character a letter, the last a letter or a
+  // number.
+  string name = 3;
+
+  // If true, name is a globally unique name and can be used in an
+  // ObjectReferenceByName and for ObjectReference.by_name.
+  bool name_is_global_alias = 12;
+
+  // The full path of this object from root.
+  ObjectFullPath object_full_path = 13;
+
+  // The type of the object.
+  ObjectType type = 4;
+
+  // Id and name of the parent object. Empty if ObjectType==ROOT.
+  IdAndName parent = 5;
+
+  // The entity within the parent that this object is parented to.
+  EntityReference parent_entity = 14;
+
+  // Ids and names of child objects. Empty if the object has no child objects.
+  repeated IdAndName children = 6;
+
+  // All child frames under this object, including ones that are attached
+  // indirectly to this object via another child frame.
+  //
+  // If ObjectView==BASIC, included Frame instances will only be partically
+  // populated (if ObjectView==BASIC, Frame.parent_t_this is not populated).
+  repeated Frame frames = 7;
+
+  // Only present if ObjectView==FULL and ObjectType!=ROOT.
+  ObjectComponent object_component = 8;
+
+  // Only present if ObjectView==FULL and ObjectType==KINEMATIC_OBJECT.
+  KinematicObjectComponent kinematic_object_component = 9;
+
+  // The entities which make up the internal structure of the object. Only
+  // filled if ObjectView==FULL.
+  map<string, Entity> entities = 10;
+
+  // Id of the root entity of this object. If ObjectView==FULL, then this is a
+  // valid key into 'entities', else this will be empty
+  string root_entity_id = 11;
+}
+
+// A sequence of multiple objects.
+message Objects {
+  // The objects.
+  repeated Object objects = 1;
+}
+
+// -----------------------------------------------------------------------------
+// Entity resource.
+
+// Basic building block for objects. The world consists of a tree of entities
+// and each object consists of one or more entities that are connected to each
+// other. I.e., each object corresponds to a subtree of the world's entities.
+// The root object consists of exactly one entity - the root entity.
+// Next tag: 11
+message Entity {
+  // Id of the world which the entity is part of.
+  string world_id = 1;
+
+  // Id of the entity which is unique among all resources in a world (i.e.
+  // frames, objects, entities, ...). Cannot be set by the user.
+  // Treat this as an opaque string - there are no guarantees on format, length
+  // or human-readability.
+  string id = 2;
+
+  // Human-readable name of the entity. Guaranteed to be non-empty and unique
+  // among all entities of an object.
+  // Allowed characters are letters, numbers, and underscore, with the first
+  // character a letter, the last a letter or a number.
+  string name = 7;
+
+  // Id and name of the object the entity is part of.
+  IdAndName object = 3;
+
+  // Id of the parent entity to which this entity is attached. Empty for the
+  // root entity.
+  string parent_id = 4;
+
+  // Pose of this entity in the space of the parent entity. Unset for the root
+  // entity.
+  intrinsic_proto.Pose parent_t_this = 5;
+
+  // The collision action to use between this entity and all others. This is the
+  // default action that will be taken when collision checking against other
+  // entities. If this entity has an action of 2cm margin, while another entity
+  // has an action of 5cm margin we will use the 5cm margin as that respects
+  // both entity requirements.
+  //
+  // This value can be overridden by CollisionSettings specified by some skills.
+  // DEPRECATED. Use 'collision_settings' in the world directly.
+  CollisionAction collision_action = 10 [deprecated = true];
+
+  // Visual and collision geometry of this entity. Unset if this entity has no
+  // associated geometry.
+  intrinsic_proto.world.GeometryComponent geometry_component = 8;
+
+  // Physics properties of this entity. Unset if this entity has no physical
+  // properties (e.g., if the entity represents a joint or sensor).
+  intrinsic_proto.world.PhysicsComponent physics_component = 6;
+
+  // Kinematics properties of this entity. Only set if this entity models the
+  // joint of a kinematic object.
+  intrinsic_proto.world.KinematicsComponent kinematics_component = 9;
+}
+
+// -----------------------------------------------------------------------------
+// Frame resource.
+
+// A local or global reference frame that represents a pose in the world (e.g.,
+// a grasp or drop-off position, a tool frame, ... ).
+//
+// Each frame is attached to a parent object, and all frames under the same
+// object need to have unique names. The pose of a frame is relative to its
+// parent object unless the parent object is the root object: then the frame is
+// a "global" frame.
+// Next tag: 10
+message Frame {
+  // Id of the world which the frame is part of.
+  string world_id = 1;
+
+  // Id of the frame which is unique among all resources in a world (i.e.
+  // frames & objects). Cannot be set by the user.
+  // Treat this as an opaque string - there are no guarantees on format, length
+  // or human-readability.
+  string id = 2;
+
+  // Human-readable name of the frame. Guaranteed to be non-empty and unique
+  // among all frames under the same object.
+  // Allowed characters are letters, numbers, and underscore, with the first
+  // character a letter, the last a letter or a number.
+  string name = 3;
+
+  // Id and name of the parent object. Equal to {id: "root" name: "root"} if the
+  // frame is a child of the root object.
+  IdAndName object = 4;
+
+  // The full path from root of the parent object.
+  ObjectFullPath object_full_path = 8;
+
+  // Optional id and name of the parent frame. If not set, the frame is attached
+  // directly to one of the entities of the parent object (see 'object'). Else,
+  // if set, the frame is attached to the given parent frame.
+  IdAndName parent_frame = 6;
+
+  // Child frames which have this frame as their parent frame and which are not
+  // attached directly to the parent object. Not sorted in any particular order.
+  repeated IdAndName child_frames = 7;
+
+  // Pose of this frame in the space of the parent object (if 'parent_frame' is
+  // empty) or frame (if 'parent_frame' is set).
+  intrinsic_proto.Pose parent_t_this = 5;
+
+  // If set then this frame is designated as an attachment frame.
+  bool is_attachment_frame = 9;
+}
+
+// -----------------------------------------------------------------------------
+// Requests and responses.
+
+message World {
+  // World-level metadata.
+  WorldMetadata world_metadata = 1;
+
+  // All world objects (which contain the frames in the world). Always
+  // populated according to ObjectView==FULL.
+  repeated Object objects = 2;
+
+  // The set of collision rules in use with this world.
+  CollisionSettings collision_settings = 3;
+}
+
+message GetWorldRequest {
+  // Id of the world to be queried.
+  string world_id = 1;
+}
+
+message CloneWorldRequest {
+  // The id of the world to be cloned.
+  string world_id = 1;
+  // The desired world id for the new clone. If left empty a new ID will be
+  // generated automatically.
+  string cloned_world_id = 5;
+  // Whether it is ok to overwrite an existing world with a clone. Ignored
+  // if cloned_world_id is empty (the system automatically picks a new yet
+  // unused ID).
+  bool allow_overwrite = 6;
+}
+
+message DeleteWorldRequest {
+  // The id of the world to remove
+  string world_id = 1;
+}
+
+message ListWorldsRequest {}
+
+message ListWorldsResponse {
+  // The requested worlds.
+  repeated WorldMetadata world_metadatas = 1;
+}
+
+message ObjectFullPath {
+  // The list of object names from the root object(excluding root) to the
+  // addresssed object(including addresssed object). An empty list indicates the
+  // root object.
+  repeated string object_names = 1;
+}
+
+message GetObjectRequest {
+  // Id of the world to be queried.
+  string world_id = 1;
+
+  oneof object_query {
+    // Direct reference to the object to be queried.
+    ObjectReference object = 2;
+
+    // Equipment that is associated with the object to be queried.
+    string equipment_handle_name = 4;
+
+    // The full path from root to the object to be queried.
+    ObjectFullPath object_full_path = 5;
+  }
+
+  // Requested object view.
+  ObjectView view = 3;
+}
+
+message ListObjectsRequest {
+  // Id of the world to be queried.
+  string world_id = 1;
+
+  // Requested object view.
+  ObjectView view = 3;
+}
+
+message ListObjectsResponse {
+  // The requested objects.
+  repeated Object objects = 1;
+}
+
+message CreateObjectsResponse {
+  // The created objects.
+  Objects objects = 1;
+}
+
+message GetFrameRequest {
+  // Id of the world to be queried.
+  string world_id = 1;
+
+  // The frame to be queried.
+  FrameReference frame = 2;
+}
+
+message ListFramesRequest {
+  // Id of the world to be queried.
+  string world_id = 1;
+
+  // The object to be queried. If unset, frames for all objects in the world
+  // will be returned.
+  ObjectReference object = 2;
+}
+
+message ListFramesResponse {
+  // The requested frames.
+  repeated Frame frames = 1;
+}
+
+// Request to return a transform 'a_t_b' between two nodes 'node_a' and 'node_b'
+// in the transform tree (a node can be a frame or an object). If 'node_a' or
+// 'node_b' reference an object, the returned transform is with respect to the
+// origin of the referenced object.
+message GetTransformRequest {
+  // Id of the world to be queried.
+  string world_id = 1;
+
+  // First transform node.
+  TransformNodeReference node_a = 2;
+
+  // Optional node_a filter to further specify the entity within the node.
+  ObjectEntityFilter node_a_filter = 4;
+
+  // Second transform node.
+  TransformNodeReference node_b = 3;
+
+  // Optional node_b filter to further specify the entity within the node.
+  ObjectEntityFilter node_b_filter = 5;
+}
+
+// Response with the requested transform 'a_t_b' between two nodes 'node_a' and
+// 'node_b' in the transform tree.
+message GetTransformResponse {
+  // The transform between the two requested nodes 'node_a' and 'node_b'.
+  intrinsic_proto.Pose a_t_b = 1;
+}
+
+// Response after updating a transform.
+message UpdateTransformResponse {
+  // The updated transform node which can either be a frame or an object (see
+  // UpdateTransformRequest.node_to_update).
+  oneof updated_node {
+    // If set, populated according to the requested object view.
+    Object object = 1;
+    // If set, always fully populated.
+    Frame frame = 2;
+  }
+}
+
+message UpdateWorldResourcesRequest {
+  // Id of the world to be updated.
+  string world_id = 3;
+
+  // A sequence of world updates which will be applied in the given order.
+  //
+  // All updates must not have any world_id set.
+  //
+  // Each update must be relative to the world state that has to be expected
+  // after all previous updates in the sequence have been applied. E.g.
+  // {
+  //   updates: {
+  //     update_object_name: {
+  //       object: { by_name: { object_name:"first_name" } }
+  //       new_name: "second_name"
+  //     }
+  //   }
+  //   updates: {
+  //     update_object_name: {
+  //       object: { by_name: { object_name:"second_name" } } # not "first_name"
+  //       new_name: "third_name"
+  //     }
+  //   }
+  // }
+  ObjectWorldUpdates world_updates = 1;
+
+  // Requested object view for the returned objects.
+  ObjectView view = 2;
+}
+
+message UpdateWorldResourcesResponse {
+  // All objects in the world, including the updated ones.
+  repeated Object objects = 1;
+
+  // The set of collision rules in use with the world.
+  CollisionSettings collision_settings = 2;
+}
+
+// Comparares each footprint in 'left_set' against each footprint in the
+// 'right_set'. Does not compare footprints within the same set.
+message AreFootprintsCompatibleRequest {
+  // The id of the world to be used during the check.
+  string world_id = 1;
+
+  // The first set of footprints to compare against the second set (see
+  // 'right_set').
+  repeated intrinsic_proto.skills.Footprint left_set = 2;
+
+  // The second set of footprints to compare against the first set (see
+  // 'left_set').
+  repeated intrinsic_proto.skills.Footprint right_set = 3;
+
+  // If set, the result will contain all conflicting pairs, not just the first.
+  bool return_all_incompatible_pairs = 4;
+}
+
+// Results of running the compatibility checks for two sets of footprints.
+message AreFootprintsCompatibleResponse {
+  // The id of the world used during the check.
+  string world_id = 1;
+
+  // Contains the index of the incompatible pair of footprints as found in the
+  // original request.
+  message IncompatiblePair {
+    uint32 left_index = 1;
+    uint32 right_index = 2;
+
+    // The reported error for this incompatibility.
+    google.rpc.Status reason = 3;
+  }
+
+  // The set of incompatible pairs of footprints. If empty, then all checked
+  // pairs of footprints are compatible.
+  repeated IncompatiblePair pairs = 2;
+}
+
+message CompareWorldsRequest {
+  // The base of the comparison.
+  string base_world_id = 1;
+
+  // The world with changes.
+  string changed_world_id = 2;
+}
+
+message CompareWorldsResponse {
+  // Objects added to the changed world.
+  repeated ObjectReference added = 1;
+
+  // Objects removed from the base world.
+  repeated Object removed = 2;
+
+  // Objects modified in the changed world.
+  repeated ObjectReference modified = 3;
+
+  // Contains all frames from new objects and added frames to modified objects
+  // in the changed world.
+  repeated Frame added_frames = 4;
+
+  // Contains all frames from removed objects from the base world and removed
+  // frames from modified objects in the changed world.
+  repeated Frame removed_frames = 5;
+
+  // Contains all modified frames from modified objects in the changed world.
+  repeated Frame modified_frames = 6;
+}
+message SyncObjectRequest {
+  // World the object is located in.
+  string from_world_id = 1;
+
+  // World the object should be synced to.
+  string to_world_id = 2;
+
+  oneof resource_type {
+    // The object to sync.
+    ObjectReference object = 3;
+
+    // The frame to sync.
+    FrameReference frame = 4;
+  }
+}
+
+message SyncObjectResponse {}

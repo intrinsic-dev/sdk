@@ -1,0 +1,25 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic.testing.proto;
+
+import "intrinsic/util/proto/testing/descriptors_test_left_wrapper.proto";
+import "intrinsic/util/proto/testing/descriptors_test_right_wrapper.proto";
+
+// Test message with diamond-shaped dependency graph. Both left_wrapper and
+// right_wrapper depend on //google/protobuf/wrappers.proto.
+message DiamondTest {
+  LeftWrapper left_wrapper = 1;
+  RightWrapper right_wrapper = 2;
+}
+
+message SubMessage {
+  string string_value = 1;
+}
+
+message MessageWithSubmessage {
+  SubMessage submessage = 1;
+}

@@ -1,0 +1,36 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+import "google/protobuf/any.proto";
+
+// This message omits information on the Action that the output belongs to, to
+// reduce the bandwidth required to stream outputs to a client. This information
+// is implicit in the parameters of the corresponding gRPC request.
+message StreamingOutput {
+  // Time (in ns, since the server started) when the output was last written to.
+  int64 timestamp_ns = 1;
+
+  // Time (in ns) of the local time on the machine when this output was
+  // generated. Note this will be different than then timestamp_ns (they may
+  // even tick at different rates in some scenarios!). This time is meant only
+  // to be used to correlate the outputs with other logs from the platform.
+  int64 wall_clock_timestamp_ns = 4;
+
+  // See the corresponding ActionSignature for the type name and
+  // FileDescriptorSet needed to unpack this.
+  google.protobuf.Any payload = 3;
+}
+
+// Bundles some additional data with a streaming output.
+message StreamingOutputWithMetadata {
+  StreamingOutput output = 1;
+
+  // Information on the action that produced this output.
+  string action_type_name = 2;
+  int64 action_instance_id = 3;
+}

@@ -1,0 +1,42 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+enum ModeOfSafeOperation {
+  MODE_OF_SAFE_OPERATION_UNKNOWN = 0;
+  MODE_OF_SAFE_OPERATION_AUTOMATIC = 1;
+  MODE_OF_SAFE_OPERATION_TEACHING_1 = 2;
+  MODE_OF_SAFE_OPERATION_TEACHING_2 = 3;
+  MODE_OF_SAFE_OPERATION_CONFIGURATION = 4;
+  MODE_OF_SAFE_OPERATION_UPDATING = 5;
+}
+
+enum ButtonStatus {
+  BUTTON_STATUS_UNKNOWN = 0;
+  // The button is physically not available in this setup.
+  BUTTON_STATUS_NOT_AVAILABLE = 1;
+  BUTTON_STATUS_ENGAGED = 2;
+  BUTTON_STATUS_DISENGAGED = 3;
+}
+
+enum RequestedBehavior {
+  REQUESTED_BEHAVIOR_UNKNOWN = 0;
+  REQUESTED_BEHAVIOR_NORMAL_OPERATION = 1;
+  REQUESTED_BEHAVIOR_SAFE_STOP_1_TIME_MONITORED = 2;
+  REQUESTED_BEHAVIOR_SAFE_STOP_2_TIME_MONITORED = 3;
+  REQUESTED_BEHAVIOR_SAFE_STOP_0 = 4;
+
+  reserved "REQUESTED_BEHAVIOR_HARDWARE_STOP_TIME_MONITORED",
+      "REQUESTED_BEHAVIOR_CONTROLLED_STOP_TIME_MONITORED";
+}
+
+message SafetyStatus {
+  ModeOfSafeOperation mode_of_safe_operation = 1;
+  ButtonStatus estop_button_status = 2;
+  ButtonStatus enable_button_status = 3;
+  RequestedBehavior requested_behavior = 4;
+}

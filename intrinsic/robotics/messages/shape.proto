@@ -1,0 +1,102 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+import "intrinsic/robotics/messages/pose.proto";
+import "intrinsic/robotics/messages/vector.proto";
+
+option cc_enable_arenas = true;
+option java_outer_classname = "ShapeProto";
+option java_package = "com.google.protos.robotics.messages";
+
+// ===========================================================================
+// Geometric primitive shape.
+//
+// Describes a simple convex 3D shape which supports distance computations and
+// collision testing for use in physics simulation.
+//
+// Each of these primitives is defined to be centered at the origin.
+//
+//            URDF SDF MJCF
+//   Box        X   X   X
+//   Sphere     X   X   X
+//   Cylinder   X   X   X
+//   Plane          X   X
+//   Capsule            X
+//   Ellipsoid          X
+//
+// Unsupported geometry primitives:
+//   SDF: heightmap, image, mesh, polyline
+//   MJCF: hfield, mesh
+// ===========================================================================
+message Shape {
+  // Box is defined with center at the origin.
+  // Supported in URDF, SDF, MJCF.
+  message Box {
+    Vector3d size = 1;
+  }
+
+  // Sphere is defined with center at the origin.
+  // Supported in URDF, SDF, MJCF.
+  message Sphere {
+    double radius = 1;
+  }
+
+  // Cylinder is defined with center at the origin and axis along z.
+  // Supported in URDF, SDF, MJCF.
+  message Cylinder {
+    double length = 1;
+    double radius = 2;
+  }
+
+  // Plane represents a halfspace with the given normal vector.
+  // Supported in SDF and MJCF for collision body only.
+  //
+  // Assuming that the normal vector is normalized, the half-space is the set of
+  // points, p, such that
+  //
+  //  normal . p >= distance
+  message Plane {
+    Vector3d normal = 1;  // Normal vector may not be zero.
+    double distance = 2;  // Signed distance to the origin.
+  }
+
+  // A cylinder with hemispherical caps at each end.
+  // Supported in MJCF only.  Can be modeled with Sphere and Cylinder.
+  message Capsule {
+    double length = 1;  // Length of the cylindrical center portion.
+    double radius = 2;  // Radius of the cylinder and the spherical end caps.
+  }
+
+  // A sphere scaled non-uniformly in x, y, and z dimensions.
+  // Supported in MJCF only.  Can be approximated by Sphere and Cylinder.
+  message Ellipsoid {
+    Vector3d size = 1;
+  }
+
+  oneof primitive {
+    Box box = 1;
+    Sphere sphere = 2;
+    Cylinder cylinder = 3;
+    Plane plane = 4;
+    Capsule capsule = 5;
+    Ellipsoid ellipsoid = 6;
+  }
+}
+
+// A shape with an arbitrary position and orientation with respect to a parent
+// coordinate frame.
+message PosedShape {
+  // Shape in canonical position at the origin.
+  Shape shape = 1;
+
+  // Pose of the shape with respect to its parent's coordinate frame.
+  // The parent may be the world frame or a local frame and should be
+  // inferred from context.
+  // This name format is defined in go/pose-convention
+  Pose3d parent_pose_shape = 2;
+}

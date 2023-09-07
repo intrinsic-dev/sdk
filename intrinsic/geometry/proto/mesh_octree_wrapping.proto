@@ -1,0 +1,25 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.geometry;
+
+import "intrinsic/geometry/proto/octree.proto";
+
+// Wrapping context for describing how a octree wraps a mesh. This data
+// structure contains both the octree and the associations between octree voxels
+// and the primitives contained in the corresponding mesh.
+message MeshOctreeWrapping {
+  // The octree structure.
+  Octree octree = 1;
+
+  message MortonToPrimitiveEntry {
+    uint64 code = 1;
+    repeated int32 primitives = 2;
+  }
+
+  // The associations between the voxels and the primitives in the mesh.
+  repeated MortonToPrimitiveEntry morton_to_primitives = 3;
+}

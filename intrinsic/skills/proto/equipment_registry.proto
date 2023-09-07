@@ -1,0 +1,87 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.skills;
+
+
+import "intrinsic/skills/proto/equipment.proto";
+
+message EquipmentBySelectorRequest {
+  // The selector that must be matched.
+  intrinsic_proto.skills.EquipmentSelector selector = 1;
+}
+
+message EquipmentBySelectorResponse {
+  repeated intrinsic_proto.skills.EquipmentHandle handles = 2;
+
+  reserved 1;
+  reserved "status";
+}
+
+message EquipmentBySelectorBatchRequest {
+  repeated EquipmentBySelectorRequest requests = 1;
+}
+
+message EquipmentBySelectorBatchResponse {
+  // The number of responses is always equal to the number of requests. If no
+  // handle can be found for a request, the corresponding response will be empty
+  // (i.e., this method won't return a NOT_FOUND error).
+  repeated EquipmentBySelectorResponse responses = 1;
+}
+
+message EquipmentByNameRequest {
+  // The name of the equipment handle we are looking for.
+  string equipment_name = 1;
+}
+
+message EquipmentByNameResponse {
+  intrinsic_proto.skills.EquipmentHandle handle = 2;
+
+  reserved 1;
+  reserved "status";
+}
+
+message ListEquipmentRequest {}
+
+message ListEquipmentResponse {
+  repeated intrinsic_proto.skills.EquipmentHandle handles = 1;
+}
+
+message EquipmentHandles {
+  repeated intrinsic_proto.skills.EquipmentHandle handles = 1;
+}
+
+service EquipmentRegistry {
+  // Returns the set of equipment matching the given request. Returns NOT_FOUND
+  // error if no equipment can be found.
+  rpc GetEquipmentBySelector(EquipmentBySelectorRequest)
+      returns (EquipmentBySelectorResponse) {
+    
+    
+  }
+
+  // Batched version of GetEquipmentBySelector. Returns empty response if no
+  // equipment can be found for an individual request.
+  rpc BatchGetEquipmentBySelector(EquipmentBySelectorBatchRequest)
+      returns (EquipmentBySelectorBatchResponse) {
+    
+    
+  }
+
+  // Returns the equipment matching the given request.
+  rpc GetEquipmentByName(EquipmentByNameRequest)
+      returns (EquipmentByNameResponse) {
+    
+    
+  }
+
+  // Returns list of all registered equipment. The ordering of equipment handles
+  // in the response is unspecified.
+  rpc ListEquipment(ListEquipmentRequest) returns (ListEquipmentResponse) {
+    
+    
+  }
+}

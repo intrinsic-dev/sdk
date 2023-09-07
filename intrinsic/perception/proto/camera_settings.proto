@@ -1,0 +1,52 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "google/protobuf/empty.proto";
+import "intrinsic/hardware/proto/settings.proto";
+
+// This message encapsulates camera settings conforming with the GenICam
+// Standard Features Naming Convention (SFNC).
+message CameraSetting {
+  // The SFNC conforming feature name.
+  string name = 1;
+  // The value of a specific camera setting.
+  // Settings are referred to as features in SFNC and different types of
+  // settings are called interface types. Supported types are described in
+  // section 2.3 'Nodes, Interfaces, and Abstract Features' of the GenICam
+  // standard. All interfaces types which are added below in the future must
+  // have a corresponding matching interface type in the GenICam standard.
+  oneof value {
+    // GenICam: IInteger - maps to a slider with value, min, max, and increment
+    int64 integer_value = 2;
+    // GenICam: IFloat - maps to a slider with value, min, and max
+    double float_value = 3;
+    // GenICam: IBoolean - maps to a check box
+    bool bool_value = 4;
+    // GenICam: IString - maps to an edit box showing a string
+    string string_value = 5;
+    // GenICam: IEnumeration - maps to a drop down box
+    string enumeration_value = 6;
+    // GenICam: ICommand
+    google.protobuf.Empty command_value = 7;
+  }
+}
+
+message CameraSettingProperties {
+  // The SFNC conforming feature name.
+  string name = 1;
+
+  oneof setting_properties {
+    FloatSettingProperties float_properties = 2;
+    IntegerSettingProperties integer_properties = 3;
+    EnumSettingProperties enum_properties = 4;
+  }
+}
+
+message GainSetting {
+  double value = 1;
+}

@@ -1,0 +1,82 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.skills;
+
+import "intrinsic/perception/proto/hand_eye_calibration.proto";
+import "intrinsic/perception/proto/pattern_detection_config.proto";
+import "intrinsic/perception/proto/pose_estimator_id.proto";
+import "intrinsic/skills/apps/calibration/sample_calibration_poses.proto";
+import "intrinsic/world/proto/object_world_refs.proto";
+
+enum MotionType {
+  MOTION_TYPE_AUTO = 0;
+  MOTION_TYPE_PLANNED = 1;
+  MOTION_TYPE_JOINT = 2;
+  MOTION_TYPE_LINEAR = 3;
+}
+
+// Next ID: 15
+message CollectCalibrationDataParams {
+  reserved 1;
+  reserved "pose_estimation_config_filename";
+
+  oneof detector_config {
+    // Id of the pose estimator to use.
+    perception.PoseEstimatorId pose_estimator = 10;
+
+    // Specify the pattern detection config, if needed to get samples with
+    // pattern detections. This is needed in case the samples are also used for
+    // intrinsic calibration.
+    intrinsic_proto.perception.PatternDetectionConfig pattern_detection_config =
+        9;
+  }
+
+  // Has to be one of 'STATIONARY_CAMERA' or 'MOVING_CAMERA'.
+  optional string calibration_case = 2;
+
+  // Uniquely identifies the object used for calibration. Typically a
+  // calibration pattern, but - with an appropriate pose estimator - all kinds
+  // of objects can be used.
+  intrinsic_proto.world.ObjectReference calibration_object = 3;
+
+  // Perception server endpoint, for estimating the pose of the calibration
+  // object.
+  optional string perception_grpc = 4;
+
+  // Robot waypoints.
+  repeated intrinsic_proto.skills.Waypoint waypoints = 5;
+
+  // Minimum margin between the moving object (calibration pattern for the
+  // 'STATIONARY_CAMERA' case, and camera for the 'MOVING_CAMERA' case) and all
+  // other world objects.
+  //
+  // Set this parameter to a higher value if you are unsure about the exact
+  // positions of the objects in your world.
+  optional float minimum_margin = 6;
+
+  // Set to true to run without collision checking. This enables cases where the
+  // exact camera position is unknown, or the world is not accurately modelled.
+  optional bool disable_collision_checking = 7;
+
+  // If true, this restricts the sampled poses to the same IK branch of the
+  // robot.
+  optional bool ensure_same_branch_ik = 8;
+
+  // Determines the type of robot motion used to collect the data. Defaults to a
+  // planned move.
+  MotionType motion_type = 13;
+
+  // Indicates if we want to return to the base robot pose after visiting the
+  // individual waypoints. Using the return-to-base strategy can help to
+  // increase robustness, e.g. in presence of a dress-pack.
+  optional bool skip_return_to_base_between_waypoints = 14;
+}
+
+message CollectCalibrationDataResult {
+  intrinsic_proto.perception.HandEyeCalibrationRequest
+      hand_eye_calibration_request = 1;
+}

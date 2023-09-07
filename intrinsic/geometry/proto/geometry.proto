@@ -1,0 +1,27 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.geometry;
+
+import "intrinsic/geometry/proto/lazy_exact_geometry.proto";
+import "intrinsic/geometry/proto/renderable.proto";
+
+// Shared Geometry representation. Contains both the computational geometry data
+// as well as an optional renderable data available for the shape.
+message Geometry {
+  // The computational geometry representation.
+  LazyExactGeometry exact_geometry = 4;
+
+  // The optional renderable data.
+  oneof renderable_type {
+    // If renderable is specified then this proto contains a unique (user
+    // provided) renderable that should be maintained.
+    Renderable renderable = 2;
+    // If generated_renderable is specified then this proto contains a cached
+    // generated renderable and does not have to be maintained.
+    Renderable generated_renderable = 3;
+  }
+}

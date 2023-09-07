@@ -1,0 +1,33 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "google/protobuf/timestamp.proto";
+import "intrinsic/perception/proto/camera_params.proto";
+import "intrinsic/perception/proto/image_buffer.proto";
+
+// This message represents a perception Frame.
+// This is a multi purpose container which can hold multiple images. All images
+// are registered to each other, i.e. the same intrinsic parameters apply to the
+// RGB and Gray images as well as the depth image.
+message Frame {
+  google.protobuf.Timestamp acquisition_time = 1;
+
+  // For uncalibrated frames, the camera parameters are not present.
+  // The frame is undistorted if the camera_params contain only intrinsic
+  // parameters. Correspondingly, if the camera_params contain distortion
+  // parameters, the frame is distorted (and the distortion parameters can be
+  // used to undistort it).
+  optional CameraParams camera_params = 2;
+
+  ImageBuffer rgb8u = 3;
+  ImageBuffer gray32f = 4;
+  ImageBuffer depth32f = 5;
+  ImageBuffer point32f = 6;
+  ImageBuffer normal32f = 7;
+  ImageBuffer gray8u = 8;
+}

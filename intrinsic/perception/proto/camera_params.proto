@@ -1,0 +1,23 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "intrinsic/perception/proto/distortion_params.proto";
+import "intrinsic/perception/proto/intrinsic_params.proto";
+
+// This proto contains information about the image size and all internal camera
+// parameters (intrinsic and distortion parameters).
+message CameraParams {
+  // The intrinsic camera parameters. If they are not presented, we are dealing
+  // with an uncalibrated camera.
+  IntrinsicParams intrinsic_params = 1;
+
+  // The distortion params of the camera. If they are not present, the camera is
+  // either uncalibrated or it provides undistorted images (in all likelihood
+  // synthetic one).
+  optional DistortionParams distortion_params = 2;
+}

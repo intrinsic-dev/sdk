@@ -1,0 +1,23 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+import "intrinsic/kinematics/proto/kinematics.proto";
+import "intrinsic/math/proto/pose.proto";
+
+// A reflexion of intrinsic::kinematics::Skeleton
+message Skeleton {
+  string name = 1;
+
+  Pose anchor_offset = 2;
+
+  repeated Link links = 3;
+  repeated Joint joints = 4;
+  repeated CoordinateFrame coordinate_frames = 5;
+
+  map<uint32, uint32> element_id_to_dof_index = 6;
+}

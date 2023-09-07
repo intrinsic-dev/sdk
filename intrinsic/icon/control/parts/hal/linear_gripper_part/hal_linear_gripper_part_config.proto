@@ -1,0 +1,42 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+import "intrinsic/icon/control/parts/hal/hal_part_config.proto";
+
+message HalLinearGripperPartConfig {
+  // Interfaces for linear gripper.
+  intrinsic_proto.icon.HardwareInterface status_interface = 1;
+  intrinsic_proto.icon.HardwareInterface command_interface = 2;
+
+  // These are REQUIRED fields (with optional set so we can presence test them).
+  optional double default_grasp_width = 4;
+  optional double default_release_width = 5;
+  // Force to apply when opening/closing, defaults to 0.
+  double default_force = 12;
+  // Speed open/close, defaults to 0, but this doesn't necessarily result in no
+  // movement, and may be gripper specific.
+  double default_speed = 13;
+
+  // Minimum width setting allowed.
+  double min_width = 6;
+  // Maximum width setting allowed.
+  // If unset, defaults to double max (so essentially unbounded).
+  optional double max_width = 7;
+
+  // Minimum absolute force to apply.
+  double min_force = 8;
+  // Maximum absolute force to use when opening/closing.
+  // If unset, defaults to double max (so essentially unbounded).
+  optional double max_force = 9;
+
+  // Minimum absolute speed to use when opening/closing.
+  double min_speed = 10;
+  // Maximum absolute speed to use when opening/closing.
+  // If unset, defaults to double max (so essentially unbounded).
+  optional double max_speed = 11;
+}

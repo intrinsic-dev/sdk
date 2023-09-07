@@ -1,0 +1,36 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+import "intrinsic/icon/proto/cart_space.proto";
+import "intrinsic/icon/proto/joint_space.proto";
+import "intrinsic/kinematics/types/joint_limits.proto";
+import "intrinsic/math/proto/pose.proto";
+
+// `BlendedJointMove` parameterizes a joint-space Trajectory Generation problem
+// for going from an `initial_joint_state` to a `target_joint_state` through
+// `waypoints` with a `desired_tightness_rad`, subject to `joint_limits`. Each
+// waypoint is specified in terms of a `waypoint_position_rad` and a
+// `desired_tightness_rad`, which quantifies how closely the blend must pass by
+// the waypoint (the tightness can be interpreted as the coordinate-wise
+// distance at which the blending arc begins).
+message BlendedJointMove {
+  message JointWaypoint {
+    double desired_tightness_rad = 1;
+    intrinsic_proto.icon.JointVec waypoint_position_rad = 2;
+  }
+
+  intrinsic_proto.icon.JointVec initial_joint_state = 1;
+  repeated JointWaypoint waypoints = 2;
+  intrinsic_proto.icon.JointVec target_joint_state = 3;
+  optional intrinsic_proto.JointLimits joint_limits = 4;
+  optional intrinsic_proto.icon.CartesianLimits cart_limits = 6;
+  // Offset between robot tip and target frame for which the motion is defined.
+  optional intrinsic_proto.Pose tip_t_target = 7;
+
+  reserved 5;
+}

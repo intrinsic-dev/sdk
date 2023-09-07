@@ -1,0 +1,38 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+message FloatSettingProperties {
+  message FloatRange {
+    double minimum = 1;
+    double maximum = 2;
+  }
+  // The range of allowed floating point values.
+  FloatRange range = 1;
+  // The increment (or delta) between two neighboring allowed values.
+  double increment = 2;
+  // The unit corresponding to the value. We typically default to SI units.
+  optional string unit = 3;
+}
+
+message IntegerSettingProperties {
+  message IntegerRange {
+    int64 minimum = 1;
+    int64 maximum = 2;
+  }
+  // The range of allowed integer values.
+  IntegerRange range = 1;
+  // The increment (or delta) between two neighboring allowed values.
+  int64 increment = 2;
+  // The unit corresponding to the value. We typically use SI units.
+  optional string unit = 3;
+}
+
+message EnumSettingProperties {
+  // The allowed values for the enum.
+  repeated string values = 1;
+}

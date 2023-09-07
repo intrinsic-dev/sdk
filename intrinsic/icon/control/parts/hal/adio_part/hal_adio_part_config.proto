@@ -1,0 +1,45 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+import "intrinsic/icon/control/parts/hal/hal_part_config.proto";
+
+// Config used to create an `ADIOPart` providing access to the configured inputs
+// and outputs.
+// It is possible to define multiple parts interacting with hardware modules.
+// This poses the risk of multiple parts controlling the same IO blocks!
+//
+// At least one input or output needs to be defined.
+// Next ID: 4
+message HalADIOPartConfig {
+  // Defines a single input or output block exposed by the respective interface.
+  // A block is a logical group of inputs or outputs.
+  message HalBlockConfig {
+    // Uniquely identifies an interface.
+    intrinsic_proto.icon.HardwareInterface interface = 1;
+    //  `export_name` can be used to overwrite the name generated from
+    //  `interface`.
+    // Interface names need to be unique within a HalBlockConfig.
+    // This means that e.g. no two digital_input blocks can share a name. It is
+    // fine to have an input_block and an output_block with the same name.
+    optional string export_name = 2;
+  }
+
+  // Digital input blocks.
+  // Block names and interfaces need to be unique within a list.
+  repeated HalBlockConfig digital_inputs = 1;
+  // Digital output blocks.
+  // The state of the physical output is not reflected in the command.
+  // A module can reflect the physical state of the outputs as a digital input.
+  // Block names and interfaces need to be unique within a list.
+  // Configuring the HardwareInterface multiple times with different names
+  // results in undefined behavior.
+  repeated HalBlockConfig digital_outputs = 2;
+  // Analog input blocks.
+  // Block names and interfaces need to be unique within a list.
+  repeated HalBlockConfig analog_inputs = 3;
+}

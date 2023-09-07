@@ -1,0 +1,46 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.geometry;
+
+import "intrinsic/geometry/service/geometry_service_types.proto";
+
+// Geometry service is a mechanism for storing and retrieving geometry.
+service GeometryService {
+  // Gets the requested Geometry data. Includes computational geometry data as
+  // well as the optional Renderable data if available. The Renderable data will
+  // be at original quality.
+  rpc GetGeometry(GetGeometryRequest) returns (GeometryWithMetadata) {}
+
+  // Gets the requested Renderable data at the requested LOD level.
+  rpc GetRenderable(GetRenderableRequest) returns (RenderableWithMetadata) {}
+
+  // Adds new geometry data to the service that can be fetched later.
+  rpc CreateGeometry(CreateGeometryRequest) returns (GeometryWithMetadata) {}
+}
+
+// Request message for getting geometry from the geometry service.
+message GetGeometryRequest {
+  // The geometry id being requested.
+  string geometry_id = 1;
+}
+
+// Request message for getting renderable data from the geometry service.
+message GetRenderableRequest {
+  // The geometry id being requested.
+  string geometry_id = 1;
+
+  // The LOD level to use when fetching the renderable data. 0 means the
+  // original quality and any number above that will simplify the geometry. The
+  // higher the number the more simplified it will be.
+  uint32 lod_level = 2;
+}
+
+// Request message for adding new geometry to the geometry service
+message CreateGeometryRequest {
+  // The geometry data to store.
+  GeometryData data = 1;
+}

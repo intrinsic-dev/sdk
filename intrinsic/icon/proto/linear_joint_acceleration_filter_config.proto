@@ -1,0 +1,61 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+message LinearJointAccelerationFilterConfig {
+  // Filter process noise covariances for position and time derivatives
+  // (velocity, acceleration, jerk). These represent the uncertainty in
+  // transition of the state according to the linear system model.
+  double joint_position_process_noise = 1;
+  double joint_velocity_process_noise = 2;
+  double joint_acceleration_process_noise = 3;
+  double joint_jerk_process_noise = 4;
+
+  // Filter measurement noise covariances for position and velocity joint state
+  // measurements. These represent the uncertainty of joint state measurements
+  // in terms of the added Gaussian noise to the joint state and
+  // can generally be obtained through analysis of joint state time series
+  // measurements.
+  double joint_position_measurement_noise = 5;
+  double joint_velocity_measurement_noise = 6;
+
+  // The update frequency of the recursive filter update.
+  double control_frequency_hz = 7;
+
+  // Configuration parameters for solving the Discrete Algebraic Ricatti
+  // Equation iteratively during the linear filter initialization.
+  DiscreteAlgebraicRicattiEquationSolutionConfig dare_settings = 8;
+}
+
+message DiscreteAlgebraicRicattiEquationSolutionConfig {
+  // Maximum number of iterations the solver attempts. Defaults to 250 if
+  // unspecified.
+  optional int64 max_iterations = 1;
+  // Sets the convergence criterion in terms of the P-matrix infinity norm.
+  // Defaults to 1e-4 if unspecified.
+  optional double accuracy = 2;
+  // Hessian regularizer offset, ignored if dare_iteration_strategy is
+  // DARE_ITERATION_STRATEGY_NAIVE. This term should be = 1e-5 or similar.
+  // Defaults to 1e-5 if unspecified.
+  optional double regularizer_epsilon = 3;
+
+  // Iteration strategies used to solve the DARE. If
+  // DARE_ITERATION_STRATEGY_ROBUST is used then a damping term is added to the
+  // Hessian matrix. This increases solution reliability for poorly conditioned
+  // control problems. See R.F. Stengel, "Optimal Control and Estimation",
+  // Chapter 6.
+  enum DareIterationStrategy {
+    DARE_ITERATION_STRATEGY_UNSPECIFIED = 0;
+    DARE_ITERATION_STRATEGY_ROBUST = 1;
+    DARE_ITERATION_STRATEGY_NAIVE = 2;
+  }
+
+  // Determines the iteration strategy used to solve the Discrete Algebraic
+  // Ricatti Equation upon filter initialization. Defaults to
+  // DARE_ITERATION_STRATEGY_ROBUST if unspecified.
+  DareIterationStrategy dare_iteration_strategy = 4;
+}

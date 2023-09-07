@@ -1,0 +1,159 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.motion_planning;
+
+import "intrinsic/icon/proto/joint_space.proto";
+import "intrinsic/world/proto/collision_settings.proto";
+import "intrinsic/world/proto/geometric_constraints.proto";
+import "intrinsic/world/proto/object_world_refs.proto";
+
+// Cartesian straight line constraint.
+message LinearCartesianPathConstraint {
+  // The frame for which we define the linear movement. If not defined, the
+  // constraint will be initiated with the frame for which the position
+  // constraint of the motion target is defined.
+  optional intrinsic_proto.world.TransformNodeReference frame = 1;
+}
+
+message PathConstraint {
+  // Local collision settings for the individual segments. If not defined,
+  // segment will use the global collision settings if defined or the default
+  // collision settings with zero margin if none are set.
+  optional intrinsic_proto.world.CollisionSettings collision_settings = 1;
+  // Joint position limits allow to restrict the robot joint movement in joint
+  // space. Each joint of the robot has lower and upper limits. The specified
+  // limits need to be within the robot application limits.
+  optional intrinsic_proto.world.geometric_constraints.JointPositionLimits
+      joint_position_limits = 2;
+  // Defines a linear Cartesian path constraint, i.e., that a defined frame
+  // will move linearly in Cartesian space. Cannot be combined with an enforce
+  // kinematic configuration space interpolation constraint.
+  optional LinearCartesianPathConstraint linear_path_constraint = 3;
+  // Enforces interpolation in the kinematic configuration (i.e., joint) space.
+  // If it is not possible to create a straight line in joint space due to
+  // collision settings, the skill will return an error and not execute the
+  // motion.
+  optional bool enforce_configuration_space_interpolation = 4;
+  optional
+      intrinsic_proto.world.geometric_constraints.UniformGeometricConstraint
+          uniform_geometric_constraint = 5;
+}
+
+message DynamicCartesianLimits {
+  // Maximum Cartesian rotational velocity in radians per second. If not
+  // specified, the default value defined in the robot limits will be used.
+  optional double max_rotational_velocity = 2;
+  // Maximum Cartesian translational velocity in meters per second. The value
+  // defines the max translational velocity in the x, y, and z axis. If not
+  // specified, the default value defined in the robot limits will be used.
+  optional double max_translational_velocity = 3;
+  // Maximum Cartesian rotational acceleration limits in radians per second^2.
+  // If not specified, the default value defined in the robot limits will be
+  // used.
+  optional double max_rotational_acceleration = 4;
+  // Maximum Cartesian translational acceleration limits in meters per
+  // second^2. The value defines the max translational acceleration in the x, y,
+  // and z axis. If not specified, the default value defined in the robot limits
+  // will be used.
+  optional double max_translational_acceleration = 5;
+}
+message DynamicJointLimits {
+  // Maximum joint velocity limits per joint. Units are in radians per second.
+  // When not specified, the application limits of the robot will be used.
+  optional intrinsic_proto.icon.JointVec max_velocity = 1;
+  // Max joint acceleration limits per joint. Units are in radians per second^2.
+  // When not specified, the acceleration limits from the robot application
+  // limits will be used.
+  optional intrinsic_proto.icon.JointVec max_acceleration = 2;
+  // Maximum joint jerk limits for the robot. Units are in radians per second^3.
+  // When not specified, the jerk limits from the robot application limits
+  // will be used.
+  optional intrinsic_proto.icon.JointVec max_jerk = 3;
+}
+message DynamicLimitConstraint {
+  // Dynamic Cartesian limit constraints allow to restrict the Cartesian
+  // velocity and acceleration of the robot motion. If not defined, the default
+  // limits defined for the robot will be used. Cartesian limits can currently
+  // only be defined for linear Cartesian motions. The limit constraints
+  // applies to the moving frame defined in the motion target
+  optional DynamicCartesianLimits cartesian_limits = 1;
+  // Dynamic joint constraints allow to restrict velocity, acceleration, and
+  // jerk of the robot  motion. If not defined, the application limits of the
+  // robot will be used.
+  optional DynamicJointLimits joint_limits = 2;
+}
+
+// Blending parameters for Cartesian linear trajectory generation.
+message CartesianBlendingParameters {
+  // Cartesian radius of the circular blend around a Cartesian waypoint corner
+  // in m. Default value is 0.001 meter.
+  optional double translation_corner_rounding = 1;
+  // Radius of the circular blend around a waypoint corner (max angles-axis
+  // deviation) in radians. Default value is 0.01 rad.
+  optional double rotational_corner_rounding = 2;
+}
+
+// Single waypoints blending parameter that apply to all
+// joint configuration way points.
+message JointBlendingParameters {
+  // Quantifies how closely the blend must pass by the joint configuration
+  // waypoint. It can be interpreted as the coordinate-wise distance at which
+  // the blending arc begins. Default value is 0.1 rad.
+  optional double desired_tightness_rad = 1;
+}
+message BlendingParameters {
+  oneof parameter_kind {
+    CartesianBlendingParameters cartesian_blending = 1;
+    JointBlendingParameters joint_blending = 2;
+  }
+}
+
+message MotionTarget {
+  // Define the goal constraint of a given robot motion segment, either
+  // explicitly or implicitly (via a constraint).
+  intrinsic_proto.world.geometric_constraints.GeometricConstraint constraint =
+      1;
+}
+
+message MotionSegment {
+  // A motion target places a set of constraints on the final configuration of
+  // this segment.  Constraints can be specified in terms of either the joint
+  // position or the Cartesian pose.
+  MotionTarget target = 5;
+  // Path constraints apply to the entire segment rather than just the final
+  // configuration. Examples include Cartesian linear motion, joint position
+  // limits, or orientation constraints that are applied to each point on the
+  // path.
+  optional PathConstraint path_constraints = 3;
+  // Dynamic limits defined for the motion segment. This includes velocity,
+  // accleration, and if available jerk limits for the robot, but not position
+  // limits. Robot joint position limits can be set via the path constraints.
+  optional DynamicLimitConstraint limit_constraints = 4;
+
+  reserved "joint_position", "target_constraints";
+  reserved 1, 2;
+}
+
+message MotionSpecification {
+  // The motion is divided into segments, where each motion segment defines a
+  // single motion target as well as optional path and dynamic limit
+  // constraints.
+  // Note: Currently it is not possible to combine motion segments with linear
+  // Cartesian motion requirements with those without linear Cartesian motion
+  // requirement. We also do not currently support different joint limits for
+  // different segments.
+  repeated MotionSegment motion_segments = 1;
+  // Default collision settings that apply to all motion segments which don't
+  // define them in their path constraints of the individual motion segment.
+  // If not provided, the default is collision checking with zero margin.
+  optional intrinsic_proto.world.CollisionSettings collision_settings = 2;
+  // The curve waypoint fitting parameters that will be applied during
+  // trajectory generation if multiple motion segments have been defined. Use
+  // Cartesian blending parameter for linear Cartesian motion requests and joint
+  // blending parameter otherwise.
+  optional BlendingParameters curve_parameters = 3;
+}

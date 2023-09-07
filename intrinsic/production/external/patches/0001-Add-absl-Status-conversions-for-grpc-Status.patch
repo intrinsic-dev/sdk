@@ -1,0 +1,144 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+From 0e48fc34f1e3e9469d3553d465dd093227ccadca Mon Sep 17 00:00:00 2001
+From: ferstl
+Date: Tue, 1 Aug 2023 13:58:12 +0200
+Subject: [PATCH 1/5] absl status conversions
+
+---
+ BUILD                        |  1 +
+ include/grpcpp/impl/status.h | 89 ++++++++++++++++++++++++++++++++++++
+ 2 files changed, 90 insertions(+)
+
+diff --git a/BUILD b/BUILD
+index 06b69411a8..3081e31b22 100644
+--- a/BUILD
++++ b/BUILD
+@@ -3854,6 +3854,7 @@ grpc_cc_library(
+         "gpr_platform",
+         "grpc++_public_hdrs",
+         "grpc_public_hdrs",
++        "@com_google_absl//absl/status",
+     ],
+ )
+
+diff --git a/include/grpcpp/impl/status.h b/include/grpcpp/impl/status.h
+index 95436ab8fb..b51af4de14 100644
+--- a/include/grpcpp/impl/status.h
++++ b/include/grpcpp/impl/status.h
+@@ -23,6 +23,8 @@
+
+ #include <grpc/support/port_platform.h>
+
++#include "absl/status/status.h"
++
+ #include <grpc/status.h>
+ #include <grpcpp/support/config.h>
+ #include <grpcpp/support/status_code_enum.h>
+@@ -108,6 +110,13 @@ class GRPC_MUST_USE_RESULT_WHEN_USE_STRICT_WARNING Status {
+         error_message_(error_message),
+         binary_error_details_(error_details) {}
+
++  Status(const absl::Status& status)
++      : code_(FromAbslCode(status.code())), error_message_(status.message()) {}
++
++  operator ::absl::Status() const& {
++    return absl::Status(ToAbslCode(code_), error_message_);
++  }
++
+   // Pre-defined special status objects.
+   /// An OK pre-defined instance.
+   static const Status& OK;
+@@ -130,6 +139,86 @@ class GRPC_MUST_USE_RESULT_WHEN_USE_STRICT_WARNING Status {
+   // the floor.
+   void IgnoreError() const {}
+
++  static StatusCode FromAbslCode(const absl::StatusCode& absl_code) {
++    switch (absl_code) {
++      case absl::StatusCode::kOk:
++        return grpc::StatusCode::OK;
++      case absl::StatusCode::kCancelled:
++        return grpc::StatusCode::CANCELLED;
++      case absl::StatusCode::kUnknown:
++        return grpc::StatusCode::UNKNOWN;
++      case absl::StatusCode::kInvalidArgument:
++        return grpc::StatusCode::INVALID_ARGUMENT;
++      case absl::StatusCode::kDeadlineExceeded:
++        return grpc::StatusCode::DEADLINE_EXCEEDED;
++      case absl::StatusCode::kNotFound:
++        return grpc::StatusCode::NOT_FOUND;
++      case absl::StatusCode::kAlreadyExists:
++        return grpc::StatusCode::ALREADY_EXISTS;
++      case absl::StatusCode::kPermissionDenied:
++        return grpc::StatusCode::PERMISSION_DENIED;
++      case absl::StatusCode::kResourceExhausted:
++        return grpc::StatusCode::RESOURCE_EXHAUSTED;
++      case absl::StatusCode::kFailedPrecondition:
++        return grpc::StatusCode::FAILED_PRECONDITION;
++      case absl::StatusCode::kAborted:
++        return grpc::StatusCode::ABORTED;
++      case absl::StatusCode::kOutOfRange:
++        return grpc::StatusCode::OUT_OF_RANGE;
++      case absl::StatusCode::kUnimplemented:
++        return grpc::StatusCode::UNIMPLEMENTED;
++      case absl::StatusCode::kInternal:
++        return grpc::StatusCode::INTERNAL;
++      case absl::StatusCode::kUnavailable:
++        return grpc::StatusCode::UNAVAILABLE;
++      case absl::StatusCode::kDataLoss:
++        return grpc::StatusCode::DATA_LOSS;
++      case absl::StatusCode::kUnauthenticated:
++        return grpc::StatusCode::INTERNAL;
++      default:
++        return grpc::StatusCode::INTERNAL;
++    }
++  }
++
++  static absl::StatusCode ToAbslCode(const StatusCode& code) {
++    switch (code) {
++      case grpc::StatusCode::OK:
++        return absl::StatusCode::kOk;
++      case grpc::StatusCode::CANCELLED:
++        return absl::StatusCode::kCancelled;
++      case grpc::StatusCode::UNKNOWN:
++        return absl::StatusCode::kUnknown;
++      case grpc::StatusCode::INVALID_ARGUMENT:
++        return absl::StatusCode::kInvalidArgument;
++      case grpc::StatusCode::DEADLINE_EXCEEDED:
++        return absl::StatusCode::kDeadlineExceeded;
++      case grpc::StatusCode::NOT_FOUND:
++        return absl::StatusCode::kNotFound;
++      case grpc::StatusCode::ALREADY_EXISTS:
++        return absl::StatusCode::kAlreadyExists;
++      case grpc::StatusCode::PERMISSION_DENIED:
++        return absl::StatusCode::kPermissionDenied;
++      case grpc::StatusCode::RESOURCE_EXHAUSTED:
++        return absl::StatusCode::kResourceExhausted;
++      case grpc::StatusCode::FAILED_PRECONDITION:
++        return absl::StatusCode::kFailedPrecondition;
++      case grpc::StatusCode::ABORTED:
++        return absl::StatusCode::kAborted;
++      case grpc::StatusCode::OUT_OF_RANGE:
++        return absl::StatusCode::kOutOfRange;
++      case grpc::StatusCode::UNIMPLEMENTED:
++        return absl::StatusCode::kUnimplemented;
++      case grpc::StatusCode::INTERNAL:
++        return absl::StatusCode::kInternal;
++      case grpc::StatusCode::UNAVAILABLE:
++        return absl::StatusCode::kUnavailable;
++      case grpc::StatusCode::DATA_LOSS:
++        return absl::StatusCode::kDataLoss;
++      default:
++        return absl::StatusCode::kInternal;
++    }
++  }
++
+  private:
+   StatusCode code_;
+   std::string error_message_;
+--
+2.41.0.585.gd2178a4bd4-goog
+
+

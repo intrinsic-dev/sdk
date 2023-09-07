@@ -1,0 +1,44 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "intrinsic/perception/proto/dimensions.proto";
+import "intrinsic/perception/proto/image_buffer.proto";
+
+// Options the requested frames/images.
+//
+// Order of operations:
+// raw image -> undistortion -> cropping -> resizing
+message FramePostProcessing {
+  // Specifies how the returned image should be encoded.
+  intrinsic_proto.perception.Encoding image_encoding = 1;
+
+  // If true, the returned image will be distorted.
+  // If false, the returned image might be undistorted depending whether the
+  // camera has undistortion parameters defined.
+  bool skip_undistortion = 2;
+
+  // Optionally crops the image. Note that cropping happens after undistortion
+  // but before resizing.
+  optional FrameCropOptions crop = 3;
+
+  // Optionally resize the image.
+  // If not specified the fullsized camera image is returned.
+  // Note that resizing happens after the optional cropping step.
+  oneof resizing {
+    // Resize dimensions.
+    Dimensions resize = 4;
+    // Resize width. Height is set automatically to aspect ratio.
+    int32 resize_width = 5;
+  }
+}
+
+message FrameCropOptions {
+  int32 origin_x = 1;
+  int32 origin_y = 2;
+  Dimensions dimensions = 3;
+}

@@ -1,0 +1,120 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.data_logger;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+import "intrinsic/executive/proto/executive_state.proto";
+import "intrinsic/icon/proto/cart_space.proto";
+import "intrinsic/icon/proto/joint_space.proto";
+import "intrinsic/icon/proto/part_status.proto";
+import "intrinsic/logging/errors/proto/error_report.proto";
+import "intrinsic/logging/proto/blob.proto";
+import "intrinsic/logging/proto/context.proto";
+import "intrinsic/perception/proto/frame.proto";
+import "intrinsic/perception/proto/hand_eye_calibration.proto";
+import "intrinsic/perception/proto/pose_estimation_result.proto";
+import "intrinsic/skills/proto/skill_service.proto";
+
+// Represents an event. Payload can be structured data and/or blobs.
+// Next tag: 29
+message LogItem {
+  // Type-agnostic information about an event.
+  // For metadata that needs to be propagated through the gRPC call stack, use
+  // Context instead.
+  message Metadata {
+    // An identifier for this LogItem that has a high probability of being
+    // unique in the context of on-prem storage.
+    // For details see 'uid' field in google.aip.dev/148.
+    // Important: The parameter should never be user defined.
+    uint64 uid = 1;
+
+    // Time at which this item was generated (e.g. acquisition time for sensor
+    // data). LogItems with the same event_source must be logged in increasing
+    // order of this field. Can be left unset, in which case the logging service
+    // will fill it with the time at which it wrote it (guaranteeing that it is
+    // in order).
+    google.protobuf.Timestamp acquisition_time = 2;
+
+    // The log item's name which is a unique identifier. The name will be
+    // created and populated when a log item is persisted in the log server.
+    // This name is what clients should use when retrieving individual items.
+    // For details see 'name' field in google.aip.dev/122.
+    // Important: The parameter should never be user defined.
+    string name = 9;
+
+    // A human readable identifier for the stream of data that this event
+    // belongs to. Should only be used for metadata that is common across
+    // multiple LogItems of this type, such as the name of the sensor that
+    // produced a reading. Information specific to this event should be added to
+    // the payload.
+    // For details see 'parent' field in google.aip.dev/148.
+    // Example: log_items/perception/frame/{camera_id}
+    string event_source = 7;
+
+    reserved 3, 4, 5, 6, 8;
+  }
+
+  // Type-agnostic information about this event.
+  Metadata metadata = 1;
+
+  // Type-agnostic information about this event that needs to be propagated
+  // throughout the gRPC call stack. This can be used to join this event with
+  // others that belong to the same timeframe.
+  Context context = 2;
+
+  // Structured data associated with an event.
+  message Payload {
+    oneof data {
+      // Prefer logging the canonical data types below, as these types will
+      // typically be better supported.
+
+      // ===== General =====
+      google.protobuf.Any any = 1;
+      intrinsic_proto.error.ErrorReport error_report = 23;
+
+      // ===== Skills =====
+      intrinsic_proto.skills.ExecuteRequest skills_execute_request = 21;
+      intrinsic_proto.skills.ExecutionSummary skills_execution_summary = 16;
+      intrinsic_proto.skills.ProjectRequest skills_project_request = 22;
+      intrinsic_proto.skills.ProjectionSummary skills_projection_summary = 20;
+      intrinsic_proto.skills.PredictRequest skills_predict_request = 36;
+      intrinsic_proto.skills.PredictionSummary skills_prediction_summary = 37;
+      intrinsic_proto.skills.FootprintRequest skills_footprint_request = 38;
+      intrinsic_proto.skills.FootprintSummary skills_footprint_summary = 39;
+
+      // ===== Executive =====
+      intrinsic_proto.executive.ExecutiveState executive_state = 13;
+
+      // ===== Perception =====
+      intrinsic_proto.perception.PoseEstimationResult pose_estimation_result =
+          10;
+      intrinsic_proto.perception.Frame perception_frame = 11;
+      intrinsic_proto.perception.HandEyeCalibrationResult
+          hand_eye_calibration_result = 26;
+      intrinsic_proto.perception.HandEyeCalibrationRequest
+          hand_eye_calibration_request = 29;
+
+      // ===== Icon =====
+      intrinsic_proto.icon.JointState icon_l1_joint_state = 14;
+      intrinsic_proto.icon.Wrench icon_ft_wrench = 17;
+      intrinsic_proto.icon.RobotStatus icon_robot_status = 27;
+    }
+    reserved 2, 4, 5, 6, 9, 12, 15, 19, 28;
+    reserved "optimization_measurement";
+  }
+
+  // Any structured data associated with this event.
+  Payload payload = 3;
+
+  reserved 4, 5;
+
+  // Use this to log individual files smaller than 2GB (size limit for proto
+  // messages). For larger files sync them to GCS using the GCS API directly. If
+  // you have many files, consider creating a tar archive out of them first.
+  Blob blob_payload = 6;
+}

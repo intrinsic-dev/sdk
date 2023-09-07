@@ -1,0 +1,35 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+--- a/google/longrunning/BUILD.bazel	2022-12-22 12:16:23.490681255 -0800
++++ b/google/longrunning/BUILD.bazel	2022-12-22 12:17:28.626782188 -0800
+@@ -224,27 +224,7 @@
+     "py_proto_library",
+ )
+ 
+-moved_proto_library(
+-    name = "longrunning_moved_proto",
+-    srcs = [":operations_proto"],
+-    deps = [
+-        "//google/api:annotations_proto",
+-        "//google/api:client_proto",
+-        "//google/rpc:status_proto",
+-        "@com_google_protobuf//:any_proto",
+-        "@com_google_protobuf//:descriptor_proto",
+-        "@com_google_protobuf//:duration_proto",
+-        "@com_google_protobuf//:empty_proto",
+-    ],
+-)
+-
+ py_proto_library(
+     name = "longrunning_py_proto",
+-    deps = [":longrunning_moved_proto"],
+-)
+-
+-py_grpc_library(
+-    name = "longrunning_py_grpc",
+-    srcs = [":longrunning_moved_proto"],
+-    deps = [":longrunning_py_proto"],
++    deps = [":operations_proto"],
+ )

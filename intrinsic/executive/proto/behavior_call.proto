@@ -1,0 +1,93 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/duration.proto";
+import "intrinsic/skills/proto/footprint.proto";
+import "intrinsic/skills/proto/skills.proto";
+
+// A BehaviorCall is a reference to a fully configured behavior to execute.
+// It can either be a skill or a parameterizable behavior tree. It references
+// the skill_id and configures parameters, parameter assignments and equipment
+// as well as the key for the return value.
+message BehaviorCall {
+  // Catalog id of the behavior to be instantiated.
+  // Can refer to a skill or a parameterizable behavior tree.
+  // References a intrinsic_proto.skills.Skill.id.
+  string skill_id = 1;
+
+  // Name of a particular instance of the skill identified in the `name` field.
+  // The instance name should be unique among all other existing skill instances
+  // that are being used in a process.
+  optional string instance_name = 2;
+
+  // Single-message parameters for the skill.
+  google.protobuf.Any parameters = 3;
+  message ParameterAssignment {
+    oneof target {
+      string parameter_path = 1;
+    }
+    oneof source {
+      string cel_expression = 2;
+    }
+  }
+  // List of parameter assignments from blackboard. Contains access path into
+  // the parameter and cel_expression to access the blackboard value.
+  repeated ParameterAssignment assignments = 4;
+
+  message EquipmentSpecification {
+    oneof equipment_specification_type {
+      string handle = 1;
+      string reference = 2;
+    }
+  }
+  // This is a map from slot to equipment name or reference.
+  // The name can then be used to retrieve an equipment handle.
+  // The reference will be instantiated from a BehaviorCall.
+  map<string, EquipmentSpecification> equipment = 5;
+
+  // This is the key for accessing the return value of the behavior call on
+  // the blackboard.
+  string return_value_name = 6;
+
+  // Optional data that can be set when calling a skill.
+  message SkillExecutionOptions {
+    // When set, use the specified timeout instead of the default timeout when
+    // calling skill.project() (report failure if project does not finish within
+    // this time bound).
+    google.protobuf.Duration project_timeout = 1;
+
+    // When set, use the specified timeout instead of the default timeout
+    // calling skill.execute() (report failure if execute does not finish within
+    // this time bound).
+    google.protobuf.Duration execute_timeout = 2;
+
+    // Optional field containing skill metadata. This information can be passed
+    // through to the service that executes the skill.
+    intrinsic_proto.skills.SkillMetadata skill_metadata = 3;
+  }
+  optional SkillExecutionOptions skill_execution_options = 7;
+
+  // The fields in SkillExecutionData are updated based on a skill.project()
+  // call. They are passed to skill.execute() if set.
+  // At a later point these fields may be set, for example when projection was
+  // run off-line. This is currently not implemented. Confer documentation of
+  // intrinsic_proto.skills.ProjectResult and
+  // intrinsic_proto.skills.ExecuteRequest.
+  message SkillExecutionData {
+    // The footprint (required resources etc.) of the skill.
+    intrinsic_proto.skills.Footprint footprint = 1;
+
+    // Arbitrary internal data from projection. This could be anything and you
+    // cannot make any assumptions on the structure. Since it's passed from a
+    // call to project to the call of execute on the exact same skill, it can
+    // know what to expect.
+    bytes internal_data = 2;
+  }
+  optional SkillExecutionData skill_execution_data = 8;
+}

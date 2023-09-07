@@ -1,0 +1,13 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package xfa.icon.actions.proto;
+
+message WaitForSettlingActionFixedParams {
+  // The uncertainty value below which the `WaitForSettlingAction` is considered
+  // settled and done. Must be in range [0.01, 0.5]. Default is 0.2.
+  optional double uncertainty_threshold = 1;
+}

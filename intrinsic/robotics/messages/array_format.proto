@@ -1,0 +1,24 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto2";
+
+package robotics.messages;
+
+import "google/protobuf/descriptor.proto";
+
+message ArrayFormat {
+  enum StorageOrder {
+    UNSPECIFIED_STORAGE_ORDER = 0;
+    COL_MAJOR = 1;
+    ROW_MAJOR = 2;
+  }
+  repeated uint32 shape = 1 [packed = true];
+  optional StorageOrder storage_order = 2 [default = UNSPECIFIED_STORAGE_ORDER];
+}
+
+extend google.protobuf.FieldOptions {
+  // Describes the data arrangement of an array.
+  optional ArrayFormat array_format = 505438291;
+}

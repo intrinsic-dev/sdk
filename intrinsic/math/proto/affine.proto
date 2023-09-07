@@ -1,0 +1,21 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+import "intrinsic/math/proto/matrix.proto";
+import "intrinsic/math/proto/point.proto";
+
+// Represents an affine 3D transformation composed of a linear part (containing
+// rotation and scaling) and a position. Usually it is composed from position *
+// rotation * scaling.
+message Affine3d {
+  // A 3x3 linear matrix containing the rotation and scaling of the affine
+  // transformation.
+  Matrixd linear = 1;
+  // The translational part of the affine transformation.
+  Point translation = 2;
+}

@@ -1,0 +1,50 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.data_logger;
+
+// Context identifies the execution stack that the event represented by a
+// LogItem is generated in. Each layer consists of a globally unique ID for
+// readers to group LogItems by. For example, by fetching all of the LogItems
+// with a given skill_id you get the sequence of events that corresponds to that
+// particular execution of the skill. There can be multiple active Contexts in
+// the stack at a given layer at a time, for example if two skills are executing
+// concurrently.
+// Next ID: 10
+message Context {
+  // The top context layer. Represents all of the work done by the executive
+  // from when it is initialized until it is destroyed. This is currently used
+  // by the frontend to load meshes, which would be expensive for the executive
+  // to log for every sequence plan.
+  uint64 executive_session_id = 4;
+
+  // The layer of context below executive_session_id. Identifies the execution
+  // of a plan.
+  uint64 executive_plan_id = 2;
+
+  // This layer allows to tie data to a specific action in a plan.
+  uint64 executive_plan_action_id = 5;
+
+  // The layer of context below executive_plan_id. Identifies the execution of a
+  // skill.
+  uint64 skill_id = 3;
+
+  // This field is only set if the skill 'skill_id' is executed internally by
+  // another skill, specified by 'parent_skill_id'.
+  uint64 parent_skill_id = 6;
+
+  // The ICON session controlling the part which is sending the logs.
+  // Only used for logs coming from ICON.
+  // Check has_icon_session_id to distinguish between an unset session ID and an
+  // actual session with ID==0.
+  optional uint64 icon_session_id = 8;
+
+  // The ICON action which is controlling the part which is sending the logs.
+  // Only used for ICOn logs and only set if an action is active.
+  // Check has_icon_session_id to distinguish between an unset action ID and an
+  // actual action with ID==0.
+  optional uint64 icon_action_id = 9;
+}

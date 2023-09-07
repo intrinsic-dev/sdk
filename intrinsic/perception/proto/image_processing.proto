@@ -1,0 +1,50 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+// Parameters for modification of image intensity I according to the function
+// f(I) = a*I + b. Applied to each color channel separately.
+message AffineRgbCorrection {
+  // Slope of the affine modification function. Valid values are from
+  // [-255,255].
+  double a = 1;
+  // Offset of the affine modification function. Valid values are from
+  // [-255,255].
+  double b = 2;
+}
+
+// Parameters for correction of image intensity by CLAHE histogram equalization.
+message HistogramEqualizationClahe {
+  // Tile grid size for CLAHE. Controls the locality of the histogram
+  // equalization, with 1 resulting in global processing and higher values in
+  // more local and stronger changes. Reasonable default value is 8.
+  int32 tile_grid_size = 1;
+  // Clip limit for CLAHE. Controls the strength of the processing, with higher
+  // values resulting in stronger changes. Reasonable default value is 2.
+  double clip_limit = 2;
+}
+
+// Parameters for image processing.
+message ImageProcessing {
+  oneof correction {
+    // Controls if histogram equalization is to be performed.
+    bool histogram_equalization = 1;
+
+    // Controls the settings for adaptive histogram equalization by CLAHE.
+    HistogramEqualizationClahe histogram_equalization_clahe = 2;
+
+    // Controls if gamma correction is to be performed on the acquired RGB frame
+    // before pose estimation. Gamma values have to be larger than zero, with
+    // gamma < 1 making the image brighter and gamma > 1 making the image
+    // darker.
+    double gamma_rgb_correction = 3;
+
+    // Controls the affine intensity correction to be applied to
+    // the acquired frame before pose estimation.
+    AffineRgbCorrection affine_rgb_correction = 4;
+  }
+}

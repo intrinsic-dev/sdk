@@ -1,0 +1,12 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+message JointMovePositions {
+  repeated double joint_positions_1 = 1;
+  repeated double joint_positions_2 = 2;
+}

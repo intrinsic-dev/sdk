@@ -1,0 +1,233 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.skills;
+
+import "google/longrunning/operations.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "intrinsic/logging/proto/context.proto";
+import "intrinsic/skills/proto/error.proto";
+import "intrinsic/skills/proto/footprint.proto";
+import "intrinsic/skills/proto/prediction.proto";
+import "intrinsic/skills/proto/skills.proto";
+
+message ProjectRequest {
+  google.protobuf.Any parameters = 6;
+
+  // Id of the world in the world service which holds the initial world state
+  // for the skill projection.
+  string world_id = 4;
+  intrinsic_proto.skills.SkillInstance instance = 3;
+
+  // OPTIONAL. Context of the projection of the skill instance (e.g. IDs of
+  // related plan instance, deployment configs etc.).
+  intrinsic_proto.data_logger.Context context = 5;
+
+  // OPTIONAL. Skill-internal data about the outcome of planning the skill. This
+  // data is optional and if provided can be used to make planning faster. It is
+  // intended to be used if the skill was previously planned and needs
+  // replanning.
+  bytes internal_data = 7;
+}
+
+message ProjectResult {
+  intrinsic_proto.skills.Footprint footprint = 2;
+
+  // Skill-internal data about the outcome of planning the skill. Attempting to
+  // execute a skill without passing this data may result in behavior that does
+  // not match this ProjectResult.
+  bytes internal_data = 5;
+}
+
+message FootprintRequest {
+  ProjectRequest internal_request = 1;
+}
+
+message PredictRequest {
+  ProjectRequest internal_request = 1;
+}
+
+message PredictResult {
+  // The possible set of outcomes given the skill and its parameters. This list
+  // of outcomes should represent a probability distribution (i.e. the
+  // `probability` fields of each Prediction should sum to 1.0). Each predicted
+  // outcome contains a sequence of world updates with associated types. These
+  // updates should be confined to the resources available in the footprint that
+  // would be generated from a call to GetFootprint() with the same arguments.
+  repeated Prediction outcomes = 2;
+
+  // Skill-internal data generated while predicting the skill.
+  bytes internal_data = 3;
+
+  reserved 1;
+  reserved "initial_world_snapshot_id";
+}
+
+service Projector {
+  // Returns the anticipated resources given the nominal initial world.
+  // Projection could entail planning (e.g., a motion), or simulating an
+  // execution.
+  rpc GetFootprint(FootprintRequest) returns (ProjectResult) {}
+
+  // Returns a distribution of possible states that the world could be in after
+  // executing the skill with the provided parameters.
+  rpc Predict(PredictRequest) returns (PredictResult) {}
+}
+
+message ExecuteRequest {
+  google.protobuf.Any parameters = 8;
+
+  intrinsic_proto.skills.Footprint footprint = 2;
+  bytes internal_data = 3;
+
+  // Id of the world in the world service which holds the initial world state
+  // for the skill execution.
+  string world_id = 7;
+  intrinsic_proto.skills.SkillInstance instance = 5;
+
+  // OPTIONAL. Context of the execution of the skill instance (e.g. IDs of
+  // related plan instance, deployment configs etc.).
+  intrinsic_proto.data_logger.Context context = 6;
+
+  // Additional data associated with the skill. This field is currently required
+  // for all learning (template) skills but may be left empty for non-learning
+  // skills.
+  intrinsic_proto.skills.SkillMetadata skill_metadata = 10;
+}
+
+message ExecuteResult {
+  // Contains optional returned data for the Skill. If a Skill returns data in
+  // this field, there will also be descriptor information for the type of data
+  // in the Skill information retrieved from the registry.
+  google.protobuf.Any result = 4;
+}
+
+// Logged by the skills client library after a skill execution.
+message ExecutionSummary {
+  intrinsic_proto.skills.SkillInstance instance = 1;
+
+  intrinsic_proto.skills.ExecuteResult result = 2;
+
+  google.protobuf.Duration duration = 3;
+
+  // The OpenCensus Trace ID associated with this skill execution.
+  // A 32 character hex string.
+  string trace_id = 4;
+
+  // Error information if the request failed for any reason.
+  int32 error_code = 5;
+  string error_message = 6;
+  SkillErrorInfo error_info = 7;
+}
+
+// Logged by the skills client library after a skill projection.
+message ProjectionSummary {
+  intrinsic_proto.skills.SkillInstance instance = 1;
+
+  intrinsic_proto.skills.ProjectResult result = 2;
+
+  google.protobuf.Duration duration = 3;
+
+  // Error information if the request failed for any reason.
+  int32 error_code = 4;
+  string error_message = 5;
+  SkillErrorInfo error_info = 6;
+}
+
+// Logged by the skills client library after a skill prediction.
+message PredictionSummary {
+  intrinsic_proto.skills.SkillInstance instance = 1;
+
+  intrinsic_proto.skills.PredictResult result = 2;
+
+  google.protobuf.Duration duration = 3;
+
+  // Error information if the request failed for any reason.
+  int32 error_code = 4;
+  string error_message = 5;
+  SkillErrorInfo error_info = 6;
+}
+
+// Logged by the skills client library after a skill get footprint.
+message FootprintSummary {
+  intrinsic_proto.skills.SkillInstance instance = 1;
+
+  intrinsic_proto.skills.ProjectResult result = 2;
+
+  google.protobuf.Duration duration = 3;
+
+  // Error information if the request failed for any reason.
+  int32 error_code = 4;
+  string error_message = 5;
+  SkillErrorInfo error_info = 6;
+}
+
+service Executor {
+  /* Starts executing the skill as a long-running operation.
+
+  The RPC fails with:
+  - NOT_FOUND if the skill cannot be found.
+  - INTERNAL if default parameters cannot be applied.
+  - ALREADY_EXISTS if a skill execution operation with the specified name (i.e.,
+      the skill instance name) already exists. */
+  rpc StartExecute(ExecuteRequest) returns (google.longrunning.Operation) {}
+
+  /* Gets the current state of a skill execution operation.
+
+  The RPC fails with:
+  - NOT_FOUND if the operation cannot be found. */
+  rpc GetOperation(google.longrunning.GetOperationRequest)
+      returns (google.longrunning.Operation) {}
+
+  /* Requests cancellation of a skill execution operation.
+
+  NOTE: The skill may finish successfully before it can be cancelled. The actual
+  outcome can be inferred from the state returned by a subsequent call to
+  WaitOperation.
+
+  The RPC fails with:
+  - NOT_FOUND if the operation cannot be found.
+  - FAILED_PRECONDITION if the operation was already cancelled.
+  - UNIMPLEMENTED if the skill does not support cancellation.
+  - INTERNAL if a skill cancellation callback fails. */
+  rpc CancelOperation(google.longrunning.CancelOperationRequest)
+      returns (google.protobuf.Empty) {}
+
+  /* Waits for a skill execution operation to finish.
+
+  Unless the wait timed out, the returned state reflects the final outcome of
+  skill execution. NOTE that an unfinished operation will be returned if the
+  wait times out.
+
+  If skill execution succeeded, the operation's `response` will be the resulting
+  ExecuteResult. Otherwise, the operation's `error` will contain information
+  about the failure.
+
+  The RPC fails with:
+  - NOT_FOUND if the operation cannot be found. */
+  rpc WaitOperation(google.longrunning.WaitOperationRequest)
+      returns (google.longrunning.Operation) {}
+
+  /* Clears the internal store of skill execution operations.
+
+  Should only be called once all operations are finished.
+
+  The RPC fails with:
+  - FAILED_PRECONDITION if any operations are not finished. */
+  rpc ClearOperations(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
+
+// Contains the skill information provided by a single skill service.
+message SkillInformationResult {
+  Skill skill = 2;
+}
+
+service SkillInformation {
+  // Returns skill information.
+  rpc GetSkillInfo(google.protobuf.Empty) returns (SkillInformationResult) {}
+}

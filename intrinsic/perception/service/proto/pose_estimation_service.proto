@@ -1,0 +1,22 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "google/protobuf/empty.proto";
+import "intrinsic/math/proto/affine.proto";
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/skills/proto/equipment.proto";
+
+message ListPoseEstimationConfigsResponse {
+  // List of pose estimator ids of locally deployed pose estimators.
+  repeated string pose_estimator_ids = 1;
+}
+service PoseEstimationService {
+  // Lists deployed pose estimators.
+  rpc ListPoseEstimationConfigs(google.protobuf.Empty)
+      returns (ListPoseEstimationConfigsResponse);
+}

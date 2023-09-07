@@ -1,0 +1,21 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.geometry;
+
+import "intrinsic/math/proto/matrix.proto";
+
+// A proto holding the shape data wrapping a single shape.
+message ShapeData {
+  // The geometry id for an instance of Geometry.
+  string geometry_id = 2;
+
+  // This is a 4x4 affine transform from the reference frame to this shape.
+  intrinsic_proto.Matrixd ref_t_shape_aff = 4;
+
+  // A set of labels to apply to the shape if adding to the world.
+  repeated string label = 1;
+}

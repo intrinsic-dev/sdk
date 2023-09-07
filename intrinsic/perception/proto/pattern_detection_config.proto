@@ -1,0 +1,34 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "intrinsic/perception/proto/charuco_pattern.proto";
+
+message PatternDetectionConfig {
+  // REQUIRED. Class id (e.g., "pattern-1234").
+  string name = 1;
+
+  // REQUIRED. Sets the pattern detector implementation and all pattern
+  // detector-specific configs.
+  oneof Type {
+    CharucoPatternDetectionConfig charuco_pattern_detection_config = 2;
+    HalconPatternDetectionConfig halcon_pattern_detection_config = 3;
+  }
+}
+
+// Config for Charuco pattern detector.
+message CharucoPatternDetectionConfig {
+  // Defines the ChArUco pattern outlay.
+  CharucoPattern charuco_pattern = 1;
+}
+
+// Config for Halcon pattern detectors. Supports both rectangular and hexagonal
+// Halcon markers.
+message HalconPatternDetectionConfig {
+  // Filepath to pattern descriptor file.
+  string file_path = 1;
+}

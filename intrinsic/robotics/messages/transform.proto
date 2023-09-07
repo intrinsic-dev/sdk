@@ -1,0 +1,17 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+import "intrinsic/robotics/messages/pose.proto";
+
+// A transform between two coordinate frames, using the ROS TransformStamped
+// conventions. If you need a timestamp, wrap this in a SensorMessage.
+message Transform {
+  string frame_id = 1;
+  string child_frame_id = 2;
+  Pose3d transform = 3;
+}

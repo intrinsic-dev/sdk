@@ -1,0 +1,23 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.catalog;
+
+// Tag for providing additional info about the asset.
+enum Tag {
+  TAG_UNSPECIFIED = 0;
+
+  // Only a single id_version for each asset id may be marked as default.
+  // This can be used when retrieving assets from the catalog to retrieve a
+  // single version of an asset. Every asset must have one id_version which is
+  // tagged as the default.
+  //
+  // Example use case: When retrieving the list of available assets in the
+  // catalog, the results can be filtered by the TAG_DEFAULT to get a single
+  // version of the asset. This can be useful when trying to discover what
+  // assets are available to build a solution.
+  TAG_DEFAULT = 2;
+}

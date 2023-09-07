@@ -1,0 +1,46 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+import "intrinsic/robotics/messages/vector.proto";
+
+// Balls in 2, 3, or 4 dimensions with float or double values.
+// Each ball is defined by a center point and a radius.
+// If the radius of the ball is negative, the ball is considered to be empty.
+
+// A circle in two-dimensional space.
+message Ball2d {
+  Vector2d center = 1;
+  double radius = 2;
+}
+
+message Ball2f {
+  Vector2f center = 1;
+  float radius = 2;
+}
+
+// A sphere in three-dimensional space.
+message Ball3d {
+  Vector3d center = 1;
+  double radius = 2;
+}
+
+message Ball3f {
+  Vector3f center = 1;
+  float radius = 2;
+}
+
+// A hypersphere in four-dimensional space.
+message Ball4d {
+  Vector4d center = 1;
+  double radius = 2;
+}
+
+message Ball4f {
+  Vector4f center = 1;
+  float radius = 2;
+}

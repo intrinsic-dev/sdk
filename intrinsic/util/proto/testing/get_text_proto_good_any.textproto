@@ -1,0 +1,9 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+# proto-file: google/protobuf/any.proto
+# proto-message: Any
+[type.googleapis.com/intrinsic_proto.TestMessage] {
+  string_value: "foo"
+}

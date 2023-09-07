@@ -1,0 +1,24 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+import "intrinsic/robotics/messages/box.proto";
+import "intrinsic/robotics/messages/pose.proto";
+
+option cc_enable_arenas = true;
+
+// An oriented box in three-dimensional space.
+message OrientedBox3d {
+  Box3d box = 1;
+  Pose3d world_pose_box = 2;
+}
+
+// An oriented box in three-dimensional space.
+message OrientedBox3f {
+  Box3f box = 1;
+  Pose3f world_pose_box = 2;
+}

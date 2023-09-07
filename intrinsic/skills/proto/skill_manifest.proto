@@ -1,0 +1,144 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.skills;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/duration.proto";
+import "intrinsic/assets/proto/id.proto";
+import "intrinsic/skills/proto/equipment.proto";
+import "intrinsic/skills/proto/vendor.proto";
+
+message PythonServiceConfig {
+  // The module where the skill's create function is declared.
+  string skill_module = 1;
+
+  // The module where the skill's proto message schemas are declared.
+  string proto_module = 2;
+
+  // The symbol for the method to create the skill.
+  // This is commonly the skill's constructor. For example,
+  // for a skill declared in:
+  // intrinsic/skills/examples/my_skill.py
+  //
+  // class MySkill(skl.Skill):
+  //   def __init__(self):
+  //     pass
+  //
+  // this field should be set to:
+  // "intrinsic.skills.examples.my_skill.MySkill" to use the class's
+  // constructor to create the skill.
+  string create_skill = 3;
+}
+
+message CcServiceConfig {
+  // The create skill method symbol. This is the fully qualified name of the
+  // method that can be used to create a skill. It must be convertible to a
+  // std::function<absl::StatusOr<std::unique_ptr<SkillInterface>>()>. The
+  // method must be declared in the header file for a skill library provided to
+  // the cc_skill() build rule as the skill dependency.
+  //
+  // This method is used at build time to generate the skill service main.
+  //
+  // For the NoOpSkill example with:
+  //
+  // namespace intrinsic::skills {
+  // class NoOpSkill {
+  //  public:
+  //   static std::unique_ptr<SkillInterface> CreateSkill();
+  //   // ...
+  // };
+  // }  // namespace intrinsic::skills
+  //
+  // The Create() method should be registered in the manifest.textproto as:
+  //
+  // create_skill: "::intrinsic::skills::NoOpSkill::CreateSkill"
+  //
+  // The generated skill service will create skills by invoking this method.
+  string create_skill = 1;
+}
+
+message Documentation {
+  string doc_string = 1;
+}
+
+message ParameterMetadata {
+  // The fully-qualified name of the Protobuf message
+  string message_full_name = 1;
+
+  // The default value used by the skill for this
+  optional google.protobuf.Any default_value = 2;
+}
+
+message ReturnMetadata {
+  // The fully-qualified name of the Protobuf message
+  string message_full_name = 1;
+}
+
+message PubTopicMetadata {
+  // Used to construct a unique topic name for publishing. Instances of this
+  // skill will publish to topic /skill/<skill_name>/<instance_id>/<data_id>.
+  string data_id = 1;
+
+  // Optional documentation that can be shown to users of the skill. It may
+  // include information about the data published on this topic.
+  string doc_string = 2;
+
+  // The published proto's full message name.
+  string message_full_name = 3;
+}
+
+message Options {
+  // Describes whether the skill supports cooperative cancellation during
+  // execution. Set to true if the skill supports cancellation, set to false
+  // otherwise.
+  bool supports_cancellation = 1;
+
+  // Sets the cancellation ready time for the skill during execution.
+  //
+  // During execution, if the skill is cancelled, its ExecutionContext waits for
+  // at most this timeout duration for the skill to have called
+  // `NotifyReadyForCancellation` before raising a timeout error.
+  //
+  // If this is not specified, then the default used by the skill execution
+  // service is 30 seconds.
+  google.protobuf.Duration cancellation_ready_timeout = 2;
+
+  // Language-specific configuration options.
+  oneof language_specific_options {
+    PythonServiceConfig python_config = 10;
+    CcServiceConfig cc_config = 11;
+  }
+}
+
+message Dependencies {
+  // Required interfaces that resources must satisfy for the skill.
+  map<string, EquipmentSelector> required_equipment = 1;
+}
+
+message Manifest {
+  // The skill's id.
+  config.Id id = 1;
+
+  // The skill's vendor.
+  config.Vendor vendor = 2;
+
+  // Documentation about the skill which will be shown to users.
+  Documentation documentation = 3;
+
+  // Contains user-set options about what skill features are supported by
+  // this skill.
+  Options options = 4;
+
+  // Specifies the runtime dependencies of this skill.
+  Dependencies dependencies = 5;
+
+  // A description of the input parameter message for Execution of the skill.
+  ParameterMetadata parameter = 6;
+
+  // A description of the return type for Execution of the skill.
+  optional ReturnMetadata return = 7;
+}

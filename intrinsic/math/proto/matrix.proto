@@ -1,0 +1,14 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+message Matrixd {
+  int32 rows = 1;
+  int32 cols = 2;
+  // Stores the values of a matrix in column-major order.
+  repeated double values = 3;
+}

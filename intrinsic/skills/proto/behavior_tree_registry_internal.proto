@@ -1,0 +1,27 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.skills;
+
+import "intrinsic/executive/proto/behavior_tree.proto";
+
+message GetBehaviorTreeRequest {
+  // The identifier for the skill as in intrinsic_proto.skills.Skill.id.
+  // This must refer to a parameterizable behavior tree registered via
+  // RegisterOrUpdateBehaviorTree.
+  string id = 1;
+}
+
+message GetBehaviorTreeResponse {
+  intrinsic_proto.executive.BehaviorTree behavior_tree = 1;
+}
+
+service BehaviorTreeRegistryInternal {
+  // Returns the BehaviorTree that is registered for a specific skill.
+  // The requested skill must be a parameterizable BehaviorTree.
+  rpc GetBehaviorTree(GetBehaviorTreeRequest)
+      returns (GetBehaviorTreeResponse) {}
+}

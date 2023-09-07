@@ -1,0 +1,38 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "intrinsic/perception/proto/camera_identifier.proto";
+import "intrinsic/perception/proto/camera_settings.proto";
+import "intrinsic/perception/proto/distortion_params.proto";
+import "intrinsic/perception/proto/intrinsic_params.proto";
+
+// Specification of a single camera.
+// The specification includes the driver to be used, connection parameters,
+// but also intrinsic calibration info and optional per-sensor configuration.
+message CameraConfig {
+  string name = 1;
+
+  // A unique identifier of a specific camera.
+  // This identifier determines which underlying driver is used to access a
+  // camera.
+  CameraIdentifier identifier = 2;
+
+  // Intrinsic camera parameters of the camera.
+  // The parameters contain the image size, focal length and principal point.
+  // If the parameters are not specified, the camera is uncalibrated.
+  optional IntrinsicParams intrinsic_params = 3;
+
+  // The lense distortion parameters.
+  // If these are not specified, the camera is either uncalibrated or a
+  // synthetic camera which serves undistorted images.
+  optional DistortionParams distortion_params = 4;
+
+  // A list of camera settings. Camera settings are applied in the order in
+  // which they are defined. The specification of camera settings is optional.
+  repeated CameraSetting camera_settings = 5;
+}

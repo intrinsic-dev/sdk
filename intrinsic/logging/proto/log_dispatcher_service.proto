@@ -1,0 +1,48 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.data_logger;
+
+import "google/protobuf/empty.proto";
+import "intrinsic/logging/proto/blob.proto";
+import "intrinsic/logging/proto/log_item.proto";
+
+// A batch of LogItems to be sent to the LogDispatcher, to be PUT into storage
+// on the cloud.
+message PutLogItemsRequest {
+  repeated intrinsic_proto.data_logger.LogItem items = 1;
+
+  // the cluster the logs originated from
+  string workcell_name = 2;
+}
+
+message PutLogItemsResponse {
+  // The number of log items successfully ingested
+  int32 log_items_ingested = 1;
+
+  // The number of log items dropped
+  int32 log_items_dropped = 2;
+
+  // log items in request == (log_items_ingested + log_items_dropped)
+}
+
+message PutBlobRequest {
+  Blob blob = 1;
+
+  // the cluster the blob originated from
+  string workcell_name = 2;
+}
+
+// Service to relay and dispatch CRUD operations on behalf of users for items
+// relating to structured logs.
+// (e.g., putting logs, uploading blobs, etc.)
+service LogDispatcher {
+  // Put one batch of LogItems to the cloud.
+  rpc PutLogItems(PutLogItemsRequest) returns (PutLogItemsResponse) {}
+
+  // Put one Blob to the cloud.
+  rpc PutBlob(PutBlobRequest) returns (google.protobuf.Empty) {}
+}

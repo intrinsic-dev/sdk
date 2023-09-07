@@ -1,0 +1,283 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.world.geometric_constraints;
+
+import "intrinsic/icon/proto/joint_space.proto";
+import "intrinsic/math/proto/point.proto";
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/math/proto/quaternion.proto";
+import "intrinsic/math/proto/vector3.proto";
+import "intrinsic/world/proto/object_world_refs.proto";
+
+message JointIds {
+  repeated uint32 joint_ids = 1;
+}
+
+// Requires one or more joints to have the given positions
+message JointPositionEquality {
+  oneof joint_group {
+    ObjectReference object_id = 1;
+  }
+
+  // The desired position, one element per joint.
+  intrinsic_proto.icon.JointVec joint_positions = 3;
+}
+
+// Defines lower and upper bounds on the positions of joints (e.g. for a robot).
+message JointPositionLimits {
+  oneof joint_group {
+    ObjectReference object_id = 1;
+  }
+
+  // Either one element per joint or empty, in which case the limits default to
+  // those defined in the `World` in which this constraint is applied
+  repeated double lower_limits = 3;
+
+  // Either one element per joint or empty, in which case the limits default to
+  // those defined in the `World` in which this constraint is applied
+  repeated double upper_limits = 4;
+}
+
+// Requires a point attached to `moving_frame` to have the same position as
+// a point attached to the `target_frame`, regardless of the orientation of
+// the frames.
+message PositionEquality {
+  // Frame for `moving_frame_offset`, which will be constrained to be equal
+  // to `target_frame_offset`.
+  TransformNodeReference moving_frame = 1;
+
+  // Frame for `target_frame_offset`, which will be constrained to be equal to
+  // `moving_frame_offset`.
+  TransformNodeReference target_frame = 2;
+
+  // The point attached to `moving_frame`. Defaults to (0, 0, 0) if unset.
+  optional intrinsic_proto.Point moving_frame_offset = 3;
+  // The point attached to the `target_frame`. Defaults to (0, 0, 0) if
+  // unset.
+  optional intrinsic_proto.Point target_frame_offset = 4;
+}
+
+// Constrains a point attached to `moving_frame` to remain within a bounding
+// box of positions defined in the `target_frame`. This constraint does not
+// limit the rotation between the frames.
+message PositionBoundingBox {
+  // Frame for `moving_frame_offset`, which will be constrained to lie in the
+  // bounding box.
+  TransformNodeReference moving_frame = 1;
+
+  // Frame for bounding box.  This must be the base of a kinematic chain leading
+  // to moving_frame, with >= one non-fixed DOF between them in the kinematic
+  // chain.
+  TransformNodeReference target_frame = 2;
+
+  // The point defined relative to `moving_frame` whose position must remain
+  // within the bounding box attached to the `target_frame`. If unset,
+  // defaults to (0, 0, 0), the origin of `moving_frame`.
+  optional intrinsic_proto.Point moving_frame_offset = 3;
+
+  // Defines the center position and rotation of the bounding box relative
+  // to the `target_frame`. If unset, defaults to an identity pose, in which
+  // case the bounding box corners are defined relative to `target_frame`
+  optional intrinsic_proto.Pose target_bounding_box_center = 4;
+
+  // Defines the (x, y, z) lower bounds in the center frame (i.e., defines a
+  // corner of the bounding box). If not set, defaults to having no lower bound,
+  // so the bounding box extends to -infinity in every dimension. Elements of
+  // the point may also be -infinity to indicate that there is no lower bound on
+  // a particular dimension.
+  optional intrinsic_proto.Point lower_bounds = 5;
+
+  // Defines the (x, y, z) upper bounds in the center frame (i.e., defines a
+  // corner of the bounding box). If not set, defaults to having no upper bound,
+  // so the bounding box extends to +infinity in every dimension. Elements of
+  // the point may also be +infinity to indicate that there is no upper bound on
+  // a particular dimension.
+  optional intrinsic_proto.Point upper_bounds = 6;
+}
+
+// Requires a point attached to `moving_frame` to remain within an ellipsoid
+// of positions defined in the `target_frame`. This constraint does not limit
+// the rotation between the frames.  The ellipsoid half-axes are defined with
+// respect to the ellipsoid center frame, which may be translated and rotated
+// relative to the `target_frame`.
+message PositionEllipsoid {
+  // Frame for `moving_frame_offset` which will be constrained to lie in the
+  // ellipsoid.
+  TransformNodeReference moving_frame = 1;
+
+  // Reference frame for the ellipsoid.
+  TransformNodeReference target_frame = 2;
+
+  // The x-radius of the ellipsoid
+  double rx = 3;
+
+  // The y-radius of the ellipsoid. If unset, defaults to `rx`.
+  optional double ry = 4;
+
+  // The z-radius of the ellipsoid. If unset, defaults to `rx`.
+  optional double rz = 5;
+
+  // The point defined relative to `moving_frame` whose position must remain
+  // within the ellipsoid attached to the `target_frame`. If unset, defaults
+  // to (0, 0, 0), the origin of `moving_frame`.
+  optional intrinsic_proto.Point moving_frame_offset = 6;
+
+  // Defines the center position and rotation of the ellipsoid relative to
+  // the `target_frame`. If unset, defaults to an identity pose, in which
+  // case the ellipsoid axes are defined in the `target_frame`.
+  optional intrinsic_proto.Pose target_ellipsoid_center = 7;
+}
+
+// Requires a point attached to `moving_frame` to remain within a frustum of
+// positions defined in the `target_frame`. A frustum is a truncated pyramid
+// in which its tip is cut off by a plane parallel to its base. Frustums can
+// represent the field of view of some cameras. The frustum extends from its tip
+// in the +z direction in the `target_frame` with its tip at the origin.
+message PositionFrustum {
+  // Frame for `moving_frame_offset`, which will be constrained to lie in the
+  // frustrum.
+  TransformNodeReference moving_frame = 1;
+
+  // Reference frame for the frustrum.
+  TransformNodeReference target_frame = 2;
+
+  // Angle in radians between frustrum surface plane and x-z plane
+  double x_angle = 3;
+  // Angle in radians between frustrum surface plane and y-z plane
+  double y_angle = 4;
+
+  // The point defined relative to `moving_frame` whose position must remain
+  // within the frustum attached to the `target_frame`. If unset, defaults to
+  // (0, 0, 0), the origin of `moving_frame`.
+  optional intrinsic_proto.Point moving_frame_offset = 5;
+
+  // These parameters define the frustum surface planes that are parallel to
+  // the x-y plane.
+
+  // The distance in meters between the origin of the `target_frame` and the
+  // plane that cuts the tip of the pyramid to form a surface of the frustum.
+  // This plane is parallel to the x-y plane in the `target_frame`. If unset,
+  // defaults to 0. Must be >= 0.
+  optional double min_z_distance = 6;  // [meters]
+
+  // The distance in meters between the origin of the `target_frame` and the
+  // plane that defines the base of the frustum. This plane is parallel to the
+  // x-y plane in the `target_frame`. If unset, defaults to infinity.
+  // Must be >= `min_z_distance`.
+  optional double max_z_distance = 7;  // [meters]
+}
+
+// Requires `moving_frame` and `target_frame` to have a fixed relative
+// rotation. Does not constrain their positions.
+message RotationEquality {
+  // Moving frame that will be constrained to have a fixed relative rotation
+  // to the reference frame.
+  TransformNodeReference moving_frame = 1;
+
+  // Reference frame that will be constrained to have a fixed relative rotation
+  // to the moving frame.
+  TransformNodeReference target_frame = 2;
+
+  // The required rotation between `moving_frame` and `target_frame`.
+  // If unset, defaults to the identity rotation.
+  optional intrinsic_proto.Quaternion rotation_offset = 3;
+}
+
+// Requires `moving_frame` and `target_frame` to have a relative rotation
+// that is within a given angular distance from a given rotation.
+message RotationBall {
+  // Moving frame that will be constrained to have relative rotation to the
+  // reference frame that is within some angular offset of a given rotation.
+  TransformNodeReference moving_frame = 1;
+
+  // Reference frame that will be constrained to have a relative rotation to the
+  // moving frame that is within some angular offset of a given rotation.
+  TransformNodeReference target_frame = 2;
+
+  // The radius of the ball, measured in radians. This is an upper bound on the
+  // angular distance between `rotation_offset` defined below and
+  // the relative rotation between the `moving_frame` and `target_frame`.
+  double angular_radius = 4;  // [radians]
+
+  // The required relative rotation between `moving_frame` and
+  // `target_frame`. If unset, defaults to the identity rotation.
+  optional intrinsic_proto.Quaternion rotation_offset = 3;
+}
+
+// Requires an axis defined in `moving_frame` to be rotated within a maximum
+// angle from an axis defined in the `target_frame`. Does not constrain the
+// positions of the frames. Axes are directional, so inverting an axis results
+// in a different rotation cone.
+message RotationCone {
+  // Frame for the moving axis that will be constrained to lie within the cone.
+  TransformNodeReference moving_frame = 1;
+
+  // Frame for the reference axis that is the center of the cone.
+  TransformNodeReference target_frame = 2;
+
+  // The direction of the axis in `moving_frame`. Must have non-zero norm.
+  intrinsic_proto.Vector3 moving_axis = 3;
+
+  // The direction of the axis in the `target_frame`. Must have non-zero
+  // norm. If unset, defaults to `moving_axis`.
+  optional intrinsic_proto.Vector3 target_axis = 4;
+
+  // The maximum absolute angle in radians from which the axes are allowed to
+  // deviate from parallel. This is equivalent to half of the opening angle of
+  // the cone formed from all allowed positions of `moving_axis` relative to
+  // `target_axis`, which is the axis of the cone. If unset, defaults to 0.
+  optional double cone_opening_half_angle = 5;  // [radians]
+}
+
+// Requires `moving_frame` and `target_frame` to have a fixed relative pose.
+message PoseEquality {
+  // Moving frame that will be constrained to have a fixed relative pose to
+  // the reference frame.
+  TransformNodeReference moving_frame = 1;
+
+  // Reference frame That will be constrained to have fixed relative pose to
+  // the moving frame.
+  TransformNodeReference target_frame = 2;
+
+  // The required relative pose between `moving_frame` and `target_frame`.
+  // If unset, defaults to the identity pose.
+  optional intrinsic_proto.Pose target_frame_offset = 3;
+}
+
+// Satisfied if all of the contained constraints are satisfied.
+message ConstraintIntersection {
+  // Set of constraints that must be jointly satisfied
+  repeated GeometricConstraint constraints = 1;
+}
+
+// Satisfied if all of the contained constraints are satisfied.
+message UniformGeometricConstraintIntersection {
+  // Set of constraints that must be jointly satisfied
+  repeated UniformGeometricConstraint constraints = 1;
+}
+
+message GeometricConstraint {
+  oneof constraint {
+    JointPositionLimits joint_position_limits = 1;
+    PositionEquality position_equality = 2;
+    JointPositionEquality joint_position_equality = 3;
+    RotationEquality rotation_equality = 6;
+    RotationCone rotation_cone = 7;
+    PoseEquality pose_equality = 8;
+    PositionBoundingBox position_bounding_box = 9;
+    ConstraintIntersection constraint_intersection = 10;
+  }
+}
+
+message UniformGeometricConstraint {
+  oneof constraint {
+    RotationCone rotation_cone = 3;
+    PositionBoundingBox position_bounding_box = 5;
+    UniformGeometricConstraintIntersection
+        uniform_geometric_constraint_intersection = 4;
+  }
+}

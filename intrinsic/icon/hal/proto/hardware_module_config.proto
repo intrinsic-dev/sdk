@@ -1,0 +1,46 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+import "google/protobuf/any.proto";
+import "intrinsic/icon/hardware_modules/sim_bus/sim_bus_hardware_module.proto";
+
+message HardwareModuleConfig {
+  // The unique name given to the hardware module. This should be unique across
+  // all running hardware modules that are connecting to the same icon instance.
+  // Shared memory modules are indexed by this name.
+  string name = 1;
+
+  // The module-specific config passed via the ModuleConfig to a HardwareModule.
+  // Individual hardware modules should create their own configs that reflect
+  // the configuration for any instance.
+  google.protobuf.Any module_config = 2;
+
+  // Does this hardware module drive ICON's realtime clock?  If true, then the
+  // hardware module's Init method will be provided a RealtimeClockInterface
+  // (via module_config.GetRealtimeClock()), and the hardware module is expected
+  // to call TickBlocking every control cycle.  If false, then the hardware
+  // module_config.GetRealtimeClock() will return nullptr.
+  bool drives_realtime_clock = 3;
+
+  // This is empty unless the module is running
+  // 1. As a resource
+  // 2. In simulation
+  string simulation_server_address = 4;
+
+  // Configuration for running the module in sim. Hardware modules may use a
+  // different image for simulation than for real operation. This other image
+  // may not be able to parse the `module_config`, or might need additional
+  // data.
+  intrinsic_proto.icon.SimBusModuleConfig simulation_module_config = 5;
+
+  // Specifies the cpu cores used for any realtime threads.
+  //
+  // If not specified, the hardware module will look for a realtime_core
+  // configured via commandline flag, and then from /proc/cmdline.
+  repeated int32 realtime_cores = 6;
+}

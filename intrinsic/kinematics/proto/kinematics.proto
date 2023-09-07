@@ -1,0 +1,81 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+import "intrinsic/math/proto/matrix.proto";
+import "intrinsic/math/proto/point.proto";
+import "intrinsic/math/proto/pose.proto";
+
+// A reflexion of intrinsic::kinematics::Element
+message Element {
+  // The id local to a kinematic skeleton
+  uint32 id = 1;
+  string name = 2;
+  Pose parent_t_this = 3;
+  uint32 parent = 4;
+  repeated uint32 children = 5;
+}
+
+// A reflexion of intrinsic::kinematics::CoordinateFrame
+message CoordinateFrame {
+  Element element = 1;
+}
+
+message LimitPair {
+  double lower = 1;
+  double upper = 2;
+}
+
+message Limits {
+  LimitPair position = 1;
+  double velocity = 2;
+  double acceleration = 3;
+  double jerk = 4;
+  double effort = 5;
+}
+
+// A reflexion of intrinsic::kinematics::Joint
+message Joint {
+  enum Type {
+    REVOLUTE = 0;
+    PRISMATIC = 1;
+    FIXED = 2;
+  }
+
+  message Parameters {
+    message Dynamics {
+      double static_friction = 1;
+      double damping = 2;
+    }
+
+    Type type = 1;
+    Point axis = 2;
+
+    Limits system_limits = 3;
+    Limits soft_limits = 4;
+    Dynamics dynamics = 5;
+    double default_configuration = 6;
+  }
+
+  Element element = 1;
+  Parameters parameters = 2;
+
+  reserved 3, 4;
+  reserved "value_function", "value_function_to_joint";
+}
+
+// A reflexion of intrinsic::kinematics::Link
+message Link {
+  message Parameters {
+    double mass = 1;
+    Pose center_of_gravity = 2;
+    Matrixd inertia = 3;
+  }
+
+  Element element = 1;
+  Parameters parameters = 2;
+}

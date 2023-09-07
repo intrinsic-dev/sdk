@@ -1,0 +1,56 @@
+{{/*
+Copyright 2023 Intrinsic Innovation LLC
+Intrinsic Proprietary and Confidential
+Provided subject to written agreement between the parties.
+*/ -}}
+
+#ifndef {{.BazelPackageUpperSnakeCase}}_{{.SkillNameUpperSnakeCase}}_H_
+#define {{.BazelPackageUpperSnakeCase}}_{{.SkillNameUpperSnakeCase}}_H_
+
+#include <memory>
+#include <string>
+#include <utility>
+
+#include "absl/container/flat_hash_map.h"
+#include "absl/status/statusor.h"
+#include "intrinsic/skills/cc/skill_interface.h"
+#include "intrinsic/skills/proto/skill_service.pb.h"
+
+{{- /* Don't use a namespace when creating a skill adjacent to WORKSPACE because
+it will be an anonymous namespace. It would prevent CreateSkill from being
+callable from outside this translation unit. */}}
+{{if .BazelPackage}}
+namespace {{strJoin .BazelPackage "::"}} {
+{{end}}
+class {{.SkillNameUpperCamelCase}} : public intrinsic::skills::SkillInterface {
+ public:
+  // ---------------------------------------------------------------------------
+  // Skill signature (see intrinsic::skills::SkillSignatureInterface)
+  // ---------------------------------------------------------------------------
+
+  // Factory method to create an instance of the skill.
+  static std::unique_ptr<intrinsic::skills::SkillInterface> CreateSkill();
+
+  // Generates a distribution of possible outcomes from running this skill with
+  // the provided parameters.
+  // TODO: A default no-op implementation is provided for 
+  //       `{{.SkillNameUpperCamelCase}}.Predict`.
+  //       For a production-ready skill, this method needs to be implemented
+  //       by the skill author. 
+  absl::StatusOr<PredictResult> Predict(
+      const ProjectParams& params, 
+      intrinsic::skills::ProjectionContext& context) const override;
+
+  // ---------------------------------------------------------------------------
+  // Skill execution (see intrinsic::skills::SkillExecuteInterface)
+  // ---------------------------------------------------------------------------
+
+  // Called once each time the skill is executed in a process.
+  absl::StatusOr<intrinsic_proto::skills::ExecuteResult>
+  Execute(const intrinsic_proto::skills::ExecuteRequest& execute_request,
+          intrinsic::skills::ExecutionContext& context) override;
+};
+{{if .BazelPackage }}
+}  // namespace {{strJoin .BazelPackage "::"}}
+{{end}}
+#endif  // {{.BazelPackageUpperSnakeCase}}_{{.SkillNameUpperSnakeCase}}_H_

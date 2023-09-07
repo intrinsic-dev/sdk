@@ -1,0 +1,46 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+load("//bazel:go_macros.bzl", "go_library")
+
+package(default_visibility = ["//visibility:public"])
+
+go_library(
+    name = "start",
+    srcs = ["start.go"],
+    deps = [
+        "//intrinsic/kubernetes/workcell_spec/proto:image_go_proto",
+        "//intrinsic/kubernetes/workcell_spec/proto:installer_go_grpc_proto",
+        "//intrinsic/skills/tools/skill/cmd",
+        "//intrinsic/skills/tools/skill/cmd:dialerutil",
+        "//intrinsic/skills/tools/skill/cmd:imagetransfer",
+        "//intrinsic/skills/tools/skill/cmd:imageutil",
+        "//intrinsic/skills/tools/skill/cmd:registry",
+        "//intrinsic/skills/tools/skill/cmd:solutionutil",
+        "//intrinsic/skills/tools/skill/cmd:waitforskill",
+        "@com_github_google_go_containerregistry//pkg/authn:go_default_library",
+        "@com_github_google_go_containerregistry//pkg/v1/google:go_default_library",
+        "@com_github_google_go_containerregistry//pkg/v1/remote:go_default_library",
+        "@com_github_google_uuid//:go_default_library",
+        "@com_github_spf13_cobra//:go_default_library",
+        "@com_github_spf13_viper//:go_default_library",
+    ],
+)
+
+go_library(
+    name = "stop",
+    srcs = ["stop.go"],
+    deps = [
+        "//intrinsic/kubernetes/workcell_spec/proto:installer_go_grpc_proto",
+        "//intrinsic/skills/tools/skill/cmd",
+        "//intrinsic/skills/tools/skill/cmd:dialerutil",
+        "//intrinsic/skills/tools/skill/cmd:imagetransfer",
+        "//intrinsic/skills/tools/skill/cmd:imageutil",
+        "//intrinsic/skills/tools/skill/cmd:solutionutil",
+        "@com_github_google_go_containerregistry//pkg/v1/google:go_default_library",
+        "@com_github_google_go_containerregistry//pkg/v1/remote:go_default_library",
+        "@com_github_spf13_cobra//:go_default_library",
+        "@com_github_spf13_viper//:go_default_library",
+    ],
+)

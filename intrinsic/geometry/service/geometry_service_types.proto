@@ -1,0 +1,64 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.geometry;
+
+import "intrinsic/geometry/proto/geometry.proto";
+import "intrinsic/geometry/proto/lazy_exact_geometry.proto";
+import "intrinsic/geometry/proto/renderable.proto";
+import "intrinsic/math/proto/matrix.proto";
+import "intrinsic/math/proto/point.proto";
+
+// Response message for getting geometry from the geometry service.
+message GeometryWithMetadata {
+  // The id of the held geometry.
+  string geometry_id = 1;
+
+  // The geometry data for the requested geometry object.
+  Geometry geometry = 2;
+}
+
+// Response message for getting renderable data from the geometry service.
+message RenderableWithMetadata {
+  // The id of the held geometry.
+  string geometry_id = 1;
+
+  // The LOD level used when fetching the renderable data. 0 means the original
+  // quality and any number above that will simplify the geometry. The higher
+  // the number the more simplified it will be.
+  uint32 lod_level = 2;
+
+  // The renderable data itself.
+  Renderable renderable = 3;
+}
+
+message GeometryData {
+  oneof data {
+    // The full geometry object
+    Geometry geometry = 1;
+    // Supported primitives shapes like box and sphere
+    PrimitiveShapeSet primitive_set = 4;
+    // Obj file format, in string format
+    bytes obj_data = 2;
+    // Gltf compressed data in binary format.
+    bytes gltf_bytes = 3;
+    // Stl file format, in binary format or 8bit ASCII encoding.
+    bytes stl_bytes = 5;
+  }
+}
+
+message PosedGeometryData {
+  oneof data_or_id {
+    // Geometry data for this object's shape.
+    GeometryData geometry_data = 1;
+
+    // Geometry id already present in geometry storage.
+    string geometry_id = 2;
+  }
+
+  // A 4x4 affine transform from entity frame to this shape.
+  intrinsic_proto.Matrixd ref_t_shape_aff = 5;
+}

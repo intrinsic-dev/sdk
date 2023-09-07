@@ -1,0 +1,39 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+# Common code for assets (e.g., skills, resources).
+
+load("//bazel:go_macros.bzl", "go_library")
+load("@rules_python//python:defs.bzl", "py_library")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "id_utils",
+    srcs = ["id_utils.cc"],
+    hdrs = ["id_utils.h"],
+    deps = [
+        "//intrinsic/icon/release:status_helpers",
+        "@com_github_google_re2//:re2",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+py_library(
+    name = "id_utils_py",
+    srcs = ["id_utils.py"],
+)
+
+go_library(
+    name = "idutils",
+    srcs = ["idutils.go"],
+    deps = [
+        "//intrinsic/assets/proto:id_go_proto",
+        "@org_golang_x_exp//slices",
+    ],
+)

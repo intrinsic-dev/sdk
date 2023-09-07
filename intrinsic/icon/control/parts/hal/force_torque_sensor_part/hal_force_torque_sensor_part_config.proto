@@ -1,0 +1,67 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+import "intrinsic/icon/control/parts/hal/hal_part_config.proto";
+import "intrinsic/icon/proto/linear_joint_acceleration_filter_config.proto";
+
+message HalForceTorqueSensorPartConfig {
+  // Interfaces for FT sensor.
+  intrinsic_proto.icon.HardwareInterface force_torque_state = 1;
+  intrinsic_proto.icon.HardwareInterface force_torque_command = 2;
+
+  // Used to find the correct robot_collection entity in the world. If running
+  // as a resource the associated_resource_id takes precedence over this.
+  // Additionally if there is only one robot collection entity the part will try
+  // to use it even if this is empty.
+  string world_robot_collection_name = 3;
+
+  // Joint position data for arm to which FT sensor is attached to. If this is
+  // *not* specified then the HalForceTorqueSensorPart is created without
+  // assumed attachment to any robot. In this case only force_torque_state,
+  // force_torque_command and optionally num_acceptable_constant_readings are
+  // used.
+  optional intrinsic_proto.icon.HardwareInterface joint_position_state = 4;
+
+  // Joint velocity data for arm to which FT sensor is attached to. This is only
+  // required if `estimate_post_sensor_dynamic_load` is set true.
+  optional intrinsic_proto.icon.HardwareInterface joint_velocity_state = 5;
+
+  // Joint acceleration data for arm to which FT sensor is attached to. This is
+  // only required if `estimate_post_sensor_dynamic_load` is set true. The joint
+  // acceleration can be provided by a hardware interface or alternatively a
+  // linear filter is used which uses the position and velocity state
+  // measurements.
+  oneof joint_acceleration {
+    intrinsic_proto.icon.HardwareInterface joint_acceleration_state = 6;
+    intrinsic_proto.icon.LinearJointAccelerationFilterConfig
+        linear_joint_acceleration_filter_config = 7;
+  }
+
+  // The target link is a link entity that is part of the robot collection. It
+  // must only be connected to the force torque sensor link through fixed
+  // joints. This frame is used to calculate the `WrenchAtTip()` and
+  // `PostSensorDynamicLoadAtTip()`.
+  string target_link_name = 8;
+  string ft_sensor_link_name = 9;
+
+  // The initial mounted payload.
+  double support_mass = 10;
+  // [x,y,z] vector to COG of mounted payload.
+  repeated double ft_t_cog = 11;
+
+  // If true use rigid body dynamics to obtain an estimate of the dynamic load
+  // exerted by the support mass and grasped mass on the FT-sensor.
+  // joint_velocity_state and joint_acceleration must also be defined.
+  bool estimate_post_sensor_dynamic_load = 12;
+
+  // If defined the part will return an error from ReadStatus if the HWM sensor
+  // status is enabled and the unprocessed wrench is constant for
+  // num_acceptable_constant_readings consecutive readings. Defaults to 10 if
+  // undefined.
+  optional uint32 num_acceptable_constant_readings = 13;
+}

@@ -1,0 +1,30 @@
+{{/*
+Copyright 2023 Intrinsic Innovation LLC
+Intrinsic Proprietary and Confidential
+Provided subject to written agreement between the parties.
+*/ -}}
+
+id {
+  package: "{{.SkillPackageName}}"
+  name: "{{.SkillNameSnakeCase}}"
+}
+vendor {
+  display_name: "Unknown Vendor"
+}
+documentation {
+  doc_string: "TODO: Describe what the skill does here."
+}
+options {
+  supports_cancellation: false
+  cc_config {
+    create_skill: "{{strJoin .BazelPackage "::"}}::{{.SkillNameUpperCamelCase}}::CreateSkill"
+  }
+}
+dependencies {
+}
+parameter {
+  message_full_name: "{{strJoin .ProtoPackage "."}}.{{.SkillNameUpperCamelCase}}Params"
+  default_value {
+    type_url: "type.googleapis.com/{{strJoin .ProtoPackage "."}}.{{.SkillNameUpperCamelCase}}Params"
+  }
+}

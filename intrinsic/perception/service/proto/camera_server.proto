@@ -1,0 +1,280 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "google/protobuf/duration.proto";
+
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/perception/proto/camera_config.proto";
+import "intrinsic/perception/proto/camera_identifier.proto";
+import "intrinsic/perception/proto/camera_params.proto";
+import "intrinsic/perception/proto/camera_settings.proto";
+import "intrinsic/perception/proto/capture_result.proto";
+import "intrinsic/perception/proto/dimensions.proto";
+import "intrinsic/perception/proto/distortion_params.proto";
+import "intrinsic/perception/proto/frame.proto";
+import "intrinsic/perception/proto/frame_post_processing.proto";
+import "intrinsic/perception/proto/image_buffer.proto";
+import "intrinsic/perception/proto/intrinsic_params.proto";
+
+service CameraServer {
+  // Returns all available cameras connected on the server side.
+  // Note: Today, the camera does not return active instances to cameras. If
+  // this functionality is required, is could be implemented by adding a
+  // 'filter' property to the ListCamerasRequest.
+  rpc ListCameras(ListCamerasRequest) returns (ListCamerasResponse) {}
+
+  // Creates a camera with the specified configuration on the server side and
+  // returns a handle to it. In case the camera has already been created with
+  // the exact same configuration in the past, the function returns a handle to
+  // the existing camera.
+  // NOTE: If a user tries to create the same camera twice with different
+  // parameters, the system will return the previously created camera with the
+  // settings that were specified during its creation. The user is free to
+  // override any camera parameters.
+  rpc CreateCamera(CreateCameraRequest) returns (CreateCameraResponse) {
+    
+  }
+
+  // Describes the camera and its sensors. Enumerates connected sensors.
+  rpc DescribeCamera(DescribeCameraRequest) returns (DescribeCameraResponse) {}
+
+  // Captures image data from the requested sensors of the specified camera.
+  rpc Capture(CaptureRequest) returns (CaptureResponse) {
+    
+  }
+
+  // Returns the current frame from the specified camera.
+  rpc GetFrame(GetFrameRequest) returns (GetFrameResponse) {
+    
+  }
+
+  // Read the properties of the user specified camera and setting.
+  // The function returns an error if the camera is unknown or if the setting is
+  // not supported. If specific properties of a setting are not supported, they
+  // are not added to the result. The function only returns existing properties
+  // and triggers no errors for non-existing properties as these are optional to
+  // be implemented by the camera vendors.
+  rpc ReadCameraSettingProperties(ReadCameraSettingPropertiesRequest)
+      returns (ReadCameraSettingPropertiesResponse) {}
+
+  // Reads and returns the current value of a specific setting from a camera.
+  // The function returns an error if the camera is unknown or if the setting is
+  // not supported.
+  rpc ReadCameraSetting(ReadCameraSettingRequest)
+      returns (ReadCameraSettingResponse) {}
+
+  // Update the value of a specific camera setting.
+  // The function returns an error if the camera is unknown or if the setting is
+  // not supported.
+  // Note: When updating camera parameters, beware that the modifications will
+  //   apply to all instances. I.e. it will also affect all other clients who
+  //   are using the same camera.
+  rpc UpdateCameraSetting(UpdateCameraSettingRequest)
+      returns (UpdateCameraSettingResponse) {}
+
+  // Returns a camera's intrinsic and distortion parameters.
+  // The request may result in a NotFound error in which case the camera is
+  // uncalibrated.
+  rpc ReadCameraParams(ReadCameraParamsRequest)
+      returns (ReadCameraParamsResponse) {}
+
+  // Sets a camera's intrinsic and distortion parameters.
+  // The function will also adapt the camera's image resolution to the
+  // dimensions which are specified in the provided parameters.
+  rpc UpdateCameraParams(UpdateCameraParamsRequest)
+      returns (UpdateCameraParamsResponse) {}
+
+  // Removes camera parameters.
+  // This effectively turns the camera into an "uncalibrated" state.
+  rpc ClearCameraParams(ClearCameraParamsRequest)
+      returns (ClearCameraParamsResponse) {}
+}
+
+// In the future, this proto may contain a filter property to specify which
+// cameras should be returned by the function. This would allow us to
+// differentiate between physical cameras connected to the system and cameras
+// which are already instantiated on the server side. In addition one could add
+// filtering options to only list cameras of a specific driver.
+message ListCamerasRequest {}
+
+message ListCamerasResponse {
+  // A list of unique camera identifiers. These can be used to create a
+  // CameraConfig which is required during camera creation.
+  repeated CameraIdentifier camera_identifiers = 1;
+}
+
+message CreateCameraRequest {
+  // The configuration of the camera which should be created.
+  CameraConfig camera_config = 1;
+}
+
+message CreateCameraResponse {
+  // The handle is server specific and an internal identifier for the camera.
+  // The handle format is considered to be an implementation detail and will
+  // change between different server invocations.
+  string camera_handle = 1;
+}
+
+message CaptureRequest {
+  // Handle for the camera to capture from
+  string camera_handle = 1;
+
+  // The timeout which is used for retrieving frames from the underlying driver
+  // implementation. If this timeout is implemented by the underlying camera
+  // driver, it will not spend more than the specified time when waiting for new
+  // frames.
+  // The timeout should be greater than the combined exposure and processing
+  // time. Processing times can be roughly estimated as a value between 10 - 50
+  // ms. The timeout just serves as an upper limit to prevent blocking calls
+  // within the camera driver. In case of intermittent network errors users can
+  // try to increase the timeout. The default timeout (if unspecified) of 500 ms
+  // works well in common setups.
+  google.protobuf.Duration timeout = 2;
+
+  // Optional. Request data only for the following sensor ids (i.e. transmit
+  // mask). Empty returns all sensor images.
+  repeated int64 sensor_ids = 3;
+
+  // Additional global (applied to all sensor images) post processing options on
+  // whether the image should be undistorted, cropped, resized and encoding
+  // formats.
+  optional FramePostProcessing post_processing = 4;
+
+  // Optional. For streaming `Capture` requests, sets the requested fps.
+  optional float stream_fps = 5;
+}
+
+message CaptureResponse {
+  CaptureResult capture_result = 1;
+}
+
+message GetFrameRequest {
+  // The handle of the camera from which a frame is requested.
+  string camera_handle = 1;
+
+  // The timeout which is used for retrieving frames from the underlying driver
+  // implementation. If this timeout is implemented by the underlying camera
+  // driver, it will not spend more than the specified time when waiting for new
+  // frames.
+  // The timeout should be greater than the combined exposure and processing
+  // time. Processing times can be roughly estimated as a value between 10 - 50
+  // ms. The timeout just serves as an upper limit to prevent blocking calls
+  // within the camera driver. In case of intermittent network errors users can
+  // try to increase the timeout. The default timeout (if unspecified) of 500 ms
+  // works well in common setups.
+  google.protobuf.Duration timeout = 2;
+
+  // Additional post processing options on whether the image should be
+  // undistorted, cropped, resized and encoding formats.
+  optional FramePostProcessing post_processing = 3;
+
+  // Optional. Request data only for the following sensor ids. Empty returns
+  // data from all sensors.
+  repeated int64 sensor_ids = 4;
+
+  // Optional. For streaming `GetFrame` requests, sets the requested fps.
+  optional int32 stream_fps = 5;
+}
+
+message GetFrameResponse {
+  Frame frame = 1;
+}
+
+message ReadCameraSettingPropertiesRequest {
+  // The identifier of the camera from which setting properties are read.
+  string camera_handle = 1;
+  // The setting name.
+  // The setting name must be defined by the Standard Feature Naming Conventions
+  // (SFNC) which is part of the GenICam standard.
+  string name = 2;
+}
+
+message ReadCameraSettingPropertiesResponse {
+  // The properties of a specific setting.
+  // For numeric properties (integer and float), these include the valid range
+  // of parameters, their increment and their unit. For enumerations the
+  // properties contain the values (as strings) which can be set.
+  CameraSettingProperties properties = 1;
+}
+
+message ReadCameraSettingRequest {
+  // The identifier of the camera from which setting properties are read.
+  string camera_handle = 1;
+  // The setting name.
+  // The setting name must be defined by the Standard Feature Naming Conventions
+  // (SFNC) which is part of the GenICam standard.
+  string name = 2;
+}
+
+message ReadCameraSettingResponse {
+  // The current values of a specific setting.
+  // The following types of settings are supported int64, double, bool, string
+  // or an enum value.
+  CameraSetting setting = 1;
+}
+
+message UpdateCameraSettingRequest {
+  // The identifier of the camera on which settings are updated.
+  string camera_handle = 1;
+  // The settings values which will be used to for a parameter update.
+  CameraSetting setting = 2;
+}
+
+// The response for setting camera parameters. This is currently a  mere
+// placeholder for future response values.
+message UpdateCameraSettingResponse {}
+
+message ReadCameraParamsRequest {
+  string camera_handle = 1;
+}
+
+message ReadCameraParamsResponse {
+  CameraParams camera_params = 1;
+}
+
+message UpdateCameraParamsRequest {
+  string camera_handle = 1;
+  CameraParams camera_params = 2;
+}
+
+message UpdateCameraParamsResponse {}
+
+message ClearCameraParamsRequest {
+  string camera_handle = 1;
+}
+
+message ClearCameraParamsResponse {}
+
+message DescribeCameraRequest {
+  string camera_handle = 1;
+}
+
+message DescribeCameraResponse {
+  CameraConfig camera_config = 1;
+  repeated SensorInformation sensors = 2;
+}
+
+message SensorInformation {
+  // SourceIDValue for Genicam, sensor number for other cameras (e.g. IPS PU)
+  int64 id = 1;
+  // A human readable display name.
+  string display_name = 7;
+  // Sensor intrinsic calibration parameters from factory
+  optional IntrinsicParams factory_intrinsic_params = 2;
+  // Sensor distortion parameters from factory
+  optional DistortionParams factory_distortion_params = 3;
+  // Transforms the sensor data into the reference coordinate system of the
+  // camera.
+  optional intrinsic_proto.Pose camera_t_sensor = 4;
+  // Supported pixel types
+  repeated PixelType supported_pixel_types = 5;
+  // Dimensions of sensor output
+  Dimensions dimensions = 6;
+  // Is sensor currently disabled
+  bool disabled = 8;
+}

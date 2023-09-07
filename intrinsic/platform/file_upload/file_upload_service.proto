@@ -1,0 +1,65 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+message FileInfo {
+  // Basename of the file .so file. For example, "my_custom_actions.so"
+  string filename = 1;
+}
+
+// ListFiles() request.
+message ListFilesRequest {}
+// ListFiles() response.
+message ListFilesResponse {
+  // Info about each file available to the ICON server.
+  repeated FileInfo files = 1;
+}
+
+// RemoveFiles() request.
+message RemoveFilesRequest {
+  // List of files to delete from the server.
+  repeated string filenames = 1;
+}
+// RemoveFiles() response.
+message RemoveFilesResponse {}
+
+// UploadFile() request.
+message UploadFileRequest {
+  // The file's basename on the server. For example "my_config.json". If
+  // the filename already exists on the server, it will be ovewritten.  This
+  // must not contain ".." or "/".
+  string filename = 1;
+
+  // Contents of the file binary.
+  bytes contents = 2;
+}
+
+// UploadFile() response.
+message UploadFileResponse {}
+
+// FileUploadService is used to add and manage files that are available to the
+// ICON server.
+service FileUploadService {
+  // Lists the files that are available to the ICON server, including those
+  // that have been disabled, along with their status (enabled or disabled).
+  rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
+
+  // Deletes the listed files from the server.
+  //
+  // Returns an error if a listed file is not found.
+  //
+  // In the event of an error, the result may be a partially-completed request,
+  // with only some of the listed files deleted.
+  //
+  // It is safe to delete a file that is currently in-use by a running ICON
+  // server. The server will continue running as before, and will only notice
+  // the change when restarted.
+  rpc RemoveFiles(RemoveFilesRequest) returns (RemoveFilesResponse);
+
+  // Uploads a file to the server.
+  rpc UploadFile(UploadFileRequest) returns (UploadFileResponse);
+}

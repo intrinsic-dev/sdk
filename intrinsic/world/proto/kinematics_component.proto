@@ -1,0 +1,37 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.world;
+
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/math/proto/vector3.proto";
+
+// Component indicating the owning Entity represents a DoF.
+message KinematicsComponent {
+  // Pose of the inboard coordinate frame in the parent object's space.
+  intrinsic_proto.Pose parent_t_inboard = 10;
+
+  // Type of joint.
+  enum MotionType {
+    MOTION_TYPE_UNDEFINED = 0;
+
+    // 1 DoF, rotates about the axis.
+    MOTION_TYPE_REVOLUTE = 1;
+
+    // 1 DoF, translates along the axis.
+    MOTION_TYPE_PRISMATIC = 2;
+
+    // 0 DoF, inboard and outboard transforms are always equal.
+    MOTION_TYPE_FIXED = 3;
+  }
+  MotionType motion_type = 1;
+
+  // Axis of this joint in its local space. If not set, +z is used by default.
+  intrinsic_proto.Vector3 axis = 11;
+
+  // GetDof() and SetDof()-style functions operate on this value.
+  double raw_value = 3;
+}

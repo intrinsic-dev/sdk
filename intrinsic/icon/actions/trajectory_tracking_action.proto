@@ -1,0 +1,19 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package xfa.icon.actions;
+
+import "intrinsic/icon/proto/joint_space.proto";
+
+message TrajectoryTrackingActionFixedParams {
+  // The joint position-velocity-acceleration trajectory to be played back on
+  // the robot. Time stamps must start at zero. Time stamps are not required to
+  // increase uniformly, however the trajectory is expected to be
+  // dynamically/kinematically consistent. The action does not perform
+  // additional consistency checks beyond limit checking, the system may be at
+  // risk if the input trajectory is inconsistent.
+  intrinsic_proto.icon.JointTrajectoryPVA trajectory = 1;
+}

@@ -1,0 +1,75 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+option cc_enable_arenas = true;
+option java_outer_classname = "ObjectIdProto";
+option java_package = "com.google.protos.robotics.messages";
+
+// ----------------------------------------------------------------------------
+// References to objects and coordinate frames in a simulation.
+//
+// Identify a component of a body or other entity in the scene.
+// Each such object has its own coordinate frame.
+//
+// The ObjectId can be used to identify a body, link, or joint or other
+// components in a simulation, such as sensors or coordinate frames.  The
+// meanings of the three index fields depend on the type of object and the tool
+// being used.  An object that has representations in multiple tools, such as a
+// physics simulation and a renderer, will probably require separate ObjectIds
+// for each tool.
+//
+// Here is an example of ObjectId usage for Bullet and SceneLoader:
+//
+//   WORLD              - The world frame or global coordinate system.
+//   FRAME.i            - A named frame of reference.
+//
+//   BODY.i             - The body with unique integer ID, i.
+//   LINK.i.j           - The jth link on BODY.i, where the base link is -1.
+//   VISUAL_SHAPE.i.j.k - The kth visual shape on LINK.i.j
+//   COLLISION_SHAPE.i.j.k - The kth collision shape on LINK.i.j
+//   JOINT.i.j          - The jth joint on BODY.i
+//   AXIS.i.j,k         - The kth axis on JOINT.i.j
+//
+//   SHAPE.i            - The globally defined shape with unique integer ID, i.
+//   SENSOR.i           - The sensor with unique integer ID, i.
+//   CONSTRAINT.i       - The constraint with unique integer ID, i.
+//
+// The index fields (index0, index1, and index2) correspond to the i,j,k values
+// described here.
+// ----------------------------------------------------------------------------
+message ObjectId {
+  enum ObjectType {
+    UNDEFINED = 0;
+
+    BODY = 1;             // An independent physical object.
+    LINK = 2;             // A link (a rigid piece) in a robot or assembly.
+    JOINT = 3;            // A joint between links in a robot or assembly.
+    VISUAL_SHAPE = 4;     // A shape that is part of a visual model.
+    COLLISION_SHAPE = 5;  // A shape that is part of a collision model.
+    AXIS = 6;             // An axis in a joint.
+    WORLD = 7;            // The world coordinate frame.
+    FRAME = 8;            // A named frame of reference.
+    LIGHT = 9;            // A light source.
+    SENSOR = 10;          // A camera or other sensor.
+    SHAPE = 11;           // An abstract shape that is not part of a body.
+    CONSTRAINT = 12;      // A constraint between two objects.
+    IMAGE = 13;           // An image that can be used as texture or backdrop.
+    COLLISION_FILTER =
+        14;  // A filter that enables or disables collision detection.
+  }
+  ObjectType object_type = 1;
+
+  optional int32 index0 = 2;
+  optional int32 index1 = 3;
+  optional int32 index2 = 4;
+}
+
+// A list of ObjectId.
+message ObjectIdList {
+  repeated ObjectId ids = 1;
+}

@@ -1,0 +1,21 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+namespace intrinsic.icon;
+
+struct SegmentName {
+  // Fixed size string correspondig to the max size of a
+  // POSIX shm segment plus the null-terminator.
+  // Flatbuffers don't support `char` as a datatype, however
+  // a int8 is byte compatible with C++'s signed char used by std::string.
+  value:[int8:255];
+}
+
+struct SegmentInfo {
+  size:uint32;
+  // We allow a maximum number of segment names.
+  // We have to fix it in order to make the flatbuffer
+  // a true fixed size datatype.
+  names:[SegmentName:100];
+}

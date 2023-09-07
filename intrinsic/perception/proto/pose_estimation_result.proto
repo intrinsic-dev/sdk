@@ -1,0 +1,30 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/perception/proto/image_buffer.proto";
+
+message PoseEstimate {
+  // Class id (e.g., "marker-1234").
+  string id = 1;
+
+  // Pose of the object.
+  intrinsic_proto.Pose camera_t_target = 2;
+
+  // Between 0..1. Unused in case of ground truth data.
+  double score = 3;
+}
+
+// Contains the results of a perception detector.
+message PoseEstimationResult {
+  repeated PoseEstimate pose_estimates = 1;
+
+  // Optional: Input image with overlaid pose estimations.
+  // This field will be only populated if requested in the run config.
+  ImageBuffer annotated_image = 2;
+}

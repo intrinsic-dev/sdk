@@ -1,0 +1,66 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package xfa.icon.actions.proto;
+
+// A Comparison is used to evaluate an Analog Input value with the
+// `expected_value` using `operation`.
+// The evaluation returns true if `analog_value` `operation` `expected_value`.
+// E.g. returns `true` for an `analog_value` of 1.0, an `operation` of
+// `LESS_THAN` and an `expected_value` 1.5.
+message Comparison {
+  enum OpEnum {
+    UNKNOWN = 0;
+    // APPROX_EQUAL is evaluated using an epsilon of
+    // ADIOAction::Comparison::kMaxAbsError.
+    APPROX_EQUAL = 1;
+    APPROX_NOT_EQUAL = 2;
+    LESS_THAN_OR_EQUAL = 3;
+    LESS_THAN = 4;
+    GREATER_THAN_OR_EQUAL = 5;
+    GREATER_THAN = 6;
+  }
+  // Comparison operation to perform between the Analog Input and value.
+  OpEnum operation = 1;
+
+  // Compare against this double value.
+  double expected_value = 2;
+}
+
+message AnalogInputBlock {
+  // Defines the expected state of an AnalogInputBlock. All
+  // 'index, Comparison' pairs are observed by the action.
+  // Unset indices are ignored.
+  map<uint32, Comparison> comparisons_by_index = 1;
+}
+
+message DigitalBlock {
+  // Defines the state of a DigitalBlock. All 'index,value' pairs are observed
+  // by the action. Unset indices are ignored.
+  map<uint32, bool> values_by_index = 1;
+}
+
+// Output values to set on the device.
+message SetDigitalOutputs {
+  map<string, DigitalBlock> digital_outputs = 1;
+}
+
+// All inputs need to match for the 'all_inputs_match' condition to become
+// 'true'.
+// Any inputs need to match for the 'any_inputs_match' condition to become
+// 'true'
+message AnalogDigitalInExpectations {
+  map<string, AnalogInputBlock> analog_inputs = 1;
+  map<string, DigitalBlock> digital_inputs = 2;
+}
+
+// Fixed parameters for an Analog/Digital Input/Output Action. These are
+// provided once by the user when the action is created, and remain the same for
+// the lifetime of the action.
+message ADIOFixedParams {
+  AnalogDigitalInExpectations expectations = 1;
+  SetDigitalOutputs outputs = 2;
+}

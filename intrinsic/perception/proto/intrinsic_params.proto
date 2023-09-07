@@ -1,0 +1,31 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "intrinsic/perception/proto/dimensions.proto";
+
+// Internal camera parameters such as focal length and principal point.
+message IntrinsicParams {
+  // Focal length in horizontal direction. Required.
+  // The focal length is specified in pixels.
+  double focal_length_x = 1;
+
+  // Focal length in vertical direction. Required.
+  // The focal length is specified in pixels.
+  double focal_length_y = 2;
+
+  // Horizontal location of the principal point in the image plane. Required.
+  // The principal point is specified in pixels.
+  double principal_point_x = 3;
+
+  // Vertical location of the principal point in the image plane. Required.
+  // The principal point is specified in pixels.
+  double principal_point_y = 4;
+
+  // The dimensions of the image plane.
+  Dimensions dimensions = 5;
+}

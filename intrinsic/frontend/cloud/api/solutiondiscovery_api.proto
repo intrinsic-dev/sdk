@@ -1,0 +1,50 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.frontend.v1;
+
+import "intrinsic/frontend/cloud/api/clusterdiscovery_api.proto";
+
+
+message SolutionDescription {
+  string name = 1;
+  string display_name = 2;
+  SolutionState state = 3;
+  // Name of the cluster this solution is deployed to.
+  // Only filled if solution is running.
+  string cluster_name = 4;
+}
+
+message ListSolutionDescriptionsRequest {
+  repeated SolutionState filters = 1;
+}
+
+message ListSolutionDescriptionsResponse {
+  // sorted lexicographically by solution name
+  repeated SolutionDescription solutions = 1;
+}
+
+message GetSolutionDescriptionRequest {
+  string name = 1;
+}
+
+message GetSolutionDescriptionResponse {
+  SolutionDescription solution = 1;
+}
+
+service SolutionDiscoveryService {
+  
+  
+  
+
+  // Returns a list of solutions based on the provided filter
+  rpc ListSolutionDescriptions(ListSolutionDescriptionsRequest)
+      returns (ListSolutionDescriptionsResponse) {}
+
+  // Returns information about a specific solution
+  rpc GetSolutionDescription(GetSolutionDescriptionRequest)
+      returns (GetSolutionDescriptionResponse) {}
+}

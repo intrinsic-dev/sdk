@@ -1,0 +1,21 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "google/protobuf/timestamp.proto";
+import "intrinsic/perception/proto/sensor_image.proto";
+
+// This message represents a perception CaptureResult.
+// A container for sensor images and any associated capture metadata.
+message CaptureResult {
+  // Timestamp at which the images were captured. Value matches each
+  // sensor_image's acquisition_time, and is duplicated for capture result
+  // processing convenience.
+  google.protobuf.Timestamp capture_at = 1;
+  // Images for each of the captured sensors
+  repeated SensorImage sensor_images = 2;
+}

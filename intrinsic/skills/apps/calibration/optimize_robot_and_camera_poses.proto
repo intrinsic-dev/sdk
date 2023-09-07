@@ -1,0 +1,115 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.calibration;
+
+import "intrinsic/math/proto/pose.proto";
+
+message OptimizeRobotAndCameraPosesParams {
+  // Datasets to be used as constraints in the optimizations. Note that each
+  // dataset introduces a new hidden variable (either root_t_board or
+  // flange_t_board, depending on the case).
+  repeated Dataset datasets = 1;
+  // All variables (robot poses and camera poses).
+  repeated Variable variables = 2;
+  // Scales rotation error by this factor in the pose residuals; translation
+  // error is unscaled.
+  float rotation_scale_error_factor = 3;
+  // Relative transformations that were computed by other means (e.g., a
+  // previous hand eye calibration or laser-tracker measured robot poses).
+  repeated RelativePoseConstraint relative_pose_constraints = 4;
+  // Additional constraints on a particular variable. Intended to incorporate
+  // previous hand-eye calibrations.
+  repeated AbsolutePoseConstraint absolute_pose_constraints = 5;
+}
+
+// A variable is a node in the pose graph. There variables will be optimized
+// to match the constraints provided in the datasets.
+message Variable {
+  oneof variable {
+    Robot robot = 1;
+    Camera camera = 2;
+  }
+  // false means the initial value will be kept and the variable is actually a
+  // constant.
+  bool optimize = 3;
+}
+
+message RelativePoseConstraint {
+  string name_a = 1;
+  string name_b = 2;
+  intrinsic_proto.Pose a_t_b = 3;
+  float weight = 4;
+}
+
+// Constraint of the form: variable[name] = pose.
+message AbsolutePoseConstraint {
+  string name = 1;
+  intrinsic_proto.Pose pose = 2;
+  float weight = 3;
+}
+
+message Robot {
+  string name = 1;
+  intrinsic_proto.Pose root_t_base = 2;
+}
+
+message Camera {
+  string name = 1;
+  intrinsic_proto.Pose parent_t_camera = 2;
+  // If set, the camera is attached to the robot flange.
+  optional string robot_name = 3;
+}
+
+message RobotPose {
+  string robot_name = 1;
+  intrinsic_proto.Pose base_t_flange = 2;  // known
+}
+
+message TargetPose {
+  string camera_name = 1;
+  intrinsic_proto.Pose camera_t_target = 2;
+}
+
+// Represents measurements at the same timestamp (conceptually).
+// Must contain at least one robot pose and one target pose.
+message Measurement {
+  repeated RobotPose robot_poses = 1;
+  repeated TargetPose target_poses = 2;
+}
+
+// Represents a series of measurements with the same workcell configuration
+// (meaning that within a dataset the attachment of the calibration target
+// to the workcell doesn't change, thus, resulting in a common target that
+// we can utilize within the optimization).
+// Roughly: If you go into the workcell and move the calibration target around
+// yourself with your hands then you should start a new dataset.
+// One dataset implicitly creates a hidden variable, either flange_t_target
+// or root_t_target depending on the case.
+message Dataset {
+  repeated Measurement measurements = 1;
+  // If specified, the target is attached to the robot flange (the robot with
+  // that name) which implicitly creates a variable flange_t_camera for this
+  // dataset. Leaving this field unset means that the target is staticly mounted
+  // in the world which implicitly creates a variable root_t_target for this
+  // dataset.
+  optional string target_attached_to_robot = 2;
+}
+
+message OptimizeRobotAndCameraPosesResult {
+  repeated PoseResult robot_poses = 1;
+  repeated PoseResult camera_poses = 2;
+  double error = 3;
+  string summary = 4;
+}
+
+message PoseResult {
+  // Name refers to the variable defined in the input, e.g., a robot or camera
+  // pose.
+  string name = 1;
+  // Result is always return w.r.t. root.
+  intrinsic_proto.Pose base_t_object = 2;
+}

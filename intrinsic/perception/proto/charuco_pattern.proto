@@ -1,0 +1,42 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+// Descriptor of a ChArUco pattern.
+message CharucoPattern {
+  // Number of squares of the ChArUco board in x direction.
+  int32 squares_x = 1;
+  // Number of squares of the ChArUco board in y direction.
+  int32 squares_y = 2;
+  // Length (width and height) of each square of the chessboard of the ChArUco
+  // board.
+  double square_length = 3;
+  // Length (width and height) of each ArUco marker on the ChArUco board.
+  double marker_length = 4;
+  // Dictionary for the ArUco markers that are being used.
+  ArucoDictionary dictionary = 5;
+}
+
+enum ArucoDictionary {
+  DICT_ARUCO_ORIGINAL = 0;
+  DICT_4X4_50 = 1;
+  DICT_4X4_100 = 2;
+  DICT_4X4_250 = 3;
+  DICT_4X4_1000 = 4;
+  DICT_5X5_50 = 5;
+  DICT_5X5_100 = 6;
+  DICT_5X5_250 = 7;
+  DICT_5X5_1000 = 8;
+  DICT_6X6_50 = 9;
+  DICT_6X6_100 = 10;
+  DICT_6X6_250 = 11;
+  DICT_6X6_1000 = 12;
+  DICT_7X7_50 = 13;
+  DICT_7X7_100 = 14;
+  DICT_7X7_250 = 15;
+  DICT_7X7_1000 = 16;
+}

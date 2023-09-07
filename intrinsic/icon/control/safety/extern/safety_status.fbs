@@ -1,0 +1,119 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+namespace intrinsic.safety.messages;
+
+// Describes the mode of safe operation of the robot.
+// ModesOfSafeOperation (MSO) define modes in which certain safety measures may
+// be enabled or disabled. Used to account for situations (possibly much less
+// frequent) in which some safety measures might be lifted/replaced at the cost
+// of specially trained personnel.
+// The enum values **must** be sequential and dense
+// (i.e. UNKNOWN=0, AUTOMATIC=10, TEACH_PENDANT_1=11 would be invalid)!
+enum ModeOfSafeOperation : ubyte {
+    // The operation mode is unknown. Maybe there is no safety device available.
+    UNKNOWN = 0,
+
+    // The robot is in automatic mode, which allows free movement.
+    // This is the mode in which the robot is expected to perform its trained
+    // (possibly collaborative) task.
+    AUTOMATIC = 1,
+
+    // The device is in teach pendant mode 1 (aka Manual Reduced Speed).
+    // This mode is used for training the robot under constrained conditions.
+    TEACH_PENDANT_1 = 2,
+
+    // The device is in teach pendant mode 2 (aka Manual High Speed).
+    // This mode is used for training the robot under less or even unconstrained
+    // conditions. Typpically requires personnel with more specialized training
+    // compared to TEACH_PENDANT_1.
+    TEACH_PENDANT_2 = 3,
+
+    // [Not yet implemented] The device is currently in configuration.
+    CONFIGURATION = 4,
+
+    // [Not yet implemented] The device is currently being updated (i.e. new
+    // safety firmware).
+    UPDATING = 5,
+
+}
+
+// Bitindices encoding a specific input to the safety system.
+// A `true` bit encodes that the corresponding input is active/engaged.
+enum InputStatusIndex : ubyte {
+  // We don't know or cannot evaluate whether any of the inputs is engaged.
+  UNKNOWN = 0,
+
+  // The status of an enable input, i.e. the state of an enable button in T1
+  // mode.
+  ENABLE = 1,
+
+  // Acknowledgement is given, i.e. the state of a dedicated acknowledge button.
+  ACKNOWLEDGE = 2,
+
+  // The safety system is awaiting acknowledgement from the user.
+  AWAITING_ACKNOWLEDGE = 4,
+
+  // The device is E-Stopped (emergency stop).
+  EMERGENCY_STOP = 8,
+
+  // The device is P-Stopped (protective stop)
+  PROTECTIVE_STOP = 16,
+}
+
+// Enum encoding the behavior that the safety system requests from ICON.
+enum RequestedBehavior : byte {
+  // We don't (yet) know if any behavior is requested.
+  UNKNOWN = 0,
+
+  // Normal operation: The robot may move.
+  NORMAL_OPERATION = 1,
+
+  // SS1: The robot is expected to perform a controlled stop within a time
+  // window derived from the risk analysis. Once the window closes the robot
+  // will perform a hardware stop.
+  // Used to be called HARDWARE_STOP_TIME_MONITORED.
+  SAFE_STOP_1_TIME_MONITORED = 2,
+
+  // SS2: The robot is expected to perform a controlled stop within a time
+  // window derived from the risk analysis and is expected to maintain the stop
+  // position actively controlled.
+  // Used to be called CONTROLLED_STOP_TIME_MONITORED.
+  SAFE_STOP_2_TIME_MONITORED = 3,
+
+  // SS0: The robot is performing a hardware stop maneuver, aka STO (Safe Torque
+  // Off)/SBC (Safe Brake Control).
+  SAFE_STOP_0 = 4,
+
+}
+
+// Basic version of the safety status used to read the version of the interface.
+// See README.md for more details about the schema evolution!
+struct SafetyStatusVersion {
+  // The semantic version of this interface.
+  // Required in all versions of the safety status interface.
+  version : ubyte;
+}
+
+// Version 1 of the safety status, used for the gold release of the safety
+// software.
+struct SafetyStatusVersion1 {
+  // The semantic version of this interface.
+  // Must always be 1 for instances of this version of the struct.
+  version : ubyte;
+  // The alive counter will be incremented at each cycle.
+  alive_counter : ubyte;
+  // A bit field indicating the active/engaged status of relevant inputs.
+  // See `enum InputStatus`.
+  input_status : ubyte;
+  // The current mode of safe operation.
+  mode_of_safe_operation : ModeOfSafeOperation;
+  // A bit field marking the completion of relevant stages during the execution
+  // of the safety software.
+  tracepoints : uint;
+  // A bit field indicating the behavior that the safety software expects from
+  // the non-safe controller, see `enum RequestedBehavior`.
+  requested_behavior : RequestedBehavior;
+}
+

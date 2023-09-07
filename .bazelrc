@@ -1,0 +1,52 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+# C++ toolchain
+# Recommended by https://github.com/grailbio/bazel-toolchain/blob/0.7.2/README.md
+build --incompatible_enable_cc_toolchain_resolution
+
+# Always use the pre-configured toolchain.
+build --action_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+
+# Use a static value for `PATH` and does not inherit `LD_LIBRARY_PATH`. Doesn't let environment
+# variables like `PATH` sneak into the build, which can cause massive cache misses when they change.
+# Use `--action_env=ENV_VARIABLE` if you want to inherit specific environment variables from the
+# client, but note that doing so can prevent cross-user caching if a shared cache is used.
+# Docs: https://bazel.build/reference/command-line-reference#flag--incompatible_strict_action_env
+build --incompatible_strict_action_env
+
+# Silences spurious warnings like:
+# `bazel-out/k8-fastbuild/bin/external/com_github_grpc_grpc/external/com_github_grpc_grpc: warning: directory does not exist`
+build --incompatible_generated_protos_in_virtual_imports
+build --incompatible_default_to_explicit_init_py
+
+# Set a higher timeout value, just in case.
+build --remote_timeout=3600
+
+# To keep bazel-bin, bazel-testlogs symlinks when building targets that self transition,
+# e.g. `container_image` from rules_docker. This is a temporary workaround until
+# the Bazel team changes the flag to be less intrusive or decides to keep it around, see
+# https://github.com/bazelbuild/bazel/issues/17081.
+build --use_top_level_targets_for_symlinks=false
+
+build:remote       --remote_executor=grpcs://remotebuildexecution.googleapis.com
+build:remote_cache --remote_cache=grpcs://remotebuildexecution.googleapis.com
+
+# Enable authentication. This will pick up application default credentials by
+# default. You can use --google_credentials=some_file.json to use a service
+# account credential instead.
+build:remote       --google_default_credentials=true
+build:remote_cache --google_default_credentials=true
+
+# Platform flags
+# The toolchain container used for execution is defined in the target indicated
+# by "extra_execution_platforms", "host_platform" and "platforms".
+# More about platforms: https://docs.bazel.build/versions/master/platforms.html
+build:remote --extra_execution_platforms=//bazel/rbe_config/config:platform
+build:remote --extra_toolchains=//bazel/rbe_config/java:all
+build:remote --host_platform=//bazel/rbe_config/config:platform
+build:remote --java_runtime_version=rbe_jdk
+build:remote --platforms=//bazel/rbe_config/config:platform
+build:remote --tool_java_runtime_version=rbe_jdk
+build:remote --define=EXECUTOR=remote

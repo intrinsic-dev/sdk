@@ -1,0 +1,16 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+import "intrinsic/kinematics/types/joint_limits.proto";
+
+message LoopbackConfig {
+  // The joint limits for the arm.  The number of degrees of the module will be
+  // dynamically set by the number of values provided in this message (though
+  // that, naturally, will need to match the controlled equipment).
+  intrinsic_proto.JointLimits joint_limits = 1;
+}

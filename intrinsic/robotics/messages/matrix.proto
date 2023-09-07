@@ -1,0 +1,101 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+// Double precision matrix.
+message Matrixd {
+  int32 rows = 1;
+  int32 cols = 2;
+  repeated double data = 3 [packed = true];
+  bool column_major = 4;  // Default is row-major order.
+}
+
+// Single precision matrix.
+message Matrixf {
+  int32 rows = 1;
+  int32 cols = 2;
+  repeated float data = 3 [packed = true];
+  bool column_major = 4;  // Default is row-major order.
+}
+
+// Square matrices with fixed size.
+
+message Matrix2d {
+  double m00 = 1;
+  double m01 = 2;
+  double m10 = 3;
+  double m11 = 4;
+}
+
+message Matrix2f {
+  float m00 = 1;
+  float m01 = 2;
+  float m10 = 3;
+  float m11 = 4;
+}
+
+message Matrix3d {
+  double m00 = 1;
+  double m01 = 2;
+  double m02 = 3;
+  double m10 = 4;
+  double m11 = 5;
+  double m12 = 6;
+  double m20 = 7;
+  double m21 = 8;
+  double m22 = 9;
+}
+
+message Matrix3f {
+  float m00 = 1;
+  float m01 = 2;
+  float m02 = 3;
+  float m10 = 4;
+  float m11 = 5;
+  float m12 = 6;
+  float m20 = 7;
+  float m21 = 8;
+  float m22 = 9;
+}
+
+message Matrix4d {
+  double m00 = 1;
+  double m01 = 2;
+  double m02 = 3;
+  double m03 = 4;
+  double m10 = 5;
+  double m11 = 6;
+  double m12 = 7;
+  double m13 = 8;
+  double m20 = 9;
+  double m21 = 10;
+  double m22 = 11;
+  double m23 = 12;
+  double m30 = 13;
+  double m31 = 14;
+  double m32 = 15;
+  double m33 = 16;
+}
+
+message Matrix4f {
+  float m00 = 1;
+  float m01 = 2;
+  float m02 = 3;
+  float m03 = 4;
+  float m10 = 5;
+  float m11 = 6;
+  float m12 = 7;
+  float m13 = 8;
+  float m20 = 9;
+  float m21 = 10;
+  float m22 = 11;
+  float m23 = 12;
+  float m30 = 13;
+  float m31 = 14;
+  float m32 = 15;
+  float m33 = 16;
+}

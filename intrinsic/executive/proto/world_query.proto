@@ -1,0 +1,53 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+import "intrinsic/world/proto/object_world_refs.proto";
+
+// Specification to retrieve data from the world.
+// Used in BehaviorTree.DataNode.
+message WorldQuery {
+  // Selection criteria for elements to return.
+  message Query {
+    oneof query_type {
+      // Fills for_each with intrinsic_proto.world.FrameReference from the
+      // immediate child frames of the given ObjectReference.
+      intrinsic_proto.world.ObjectReference child_frames_of = 1;
+      // Fills for_each with intrinsic_proto.world.ObjectReference from the
+      // immediate child objects of the given ObjectReference.
+      intrinsic_proto.world.ObjectReference child_objects_of = 2;
+      // Fills for_each with intrinsic_proto.world.TransformNodeReference from
+      // the immediate child frames or objects of the given ObjectReference.
+      intrinsic_proto.world.ObjectReference children_of = 3;
+    }
+  }
+
+  // Filtering specifications for output.
+  message Filter {
+    oneof filter_type {
+      string name_regex = 1;
+    }
+  }
+
+  // Order criteria for output.
+  message Order {
+    enum Criterion {
+      SORT_ORDER_UNSPECIFIED = 0;
+      NAME = 1;
+    }
+    enum Direction {
+      ASCENDING = 0;
+      DESCENDING = 1;
+    }
+    Criterion by = 1;
+    Direction direction = 2;
+  }
+
+  Query select = 1;
+  optional Filter filter = 2;
+  optional Order order = 3;
+}

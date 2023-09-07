@@ -1,0 +1,89 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.resources;
+
+// This service implements a simple key-value store. This store is used to hold
+// runtime data for resources used in an application. Key-value pairs will live
+// until they are deleted. Typically, this store is wiped clean before an
+// application is deployed. There is support for namespacing via the bucket
+// field in each request message. For now, a single bucket will be used to hold
+// all resource data. We provide namespacing support in case this store is
+// needed for another use case in the future.
+//
+// Please note that this DB does not properly support mutable entries. Two Put
+// requests for the same key and bucket may result in having either the first or
+// second value stored unless additional synchronization is handled by clients.
+// A future implementation using revision tokens will better handle this use
+// case.
+service RuntimeDb {
+  // Put adds an element to the DB.
+  rpc Put(PutRequest) returns (PutResponse) {}
+
+  // Get retrieves an element from the DB. Note that if a Get and Delete request
+  // come in at the same time (for the same key and bucket), the data may have
+  // been deleted before the Get could retrieve its value.
+  rpc Get(GetRequest) returns (GetResponse) {}
+
+  // List returns all elements from the DB. Note that a subsequent Get request
+  // may return NotFound if a Delete request was received in between.
+  rpc List(ListRequest) returns (ListResponse) {}
+
+  // Delete removes an element from the DB.
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+
+  // Clear removes all entries from the DB.
+  rpc Clear(ClearRequest) returns (ClearResponse) {}
+}
+
+message PutRequest {
+  // The bucket (namespace) to put this entry into. Collisions only occur when
+  // the same key is referenced in the same bucket. In that case, the old data
+  // will be overwritten with the new value.
+  string bucket = 1;
+  string key = 2;
+  // The value to store. The maximum data size is limited by the underlying
+  // bolt DB implementation (~ 2GB) and the size of the DB file on disk.
+  bytes value = 3;
+}
+
+message PutResponse {}
+
+message GetRequest {
+  // The bucket (namespace) to pull this entry from.
+  string bucket = 1;
+  string key = 2;
+}
+
+message GetResponse {
+  bytes value = 1;
+}
+
+message ListRequest {
+  // The bucket (namespace) to list all entries from.
+  string bucket = 1;
+}
+
+message ListResponse {
+  repeated string keys = 1;
+}
+
+message DeleteRequest {
+  // The bucket (namespace) to delete.
+  string bucket = 1;
+  // The key to delete. Note that deleting a key that does not exist will still
+  // return an OK status.
+  string key = 2;
+}
+
+message DeleteResponse {}
+
+message ClearRequest {
+  // The bucket (namespace) to clear.
+  string bucket = 1;
+}
+
+message ClearResponse {}

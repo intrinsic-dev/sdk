@@ -1,0 +1,178 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.data_logger;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+import "intrinsic/logging/proto/log_item.proto";
+
+// Note: We have the nesting here to emulate class enum functionality.
+message LogItemView {
+  enum LogItemViewEnum {
+    // The default / unset value.
+    // The API will default to the FULL view.
+    UNSPECIFIED = 0;
+
+    // Metadata and context, no payloads.
+    BASIC = 1;
+
+    // All data, including blobs.
+    FULL = 2;
+  }
+}
+
+message LogRequest {
+  intrinsic_proto.data_logger.LogItem item = 1;
+}
+
+message LogOptions {
+  // If set to 'true', logs are synched to the cloud.
+  optional bool sync_active = 1;
+
+  // The size of the on_prem buffer for LogItems
+  optional int32 max_buffer_size = 2;
+}
+
+message ListLogSourcesResponse {
+  repeated string event_sources = 1;
+}
+
+message GetLogItemsRequest {
+  // Leaving unset will be treated as if start_time = 5 minutes ago.
+  oneof start_condition {
+    // Return LogItems whose acquisition time is greater than or equal to this.
+    // Uses the index to find a reasonable starting position for reading the log
+    // files.
+    google.protobuf.Timestamp start_time = 1;
+
+    // Returned in GetLogItemsResponse to continue where the previous call left
+    // off. Opaque to the client. If the data being requested has already
+    // been garbage collected (happens to data older than --file_ttl), returns
+    // items starting at the beginning of the available data.
+    bytes cursor = 2;
+  }
+  // Return log items until encountering one with a timestamp greater than this.
+  google.protobuf.Timestamp end_time = 3;
+  // Only LogItems whose event_source matches one of these will be returned.
+  // NOTE: Specifying multiple event_sources in a single request is deprecated.
+  // http://cs/symbol:intrinsic_proto.data_logger.LogItem.metadata.event_source.
+  repeated string event_sources = 4;
+
+  reserved 5, 6;
+
+  // Maximum number of items to return.
+  // If unspecified, defaults to 10000.
+  int32 max_num_items = 7;
+
+  // Optional downsampling parameter.
+  // The duration in milliseconds between subsequent LogItems to return.
+  int32 sampling_period_ms = 8;
+}
+
+message GetLogItemsResponse {
+  // The LogItems that matched the criteria.
+  repeated intrinsic_proto.data_logger.LogItem log_items = 1;
+
+  // Can be passed in to GetLogItems to read starting at the LogItem that comes
+  // after the last element of `log_items` in the log files. This can be used,
+  // for example, when polling for recent data to avoid overlaps or gaps in the
+  // windows of data that are returned. Opaque to the client.
+  bytes cursor = 2;
+
+  // If true, the response doesn't contain all available data in the requested
+  // time window. In that case only data up until
+  // that point is returned, and the client can continue reading by passing
+  // cursor to another call.
+  bool truncated = 3;
+
+  // A descriptor of what caused the truncation. Typically when the response
+  // grew too large, exceeding the maximum number of items, or the response
+  // threshold in bytes.
+  string truncation_cause = 4;
+}
+
+message GetMostRecentItemRequest {
+  // The event_source to return the most recent LogItem for.
+  string event_source = 1;
+}
+
+message GetMostRecentItemResponse {
+  // The most recently logged LogItem for the event_source.
+  intrinsic_proto.data_logger.LogItem item = 1;
+}
+
+message SetLogOptionsRequest {
+  // The even source for which the synchronization options are set.
+  string event_source = 1;
+
+  // The actual log options which are being set.
+  LogOptions log_options = 2;
+}
+
+message SetLogOptionsResponse {}
+
+message GetLogOptionsRequest {
+  // The event source for which log synching options are being queried.
+  string event_source = 1;
+}
+
+message GetLogOptionsResponse {
+  // The log options of the requested event source.
+  LogOptions log_options = 1;
+}
+
+message SyncRequest {
+  // The event_sources to sync and rotate LogItems for.
+  repeated string event_sources = 1;
+
+  // If true, requests to sync and rotate logs of all event sources
+  bool sync_all = 2;
+}
+
+message SyncResponse {
+  // The event_sources successfully synced and rotated LogItems for.
+  repeated string event_sources = 1;
+}
+
+// Service to persistently store and retrieve structured data on-prem.
+// Data is buffered locally on disk and uploaded to the cloud in the background.
+service DataLogger {
+  
+  
+
+  // Dispatches one log item to the data logger.
+  rpc Log(LogRequest) returns (google.protobuf.Empty) {}
+
+  // Returns a list of `event_source` that can be requested using GetLogItems.
+  rpc ListLogSources(google.protobuf.Empty) returns (ListLogSourcesResponse) {}
+
+  // Reads the log files seqentially, performing basic filtering and sampling.
+  // The response contains a field 'cursor', whose value can be passed in to
+  // continue reading in the next call where this call left off.
+  // The response will contain log items from request.start_time until one of:
+  //   - response has a log item with timestamp > min(request.end_time, now)
+  //   - the end of the logged data has been reached
+  //   - the response size has reached 1GB
+  rpc GetLogItems(GetLogItemsRequest) returns (GetLogItemsResponse) {}
+
+  // Returns the most recent LogItem that has been logged for the given event
+  // source, from an in-memory cache. If no LogItem with a matching event_source
+  // has been logged since --file_ttl, then NOT_FOUND will be returned instead.
+  rpc GetMostRecentItem(GetMostRecentItemRequest)
+      returns (GetMostRecentItemResponse) {}
+
+  // Sets log options for a specific event source.
+  rpc SetLogOptions(SetLogOptionsRequest) returns (SetLogOptionsResponse) {}
+
+  // Returns log options for a specific event source. If no user defined options
+  // have been specified, the call returns NOT_FOUND status.
+  rpc GetLogOptions(GetLogOptionsRequest) returns (GetLogOptionsResponse) {}
+
+  // Flushes all remaining LogItems
+  rpc SyncAndRotateLogs(SyncRequest) returns (SyncResponse) {}
+}

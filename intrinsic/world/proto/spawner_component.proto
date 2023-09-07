@@ -1,0 +1,21 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.world;
+
+import "intrinsic/math/proto/vector3.proto";
+
+// Component indicating how the owning Entity (or the object/collection
+// represented by the owning entity) should expect new objects to be spawned in
+// simulation.
+message SpawnerComponent {
+  // The product that will be spawned by this spawner.
+  string product_part_name = 1;
+
+  // The extents of the axis-aligned bounding box that define the
+  // volume for this spawner.
+  intrinsic_proto.Vector3 bounds = 2;
+}

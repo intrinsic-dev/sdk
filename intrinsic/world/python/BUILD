@@ -1,0 +1,94 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+
+# Libraries for the Python object world client.
+
+package(default_visibility = [
+    "//visibility:public",
+])
+
+py_library(
+    name = "object_world_resources",
+    srcs = ["object_world_resources.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":object_world_ids",
+        "//intrinsic/kinematics/types:joint_limits_py_pb2",
+        "//intrinsic/math/python:data_types",
+        "//intrinsic/math/python:proto_conversion",
+        "//intrinsic/util/grpc:error_handling",
+        "//intrinsic/world/proto:object_world_refs_py_pb2",
+        "//intrinsic/world/proto:object_world_service_py_pb2",
+        "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
+        "//intrinsic/world/proto:object_world_updates_py_pb2",
+    ],
+)
+
+py_test(
+    name = "object_world_resources_test",
+    srcs = ["object_world_resources_test.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":object_world_ids",
+        ":object_world_resources",
+        "//intrinsic/kinematics/types:joint_limits_py_pb2",
+        "//intrinsic/world/proto:object_world_refs_py_pb2",
+        "//intrinsic/world/proto:object_world_service_py_pb2",
+        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_protobuf//:protobuf_python",
+        requirement("numpy"),
+    ],
+)
+
+py_library(
+    name = "object_world_ids",
+    srcs = ["object_world_ids.py"],
+    srcs_version = "PY3",
+)
+
+py_test(
+    name = "object_world_ids_test",
+    srcs = ["object_world_ids_test.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":object_world_ids",
+        "@com_google_absl_py//absl/testing:absltest",
+    ],
+)
+
+py_library(
+    name = "object_world_client",
+    srcs = ["object_world_client.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":object_world_ids",
+        ":object_world_resources",
+        "//intrinsic/kinematics/types:joint_limits_py_pb2",
+        "//intrinsic/math/python:data_types",
+        "//intrinsic/math/python:proto_conversion",
+        "//intrinsic/skills/proto:equipment_py_pb2",
+        "//intrinsic/util/grpc:error_handling",
+        "//intrinsic/world/proto:geometry_component_py_pb2",
+        "//intrinsic/world/proto:object_world_refs_py_pb2",
+        "//intrinsic/world/proto:object_world_service_py_pb2",
+        "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
+        "//intrinsic/world/proto:object_world_updates_py_pb2",
+        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+    ],
+)
+
+py_test(
+    name = "object_world_client_external_test",
+    srcs = ["object_world_client_external_test.py"],
+    deps = [
+        ":object_world_client",
+        ":object_world_ids",
+        "//intrinsic/world/proto:object_world_service_py_pb2",
+        "@com_google_absl_py//absl/testing:absltest",
+    ],
+)

@@ -1,0 +1,20 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+import "google/longrunning/operations.proto";
+
+// Message to log the executive state.
+message ExecutiveState {
+  // The operations active in the executive.
+  repeated google.longrunning.Operation operations = 15;
+
+  reserved "domain", "plan", "world", "action_states", "mode", "state", "tree",
+      "world_id", "log_context", "execution_mode", "simulation_mode",
+      "skill_trace_handling", "tracing_info";
+  reserved 5, 2, 4, 3, 8, 1, 9, 7, 6, 13, 14, 12, 11;
+}

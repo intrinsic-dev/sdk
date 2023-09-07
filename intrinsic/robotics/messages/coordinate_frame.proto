@@ -1,0 +1,40 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto2";
+
+package robotics.messages;
+
+import "google/protobuf/timestamp.proto";
+import "intrinsic/robotics/messages/array_format.proto";
+
+message CoordinateFrameId {
+  optional string name = 1;
+  optional uint64 index = 2;
+}
+
+// An isometric affine transformation in 3D.
+message Isometry3d {
+  repeated double translation = 1
+      [packed = true, (.robotics.messages.array_format) = { shape: [ 3 ] }];
+  // A Hamiltonian quaternion.
+  repeated double quaternion_xyzw = 2
+      [packed = true, (.robotics.messages.array_format) = { shape: [ 4 ] }];
+
+  repeated double matrix = 3
+      [packed = true, (.robotics.messages.array_format) = { shape: [ 4, 4 ] }];
+}
+
+message CoordinateFrameTransform3d {
+  // Isometric transformation from the source/src coordinate system to the
+  // destination/dst coordinate system.
+  optional Isometry3d dst_transform_src = 1;
+
+  // IDs of the source and destination of the given transformation.
+  optional CoordinateFrameId dst = 2;
+  optional CoordinateFrameId src = 3;
+
+  // Optional timestamp of the given transformation.
+  optional google.protobuf.Timestamp timestamp = 4;
+}

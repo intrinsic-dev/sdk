@@ -1,0 +1,29 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.geometry;
+
+import "intrinsic/geometry/proto/axis_aligned_bounding_box.proto";
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/math/proto/vector3.proto";
+
+// Generic oriented bounding box for the n-dimensional case.
+// For 3D, use specialized types (see below).
+// Note that the number of dimensions is only implicitly encoded in the
+// axis_aligned_box.
+message OrientedBoundingBox {
+  geometry.AxisAlignedBoundingBox axis_aligned_box = 1;
+  // Pose of the box frame in the reference frame.
+  intrinsic_proto.Pose ref_t_box = 2;
+}
+
+// An oriented 3-D bounding box
+message OrientedBoundingBox3 {
+  // Full-length dimensions of the bounding box.
+  intrinsic_proto.Vector3 dimensions = 1;
+  // Pose of the center of the box in the reference frame.
+  intrinsic_proto.Pose ref_t_box = 2;
+}

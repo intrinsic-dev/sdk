@@ -1,0 +1,619 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+# This directory should contain code that is used internally to our platform.
+# Some files may still be exported as part of the Skills SDK, but they should
+# not needed to be included directly when authoring a Skill.
+
+load("//bazel:go_macros.bzl", "go_library", "go_test")
+load("@io_bazel_rules_docker//python3:image.bzl", "py3_image")
+load("@rules_python//python:defs.bzl", "py_library")
+load("@rules_python//python:packaging.bzl", "py_package", "py_wheel")
+load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+load("//intrinsic/util/proto/build_defs:descriptor_set.bzl", "proto_source_code_info_transitive_descriptor_set")
+
+package(default_visibility = ["//intrinsic/skills:__subpackages__"])
+
+exports_files(
+    [
+        "module_skill_service_main.py",
+        "templates/skill_image_builder.yaml",
+    ],
+    visibility = [
+        "//visibility:public",
+    ],
+)
+
+cc_library(
+    name = "default_parameters",
+    srcs = ["default_parameters.cc"],
+    hdrs = ["default_parameters.h"],
+    deps = [
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/types:span",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+py_library(
+    name = "default_parameters_py",
+    srcs = ["default_parameters.py"],
+    data = [
+        ":error_bindings.so",
+        "@pybind11_abseil//pybind11_abseil:status.so",
+    ],
+    srcs_version = "PY3",
+    deps = ["@com_google_protobuf//:protobuf_python"],
+)
+
+cc_library(
+    name = "equipment_utilities",
+    srcs = ["equipment_utilities.cc"],
+    hdrs = ["equipment_utilities.h"],
+    deps = [
+        "//intrinsic/skills/proto:equipment_cc_proto",
+        "//intrinsic/skills/proto:footprint_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "error_utils",
+    srcs = ["error_utils.cc"],
+    hdrs = ["error_utils.h"],
+    deps = [
+        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/skills/proto:error_cc_proto",
+        "@com_github_grpc_grpc//:grpc++_error_details",
+        "@com_github_grpc_grpc//:grpc++_public_hdrs",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:cord",
+        "@com_google_googleapis//google/rpc:status_cc_proto",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+py_library(
+    name = "error_utils_py",
+    srcs = ["error_utils.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    srcs_version = "PY3",
+    deps = [
+        "//intrinsic/skills/proto:error_py_pb2",
+        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        "@com_google_googleapis//google/rpc:status_py_proto",
+    ],
+)
+
+pybind_extension(
+    name = "error_bindings",
+    srcs = ["error_bindings.cc"],
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@pybind11_abseil//pybind11_abseil:status_casters",
+    ],
+)
+
+py_library(
+    name = "module_utils",
+    srcs = ["module_utils.py"],
+    srcs_version = "PY3",
+)
+
+cc_library(
+    name = "execution_context_impl",
+    srcs = ["execution_context_impl.cc"],
+    hdrs = ["execution_context_impl.h"],
+    deps = [
+        ":canceller",
+        ":skill_registry_client_interface",
+        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/logging/proto:context_cc_proto",
+        "//intrinsic/motion_planning:motion_planner_client",
+        "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
+        "//intrinsic/skills/cc:equipment_pack",
+        "//intrinsic/skills/cc:skill_interface",
+        "//intrinsic/skills/proto:equipment_cc_proto",
+        "//intrinsic/skills/proto:footprint_cc_proto",
+        "//intrinsic/skills/proto:skill_service_cc_proto",
+        "//intrinsic/skills/proto:skills_cc_proto",
+        "//intrinsic/world/objects:object_world_client",
+        "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
+        "@com_github_grpc_grpc//:grpc++_public_hdrs",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_library(
+    name = "canceller",
+    srcs = ["canceller.cc"],
+    hdrs = ["canceller.h"],
+    deps = [
+        "//intrinsic/icon/release:status_helpers",
+        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+py_library(
+    name = "module_skill_service",
+    srcs = ["module_skill_service.py"],
+    srcs_version = "PY3",
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        ":module_utils",
+        ":skill_init_py",
+        "//intrinsic/skills/proto:skill_service_config_py_pb2",
+        "//intrinsic/skills/python:skill_interface",
+        "//intrinsic/skills/testing:map_skill_repository_py",
+        "@com_google_absl_py//absl:app",
+        "@com_google_absl_py//absl/flags",
+    ],
+)
+
+py_library(
+    name = "skill_service_impl_py",
+    srcs = ["skill_service_impl.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    srcs_version = "PY3",
+    deps = [
+        ":default_parameters_py",
+        ":error_utils_py",
+        ":runtime_data_py",
+        ":skill_repository_py",
+        "//intrinsic/assets:id_utils_py",
+        "//intrinsic/motion_planning/proto:motion_planner_service_py_pb2_grpc",
+        "//intrinsic/skills/proto:error_py_pb2",
+        "//intrinsic/skills/proto:footprint_py_pb2",
+        "//intrinsic/skills/proto:prediction_py_pb2",
+        "//intrinsic/skills/proto:skill_service_py_pb2",
+        "//intrinsic/skills/proto:skill_service_py_pb2_grpc",
+        "//intrinsic/skills/proto:skills_py_pb2",
+        "//intrinsic/skills/python:proto_utils",
+        "//intrinsic/skills/python:skill_interface",
+        "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
+        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        "@com_google_absl_py//absl/logging",
+        "@com_google_googleapis//google/longrunning:longrunning_py_proto",
+        "@com_google_googleapis//google/rpc:status_py_proto",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_library(
+    name = "proto_utils",
+    srcs = ["proto_utils.py"],
+    data = [
+        "//intrinsic/util/proto:source_code_info_view_py.so",
+        "@pybind11_abseil//pybind11_abseil:status.so",
+    ],
+    srcs_version = "PY3",
+    deps = [
+        "//intrinsic/assets:id_utils_py",
+        "//intrinsic/skills/proto:skill_manifest_py_pb2",
+        "//intrinsic/skills/proto:skill_registry_config_py_pb2",
+        "//intrinsic/skills/proto:skills_py_pb2",
+        "//intrinsic/skills/python:skill_interface",
+        "//intrinsic/util/proto:descriptors_py",
+        "@com_google_absl_py//absl/logging",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+cc_library(
+    name = "skill_repository",
+    hdrs = ["skill_repository.h"],
+    deps = [
+        ":runtime_data",
+        "//intrinsic/skills/cc:skill_interface",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "registerer_skill_repository",
+    srcs = ["registerer_skill_repository.cc"],
+    hdrs = ["registerer_skill_repository.h"],
+    deps = [
+        ":runtime_data",
+        ":skill_repository",
+        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/skills/cc:skill_interface",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+# Link this library with your chosen skill libraries to create a binary that
+# serves those skills.
+cc_library(
+    name = "registerer_skill_service_main",
+    srcs = ["registerer_skill_service_main.cc"],
+    # This visibility is needed when building a skill service, because
+    # the users will link this target (through the provided BUILD rules)
+    # to provide the main.
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        ":registerer_skill_repository",
+        ":skill_init",
+        "//intrinsic/icon/release/portable:init_xfa_absl",
+        "//intrinsic/util/grpc",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/time",
+        # This is needed when using grpc_cli.
+        "@com_github_grpc_grpc//:grpc++_reflection",
+    ],
+)
+
+py_library(
+    name = "skill_repository_py",
+    srcs = ["skill_repository.py"],
+    deps = [
+        ":runtime_data_py",
+        "//intrinsic/skills/python:skill_interface",
+    ],
+)
+
+cc_library(
+    name = "runtime_data",
+    srcs = ["runtime_data.cc"],
+    hdrs = ["runtime_data.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//intrinsic/assets:id_utils",
+        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/skills/cc:skill_interface",
+        "//intrinsic/skills/proto:equipment_cc_proto",
+        "//intrinsic/skills/proto:skill_service_config_cc_proto",
+        "//intrinsic/skills/proto:skills_cc_proto",
+        "//intrinsic/util:proto_time",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:span",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+py_library(
+    name = "runtime_data_py",
+    srcs = ["runtime_data.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//intrinsic/assets:id_utils_py",
+        "//intrinsic/skills/proto:equipment_py_pb2",
+        "//intrinsic/skills/proto:skill_service_config_py_pb2",
+        "//intrinsic/skills/proto:skills_py_pb2",
+        "//intrinsic/skills/python:skill_interface",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+cc_library(
+    name = "single_skill_factory",
+    srcs = ["single_skill_factory.cc"],
+    hdrs = ["single_skill_factory.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":runtime_data",
+        ":skill_repository",
+        "//intrinsic/assets:id_utils",
+        "//intrinsic/skills/cc:skill_interface",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+py_library(
+    name = "single_skill_factory_py",
+    srcs = ["single_skill_factory.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":runtime_data_py",
+        ":skill_repository_py",
+        "//intrinsic/assets:id_utils_py",
+        "//intrinsic/skills/python:skill_interface",
+        "//intrinsic/util:decorators",
+    ],
+)
+
+cc_library(
+    name = "skill_init",
+    srcs = ["skill_init.cc"],
+    hdrs = ["skill_init.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":skill_proto_utils",
+        ":skill_registry_client",
+        ":skill_repository",
+        ":skill_service_impl",
+        "//intrinsic/icon/release:file_helpers",
+        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/logging:data_logger_client",
+        "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
+        "//intrinsic/skills/cc:skill_interface",
+        "//intrinsic/skills/proto:skill_service_config_cc_proto",
+        "//intrinsic/skills/proto:skills_cc_proto",
+        "//intrinsic/util/grpc",
+        "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_github_grpc_grpc//:grpc_security_base",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+py_library(
+    name = "skill_init_py",
+    srcs = ["skill_init.py"],
+    srcs_version = "PY3",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":proto_utils",
+        ":skill_repository_py",
+        ":skill_service_impl_py",
+        "//intrinsic/motion_planning/proto:motion_planner_service_py_pb2_grpc",
+        "//intrinsic/skills/proto:skill_service_config_py_pb2",
+        "//intrinsic/skills/proto:skill_service_py_pb2_grpc",
+        "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
+        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        "@com_google_absl_py//absl/logging",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+cc_library(
+    name = "skill_service_impl",
+    srcs = ["skill_service_impl.cc"],
+    hdrs = ["skill_service_impl.h"],
+    deps = [
+        ":canceller",
+        ":default_parameters",
+        ":equipment_utilities",
+        ":error_utils",
+        ":execution_context_impl",
+        ":projection_context_impl",
+        ":skill_registry_client_interface",
+        ":skill_repository",
+        "//intrinsic/assets:id_utils",
+        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
+        "//intrinsic/skills/cc:equipment_pack",
+        "//intrinsic/skills/cc:skill_interface",
+        "//intrinsic/skills/proto:error_cc_proto",
+        "//intrinsic/skills/proto:skill_service_cc_grpc_proto",
+        "//intrinsic/skills/proto:skill_service_cc_proto",
+        "//intrinsic/skills/proto:skills_cc_proto",
+        "//intrinsic/util/thread",
+        "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
+        "@com_github_grpc_grpc//:grpc++_public_hdrs",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
+        "@com_google_googleapis//google/longrunning:longrunning_cc_proto",
+        "@com_google_googleapis//google/rpc:status_cc_proto",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
+    name = "skill_registry_client",
+    srcs = ["skill_registry_client.cc"],
+    hdrs = ["skill_registry_client.h"],
+    deps = [
+        ":skill_registry_client_interface",
+        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/skills/cc:client_common",
+        "//intrinsic/skills/cc:equipment_pack",
+        "//intrinsic/skills/proto:behavior_tree_registry_cc_grpc_proto",
+        "//intrinsic/skills/proto:behavior_tree_registry_internal_cc_grpc_proto",
+        "//intrinsic/skills/proto:equipment_cc_proto",
+        "//intrinsic/skills/proto:skill_registry_cc_grpc_proto",
+        "//intrinsic/skills/proto:skill_registry_cc_proto",
+        "//intrinsic/skills/proto:skill_registry_config_cc_proto",
+        "//intrinsic/skills/proto:skill_registry_internal_cc_grpc_proto",
+        "//intrinsic/skills/proto:skill_registry_internal_cc_proto",
+        "//intrinsic/skills/proto:skills_cc_proto",
+        "//intrinsic/util/grpc",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
+    name = "skill_registry_client_interface",
+    hdrs = ["skill_registry_client_interface.h"],
+    deps = [
+        "//intrinsic/skills/cc:equipment_pack",
+        "//intrinsic/skills/proto:equipment_cc_proto",
+        "//intrinsic/skills/proto:skill_registry_config_cc_proto",
+        "//intrinsic/skills/proto:skills_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_library(
+    name = "skill_proto_utils",
+    srcs = ["skill_proto_utils.cc"],
+    hdrs = ["skill_proto_utils.h"],
+    deps = [
+        "//intrinsic/assets/proto:id_cc_proto",
+        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/skills/cc:skill_interface",
+        "//intrinsic/skills/proto:equipment_cc_proto",
+        "//intrinsic/skills/proto:skill_manifest_cc_proto",
+        "//intrinsic/skills/proto:skills_cc_proto",
+        "//intrinsic/util/proto:descriptors",
+        "//intrinsic/util/proto:source_code_info_view",
+        "@com_github_google_re2//:re2",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_binary(
+    name = "skill_service_config_main",
+    srcs = ["skill_service_config_main.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":skill_proto_utils",
+        "//intrinsic/assets/proto:id_cc_proto",
+        "//intrinsic/icon/release:file_helpers",
+        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/icon/release/portable:init_xfa_absl",
+        "//intrinsic/skills/proto:skill_manifest_cc_proto",
+        "//intrinsic/skills/proto:skill_service_config_cc_proto",
+        "//intrinsic/skills/proto:skills_cc_proto",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
+    name = "projection_context_impl",
+    srcs = ["projection_context_impl.cc"],
+    hdrs = ["projection_context_impl.h"],
+    deps = [
+        ":default_parameters",
+        ":skill_registry_client_interface",
+        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/logging/proto:context_cc_proto",
+        "//intrinsic/motion_planning:motion_planner_client",
+        "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
+        "//intrinsic/skills/cc:equipment_pack",
+        "//intrinsic/skills/cc:skill_interface",
+        "//intrinsic/skills/proto:equipment_cc_proto",
+        "//intrinsic/skills/proto:skill_service_cc_proto",
+        "//intrinsic/skills/proto:skills_cc_proto",
+        "//intrinsic/world/objects:object_world_client",
+        "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+py_package(
+    name = "skills_service_py_packages",
+    packages = [
+        "intrinsic",
+        "pybind11_abseil",
+    ],
+    deps = [
+        ":module_skill_service",
+        ":module_utils",
+        ":skill_service_impl_py",
+        "//intrinsic/skills/python:skill_interface",
+    ],
+)
+
+py_wheel(
+    name = "skills_service_wheel",
+    distribution = "skills_service",
+    requires = [
+        "grpcio",
+        "google-api-core",
+        "numpy",
+        "retrying",
+    ],
+    version = "0.0.1",
+    deps = [":skills_service_py_packages"],
+)
+
+# The default proto descriptors used by the skill image builder.
+proto_source_code_info_transitive_descriptor_set(
+    name = "built_skill_proto_descriptors",
+    deps = [
+        "//intrinsic/math/proto:affine_proto",
+        "//intrinsic/math/proto:array_proto",
+        "//intrinsic/math/proto:matrix_proto",
+        "//intrinsic/math/proto:point_proto",
+        "//intrinsic/math/proto:pose_proto",
+        "//intrinsic/math/proto:quaternion_proto",
+        "//intrinsic/math/proto:vector2_proto",
+        "//intrinsic/math/proto:vector3_proto",
+        "@com_google_protobuf//:any_proto",
+        "@com_google_protobuf//:empty_proto",
+        "@com_google_protobuf//:wrappers_proto",
+    ],
+)
+
+# The default base image used by the skill image builder for python skills.
+py3_image(
+    name = "built_py_skill_base",
+    srcs = ["//intrinsic/skills/internal:module_skill_service_main.py"],
+    data = [
+        ":built_skill_proto_descriptors",
+    ],
+    main = "//intrinsic/skills/internal:module_skill_service_main.py",
+    deps = [
+        "//intrinsic/skills/internal:module_skill_service",
+    ],
+)

@@ -1,0 +1,76 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.world;
+
+import "intrinsic/math/proto/matrix.proto";
+import "intrinsic/math/proto/point.proto";
+import "intrinsic/math/proto/pose.proto";
+
+// Component indicating the owning Entity has physics properties releveant to
+// our modeling.
+// Next tag: 11
+message PhysicsComponent {
+  // Mass of the owning Entity in kilograms.
+  double mass_kg = 1;
+
+  // Pose of the center of mass in the owning Entity's space.
+  intrinsic_proto.Pose this_t_center_of_mass = 9;
+
+  // Inertia matrix.
+  intrinsic_proto.Matrixd inertia = 10;
+
+  // Surface friction parameters.
+  Friction friction = 5;
+
+  // Torsional friction parameters.
+  Torsional torsional = 6;
+
+  // Dynamically "stiffness"-equivalent coefficient for contact joints.
+  double contact_kp = 7;
+
+  // Dynamically "damping"-equivalent coefficient for contact joints.
+  double contact_kd = 8;
+}
+
+// Friction parameters.
+// This is based on what is supported by classic Gazebo and Ignition.
+// Next ID: 7
+message Friction {
+  // Coefficient of friction in first friction pyramid direction. Unitless.
+  double mu = 1;
+  // Coefficient of friction in second friction pyramid direction. Unitless.
+  double mu2 = 2;
+  // Force dependent slip in first friction pyramid direction. Unit: m/s/N.
+  double slip1 = 3;
+  // Force dependent slip in second friction pyramid direction. Unit: m/s/N.
+  double slip2 = 4;
+
+  // Unit vector specifying first friction pyramid direction in collision-fixed
+  // reference frame.
+  intrinsic_proto.Point fdir1 = 6;
+}
+
+// Torsional friction parameters.
+// This is based on what is supported by classic Gazebo.
+// Next ID: 6
+message Torsional {
+  // Torsional friction coefficient, unitless.
+  double coefficient = 1;
+
+  bool use_patch_radius = 2;
+
+  // Radius of contact patch surface. Used when "use_patch_radius" is true.
+  double patch_radius = 3;
+
+  // Surface radius on the point of contact. Used when "use_patch_radius" is
+  // false.
+  double surface_radius = 4;
+
+  // Force dependent slip for torsional friction. Physics engines other than ODE
+  // might ignore it.
+  double ode_slip = 5;
+}

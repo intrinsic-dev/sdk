@@ -1,0 +1,131 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/perception/proto/intrinsic_calibration.proto";
+import "intrinsic/perception/proto/pattern_detection_result.proto";
+
+// Specifies a hand-eye-calibration setup to be solved for the missing, unknown
+// poses.
+//
+// In general, a hand-eye-calibration setup always corresponds to an alternating
+// cycle of four transformations/poses between four reference frames A,B,C,D.
+// Two of the poses are known (more precisely, various matching pairs are given)
+// and the other two are constant but unknown.
+//
+// A -?- B    "!": known poses (input)
+// !     !    "-?-": unknown poses (output)
+// D -?- C
+//
+// The hand-eye-calibration computes A_t_B and C_t_D from a sequence of matching
+// pairs ((D_t_A)_1, (B_t_C)_1),...,((D_t_A)_n, (B_t_C)_n) such that, for all i:
+//   (A_t_D)_i ~= A_t_B * (B_t_C)_i * C_t_D
+message HandEyeCalibrationRequest {
+  enum HandEyeCalibrationType {
+    UNKNOWN = 0;
+    // The camera is stationary (fixed in world-space/relative to the robot's
+    // base). An object is attached (typically a calibration plate) to the
+    // robot's flange and was detected in the camera image from varying robot
+    // flange positions.
+    //
+    // Object -?- Flange   "!": known poses (input)
+    //   !         !       "-?-": unknown poses (output)
+    // Camera -?- Base
+    STATIONARY_CAMERA = 1;
+    // The camera is attached to the robot's flange. A stationary object (fixed
+    // in world-space/relative to the robot' base) was detected in the camera
+    // image from varying robot flange positions.
+    //
+    // Camera -?- Flange   "!": known poses (input)
+    //   !         !       "-?-": unknown poses (output)
+    // Object -?- Base
+    MOVING_CAMERA = 2;
+  }
+
+  // A pair of input poses corresponding to one possible state of the
+  // hand-eye-calibration setup.
+  message InputPosePair {
+    oneof result_detection {
+      intrinsic_proto.Pose camera_t_object = 1;
+      PatternDetection pattern_detection = 3;
+    }
+    intrinsic_proto.Pose base_t_flange = 2;
+  }
+
+  enum OptimizationAlgorithm {
+    // This will default to NONLINEAR.
+    AUTO = 0;
+    // NOTYPO Mili Shah (2013): "Solving the robot-world/hand-eye calibration
+    // problem using the kronecker product."
+    SHAH = 1;
+    // Aiguo Li, Lin Wang, and Defeng Wu (2010): "Simultaneous robot-world and
+    // hand-eye calibration using dual-quaternions and kronecker product."
+    LI = 2;
+    // Refines the solution from the SHAH algorithm by a Ceres-based non-linear
+    // optimization.
+    NONLINEAR = 3;
+    // R. Tsai, R. Lenz (1989): "A New Technique for Fully Autonomous and
+    // Efficient 3D Robotics Hand/Eye Calibration".
+    TSAI = 4;
+    // F. Park, B. Martin (1994): "Robot Sensor Calibration: Solving AX = XB on
+    // the Euclidean Group".
+    PARK = 5;
+    // R. Horaud, F. Dornaika (1995): "Hand-eye Calibration".
+    HORAUD = 6;
+    // N. Andreff, R. Horaud, B. Espiau (1999): "On-line Hand-Eye Calibration".
+    ANDREFF = 7;
+    // K. Daniilidis (1999): "Hand-Eye Calibration Using Dual Quaternions".
+    DANIILIDIS = 8;
+  }
+
+  // The type of calibration to perform. Depending on this type, the returned
+  // HandEyeCalibrationResult will contain a corresponding result type.
+  HandEyeCalibrationType type = 1;
+
+  // The pairs of input poses to be used for the hand-eye-calibration. These
+  // have to cover all six degrees of freedom sufficiently so that the
+  // calibration result can be accurate.
+  repeated InputPosePair input_pose_pairs = 2;
+
+  OptimizationAlgorithm algorithm = 3;
+
+  // If the intrinsics are specified, then it will be used along with pattern
+  // detections (as defined in InputPosePair above) to estimate the new camera
+  // to object poses. This is needed in case, we are doing the intrinsics and
+  // hand eye calibration as well. The intrinsics will not be saved to the
+  // camera config by this skill, but you can use the frontend to save the
+  // camera config instead.
+  optional IntrinsicCalibrationResult intrinsic_calibration_result = 4;
+}
+
+message HandEyeCalibrationResult {
+  // Returned poses if HandEyeCalibrationRequest.type == 'STATIONARY_CAMERA'.
+  message StationaryCameraResultPoses {
+    intrinsic_proto.Pose flange_t_object = 1;
+    intrinsic_proto.Pose base_t_camera = 2;
+  }
+
+  // Returned poses if HandEyeCalibrationRequest.type == 'MOVING_CAMERA'.
+  message MovingCameraResultPoses {
+    intrinsic_proto.Pose flange_t_camera = 1;
+    intrinsic_proto.Pose base_t_object = 2;
+  }
+
+  // The poses resulting from the hand-eye-calibration.
+  oneof result_poses {
+    StationaryCameraResultPoses stationary_camera_result_poses = 1;
+    MovingCameraResultPoses moving_camera_result_poses = 2;
+  }
+
+  // The errors resulting from the hand-eye-calibration. The lower, the more
+  // accurate the calibration result is.
+  double translation_root_mean_square_error = 3;
+  double translation_maximum_error = 4;
+  double rotation_root_mean_square_error_in_degrees = 5;
+  double rotation_maximum_error_in_degrees = 6;
+}

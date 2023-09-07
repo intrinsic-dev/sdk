@@ -1,0 +1,58 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+import "intrinsic/robotics/messages/quaternion.proto";
+import "intrinsic/robotics/messages/vector.proto";
+
+option cc_enable_arenas = true;
+
+// A pose in three-dimensional space.
+message Pose3d {
+  // The translation, in meters.
+  Vector3d translation = 1;
+  // The orientation as a quaternion.
+  Quaterniond rotation = 2;
+}
+
+// A pose in three-dimensional space.
+message Pose3f {
+  // Prefer using Pose3d
+  option deprecated = true;
+
+  // The position, in meters.
+  Vector3f translation = 1;
+  // The orientation as a quaternion.
+  Quaternionf rotation = 2;
+}
+
+// A pose in two-dimensional space.
+message Pose2d {
+  // The translation, in meters.
+  Vector2d translation = 1;
+  // Rotation angle in radians.
+  double rotation = 2;
+}
+
+// A pose in two-dimensional space.
+message Pose2f {
+  // The translation, in meters.
+  Vector2f translation = 1;
+  // Rotation angle in radians.
+  float rotation = 2;
+}
+
+// A rotation about the origin in two dimensions, represented as (cos, sin).
+message Rotation2d {
+  double cos_angle = 1;
+  double sin_angle = 2;
+}
+
+message Rotation2f {
+  float cos_angle = 1;
+  float sin_angle = 2;
+}

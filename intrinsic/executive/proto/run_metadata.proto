@@ -1,0 +1,58 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+import "intrinsic/executive/proto/behavior_tree.proto";
+import "intrinsic/executive/proto/executive_execution_mode.proto";
+import "intrinsic/logging/proto/context.proto";
+
+message RunMetadata {
+  oneof runnable_type {
+    BehaviorTree behavior_tree = 1;
+  }
+
+  oneof state_type {
+    BehaviorTree.State behavior_tree_state = 10;
+  }
+
+  string world_id = 19;
+
+  // These fields will be initialized when starting a behavior tree (not
+  // immediately when creating it).
+  ExecutionMode execution_mode = 20;
+  SimulationMode simulation_mode = 21;
+
+  // Tracing information for retrieval of tracing info. The feature is only
+  // available internally for Intrinsic at this point in time.
+  message TracingInfo {
+    // Defines how skill traces are handled within a behavior tree trace.
+    enum SkillTraceHandling {
+      SKILL_TRACES_UNSPECIFIED = 0;
+
+      // Leave skill traces as individual traces and provide links
+      // to these as attributes in task nodes.
+      SKILL_TRACES_LINK = 1;
+
+      // Embed skill traces as part of the current behavior tree trace.
+      SKILL_TRACES_EMBED = 2;
+    }
+
+    string trace_id = 1;
+    string trace_url = 2;
+    SkillTraceHandling skill_trace_handling = 3;
+  }
+  // The field is initialized when starting a behavior tree (not immediately
+  // when creating it).
+  TracingInfo tracing_info = 22;
+
+  // This context is set when getting the operation info via the service.  It
+  // contains the session ID and possibly the ID of the current runnable. It
+  // will *not* contain an action ID. The field is *not* set for logged
+  // executive states (which already are associated with a context anyway). The
+  // IDs can be used to query other relevant data.
+  optional intrinsic_proto.data_logger.Context log_context = 23;
+}

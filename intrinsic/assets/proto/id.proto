@@ -1,0 +1,56 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.config;
+
+// Ids are commonly used to describe assets uniquely with a human-readable
+// identifier.
+//
+// An id is represented as a string in the format: <package>.<name>
+//
+// An id_version is represented as a string in the format:
+// <package>.<name>.<version>
+//
+// A version is formatted as described by semver.org.
+//
+// An Id uniquely identifies an asset (e.g., skill, resource type) in its
+// respective catalog. If you change an Id's package or name field, the catalog
+// will treat any new uploads as a completely different asset.
+message Id {
+  // The package name for the asset. This is a dot-separated string describing
+  // the package for the asset. We recommend that companies use their reverse
+  // Internet domain name to start the package name.
+  //
+  // A valid package:
+  //   - consists only of lower case alphanumeric characters, underscores, and
+  //     periods;
+  //   - begins with an alphabetic character;
+  //   - ends with an alphanumeric character;
+  //   - contains at least one period;
+  //   - precedes each period with an alphanumeric character;
+  //   - follows each period with an alphabetic character;
+  //   - does not contain multiple underscores in a row.
+  //
+  // NOTE: Disallowing multiple underscores in a row enables underscores to be
+  // replaced with a hyphen (-) and periods to be replaced with two hyphens (--)
+  // in order to convert asset ids to kubernetes labels without possibility of
+  // collisions.
+  string package = 1;
+
+  // The name of the asset within the package.
+  //
+  // A valid name:
+  //   - consists only of lower case alphanumeric characters and underscores;
+  //   - begins with an alphabetic character;
+  //   - ends with an alphanumeric character;
+  //   - does not contain multiple underscores in a row.
+  //
+  // NOTE: Disallowing multiple underscores in a row enables underscores to be
+  // replaced with a hyphen (-) and periods to be replaced with two hyphens (--)
+  // in order to convert asset ids to kubernetes labels without possibility of
+  // collisions.
+  string name = 2;
+}

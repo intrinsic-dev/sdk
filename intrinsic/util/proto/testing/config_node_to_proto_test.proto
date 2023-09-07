@@ -1,0 +1,100 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+message RepeatedDouble {
+  repeated double values = 1;
+}
+
+message RepeatedFloat {
+  repeated float values = 1;
+}
+
+message RepeatedBool {
+  repeated bool values = 1;
+}
+
+message RepeatedInt64 {
+  repeated int64 values = 1;
+}
+
+message RepeatedInt32 {
+  repeated int32 values = 1;
+}
+
+message RepeatedUInt64 {
+  repeated uint64 values = 1;
+}
+
+message RepeatedUInt32 {
+  repeated uint32 values = 1;
+}
+
+message Fixed64Value {
+  fixed64 value = 1;
+}
+
+message Fixed32Value {
+  fixed32 value = 1;
+}
+
+message SFixed64Value {
+  sfixed64 value = 1;
+}
+
+message SFixed32Value {
+  sfixed32 value = 1;
+}
+
+message SInt64Value {
+  sint64 value = 1;
+}
+
+message SInt32Value {
+  sint32 value = 1;
+}
+
+enum TestEnum {
+  TEST_ENUM_UNKNOWN = 0;
+  TEST_ENUM_FIRST = 1;
+  TEST_ENUM_SECOND = 2;
+}
+
+message EnumValue {
+  TestEnum value = 1;
+}
+
+message RepeatedEnum {
+  repeated TestEnum values = 1;
+}
+
+message NestedValue {
+  Fixed32Value fixed32_child = 1;
+}
+
+message OptionalNestedValue {
+  optional Fixed32Value fixed32_child = 1;
+}
+
+message RepeatedNestedValue {
+  repeated Fixed32Value children = 1;
+}
+
+message OptionalInt32 {
+  optional int32 value = 1;
+}
+
+message RepeatedString {
+  repeated string values = 1;
+}
+
+message Oneof {
+  oneof myoneof {
+    RepeatedDouble doubles = 1;
+    string string_value = 2;
+  }
+}

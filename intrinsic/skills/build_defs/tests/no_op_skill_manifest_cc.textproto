@@ -1,0 +1,26 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+# proto-file: intrinsic/skills/proto/skill_manifest.proto
+# proto-message: intrinsic_proto.skills.SkillManifest
+
+id {
+  package: "ai.intrinsic"
+  name: "no_op"
+}
+vendor {
+  display_name: "Intrinsic"
+}
+documentation {
+  doc_string: "Does nothing, returns an OK status."
+}
+options {
+  supports_cancellation: false
+  cc_config {
+    create_skill: "::intrinsic::skills::NoOpSkill::CreateSkill"
+  }
+}
+parameter {
+  message_full_name: "intrinsic_proto.skills.NoOpSkillParams"
+}

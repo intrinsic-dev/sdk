@@ -1,0 +1,158 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+import "intrinsic/icon/proto/cart_space.proto";
+import "intrinsic/icon/proto/io_block.proto";
+import "intrinsic/icon/proto/safety_status.proto";
+import "intrinsic/math/proto/quaternion.proto";
+import "intrinsic/math/proto/vector3.proto";
+
+message PartJointState {
+  optional double position_sensed = 1;
+  optional double velocity_sensed = 2;
+  optional double acceleration_sensed = 3;
+  optional double torque_sensed = 4;
+  optional double position_commanded_last_cycle = 5;
+  optional double velocity_commanded_last_cycle = 6;
+  optional double acceleration_commanded_last_cycle = 7;
+}
+
+message GripperState {
+  enum SensedState {
+    SENSED_STATE_UNKNOWN = 0;
+    SENSED_STATE_FREE = 1;
+    SENSED_STATE_HOLDING = 2;
+  }
+
+  SensedState sensed_state = 1;
+}
+
+message LinearGripperState {
+  double sensed_width = 1;
+}
+
+enum PartControlMode {
+  CONTROL_MODE_UNKNOWN = 0;
+  CONTROL_MODE_CYCLIC_POSITION = 1;
+  CONTROL_MODE_CYCLIC_VELOCITY = 2;
+  CONTROL_MODE_CYCLIC_TORQUE = 3;
+  CONTROL_MODE_HAND_GUIDING = 4;
+}
+
+// Part-specific status for a part.
+message PartStatus {
+  // Timestamp, in nanoseconds since the server started, when the status was
+  // obtained.
+  int64 timestamp_ns = 2;
+
+  // Each part can have any number of the following features present.
+
+  // The state of joints associated with this part. Each JointState of a part is
+  // not guaranteed to have identical fields. May be empty.
+  repeated PartJointState joint_states = 4;
+
+  // The state of the gripper associated with this part.
+  optional GripperState gripper_state = 5;
+
+  // The state of the linear gripper associated with this part.
+  optional LinearGripperState linear_gripper_state = 10;
+
+  // If the Part has a kinematics model, this is the transformation from the
+  // base to the tip frame of the kinematic chain.
+  optional intrinsic_proto.icon.Transform base_t_tip_sensed = 6;
+
+  // The wrench as sensed at the force-torque sensor, in the sensor's frame. The
+  // returned value is *not* compensated for gravity.
+  optional intrinsic_proto.icon.Wrench wrench_at_ft_uncompensated = 15;
+
+  // The wrench as sensed at the force-torque sensor, in the sensor's frame. The
+  // returned value is low-pass filtered, tared and payload compensated
+  optional intrinsic_proto.icon.Wrench wrench_at_ft = 7;
+
+  // The sensed wrench (wrench_at_ft) transformed to the robot tip frame.
+  optional intrinsic_proto.icon.Wrench wrench_at_tip = 8;
+
+  // The sensed Twist at the robot tip expressed in the base frame of the
+  // kinematic chain.
+  // WARNING: This value depends on the used kinematics solver and might not be
+  // accurate.
+  optional intrinsic_proto.icon.Twist base_twist_tip_sensed = 9;
+
+  // The state of all analog and digital inputs and outputs for this part.
+  optional intrinsic_proto.icon.ADIOState adio_state = 11;
+
+  // The currently active cyclic control mode of the part.
+  optional PartControlMode current_control_mode = 12;
+
+  // The rangefinder status.
+  optional RangefinderState rangefinder_status = 13;
+
+  optional InertialMeasurementUnitState inertial_measurement_unit_status = 14;
+
+  reserved 3;
+}
+
+// RobotStatus that is exported to the datalogger.
+message RobotStatus {
+  // One PartStatus per part.
+
+  map<string, PartStatus> status_map = 2;
+  intrinsic_proto.icon.SafetyStatus safety_status = 3;
+
+  // The following timestamps can be used to identify and correlate the timing
+  // of this status against both ICON events (generation of PartStatuses) and
+  // events happening in other parts of the platform. Please read the following
+  // before using these fields as there are many subtleties.
+  //
+  // There are two different clocks maintained:
+  //   * an "ICON" clock that is monotonic (typically time since the server
+  //     started),
+  //   * a wall clock which corresponds to the time on the machine running ICON.
+  //
+  // These two clocks are NOT synchoronized and may even tick at different
+  // rates, for example, when running ICON in simulation.
+  //
+  // Since the ICON timestamp_ns and the wall_clock_timestamp_ns are set within
+  // a very tight window, the user can compare the timestamp_ns in individual
+  // PartStatus messages to this timestamp_ns to help situate the timing of the
+  // PartStatus update with respect to the wall clock.
+  //
+  // Typically, wall clock should be used to locate (in time) a section of logs
+  // of interest, followed by using timestamp_ns fields to compare the data
+  // received by each Part (or custom streaming outputs).
+
+  // Timestamp, in nanoseconds, of the local time on the machine when this
+  // status was generated.
+  //
+  // This field is optional so we can internally test whether it is being set,
+  // but users can expect this field to always be populated.
+  optional int64 wall_clock_timestamp_ns = 4;
+
+  // Timestamp, in nanoseconds since the server started, when this status was
+  // generated.
+  //
+  // This field is optional so we can internally test whether it is being set,
+  // but users can expect this field to always be populated.
+  optional int64 timestamp_ns = 5;
+
+  reserved 1;
+}
+
+message RangefinderState {
+  // The sensed rangefinder distance.
+  double distance = 1;
+}
+
+message InertialMeasurementUnitState {
+  // The sensed orientation.
+  intrinsic_proto.Quaternion orientation = 1;
+  // The sensed angular velocity.
+  intrinsic_proto.Vector3 angular_velocity = 2;
+  // The sensed linear acceleration.
+  intrinsic_proto.Vector3 linear_acceleration = 3;
+}

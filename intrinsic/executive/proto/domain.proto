@@ -1,0 +1,323 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+// This set of protos enable the representation of a symbolic domain.
+// It is used for task planning and execution and models PDDL domains
+// (https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language).
+//
+// The overall proto hierarchy looks roughly like this:
+// Domain
+// |----- DomainModel  # static domain information
+//        |----- DomainType*
+//        |----- DomainPredicate*
+//        |----- DomainOperator*
+//               |----- DomainFormula*
+// |----- DomainSituation  # dynamic domain instance
+//        |----- DomainObject*
+//        |----- DomainFact*
+//
+// Due to our dual emphasis on planning and execution, we have generalized a few
+// terms. Here, the DomainModel is what PDDL calls just "Domain". A
+// DomainSituation roughly represents a PDDL problem, but without a planning
+// goal (PDDL problem = situation + goal). A Domain consists of both and gives a
+// full representation at a specific point in time.
+
+// Throughout this document we will use the Blocks World domain as example.
+// In this domain, there are a number of blocks which can be on the table or
+// stacked on top of each other. A planning goal would be to create a specific
+// stacking order, e.g., A on top of B, which is on top of C (the representation
+// protos give the model and situation, but not a goal, it is only mentioned to
+// understand the intent of the blocks world domain). Relevant bits of
+// information are:
+// - whether the robot's hand is empty (it can only ever hold a single block),
+// - what it is holding
+// - whether a block is on the table
+// - relation that one block is stacked on top of another
+// - when a block is clear, i.e., nothing is stacked on top.
+// The actions that can be taken are:
+// - picking up a block (from the table)
+// - Putting down a block (onto the table)
+// - Stacking a block on another one
+// - Unstacking/taking a block from another one
+// It is a classic planning example and was used in the International
+// Planning Competition 2000:
+// https://github.com/potassco/pddl-instances/blob/master/ipc-2000/domains/blocks-strips-typed/domain.pddl
+
+// Domain types form a tree rooted in the base type "object".
+// Types are associated to domain objects.
+// PDDL Example: (:types block)
+// Proto: { name: "block" super_type: "object" }
+message DomainType {
+  string name = 1;
+  // If empty assume "object" (proto3 cannot set default value)
+  string super_type = 2;
+}
+
+// Values of fields passed to facts.
+message DomainFieldValue {
+  string name = 1;
+  string value = 2;
+}
+
+// Type information for fields of operators or predicates.
+message DomainFieldType {
+  string name = 1;
+  string type = 2;
+}
+
+// Predicates are the basic structure (relations) to describe state/a situation.
+// During planning or execution, the respective state is represented in terms of
+// predicates. Instances (of predicates) are domain facts (cf. DomainFact) and
+// the predicate structure is also used in formulas (FACTs, cf. DomainFormula).
+// Example: on-table: represents whether a specified block is lying on the table
+// PDDL Example: (:predicates (on-table ?x - block))
+// Proto: { name: "on-table" fields { name: "x" type: "block" } }
+message DomainPredicate {
+  string name = 1;
+
+  // Positional argument name and type information
+  repeated DomainFieldType fields = 2;
+}
+
+// The value of a term. Can be either a variable name (e.g., referring to the
+// parameter of an associated operator) or a constant value.
+message DomainNameOrConstant {
+  // While both items are represented as string, it is important to
+  // distinguish which one has been set (e.g., for partially specific
+  // operators).
+  oneof name_or_constant {
+    string name = 1;      // references name of associated operator parameter
+    string constant = 2;  // direct value
+  }
+}
+
+// Logic formula representation used to define preconditions.
+// Example: Block B1 is on the table
+// PDDL Example: (and (on-table ?x))
+// Proto:
+// {
+//   and {
+//     sub_formulas {
+//       fact {
+//         predicate_name: "on-table"
+//         values { name: "x" }
+//       }
+//     }
+//   }
+// }
+message DomainFormula {
+  message Quantifier {
+    // The sub-formula for which the quantified variables apply
+    DomainFormula sub_formula = 1;
+    // Type info for named quantified variables. These can be used as names
+    // in sub_formula.
+    repeated DomainFieldType variables = 2;
+  }
+
+  // A single fact, defined by its predicate name and its parameter values.
+  message Fact {
+    string predicate_name = 1;
+    repeated DomainNameOrConstant values = 2;
+  }
+
+  // An equality formula, consisting of the left hand side and right hand side
+  // terms, e.g., `(= ?x ?y)`.
+  message Equality {
+    DomainNameOrConstant left_hand_side = 3;
+    DomainNameOrConstant right_hand_side = 4;
+  }
+
+  // A logical compound of all sub-formulae, i.e., a conjunction, disjunction.
+  message LogicalCompound {
+    repeated DomainFormula sub_formulas = 1;
+  }
+
+  // A logical negation of a sub-formula.
+  message Negation {
+    DomainFormula sub_formula = 1;
+  }
+
+  oneof type {
+    // A conjunction, e.g., `(and (on ?x ?y) (on ?y ?z))`
+    LogicalCompound and = 3;
+    // A disjunction, e.g., `(or (on ?x ?y) (on ?y ?z))`
+    LogicalCompound or = 4;
+    // A negation, e.g., `(not (on ?x ?y))`
+    Negation not = 5;
+    // A formula particle referring to a predicate, e.g., `(on ?x ?y)`
+    Fact fact = 6;
+    // The quantifier part of an existentially quantified formula, e.g.,
+    // `(exists (?b - block) (on ?b ?y))`
+    Quantifier exists = 7;
+    // The quantifier part of a universally quantified formula, e.g.,
+    // `(forall (?b - block) (on ?b ?y))`
+    Quantifier forall = 8;
+    // A formula consisting of an equality operator, e.g., `(= ?x ?y)`
+    Equality equals = 9;
+  }
+
+  reserved 1, 2;
+  reserved "id", "parent_id";
+}
+
+message DomainEffect {
+  bool negative = 1;
+
+  message Fact {
+    string predicate_name = 1;
+    repeated DomainNameOrConstant params = 2;
+  }
+
+  oneof effect {
+    Fact fact = 2;
+  }
+}
+
+message DomainOperator {
+  string name = 1;
+
+  // Operator's positional parameters with name and type information.
+  repeated DomainFieldType params = 2;
+
+  // Precondition logic formula (tree).
+  DomainFormula precondition = 5;
+
+  repeated DomainEffect effects = 4;
+
+  reserved 3;
+  reserved "precondition_formula";
+}
+
+// Objects currently existing by unique name and type.
+// Example: A is a block
+// PDDL: A - block
+// Proto: { name: "A" type: "block" }
+message DomainObject {
+  string name = 1;
+  // type refers to a DomainType.name
+  string type = 2;
+}
+
+// A predicate instance with parameter assignments for some predicate.
+// Example: Block A is on the table
+// PDDL: (on-table A)
+// Proto: { predicate_name: "on-table" values { key: "x" value: "A" } }
+message DomainFact {
+  string predicate_name = 1;
+
+  // Positional arguments to predicate
+  repeated DomainFieldValue values = 2;
+}
+
+// This describes the domain, i.e., the static immutable information.
+// Blocks world example (excerpt) (using # to indicate comment):
+//
+// name: "BLOCKS"
+// requirements: ADL
+// # Type information, only one type "block"
+// types { name: "block" super_type: "object" }
+//
+// # predicate represent state, here: block x on the table for some block x.
+// predicates {
+//   # Object X is on the table
+//   name: "on-table"
+//   params { key: "x" value: "block" }
+// }
+// predicates {
+//   # Nothing is stacked on top of the block x
+//   name: "clear"
+//   params { key: "x" value: "block" }
+// }
+// predicates { name: "hand-empty" }
+// [... more predicates ...]
+//
+// # An operator to effect change in the environment.
+// operators {
+//   name: "pick-up"
+//   [... see above for DomainOperator example ...]
+// }
+// [... more operators ...]
+message DomainModel {
+  // enum for domain type requirements. These can be used to check for
+  // compatibility with a given planning system. These are based on PDDL.
+  // See https://planning.wiki/ref/pddl/requirements for details.
+  enum Requirement {
+    NONE = 0;
+    // Addition and deletion of facts as effects
+    STRIPS = 1;
+    // All of STRIPS, TYPING, DISJUNCTIVE_PRECONDITIONS, EQUALITY,
+    // QUANTIFIED_PRECONDITIONS, and CONDITIONAL_EFFECTS
+    ADL = 2;
+    // Typing for objects
+    TYPING = 3;
+    // Enables "not" in preconditions, cf. https://planning.wiki/ref/pddl21/req
+    NEGATIVE_PRECONDITIONS = 4;
+    // Enables "or" in preconditions
+    DISJUNCTIVE_PRECONDITIONS = 5;
+    // Enables equality in preconditions, e.g., "(= ?p1 ?p2)"
+    EQUALITY = 6;
+    // Enables quantifiers (exists, forall) in preconditions
+    QUANTIFIED_PRECONDITIONS = 7;
+    // Enables "when" in effects, i.e., apply effects only if a given formula
+    // holds
+    CONDITIONAL_EFFECTS = 8;
+  }
+
+  string name = 1;
+  repeated Requirement requirements = 2;
+
+  // Domain model information
+  repeated DomainType types = 3;
+  repeated DomainPredicate predicates = 4;
+  repeated DomainOperator operators = 5;
+}
+
+// Current situation in terms of objects and predicates.
+// Blocks world example (using # to indicate comment):
+// # Objects that exist in the world
+// objects { name: "A" type: "block" }
+// objects { name: "B" type: "block" }
+// objects { name: "C" type: "block" }
+//
+// # Current facts, each fact refers to a predicate from the domain model
+// # and assigns values to all parameters.
+// facts {
+//   # Block C is clear (nothing on top, cf. clear predicate above)
+//   predicate_name: "clear"
+//   values { key: "x" value: "C" }
+// }
+// facts {
+//   # Block A is on the table
+//   predicate_name: "on-table"
+//   values { key: "x" value: "A" }
+// }
+// facts {
+//   # Block B is on top of Block A
+//   predicate_name: "on"
+//   values { key: "x" value: "B" }
+//   values { key: "y" value: "A" }
+// }
+// facts {
+//   # Block C is on top of Block B
+//   predicate_name: "on"
+//   values { key: "x" value: "C" }
+//   values { key: "y" value: "B" }
+// }
+// # Robot is not currently holding anything
+// facts { predicate_name: "hand-empty" }
+message DomainSituation {
+  string domain_name = 1;  // refers to DomainModel.name
+  repeated DomainObject objects = 2;
+  repeated DomainFact facts = 3;
+}
+
+// This contains the full domain information.
+message Domain {
+  DomainModel model = 1;
+  DomainSituation situation = 2;
+}

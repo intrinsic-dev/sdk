@@ -1,0 +1,12 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.config;
+
+message Vendor {
+  // The name of the vendor that is to be displayed in the UI.
+  string display_name = 1;
+}

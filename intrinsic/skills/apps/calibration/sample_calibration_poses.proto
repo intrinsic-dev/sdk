@@ -1,0 +1,92 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.skills;
+
+import "intrinsic/icon/proto/joint_space.proto";
+import "intrinsic/motion_planning/proto/motion_target.proto";
+import "intrinsic/skills/proto/skills.proto";
+import "intrinsic/world/proto/object_world_refs.proto";
+
+// Waypoints are used as input for the hand-eye data collection to specify
+// through which poses the robot tip should move to collect the data. A waypoint
+// can be either a pose expressed as a cartesian motion target, or a joint
+// configuration of the robot.
+message Waypoint {
+  // The CartesianMotionTarget, which specifies what to move where.
+  optional intrinsic_proto.motion_planning.CartesianMotionTarget
+      cartesian_target = 1;
+  // Represents the desired position of each robot joint.
+  optional intrinsic_proto.icon.JointVec joint_target = 2;
+}
+
+message RandomizedBoxParams {
+  // Number of poses to sample for the hand-eye calibration (minimum: 4,
+  // recommended: >= 20). Only used for automatic pose sampling.
+  optional uint64 num_samples = 1;
+
+  // Half size in meters of a box from which poses should be sampled. The center
+  // of the box is the position of the calibration object at the beginning of
+  // this skill. The box is axis-aligned with world space. Only used for
+  // automatic pose sampling.
+  optional intrinsic_proto.skills.VectorNdValue sample_box_halfsize = 2;
+
+  // Randomly tilts the calibration board (stationary camera case) or camera
+  // (moving camera case) to obtain a more diverse set of rotations. Tilt
+  // happens around two axes orthogonal to the view-to-calibration-board
+  // direction, e.g., setting this value to zero means pointing the camera
+  // perfectly to the calibration board center in the moving camera case.
+  optional double rotation_randomization_angle_degrees = 3;
+
+  // Defines the maximum absolute value for sampling random rotations around
+  // the camera-to-calibration-board axis.
+  optional double rotation_randomization_roll_angle_degrees = 4;
+
+  // If true, this restricts the sampled poses to the same IK branch of the
+  // robot.
+  optional bool ensure_same_branch_ik = 5;
+}
+
+message PreCalibrationParams {
+  // Maximum distance in meters from the initial position of the robot for which
+  // the caller guarantees that unplanned cartesian moves are safe. Typically
+  // 5-10cm.
+  optional double max_distance = 1;
+
+  // Maximum angle in degrees from the initial orientation of the robot for
+  // which the caller guarantees that unplanned cartesian moves are safe.
+  // Typically 10-15° degrees.
+  optional double max_angle_degrees = 2;
+}
+
+message SampleCalibrationPosesParams {
+  // Has to be one of 'STATIONARY_CAMERA' or 'MOVING_CAMERA'.
+  string calibration_case = 1;
+
+  // Uniquely identifies the object used for calibration. Typically a
+  // calibration pattern, but - with an appropriate detector - all kinds of
+  // objects can be used.
+  intrinsic_proto.world.ObjectReference calibration_object = 2;
+
+  // Minimum margin between the moving object (calibration pattern for the
+  // 'STATIONARY_CAMERA' case, and camera for the 'MOVING_CAMERA' case) and all
+  // other world objects.
+  //
+  // Set this parameter to a higher value if you are unsure about the exact
+  // positions of the objects in your world.
+  optional float minimum_margin = 3;
+
+  oneof sampling_strategy_params {
+    // Parameters specific to pre-calibration sampling.
+    PreCalibrationParams pre_calibration_params = 4;
+    // Parameters specific to randomized box sampling.
+    RandomizedBoxParams randomized_box_params = 5;
+  }
+}
+
+message SampleCalibrationPosesResult {
+  repeated Waypoint sample_calibration_poses_result = 1;
+}

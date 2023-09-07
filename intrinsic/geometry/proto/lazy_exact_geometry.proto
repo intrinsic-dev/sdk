@@ -1,0 +1,40 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.geometry;
+
+import "intrinsic/geometry/proto/mesh_octree_wrapping.proto";
+import "intrinsic/geometry/proto/primitives.proto";
+import "intrinsic/geometry/proto/triangle_mesh.proto";
+
+// Computational geometry representation of Geometry.
+message LazyExactGeometry {
+  // The mesh representation of this Geometry.
+  TriangleMesh triangle_mesh = 6;
+
+  // An optional Octree based wrapping that segments the mesh into an octree
+  MeshOctreeWrapping mesh_octree_wrapping = 4;
+
+  // An optional set of primitives that represent the geometry.
+  PrimitiveShapeSet primitive_set = 5;
+}
+
+// A primitives based representation of a geometric shape.
+message PrimitiveShape {
+  oneof shape {
+    Box box = 1;
+    Cylinder cylinder = 2;
+    Sphere sphere = 3;
+    Ellipsoid ellipsoid = 4;
+    Capsule capsule = 5;
+    Frustum frustum = 6;
+  }
+}
+
+// A set of primitives grouped together.
+message PrimitiveShapeSet {
+  repeated PrimitiveShape primitives = 1;
+}

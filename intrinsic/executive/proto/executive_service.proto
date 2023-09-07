@@ -1,0 +1,232 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+import "google/longrunning/operations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "intrinsic/executive/proto/behavior_tree.proto";
+import "intrinsic/executive/proto/executive_execution_mode.proto";
+import "intrinsic/executive/proto/run_metadata.proto";
+
+
+// The executive is responsible for executing and monitoring Behavior Trees.
+service ExecutiveService {
+  
+
+  // ========= Methods for operations (tied to a Behavior Tree) =============
+
+  // An operation manages the lifecycle of a Behavior Tree. It is the
+  // operational envelope. It is identified by a unique name. The operation name
+  // changes for every operation, cannot be reused, and is independent of any
+  // Behavior Tree ID or name.
+  //
+  // Operations follow the log-running operations specification in
+  // https://google.aip.dev/151.
+  //
+  // At this time, the executive only supports a single active operation. The
+  // operation's metadata is crucial to understanding the state fully. The done
+  // flag in the Operation message will only denote whether the associated BT
+  // is in a TERMINAL state (see below).
+  //
+  // NOTE: Below, we use the following labels to refer to conjunctions of
+  // behavior tree states:
+  //  CANCELLABLE := RUNNING | SUSPENDING | SUSPENDED
+  //  WAITING := ACCEPTED | SUSPENDED | FAILED | SUCCEEDED | CANCELLED
+  //  TERMINAL := SUCCEEDED | FAILED | CANCELLED
+
+  // Loads a behavior tree. This will only work if the executive has no
+  // operation.
+  rpc CreateOperation(CreateOperationRequest)
+      returns (google.longrunning.Operation) {
+    option (google.longrunning.operation_info) = {
+      response_type: "RunResponse"
+      metadata_type: "RunMetadata"
+    };
+  }
+
+  // Lists all active operations.
+  rpc ListOperations(google.longrunning.ListOperationsRequest)
+      returns (google.longrunning.ListOperationsResponse) {}
+
+  // Get a particular operation by name.
+  rpc GetOperation(google.longrunning.GetOperationRequest)
+      returns (google.longrunning.Operation) {}
+
+  // Get a particular operation by name with configurable metadata.
+  rpc GetOperationView(GetOperationViewRequest)
+      returns (google.longrunning.Operation) {}
+
+  // Deletes a long-running operation. This method indicates that the client is
+  // no longer interested in the operation result. It does not cancel the
+  // operation. This returns an error if the operation's BT is not in a WAITING
+  // state.
+  rpc DeleteOperation(google.longrunning.DeleteOperationRequest)
+      returns (google.protobuf.Empty) {}
+
+  // Starts the operation and thus the execution of its Behavior Tree. Only
+  // valid if BT is in ACCEPTED state.
+  rpc StartOperation(StartOperationRequest)
+      returns (google.longrunning.Operation) {}
+
+  // Starts asynchronous cancellation on a long-running operation. Clients can
+  // use [GetOperation][google.longrunning.Operations.GetOperation] to check
+  // whether the cancellation succeeded or whether the operation completed
+  // despite cancellation. On successful cancellation, the operation is not
+  // deleted; instead, it becomes an operation with an [Operation.error][] value
+  // with a [google.rpc.Status.code][] of 1, corresponding to `Code.CANCELLED`.
+  //
+  // Returns an error if the BT is not in a CANCELLABLE state.
+  rpc CancelOperation(google.longrunning.CancelOperationRequest)
+      returns (google.protobuf.Empty) {}
+
+  // Waits until the specified long-running operation is done (SUCCEEDED,
+  // FAILED, or CANCELLED) or reaches at most a specified timeout, returning the
+  // latest state. If the operation is already done, the latest state is
+  // immediately returned. If the timeout specified is greater than the default
+  // HTTP/RPC timeout, the HTTP/RPC timeout is used. The default timeout is 60
+  // minutes.  Note that this method is on a best-effort basis. It may return
+  // the latest state before the specified timeout (including immediately),
+  // meaning even an immediate response is no guarantee that the operation is
+  // done.
+  rpc WaitOperation(google.longrunning.WaitOperationRequest)
+      returns (google.longrunning.Operation) {}
+
+  // Suspends an operation by waiting for active skills to finish and then
+  // pausing execution of the remainder of the BT.
+  //
+  // Returns an error if the BT is not RUNNING.
+  rpc SuspendOperation(SuspendOperationRequest)
+      returns (google.protobuf.Empty) {}
+
+  // Resumes an operation by resuming its Behavior Tree.
+  // Returns an error if the BT state is not SUSPENDED.
+  rpc ResumeOperation(ResumeOperationRequest)
+      returns (google.longrunning.Operation) {}
+
+  // Resets an operation and its associated BT. This will reset the BT to a
+  // state as if it had just been created.
+  //
+  // Returns an error if the BT is not in a WAITING state.
+  rpc ResetOperation(ResetOperationRequest) returns (google.protobuf.Empty) {}
+
+  // ========= Methods for breakpoints (on a specific behavior tree) ===========
+
+  // Breakpoints are a means to request automatically suspending a tree at
+  // specific points of the BT. They can be embedded directly in BT nodes'
+  // decorators or added at run-time for a particular operation's BT.
+
+  // Creates a new breakpoint on the given operation's loaded Behavior Tree.
+  rpc CreateBreakpoint(CreateBreakpointRequest)
+      returns (BehaviorTree.Breakpoint) {}
+
+  // Deletes a breakpoint from the given operation's Behavior Tree.
+  rpc DeleteBreakpoint(DeleteBreakpointRequest)
+      returns (google.protobuf.Empty) {}
+
+  // Deletes all breakpoints of the currently loaded Behavior Tree.
+  rpc DeleteAllBreakpoints(DeleteAllBreakpointsRequest)
+      returns (google.protobuf.Empty) {}
+
+  // Get a list of all breakpoints set on the currently loaded Behavior Tree.
+  // The information is the same as presented through decorators in the BT in
+  // the state proto retrieved via GetOperation or GetOperationView.
+  rpc ListBreakpoints(ListBreakpointsRequest)
+      returns (ListBreakpointsResponse) {}
+}
+
+message CreateOperationRequest {
+  // New runnable to load. If default_plan is set to true, the default plan of
+  // the executive (configured at startup) is created. Error if unset.
+  oneof runnable_type {
+    BehaviorTree behavior_tree = 1;
+    bool use_default_plan = 2;
+  }
+}
+
+message ResetOperationRequest {
+  string name = 1;
+}
+
+message GetOperationViewRequest {
+  string name = 1;
+
+  // Some presets to simplify querying from frontend.
+  enum View {
+    // Full view, corresponds to "no fieldmask"
+    VIEW_DEFAULT = 0;
+    // Only report state, not runnable (behavior tree).
+    VIEW_STATE_ONLY = 1;
+  }
+
+  oneof view_type {
+    // The following enables to limit the data that is returned in the
+    // operation's metadata field (of type RunMetadata in the Any proto). If
+    // empty returns the full metadata. A typical limited mask could be "paths:
+    // behavior_tree.state" to get only the behavior tree's overall state. If
+    // this is set to an empty FieldMask (nothing in FieldMask.paths), the
+    // metadata field will not be filled.
+    google.protobuf.FieldMask metadata_fieldmask = 2;
+    // Use a predefined view.
+    View view = 3;
+  }
+}
+
+message StartOperationRequest {
+  string name = 1;
+
+  ExecutionMode execution_mode = 2;
+  SimulationMode simulation_mode = 3;
+
+  RunMetadata.TracingInfo.SkillTraceHandling skill_trace_handling = 4;
+}
+
+message SuspendOperationRequest {
+  string name = 1;
+}
+
+message ResumeOperationRequest {
+  enum ResumeMode {
+    // As if the field was not set, see below.
+    RESUME_MODE_UNSPECIFIED = 0;
+
+    // Set execution mode to normal and resume
+    CONTINUE = 1;
+
+    // Take a step and select the next node. Only valid in step-wise mode.
+    STEP = 2;
+
+    // Mark sub-trees of node that caused last step-wise suspend to not trigger
+    // a suspend and continue execution. First non-marked node will trigger a
+    // suspend again. Only valid in step-wise mode.
+    NEXT = 3;
+  }
+
+  string name = 1;
+  optional ResumeMode mode = 2;
+}
+
+message CreateBreakpointRequest {
+  string name = 1;
+  BehaviorTree.Breakpoint breakpoint = 2;
+}
+
+message DeleteBreakpointRequest {
+  string name = 1;
+  BehaviorTree.Breakpoint breakpoint = 2;
+}
+
+message DeleteAllBreakpointsRequest {
+  string name = 1;
+}
+
+message ListBreakpointsRequest {
+  string name = 1;
+}
+message ListBreakpointsResponse {
+  repeated BehaviorTree.Breakpoint breakpoints = 1;
+}

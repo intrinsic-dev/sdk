@@ -1,0 +1,21 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+import "intrinsic/robotics/messages/vector.proto";
+
+// A three-dimensional double precision wrench.
+message Wrench3d {
+  Vector3d force = 1;
+  Vector3d torque = 2;
+}
+
+// A three-dimensional single precision wrench.
+message Wrench3f {
+  Vector3f force = 1;
+  Vector3f torque = 2;
+}

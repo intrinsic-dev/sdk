@@ -1,0 +1,33 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.geometry;
+
+import "intrinsic/math/proto/vector2.proto";
+import "intrinsic/math/proto/vector3.proto";
+
+// Generic bounding box for the n-dimensional case.
+// For 2D and 3D, use specialized types (see below).
+// Note that the number of dimensions is only implicitly encoded in the length
+// of min_points and max_points (when set). However, we also consider a bounding
+// box valid when min_points and max_points are empty (this corresponds then to
+// an empty bounding box).
+message AxisAlignedBoundingBox {
+  repeated double min_points = 1;
+  repeated double max_points = 2;
+}
+
+// Bounding box for 2D.
+message AxisAlignedBoundingBox2 {
+  intrinsic_proto.Vector2 min = 2;
+  intrinsic_proto.Vector2 max = 3;
+}
+
+// Bounding box for 3D.
+message AxisAlignedBoundingBox3 {
+  intrinsic_proto.Vector3 min = 2;
+  intrinsic_proto.Vector3 max = 3;
+}

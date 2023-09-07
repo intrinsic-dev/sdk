@@ -1,0 +1,15 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.world;
+
+// Component indicating how the owning Entity (or the object/collection
+// represented by the owning entity) should be treated in simulation.
+message SimulationComponent {
+  // If true, the entity or object is immovable (not affected by physics during
+  // simulation.).
+  bool is_static = 1;
+}

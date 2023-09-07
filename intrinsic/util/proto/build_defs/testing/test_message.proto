@@ -1,0 +1,36 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic.build_def.testing;
+
+import "google/protobuf/duration.proto";
+import "intrinsic/util/proto/build_defs/testing/test_message_dep.proto";
+
+// A test message.
+message TestMessage {
+  // A submessage.
+  SubMessage submessage = 1;
+
+  SubMessage submessage_no_comment = 2;
+
+  google.protobuf.Duration duration = 3;
+}
+
+// A submessage
+message SubMessageB {
+  // a field
+  string hello = 1;
+}
+
+// A test message
+message TestMessageB {
+  // A submessage
+  SubMessage submessage = 1;
+
+  SubMessage submessage_no_comment = 2;
+
+  SubMessageB submesage_b = 3;
+}

@@ -1,0 +1,46 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package xfa.simulation;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+
+// Provides methods to control and query running simulations.
+service SimulationService {
+  // Returns a human readable string to identify the simulator being used.
+  rpc GetSimulatorName(google.protobuf.Empty)
+      returns (google.protobuf.StringValue) {}
+
+  // Reset the current simulation to its initial state and make sure that all
+  // affected components such as ICON are in a working state.
+  rpc ResetSimulation(ResetSimulationRequest) returns (google.protobuf.Empty) {
+    
+  }
+
+  // Returns the ratio of simulation to real clock time, i.e. the time elapsed
+  // in the sim world within a unit timespan on the real clock.
+  rpc GetRealtimeFactor(google.protobuf.Empty)
+      returns (google.protobuf.DoubleValue) {}
+}
+
+// Request for resetting the current simulation.
+message ResetSimulationRequest {
+  // The world ID for the world which will seed the simulator post reset. If not
+  // set, defaults to "world". If no world service is connected, this parameter
+  // will be ignored.
+  string start_world_id = 2;
+
+  // The world ID for the world which will receive pose updates from the
+  // simulator. If not set, defaults to "sim_world". If no world service is
+  // connected, this parameter will be ignored.
+  string sim_world_id = 3;
+
+  reserved "simulation_mode";
+  reserved 1;
+}

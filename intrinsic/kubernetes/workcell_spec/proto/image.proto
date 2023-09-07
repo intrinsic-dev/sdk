@@ -1,0 +1,22 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.workcell_spec.v1;
+
+message Image {
+  // fully qualified url to container registry, e.g. 'gcr.io/<project-id>'
+  string registry = 1;
+  // image name, will also be used in the template for the resources that run
+  // the image (e.g. pod or deployment)
+  string name = 2;
+  // image ref, e.g. '@sha256:<sha>' or ':<tag>'
+  string tag = 3;
+  // private registry auth, e.g. for gcr.io use:
+  //   user=oauth2accesstoken
+  //   password="$(gcloud auth application-default print-access-token)"
+  string auth_user = 4;
+  string auth_password = 5;
+}

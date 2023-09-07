@@ -1,0 +1,52 @@
+{{/*
+Copyright 2023 Intrinsic Innovation LLC
+Intrinsic Proprietary and Confidential
+Provided subject to written agreement between the parties.
+*/ -}}
+
+{{/*empty line at top since this template is appended to an existing file*/}}
+proto_library(
+    name = "{{.SkillNameSnakeCase}}_proto",
+    srcs = ["{{.SkillNameSnakeCase}}.proto"],
+)
+
+cc_proto_library(
+    name = "{{.SkillNameSnakeCase}}_cc_proto",
+    deps = [":{{.SkillNameSnakeCase}}_proto"],
+)
+
+skill_manifest(
+    name = "{{.SkillNameSnakeCase}}_cc_manifest",
+    src = "{{.SkillNameSnakeCase}}.manifest.textproto",
+    deps = [":{{.SkillNameSnakeCase}}_proto"],
+)
+
+cc_library(
+    name = "{{.SkillNameSnakeCase}}",
+    srcs = ["{{.SkillNameSnakeCase}}.cc"],
+    hdrs = ["{{.SkillNameSnakeCase}}.h"],
+    deps = [
+        ":{{.SkillNameSnakeCase}}_cc_proto",
+        "@ai_intrinsic_sdks//intrinsic/icon/release:status_helpers",
+        "@ai_intrinsic_sdks//intrinsic/skills/cc:skill_interface",
+        "@ai_intrinsic_sdks//intrinsic/skills/cc:skill_registration",
+        "@ai_intrinsic_sdks//intrinsic/skills/cc:skill_utils",
+        "@ai_intrinsic_sdks//intrinsic/skills/proto:equipment_cc_proto",
+        "@ai_intrinsic_sdks//intrinsic/skills/proto:skill_service_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status:status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_skill(
+    name = "{{.SkillNameSnakeCase}}_image",
+    manifest = ":{{.SkillNameSnakeCase}}_cc_manifest",
+    proto = ":{{.SkillNameSnakeCase}}_proto",
+    deps = [
+      ":{{.SkillNameSnakeCase}}",
+      ":{{.SkillNameSnakeCase}}_cc_proto",
+    ]
+)

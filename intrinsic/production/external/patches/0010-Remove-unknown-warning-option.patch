@@ -1,0 +1,28 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+From c91f8c7533531d27ca246ff22c5180134f985164 Mon Sep 17 00:00:00 2001
+From: ferstl
+Date: Tue, 1 Aug 2023 17:22:35 +0200
+Subject: [PATCH] remove use of unknown warning option
+
+---
+ third_party/zlib.BUILD | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/third_party/zlib.BUILD b/third_party/zlib.BUILD
+index 0b8fbbc14..187bec212 100644
+--- a/third_party/zlib.BUILD
++++ b/third_party/zlib.BUILD
+@@ -60,7 +60,6 @@ cc_library(
+     copts = select({
+         "@bazel_tools//src/conditions:windows": [],
+         "//conditions:default": [
+-            "-Wno-deprecated-non-prototype",
+             "-Wno-unused-variable",
+             "-Wno-implicit-function-declaration",
+         ],
+--
+2.41.0.585.gd2178a4bd4-goog
+

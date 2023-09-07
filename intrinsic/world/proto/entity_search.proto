@@ -1,0 +1,26 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.world;
+
+// Search criteria for finding relevant entities to apply an update to.
+message EntitySearchCriteria {
+  // Search for an entity using its entity id.
+  message ById {
+    // The entity id to search for.
+    uint32 entity_id = 1;
+  }
+
+  // Search for an entity using an alias.
+  message ByAlias {
+    string alias = 1;
+  }
+
+  oneof search_type {
+    ById by_id = 2;
+    ByAlias by_alias = 3;
+  }
+}

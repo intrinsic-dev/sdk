@@ -1,0 +1,19 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.kinematics;
+
+import "intrinsic/icon/proto/joint_space.proto";
+
+// A constraint that imposes that valid configurations of the Chain obey the
+// specified lower and upper joint position limits.
+message JointPositionLimitsConstraint {
+  intrinsic_proto.icon.JointVec lower_limits = 1;
+  intrinsic_proto.icon.JointVec upper_limits = 2;
+  // The optional joint position limit error rate gain. If not specified, will
+  // default to 0.99.
+  optional double joint_position_limit_error_rate_multiplier = 3;
+}

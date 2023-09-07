@@ -1,0 +1,104 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.error;
+
+import "google/protobuf/any.proto";
+import "google/rpc/status.proto";
+
+// Structured data about an error that occurred within the stack, which has
+// the purpose to be used for error resolution. This data is typically logged to
+// the DataLogger as a payload of a LogItem, and collected by the ErrorService
+// for processing.
+// It contains a description, resolution instructions and relevant associated
+// data (e.g. images, internal states etc.).
+//
+// DIFFERENCE BETWEEN absl.Status / rpc.Status AND ErrorReport:
+// - absl.Status & rpc.Status are used throughout our stack to propagate
+//     information that is useful for the respective higher level component to
+//     interpret the status, and automatically act on it.
+// - ErrorReport: Structured data about an error event that contains a detailed
+//     context (e.g. camera images, simulation state, other internal states)
+//     which is useful to present an explanation for the error to a human and to
+//     (automatically) search for or generate resolution suggestions. The proto
+//     should contain enough data to clearly share issues with other humans
+//     and preferably enough data to replay / tune the problematic part in
+//     isolation. An ErrorReport contains the respective StatusProto (generated
+//     from absl.Status) in its description.
+//     ErrorReports should only be logged close to the root cause of the error,
+//     and at key framework locations (skill interface and executive interface).
+//
+// Note that the LogItem.Metadata used in conjunction with an ErrorReport
+// informs about timings and details about the event source (component, app
+// name, cluster etc.). The LogItem.Context informs about how an ErrorReport is
+// related to other ErrorReports given their context.
+message ErrorReport {
+  // Error description. (e.g. error type & message, properties of error)
+  message Description {
+    enum Category {
+      UNKNOWN = 0;
+      // Error likely leads to an app failure. Restart of app or component
+      // required.
+      CATEGORY_CRITICAL = 1;
+      // Error is most likely only recoverable by human intervention.
+      CATEGORY_HUMAN_INTERVENTION_REQUIRED = 2;
+      // Error is likely recoverable automatically.
+      CATEGORY_AUTOMATICALLY_RECOVERABLE = 3;
+    }
+
+    // Required. Be as specific as possible in the error message describing the
+    // error.
+    google.rpc.Status status = 4;
+
+    // Required. Short summary of the error to be communicated to a human.
+    // Typically <10 words.
+    string human_readable_summary = 2;
+
+    // Optional.
+    Category category = 3;
+
+    reserved 1;
+  }
+
+  // Instructions for resolution. Human-readable and additional structured
+  // data for recoveries which the user can select via a frontend. Instructions
+  // can reference data items from 'data'.
+  message RecoveryInstructions {
+    message Item {
+      // Required. Human-readable instruction on how to potentially resolve the
+      // issue.
+      string human_readable = 1;
+    }
+
+    // List of alternatives.
+    repeated Item items = 1;
+  }
+
+  // Relevant data items for the error (e.g. images, internal states).
+  message Data {
+    message Item {
+      oneof status_or_data {
+        google.protobuf.Any data = 1;
+
+        // status may be set if acquiring data failed
+        google.rpc.Status status = 4;
+      }
+
+      reserved 2;
+    }
+
+    repeated Item items = 1;
+  }
+
+  // Required.
+  Description description = 1;
+
+  // Required.
+  RecoveryInstructions instructions = 2;
+
+  // Optional.
+  Data data = 3;
+}

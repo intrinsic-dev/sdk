@@ -1,0 +1,25 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+// A closed interval of double precision values [min, max].
+message Intervald {
+  double min = 1;
+  double max = 2;
+}
+
+// A closed interval of single precision values [min, max].
+message Intervalf {
+  float min = 1;
+  float max = 2;
+}
+
+// A closed interval of integer values [min, max].
+message Intervali {
+  int64 min = 1;
+  int64 max = 2;
+}

@@ -1,0 +1,38 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+import "google/protobuf/duration.proto";
+
+option cc_enable_arenas = true;
+
+// -----------------------------------------------------------------------------
+// Frequency represented as either a period duration or a value in Hertz.
+//
+// This representation is intended to be used as a specification for a
+// frequency.
+//
+// The default frequency is 1 Hz.
+//
+// The Duration representation has a resolution of nanoseconds, so the maximum
+// representable frequency is 1GHz and the second highest frequency is 500MHz.
+//
+// The minimum allowed non-zero frequency has a period of approximately one
+// year.
+//
+// A zero frequency corresponds to an infinite period and indicates that the
+// event will never reoccur.  The Duration protobuf cannot represent infinite
+// values, so the zero frequency is always uses frequency_hz in the protobuf.
+//
+// These constants are defined in //third_party/robotics/lib/math/frequency.h
+// -----------------------------------------------------------------------------
+message Frequency {
+  oneof value {
+    google.protobuf.Duration period = 1;
+    double frequency_hz = 2;
+  }
+}

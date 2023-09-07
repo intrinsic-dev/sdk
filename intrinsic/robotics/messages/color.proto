@@ -1,0 +1,21 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+option cc_enable_arenas = true;
+
+// RGB color with double-precision component values in [0, 1].
+message Color {
+  double red = 1;
+  double green = 2;
+  double blue = 3;
+  optional double alpha = 4;  // Default value is 1.0.
+}
+
+message Colors {
+  repeated Color colors = 1;
+}

@@ -1,0 +1,18 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+namespace intrinsic_fbs;
+
+table JointLimits {
+  min_position:[double];
+  max_position:[double];
+  has_velocity_limits:bool = false;
+  max_velocity:[double];
+  has_acceleration_limits:bool = false;
+  max_acceleration:[double];
+  has_jerk_limits:bool = false;
+  max_jerk:[double];
+  has_effort_limits:bool = false;
+  max_effort:[double];
+}

@@ -1,0 +1,79 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "intrinsic/perception/proto/dimensions.proto";
+
+// How the image is encoded / compressed.
+// An unspecified encoding corresponds to uncompressed image data.
+enum Encoding {
+  ENCODING_UNSPECIFIED = 0;  // uncompressed data, go/unspecified-enum
+  ENCODING_JPEG = 1;         // JPG compression
+  ENCODING_PNG = 2;          // PNG compression
+  ENCODING_WEBP = 3;         // WEBP compression
+}
+
+// The underlying core component type of a pixel.
+enum DataType {
+  TYPE_UNSPECIFIED = 0;  // go/unspecified-enum
+  TYPE_8U = 2;           // uint8_t
+  TYPE_16U = 3;          // uint16_t
+  TYPE_32U = 4;          // uint32_t
+  TYPE_8S = 5;           // int8_t
+  TYPE_16S = 6;          // int16_t
+  TYPE_32S = 7;          // int32_t
+  TYPE_32F = 8;          // float
+  TYPE_64F = 9;          // double
+}
+
+// The pixel type together with the data type fully specifies the concept of a
+// pixel. It makes it possible to differentiate pixels semantically, e.g. mere
+// intensity value (e.g. heat) vs. a depth value (i.e. distance to camera).
+enum PixelType {
+  PIXEL_UNSPECIFIED = 0;  // go/unspecified-enum
+  PIXEL_INTENSITY = 1;    // Used for 1- and 3-channel intensity images.
+  PIXEL_DEPTH = 2;        // Used for depth images.
+  PIXEL_POINT = 3;        // Used for 3D point clouds.
+  PIXEL_NORMAL = 4;       // Used for normals.
+}
+
+// The packing type specifies how the pixels are packed, whether interleaved,
+// or planar. For single-channel images, interleaved and planar are identical.
+enum PackingType {
+  // go/unspecified-enum
+  PACKING_TYPE_UNSPECIFIED = 0;
+  // Pixel channels are stored interleaved, e.g., rgbrgbrgb… for RGB images.
+  PACKING_TYPE_INTERLEAVED = 1;
+  // Pixel channels are stored in separate planes, e.g., rrrr…rrrbbb…bbbggg…ggg
+  PACKING_TYPE_PLANAR = 2;
+}
+
+// An image buffer, which contains either raw and uncompressed image data or
+// a compressed image.
+message ImageBuffer {
+  // The image buffer's encoding.
+  Encoding encoding = 1;
+
+  // Stores the underlying semantic pixel data which is stored in an image.
+  PixelType pixel_type = 2;
+  // The image's number of channels, i.e. components per pixel.
+  int32 num_channels = 3;
+  // The underlying data type of the pixels.
+  DataType type = 4;
+
+  // The width and height (cols and rows) of an image.
+  // This parameter is optional and must be specified when images are
+  // uncompressed, i.e. when encoding is ENCODING_UNSPECIFIED.
+  optional Dimensions dimensions = 5;
+
+  // The actual underlying data.
+  bytes data = 6;
+
+  // The packing type of the pixels. If not present, implementations should
+  // default to PACKING_TYPE_INTERLEAVED.
+  optional PackingType packing_type = 7;
+}

@@ -1,0 +1,19 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+// Inverse Kinematics options.
+// For parts with redundant kinematics, this is used in redundancy resolution.
+// The cost is the squared Euclidean distance to a preferred joint vector
+// multiplied by the weight.
+message IKOptions {
+  // Preferred joint configuration to bias toward.
+  // If absent, this term is not used in the cost function.
+  repeated double preferred_joint_positions = 1;
+  // Preferred joint configuration weight.
+  double preferred_joint_positions_weight = 2;
+}

@@ -1,0 +1,34 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+import "intrinsic/icon/server/config/realtime_control_config.proto";
+import "intrinsic/icon/server/config/services_config.proto";
+
+// Top-level config for MainLoop and real-time control servers.
+message IconMainConfig {
+  // ICON main loop frequency.
+  double control_frequency_hz = 1;
+  // If true, the server will fault if a cycle overrun occurs.
+  bool hard_deadline = 2;
+  // Configuration parameters for real-time control Services used by the
+  // Real-time control layer.
+  ServicesConfig services = 3;
+  // Configuration of the realtime control manager.
+  RealtimeControlConfig realtime_control_config = 4;
+  // High realtime priority for the Main loop thread.
+  bool main_loop_realtime_priority = 5;
+  // Hardware module names. These should match the `name` specified in each
+  // HardwareModuleConfig.
+  repeated string hardware_module_names = 6;
+  // What is the name of the hardware module that runs the clock. If empty then
+  // main loop internally runs the clock.
+  string hardware_module_that_drives_clock = 7;
+  // Read and Write operations to the hardware modules will error if they take
+  // longer than this value.
+  double hardware_module_read_write_timeout_seconds = 8;
+}

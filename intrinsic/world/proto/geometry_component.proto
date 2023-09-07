@@ -1,0 +1,61 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.world;
+
+import "intrinsic/math/proto/matrix.proto";
+import "intrinsic/math/proto/point.proto";
+
+// Component indicating the owning Entity has geometry (e.g. collision, visual,
+// etc.).
+message GeometryComponent {
+  message Geometry {
+    // Geometry id for this object's shape. The id represents a unique
+    // piece of geometry, multiple entities within the world may have the
+    // same id. If multiple entities in the same world have the same id,
+    // those entities all reference the same piece of geometry. The id is
+    // not guaranteed to be globaly unique and the same id in different
+    // world protos may point to different pieces of geometry.
+    string geometry_id = 1;
+
+    // A 4x4 affine transform matrix from reference frame to shape
+    intrinsic_proto.Matrixd ref_t_shape_aff = 4;
+  }
+
+  // Used for the value type in proto map below.
+  message GeometrySet {
+    repeated Geometry geometries = 1;
+  }
+
+  message Model {
+    // This model explicitly specifies the transform between the entity and the
+    // geometry shapes themselves. The geometry id represents a Geometry
+    // instance containing a LazyExactGeometry and an optional Renderable.
+    message GeometryModel {
+      // The collision and visual geometries associated with this entity.
+      repeated Geometry collision_geometries = 1;
+      repeated Geometry visual_geometries = 2;
+    }
+
+    oneof type_oneof {
+      // Model representing the Geometry as definted by the Geometry API.
+      GeometryModel geometry_model = 2;
+    }
+  }
+  Model model = 1 [deprecated = true];
+
+  // Stores named geometry for this entity. Names starting with "Intrinsic_" may
+  // have special semantics. For example, geometries named "Intrinsic_Collision"
+  // and "Intrinsic_Visual" indicate the geometry used for collision detection
+  // and rendering, respectively. All other names are user-defined.
+  //
+  // It is expected that a component may contain the same geometry under
+  // different names. For example, if an entity is using the same geometry for
+  // both visualization and collision, it will be repeated under the
+  // aforementioned names. User-defined names may further repeat or distinguish
+  // geometries in user-defined ways.
+  map<string, GeometrySet> named_geometries = 2;
+}

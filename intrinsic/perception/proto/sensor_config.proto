@@ -1,0 +1,31 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/perception/proto/camera_settings.proto";
+import "intrinsic/perception/proto/distortion_params.proto";
+import "intrinsic/perception/proto/intrinsic_params.proto";
+
+// Specification of a single sensor within a camera. This includes intrinsic
+// calibration (including distortion params), per-sensor settings, and sensor
+// pose relative to the device coordinate system. Minimal specification includes
+// sensor ID only.
+message SensorConfig {
+  // SourceIDValue for Genicam, sensor number for other cameras (e.g. IPS PU)
+  int64 id = 1;
+  // Transforms the sensor data into the reference coordinate system of the
+  // camera.
+  optional intrinsic_proto.Pose camera_t_sensor = 2;
+  // Sensor intrinsic calibration parameters
+  optional IntrinsicParams intrinsic_params = 3;
+  // Sensor distortion parameters
+  optional DistortionParams distortion_params = 4;
+  // A list of camera settings applied to this sensor after the global settings
+  // have been applied. TODO: Shall we rename this to SensorSetting?
+  repeated CameraSetting settings = 5;
+}

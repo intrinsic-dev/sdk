@@ -1,0 +1,23 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+import "google/protobuf/any.proto";
+
+// Define a proto were arbitrary fields can be overridden from CEL expressions.
+message AnyWithAssignments {
+  message Assignment {
+    // The path for which to set the value, the root is the proto.
+    // Can be a proto path or a simplified dot path.
+    string path = 1;
+    // Expression to generate the desired value. Result type must be
+    // compatible with the field in the proto that is being set.
+    string cel_expression = 2;
+  }
+  google.protobuf.Any proto = 1;
+  repeated Assignment assign = 2;
+}

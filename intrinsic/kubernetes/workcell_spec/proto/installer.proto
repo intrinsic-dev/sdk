@@ -1,0 +1,167 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.workcell_spec.v1;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+import "intrinsic/kubernetes/workcell_spec/proto/image.proto";
+
+message GetInstalledSpecResponse {
+  // The identifier of the currently running workcell spec.
+  string name = 1;
+
+  // The health status of the workcell. Currently ERROR is never returned.
+  enum WorkcellStatus {
+    UNKNOWN = 0;
+    // Ready to receive requests.
+    HEALTHY = 1;
+    // Not ready to receive requests, but should fix itself.
+    PENDING = 2;
+    // Non-recoverable error.
+    ERROR = 3;
+    // The workcell spec is about to be deleted.
+    STOPPING = 4;
+  }
+  WorkcellStatus status = 3;
+  // If status != HEALTHY, a human-readable explanation of why.
+  // Note that after (re-)installing an app, the expectation is for it to go
+  // through a few unhealthy states before it's healthy.
+  string error_reason = 4;
+
+  // A list of services that are available.
+  repeated Service services = 2;
+  message Service {
+    string name = 1;
+  }
+
+  // The version of the installed workcell spec.
+  string version = 5;
+
+  // A project wide unique name of the workcell.
+  string workcell_name = 6;
+
+  // The human readable name of the currently running workcell spec.
+  string display_name = 7;
+
+  // A list of ICON instances that are available. Only set if status = HEALTHY.
+  // These can be used with the x-icon-instance-name header when connecting
+  // through the ingress.
+  // http://intrinsic/util/grpc/channel.h?l=29&rcl=373881143
+  repeated string icon_instance_names = 8;
+
+  // Whether it's a simulated workcell or physical.
+  bool simulated = 9;
+
+  // The time at which the workcellspec was deployed.
+  google.protobuf.Timestamp started_at = 10;
+}
+
+enum AddonType {
+  ADDON_TYPE_UNKNOWN = 0;
+  ADDON_TYPE_SKILL = 1;
+  ADDON_TYPE_SKILL_BUNDLE = 2;
+  ADDON_TYPE_ICON_HARDWARE_MODULE = 3;
+  ADDON_TYPE_RESOURCE_INSTANCE = 4;
+}
+
+message IconHardwareModuleOptions {
+  // If true, then the hardware module requires an atemsys device to run.
+  bool requires_atemsys = 1;
+
+  // The hostname of the node that this hardware module should run on.
+  string rtpc_node_hostname = 2;
+
+  // If true, then the hardware module runs with realtime priority.
+  bool run_with_realtime_priority = 3;
+
+  // If true, then the hardware module runs with normal cluster networking.
+  // if false, then the hardware module runs with host network interfaces.
+  bool isolate_network = 5;
+
+  // Contains the raw bytes representing the hardware module config to be used.
+  message HardwareModuleConfig {
+    bytes content = 1;
+  }
+
+  // The hardware module config in raw bytes to tbe used by the installer
+  // service.
+  HardwareModuleConfig hardware_module_config = 4;
+}
+
+message InstallContainerAddonRequest {
+  // The addon name
+  // - must be a valid dns name
+  // - should not start with 'skill-'
+  // - the combination of (type,name) must be unique
+  //   the generated namespace will by '$type-$name'
+  // Prefer to specify `id` instead of `name`
+  string name = 1 [deprecated = true];
+
+  // The addon id
+  // - must be a valid id in. This must:
+  //     - start with a letter in the alphabet
+  //     - only contain [a-Z0-9._]
+  //     - we recommend using reverse dns notation
+  // - should not start with 'skill-'
+  // - the combination of (type,name) must be unique
+  //   the generated namespace will by '$type-$name'
+  string id = 6;
+
+  // The semver version of the addon. Uses `0.0.1` if unspecified.
+  string version = 7;
+
+  // The type of the addon, will determine the supported options
+  AddonType type = 2;
+
+  repeated Image images = 3;
+
+  oneof addon_options {
+    IconHardwareModuleOptions icon_hardware_module_options = 4;
+  }
+
+  reserved "image";
+}
+
+message RemoveContainerAddonRequest {
+  // The addon name. Prefer to specify `id` instead of `name`
+  string name = 1 [deprecated = true];
+
+  // The id of the addon
+  string id = 3;
+
+  // The type of the addon
+  AddonType type = 2;
+}
+
+message InstallContainerAddonsRequest {
+  repeated InstallContainerAddonRequest requests = 1;
+}
+
+service InstallerService {
+  
+
+  // Returns information about the currently running (if any) workcell spec.
+  // Blocks for up to 1s.
+  rpc GetInstalledSpec(google.protobuf.Empty)
+      returns (GetInstalledSpecResponse) {
+    // errors: NOT_FOUND if no workcell spec has been installed yet
+  }
+
+  // Installs a (eg. 3rd party) container addon into the cluster
+  rpc InstallContainerAddon(InstallContainerAddonRequest)
+      returns (google.protobuf.Empty) {}
+
+  // Installs multiple (eg. 3rd party) container addons into the cluster.
+  rpc InstallContainerAddons(InstallContainerAddonsRequest)
+      returns (google.protobuf.Empty) {}
+
+  // Removes a (eg. 3rd party) container addon from the cluster
+  rpc RemoveContainerAddon(RemoveContainerAddonRequest)
+      returns (google.protobuf.Empty) {}
+}

@@ -1,0 +1,147 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+import "intrinsic/icon/proto/cart_space.proto";
+import "intrinsic/kinematics/proto/skeleton.proto";
+import "intrinsic/kinematics/types/joint_limits.proto";
+import "intrinsic/math/proto/pose.proto";
+
+// Config values that are relevant for each feature interface.
+message GenericJointPositionConfig {
+  int64 num_joints = 1;
+}
+message GenericJointVelocityConfig {
+  int64 num_joints = 1;
+}
+message GenericJointPositionSensorConfig {
+  int64 num_joints = 1;
+}
+message GenericJointVelocityEstimatorConfig {
+  int64 num_joints = 1;
+}
+message GenericJointAccelerationEstimatorConfig {
+  int64 num_joints = 1;
+}
+message GenericJointLimitsConfig {
+  // Joint space application limits for the Part. Actions will fall back to
+  // these if a user does not provide custom limits. Custom limits must be
+  // smaller than these in every dimension, or ICON will reject them.
+  intrinsic_proto.JointLimits application_limits = 1;
+  // Joint space system limits. These are purely informative – ICON clients must
+  // respect the `application_limits` above. ICON may slightly violate
+  // `application_limits` for performance reasons, but never violate
+  // `system_limits`.
+  intrinsic_proto.JointLimits system_limits = 2;
+  reserved "default_joint_limits";
+  reserved "maximum_joint_limits";
+}
+message GenericCartesianLimitsConfig {
+  CartesianLimits default_cartesian_limits = 1;
+}
+// Config values used to create a GenericConfig adjusting
+// (GenericJointLimitsConfig and GenericCartesianLimitsConfig) for every
+// ModeOfSafeOperation.
+// Needs to contain limits for MODE_OF_SAFE_OPERATION_UNKNOWN as those are used
+// as defaults.
+message GenericSafetyLimitsConfig {
+  // The key is intrinsic_proto.icon.ModeOfSafeOperation_Name() because proto
+  // doesn't support using enum types as keys in maps.
+  map<string, GenericJointLimitsConfig> joint_limits_map = 1;
+  // The key is intrinsic_proto.icon.ModeOfSafeOperation_Name() because proto
+  // doesn't support using enum types as keys in maps.
+  map<string, GenericCartesianLimitsConfig> cartesian_limits_map = 2;
+}
+
+message GenericSimpleGripperConfig {}
+message GenericAdioConfig {
+  message AnalogInputConfig {
+    // An analog input block has an array of fields, each with an associated
+    // unit. This repeated field contains the unit names for each such field, in
+    // order.
+    repeated string units = 1;
+  }
+
+  // Map from analog input block name to an AnalogInputConfig proto (see
+  // above).
+  map<string, AnalogInputConfig> analog_input_blocks = 1;
+  // Map from digital input block name to the number of bits in that block.
+  map<string, int64> digital_input_block_sizes = 2;
+  // Map from digital output block name to the number of bits in that block.
+  map<string, int64> digital_output_block_sizes = 3;
+}
+message GenericRangeFinderConfig {
+  intrinsic_proto.Pose pose_in_tcp_frame = 1;
+}
+message GenericInertialMeasurementUnitConfig {
+  intrinsic_proto.Pose pose_in_flange_frame = 1;
+}
+message GenericManipulatorKinematicsConfig {
+  intrinsic_proto.Skeleton skeleton = 1;
+  // Inverse kinematics solver name/key.
+  string solver_key = 2;
+}
+message GenericJointTorqueConfig {
+  int64 num_joints = 1;
+}
+message GenericJointTorqueSensorConfig {
+  int64 num_joints = 1;
+}
+message GenericDynamicsConfig {}
+message GenericForceTorqueSensorConfig {}
+message GenericStandaloneForceTorqueSensorConfig {}
+message GenericLinearGripperConfig {
+  double min_width_m = 1;
+  double max_width_m = 2;
+  optional double min_force_newton = 3;
+  optional double max_force_newton = 4;
+  optional double min_speed_meters_per_second = 5;
+  optional double max_speed_meters_per_second = 6;
+}
+message GenericHandGuidingConfig {
+  // Empty for now.
+}
+message GenericControlModeExporterConfig {
+  // Empty, as there is no configuration to be done.
+}
+message GenericMoveOkConfig {
+  // Empty for now.
+}
+
+// Bundles all FeatureInterface-specific config values into a single message.
+message GenericPartConfig {
+  optional GenericJointPositionConfig joint_position_config = 1;
+  optional GenericJointVelocityConfig joint_velocity_config = 2;
+  optional GenericJointPositionSensorConfig joint_position_sensor_config = 3;
+  optional GenericJointVelocityEstimatorConfig joint_velocity_estimator_config =
+      4;
+  optional GenericJointAccelerationEstimatorConfig
+      joint_acceleration_estimator_config = 5;
+  // The joint_limits_config selected based on the active ModeOfSafeOperation.
+  // The safety_limits_config contains all possible limits.
+  optional GenericJointLimitsConfig joint_limits_config = 6;
+  // The cartesian_limits_config selected based on the active
+  // ModeOfSafeOperation. The safety_limits_config contains all possible limits.
+  optional GenericCartesianLimitsConfig cartesian_limits_config = 7;
+  optional GenericSimpleGripperConfig simple_gripper_config = 8;
+  optional GenericAdioConfig adio_config = 9;
+  optional GenericRangeFinderConfig range_finder_config = 10;
+  optional GenericManipulatorKinematicsConfig manipulator_kinematics_config =
+      11;
+  optional GenericJointTorqueConfig joint_torque_config = 12;
+  optional GenericJointTorqueSensorConfig joint_torque_sensor_config = 13;
+  optional GenericDynamicsConfig dynamics_config = 14;
+  optional GenericStandaloneForceTorqueSensorConfig
+      standalone_force_torque_sensor_config = 22;
+  optional GenericForceTorqueSensorConfig force_torque_sensor_config = 15;
+  optional GenericLinearGripperConfig linear_gripper_config = 16;
+  optional GenericHandGuidingConfig native_hand_guiding_config = 17;
+  optional GenericControlModeExporterConfig control_mode_exporter_config = 18;
+  optional GenericSafetyLimitsConfig safety_limits_config = 19;
+  optional GenericMoveOkConfig move_ok_config = 20;
+  optional GenericInertialMeasurementUnitConfig imu_config = 21;
+}

@@ -1,0 +1,71 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.world;
+
+import "intrinsic/world/proto/collision_action.proto";
+import "intrinsic/world/proto/object_world_refs.proto";
+
+// Wrapper around using an Object or an Entity reference with the Collision rule
+// below.
+message ObjectOrEntityReference {
+  oneof type {
+    intrinsic_proto.world.ObjectReference object = 1;
+    intrinsic_proto.world.EntityReference entity = 2;
+  }
+}
+
+message CollisionSettings {
+  // Disables collision checking.
+  bool disable_collision_checking = 1;
+
+  // The minimum distance (in m) between any pair of objects beyond which they
+  // are no longer considered in collision. The default value is 0, meaning that
+  // objects are deemed not in collision unless they intersect. This value has
+  // to be >= 0 when specified.
+  // If present, this setting just adds an object rule matching "anything"
+  // with "anything" with the margin set to minimum_margin. Therefore, this rule
+  // will take precedence over all other object rules below with lower priority
+  // (i.e. those with higher margin values).
+  optional double minimum_margin = 2;
+
+  // Rule defining the minimum_margin (or collision exclusion) between an
+  // object(s) and "anything else" or between the object(s) and the "other"
+  // provided object(s).
+  message CollisionRule {
+    // Action to enforce when doing collision checking, e.g., collision
+    // exclusion pairs or minimum margin. This rule will be applied for every
+    // pair of objects that has one entry in "left" and one entry in "right". If
+    // "right" is empty then it will apply to every pair of "left" and anything
+    // else in the world.
+    CollisionAction collision_action = 5;
+    // The object(s) or entities that the rule applies to. A rule will be
+    // created between each object in 'left' and each of the objects in 'right'.
+    repeated ObjectOrEntityReference left = 1;
+    // Optional. If not provided, the rule applies between each object specified
+    // above and "anything else". Otherwise, the rule applies between each
+    // object above, and each other object in 'right' here.
+    repeated ObjectOrEntityReference right = 2;
+  }
+
+  // The rules for this collision settings instance. Allows to set rules like
+  // minimum margin and exclusion pairs for specific objects in the world.
+  repeated CollisionRule collision_rules = 3;
+
+  // Spacing between collision checks (in radians in the joint space of the
+  // robot). A typical value is 0.01. Increasing this value will speed up
+  // collision checking at the expense of possibly having small collisions on
+  // the path (in between the discrete points checked).
+  //
+  // The meaning of 'unset' may differ between use-cases. We are in the process
+  // of updating more callsites to use this parameter, so expect this list to
+  // evolve over time:
+  //   * For skills/code that produce a linear trajectory, collision checking
+  //     will be performed with a default spacing (0.01 in joint space).
+  // Use-cases not listed will likely ignore this parameter in favor of some
+  // default behavior.
+  optional double collision_check_spacing = 4;
+}

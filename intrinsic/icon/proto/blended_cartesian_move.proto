@@ -1,0 +1,45 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+import "intrinsic/icon/proto/cart_space.proto";
+import "intrinsic/icon/proto/joint_space.proto";
+import "intrinsic/kinematics/types/joint_limits.proto";
+import "intrinsic/math/proto/pose.proto";
+
+// `BlendedCartesianMove` parameterizes a Trajectory Generation problem for
+// blended LIN moves in Cartesian space. Robot will move from
+// `initial_joint_state` to an end-effector `target_pose` through end-effector
+// `waypoints` with blending parameters `translational_rounding_m` and
+// `rotational_rounding_rad`. Waypoints and target pose must be kinematically
+// feasible (reachable). Optional `joint_limits` and `cartesian_limits` can be
+// employed to reduce motion speed.
+message BlendedCartesianMove {
+  message CartesianWaypoint {
+    intrinsic_proto.Pose waypoint_pose = 1;
+  }
+
+  intrinsic_proto.icon.JointStatePVA initial_joint_state = 1;
+  repeated CartesianWaypoint waypoints = 2;
+  intrinsic_proto.Pose target_pose = 3;
+
+  // (Optional) offset between robot tip (the robot endeffector flange) and the
+  // motion target pose. This offset defaults to Identity.
+  optional intrinsic_proto.Pose tip_t_target = 9;
+
+  // Cartesian radius of the circular blend around a waypoint corner.
+  double translational_rounding_m = 4;
+  // Radius of the circular blend around a waypoint corner (max angle-axis
+  // deviation).
+  double rotational_rounding_rad = 5;
+
+  optional intrinsic_proto.JointLimits joint_limits = 6;
+  optional intrinsic_proto.icon.CartesianLimits cartesian_limits = 7;
+
+  reserved 8;
+  reserved "planning_sampling_time";
+}

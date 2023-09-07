@@ -1,0 +1,46 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+import "google/protobuf/any.proto";
+import "intrinsic/robotics/messages/object_id.proto";
+
+option cc_enable_arenas = true;
+option java_outer_classname = "ObjectRefProto";
+option java_package = "com.google.protos.robotics.messages";
+
+// Unique identifier for an object.
+message ObjectRef {
+  // Fully specified name of an object, e.g. "/bldg/room102/s102A/desk/drawer0".
+  string path = 1;
+
+  // Type of the referent (e.g. LINK) for this reference.
+  ObjectId.ObjectType type = 2;
+
+  // Id for the ObjectRef.
+  message Id {
+    oneof id_type {
+      // Holds an identifier for an entity in an arbitrary format.
+      // One example is the ObjectId, which identifies an object by indices.
+      // Another is a string in an internal tool format.
+      google.protobuf.Any data = 1;
+
+      // Common ID types.
+      string str_id = 3;
+      int64 int_id = 4;
+      ObjectId object_id = 5;
+    }
+
+    // This optional key is used to select a handler for the ID.
+    // For example, the key "path" indicates that the ID is a string field with
+    // path semantics.
+    string key = 2;
+  }
+
+  // Identifier for the object in some other tool or system.
+  Id id = 3;
+}

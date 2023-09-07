@@ -1,0 +1,20 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package xfa.icon.actions.proto;
+
+// Fixed parameters for a SimpleGripper action. These are provided once by the
+// user when the action is created, and remain the same for the lifetime of the
+// action.
+message SimpleGripperFixedParams {
+  enum Command {
+    UNKNOWN = 0;
+    GRASP = 1;
+    RELEASE = 2;
+  }
+  Command command = 1;
+  reserved 2;
+}

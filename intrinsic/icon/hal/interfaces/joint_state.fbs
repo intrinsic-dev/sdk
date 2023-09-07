@@ -1,0 +1,21 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+namespace intrinsic_fbs;
+
+table JointPositionState {
+  position:[double];
+}
+
+table JointVelocityState {
+  velocity:[double];
+}
+
+table JointAccelerationState {
+  acceleration:[double];
+}
+
+table JointTorqueState {
+  torque:[double];
+}

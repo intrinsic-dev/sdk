@@ -1,0 +1,163 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.skills;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/descriptor.proto";
+import "intrinsic/skills/proto/equipment.proto";
+
+message StringVector {
+  repeated string values = 1;
+}
+
+message VectorNdValue {
+  repeated double value = 1;
+}
+
+message VectorNdArray {
+  repeated VectorNdValue array = 1;
+}
+
+message ParameterDescription {
+  // Specifies the default values used by the Skill
+  google.protobuf.Any default_value = 1;
+
+  // The set of FileDescriptors needed to dynamically create a message from a
+  // factory
+  google.protobuf.FileDescriptorSet parameter_descriptor_fileset = 2;
+
+  string parameter_message_full_name = 4;
+  //
+  // New users of the Skill APIs should prefer to retrieve comments from the
+  // `parameter_descriptor_fileset` instead of from the
+  // `parameter_field_comments`.
+  //
+  // The leading comments of the fields in the parameter message. The key is
+  // the full name of the field.
+  map<string, string> parameter_field_comments = 5;
+
+  reserved 3;
+  reserved "parameter_descriptor";
+}
+
+message ReturnValueDescription {
+  // The set of FileDescriptors needed to dynamically create a message from a
+  // factory. More precisely, this is the smallest set containing the file
+  // descriptor, A, with the message definition for the return value, along with
+  // the file descriptors for all transitive dependencies of file descriptor A.
+  google.protobuf.FileDescriptorSet descriptor_fileset = 2;
+
+  string return_value_message_full_name = 4;
+  //
+  // New users of the Skill APIs should prefer to retrieve comments from the
+  // `descriptor_fileset` instead of from the `return_value_field_comments`.
+  //
+  // The leading comments of the fields in the return value message. The key is
+  // the full name of the field.
+  map<string, string> return_value_field_comments = 5;
+}
+
+// Message to carry information about a Parameterizable Behavior Tree.
+// Currently used as an indicator, may get additional information later.
+message BehaviorTreeDescription {}
+
+message ExecutionOptions {
+  // True if the skill supports cooperative cancellation during execution.
+  bool supports_cancellation = 1;
+}
+
+message Skill {
+  // A well-known name for this skill.
+  string skill_name = 1;
+
+  // The package name for the skill. This is dot-separated string describing
+  // the package for the skill.
+  string package_name = 9;
+
+  // The skill id. See intrinsic_proto.catalog.SkillMeta for the formatting of
+  // this id field.
+  string id = 10;
+
+  // The fully-qualified globally unique id of the skill.
+  // See: intrinsic_proto.catalog.SkillMeta for the formatting of this id field.
+  string id_version = 11;
+
+  // Description information for the parameters of this Skill.
+  ParameterDescription parameter_description = 6;
+
+  // Description information for the data returned by a Skill's Execution.
+  // This is only present if a Skill utilizes return values.
+  ReturnValueDescription return_value_description = 7;
+
+  // Maps equipment slot name to a selector describing handles that can satisfy
+  // the implementation's requirements for that slot.
+  map<string, intrinsic_proto.skills.EquipmentSelector> equipment_selectors = 4;
+
+  // General documentation that can be shown to a user/caller of the skill.
+  // You may include usage instructions, assumptions of operating the skill,
+  // intended exhibited behavior when running the skill.
+  string doc_string = 5;
+
+  // Parameterizable Behavior Tree Description, if set, the executive can
+  // retrieve a tree for this skill's ID.
+  optional BehaviorTreeDescription behavior_tree_description = 12;
+
+  // Information about options supported by this skill during execution.
+  ExecutionOptions execution_options = 13;
+
+  reserved 2, 3;
+  reserved "params", "results";
+}
+
+message SkillHandle {
+  string grpc_target = 1;
+}
+
+message SkillInstance {
+  // The globally-unique name of this skill instance.
+  string instance_name = 1;
+
+  // The fully-qualified globally unique id of the skill
+  // See: intrinsic_proto.catalog.SkillMeta for the formatting of this id field.
+  string id_version = 10;
+
+  // Dispatcher handle to project this skill.
+  SkillHandle project_handle = 4;
+
+  // Dispatcher handle to execute this skill.
+  SkillHandle execute_handle = 5;
+
+  // Maps equipment slot name to a handle satisfying the slot's selector. This
+  // map must contain an entry for each slot in the implementation's
+  // equipment_selectors map.
+  map<string, intrinsic_proto.skills.EquipmentHandle> equipment_handles = 6;
+
+  // DEPRECATED: Please retrieve default parameters via the ParameterDescription
+  // returned by SkillRegistry::GetSkills, and not through a SkillInstance.
+  // `params` and `default_parameters` are passed here to maintain our current
+  // default override handling. Please do not add additional dependencies on
+  // theses fields.
+  google.protobuf.Any default_parameters = 9;
+
+  reserved 2, 3, 7, 8;
+  reserved "params", "skill", "skill_name";
+}
+
+// Information needed to execute a learning skill that uses a template.
+message TemplateExecuteParams {
+  // The full path of the gcp filename.
+  string gcp_filename = 1;
+  // The name of the gcp bucket.
+  string gcp_bucket_name = 2;
+}
+
+message SkillMetadata {
+  // Contains information for learning skills that use templates. This field is
+  // optional and only present when a learning skill is executed. Non-learning
+  // skills should not populate this field.
+  TemplateExecuteParams template_execute_params = 1;
+}

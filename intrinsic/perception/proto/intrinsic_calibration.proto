@@ -1,0 +1,51 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "intrinsic/perception/proto/camera_params.proto";
+import "intrinsic/perception/proto/dimensions.proto";
+import "intrinsic/perception/proto/pattern_detection_result.proto";
+
+message IntrinsicCalibrationRequest {
+  enum OptimizationAlgorithm {
+    // This will default to STROBL.
+    AUTO = 0;
+    // Based on this paper: https://elib.dlr.de/71888/1/strobl_2011iccv.pdf
+    STROBL = 1;
+    // Halcon's implementation.
+    HALCON = 2;
+  }
+
+  message InitializationParams {
+    double focal_length = 2;
+    double sensor_size_x = 3;
+    double sensor_size_y = 4;
+
+    reserved 1;
+  }
+
+  // Detections of the calibration plate.
+  repeated PatternDetection pattern_detections = 1;
+
+  // Initial values for the camera parameters that are used to initialize the
+  // algorithm. Only used for HALCON OptimizationAlgorithm.
+  optional InitializationParams initial_params = 2;
+
+  // Image dimensions.
+  Dimensions dimensions = 4;
+
+  // The optimization algorithm which should be used.
+  OptimizationAlgorithm algorithm = 3;
+}
+
+message IntrinsicCalibrationResult {
+  CameraParams camera_params = 1;
+  // Reprojection error in pixels.
+  double error = 2;
+  // 3D error in m.
+  optional double error_3d = 3;
+}

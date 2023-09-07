@@ -1,0 +1,33 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "google/protobuf/any.proto";
+import "intrinsic/perception/proto/camera_drivers.proto";
+
+// A unique identifier for a specific, physical camera.
+//
+// Each driver uses a different underlying implementation and within each driver
+// a specific hardware ID binds the identifier to a single physical camera.
+message CameraIdentifier {
+  oneof drivers {
+    CameraDrivers.FileCamera file_camera = 1;
+    CameraDrivers.GenICam genicam = 2;
+    CameraDrivers.OpenNi openni = 3;
+    CameraDrivers.Video4Linux v4l = 4;
+    CameraDrivers.Photoneo photoneo = 5;
+    CameraDrivers.FakeGenICam fake_genicam = 7;
+    CameraDrivers.Realsense realsense = 8;
+    CameraDrivers.PlenopticUnit plenoptic_unit = 9;
+
+    // This parameter can be used to inject specific data to a driver and it
+    // can be either used for standalone parameters which do not require a
+    // factory mechanism or for cameras which require special data during their
+    // creation.
+    google.protobuf.Any generic = 50;
+  }
+}

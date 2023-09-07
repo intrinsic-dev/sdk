@@ -1,0 +1,29 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+From 8532831410b52d1cf23b004fe1523efbf6b3e3ac Mon Sep 17 00:00:00 2001
+From: ferstl
+Date: Tue, 1 Aug 2023 13:58:46 +0200
+Subject: [PATCH 3/5] remove local_config_python
+
+---
+ bazel/grpc_python_deps.bzl | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/bazel/grpc_python_deps.bzl b/bazel/grpc_python_deps.bzl
+index 0a809bf525..17ec465f23 100644
+--- a/bazel/grpc_python_deps.bzl
++++ b/bazel/grpc_python_deps.bzl
+@@ -28,7 +28,7 @@ def grpc_python_deps():
+             patch_args = ["-p1"],
+         )
+
+-    python_configure(name = "local_config_python")
++    #python_configure(name = "local_config_python")
+
+     native.bind(
+         name = "python_headers",
+--
+2.41.0.585.gd2178a4bd4-goog
+

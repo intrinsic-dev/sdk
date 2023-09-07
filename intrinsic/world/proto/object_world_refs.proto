@@ -1,0 +1,134 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.world;
+
+// Identifies an object within a world by means of its unique name.
+// Only works when the name is explicitly flagged as a globally unique name.
+// See Object.name_is_global_alias.
+message ObjectReferenceByName {
+  // Unique name of the object. Can be "root".
+  string object_name = 1;
+}
+
+// Identifies a frame within a world by a unique combination of the name of the
+// frame itself and the name of its parent object. Only works when the name is
+// explicitly flagged as a globally unique name. See
+// Object.name_is_global_alias.
+message FrameReferenceByName {
+  // Unique name of the frame's parent object. Can be "root".
+  string object_name = 1;
+
+  // Name of the frame (which is unique among all frames under an object).
+  string frame_name = 2;
+}
+
+// Identifies a node in the transform tree of the world by a combination of
+// name(s) that uniquely identifies an object or a frame.
+message TransformNodeReferenceByName {
+  oneof transform_node_reference_by_name {
+    // Unique name of an object.
+    ObjectReferenceByName object = 1;
+
+    // Unique combination of object name and frame name which identifies a
+    // frame.
+    FrameReferenceByName frame = 2;
+  }
+}
+
+// Identifies an object within a world.
+message ObjectReference {
+  oneof object_reference {
+    // Id of the object. Can be "root".
+    string id = 1;
+
+    // Unique name of the object. Only works when the name is explicitly flagged
+    // as a globally unique name. See Object.name_is_global_alias.
+    ObjectReferenceByName by_name = 2;
+  }
+
+  // Human readable information for debugging
+  // Example: "Created from path world.robot.gripper.workpiece"
+  string debug_hint = 3;
+}
+
+// Identifies a frame within a world.
+message FrameReference {
+  oneof frame_reference {
+    // Id of the frame.
+    string id = 1;
+
+    // Unique combination of object name and frame name which identifies a
+    // frame. Only works when the object name is explicitly flagged as a
+    // globally unique name. See Object.name_is_global_alias.
+    FrameReferenceByName by_name = 2;
+  }
+  // Human readable information for debugging
+  // Example: "Created from path world.robot.gripper.workpiece.grasp"
+  string debug_hint = 3;
+}
+
+// Identifies a node in the transform tree of the world which can either be an
+// object or a frame. Options are:
+//   - The root object (= the world origin)
+//   - A child frame of the root object (= a global frame)
+//   - A non-root object (= the origin/base of a robot, camera, workpiece, ...)
+//   - A child frame of a non-root object (= a local frame)
+message TransformNodeReference {
+  oneof transform_node_reference {
+    // Id of the object or frame from the shared id-namespace. Can be "root".
+    string id = 1;
+
+    // Combination of name(s) that uniquely identifies an object or a frame.
+    TransformNodeReferenceByName by_name = 2;
+  }
+
+  // Human readable information for debugging
+  // Example: "Created from path world.robot.gripper.workpiece"
+  string debug_hint = 3;
+}
+
+// Identifies an entity within a world.
+message EntityReference {
+  oneof entity_reference {
+    // Id of the entity. Can be "eid_root".
+    string id = 1;
+  }
+}
+
+// Selects one or more entities of an object, which are the parts of an object.
+//
+// Not all objects have more than one object entity, so for a those objects all
+// of the provided options will behave identically and select the one and only
+// existing entity.
+message ObjectEntityFilter {
+  // If true, include the base entity of an object. Has no effect if
+  // 'include_all_entities' is also set.
+  bool include_base_entity = 1;
+
+  // If true, include the final entity of an object. Has no effect if
+  // 'include_all_entities' is also set. Using this on an object that does not
+  // have a unique final entity will result in an error.
+  bool include_final_entity = 2;
+
+  // If true, include all entities of an object.
+  bool include_all_entities = 3;
+
+  // An entity to include from the object.
+  repeated EntityReference entity_references = 4;
+
+  // An entity to include from the object based on its name
+  repeated string entity_names = 5;
+}
+
+// References one or more object entities of a specific object.
+message ObjectReferenceWithEntityFilter {
+  // Reference to the object.
+  ObjectReference reference = 1;
+
+  // The entity filter to be applied to the object.
+  ObjectEntityFilter entity_filter = 2;
+}

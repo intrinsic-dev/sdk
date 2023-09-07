@@ -1,0 +1,29 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+From c0dc41fa9f6ca30a5a31fa0f9e96b985a4cbc977 Mon Sep 17 00:00:00 2001
+From: ferstl
+Date: Tue, 1 Aug 2023 14:34:19 +0200
+Subject: [PATCH 1/2] rm python/google/__init__.py
+
+---
+ python/google/__init__.py | 4 ----
+ 1 file changed, 4 deletions(-)
+ delete mode 100644 python/google/__init__.py
+
+diff --git a/python/google/__init__.py b/python/google/__init__.py
+deleted file mode 100644
+index 558561412..000000000
+--- a/python/google/__init__.py
++++ /dev/null
+@@ -1,4 +0,0 @@
+-try:
+-  __import__('pkg_resources').declare_namespace(__name__)
+-except ImportError:
+-  __path__ = __import__('pkgutil').extend_path(__path__, __name__)
+--
+2.41.0.585.gd2178a4bd4-goog
+
+
+

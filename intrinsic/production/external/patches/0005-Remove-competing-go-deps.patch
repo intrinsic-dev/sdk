@@ -1,0 +1,32 @@
+# Copyright 2023 Intrinsic Innovation LLC
+# Intrinsic Proprietary and Confidential
+# Provided subject to written agreement between the parties.
+
+From 169412291496899ecd0b186a3fa42f278f98d372 Mon Sep 17 00:00:00 2001
+From: ferstl
+Date: Tue, 1 Aug 2023 13:59:13 +0200
+Subject: [PATCH 4/5] remove
+
+---
+ bazel/grpc_extra_deps.bzl | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/bazel/grpc_extra_deps.bzl b/bazel/grpc_extra_deps.bzl
+index 4d8afa3131..584605290a 100644
+--- a/bazel/grpc_extra_deps.bzl
++++ b/bazel/grpc_extra_deps.bzl
+@@ -52,10 +52,6 @@ def grpc_extra_deps(ignore_version_differences = False):
+
+     api_dependencies()
+
+-    go_rules_dependencies()
+-    go_register_toolchains(version = "1.18")
+-    gazelle_dependencies()
+-
+     # Pull-in the go 3rd party dependencies for protoc_gen_validate, which is
+     # needed for building C++ xDS protos
+     go_third_party()
+--
+2.41.0.585.gd2178a4bd4-goog
+
+
