@@ -55,7 +55,7 @@ func release(ctx context.Context, req *skillcatalogpb.CreateSkillReleaseRequest,
 		CredName: project,
 	})
 	if err != nil {
-		return fmt.Errorf("could not release the skill: %v", err)
+		return fmt.Errorf("could not create connection options for the skill catalog service: %v", err)
 	}
 
 	conn, err := grpc.DialContext(ctx, address, *dialerOpts...)
