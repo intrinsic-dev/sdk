@@ -5,18 +5,26 @@
 package device
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
+	backoff "github.com/cenkalti/backoff/v4"
 	"github.com/spf13/cobra"
+	"go.uber.org/multierr"
 	"intrinsic/frontend/cloud/devicemanager/shared/shared"
 	"intrinsic/tools/inctl/cmd/device/projectclient"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/printer"
+)
+
+var (
+	errConfigGone = fmt.Errorf("config was rejected")
 )
 
 func prettyPrintStatusInterfaces(interfaces map[string]shared.StatusInterface) string {
@@ -93,6 +101,60 @@ var configGetCmd = &cobra.Command{
 	},
 }
 
+// applyConfig tries to call the apply endpoint for the device periodically for a maximum of 3 minutes.
+// This persists the network configuration to disk.
+// The configuration was already sent and tentatively applied with POST /v1alpha1/config/network.
+// We need to retry because the device may be briefly unreachable while it changes its network config.
+func applyConfig(ctx context.Context, client *projectclient.AuthedClient, clusterName, deviceID string) error {
+	ctx, stop := context.WithTimeout(ctx, time.Minute*3)
+	defer stop()
+
+	var connectionError error
+
+	fmt.Printf("Trying to apply")
+	os.Stdout.Sync()
+
+	err := backoff.RetryNotify(func() error {
+		// There's a shorter timeout on the actual request, because the network re-configuration can lead to a hung request.
+		// Likely due to some drop in the relay.
+		// The lower timeout here guarantees multiple requests in the 2 minute time frame.
+		ctx, stop := context.WithTimeout(ctx, time.Second*10)
+		defer stop()
+		fmt.Printf(".")
+		os.Stdout.Sync()
+
+		resp, err := client.PostDevice(ctx, clusterName, deviceID, "relay/v1alpha1/config/network:persist", nil)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != 200 {
+			// In this case, 404 signals an older OS which doesn't do the apply flow yet.
+			// Return the error and adapt the output
+			if resp.StatusCode == http.StatusNotFound {
+				return backoff.Permanent(projectclient.ErrNotFound)
+			}
+
+			if resp.StatusCode == http.StatusGone {
+				return backoff.Permanent(errConfigGone)
+			}
+
+			return fmt.Errorf("request failed: %v", resp.StatusCode)
+		}
+
+		return nil
+	}, backoff.WithContext(backoff.NewConstantBackOff(time.Second*5), ctx),
+		func(err error, _ time.Duration) { connectionError = multierr.Append(connectionError, err) })
+	fmt.Printf("\n")
+
+	if err != nil {
+		return multierr.Append(err, connectionError)
+	}
+
+	return nil
+}
+
 var configSetCmd = &cobra.Command{
 	Use:   "set",
 	Short: "Set the network config",
@@ -125,13 +187,27 @@ var configSetCmd = &cobra.Command{
 		}
 		defer resp.Body.Close()
 
-		fmt.Printf("Got http code: %v\n", resp.StatusCode)
-		io.Copy(os.Stderr, resp.Body)
-
 		if resp.StatusCode != 200 {
-			return fmt.Errorf("request failed")
+			io.Copy(os.Stderr, resp.Body)
+			return fmt.Errorf("server returned error: %v", resp.StatusCode)
 		}
 
+		if err := applyConfig(cmd.Context(), &client, clusterName, deviceID); err != nil {
+			if errors.Is(err, projectclient.ErrNotFound) {
+				fmt.Println("The device is running an older version of INTRINSIC-OS. Please reboot manually")
+				return nil
+			}
+
+			if errors.Is(err, errConfigGone) {
+				fmt.Println("The device rejected the network configuration. This happens when it cannot connect to the configuration server with the new configuration.")
+				return errConfigGone
+			}
+
+			fmt.Println("There was an unexpected error trying to configure the device. It may be in an undefined state.")
+			return err
+		}
+
+		fmt.Println("Successfully applied new network configuration to the device.")
 		return nil
 	}}
 
