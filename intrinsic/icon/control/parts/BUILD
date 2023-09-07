@@ -13,6 +13,7 @@ proto_library(
 
 cc_proto_library(
     name = "realtime_part_config_cc_proto",
+    visibility = ["//intrinsic:__subpackages__"],
     deps = [":realtime_part_config_proto"],
 )
 

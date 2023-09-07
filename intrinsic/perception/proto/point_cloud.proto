@@ -1,0 +1,77 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/perception/proto/sensor_image.proto";
+
+message SingleView {
+  perception.SensorImage sensor_image = 1;
+  // Camera position in the world coordinate system.
+  intrinsic_proto.Pose camera_t_world = 2;
+}
+
+message StereoPairIds {
+  // Name of the first camera. For example this can be the equipment handle name
+  // of the left camera in a stereo pair.
+  string first = 1;
+  // Name of the second camera. For example this can be the equipment handle
+  // name of the right camera in a stereo pair.
+  string second = 2;
+}
+
+// Mirrors intrinsic/perception/multi_view_sgm/multi_view_sgm.h
+message MultiViewSgmConfig {
+  // Specifies the camera handle names that constitute each stereo pair. At
+  // least one stereo pair must be specified. If more than one stereo pair is
+  // specified, the first one will be assumed to be the reference pair.
+  repeated perception.StereoPairIds stereo_pair_ids = 1;
+
+  message SgmConfig {
+    int32 lambda_1 = 1;
+    int32 lambda_2 = 2;
+    float max_depth = 3;
+    int32 num_sgm_paths = 4;
+    bool subpixel_output = 5;
+    bool run_median_filter = 6;
+  }
+
+  message SgmScaleConfig {
+    float scale = 1;
+    int32 num_disp = 2;
+    float min_gap_ratio_best_to_second = 3;
+    int32 left_right_max_disp_diff = 4;
+  }
+
+  SgmConfig sgm_config = 2;
+  repeated SgmScaleConfig sgm_scale_config = 3;
+}
+
+message MultiViewCREStereoConfig {
+  // Specifies the camera handle names that constitute each stereo pair. At
+  // least one stereo pair must be specified. If more than one stereo pair is
+  // specified, the first one will be assumed to be the reference pair.
+  repeated perception.StereoPairIds stereo_pair_ids = 1;
+
+  message MVCREStereoInferenceConfig {
+    // Minimum estimated depth.
+    int32 min_depth = 1;
+    // Maximum estimated depth.
+    int32 max_depth = 2;
+    // Number of iterations per GRUs in CREStereo.
+    int32 iterations = 3;
+    // Disparity scales used by crestereo at different inference run. The number
+    // of the disparity scales set defines the numbers of inference runs.
+    repeated int32 disparity_scales = 4;
+    // Id of the small baseline in the defined stereo pair.
+    int32 small_baseline_id = 5;
+    // Scale of the images at which the model is run.
+    float image_scale = 6;
+  }
+
+  MVCREStereoInferenceConfig inference_config = 2;
+}

@@ -5,7 +5,7 @@
 load("//intrinsic/platform:fbs_library.bzl", "fbs_library")
 load("//intrinsic/platform:cc_fbs_library.bzl", "cc_fbs_library")
 
-package(default_visibility = ["//intrinsic/icon:hardware_module_authors"])
+package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "segment_header",

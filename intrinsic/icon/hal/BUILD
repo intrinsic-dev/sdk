@@ -6,7 +6,7 @@ load("//bazel:go_macros.bzl", "go_proto_library")
 load("//intrinsic/icon/hal/bzl:hardware_module_binary.bzl", "hardware_module_binary")
 
 package(default_visibility = [
-    "//intrinsic/icon:hardware_module_authors",
+    "//visibility:public",
 ])
 
 proto_library(

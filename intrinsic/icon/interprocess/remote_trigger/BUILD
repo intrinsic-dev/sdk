@@ -3,7 +3,7 @@
 # Provided subject to written agreement between the parties.
 
 package(default_visibility = [
-    "//intrinsic/icon:hardware_module_authors",
+    "//visibility:public",
 ])
 
 cc_library(
