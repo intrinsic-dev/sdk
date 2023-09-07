@@ -36,7 +36,6 @@ cc_library(
         ":equipment_pack",
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/motion_planning:motion_planner_client",
-        "//intrinsic/simulation/service/proto:simulation_service_cc_proto",
         "//intrinsic/skills/proto:equipment_cc_proto",
         "//intrinsic/skills/proto:footprint_cc_proto",
         "//intrinsic/skills/proto:skill_service_cc_proto",
