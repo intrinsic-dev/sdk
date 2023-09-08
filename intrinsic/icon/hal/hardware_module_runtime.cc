@@ -373,6 +373,9 @@ absl::Status HardwareModuleRuntime::Run(bool is_realtime,
   intrinsic::Thread::Options state_change_thread_options;
   state_change_thread_options.SetName("StateChange");
 
+  intrinsic::Thread::Options activate_thread_options;
+  activate_thread_options.SetName("Activate");
+
   intrinsic::Thread::Options read_status_thread_options;
   read_status_thread_options.SetName("ReadStatus");
 
@@ -382,6 +385,8 @@ absl::Status HardwareModuleRuntime::Run(bool is_realtime,
   if (is_realtime) {
     state_change_thread_options.SetRealtimeLowPriorityAndScheduler();
     state_change_thread_options.SetAffinity(cpu_affinity);
+    activate_thread_options.SetRealtimeLowPriorityAndScheduler();
+    activate_thread_options.SetAffinity(cpu_affinity);
     read_status_thread_options.SetRealtimeHighPriorityAndScheduler();
     read_status_thread_options.SetAffinity(cpu_affinity);
     apply_command_thread_options.SetRealtimeHighPriorityAndScheduler();
@@ -389,13 +394,11 @@ absl::Status HardwareModuleRuntime::Run(bool is_realtime,
   }
 
   auto state_change_query = [](std::atomic<bool>* stop_requested,
-                               RemoteTriggerServer* activate_server,
                                RemoteTriggerServer* deactivate_server,
                                RemoteTriggerServer* enable_motion_server,
                                RemoteTriggerServer* disable_motion_server,
                                RemoteTriggerServer* clear_faults_server) {
     while (!stop_requested->load()) {
-      activate_server->Query();
       deactivate_server->Query();
       enable_motion_server->Query();
       disable_motion_server->Query();
@@ -405,9 +408,10 @@ absl::Status HardwareModuleRuntime::Run(bool is_realtime,
 
   INTRINSIC_RETURN_IF_ERROR(set_init_failed_on_error(state_change_thread_.Start(
       state_change_thread_options, state_change_query, stop_requested_.get(),
-      activate_server_.get(), deactivate_server_.get(),
-      enable_motion_server_.get(), disable_motion_server_.get(),
-      clear_faults_server_.get())));
+      deactivate_server_.get(), enable_motion_server_.get(),
+      disable_motion_server_.get(), clear_faults_server_.get())));
+  INTRINSIC_RETURN_IF_ERROR(set_init_failed_on_error(
+      activate_server_->StartAsync(activate_thread_options)));
   INTRINSIC_RETURN_IF_ERROR(set_init_failed_on_error(
       read_status_server_->StartAsync(read_status_thread_options)));
   INTRINSIC_RETURN_IF_ERROR(set_init_failed_on_error(
