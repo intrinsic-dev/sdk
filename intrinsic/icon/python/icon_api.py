@@ -339,7 +339,7 @@ class Client:
     Args:
       parts: List of parts to control.
       context: The log context passed to the session. Needed to sync ICON logs
-        to the cloud. In skills use `request.context`.
+        to the cloud. In skills use `context.logging_context`.
 
     Returns:
       A new Session.

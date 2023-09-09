@@ -13,6 +13,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         "//intrinsic/geometry/service:geometry_service_py_pb2_grpc",
+        "//intrinsic/logging/proto:context_py_pb2",
         "//intrinsic/motion_planning:motion_planner_client_py",
         "//intrinsic/motion_planning/proto:motion_planner_service_py_pb2_grpc",
         "//intrinsic/skills/proto:equipment_py_pb2",

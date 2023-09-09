@@ -11,6 +11,7 @@ from typing import Any, Callable, Generic, List, Mapping, Optional, TypeVar
 from google.protobuf import any_pb2
 from google.protobuf import descriptor
 from google.protobuf import message
+from intrinsic.logging.proto import context_pb2
 from intrinsic.motion_planning import motion_planner_client
 from intrinsic.motion_planning.proto import motion_planner_service_pb2_grpc
 from intrinsic.skills.proto import equipment_pb2
@@ -200,6 +201,7 @@ class ExecutionContext:
   Attributes:
     cancelled: True if the skill framework has received a cancellation request.
     equipment_handles: A map of equipment names to handles.
+    logging_context: The logging context of the execution.
   """
 
   def __init__(
@@ -238,6 +240,10 @@ class ExecutionContext:
   @property
   def equipment_handles(self) -> Mapping[str, equipment_pb2.EquipmentHandle]:
     return self._equipment_handles
+
+  @property
+  def logging_context(self) -> context_pb2.Context:
+    return self._logging_context
 
   def world_id(self) -> Optional[str]:
     return self._world_id

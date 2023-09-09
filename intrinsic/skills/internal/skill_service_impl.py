@@ -572,6 +572,7 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
 
     execution_context = skl.ExecutionContext(
         equipment_handles=dict(request.instance.equipment_handles),
+        logging_context=request.context,
         world_id=request.world_id,
         object_world_service=self._object_world_service,
         motion_planner_service=self._motion_planner_service,
