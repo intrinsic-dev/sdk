@@ -153,15 +153,17 @@ class ExecuteRequest(Generic[TParamsType]):
 
   (This class temporarily proxies an ExecuteRequest proto: b/298436484.)
 
-  TODO: Make this a dataclass with needed fields.
-  TODO: Refactor existing skills to access dataclass fields.
   TODO: Stop proxying the proto.
 
   Attributes:
+    internal_data: Skill-specific data that can be communicated to `execute`
+      from other skill methods. Can be useful for optimizing skill execution by
+      pre-computing plan-related information.
     params: The skill parameters proto. For static typing, ExecuteRequest can be
       parameterized with the required type of this message.
   """
 
+  internal_data: bytes
   params: TParamsType
   _proto: skill_service_pb2.ExecuteRequest = dataclasses.field(
       default_factory=skill_service_pb2.ExecuteRequest

@@ -950,7 +950,11 @@ class _SkillExecutionOperation:
     except proto_utils.ProtoMismatchTypeError as err:
       raise _CannotConstructExecuteRequestError(str(err)) from err
 
-    return skl.ExecuteRequest(params=params, _proto=proto)
+    return skl.ExecuteRequest(
+        internal_data=proto.internal_data,
+        params=params,
+        _proto=proto,
+    )
 
 
 def _abort_with_status(
