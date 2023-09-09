@@ -170,6 +170,8 @@ class ExecuteRequest(Generic[TParamsType]):
   def __getattr__(self, name: str) -> Any:
     if name == 'parameters':
       raise AttributeError("Use 'params' instead.")
+    if name == 'instance':
+      raise AttributeError("Access to 'instance' is being removed.")
     return getattr(self._proto, name)
 
 
