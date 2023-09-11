@@ -954,7 +954,6 @@ class _SkillExecutionOperation:
     return skl.ExecuteRequest(
         internal_data=proto.internal_data,
         params=params,
-        _proto=proto,
     )
 
 

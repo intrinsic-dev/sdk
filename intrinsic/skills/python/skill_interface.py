@@ -6,7 +6,7 @@
 import abc
 import dataclasses
 import threading
-from typing import Any, Callable, Generic, List, Mapping, Optional, TypeVar
+from typing import Callable, Generic, List, Mapping, Optional, TypeVar
 
 from google.protobuf import any_pb2
 from google.protobuf import descriptor
@@ -152,10 +152,6 @@ class ProjectionContext:
 class ExecuteRequest(Generic[TParamsType]):
   """A request for executing a skill.
 
-  (This class temporarily proxies an ExecuteRequest proto: b/298436484.)
-
-  TODO: Stop proxying the proto.
-
   Attributes:
     internal_data: Skill-specific data that can be communicated to `execute`
       from other skill methods. Can be useful for optimizing skill execution by
@@ -166,16 +162,6 @@ class ExecuteRequest(Generic[TParamsType]):
 
   internal_data: bytes
   params: TParamsType
-  _proto: skill_service_pb2.ExecuteRequest = dataclasses.field(
-      default_factory=skill_service_pb2.ExecuteRequest
-  )
-
-  def __getattr__(self, name: str) -> Any:
-    if name == 'parameters':
-      raise AttributeError("Use 'params' instead.")
-    if name == 'instance':
-      raise AttributeError("Access to 'instance' is being removed.")
-    return getattr(self._proto, name)
 
 
 class ExecutionContext:
