@@ -120,6 +120,10 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
             ),
         )
 
+    request = skl.GetFootprintRequest(
+        skill_parameters=project_request.parameters,
+        internal_data=project_request.internal_data,
+    )
     projection_context = skl.ProjectionContext(
         project_request.world_id,
         self._object_world_service,
@@ -127,14 +131,9 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
         footprint_request.internal_request.instance.equipment_handles,
     )
 
-    project_params = skl.Skill.ProjectParams(
-        skill_parameters=project_request.parameters,
-        internal_data=project_request.internal_data,
-    )
-
     try:
       project_result = skill_project_instance.get_footprint(
-          project_params, projection_context
+          request, projection_context
       )
     except Exception:  # pylint: disable=broad-except
       msg = traceback.format_exc()
@@ -234,6 +233,10 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
             ),
         )
 
+    request = skl.PredictRequest(
+        skill_parameters=project_request.parameters,
+        internal_data=project_request.internal_data,
+    )
     projection_context = skl.ProjectionContext(
         project_request.world_id,
         self._object_world_service,
@@ -241,13 +244,8 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
         predict_request.internal_request.instance.equipment_handles,
     )
 
-    project_params = skl.Skill.ProjectParams(
-        skill_parameters=project_request.parameters,
-        internal_data=project_request.internal_data,
-    )
-
     try:
-      return skill_project_instance.predict(project_params, projection_context)
+      return skill_project_instance.predict(request, projection_context)
     except NotImplementedError:
       logging.warning(
           (
@@ -258,7 +256,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       )
       return skill_service_pb2.PredictResult(
           outcomes=[prediction_pb2.Prediction(probability=1.0)],
-          internal_data=project_params.internal_data(),
+          internal_data=request.internal_data(),
       )
     except Exception:  # pylint: disable=broad-except
       msg = traceback.format_exc()

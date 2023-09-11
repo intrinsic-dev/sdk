@@ -58,7 +58,9 @@ class NoOpSkill(skl.Skill):
 
   @overrides(skl.Skill)
   def get_footprint(
-      self, params: skl.Skill.ProjectParams, context: skl.ProjectionContext
+      self,
+      params: skl.GetFootprintRequest[no_op_skill_pb2.NoOpSkillParams],
+      context: skl.ProjectionContext,
   ) -> skill_service_pb2.ProjectResult:
     """See base class."""
     return skill_service_pb2.ProjectResult()

@@ -26,7 +26,7 @@ class {{.SkillNameUpperCamelCase}}(skill_interface.Skill):
     @overrides(skill_interface.Skill)
     def predict(
       self,
-      params: skill_interface.Skill.ProjectParams,
+      request: skill_interface.PredictRequest,
       context: skill_interface.ProjectionContext,
     ) -> skill_service_pb2.PredictResult:
         """Predicts a distribution of possible outcomes when running the skill.
@@ -34,7 +34,7 @@ class {{.SkillNameUpperCamelCase}}(skill_interface.Skill):
         TODO: Skill authors should override this method with their implementation.
 
         Args:
-        params: The parameters expected to be passed to the skill.
+        request: The predict request.
         context: Provides access to the world and other services that a skill may
             use.
 

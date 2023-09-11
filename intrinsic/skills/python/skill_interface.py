@@ -43,6 +43,30 @@ class SkillCancelledError(RuntimeError):
   """A skill was aborted due to a cancellation request."""
 
 
+class ProjectParams(Generic[TParamsType]):
+  """Parameters passed to the skill's project/predict methods.
+
+  This class filters the parameters available to the skill implementation by
+  removing those that are only used to manage the RPC call (e.g., logging).
+  """
+
+  def __init__(self, skill_parameters: any_pb2.Any, internal_data: bytes):
+    self._skill_parameters = skill_parameters
+    self._internal_data = internal_data
+
+  def skill_parameters(self) -> any_pb2.Any:
+    """Provides the skill-specific parameters passed to the skill."""
+    return self._skill_parameters
+
+  def internal_data(self) -> bytes:
+    """Provides any internal data generated during previous calls."""
+    return self._internal_data
+
+
+PredictRequest = ProjectParams
+GetFootprintRequest = ProjectParams
+
+
 class ProjectionContext:
   """Contains additional metadata and functionality for a skill projection.
 
@@ -415,65 +439,43 @@ class SkillProjectInterface(metaclass=abc.ABCMeta):
     will be when it is executed
   """
 
-  class ProjectParams:
-    """Parameters passed to the skill's project/predict methods.
-
-    This class filters the parameters available to the skill implementation by
-    removing those that are only used to manage the RPC call (e.g., logging).
-    """
-
-    def __init__(self, skill_parameters: any_pb2.Any, internal_data: bytes):
-      self._skill_parameters = skill_parameters
-      self._internal_data = internal_data
-
-    def skill_parameters(self) -> any_pb2.Any:
-      """Provides the skill-specific parameters passed to the skill."""
-      return self._skill_parameters
-
-    def internal_data(self) -> bytes:
-      """Provides any internal data generated during previous calls."""
-      return self._internal_data
-
   def get_footprint(
-      self, params: ProjectParams, context: ProjectionContext
+      self, request: GetFootprintRequest, context: ProjectionContext
   ) -> skill_service_pb2.ProjectResult:
     """Returns the required resources for running this skill.
 
     Skill authors should override this method with their implementation.
 
     Args:
-      params: The parameters expected to be passed to the skill.
-      context: Always provided when the skill is invoked within a skill service
-        server. It contains the current world state, which can be used to
-        analyze the expected behavior of the skill.
+      request: The get footprint request.
+      context: Provides access to the world and other services that a skill may
+        use.
 
     Returns:
       The project result proto containing the footprint.
     """
-    del params  # Unused in this default implementation.
+    del request  # Unused in this default implementation.
     del context  # Unused in this default implementation.
     return skill_service_pb2.ProjectResult(
         footprint=footprint_pb2.Footprint(lock_the_universe=True)
     )
 
   def predict(
-      self,
-      params: ProjectParams,
-      context: ProjectionContext,
+      self, request: PredictRequest, context: ProjectionContext
   ) -> skill_service_pb2.PredictResult:
     """Predicts a distribution of possible outcomes when running the skill.
 
     Skill authors should override this method with their implementation.
 
     Args:
-      params: The parameters expected to be passed to the skill.
+      request: The predict request.
       context: Provides access to the world and other services that a skill may
         use.
 
     Returns:
       A list of prediction protos containing the possible outcomes.
     """
-    del params  # Unused in this default implementation.
+    del request  # Unused in this default implementation.
     del context  # Unused in this default implementation.
     raise NotImplementedError('No user-defined call for Predict()')
 
