@@ -3,7 +3,7 @@
 # Provided subject to written agreement between the parties.
 
 load("//bazel:go_macros.bzl", "go_test")
-load("@rules_python//python:defs.bzl", "py_test")
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -35,6 +35,14 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_protobuf//src/google/protobuf/io",
+    ],
+)
+
+py_library(
+    name = "file_helpers_py",
+    srcs = ["file_helpers.py"],
+    deps = [
+        "@com_google_protobuf//:protobuf_python",
     ],
 )
 

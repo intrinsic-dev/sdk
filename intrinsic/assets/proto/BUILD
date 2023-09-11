@@ -3,6 +3,7 @@
 # Provided subject to written agreement between the parties.
 
 load("//bazel:go_macros.bzl", "go_proto_library")
+load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -19,6 +20,11 @@ go_proto_library(
 proto_library(
     name = "id_proto",
     srcs = ["id.proto"],
+)
+
+py_proto_library(
+    name = "id_py_pb2",
+    deps = [":id_proto"],
 )
 
 cc_proto_library(

@@ -98,7 +98,7 @@ def get_runtime_data_from(
     return_type_descriptor: Optional[proto_descriptor.Descriptor],
 ) -> SkillRuntimeData:
   # pyformat: disable
-  """Constructs RuntimeData from the given skill proto & the descriptors.
+  """Constructs RuntimeData from the given skill service config & descriptors.
 
   This applies a default `cancellation_ready_timeout` of 30 seconds to the
   execution options if no timeout is specified, in order to match the behavior

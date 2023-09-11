@@ -444,6 +444,11 @@ proto_library(
     srcs = ["vendor.proto"],
 )
 
+py_proto_library(
+    name = "vendor_py_pb2",
+    deps = [":vendor_proto"],
+)
+
 cc_proto_library(
     name = "vendor_cc_proto",
     deps = [":vendor_proto"],
