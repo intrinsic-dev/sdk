@@ -130,7 +130,7 @@ func WriteSkillServiceCC(manifestPath string, ccHeaderPaths []string, out string
 		templateCCParameters{
 			CCHeaderPaths:          ccHeaderPaths,
 			ParameterDescriptorPtr: ccDescriptorPointerFrom(manifest.GetParameter().GetMessageFullName()),
-			ReturnDescriptorPtr:    ccDescriptorPointerFrom(manifest.GetReturn().GetMessageFullName()),
+			ReturnDescriptorPtr:    ccDescriptorPointerFrom(manifest.GetReturnType().GetMessageFullName()),
 			CreateSkillMethod:      manifest.GetOptions().GetCcConfig().GetCreateSkill(),
 		},
 		out,
@@ -162,7 +162,7 @@ func WriteSkillServicePy(manifestPath string, out string) error {
 				manifest.GetParameter().GetMessageFullName()),
 			ReturnTypeDescriptor: pyDescriptorFrom(
 				manifest.GetOptions().GetPythonConfig().GetProtoModule(),
-				manifest.GetReturn().GetMessageFullName()),
+				manifest.GetReturnType().GetMessageFullName()),
 			CreateSkillMethod: manifest.GetOptions().GetPythonConfig().GetCreateSkill(),
 		},
 		out,

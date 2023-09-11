@@ -280,9 +280,9 @@ absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
                 .file_descriptor_set = parameter_file_descriptor_set,
             })
           : nullptr,
-      manifest.has_return_()
+      manifest.has_return_type()
           ? absl::WrapUnique<MessageData>(new MessageData{
-                .message_full_name = manifest.return_().message_full_name(),
+                .message_full_name = manifest.return_type().message_full_name(),
                 .file_descriptor_set = return_value_file_descriptor_set,
             })
           : nullptr,

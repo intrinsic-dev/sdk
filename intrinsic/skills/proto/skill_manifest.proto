@@ -140,5 +140,5 @@ message Manifest {
   ParameterMetadata parameter = 6;
 
   // A description of the return type for Execution of the skill.
-  optional ReturnMetadata return = 7;
+  optional ReturnMetadata return_type = 7;
 }
