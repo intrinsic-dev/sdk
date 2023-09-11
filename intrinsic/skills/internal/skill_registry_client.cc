@@ -17,7 +17,9 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "google/protobuf/empty.pb.h"
+#include "grpcpp/channel.h"
 #include "grpcpp/grpcpp.h"
+#include "grpcpp/support/channel_arguments.h"
 #include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/skills/cc/client_common.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
@@ -34,9 +36,33 @@ namespace skills {
 
 absl::StatusOr<std::unique_ptr<SkillRegistryClient>> CreateSkillRegistryClient(
     absl::string_view grpc_address, absl::Duration timeout) {
+  grpc::ChannelArguments channel_args = DefaultGrpcChannelArgs();
+
+  // The skill registry may need to call out to one or more skill information
+  // services. Those services might not be ready at startup. We configure a
+  // retry policy to mitigate b/283020857.
+  // (See
+  // https://github.com/grpc/grpc-go/blob/master/examples/features/retry/README.md
+  //  for an example of this gRPC feature.)
+  channel_args.SetServiceConfigJSON(R"(
+      {
+        "methodConfig": [{
+          "name": [{"service": "intrinsic_proto.skills.SkillRegistry"}],
+          "waitForReady": true,
+          "timeout": "300s",
+          "retryPolicy": {
+              "maxAttempts": 10,
+              "initialBackoff": "0.1s",
+              "maxBackoff": "10s",
+              "backoffMultiplier": 1.5,
+              "retryableStatusCodes": [ "UNAVAILABLE" ]
+          }
+        }]
+      })");
+
   INTRINSIC_ASSIGN_OR_RETURN(
       std::shared_ptr<grpc::Channel> channel,
-      CreateClientChannel(grpc_address, absl::Now() + timeout));
+      CreateClientChannel(grpc_address, absl::Now() + timeout, channel_args));
 
   return std::make_unique<SkillRegistryClient>(
       intrinsic_proto::skills::SkillRegistryInternal::NewStub(channel),
