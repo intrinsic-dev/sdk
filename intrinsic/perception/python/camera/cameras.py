@@ -9,12 +9,12 @@ import datetime
 from typing import List, Mapping, Optional, Tuple, Union
 
 from absl import logging
+from google.protobuf import empty_pb2
 import grpc
 from intrinsic.hardware.proto import settings_pb2
 from intrinsic.math.python import pose3
 from intrinsic.perception.proto import camera_config_pb2
 from intrinsic.perception.proto import camera_params_pb2
-from intrinsic.perception.proto import camera_settings_pb2
 from intrinsic.perception.python.camera import camera_client
 from intrinsic.perception.python.camera import data_classes
 from intrinsic.skills.proto import equipment_pb2
@@ -332,7 +332,8 @@ class Camera:
 
   def update_camera_setting(
       self,
-      setting: camera_settings_pb2.CameraSetting,
+      name: str,
+      value: Union[int, float, bool, str],
   ) -> None:
     """Update a camera setting.
 
@@ -342,12 +343,52 @@ class Camera:
     https://www.emva.org/wp-content/uploads/GenICam_SFNC_v2_7.pdf.
 
     Args:
-      setting: A camera_settings_pb2.CameraSetting to update.
+      name: The setting name.
+      value: The desired setting value.
 
     Raises:
+      ValueError: Setting type could not be parsed or value doesn't match type.
       grpc.RpcError: A gRPC error occurred.
     """
     try:
+      # Cannot get sufficient type information from just
+      # `Union[int, float, bool, str]`, so read the setting first and then
+      # update its value.
+      setting = self._client.read_camera_setting(name=name)
+      value_type = setting.WhichOneof("value")
+      if value_type == "integer_value":
+        if not isinstance(value, int):
+          raise ValueError(f"Expected int value for {name} but got '{value}'")
+        setting.integer_value = value
+      elif value_type == "float_value":
+        # allow int values to be casted to float, but not vice versa
+        if isinstance(value, int):
+          value = float(value)
+        if not isinstance(value, float):
+          raise ValueError(f"Expected float value for {name} but got '{value}'")
+        setting.float_value = value
+      elif value_type == "bool_value":
+        if not isinstance(value, bool):
+          raise ValueError(f"Expected bool value for {name} but got '{value}'")
+        setting.bool_value = value
+      elif value_type == "string_value":
+        if not isinstance(value, str):
+          raise ValueError(
+              f"Expected string value for {name} but got '{value}'"
+          )
+        setting.string_value = value
+      elif value_type == "enumeration_value":
+        if not isinstance(value, str):
+          raise ValueError(
+              f"Expected enumeration value string for {name} but got '{value}'"
+          )
+        setting.enumeration_value = value
+      elif value_type == "command_value":
+        # no need to check value contents
+        setting.command_value = empty_pb2.Empty()
+      else:
+        raise ValueError(f"Could not parse value: {value_type}.")
+
       self._client.update_camera_setting(setting=setting)
     except grpc.RpcError as e:
       logging.warning("Could not update camera setting.")

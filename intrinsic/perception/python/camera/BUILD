@@ -69,7 +69,6 @@ py_library(
         "//intrinsic/math/python:pose3",
         "//intrinsic/perception/proto:camera_config_py_pb2",
         "//intrinsic/perception/proto:camera_params_py_pb2",
-        "//intrinsic/perception/proto:camera_settings_py_pb2",
         "//intrinsic/skills/proto:equipment_py_pb2",
         "//intrinsic/skills/python:proto_utils",
         "//intrinsic/skills/python:skill_interface",
@@ -78,6 +77,7 @@ py_library(
         "//intrinsic/world/python:object_world_resources",
         "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
         "@com_google_absl_py//absl/logging",
+        "@com_google_protobuf//:protobuf_python",
         requirement("numpy"),
     ],
 )
