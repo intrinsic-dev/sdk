@@ -10,6 +10,7 @@ import "intrinsic/perception/proto/camera_identifier.proto";
 import "intrinsic/perception/proto/camera_settings.proto";
 import "intrinsic/perception/proto/distortion_params.proto";
 import "intrinsic/perception/proto/intrinsic_params.proto";
+import "intrinsic/perception/proto/sensor_config.proto";
 
 // Specification of a single camera.
 // The specification includes the driver to be used, connection parameters,
@@ -35,4 +36,9 @@ message CameraConfig {
   // A list of camera settings. Camera settings are applied in the order in
   // which they are defined. The specification of camera settings is optional.
   repeated CameraSetting camera_settings = 5;
+
+  // A list of per-sensor configurations. These include per-sensor calibrations
+  // and settings applied only to a particular sensor.
+  // The specification of sensor configurations is optional.
+  repeated SensorConfig sensor_configs = 6;
 }

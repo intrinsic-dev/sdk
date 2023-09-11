@@ -223,6 +223,7 @@ go_proto_library(
         ":camera_settings_go_proto",
         ":distortion_params_go_proto",
         ":intrinsic_params_go_proto",
+        ":sensor_config_go_proto",
     ],
     deps = [":camera_config"],
 )
@@ -246,6 +247,17 @@ py_proto_library(
 cc_proto_library(
     name = "sensor_config_cc_proto",
     deps = ["sensor_config"],
+)
+
+go_proto_library(
+    name = "sensor_config_go_proto",
+    go_deps = [
+        ":camera_settings_go_proto",
+        ":distortion_params_go_proto",
+        ":intrinsic_params_go_proto",
+        "//intrinsic/math/proto:pose_go_proto",
+    ],
+    deps = [":sensor_config"],
 )
 
 proto_library(
