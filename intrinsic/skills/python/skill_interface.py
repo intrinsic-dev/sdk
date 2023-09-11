@@ -8,7 +8,6 @@ import dataclasses
 import threading
 from typing import Callable, Generic, List, Mapping, Optional, TypeVar
 
-from google.protobuf import any_pb2
 from google.protobuf import descriptor
 from google.protobuf import message
 from intrinsic.logging.proto import context_pb2
@@ -43,28 +42,36 @@ class SkillCancelledError(RuntimeError):
   """A skill was aborted due to a cancellation request."""
 
 
-class ProjectParams(Generic[TParamsType]):
-  """Parameters passed to the skill's project/predict methods.
+@dataclasses.dataclass(frozen=True)
+class GetFootprintRequest(Generic[TParamsType]):
+  """A request for a call to Skill.get_footprint.
 
-  This class filters the parameters available to the skill implementation by
-  removing those that are only used to manage the RPC call (e.g., logging).
+  Attributes:
+    internal_data: Skill-specific data that can be communicated from previous
+      calls to `get_footprint` or `predict`. Can be useful for optimizing skill
+      execution by pre-computing plan-related information.
+    params: The skill parameters proto. For static typing, GetFootprintRequest
+      can be parameterized with the required type of this message.
   """
 
-  def __init__(self, skill_parameters: any_pb2.Any, internal_data: bytes):
-    self._skill_parameters = skill_parameters
-    self._internal_data = internal_data
-
-  def skill_parameters(self) -> any_pb2.Any:
-    """Provides the skill-specific parameters passed to the skill."""
-    return self._skill_parameters
-
-  def internal_data(self) -> bytes:
-    """Provides any internal data generated during previous calls."""
-    return self._internal_data
+  internal_data: bytes
+  params: TParamsType
 
 
-PredictRequest = ProjectParams
-GetFootprintRequest = ProjectParams
+@dataclasses.dataclass(frozen=True)
+class PredictRequest(Generic[TParamsType]):
+  """A request for a call to Skill.predict.
+
+  Attributes:
+    internal_data: Skill-specific data that can be communicated from previous
+      calls to `get_footprint` or `predict`. Can be useful for optimizing skill
+      execution by pre-computing plan-related information.
+    params: The skill parameters proto. For static typing, PredictRequest can be
+      parameterized with the required type of this message.
+  """
+
+  internal_data: bytes
+  params: TParamsType
 
 
 class ProjectionContext:
@@ -174,7 +181,7 @@ class ProjectionContext:
 
 @dataclasses.dataclass(frozen=True)
 class ExecuteRequest(Generic[TParamsType]):
-  """A request for executing a skill.
+  """A request for a call to Skill.execute.
 
   Attributes:
     internal_data: Skill-specific data that can be communicated to `execute`

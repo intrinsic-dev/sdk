@@ -34,9 +34,14 @@ def unpack_any(any_message: any_pb2.Any, proto_message: T) -> T:
   """
 
   if not any_message.Unpack(proto_message):
+    any_type_name = any_message.TypeName()
+    any_type_msg = (
+        f"of type {any_type_name}" if any_type_name else "with no contents"
+    )
+
     raise ProtoMismatchTypeError(
-        f"Expected proto of type {any_message.TypeName()}, but got"
-        f" {proto_message.DESCRIPTOR.name}"
+        f"Cannot unpack Any {any_type_msg} into message of type "
+        f"{proto_message.DESCRIPTOR.name}."
     )
 
   return proto_message

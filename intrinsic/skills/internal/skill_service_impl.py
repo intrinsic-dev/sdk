@@ -42,6 +42,14 @@ from pybind11_abseil import status
 MAX_NUM_OPERATIONS = 100
 
 
+class _CannotConstructGetFootprintRequestError(Exception):
+  """The service cannot construct a GetFootprintRequest for a skill."""
+
+
+class _CannotConstructPredictRequestError(Exception):
+  """The service cannot construct a PredictRequest for a skill."""
+
+
 class _CannotConstructExecuteRequestError(Exception):
   """The service cannot construct an ExecuteRequest for a skill."""
 
@@ -120,10 +128,23 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
             ),
         )
 
-    request = skl.GetFootprintRequest(
-        skill_parameters=project_request.parameters,
-        internal_data=project_request.internal_data,
-    )
+    try:
+      request = _proto_to_get_footprint_request(
+          footprint_request, skill_runtime_data
+      )
+    except _CannotConstructGetFootprintRequestError as err:
+      _abort_with_status(
+          context=context,
+          code=status.StatusCode.INTERNAL,
+          message=(
+              'Could not construct get footprint request for skill'
+              f' {project_request.instance.id_version}: {err}.'
+          ),
+          skill_error_info=error_pb2.SkillErrorInfo(
+              error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
+          ),
+      )
+
     projection_context = skl.ProjectionContext(
         project_request.world_id,
         self._object_world_service,
@@ -233,10 +254,21 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
             ),
         )
 
-    request = skl.PredictRequest(
-        skill_parameters=project_request.parameters,
-        internal_data=project_request.internal_data,
-    )
+    try:
+      request = _proto_to_predict_request(predict_request, skill_runtime_data)
+    except _CannotConstructPredictRequestError as err:
+      _abort_with_status(
+          context=context,
+          code=status.StatusCode.INTERNAL,
+          message=(
+              'Could not construct predict request for skill'
+              f' {project_request.instance.id_version}: {err}.'
+          ),
+          skill_error_info=error_pb2.SkillErrorInfo(
+              error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
+          ),
+      )
+
     projection_context = skl.ProjectionContext(
         project_request.world_id,
         self._object_world_service,
@@ -256,7 +288,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       )
       return skill_service_pb2.PredictResult(
           outcomes=[prediction_pb2.Prediction(probability=1.0)],
-          internal_data=request.internal_data(),
+          internal_data=request.internal_data,
       )
     except Exception:  # pylint: disable=broad-except
       msg = traceback.format_exc()
@@ -983,6 +1015,65 @@ def _abort_with_status(
   # since context.abort_with_status does not properly annotate its return value
   # as NoReturn.
   raise AssertionError('This error should not have been raised.')
+
+
+def _proto_to_get_footprint_request(
+    proto: skill_service_pb2.FootprintRequest,
+    skill_runtime_data: rd.SkillRuntimeData,
+) -> skl.GetFootprintRequest:
+  """Converts a FootprintRequest proto to the request to send to the skill.
+
+  Args:
+    proto: The proto to convert.
+    skill_runtime_data: The runtime data for the skill.
+
+  Returns:
+    The request to send to the skill.
+
+  Raises:
+    _CannotConstructGetFootprintRequestError: If the request cannot be
+      converted.
+  """
+  try:
+    params = _unpack_any_from_descriptor(
+        proto.internal_request.parameters,
+        skill_runtime_data.parameter_data.descriptor,
+    )
+  except proto_utils.ProtoMismatchTypeError as err:
+    raise _CannotConstructGetFootprintRequestError(str(err)) from err
+
+  return skl.GetFootprintRequest(
+      internal_data=proto.internal_request.internal_data, params=params
+  )
+
+
+def _proto_to_predict_request(
+    proto: skill_service_pb2.PredictRequest,
+    skill_runtime_data: rd.SkillRuntimeData,
+) -> skl.PredictRequest:
+  """Converts a PredictRequest proto to the request to send to the skill.
+
+  Args:
+    proto: The proto to convert.
+    skill_runtime_data: The runtime data for the skill.
+
+  Returns:
+    The request to send to the skill.
+
+  Raises:
+    _CannotConstructPredictRequestError: If the request cannot be converted.
+  """
+  try:
+    params = _unpack_any_from_descriptor(
+        proto.internal_request.parameters,
+        skill_runtime_data.parameter_data.descriptor,
+    )
+  except proto_utils.ProtoMismatchTypeError as err:
+    raise _CannotConstructPredictRequestError(str(err)) from err
+
+  return skl.PredictRequest(
+      internal_data=proto.internal_request.internal_data, params=params
+  )
 
 
 def _unpack_any_from_descriptor(
