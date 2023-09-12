@@ -357,8 +357,6 @@ py_library(
         ":simulation",
         ":structured_logging",
         ":worlds",
-        "//intrinsic/executive/app_edit_service/proto/public:app_edit_service_py_pb2",
-        "//intrinsic/executive/app_edit_service/proto/public:app_edit_service_py_pb2_grpc",
         "//intrinsic/workcell:workcell_api",
     ],
 )
