@@ -2,12 +2,12 @@
 // Intrinsic Proprietary and Confidential
 // Provided subject to written agreement between the parties.
 
+
+
 syntax = "proto3";
 
 package intrinsic.application;
 
-import "intrinsic/config/proto/ppr_refs.proto";
-import "intrinsic/executive/proto/behavior_tree.proto";
 
 
 service AppEditService {
@@ -18,33 +18,11 @@ service AppEditService {
   rpc FetchProcessNotebooks(FetchProcessNotebooksRequest)
       returns (FetchProcessNotebooksResponse);
 
-  // Fetch the behavior trees of the running application.
-  rpc FetchProcessBehaviorTrees(FetchProcessBehaviorTreesRequest)
-      returns (FetchProcessBehaviorTreesResponse);
-
   // Save the notebooks in the running application.
   // All notebooks in the process are removed and replaced by the given
   // notebooks. All other runnables are unaffected.
   rpc SaveProcessNotebooks(SaveProcessNotebooksRequest)
       returns (SaveProcessNotebooksResponse);
-
-  // Add behavior trees to the current process. All existing runnables in the
-  // process remain unaffected.
-  rpc AddBehaviorTreesToProcess(AddBehaviorTreesToProcessRequest)
-      returns (AddBehaviorTreesToProcessResponse);
-
-  // Remove behavior trees from the current process.
-  rpc RemoveBehaviorTreesFromProcess(RemoveBehaviorTreesFromProcessRequest)
-      returns (RemoveBehaviorTreesFromProcessResponse);
-
-  // Set the default runnable which should be loaded on start up.
-  rpc SetDefaultRunnableToCurrentProcess(
-      SetDefaultRunnableToCurrentProcessRequest)
-      returns (SetDefaultRunnableToCurrentProcessResponse);
-
-  // Get the list of current product part names.
-  rpc GetCurrentProductParts(GetCurrentProductPartsRequest)
-      returns (GetCurrentProductPartsResponse);
 
   // Adds a FileReference for this file to the data files of the current
   // process. The file content is uploaded to CAS on GCS.
@@ -77,42 +55,6 @@ message SaveProcessNotebooksRequest {
 }
 
 message SaveProcessNotebooksResponse {}
-
-message FetchProcessBehaviorTreesRequest {}
-
-message FetchProcessBehaviorTreesResponse {
-  // A map with all process behavior trees.
-  // The key is the runnable key, the value is the BehaviorTree.
-  map<string, intrinsic_proto.executive.BehaviorTree> trees = 1;
-}
-
-message AddBehaviorTreesToProcessRequest {
-  // A map with all behavior trees which should be added.
-  // The key is the runnable key, the value is the behavior tree proto.
-  map<string, intrinsic_proto.executive.BehaviorTree> trees = 1;
-}
-
-message AddBehaviorTreesToProcessResponse {}
-
-message RemoveBehaviorTreesFromProcessRequest {
-  // A list with all behavior trees which should be removed.
-  repeated string trees = 1;
-}
-
-message RemoveBehaviorTreesFromProcessResponse {}
-
-message SetDefaultRunnableToCurrentProcessRequest {
-  string runnable_key = 1;
-  bool autostart = 2;
-}
-
-message SetDefaultRunnableToCurrentProcessResponse {}
-
-message GetCurrentProductPartsRequest {}
-
-message GetCurrentProductPartsResponse {
-  repeated intrinsic_proto.config.ProductPartReference parts = 1;
-}
 
 message SetProcessDataFileRequest {
   // The file content.

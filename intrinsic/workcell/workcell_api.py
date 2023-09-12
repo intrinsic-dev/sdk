@@ -19,7 +19,6 @@ from intrinsic.perception.proto import hand_eye_calibration_pb2
 from intrinsic.skills.apps.calibration import collect_calibration_data_pb2
 from intrinsic.skills.apps.calibration import sample_calibration_poses_pb2
 from intrinsic.skills.proto import skills_pb2
-from intrinsic.solutions import applications
 from intrinsic.solutions import behavior_tree
 from intrinsic.solutions import deployments
 from intrinsic.solutions import equipment as equipment_mod
@@ -79,10 +78,6 @@ def connect(
   solution.cameras = None
   if "camera" in backend_names or "camera-sim" in backend_names:
     solution.cameras = perception.Cameras.for_solution(solution)
-
-  # `Workcell.application` has been removed and now has to be created separately
-  # from the `Solution` class.
-  solution.application = applications.Application.for_solution(solution)
 
   return solution
 

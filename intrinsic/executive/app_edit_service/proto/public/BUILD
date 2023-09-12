@@ -11,18 +11,9 @@ package(default_visibility = [
     "//intrinsic/solutions:__subpackages__",
 ])
 
-exports_files(
-    srcs = glob(["*.proto"]) + ["BUILD"],
-    visibility = ["//intrinsic/production:__subpackages__"],
-)
-
 proto_library(
     name = "app_edit_service_proto",
     srcs = ["app_edit_service.proto"],
-    deps = [
-        "//intrinsic/config/proto:ppr_refs_proto",
-        "//intrinsic/executive/proto:behavior_tree_proto",
-    ],
 )
 
 py_proto_library(

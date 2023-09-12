@@ -21,7 +21,6 @@ py_library(
         "//intrinsic/skills/apps/calibration:collect_calibration_data_py_pb2",
         "//intrinsic/skills/apps/calibration:sample_calibration_poses_py_pb2",
         "//intrinsic/skills/proto:skills_py_pb2",
-        "//intrinsic/solutions:applications",
         "//intrinsic/solutions:behavior_tree",
         "//intrinsic/solutions:deployments",
         "//intrinsic/solutions:equipment",

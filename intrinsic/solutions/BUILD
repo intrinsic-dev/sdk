@@ -13,31 +13,6 @@ package(default_visibility = [
 ])
 
 py_library(
-    name = "applications",
-    srcs = ["applications.py"],
-    deps = [
-        ":behavior_tree",
-        ":deployments",
-        ":ppr",
-        ":providers",
-        "//intrinsic/executive/app_edit_service/proto/public:app_edit_service_py_pb2",
-        "//intrinsic/executive/app_edit_service/proto/public:app_edit_service_py_pb2_grpc",
-        "//intrinsic/util/grpc:error_handling",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
-    ],
-)
-
-py_test(
-    name = "applications_external_test",
-    srcs = ["applications_external_test.py"],
-    deps = [
-        ":applications",
-        "//intrinsic/executive/app_edit_service/proto/public:app_edit_service_py_pb2",
-        "@com_google_absl_py//absl/testing:absltest",
-    ],
-)
-
-py_library(
     name = "behavior_tree",
     srcs = ["behavior_tree.py"],
     srcs_version = "PY3",
@@ -370,7 +345,6 @@ py_library(
     name = "solutions_lib",
     srcs_version = "PY3",
     deps = [
-        ":applications",
         ":blackboard_value",
         ":deployments",
         ":equipment",
@@ -383,6 +357,8 @@ py_library(
         ":simulation",
         ":structured_logging",
         ":worlds",
+        "//intrinsic/executive/app_edit_service/proto/public:app_edit_service_py_pb2",
+        "//intrinsic/executive/app_edit_service/proto/public:app_edit_service_py_pb2_grpc",
         "//intrinsic/workcell:workcell_api",
     ],
 )
