@@ -25,4 +25,9 @@ options {
 }
 parameter {
   message_full_name: "intrinsic_proto.skills.NoOpSkillParams"
+  default_value {
+    [type.googleapis.com/intrinsic_proto.skills.NoOpSkillParams] {
+      foo: "bar"
+    }
+  }
 }

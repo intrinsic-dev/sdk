@@ -33,11 +33,9 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":no_op_skill_py_pb2",
-        "//intrinsic/skills/proto:equipment_py_pb2",
         "//intrinsic/skills/proto:skill_service_py_pb2",
         "//intrinsic/skills/python:skill_interface",
         "//intrinsic/util:decorators",
-        "@com_google_protobuf//:protobuf_python",
     ],
 )
 
@@ -63,6 +61,7 @@ py_library(
     testonly = False,
     srcs = ["map_skill_repository.py"],
     deps = [
+        "//intrinsic/assets:id_utils_py",
         "//intrinsic/skills/internal:runtime_data_py",
         "//intrinsic/skills/internal:single_skill_factory_py",
         "//intrinsic/skills/internal:skill_repository_py",

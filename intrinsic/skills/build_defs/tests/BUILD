@@ -2,7 +2,7 @@
 # Intrinsic Proprietary and Confidential
 # Provided subject to written agreement between the parties.
 
-load("//intrinsic/skills/build_defs:skill.bzl", "cc_skill", "cc_skill_image", "py_skill", "py_skill_image", "skill_manifest")
+load("//intrinsic/skills/build_defs:skill.bzl", "cc_skill", "cc_skill_image", "py_skill", "skill_manifest")
 
 package(
     default_testonly = True,
@@ -51,13 +51,4 @@ py_skill(
         "//intrinsic/skills/testing:no_op_skill_py",
         "//intrinsic/skills/testing:no_op_skill_py_pb2",
     ],
-)
-
-py_skill_image(
-    name = "no_op_skill_py_image",
-    package_name = "ai.intrinsic",
-    parameter_proto = "//intrinsic/skills/testing:no_op_skill_proto",
-    skill = "//intrinsic/skills/testing:no_op_skill_py",
-    skill_module = "intrinsic.skills.testing.no_op_skill",
-    skill_name = "no_op",
 )
