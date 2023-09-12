@@ -26,7 +26,7 @@
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/internal/canceller.h"
-#include "intrinsic/skills/internal/execution_context_impl.h"
+#include "intrinsic/skills/internal/execute_context_impl.h"
 #include "intrinsic/skills/internal/skill_registry_client_interface.h"
 #include "intrinsic/skills/internal/skill_repository.h"
 #include "intrinsic/skills/proto/skill_service.grpc.pb.h"
@@ -55,7 +55,7 @@ class SkillExecutionOperation {
 
   // Starts execution of the specified skill.
   absl::Status StartExecution(std::unique_ptr<SkillExecuteInterface> skill,
-                              std::unique_ptr<ExecutionContextImpl> context)
+                              std::unique_ptr<ExecuteContextImpl> context)
       ABSL_LOCKS_EXCLUDED(thread_mutex_);
 
   // True if the skill execution has finished.
@@ -179,7 +179,7 @@ class SkillExecutionOperations {
   absl::StatusOr<std::shared_ptr<SkillExecutionOperation>> Start(
       std::unique_ptr<SkillExecuteInterface> skill,
       std::unique_ptr<intrinsic_proto::skills::ExecuteRequest> request,
-      std::unique_ptr<ExecutionContextImpl> context,
+      std::unique_ptr<ExecuteContextImpl> context,
       std::shared_ptr<Canceller> canceller,
       google::longrunning::Operation& initial_operation);
 

@@ -2,8 +2,8 @@
 // Intrinsic Proprietary and Confidential
 // Provided subject to written agreement between the parties.
 
-#ifndef INTRINSIC_SKILLS_INTERNAL_EXECUTION_CONTEXT_IMPL_H_
-#define INTRINSIC_SKILLS_INTERNAL_EXECUTION_CONTEXT_IMPL_H_
+#ifndef INTRINSIC_SKILLS_INTERNAL_EXECUTE_CONTEXT_IMPL_H_
+#define INTRINSIC_SKILLS_INTERNAL_EXECUTE_CONTEXT_IMPL_H_
 
 #include <memory>
 #include <string>
@@ -33,13 +33,13 @@ namespace intrinsic {
 namespace skills {
 
 // Implementation of ExecuteContext as used by the skill service.
-class ExecutionContextImpl : public ExecuteContext {
+class ExecuteContextImpl : public ExecuteContext {
   using ObjectWorldService = ::intrinsic_proto::world::ObjectWorldService;
   using MotionPlannerService =
       ::intrinsic_proto::motion_planning::MotionPlannerService;
 
  public:
-  ExecutionContextImpl(
+  ExecuteContextImpl(
       const intrinsic_proto::skills::ExecuteRequest& request,
       std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
       std::shared_ptr<MotionPlannerService::StubInterface>
@@ -93,4 +93,4 @@ class ExecutionContextImpl : public ExecuteContext {
 }  // namespace skills
 }  // namespace intrinsic
 
-#endif  // INTRINSIC_SKILLS_INTERNAL_EXECUTION_CONTEXT_IMPL_H_
+#endif  // INTRINSIC_SKILLS_INTERNAL_EXECUTE_CONTEXT_IMPL_H_

@@ -37,7 +37,7 @@
 #include "intrinsic/skills/internal/default_parameters.h"
 #include "intrinsic/skills/internal/equipment_utilities.h"
 #include "intrinsic/skills/internal/error_utils.h"
-#include "intrinsic/skills/internal/execution_context_impl.h"
+#include "intrinsic/skills/internal/execute_context_impl.h"
 #include "intrinsic/skills/internal/projection_context_impl.h"
 #include "intrinsic/skills/internal/skill_registry_client_interface.h"
 #include "intrinsic/skills/internal/skill_repository.h"
@@ -131,7 +131,7 @@ SkillExecutionOperation::Create(
 
 absl::Status SkillExecutionOperation::StartExecution(
     std::unique_ptr<SkillExecuteInterface> skill,
-    std::unique_ptr<ExecutionContextImpl> context) {
+    std::unique_ptr<ExecuteContextImpl> context) {
   if (skill == nullptr) {
     return absl::InvalidArgumentError("`skill` is null.");
   }
@@ -316,7 +316,7 @@ absl::StatusOr<std::shared_ptr<SkillExecutionOperation>>
 SkillExecutionOperations::Start(
     std::unique_ptr<SkillExecuteInterface> skill,
     std::unique_ptr<intrinsic_proto::skills::ExecuteRequest> request,
-    std::unique_ptr<ExecutionContextImpl> context,
+    std::unique_ptr<ExecuteContextImpl> context,
     std::shared_ptr<Canceller> canceller,
     google::longrunning::Operation& initial_operation) {
   INTRINSIC_ASSIGN_OR_RETURN(
@@ -659,7 +659,7 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
         /*operation_name=*/absl::Substitute("skill '$0'", skill_id));
   }
 
-  auto execution_context = std::make_unique<ExecutionContextImpl>(
+  auto execution_context = std::make_unique<ExecuteContextImpl>(
       *prepared_request, object_world_service_, motion_planner_service_,
       std::move(equipment), skill_registry_client_, skill_canceller);
 

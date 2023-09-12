@@ -108,9 +108,9 @@ py_library(
 )
 
 cc_library(
-    name = "execution_context_impl",
-    srcs = ["execution_context_impl.cc"],
-    hdrs = ["execution_context_impl.h"],
+    name = "execute_context_impl",
+    srcs = ["execute_context_impl.cc"],
+    hdrs = ["execute_context_impl.h"],
     deps = [
         ":canceller",
         ":skill_registry_client_interface",
@@ -411,7 +411,7 @@ cc_library(
         ":default_parameters",
         ":equipment_utilities",
         ":error_utils",
-        ":execution_context_impl",
+        ":execute_context_impl",
         ":projection_context_impl",
         ":skill_registry_client_interface",
         ":skill_repository",

@@ -2,7 +2,7 @@
 // Intrinsic Proprietary and Confidential
 // Provided subject to written agreement between the parties.
 
-#include "intrinsic/skills/internal/execution_context_impl.h"
+#include "intrinsic/skills/internal/execute_context_impl.h"
 
 #include <algorithm>
 #include <memory>
@@ -35,7 +35,7 @@ namespace skills {
 
 using ::intrinsic::world::ObjectWorldClient;
 
-ExecutionContextImpl::ExecutionContextImpl(
+ExecuteContextImpl::ExecuteContextImpl(
     const intrinsic_proto::skills::ExecuteRequest& request,
     std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
     std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service,
@@ -50,18 +50,18 @@ ExecutionContextImpl::ExecutionContextImpl(
       skill_canceller_(skill_canceller),
       log_context_(request.context()) {}
 
-absl::StatusOr<ObjectWorldClient> ExecutionContextImpl::GetObjectWorld() {
+absl::StatusOr<ObjectWorldClient> ExecuteContextImpl::GetObjectWorld() {
   return ObjectWorldClient(world_id_, object_world_service_);
 }
 
 absl::StatusOr<motion_planning::MotionPlannerClient>
-ExecutionContextImpl::GetMotionPlanner() {
+ExecuteContextImpl::GetMotionPlanner() {
   return motion_planning::MotionPlannerClient(world_id_,
                                               motion_planner_service_);
 }
 
-const intrinsic_proto::data_logger::Context&
-ExecutionContextImpl::GetLogContext() const {
+const intrinsic_proto::data_logger::Context& ExecuteContextImpl::GetLogContext()
+    const {
   return log_context_;
 }
 
