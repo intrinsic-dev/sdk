@@ -32,8 +32,8 @@
 namespace intrinsic {
 namespace skills {
 
-// Implementation of ExecutionContext as used by the skill service.
-class ExecutionContextImpl : public ExecutionContext {
+// Implementation of ExecuteContext as used by the skill service.
+class ExecutionContextImpl : public ExecuteContext {
   using ObjectWorldService = ::intrinsic_proto::world::ObjectWorldService;
   using MotionPlannerService =
       ::intrinsic_proto::motion_planning::MotionPlannerService;

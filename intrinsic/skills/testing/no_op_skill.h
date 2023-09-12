@@ -30,7 +30,7 @@ class NoOpSkill : public SkillInterface {
 
   absl::StatusOr<intrinsic_proto::skills::ExecuteResult> Execute(
       const intrinsic_proto::skills::ExecuteRequest& execute_request,
-      ExecutionContext& context) override;
+      ExecuteContext& context) override;
 };
 
 }  // namespace intrinsic::skills

@@ -33,7 +33,7 @@ using ::intrinsic_proto::skills::PredictResult;
 using ::intrinsic::skills::SkillInterface;
 using ::intrinsic::skills::SkillProjectInterface;
 using ::intrinsic::skills::ProjectionContext;
-using ::intrinsic::skills::ExecutionContext;
+using ::intrinsic::skills::ExecuteContext;
 using ::intrinsic::skills::UnpackParams;
 
 // -----------------------------------------------------------------------------
@@ -59,11 +59,11 @@ absl::StatusOr<PredictResult> {{.SkillNameUpperCamelCase}}::Predict(
 }
 
 // -----------------------------------------------------------------------------
-// Skill execution.
+// Skill execute.
 // -----------------------------------------------------------------------------
 
 absl::StatusOr<ExecuteResult> {{.SkillNameUpperCamelCase}}::Execute(
-    const ExecuteRequest& execute_request, ExecutionContext& context) {
+    const ExecuteRequest& execute_request, ExecuteContext& context) {
   
   // Get parameters.
   INTRINSIC_ASSIGN_OR_RETURN(

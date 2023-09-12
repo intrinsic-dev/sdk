@@ -107,7 +107,7 @@ class SkillSignatureInterface {
 
   // Returns the skill's ready for cancellation timeout.
   //
-  // If the skill is cancelled, its ExecutionContext waits for at most this
+  // If the skill is cancelled, its ExecuteContext waits for at most this
   // timeout duration for the skill to have called `NotifyReadyForCancellation`
   // before raising a timeout error.
   virtual absl::Duration GetReadyForCancellationTimeout() const {
@@ -194,11 +194,11 @@ class SkillProjectInterface {
 // provided by the skill service server to a skill. Allows, e.g., to modify the
 // world or to invoke subskills.
 //
-// ExecutionContext helps support cooperative skill cancellation. When a
+// ExecuteContext helps support cooperative skill cancellation. When a
 // cancellation request is received, the skill should stop as soon as possible
 // and leave resources in a safe and recoverable state.
 //
-// If a skill supports cancellation, it must notify its ExecutionContext via
+// If a skill supports cancellation, it must notify its ExecuteContext via
 // `NotifyReadyForCancellation` once it is ready to be cancelled.
 //
 // A skill can implement cancellation in one of two ways:
@@ -206,7 +206,7 @@ class SkillProjectInterface {
 //    true.
 // 2) Register a cancellation callback via `RegisterCancellationCallback`. This
 //    callback will be invoked when the skill receives a cancellation request.
-class ExecutionContext {
+class ExecuteContext {
  public:
   // Returns the log context this skill is called with. It includes logging IDs
   // from the higher stack.
@@ -239,7 +239,7 @@ class ExecutionContext {
   // Returns the equipment mapping associated with this skill instance.
   virtual const EquipmentPack& GetEquipment() const = 0;
 
-  virtual ~ExecutionContext() = default;
+  virtual ~ExecuteContext() = default;
 };
 
 // Interface for Skill execution.
@@ -256,7 +256,7 @@ class SkillExecuteInterface {
   // absl::CancelledError if the skill is aborted due to a cancellation request.
   virtual absl::StatusOr<intrinsic_proto::skills::ExecuteResult> Execute(
       const intrinsic_proto::skills::ExecuteRequest& execute_request,
-      ExecutionContext& context) {
+      ExecuteContext& context) {
     return absl::UnimplementedError("Skill does not implement execution.");
   }
 
@@ -269,7 +269,7 @@ class SkillExecuteInterface {
 //
 // If a skill implementation supports cancellation, it should:
 // 1) Stop as soon as possible and leave resources in a safe and recoverable
-//   state when a cancellation request is received (via its ExecutionContext).
+//   state when a cancellation request is received (via its ExecuteContext).
 // 2) Override `SupportsCancellation` to return true.
 class SkillInterface : public SkillSignatureInterface,
                        public SkillProjectInterface,
