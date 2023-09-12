@@ -6,5 +6,20 @@ syntax = "proto3";
 
 package intrinsic_proto.data_logger;
 
-// Service
+// A set of topic subscriptions and whether to add or remove them from the
+// allowlist
+message SubscriptionRequest {
+  // A description of the topic
+  repeated Subscription subscription = 1;
+  // Whether to attempt to add or remove this topic from the allowlist
+  bool allow = 2;
+}
+
+// Describes and configures a topic subscription
+message Subscription {
+  // The topic name/zenoh key expression
+  string topic_expr = 1;
+}
+
+// Service to listen to pubsub traffic, and log allowed data to the DataLogger.
 service PubSubListener {}
