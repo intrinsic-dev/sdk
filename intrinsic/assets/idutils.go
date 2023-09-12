@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"golang.org/x/exp/slices"
+	idpb "intrinsic/assets/proto/id_go_proto"
 	spb "intrinsic/assets/proto/id_go_proto"
 )
 
@@ -149,6 +150,15 @@ func IDFrom(pkg string, name string) (string, error) {
 	}
 
 	return fmt.Sprintf("%s.%s", pkg, name), nil
+}
+
+// IDFromProto creates an id string from an id proto message
+//
+// IDs are formatted as in IsID.
+//
+// Returns an error if `package` or `name` fields are not valid.
+func IDFromProto(id *idpb.Id) (string, error) {
+	return IDFrom(id.GetPackage(), id.GetName())
 }
 
 // IDVersionFrom creates an id from package, name, and version strings.
