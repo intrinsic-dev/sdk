@@ -15,7 +15,7 @@ from intrinsic.perception.proto import intrinsic_params_pb2
 import numpy as np
 
 
-def extact_identifier(config: camera_config_pb2.CameraConfig) -> Optional[str]:
+def extract_identifier(config: camera_config_pb2.CameraConfig) -> Optional[str]:
   """Extract the camera identifier from the camera config."""
   # extract device_id from oneof
   identifier = config.identifier
@@ -32,6 +32,8 @@ def extact_identifier(config: camera_config_pb2.CameraConfig) -> Optional[str]:
     return identifier.realsense.device_id
   elif camera_driver == "plenoptic_unit":
     return identifier.plenoptic_unit.device_id
+  elif camera_driver == "fake_genicam":
+    return "fake_genicam"
   else:
     return None
 

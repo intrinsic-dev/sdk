@@ -191,7 +191,7 @@ class CameraConfig:
   @property
   def identifier(self) -> Optional[str]:
     """Camera identifier."""
-    return _camera_utils.extact_identifier(self._proto)
+    return _camera_utils.extract_identifier(self._proto)
 
   @property
   def dimensions(self) -> Optional[Tuple[int, int]]:
