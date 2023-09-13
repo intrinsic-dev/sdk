@@ -26,7 +26,6 @@ from intrinsic.world.python import object_world_resources
 import numpy as np
 
 _CONFIG_EQUIPMENT_IDENTIFIER = "CameraConfig"
-_GRPC_TARGET_EQUIPMENT_IDENTIFIER = "GrpcTarget"
 
 
 def _unpack_camera_config(
@@ -62,7 +61,6 @@ def make_camera_equipment_selector() -> equipment_pb2.EquipmentSelector:
   """
   return equipment_pb2.EquipmentSelector(
       equipment_type_names=[
-          _GRPC_TARGET_EQUIPMENT_IDENTIFIER,
           _CONFIG_EQUIPMENT_IDENTIFIER,
       ]
   )
@@ -450,7 +448,8 @@ class Camera:
   def world_t_camera(self) -> pose3.Pose3:
     """Camera world pose."""
     return self._world_client.get_transform(
-        self._world_client.root, self._world_object
+        node_a=self._world_client.root,
+        node_b=self._world_object,
     )
 
   @property
@@ -483,6 +482,55 @@ class Camera:
         sensor_name: sensor_info.dimensions
         for sensor_name, sensor_info in self.factory_sensor_info.items()
     }
+
+  def update_world_t_camera(self, world_t_camera: pose3.Pose3) -> None:
+    """Update camera world pose relative to world root.
+
+    Args:
+      world_t_camera: The new world_t_camera pose.
+    """
+    self._world_client.update_transform(
+        node_a=self._world_client.root,
+        node_b=self._world_object,
+        a_t_b=world_t_camera,
+        node_to_update=self._world_object,
+    )
+
+  def update_camera_t_other(
+      self,
+      other: object_world_resources.TransformNode,
+      camera_t_other: pose3.Pose3,
+  ) -> None:
+    """Update camera world pose relative to another object.
+
+    Args:
+      other: The other object.
+      camera_t_other: The relative transform.
+    """
+    self._world_client.update_transform(
+        node_a=self._world_object,
+        node_b=other,
+        a_t_b=camera_t_other,
+        node_to_update=self._world_object,
+    )
+
+  def update_other_t_camera(
+      self,
+      other: object_world_resources.TransformNode,
+      other_t_camera: pose3.Pose3,
+  ) -> None:
+    """Update camera world pose relative to another object.
+
+    Args:
+      other: The other object.
+      other_t_camera: The relative transform.
+    """
+    self._world_client.update_transform(
+        node_a=other,
+        node_b=self._world_object,
+        a_t_b=other_t_camera,
+        node_to_update=self._world_object,
+    )
 
   def camera_t_sensor(self, sensor_name: str) -> Optional[pose3.Pose3]:
     """Get the sensor camera_t_sensor pose, falling back to factory settings if pose is missing from the sensor config.
