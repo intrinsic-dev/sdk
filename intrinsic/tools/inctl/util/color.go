@@ -5,7 +5,10 @@
 // Package color contains helper functions to simplify color-printing to the terminal.
 package color
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+)
 
 const reset = "\x1b[0m"
 
@@ -195,4 +198,11 @@ func (c x) LightWhiteBackground() x {
 // and any write error encountered.
 func (c x) Printf(format string, a ...any) (int, error) {
 	return fmt.Printf(c.fg+c.bg+format+reset, a...)
+}
+
+// Fprintf formats according to a format specifier and writes to w. The foreground
+// and background colors are controlled by the [C] object. It returns the number of bytes written
+// and any write error encountered.
+func (c x) Fprintf(w io.Writer, format string, a ...any) (int, error) {
+	return fmt.Fprintf(w, c.fg+c.bg+format+reset, a...)
 }
