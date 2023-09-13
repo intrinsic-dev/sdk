@@ -129,7 +129,6 @@ class Solution:
         pose_estimators
     )
     self.errors: error_processing.ErrorsLoader = errors
-
   @classmethod
   def for_channel(
       cls,
