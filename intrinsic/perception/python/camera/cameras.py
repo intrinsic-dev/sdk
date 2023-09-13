@@ -499,7 +499,11 @@ class Camera:
     sensor_info = self.factory_sensor_info[sensor_name]
     sensor_id = sensor_info.sensor_id
 
-    sensor_config = self.config.sensor_configs[sensor_id]
+    sensor_config = (
+        self.config.sensor_configs[sensor_id]
+        if sensor_id in self.config.sensor_configs
+        else None
+    )
 
     if sensor_config is not None and sensor_config.camera_t_sensor is not None:
       return sensor_config.camera_t_sensor
@@ -543,7 +547,11 @@ class Camera:
     sensor_info = self.factory_sensor_info[sensor_name]
     sensor_id = sensor_info.sensor_id
 
-    sensor_config = self.config.sensor_configs[sensor_id]
+    sensor_config = (
+        self.config.sensor_configs[sensor_id]
+        if sensor_id in self.config.sensor_configs
+        else None
+    )
 
     if sensor_config is not None and sensor_config.intrinsic_matrix is not None:
       return sensor_config.intrinsic_matrix
@@ -576,7 +584,11 @@ class Camera:
     sensor_info = self.factory_sensor_info[sensor_name]
     sensor_id = sensor_info.sensor_id
 
-    sensor_config = self.config.sensor_configs[sensor_id]
+    sensor_config = (
+        self.config.sensor_configs[sensor_id]
+        if sensor_id in self.config.sensor_configs
+        else None
+    )
 
     if (
         sensor_config is not None
