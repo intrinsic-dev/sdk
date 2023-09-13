@@ -20,6 +20,9 @@ namespace intrinsic_proto {
 intrinsic::eigenmath::Vector3d FromProto(const Point& point);
 intrinsic::eigenmath::Quaterniond FromProto(const Quaternion& quaternion);
 absl::StatusOr<intrinsic::Pose> FromProto(const Pose& pose);
+// Only checks if the quaternion of the pose is roughly normalized, in which
+// case it normalizes the input quaternion before generating the pose.
+absl::StatusOr<intrinsic::Pose> FromProtoNormalized(const Pose& pose);
 
 }  // namespace intrinsic_proto
 
