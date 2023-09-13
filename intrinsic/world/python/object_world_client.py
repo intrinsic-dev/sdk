@@ -858,9 +858,9 @@ class ObjectWorldClient:
       # errors like a RpcError this has non obvious side-effects, for example
       # autocomplete in jupyter is broken.
       raise AttributeError(
-          f'{self.__repr__()} does not have an object or member member with'
-          f' name "{name}". Object names need to either be the name of an'
-          ' object below root or the name of an object which has the'
+          f'{self.__repr__()} does not have an object or member with name'
+          f' "{name}". Object names need to either be the name of an object'
+          ' below root or the name of an object which has the'
           ' "name_is_global_alias" option enabled.'
       )
 
