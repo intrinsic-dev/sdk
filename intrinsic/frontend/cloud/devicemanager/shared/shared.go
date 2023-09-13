@@ -5,6 +5,8 @@
 // Package shared provides data types that client tooling uses as well for static typed api boundaries.
 package shared
 
+import "encoding/json"
+
 // ConfigureData is the data type used during the configuration push by inctl.
 type ConfigureData struct {
 	Config   []byte `json:"config"`
@@ -62,6 +64,15 @@ type Interface struct {
 	// Realtime identifies this interface to be used for realtime communication
 	// with the robot.
 	Realtime bool `json:"realtime"`
+}
+
+// String implements fmt.Stringer for logging purposes.
+func (i Interface) String() string {
+	r, err := json.Marshal(i)
+	if err != nil {
+		panic(err)
+	}
+	return string(r)
 }
 
 // Status represents the current OS status. It is similar to config.Config but
