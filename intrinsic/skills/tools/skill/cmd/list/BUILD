@@ -14,12 +14,12 @@ go_library(
     deps = [
         "//intrinsic/skills/catalog/proto:skill_catalog_go_grpc_proto",
         "//intrinsic/skills/tools/skill/cmd",
+        "//intrinsic/skills/tools/skill/cmd:cmdutil",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/skills/tools/skill/cmd:listutil",
         "//intrinsic/tools/inctl/cmd:root",
         "//intrinsic/tools/inctl/util:printer",
         "@com_github_spf13_cobra//:go_default_library",
-        "@com_github_spf13_viper//:go_default_library",
         "@org_golang_google_grpc//:go_default_library",
     ],
 )
@@ -32,12 +32,12 @@ go_library(
     deps = [
         "//intrinsic/skills/catalog/proto:skill_catalog_go_grpc_proto",
         "//intrinsic/skills/tools/skill/cmd",
+        "//intrinsic/skills/tools/skill/cmd:cmdutil",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/skills/tools/skill/cmd:listutil",
         "//intrinsic/tools/inctl/cmd:root",
         "//intrinsic/tools/inctl/util:printer",
         "@com_github_spf13_cobra//:go_default_library",
-        "@com_github_spf13_viper//:go_default_library",
         "@org_golang_google_grpc//:go_default_library",
     ],
 )
@@ -48,13 +48,14 @@ go_library(
     deps = [
         "//intrinsic/skills/proto:skill_registry_go_grpc_proto",
         "//intrinsic/skills/tools/skill/cmd",
+        "//intrinsic/skills/tools/skill/cmd:cmdutil",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/skills/tools/skill/cmd:listutil",
         "//intrinsic/skills/tools/skill/cmd:solutionutil",
         "//intrinsic/tools/inctl/cmd:root",
         "//intrinsic/tools/inctl/util:printer",
+        "@com_github_pkg_errors//:go_default_library",
         "@com_github_spf13_cobra//:go_default_library",
-        "@com_github_spf13_viper//:go_default_library",
         "@org_golang_google_protobuf//types/known/emptypb:go_default_library",
     ],
 )

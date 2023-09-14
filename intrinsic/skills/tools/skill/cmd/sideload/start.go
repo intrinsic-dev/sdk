@@ -10,17 +10,16 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	imagepb "intrinsic/kubernetes/workcell_spec/proto/image_go_proto"
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd/cmd"
+	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/imagetransfer"
 	"intrinsic/skills/tools/skill/cmd/imageutil"
@@ -29,28 +28,7 @@ import (
 	"intrinsic/skills/tools/skill/cmd/waitforskill"
 )
 
-const (
-	keyAuthUser         = "auth_user"
-	keyAuthPassword     = "auth_password"
-	keyContext          = "context"
-	keyInstallerAddress = "installer_address"
-	keyRegistry         = "registry"
-	keyType             = "type"
-	keyTimeout          = "timeout"
-)
-
-var viperLocal = viper.New()
-
-func parseNonNegativeDuration(durationStr string) (time.Duration, error) {
-	duration, err := time.ParseDuration(durationStr)
-	if err != nil {
-		return 0, fmt.Errorf("parsing duration: %w", err)
-	}
-	if duration < 0 {
-		return 0, fmt.Errorf("duration must not be negative, but got %q", durationStr)
-	}
-	return duration, nil
-}
+var cmdFlags = cmdutil.NewCmdFlags()
 
 func createSideloadedSkillIDVersion() string {
 	id := uuid.New()
@@ -58,10 +36,11 @@ func createSideloadedSkillIDVersion() string {
 }
 
 func remoteOpt() remote.Option {
-	if len(viperLocal.GetString(keyAuthUser)) != 0 && len(viperLocal.GetString(keyAuthPassword)) != 0 {
+	authUser, authPwd := cmdFlags.GetFlagsRegistryAuthUserPassword()
+	if len(authUser) != 0 && len(authPwd) != 0 {
 		return remote.WithAuth(authn.FromConfig(authn.AuthConfig{
-			Username: viperLocal.GetString(keyAuthUser),
-			Password: viperLocal.GetString(keyAuthPassword),
+			Username: authUser,
+			Password: authPwd,
 		}))
 	}
 	return remote.WithAuthFromKeychain(google.Keychain)
@@ -86,27 +65,26 @@ $ inctl skill start --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution
 	RunE: func(command *cobra.Command, args []string) error {
 		target := args[0]
 
-		timeoutStr := viperLocal.GetString(keyTimeout)
-		timeout, err := parseNonNegativeDuration(timeoutStr)
+		timeout, timeoutStr, err := cmdFlags.GetFlagSideloadStartTimeout()
 		if err != nil {
-			return fmt.Errorf("invalid value passed for --timeout: %w", err)
+			return err
 		}
 
+		authUser, authPwd := cmdFlags.GetFlagsRegistryAuthUserPassword()
 		imgpb, installerParams, err := registry.PushSkill(target, registry.PushOptions{
-			AuthUser:   viperLocal.GetString(keyAuthUser),
-			AuthPwd:    viperLocal.GetString(keyAuthPassword),
-			Registry:   viperLocal.GetString(keyRegistry),
-			Type:       viperLocal.GetString(keyType),
+			AuthUser:   authUser,
+			AuthPwd:    authPwd,
+			Registry:   cmdFlags.GetFlagRegistry(),
+			Type:       cmdFlags.GetFlagSideloadStartType(),
 			Transferer: imagetransfer.RemoteTransferer(remoteOpt()),
 		})
 		if err != nil {
 			return fmt.Errorf("could not push target %q to the container registry: %v", target, err)
 		}
 
-		k8sContext := viperLocal.GetString(keyContext)
-		installerAddress := viperLocal.GetString(keyInstallerAddress)
-		solution := viperLocal.GetString(cmd.KeySolution)
-		project := viper.GetString(cmd.KeyProject)
+		k8sContext, solution := cmdFlags.GetFlagsSideloadContextSolution()
+		installerAddress := cmdFlags.GetFlagInstallerAddress()
+		project := cmdFlags.GetFlagProject()
 
 		ctx, conn, err := dialerutil.DialConnectionCtx(command.Context(), dialerutil.DialInfoParams{
 			Address:  installerAddress,
@@ -139,10 +117,10 @@ $ inctl skill start --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution
 
 		skillVersion := "0.0.1+" + createSideloadedSkillIDVersion()
 		skillIDVersion := installerParams.SkillID + "." + skillVersion
-		log.Printf("Installing skill %q using the installer service at %q", skillIDVersion, viperLocal.GetString(keyInstallerAddress))
+		log.Printf("Installing skill %q using the installer service at %q", skillIDVersion, installerAddress)
 		err = imageutil.InstallContainer(ctx,
 			&imageutil.InstallContainerParams{
-				Address:    viperLocal.GetString(keyInstallerAddress),
+				Address:    installerAddress,
 				Connection: conn,
 				Request: &installerpb.InstallContainerAddonRequest{
 					Id:      installerParams.SkillID,
@@ -181,41 +159,13 @@ $ inctl skill start --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution
 
 func init() {
 	cmd.SkillCmd.AddCommand(startCmd)
-	startCmd.PersistentFlags().String(keyAuthUser, "", "(optional) The username used to access the private skill registry.")
-	startCmd.PersistentFlags().String(keyAuthPassword, "", "(optional) The password used to authenticate private container registry access.")
-	startCmd.PersistentFlags().String(cmd.KeySolution, "", `The solution into which the skill should be loaded. Needs to run on a cluster.
-You can set the environment variable INTRINSIC_SOLUTION=solution to set a default solution.`)
-	startCmd.PersistentFlags().StringP(keyContext, "c", "", `The Kubernetes cluster to use. Not required if using localhost for the installer_address.
-You can set the environment variable INTRINSIC_CONTEXT=cluster to set a default cluster.`)
-	startCmd.PersistentFlags().String(keyInstallerAddress, "xfa.lan:17080", `The address of the installer service. When not running the cluster on localhost, this should be the address of the relay
-(example: dns:///www.endpoints.<gcloud_project_name>.cloud.goog:443).
-You can set the environment variable INTRINSIC_INSTALLER_ADDRESS=address to change the default address.`)
-	startCmd.PersistentFlags().String(keyRegistry, "", `The container registry. This option is ignored when --type=image.
-You can set the environment variable INTRINSIC_REGISTRY=registry to set a default registry.`)
-	startCmd.PersistentFlags().String(keyType, "", fmt.Sprintf(`(required) The target's type:
-%s	build target that creates a skill image
-%s	file path pointing to an already-built image
-%s	container image name`, imageutil.Build, imageutil.Archive, imageutil.Image))
-	startCmd.PersistentFlags().String(keyTimeout, "180s", "Maximum time to wait for the skill to "+
-		"become available in the cluster after starting it. Can be set to any valid duration "+
-		"(\"60s\", \"5m\", ...) or to \"0\" to disable waiting.")
+	cmdFlags.SetCommand(startCmd)
 
-	startCmd.MarkPersistentFlagRequired(keyType)
-	// Always required to resolve API key for authentication.
-	startCmd.MarkPersistentFlagRequired(cmd.KeyProject)
-	startCmd.MarkFlagsRequiredTogether(keyAuthUser, keyAuthPassword)
-	startCmd.MarkFlagsMutuallyExclusive(keyContext, cmd.KeySolution)
-
-	viperLocal.BindPFlag(keyAuthUser, startCmd.PersistentFlags().Lookup(keyAuthUser))
-	viperLocal.BindPFlag(keyAuthPassword, startCmd.PersistentFlags().Lookup(keyAuthPassword))
-	viperLocal.BindPFlag(keyContext, startCmd.PersistentFlags().Lookup(keyContext))
-	viperLocal.BindPFlag(cmd.KeySolution, startCmd.PersistentFlags().Lookup(cmd.KeySolution))
-	viperLocal.BindPFlag(keyInstallerAddress, startCmd.PersistentFlags().Lookup(keyInstallerAddress))
-	viperLocal.BindPFlag(keyRegistry, startCmd.PersistentFlags().Lookup(keyRegistry))
-	viperLocal.BindPFlag(keyType, startCmd.PersistentFlags().Lookup(keyType))
-	viperLocal.BindPFlag(keyTimeout, startCmd.PersistentFlags().Lookup(keyTimeout))
-	viperLocal.SetEnvPrefix("intrinsic")
-	viperLocal.BindEnv(keyInstallerAddress)
-	viperLocal.BindEnv(keyRegistry)
-	viperLocal.BindEnv(cmd.KeyProject)
+	cmdFlags.AddFlagInstallerAddress()
+	cmdFlags.AddFlagProject()
+	cmdFlags.AddFlagRegistry()
+	cmdFlags.AddFlagsRegistryAuthUserPassword()
+	cmdFlags.AddFlagsSideloadContextSolution("skill")
+	cmdFlags.AddFlagSideloadStartTimeout("skill")
+	cmdFlags.AddFlagSideloadStartType()
 }

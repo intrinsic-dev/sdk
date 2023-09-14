@@ -7,16 +7,10 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"intrinsic/tools/inctl/cmd/root"
 )
 
 const (
-	// KeyProject is the Google Cloud Project to use.
-	KeyProject = "project"
-	// KeySolution is the name of the solution to interact with.
-	KeySolution = "solution"
-
 	// SideloadedSkillPrefix is the prefix that is added to the id version of a sideloaded skill.
 	SideloadedSkillPrefix = "sideloaded"
 )
@@ -26,12 +20,4 @@ var SkillCmd = &cobra.Command{
 	Use:   root.SkillCmdName,
 	Short: "Manages skills",
 	Long:  "Manages skills in a workcell, in a local repository or in the skill catalog",
-}
-
-func init() {
-	SkillCmd.PersistentFlags().StringP(KeyProject, "p", "", `The Google Cloud Platform (GCP) project to use.
-	You can set the environment variable PROJECT=project_name to set a default project name.`)
-
-	viper.BindPFlag(KeyProject, SkillCmd.PersistentFlags().Lookup(KeyProject))
-	viper.BindEnv(KeyProject)
 }

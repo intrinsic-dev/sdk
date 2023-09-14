@@ -11,11 +11,11 @@ go_library(
     srcs = ["logs.go"],
     deps = [
         "//intrinsic/skills/tools/skill/cmd",
+        "//intrinsic/skills/tools/skill/cmd:cmdutil",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/skills/tools/skill/cmd:imageutil",
         "//intrinsic/skills/tools/skill/cmd:solutionutil",
         "//intrinsic/tools/inctl/auth",
         "@com_github_spf13_cobra//:go_default_library",
-        "@com_github_spf13_viper//:go_default_library",
     ],
 )

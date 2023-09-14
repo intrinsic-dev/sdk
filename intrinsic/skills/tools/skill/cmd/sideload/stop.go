@@ -14,22 +14,15 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"intrinsic/skills/tools/skill/cmd/cmd"
+	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/imagetransfer"
 	"intrinsic/skills/tools/skill/cmd/imageutil"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
 )
 
-const (
-	keyContext          = "context"
-	keySolution         = "solution"
-	keyInstallerAddress = "installer_address"
-	keyType             = "type"
-)
-
-var viperLocal = viper.New()
+var cmdFlags = cmdutil.NewCmdFlags()
 
 var stopCmd = &cobra.Command{
 	Use:   "stop --type=TYPE TARGET",
@@ -55,15 +48,14 @@ $ inctl skill stop --type=id skill
 	Args: cobra.ExactArgs(1),
 	RunE: func(command *cobra.Command, args []string) error {
 		target := args[0]
-		targetType := imageutil.TargetType(viperLocal.GetString(keyType))
+		targetType := imageutil.TargetType(cmdFlags.GetFlagSideloadStopType())
 		if targetType != imageutil.Build && targetType != imageutil.Archive && targetType != imageutil.Image && targetType != imageutil.ID && targetType != imageutil.Name {
 			return fmt.Errorf("type must be one of (%s, %s, %s, %s, %s)", imageutil.Build, imageutil.Archive, imageutil.Image, imageutil.ID, imageutil.Name)
 		}
 
-		context := viperLocal.GetString(keyContext)
-		installerAddress := viperLocal.GetString(keyInstallerAddress)
-		solution := viperLocal.GetString(keySolution)
-		project := viper.GetString(cmd.KeyProject)
+		context, solution := cmdFlags.GetFlagsSideloadContextSolution()
+		installerAddress := cmdFlags.GetFlagInstallerAddress()
+		project := cmdFlags.GetFlagProject()
 
 		skillID, err := imageutil.SkillIDFromTarget(target, imageutil.TargetType(targetType), imagetransfer.RemoteTransferer(remote.WithAuthFromKeychain(google.Keychain)))
 		if err != nil {
@@ -118,25 +110,10 @@ $ inctl skill stop --type=id skill
 
 func init() {
 	cmd.SkillCmd.AddCommand(stopCmd)
+	cmdFlags.SetCommand(stopCmd)
 
-	stopCmd.PersistentFlags().StringP(keyContext, "c", "", "The Kubernetes cluster to use. Not required if using localhost for the installer_address. You can set the environment variable INTRINSIC_CONTEXT=cluster to set a default cluster.")
-	stopCmd.PersistentFlags().String(keySolution, "", `The solution in which the skill runs. Not required if using localhost for the installer_address.
-You can set the environment variable INTRINSIC_SOLUTION=solution to set a default solution.`)
-	stopCmd.PersistentFlags().String(keyInstallerAddress, "xfa.lan:17080", "The address of the installer service. When not running the cluster on localhost, this should be the address of the relay (e.g. dns:///www.endpoints.<gcloud_project_name>.cloud.goog:443). You can set the environment variable INTRINSIC_INSTALLER_ADDRESS=address to change the default address.")
-	stopCmd.PersistentFlags().String(keyType, "", fmt.Sprintf(`(required) The target's type:
-%s	build target that creates a skill image
-%s	file path pointing to an already-built image
-%s	container image name
-%s		skill id
-%s		skill name [deprecated: prefer to use "id"]`, imageutil.Build, imageutil.Archive, imageutil.Image, imageutil.ID, imageutil.Name))
-	stopCmd.MarkPersistentFlagRequired(keyType)
-	stopCmd.MarkFlagsMutuallyExclusive(keyContext, keySolution)
-
-	viperLocal.BindPFlag(keyContext, stopCmd.PersistentFlags().Lookup(keyContext))
-	viperLocal.BindPFlag(keySolution, stopCmd.PersistentFlags().Lookup(keySolution))
-	viperLocal.BindPFlag(keyInstallerAddress, stopCmd.PersistentFlags().Lookup(keyInstallerAddress))
-	viperLocal.BindPFlag(keyType, stopCmd.PersistentFlags().Lookup(keyType))
-	viperLocal.SetEnvPrefix("intrinsic")
-	viperLocal.BindEnv(keyInstallerAddress)
-	viperLocal.BindEnv(cmd.KeyProject)
+	cmdFlags.AddFlagInstallerAddress()
+	cmdFlags.AddFlagProject()
+	cmdFlags.AddFlagsSideloadContextSolution("skill")
+	cmdFlags.AddFlagSideloadStopType("skill")
 }

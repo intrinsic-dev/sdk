@@ -12,6 +12,16 @@ go_library(
     deps = [
         "//intrinsic/tools/inctl/cmd:root",
         "@com_github_spf13_cobra//:go_default_library",
+    ],
+)
+
+go_library(
+    name = "cmdutil",
+    srcs = ["cmdutil.go"],
+    deps = [
+        ":imageutil",
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_spf13_cobra//:go_default_library",
         "@com_github_spf13_viper//:go_default_library",
     ],
 )

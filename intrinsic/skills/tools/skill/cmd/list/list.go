@@ -10,11 +10,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	skillregistrygrpcpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
 	skillCmd "intrinsic/skills/tools/skill/cmd/cmd"
+	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/listutil"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
@@ -23,21 +24,16 @@ import (
 )
 
 const (
-	keyAddress = "address"
-	keyCluster = "cluster"
-	keyFilter  = "filter"
+	keyFilter = "filter"
 
 	sideloadedFilter = "sideloaded"
 	releasedFilter   = "released"
 )
 
 var (
-	filterOptions = []string{sideloadedFilter, releasedFilter}
+	cmdFlags = cmdutil.NewCmdFlags()
 
-	flagAddress  string
-	flagCluster  string
-	flagSolution string
-	flagFilter   string
+	filterOptions = []string{sideloadedFilter, releasedFilter}
 )
 
 type listSkillsParams struct {
@@ -83,32 +79,27 @@ $	inctl skill list --project my-project --cluster my-cluster
 `,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		projectName := viper.GetString(skillCmd.KeyProject)
-		serverAddr := "dns:///www.endpoints." + projectName + ".cloud.goog:443"
+		project := cmdFlags.GetFlagProject()
+		serverAddr := fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", project)
 
-		if flagCluster == "" && flagSolution == "" {
-			return fmt.Errorf("One of `--%s` or `--%s` needs to be set", keyCluster, skillCmd.KeySolution)
+		cluster, solution, err := cmdFlags.GetFlagsListClusterSolution()
+		if err != nil {
+			return err
 		}
 
-		cluster := flagCluster
-
-		if flagSolution != "" {
+		if solution != "" {
 			ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
 				Address:  serverAddr,
-				CredName: projectName,
+				CredName: project,
 			})
 			if err != nil {
-				return fmt.Errorf("could not create connection: %v", err)
+				return errors.Wrapf(err, "could not create connection")
 			}
 			defer conn.Close()
 
-			cluster, err = solutionutil.GetClusterNameFromSolution(
-				ctx,
-				conn,
-				flagSolution,
-			)
+			cluster, err = solutionutil.GetClusterNameFromSolution(ctx, conn, solution)
 			if err != nil {
-				return fmt.Errorf("could not resolve solution to cluster: %s", err)
+				return errors.Wrapf(err, "could not resolve solution to cluster")
 			}
 		}
 		prtr, err := printer.NewPrinter(root.FlagOutput)
@@ -118,9 +109,9 @@ $	inctl skill list --project my-project --cluster my-cluster
 
 		err = listSkills(cmd.Context(), &listSkillsParams{
 			cluster:     cluster,
-			filter:      flagFilter,
+			filter:      cmdFlags.GetString(keyFilter),
 			printer:     prtr,
-			projectName: projectName,
+			projectName: project,
 			serverAddr:  serverAddr,
 		})
 		if err != nil {
@@ -133,19 +124,12 @@ $	inctl skill list --project my-project --cluster my-cluster
 
 func init() {
 	skillCmd.SkillCmd.AddCommand(listCmd)
+	cmdFlags.SetCommand(listCmd)
 
-	if viper.GetString(skillCmd.KeyProject) == "" {
-		listCmd.MarkPersistentFlagRequired(skillCmd.KeyProject)
-	}
-	listCmd.Flags().StringVar(&flagCluster, keyCluster, "", "Defines the cluster from which the skills"+
-		" should be read.")
-	listCmd.Flags().StringVar(&flagSolution, skillCmd.KeySolution, "", "The solution from which the "+
-		"skills should be listed. Needs to run on a cluster.")
-	listCmd.Flags().StringVar(&flagFilter, keyFilter, "", fmt.Sprintf("Filter skills by the way they "+
-		"where loaded into the solution. One of %s", strings.Join(filterOptions, ", ")))
+	cmdFlags.AddFlagsListClusterSolution("skill")
+	cmdFlags.AddFlagProject()
 
-	// A solution will be resolved internally to the cluster it is running on.
-	listCmd.MarkFlagsMutuallyExclusive(skillCmd.KeySolution, keyCluster)
+	cmdFlags.OptionalString(keyFilter, "", fmt.Sprintf("Filter skills by the way they where loaded into the solution. One of: %s.", strings.Join(filterOptions, ", ")))
 }
 
 // skills get a specific prefix when sideloaded via inctl.

@@ -17,8 +17,8 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"intrinsic/skills/tools/skill/cmd/cmd"
+	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/imageutil"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
@@ -26,10 +26,6 @@ import (
 )
 
 const (
-	keyProject      = "project"
-	keyContext      = "context"
-	keySolution     = "solution"
-	keyType         = "type"
 	keyFollow       = "follow"
 	keyTimestamps   = "timestamps"
 	keyTailLines    = "tail"
@@ -50,16 +46,11 @@ const (
 )
 
 var (
-	flagType         string
-	flagFollow       bool
-	flagTimestamps   bool
-	flagTailLines    int
-	flagSinceSeconds string
-	viperLocal       = viper.New()
-
 	verboseDebug           = false
 	verboseOut   io.Writer = os.Stderr
 )
+
+var cmdFlags = cmdutil.NewCmdFlags()
 
 type bodyReader = func(context.Context, io.Reader) (string, error)
 
@@ -133,7 +124,7 @@ func runLogsCmd(ctx context.Context, params *cmdParams, w io.Writer) error {
 	}
 	consoleLogsQuery.Set(paramTimestamps, fmt.Sprintf("%t", params.timestamps))
 
-	if d, ok, err := parseSinceSeconds(flagSinceSeconds); ok && err == nil {
+	if d, ok, err := parseSinceSeconds(cmdFlags.GetString(keySinceSec)); ok && err == nil {
 		// nit: our now is different from server now (at the time of processing),
 		// so we can get drift of a second give or take
 		// this is not generally problematic for this kind of logs.
@@ -271,15 +262,15 @@ var logsCmd = &cobra.Command{
 		_, verboseDebug = os.LookupEnv(verboseDebugEnvName)
 		verboseOut = cmd.OutOrStderr()
 
-		context := viperLocal.GetString(keyContext)
-		project := viperLocal.GetString(keyProject)
+		context := cmdFlags.GetString(cmdutil.KeyContext)
+		project := cmdFlags.GetFlagProject()
 		var serverAddr string
 		if project == "" {
 			serverAddr = localhostURL
 		} else {
 			serverAddr = fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", project)
 		}
-		solution := viperLocal.GetString(keySolution)
+		solution := cmdFlags.GetString(cmdutil.KeySolution)
 
 		ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
 			Address:  serverAddr,
@@ -301,12 +292,12 @@ var logsCmd = &cobra.Command{
 		}
 
 		return runLogsCmd(ctx, &cmdParams{
-			targetType:  imageutil.TargetType(flagType),
+			targetType:  imageutil.TargetType(cmdFlags.GetString(cmdutil.KeyType)),
 			target:      target,
 			frontendURL: createFrontendURL(project, cluster),
-			follow:      flagFollow,
-			timestamps:  flagTimestamps,
-			tailLines:   flagTailLines,
+			follow:      cmdFlags.GetBool(keyFollow),
+			timestamps:  cmdFlags.GetBool(keyTimestamps),
+			tailLines:   cmdFlags.GetInt(keyTailLines),
 			projectName: project,
 		}, cmd.OutOrStdout())
 	},
@@ -314,29 +305,21 @@ var logsCmd = &cobra.Command{
 
 func init() {
 	cmd.SkillCmd.AddCommand(logsCmd)
-	f := logsCmd.PersistentFlags()
+	cmdFlags.SetCommand(logsCmd)
 
-	f.StringP(keyProject, "p", "", `The Google Cloud Project (GCP) project to use. Omit if using the local cluster.
-You can set the environment variable INTRINSIC_PROJECT=project_name to set a default project name.`)
-	f.StringP(keyContext, "c", "", `The Kubernetes cluster to use.
-You can set the environment variable INTRINSIC_CONTEXT=cluster to set a default cluster.`)
-	f.String(keySolution, "", `The solution to use.
-You can set the environment variable INTRINSIC_SOLUTION=solution to set a default solution.`)
-	f.StringVar(&flagType, keyType, "", fmt.Sprintf(`(required) The target's type:
+	cmdFlags.AddFlagProject()
+	cmdFlags.OptionalEnvString(cmdutil.KeyContext, "", "The Kubernetes cluster to use.")
+	cmdFlags.OptionalEnvString(cmdutil.KeySolution, "", "The solution to use.")
+
+	cmdFlags.RequiredString(cmdutil.KeyType, fmt.Sprintf(`The target's type:
 %s	skill id
 %s	build target of the skill image`, imageutil.ID, imageutil.Build))
-	f.BoolVarP(&flagFollow, keyFollow, "f", false, "(optional) If true, specify to follow the skill logs.")
-	f.BoolVarP(&flagTimestamps, keyTimestamps, "t", false, "(optional) If true, include timestamps on each log line.")
-	f.IntVarP(&flagTailLines, keyTailLines, "n", 10, "(optional) The number of recent log lines to display. An input number less than 0 shows all log lines.")
-	f.StringVar(&flagSinceSeconds, keySinceSec, "", "(optional) Show logs starting since value. Value is either relative (e.g 10m) or \ndate time in RFC3339 format (e.g: 2006-01-02T15:04:05Z07:00)")
+	cmdFlags.OptionalBool(keyFollow, false, "Whether to follow the skill logs.")
+	cmdFlags.OptionalBool(keyTimestamps, false, "Whether to include timestamps on each log line.")
+	cmdFlags.OptionalInt(keyTailLines, 10, "The number of recent log lines to display. An input number less than 0 shows all log lines.")
+	cmdFlags.OptionalString(keySinceSec, "", "Show logs starting since value. Value is either relative (e.g 10m) or \ndate time in RFC3339 format (e.g: 2006-01-02T15:04:05Z07:00)")
 
-	logsCmd.MarkFlagsMutuallyExclusive(keyContext, keySolution)
-
-	viperLocal.BindPFlag(keyProject, f.Lookup(keyProject))
-	viperLocal.BindPFlag(keyContext, f.Lookup(keyContext))
-	viperLocal.BindPFlag(keySolution, f.Lookup(keySolution))
-	viperLocal.SetEnvPrefix("intrinsic")
-	viperLocal.BindEnv(keyProject)
+	logsCmd.MarkFlagsMutuallyExclusive(cmdutil.KeyContext, cmdutil.KeySolution)
 }
 
 func getAuthToken(project string) (*auth.ProjectToken, error) {

@@ -13,6 +13,7 @@ go_library(
         "//intrinsic/assets/proto:tag_go_proto",
         "//intrinsic/skills/catalog/proto:skill_catalog_go_grpc_proto",
         "//intrinsic/skills/tools/skill/cmd",
+        "//intrinsic/skills/tools/skill/cmd:cmdutil",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/skills/tools/skill/cmd:imagetransfer",
         "//intrinsic/skills/tools/skill/cmd:imageutil",
@@ -21,7 +22,6 @@ go_library(
         "@com_github_google_go_containerregistry//pkg/v1/google:go_default_library",
         "@com_github_google_go_containerregistry//pkg/v1/remote:go_default_library",
         "@com_github_spf13_cobra//:go_default_library",
-        "@com_github_spf13_viper//:go_default_library",
         "@org_golang_google_grpc//:go_default_library",
     ],
 )

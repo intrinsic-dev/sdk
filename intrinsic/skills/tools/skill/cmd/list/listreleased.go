@@ -9,28 +9,30 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	skillcataloggrpcpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillcatalogpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillCmd "intrinsic/skills/tools/skill/cmd/cmd"
+	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/listutil"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/printer"
 )
 
+var cmdFlags = cmdutil.NewCmdFlags()
+
 var listReleasedCmd = &cobra.Command{
 	Use:   "list_released",
 	Short: "List released skills in the catalog",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		projectName := viper.GetString(skillCmd.KeyProject)
-		catalogAddress := "dns:///www.endpoints." + projectName + ".cloud.goog:443"
+		project := cmdFlags.GetFlagProject()
+		catalogAddress := fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", project)
 
 		ctx, dialerOpts, err := dialerutil.DialInfoCtx(cmd.Context(), dialerutil.DialInfoParams{
 			Address:  catalogAddress,
-			CredName: projectName,
+			CredName: project,
 		})
 		if err != nil {
 			return fmt.Errorf("could not list released skills: %v", err)
@@ -61,8 +63,7 @@ var listReleasedCmd = &cobra.Command{
 
 func init() {
 	skillCmd.SkillCmd.AddCommand(listReleasedCmd)
+	cmdFlags.SetCommand(listReleasedCmd)
 
-	if viper.GetString(skillCmd.KeyProject) == "" {
-		listReleasedCmd.MarkPersistentFlagRequired(skillCmd.KeyProject)
-	}
+	cmdFlags.AddFlagProject()
 }
