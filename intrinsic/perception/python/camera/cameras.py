@@ -197,6 +197,218 @@ class Camera:
     except grpc.RpcError:
       logging.warning("Could not load factory configuration.")
 
+  @property
+  def identifier(self) -> Optional[str]:
+    """Camera identifier."""
+    return self.config.identifier
+
+  @property
+  def dimensions(self) -> Optional[Tuple[int, int]]:
+    """Camera intrinsic dimensions."""
+    return self.config.dimensions
+
+  @property
+  def sensor_names(self) -> List[str]:
+    """List of sensor names."""
+    return list(self.factory_sensor_info.keys())
+
+  @property
+  def sensor_ids(self) -> List[int]:
+    """List of sensor ids."""
+    return [
+        sensor_info.sensor_id
+        for _, sensor_info in self.factory_sensor_info.items()
+    ]
+
+  @property
+  def sensor_dimensions(self) -> Mapping[str, Tuple[int, int]]:
+    """Mapping of sensor name to the sensor's intrinsic dimensions."""
+    return {
+        sensor_name: sensor_info.dimensions
+        for sensor_name, sensor_info in self.factory_sensor_info.items()
+    }
+
+  def intrinsic_matrix(
+      self, sensor_name: Optional[str] = None
+  ) -> Optional[np.ndarray]:
+    """Get the camera intrinsic matrix or that of a specific sensor (for multisensor cameras), falling back to factory settings or the camera intrinsic matrix if intrinsic params are missing from the requested sensor config.
+
+    Args:
+      sensor_name: The desired sensor name, or None for the camera intrinsic
+        matrix.
+
+    Returns:
+      The sensor's intrinsic matrix or None if it couldn't be found.
+    """
+    if sensor_name is None:
+      return self.config.intrinsic_matrix
+
+    if sensor_name not in self.factory_sensor_info:
+      return None
+    sensor_info = self.factory_sensor_info[sensor_name]
+    sensor_id = sensor_info.sensor_id
+
+    sensor_config = (
+        self.config.sensor_configs[sensor_id]
+        if sensor_id in self.config.sensor_configs
+        else None
+    )
+
+    if sensor_config is not None and sensor_config.intrinsic_matrix is not None:
+      return sensor_config.intrinsic_matrix
+    elif (
+        sensor_info is not None
+        and sensor_info.factory_intrinsic_matrix is not None
+    ):
+      return sensor_info.factory_intrinsic_matrix
+    else:
+      return self.config.intrinsic_matrix
+
+  def distortion_params(
+      self, sensor_name: Optional[str] = None
+  ) -> Optional[np.ndarray]:
+    """Get the camera distortion params or that of a specific sensor (for multisensor cameras), falling back to factory settings if distortion params are missing from the sensor config.
+
+    Args:
+      sensor_name: The desired sensor name, or None for the camera distortion
+        params.
+
+    Returns:
+      The distortion params (k1, k2, p1, p2, k3, [k4, k5, k6]) or None if it
+      couldn't be found.
+    """
+    if sensor_name is None:
+      return self.config.distortion_params
+
+    if sensor_name not in self.factory_sensor_info:
+      return None
+    sensor_info = self.factory_sensor_info[sensor_name]
+    sensor_id = sensor_info.sensor_id
+
+    sensor_config = (
+        self.config.sensor_configs[sensor_id]
+        if sensor_id in self.config.sensor_configs
+        else None
+    )
+
+    if (
+        sensor_config is not None
+        and sensor_config.distortion_params is not None
+    ):
+      return sensor_config.distortion_params
+    elif (
+        sensor_info is not None
+        and sensor_info.factory_distortion_params is not None
+    ):
+      return sensor_info.factory_distortion_params
+    else:
+      return self.config.distortion_params
+
+  @property
+  def world_object(self) -> object_world_resources.WorldObject:
+    """Camera world object."""
+    return self._world_object
+
+  @property
+  def world_t_camera(self) -> pose3.Pose3:
+    """Camera world pose."""
+    return self._world_client.get_transform(
+        node_a=self._world_client.root,
+        node_b=self._world_object,
+    )
+
+  def camera_t_sensor(self, sensor_name: str) -> Optional[pose3.Pose3]:
+    """Get the sensor camera_t_sensor pose, falling back to factory settings if pose is missing from the sensor config.
+
+    Args:
+      sensor_name: The desired sensor's name.
+
+    Returns:
+      The pose3.Pose3 of the sensor relative to the pose of the camera itself or
+      None if it couldn't be found.
+    """
+    if sensor_name not in self.factory_sensor_info:
+      return None
+    sensor_info = self.factory_sensor_info[sensor_name]
+    sensor_id = sensor_info.sensor_id
+
+    sensor_config = (
+        self.config.sensor_configs[sensor_id]
+        if sensor_id in self.config.sensor_configs
+        else None
+    )
+
+    if sensor_config is not None and sensor_config.camera_t_sensor is not None:
+      return sensor_config.camera_t_sensor
+    elif sensor_info is not None and sensor_info.camera_t_sensor is not None:
+      return sensor_info.camera_t_sensor
+    else:
+      return None
+
+  def world_t_sensor(self, sensor_name: str) -> Optional[pose3.Pose3]:
+    """Get the sensor world_t_sensor pose, falling back to factory settings for camera_t_sensor if pose is missing from the sensor config.
+
+    Args:
+      sensor_name: The desired sensor's name.
+
+    Returns:
+      The pose3.Pose3 of the sensor relative to the pose of the world or None if
+      it couldn't be found.
+    """
+    camera_t_sensor = self.camera_t_sensor(sensor_name)
+    if camera_t_sensor is None:
+      return None
+    return self.world_t_camera.multiply(camera_t_sensor)
+
+  def update_world_t_camera(self, world_t_camera: pose3.Pose3) -> None:
+    """Update camera world pose relative to world root.
+
+    Args:
+      world_t_camera: The new world_t_camera pose.
+    """
+    self._world_client.update_transform(
+        node_a=self._world_client.root,
+        node_b=self._world_object,
+        a_t_b=world_t_camera,
+        node_to_update=self._world_object,
+    )
+
+  def update_camera_t_other(
+      self,
+      other: object_world_resources.TransformNode,
+      camera_t_other: pose3.Pose3,
+  ) -> None:
+    """Update camera world pose relative to another object.
+
+    Args:
+      other: The other object.
+      camera_t_other: The relative transform.
+    """
+    self._world_client.update_transform(
+        node_a=self._world_object,
+        node_b=other,
+        a_t_b=camera_t_other,
+        node_to_update=self._world_object,
+    )
+
+  def update_other_t_camera(
+      self,
+      other: object_world_resources.TransformNode,
+      other_t_camera: pose3.Pose3,
+  ) -> None:
+    """Update camera world pose relative to another object.
+
+    Args:
+      other: The other object.
+      other_t_camera: The relative transform.
+    """
+    self._world_client.update_transform(
+        node_a=other,
+        node_b=self._world_object,
+        a_t_b=other_t_camera,
+        node_to_update=self._world_object,
+    )
+
   def capture(
       self,
       timeout: Optional[datetime.timedelta] = None,
@@ -438,215 +650,3 @@ class Camera:
     except grpc.RpcError as e:
       logging.warning("Could not clear camera params.")
       raise e
-
-  @property
-  def world_object(self) -> object_world_resources.WorldObject:
-    """Camera world object."""
-    return self._world_object
-
-  @property
-  def world_t_camera(self) -> pose3.Pose3:
-    """Camera world pose."""
-    return self._world_client.get_transform(
-        node_a=self._world_client.root,
-        node_b=self._world_object,
-    )
-
-  @property
-  def identifier(self) -> Optional[str]:
-    """Camera identifier."""
-    return self.config.identifier
-
-  @property
-  def dimensions(self) -> Optional[Tuple[int, int]]:
-    """Camera intrinsic dimensions."""
-    return self.config.dimensions
-
-  @property
-  def sensor_names(self) -> List[str]:
-    """List of sensor names."""
-    return list(self.factory_sensor_info.keys())
-
-  @property
-  def sensor_ids(self) -> List[int]:
-    """List of sensor ids."""
-    return [
-        sensor_info.sensor_id
-        for _, sensor_info in self.factory_sensor_info.items()
-    ]
-
-  @property
-  def sensor_dimensions(self) -> Mapping[str, Tuple[int, int]]:
-    """Mapping of sensor name to the sensor's intrinsic dimensions."""
-    return {
-        sensor_name: sensor_info.dimensions
-        for sensor_name, sensor_info in self.factory_sensor_info.items()
-    }
-
-  def update_world_t_camera(self, world_t_camera: pose3.Pose3) -> None:
-    """Update camera world pose relative to world root.
-
-    Args:
-      world_t_camera: The new world_t_camera pose.
-    """
-    self._world_client.update_transform(
-        node_a=self._world_client.root,
-        node_b=self._world_object,
-        a_t_b=world_t_camera,
-        node_to_update=self._world_object,
-    )
-
-  def update_camera_t_other(
-      self,
-      other: object_world_resources.TransformNode,
-      camera_t_other: pose3.Pose3,
-  ) -> None:
-    """Update camera world pose relative to another object.
-
-    Args:
-      other: The other object.
-      camera_t_other: The relative transform.
-    """
-    self._world_client.update_transform(
-        node_a=self._world_object,
-        node_b=other,
-        a_t_b=camera_t_other,
-        node_to_update=self._world_object,
-    )
-
-  def update_other_t_camera(
-      self,
-      other: object_world_resources.TransformNode,
-      other_t_camera: pose3.Pose3,
-  ) -> None:
-    """Update camera world pose relative to another object.
-
-    Args:
-      other: The other object.
-      other_t_camera: The relative transform.
-    """
-    self._world_client.update_transform(
-        node_a=other,
-        node_b=self._world_object,
-        a_t_b=other_t_camera,
-        node_to_update=self._world_object,
-    )
-
-  def camera_t_sensor(self, sensor_name: str) -> Optional[pose3.Pose3]:
-    """Get the sensor camera_t_sensor pose, falling back to factory settings if pose is missing from the sensor config.
-
-    Args:
-      sensor_name: The desired sensor's name.
-
-    Returns:
-      The pose3.Pose3 of the sensor relative to the pose of the camera itself or
-      None if it couldn't be found.
-    """
-    if sensor_name not in self.factory_sensor_info:
-      return None
-    sensor_info = self.factory_sensor_info[sensor_name]
-    sensor_id = sensor_info.sensor_id
-
-    sensor_config = (
-        self.config.sensor_configs[sensor_id]
-        if sensor_id in self.config.sensor_configs
-        else None
-    )
-
-    if sensor_config is not None and sensor_config.camera_t_sensor is not None:
-      return sensor_config.camera_t_sensor
-    elif sensor_info is not None and sensor_info.camera_t_sensor is not None:
-      return sensor_info.camera_t_sensor
-    else:
-      return None
-
-  def world_t_sensor(self, sensor_name: str) -> Optional[pose3.Pose3]:
-    """Get the sensor world_t_sensor pose, falling back to factory settings for camera_t_sensor if pose is missing from the sensor config.
-
-    Args:
-      sensor_name: The desired sensor's name.
-
-    Returns:
-      The pose3.Pose3 of the sensor relative to the pose of the world or None if
-      it couldn't be found.
-    """
-    camera_t_sensor = self.camera_t_sensor(sensor_name)
-    if camera_t_sensor is None:
-      return None
-    return self.world_t_camera.multiply(camera_t_sensor)
-
-  def intrinsic_matrix(
-      self, sensor_name: Optional[str] = None
-  ) -> Optional[np.ndarray]:
-    """Get the camera intrinsic matrix or that of a specific sensor (for multisensor cameras), falling back to factory settings or the camera intrinsic matrix if intrinsic params are missing from the requested sensor config.
-
-    Args:
-      sensor_name: The desired sensor name, or None for the camera intrinsic
-        matrix.
-
-    Returns:
-      The sensor's intrinsic matrix or None if it couldn't be found.
-    """
-    if sensor_name is None:
-      return self.config.intrinsic_matrix
-
-    if sensor_name not in self.factory_sensor_info:
-      return None
-    sensor_info = self.factory_sensor_info[sensor_name]
-    sensor_id = sensor_info.sensor_id
-
-    sensor_config = (
-        self.config.sensor_configs[sensor_id]
-        if sensor_id in self.config.sensor_configs
-        else None
-    )
-
-    if sensor_config is not None and sensor_config.intrinsic_matrix is not None:
-      return sensor_config.intrinsic_matrix
-    elif (
-        sensor_info is not None
-        and sensor_info.factory_intrinsic_matrix is not None
-    ):
-      return sensor_info.factory_intrinsic_matrix
-    else:
-      return self.config.intrinsic_matrix
-
-  def distortion_params(
-      self, sensor_name: Optional[str] = None
-  ) -> Optional[np.ndarray]:
-    """Get the camera distortion params or that of a specific sensor (for multisensor cameras), falling back to factory settings if distortion params are missing from the sensor config.
-
-    Args:
-      sensor_name: The desired sensor name, or None for the camera distortion
-        params.
-
-    Returns:
-      The distortion params (k1, k2, p1, p2, k3, [k4, k5, k6]) or None if it
-      couldn't be found.
-    """
-    if sensor_name is None:
-      return self.config.distortion_params
-
-    if sensor_name not in self.factory_sensor_info:
-      return None
-    sensor_info = self.factory_sensor_info[sensor_name]
-    sensor_id = sensor_info.sensor_id
-
-    sensor_config = (
-        self.config.sensor_configs[sensor_id]
-        if sensor_id in self.config.sensor_configs
-        else None
-    )
-
-    if (
-        sensor_config is not None
-        and sensor_config.distortion_params is not None
-    ):
-      return sensor_config.distortion_params
-    elif (
-        sensor_info is not None
-        and sensor_info.factory_distortion_params is not None
-    ):
-      return sensor_info.factory_distortion_params
-    else:
-      return self.config.distortion_params
