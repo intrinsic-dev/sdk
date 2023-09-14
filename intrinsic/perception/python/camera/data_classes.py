@@ -13,6 +13,7 @@ from intrinsic.math.python import proto_conversion as math_proto_conversion
 from intrinsic.perception.proto import camera_config_pb2
 from intrinsic.perception.proto import camera_params_pb2
 from intrinsic.perception.proto import capture_result_pb2
+from intrinsic.perception.proto import image_buffer_pb2
 from intrinsic.perception.proto import sensor_config_pb2
 from intrinsic.perception.proto import sensor_image_pb2
 from intrinsic.perception.python.camera import _camera_utils
@@ -245,9 +246,15 @@ class SensorImage:
     self._world_t_camera = world_t_camera
 
     try:
-      buffer = _camera_utils.deserialize_image_buffer(
-          self._proto.buffer, np.uint8
-      )
+      data_type = self._proto.buffer.type
+      if data_type == image_buffer_pb2.DataType.TYPE_8U:
+        dtype = np.uint8
+      elif data_type == image_buffer_pb2.DataType.TYPE_32F:
+        dtype = np.float32
+      else:
+        raise ValueError(f"Data type not supported: {data_type}.")
+
+      buffer = _camera_utils.deserialize_image_buffer(self._proto.buffer, dtype)
       self._sensor_image_buffer = buffer
     except ValueError as e:
       raise ValueError("Could not deserialize sensor image buffer.") from e
@@ -335,11 +342,17 @@ class CaptureResult:
     self._sensor_names = sensor_names
     self._sensor_images = {}
 
-    for sensor_image in self._proto.sensor_images:
+    # insert items ordered by sensor_id, since dictionaries preserve insertion
+    # order
+    sensor_images_by_id = sorted(
+        self._proto.sensor_images,
+        key=lambda sensor_image: sensor_image.sensor_config.id,
+    )
+    for sensor_image in sensor_images_by_id:
       sensor_id = sensor_image.sensor_config.id
       sensor_name_or_id = (
           self._sensor_names[sensor_id]
-          if self._sensor_names is not None
+          if self._sensor_names is not None and sensor_id in self._sensor_names
           else str(sensor_id)
       )
       self._sensor_images[sensor_name_or_id] = SensorImage(

@@ -80,6 +80,7 @@ class Camera:
     @overrides(skl.Skill)
     def required_equipment(cls) -> Mapping[str,
     equipment_pb2.EquipmentSelector]:
+      # create a camera equipment slot for the skill
       return {
           camera_slot: cameras.make_camera_equipment_selector()
       }
@@ -91,15 +92,23 @@ class Camera:
     ) -> skill_service_pb2.ExecuteResult:
     ...
 
+    # access the camera equipment slot added in `required_equipment`
     camera = cameras.Camera.create(request, context, "camera_slot")
 
+    # get the camera's intrinsic matrix as a numpy array
     intrinsic_matrix = camera.intrinsic_matrix()
 
-    capture_result = camera.capture()
+    # capture from the camera's primary sensor
+    sensor_image = camera.capture()
+    # access image buffer as a numpy array
+    img = sensor_image.array
+
+    # or capture from all of the camera's currently configured sensors
+    capture_result = camera.multi_sensor_capture()
     for sensor_name, sensor_image in capture_result.sensor_images.items():
-      print(sensor_image.array.shape)
-    ...
+      pass  # access each sensor's image buffer using sensor_image.array
     ```
+    ...
   """
 
   _camera_equipment: equipment_pb2.EquipmentHandle
@@ -411,32 +420,104 @@ class Camera:
 
   def capture(
       self,
+      sensor_name: Optional[str] = None,
       timeout: Optional[datetime.timedelta] = None,
+  ) -> data_classes.SensorImage:
+    """Capture from the camera and return a SensorImage from the selected sensor or the primary sensor if None.
+
+    Args:
+      sensor_name: An optional sensor name to capture from, if it's available.
+        If it is None, the camera's primary sensor will be selected.
+      timeout: An optional timeout which is used for retrieving a sensor image
+        from the underlying driver implementation. If this timeout is
+        implemented by the underlying camera driver, it will not spend more than
+        the specified time when waiting for the new sensor image, after which it
+        will throw a deadline exceeded error. The timeout should be greater than
+        the combined exposure and processing time. Processing times can be
+        roughly estimated as a value between 10 - 50 ms. The timeout just serves
+        as an upper limit to prevent blocking calls within the camera driver. In
+        case of intermittent network errors users can try to increase the
+        timeout. The default timeout (if None) of 500 ms works well in common
+        setups.
+
+    Returns:
+      A SensorImage from the selected sensor.
+
+    Raises:
+      ValueError: The matching sensor could not be found or the capture result
+      could not be parsed.
+      grpc.RpcError: A gRPC error occurred.
+    """
+    try:
+      if sensor_name is not None:
+        if not self.factory_sensor_info:
+          raise ValueError(
+              "No factory sensor info found, cannot find sensor id for"
+              f" {sensor_name}"
+          )
+        if sensor_name not in self.factory_sensor_info:
+          raise ValueError(f"Invalid sensor name: {sensor_name}")
+        sensor_ids = [self.factory_sensor_info[sensor_name].sensor_id]
+      else:
+        sensor_ids = None
+
+      capture_result_proto = self._client.capture(
+          timeout=timeout, sensor_ids=sensor_ids
+      )
+      capture_result = data_classes.CaptureResult(
+          capture_result_proto, self._sensor_id_to_name, self.world_t_camera
+      )
+      first_sensor_name = capture_result.sensor_names[0]
+      return capture_result.sensor_images[first_sensor_name]
+    except grpc.RpcError as e:
+      logging.warning("Could not capture from camera.")
+      raise e
+
+  def multi_sensor_capture(
+      self,
       sensor_names: Optional[List[str]] = None,
+      timeout: Optional[datetime.timedelta] = None,
   ) -> data_classes.CaptureResult:
     """Capture from the camera and return a CaptureResult.
 
     Args:
-      timeout: An optional timeout for the capture operation. If it is None, the
-        camera will block until it gets a response.
       sensor_names: An optional list of sensor names that will be transmitted in
         the response, if data was collected for them. This acts as a mask to
         limit the number of transmitted `SensorImage`s. If it is None, all
         `SensorImage`s will be transferred.
+      timeout: An optional timeout which is used for retrieving sensor images
+        from the underlying driver implementation. If this timeout is
+        implemented by the underlying camera driver, it will not spend more than
+        the specified time when waiting for new sensor images, after which it
+        will throw a deadline exceeded error. The timeout should be greater than
+        the combined exposure and processing time. Processing times can be
+        roughly estimated as a value between 10 - 50 ms. The timeout just serves
+        as an upper limit to prevent blocking calls within the camera driver. In
+        case of intermittent network errors users can try to increase the
+        timeout. The default timeout (if None) of 500 ms works well in common
+        setups.
 
     Returns:
       A CaptureResult which contains the selected sensor images.
 
     Raises:
+      ValueError: The matching sensors could not be found or the capture result
+      could not be parsed.
       grpc.RpcError: A gRPC error occurred.
     """
     try:
-      if sensor_names is not None and self.factory_sensor_info:
-        sensor_ids = [
-            self.factory_sensor_info[sensor_name].sensor_id
-            for sensor_name in sensor_names
-            if sensor_name in self.factory_sensor_info
-        ]
+      if sensor_names is not None:
+        if not self.factory_sensor_info:
+          raise ValueError(
+              "No factory sensor info found, cannot find sensor ids for"
+              f" {sensor_names}"
+          )
+        sensor_ids: List[int] = []
+        for sensor_name in sensor_names:
+          if sensor_name not in self.factory_sensor_info:
+            raise ValueError(f"Invalid sensor name: {sensor_name}")
+          sensor_id = self.factory_sensor_info[sensor_name].sensor_id
+          sensor_ids.append(sensor_id)
       else:
         sensor_ids = None
 

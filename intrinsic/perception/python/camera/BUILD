@@ -34,6 +34,7 @@ py_library(
         "//intrinsic/perception/proto:camera_config_py_pb2",
         "//intrinsic/perception/proto:camera_params_py_pb2",
         "//intrinsic/perception/proto:capture_result_py_pb2",
+        "//intrinsic/perception/proto:image_buffer_py_pb2",
         "//intrinsic/perception/proto:sensor_config_py_pb2",
         "//intrinsic/perception/proto:sensor_image_py_pb2",
         "//intrinsic/perception/service/proto:camera_server_py_pb2",
