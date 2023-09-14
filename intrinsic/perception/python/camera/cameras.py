@@ -93,7 +93,7 @@ class Camera:
     ...
 
     # access the camera equipment slot added in `required_equipment`
-    camera = cameras.Camera.create(request, context, "camera_slot")
+    camera = cameras.Camera.create(context, "camera_slot")
 
     # get the camera's intrinsic matrix as a numpy array
     intrinsic_matrix = camera.intrinsic_matrix()
@@ -123,7 +123,9 @@ class Camera:
 
   @classmethod
   def create(
-      cls, context: skill_interface.ExecutionContext, slot: str
+      cls,
+      context: skill_interface.ExecutionContext,
+      slot: str,
   ) -> Camera:
     """Creates a Camera object from the skill's execution context.
 
@@ -156,8 +158,8 @@ class Camera:
       world_client: The current world client, for camera pose information.
 
     Raises:
-      RuntimeError: If the camera's config could not be parsed from the
-      equipment handle.
+      RuntimeError: The camera's config could not be parsed from the
+        equipment handle.
     """
     self._camera_equipment = camera_equipment
     self._world_client = world_client
@@ -213,7 +215,7 @@ class Camera:
 
   @property
   def dimensions(self) -> Optional[Tuple[int, int]]:
-    """Camera intrinsic dimensions."""
+    """Camera intrinsic dimensions (width, height)."""
     return self.config.dimensions
 
   @property
@@ -231,7 +233,7 @@ class Camera:
 
   @property
   def sensor_dimensions(self) -> Mapping[str, Tuple[int, int]]:
-    """Mapping of sensor name to the sensor's intrinsic dimensions."""
+    """Mapping of sensor name to the sensor's intrinsic dimensions (width, height)."""
     return {
         sensor_name: sensor_info.dimensions
         for sensor_name, sensor_info in self.factory_sensor_info.items()
@@ -284,7 +286,7 @@ class Camera:
 
     Returns:
       The distortion params (k1, k2, p1, p2, k3, [k4, k5, k6]) or None if it
-      couldn't be found.
+        couldn't be found.
     """
     if sensor_name is None:
       return self.config.distortion_params
@@ -334,7 +336,7 @@ class Camera:
 
     Returns:
       The pose3.Pose3 of the sensor relative to the pose of the camera itself or
-      None if it couldn't be found.
+        None if it couldn't be found.
     """
     if sensor_name not in self.factory_sensor_info:
       return None
@@ -362,7 +364,7 @@ class Camera:
 
     Returns:
       The pose3.Pose3 of the sensor relative to the pose of the world or None if
-      it couldn't be found.
+        it couldn't be found.
     """
     camera_t_sensor = self.camera_t_sensor(sensor_name)
     if camera_t_sensor is None:
@@ -445,7 +447,7 @@ class Camera:
 
     Raises:
       ValueError: The matching sensor could not be found or the capture result
-      could not be parsed.
+        could not be parsed.
       grpc.RpcError: A gRPC error occurred.
     """
     try:
@@ -502,7 +504,7 @@ class Camera:
 
     Raises:
       ValueError: The matching sensors could not be found or the capture result
-      could not be parsed.
+        could not be parsed.
       grpc.RpcError: A gRPC error occurred.
     """
     try:
@@ -551,9 +553,10 @@ class Camera:
 
     Returns:
       The setting properties, which can be used to validate that a particular
-      setting is supported.
+        setting is supported.
 
     Raises:
+      ValueError: Setting properties type could not be parsed.
       grpc.RpcError: A gRPC error occurred.
     """
     try:
@@ -596,7 +599,7 @@ class Camera:
       The current camera setting.
 
     Raises:
-      ValueError: if the setting value cannot be parsed.
+      ValueError: Setting type could not be parsed.
       grpc.RpcError: A gRPC error occurred.
     """
     try:
@@ -690,7 +693,7 @@ class Camera:
 
     Returns:
       The current camera parameters, including the configured resolution, camera
-      intrinsics, and optionally distortion parameters if calibrated.
+        intrinsics, and optionally distortion parameters if calibrated.
 
     Raises:
       grpc.RpcError: A gRPC error occurred.
