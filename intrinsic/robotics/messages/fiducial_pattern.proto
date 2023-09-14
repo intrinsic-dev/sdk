@@ -51,7 +51,7 @@ message AprilTagPatternConfig {
   enum TagFamily {
     UNSPECIFIED_TAG_FAMILY = 0;
     TAG16H5 = 1;
-    TAG25H7 = 2;
+    TAG25H7 = 2 [deprecated = true];
     TAG25H9 = 3;
     TAG36H10 = 4;
     TAG36H11 = 5;
