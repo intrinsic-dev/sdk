@@ -6,20 +6,62 @@ syntax = "proto3";
 
 package intrinsic_proto.data_logger;
 
-// A set of topic subscriptions and whether to add or remove them from the
-// allowlist
-message SubscriptionRequest {
-  // A description of the topic
-  repeated Subscription subscription = 1;
-  // Whether to attempt to add or remove this topic from the allowlist
-  bool allow = 2;
-}
-
 // Describes and configures a topic subscription
 message Subscription {
   // The topic name/zenoh key expression
   string topic_expr = 1;
 }
 
+// A set of topic subscriptions and whether to add or remove them from the
+// allowlist
+message SetSubscriptionRequest {
+  // A description of the topics
+  repeated Subscription subscription = 1;
+  // Whether to attempt to add or remove these topics from an allowlist
+  bool allow = 2;
+}
+
+message SetSubscriptionResponse {}
+
+message GetSubscriptionRequest {}
+
+// A set of topic subscriptions
+message GetSubscriptionResponse {
+  // A description of the topics
+  repeated Subscription subscription = 1;
+}
+
+// A single topic subscription to check
+message CheckSubscriptionRequest {
+  Subscription subscription = 1;
+}
+
+// Describes whether a topic is subscribed, and how
+message CheckSubscriptionResponse {
+  // The state of subscription to a topic
+  enum State {
+    // Default unset value
+    UNSPECIFIED = 0;
+    // Topic is directly subscribed
+    ALLOWED = 1;
+    // Topic is subscribed through a key expression
+    ALLOWED_BY_KEY_EXPRESSION = 2;
+    // Topic is not subscribed
+    NOT_ALLOWED = 3;
+  }
+  // The matching topic subscription(s) if present
+  repeated Subscription subscription = 4;
+}
+
 // Service to listen to pubsub traffic, and log allowed data to the DataLogger.
-service PubSubListener {}
+service PubSubListener {
+  // Add or remove a topic on the service's allowlist
+  rpc SetTopicSubscriptions(SetSubscriptionRequest)
+      returns (SetSubscriptionResponse) {}
+  // Retrieve the service's current allowlist
+  rpc GetTopicSubscriptions(GetSubscriptionRequest)
+      returns (GetSubscriptionResponse) {}
+  // Check whether a particular topic is subscribed
+  rpc CheckTopicSubscription(CheckSubscriptionRequest)
+      returns (CheckSubscriptionResponse) {}
+}
