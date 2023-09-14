@@ -67,6 +67,10 @@ var claimCmd = &cobra.Command{
 			Role:     deviceRole,
 			Cluster:  clusterName,
 		}
+		if testID := os.Getenv("INCTL_CREATED_BY_TEST"); testID != "" {
+			// This is an automated test.
+			data.CreatedByTest = testID
+		}
 		body, err := json.Marshal(data)
 		if err != nil {
 			return fmt.Errorf("failed to marshal config: %w", err)
