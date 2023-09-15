@@ -4,9 +4,15 @@
 
 """Helper module to construct a Stop action."""
 
+import dataclasses
 from intrinsic.icon.python import actions
 
 ACTION_TYPE_NAME = "xfa.stop"
+
+
+@dataclasses.dataclass(frozen=True)
+class StateVariables:
+  IS_SETTLED = "is_settled"
 
 
 def CreateStopAction(

@@ -234,7 +234,7 @@ py_library(
 py_library(
     name = "stop_utils",
     srcs = ["stop_utils.py"],
-    visibility = ["//intrinsic/icon/python:__pkg__"],
+    visibility = ["//intrinsic:__subpackages__"],
     deps = ["//intrinsic/icon/python:icon"],
 )
 
