@@ -255,8 +255,10 @@ class SkillProjectorServiceImpl
       const internal::SkillRuntimeData& runtime_data)
       ABSL_LOCKS_EXCLUDED(message_mutex_);
 
-  absl::StatusOr<SkillProjectInterface::ProjectParams>
-  ConstructParamsFromRequest(
+  absl::StatusOr<GetFootprintRequest> ProtoToGetFootprintRequest(
+      const intrinsic_proto::skills::ProjectRequest& request);
+
+  absl::StatusOr<PredictRequest> ProtoToPredictRequest(
       const intrinsic_proto::skills::ProjectRequest& request);
 
   std::shared_ptr<ObjectWorldService::StubInterface> object_world_service_;

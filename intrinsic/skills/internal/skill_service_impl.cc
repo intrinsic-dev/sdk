@@ -466,29 +466,29 @@ SkillProjectorServiceImpl::SkillProjectorServiceImpl(
       skill_registry_client_(skill_registry_client),
       message_factory_(google::protobuf::MessageFactory::generated_factory()) {}
 
-absl::StatusOr<SkillProjectInterface::ProjectParams>
-SkillProjectorServiceImpl::ConstructParamsFromRequest(
+absl::StatusOr<GetFootprintRequest>
+SkillProjectorServiceImpl::ProtoToGetFootprintRequest(
     const intrinsic_proto::skills::ProjectRequest& request) {
   INTRINSIC_ASSIGN_OR_RETURN(
       std::string id, RemoveVersionFrom(request.instance().id_version()));
-
   INTRINSIC_ASSIGN_OR_RETURN(std::string skill_name, NameFrom(id));
-
   INTRINSIC_ASSIGN_OR_RETURN(internal::SkillRuntimeData runtime_data,
                              skill_repository_.GetSkillRuntimeData(skill_name));
 
+  return GetFootprintRequest(request.internal_data(), request.parameters(),
+                             runtime_data.GetParameterData().GetDefault());
+}
+
+absl::StatusOr<PredictRequest> SkillProjectorServiceImpl::ProtoToPredictRequest(
+    const intrinsic_proto::skills::ProjectRequest& request) {
   INTRINSIC_ASSIGN_OR_RETURN(
-      const google::protobuf::Message* const message_prototype,
-      GetPrototypeMessage(runtime_data));
+      std::string id, RemoveVersionFrom(request.instance().id_version()));
+  INTRINSIC_ASSIGN_OR_RETURN(std::string skill_name, NameFrom(id));
+  INTRINSIC_ASSIGN_OR_RETURN(internal::SkillRuntimeData runtime_data,
+                             skill_repository_.GetSkillRuntimeData(skill_name));
 
-  intrinsic_proto::skills::ProjectRequest request_with_defaults_set = request;
-  INTRINSIC_RETURN_IF_ERROR(SetDefaultsInRequest(
-      *message_prototype, runtime_data, request_with_defaults_set));
-
-  SkillProjectInterface::ProjectParams result;
-  result.skill_parameters = request_with_defaults_set.parameters();
-  result.internal_data = request_with_defaults_set.internal_data();
-  return result;
+  return PredictRequest(request.internal_data(), request.parameters(),
+                        runtime_data.GetParameterData().GetDefault());
 }
 
 grpc::Status SkillProjectorServiceImpl::GetFootprint(
@@ -511,8 +511,8 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
                              skill_repository_.GetSkillProject(skill_name));
 
   INTRINSIC_ASSIGN_OR_RETURN(
-      SkillProjectInterface::ProjectParams params,
-      ConstructParamsFromRequest(request->internal_request()));
+      GetFootprintRequest get_footprint_request,
+      ProtoToGetFootprintRequest(request->internal_request()));
 
   INTRINSIC_ASSIGN_OR_RETURN(
       EquipmentPack equipment,
@@ -522,7 +522,8 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
       request->internal_request().world_id(),
       request->internal_request().context(), object_world_service_,
       motion_planner_service_, std::move(equipment), skill_registry_client_);
-  auto skill_result = skill->GetFootprint(params, predict_context);
+  auto skill_result =
+      skill->GetFootprint(get_footprint_request, predict_context);
 
   if (!skill_result.ok()) {
     intrinsic_proto::skills::SkillErrorInfo error_info;
@@ -566,8 +567,8 @@ grpc::Status SkillProjectorServiceImpl::Predict(
   LOG(INFO) << "Calling predict for skill[" << skill_name << "]";
 
   INTRINSIC_ASSIGN_OR_RETURN(
-      SkillProjectInterface::ProjectParams params,
-      ConstructParamsFromRequest(request->internal_request()));
+      PredictRequest predict_request,
+      ProtoToPredictRequest(request->internal_request()));
 
   INTRINSIC_ASSIGN_OR_RETURN(
       EquipmentPack equipment,
@@ -580,12 +581,12 @@ grpc::Status SkillProjectorServiceImpl::Predict(
   INTRINSIC_ASSIGN_OR_RETURN(std::unique_ptr<SkillProjectInterface> skill,
                              skill_repository_.GetSkillProject(skill_name));
 
-  auto skill_result = skill->Predict(params, predict_context);
+  auto skill_result = skill->Predict(predict_request, predict_context);
 
   if (skill_result.status().code() == absl::StatusCode::kUnimplemented) {
     LOG(WARNING) << "No user supplied implementation of Predict() for skill '"
                  << skill_name << "'. Returning empty prediction.";
-    result->set_internal_data(params.internal_data);
+    result->set_internal_data(predict_request.internal_data());
     result->add_outcomes()->set_probability(1.0);
   } else if (!skill_result.ok()) {
     intrinsic_proto::skills::SkillErrorInfo error_info;

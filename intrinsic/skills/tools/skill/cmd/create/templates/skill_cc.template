@@ -32,6 +32,7 @@ using ::intrinsic_proto::skills::ExecuteResult;
 using ::intrinsic_proto::skills::PredictResult;
 using ::intrinsic::skills::SkillInterface;
 using ::intrinsic::skills::SkillProjectInterface;
+using ::intrinsic::skills::PredictRequest;
 using ::intrinsic::skills::PredictContext;
 using ::intrinsic::skills::ExecuteContext;
 using ::intrinsic::skills::UnpackParams;
@@ -45,7 +46,7 @@ std::unique_ptr<SkillInterface> {{.SkillNameUpperCamelCase}}::CreateSkill() {
 }
 
 absl::StatusOr<PredictResult> {{.SkillNameUpperCamelCase}}::Predict(
-    const SkillProjectInterface::ProjectParams& params, 
+    const PredictRequest& request, 
     PredictContext& context) const {
 
   LOG(WARNING) 

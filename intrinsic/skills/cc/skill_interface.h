@@ -5,8 +5,8 @@
 #ifndef INTRINSIC_SKILLS_CC_SKILL_INTERFACE_H_
 #define INTRINSIC_SKILLS_CC_SKILL_INTERFACE_H_
 
-#include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -16,12 +16,17 @@
 #include "absl/log/check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "google/protobuf/any.pb.h"
+#include "google/protobuf/message.h"
+#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
 #include "intrinsic/skills/cc/client_common.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
+#include "intrinsic/skills/internal/default_parameters.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/footprint.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
@@ -117,6 +122,128 @@ class SkillSignatureInterface {
   virtual ~SkillSignatureInterface() = default;
 };
 
+// A request for a call to SkillInterface::GetFootprint.
+class GetFootprintRequest {
+ public:
+  // As a convenience, `param_defaults` can specify default parameter values to
+  // merge into any unset fields of `params`.
+  GetFootprintRequest(std::string internal_data,
+                      const ::google::protobuf::Message& params,
+                      ::google::protobuf::Message* param_defaults = nullptr)
+      : internal_data_(std::move(internal_data)) {
+    params_any_.PackFrom(params);
+    if (param_defaults != nullptr) {
+      param_defaults_any_ = google::protobuf::Any();
+      param_defaults_any_->PackFrom(*param_defaults);
+    }
+  }
+
+  // Defers conversion of input Any params to target proto type until accessed
+  // by the user in params().
+  //
+  // This constructor enables conversion from Any to the target type without
+  // needing a message pool/factory up front, since params() is templated on the
+  // target type.
+  GetFootprintRequest(std::string internal_data, google::protobuf::Any params,
+                      std::optional<::google::protobuf::Any> param_defaults)
+      : internal_data_(std::move(internal_data)),
+        params_any_(std::move(params)),
+        param_defaults_any_(std::move(param_defaults)) {}
+
+  // Skill-specific data that can be communicated from previous calls to
+  // `GetFootprint` or `Predict`. Can be useful for optimizing skill execution
+  // by pre-computing plan-related information.
+  absl::string_view internal_data() const { return internal_data_; }
+
+  // The skill parameters proto.
+  template <class TParams>
+  absl::StatusOr<TParams> params() const {
+    TParams params;
+    if (!params_any_.UnpackTo(&params)) {
+      return absl::InternalError(absl::StrFormat(
+          "Failed to unpack params to %s.", TParams::descriptor()->name()));
+    }
+
+    TParams defaults;
+    if (param_defaults_any_.has_value() &&
+        !param_defaults_any_->UnpackTo(&defaults)) {
+      return absl::InternalError(absl::StrFormat(
+          "Failed to unpack defaults to %s.", TParams::descriptor()->name()));
+    }
+
+    INTRINSIC_RETURN_IF_ERROR(MergeUnset(defaults, params));
+
+    return params;
+  }
+
+ private:
+  std::string internal_data_;
+
+  ::google::protobuf::Any params_any_;
+  std::optional<::google::protobuf::Any> param_defaults_any_;
+};
+
+// A request for a call to SkillInterface::Predict.
+class PredictRequest {
+ public:
+  // As a convenience, `param_defaults` can specify default parameter values to
+  // merge into any unset fields of `params`.
+  PredictRequest(std::string internal_data,
+                 const ::google::protobuf::Message& params,
+                 ::google::protobuf::Message* param_defaults = nullptr)
+      : internal_data_(std::move(internal_data)) {
+    params_any_.PackFrom(params);
+    if (param_defaults != nullptr) {
+      param_defaults_any_ = google::protobuf::Any();
+      param_defaults_any_->PackFrom(*param_defaults);
+    }
+  }
+
+  // Defers conversion of input Any params to target proto type until accessed
+  // by the user in params().
+  //
+  // This constructor enables conversion from Any to the target type without
+  // needing a message pool/factory up front, since params() is templated on the
+  // target type.
+  PredictRequest(std::string internal_data, google::protobuf::Any params,
+                 std::optional<::google::protobuf::Any> param_defaults)
+      : internal_data_(std::move(internal_data)),
+        params_any_(std::move(params)),
+        param_defaults_any_(std::move(param_defaults)) {}
+
+  // Skill-specific data that can be communicated from previous calls to
+  // `GetFootprint` or `Predict`. Can be useful for optimizing skill execution
+  // by pre-computing plan-related information.
+  absl::string_view internal_data() const { return internal_data_; }
+
+  // The skill parameters proto.
+  template <class TParams>
+  absl::StatusOr<TParams> params() const {
+    TParams params;
+    if (!params_any_.UnpackTo(&params)) {
+      return absl::InternalError(absl::StrFormat(
+          "Failed to unpack params to %s.", TParams::descriptor()->name()));
+    }
+
+    TParams defaults;
+    if (param_defaults_any_.has_value() &&
+        !param_defaults_any_->UnpackTo(&defaults)) {
+      return absl::InternalError(absl::StrFormat(
+          "Failed to unpack defaults to %s.", TParams::descriptor()->name()));
+    }
+
+    INTRINSIC_RETURN_IF_ERROR(MergeUnset(defaults, params));
+
+    return params;
+  }
+
+ private:
+  std::string internal_data_;
+
+  ::google::protobuf::Any params_any_;
+  std::optional<::google::protobuf::Any> param_defaults_any_;
+};
+
 // Contains additional metadata and functionality for a call to
 // SkillInterface::Predict that is provided by the skill service to a skill.
 // Allows, e.g., to read the world.
@@ -160,28 +287,20 @@ class SkillProjectInterface {
   using ProjectResult = intrinsic_proto::skills::ProjectResult;
   using PredictResult = intrinsic_proto::skills::PredictResult;
 
-  struct ProjectParams {
-    // The skill parameters for computing potential behavior
-    google::protobuf::Any skill_parameters;
-
-    // Any useful internal data from previous calls to the SkillProjectInterface
-    std::string internal_data;
-  };
-
   // Computes the skill's footprint. `world` contains the world under which the
   // skill is expected to operate, and this function should not modify it.
   virtual absl::StatusOr<ProjectResult> GetFootprint(
-      const ProjectParams& params, PredictContext& context) const {
+      const GetFootprintRequest& request, PredictContext& context) const {
     ProjectResult result;
-    result.set_internal_data(params.internal_data.data(),
-                             params.internal_data.size());
+    auto internal_data = request.internal_data();
+    result.set_internal_data(internal_data.data(), internal_data.size());
     result.mutable_footprint()->set_lock_the_universe(true);
     return std::move(result);
   }
 
   // Generates a distribution of possible outcomes from running this skill with
   // the provided parameters.
-  virtual absl::StatusOr<PredictResult> Predict(const ProjectParams& params,
+  virtual absl::StatusOr<PredictResult> Predict(const PredictRequest& request,
                                                 PredictContext& context) const {
     return absl::UnimplementedError("No user-defined call for Predict()");
   }

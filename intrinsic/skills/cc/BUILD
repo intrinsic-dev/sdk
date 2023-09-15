@@ -34,8 +34,10 @@ cc_library(
     deps = [
         ":client_common",
         ":equipment_pack",
+        "//intrinsic/icon/release:status_helpers",
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/motion_planning:motion_planner_client",
+        "//intrinsic/skills/internal:default_parameters",
         "//intrinsic/skills/proto:equipment_cc_proto",
         "//intrinsic/skills/proto:footprint_cc_proto",
         "//intrinsic/skills/proto:skill_service_cc_proto",
@@ -46,7 +48,9 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/time",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 
