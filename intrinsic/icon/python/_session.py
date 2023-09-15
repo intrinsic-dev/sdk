@@ -478,7 +478,7 @@ class Session:
     """Adds a reaction to the session.
 
     This method provides the full Reaction API. For simple use cases
-    `add_transition`, `add_simple_reaction` and `add_freestanding_reactions` can
+    `add_transition`, `add_reaction` and `add_freestanding_reactions` can
     be used.
 
     Args:
@@ -544,7 +544,7 @@ class Session:
     self.add_reactions(from_action, [_reactions.Reaction(condition, responses)])
     return signal
 
-  def add_simple_reaction(
+  def add_reaction(
       self,
       action: _actions.Action,
       condition: _reactions.Condition,
@@ -682,9 +682,7 @@ class Session:
       True unless a given timeout expired, in which case it is False.
     """
     if wait_for is None:
-      wait_for = self.add_simple_reaction(
-          action, _reactions.Condition.is_done()
-      )
+      wait_for = self.add_reaction(action, _reactions.Condition.is_done())
 
     self.start_action(action.id, stop_active_actions=True)
     return wait_for.wait(timeout_s)

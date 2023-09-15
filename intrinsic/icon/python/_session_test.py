@@ -452,14 +452,14 @@ class SessionTest(absltest.TestCase):
       self.assertSequenceEqual(session._watcher_signal_flags[1], [flag])
     self.assertSequenceEqual(session._watcher_callbacks[1], [callback])
 
-  def test_add_simple_reaction(self):
+  def test_add_reaction(self):
     session = self._prepare_session_with_response(grpc.StatusCode.OK)
     callback = mock.Mock()
 
     with mock.patch.object(
         session, '_request_stream', autospec=True
     ) as mock_request_stream:
-      flag = session.add_simple_reaction(
+      flag = session.add_reaction(
           _actions.Action(3, 'bar', 'foo', None, []),
           _reactions.Condition.is_true('some_condition_var'),
           callback,
