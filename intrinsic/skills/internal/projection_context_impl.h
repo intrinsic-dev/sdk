@@ -25,8 +25,8 @@
 namespace intrinsic {
 namespace skills {
 
-// Implementation of ProjectionContext as used by the skill service.
-class ProjectionContextImpl : public ProjectionContext {
+// Implementation of PredictContext as used by the skill service.
+class ProjectionContextImpl : public PredictContext {
   using ObjectWorldService = ::intrinsic_proto::world::ObjectWorldService;
   using MotionPlannerService =
       ::intrinsic_proto::motion_planning::MotionPlannerService;

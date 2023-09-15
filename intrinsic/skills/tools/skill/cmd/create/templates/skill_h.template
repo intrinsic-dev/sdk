@@ -39,7 +39,7 @@ class {{.SkillNameUpperCamelCase}} : public intrinsic::skills::SkillInterface {
   //       by the skill author. 
   absl::StatusOr<PredictResult> Predict(
       const ProjectParams& params, 
-      intrinsic::skills::ProjectionContext& context) const override;
+      intrinsic::skills::PredictContext& context) const override;
 
   // ---------------------------------------------------------------------------
   // Skill execution (see intrinsic::skills::SkillExecuteInterface)

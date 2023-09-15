@@ -117,15 +117,14 @@ class SkillSignatureInterface {
   virtual ~SkillSignatureInterface() = default;
 };
 
-// Contains additional metadata and functionality for a skill projection that is
-// provided by the skill service server to a skill. Allows, e.g., to read the
-// world.
-class ProjectionContext {
+// Contains additional metadata and functionality for a call to
+// SkillInterface::Predict that is provided by the skill service to a skill.
+// Allows, e.g., to read the world.
+class PredictContext {
  public:
-  virtual ~ProjectionContext() = default;
+  virtual ~PredictContext() = default;
 
-  // Returns the object-based view of the world associated with the skill
-  // projection so that the skill can read it.
+  // Returns the object-based view of the world associated with the skill.
   //
   // Note, it is impossible to unwrap a StatusOr<const T> into a const T,
   // because const variables are not movable. However, it is possible to unwrap
@@ -136,7 +135,7 @@ class ProjectionContext {
   //                    context.GetObjectWorld());
   virtual absl::StatusOr<const world::ObjectWorldClient> GetObjectWorld() = 0;
 
-  // Returns the world id of the world associated with the skill projection.
+  // Returns the world id of the world associated with the skill.
   virtual std::string GetWorldId() const = 0;
 
   // Returns the world object that represents the equipment in the world as
@@ -149,7 +148,7 @@ class ProjectionContext {
       absl::string_view equipment_name, absl::string_view frame_name) = 0;
 
   // Returns a motion planner based on the world associated with the skill
-  // projection (see GetObjectWorld()).
+  // (see GetObjectWorld()).
   virtual absl::StatusOr<motion_planning::MotionPlannerClient>
   GetMotionPlanner() = 0;
 };
@@ -172,7 +171,7 @@ class SkillProjectInterface {
   // Computes the skill's footprint. `world` contains the world under which the
   // skill is expected to operate, and this function should not modify it.
   virtual absl::StatusOr<ProjectResult> GetFootprint(
-      const ProjectParams& params, ProjectionContext& context) const {
+      const ProjectParams& params, PredictContext& context) const {
     ProjectResult result;
     result.set_internal_data(params.internal_data.data(),
                              params.internal_data.size());
@@ -182,8 +181,8 @@ class SkillProjectInterface {
 
   // Generates a distribution of possible outcomes from running this skill with
   // the provided parameters.
-  virtual absl::StatusOr<PredictResult> Predict(
-      const ProjectParams& params, ProjectionContext& context) const {
+  virtual absl::StatusOr<PredictResult> Predict(const ProjectParams& params,
+                                                PredictContext& context) const {
     return absl::UnimplementedError("No user-defined call for Predict()");
   }
 
