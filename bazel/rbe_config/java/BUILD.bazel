@@ -27,5 +27,5 @@ alias(
 local_java_runtime(
     name = "rbe_jdk",
     java_home = "/usr/lib/jvm/java-8-openjdk-amd64",
-    version = "1.8.0_265",
+    version = "1.8.0_275",
 )
