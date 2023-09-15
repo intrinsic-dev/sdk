@@ -38,7 +38,7 @@
 #include "intrinsic/skills/internal/equipment_utilities.h"
 #include "intrinsic/skills/internal/error_utils.h"
 #include "intrinsic/skills/internal/execute_context_impl.h"
-#include "intrinsic/skills/internal/projection_context_impl.h"
+#include "intrinsic/skills/internal/predict_context_impl.h"
 #include "intrinsic/skills/internal/skill_registry_client_interface.h"
 #include "intrinsic/skills/internal/skill_repository.h"
 #include "intrinsic/skills/proto/error.pb.h"
@@ -518,11 +518,11 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
       EquipmentPack equipment,
       EquipmentPack::GetEquipmentPack(request->internal_request()));
 
-  ProjectionContextImpl projection_context(
+  PredictContextImpl predict_context(
       request->internal_request().world_id(),
       request->internal_request().context(), object_world_service_,
       motion_planner_service_, std::move(equipment), skill_registry_client_);
-  auto skill_result = skill->GetFootprint(params, projection_context);
+  auto skill_result = skill->GetFootprint(params, predict_context);
 
   if (!skill_result.ok()) {
     intrinsic_proto::skills::SkillErrorInfo error_info;
@@ -573,14 +573,14 @@ grpc::Status SkillProjectorServiceImpl::Predict(
       EquipmentPack equipment,
       EquipmentPack::GetEquipmentPack(request->internal_request()));
 
-  ProjectionContextImpl projection_context(
+  PredictContextImpl predict_context(
       request->internal_request().world_id(),
       request->internal_request().context(), object_world_service_,
       motion_planner_service_, std::move(equipment), skill_registry_client_);
   INTRINSIC_ASSIGN_OR_RETURN(std::unique_ptr<SkillProjectInterface> skill,
                              skill_repository_.GetSkillProject(skill_name));
 
-  auto skill_result = skill->Predict(params, projection_context);
+  auto skill_result = skill->Predict(params, predict_context);
 
   if (skill_result.status().code() == absl::StatusCode::kUnimplemented) {
     LOG(WARNING) << "No user supplied implementation of Predict() for skill '"

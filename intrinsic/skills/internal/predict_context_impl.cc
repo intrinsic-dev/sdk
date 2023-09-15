@@ -2,7 +2,7 @@
 // Intrinsic Proprietary and Confidential
 // Provided subject to written agreement between the parties.
 
-#include "intrinsic/skills/internal/projection_context_impl.h"
+#include "intrinsic/skills/internal/predict_context_impl.h"
 
 #include <memory>
 #include <optional>
@@ -22,6 +22,7 @@
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
+#include "intrinsic/world/objects/frame.h"
 #include "intrinsic/world/objects/object_world_client.h"
 #include "intrinsic/world/proto/object_world_service.grpc.pb.h"
 
@@ -30,7 +31,7 @@ namespace skills {
 
 using ::intrinsic::world::ObjectWorldClient;
 
-ProjectionContextImpl::ProjectionContextImpl(
+PredictContextImpl::PredictContextImpl(
     std::string world_id,
     const intrinsic_proto::data_logger::Context& log_context,
     std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
@@ -44,13 +45,12 @@ ProjectionContextImpl::ProjectionContextImpl(
       skill_registry_client_(skill_registry_client),
       log_context_(log_context) {}
 
-absl::StatusOr<const ObjectWorldClient>
-ProjectionContextImpl::GetObjectWorld() {
+absl::StatusOr<const ObjectWorldClient> PredictContextImpl::GetObjectWorld() {
   return ObjectWorldClient(world_id_, object_world_service_);
 }
 
 absl::StatusOr<const world::KinematicObject>
-ProjectionContextImpl::GetKinematicObjectForEquipment(
+PredictContextImpl::GetKinematicObjectForEquipment(
     absl::string_view equipment_name) {
   INTRINSIC_ASSIGN_OR_RETURN(const ObjectWorldClient& world, GetObjectWorld());
   INTRINSIC_ASSIGN_OR_RETURN(
@@ -60,7 +60,7 @@ ProjectionContextImpl::GetKinematicObjectForEquipment(
 }
 
 absl::StatusOr<const world::WorldObject>
-ProjectionContextImpl::GetObjectForEquipment(absl::string_view equipment_name) {
+PredictContextImpl::GetObjectForEquipment(absl::string_view equipment_name) {
   INTRINSIC_ASSIGN_OR_RETURN(const ObjectWorldClient& world, GetObjectWorld());
   INTRINSIC_ASSIGN_OR_RETURN(
       const intrinsic_proto::skills::EquipmentHandle handle,
@@ -68,7 +68,7 @@ ProjectionContextImpl::GetObjectForEquipment(absl::string_view equipment_name) {
   return world.GetObject(handle);
 }
 
-absl::StatusOr<const world::Frame> ProjectionContextImpl::GetFrameForEquipment(
+absl::StatusOr<const world::Frame> PredictContextImpl::GetFrameForEquipment(
     absl::string_view equipment_name, absl::string_view frame_name) {
   INTRINSIC_ASSIGN_OR_RETURN(const ObjectWorldClient& world, GetObjectWorld());
   INTRINSIC_ASSIGN_OR_RETURN(
@@ -78,7 +78,7 @@ absl::StatusOr<const world::Frame> ProjectionContextImpl::GetFrameForEquipment(
 }
 
 absl::StatusOr<motion_planning::MotionPlannerClient>
-ProjectionContextImpl::GetMotionPlanner() {
+PredictContextImpl::GetMotionPlanner() {
   return motion_planning::MotionPlannerClient(world_id_,
                                               motion_planner_service_);
 }

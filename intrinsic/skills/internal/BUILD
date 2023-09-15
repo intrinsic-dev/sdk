@@ -412,7 +412,7 @@ cc_library(
         ":equipment_utilities",
         ":error_utils",
         ":execute_context_impl",
-        ":projection_context_impl",
+        ":predict_context_impl",
         ":skill_registry_client_interface",
         ":skill_repository",
         "//intrinsic/assets:id_utils",
@@ -534,9 +534,9 @@ cc_binary(
 )
 
 cc_library(
-    name = "projection_context_impl",
-    srcs = ["projection_context_impl.cc"],
-    hdrs = ["projection_context_impl.h"],
+    name = "predict_context_impl",
+    srcs = ["predict_context_impl.cc"],
+    hdrs = ["predict_context_impl.h"],
     deps = [
         ":default_parameters",
         ":skill_registry_client_interface",
@@ -549,6 +549,7 @@ cc_library(
         "//intrinsic/skills/proto:equipment_cc_proto",
         "//intrinsic/skills/proto:skill_service_cc_proto",
         "//intrinsic/skills/proto:skills_cc_proto",
+        "//intrinsic/world/objects:frame",
         "//intrinsic/world/objects:object_world_client",
         "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
         "@com_google_absl//absl/log",

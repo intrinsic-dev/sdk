@@ -2,8 +2,8 @@
 // Intrinsic Proprietary and Confidential
 // Provided subject to written agreement between the parties.
 
-#ifndef INTRINSIC_SKILLS_INTERNAL_PROJECTION_CONTEXT_IMPL_H_
-#define INTRINSIC_SKILLS_INTERNAL_PROJECTION_CONTEXT_IMPL_H_
+#ifndef INTRINSIC_SKILLS_INTERNAL_PREDICT_CONTEXT_IMPL_H_
+#define INTRINSIC_SKILLS_INTERNAL_PREDICT_CONTEXT_IMPL_H_
 
 #include <memory>
 #include <optional>
@@ -26,13 +26,13 @@ namespace intrinsic {
 namespace skills {
 
 // Implementation of PredictContext as used by the skill service.
-class ProjectionContextImpl : public PredictContext {
+class PredictContextImpl : public PredictContext {
   using ObjectWorldService = ::intrinsic_proto::world::ObjectWorldService;
   using MotionPlannerService =
       ::intrinsic_proto::motion_planning::MotionPlannerService;
 
  public:
-  ProjectionContextImpl(
+  PredictContextImpl(
       std::string world_id,
       const intrinsic_proto::data_logger::Context& log_context,
       std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
@@ -68,4 +68,4 @@ class ProjectionContextImpl : public PredictContext {
 }  // namespace skills
 }  // namespace intrinsic
 
-#endif  // INTRINSIC_SKILLS_INTERNAL_PROJECTION_CONTEXT_IMPL_H_
+#endif  // INTRINSIC_SKILLS_INTERNAL_PREDICT_CONTEXT_IMPL_H_
