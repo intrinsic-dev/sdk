@@ -123,7 +123,6 @@ class Solution:
         self._skill_registry,
         self._equipment_registry,
     )
-
     self.structured_logs: structured_logging.StructuredLogs = structured_logs
     self.pose_estimators: Optional[pose_estimation.PoseEstimators] = (
         pose_estimators
@@ -324,8 +323,6 @@ def connect(
     project: Google Cloud Project to connect to.
     solution: Id (not display name!) of the solution to connect to.
     options: An optional Dict[str, Any] containing additional options.
-      Currently this is ignored since no additional options are available.
-
   Raises:
     ValueError: if parameter combination is incorrect.
 
