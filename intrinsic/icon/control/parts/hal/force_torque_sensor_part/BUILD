@@ -2,8 +2,6 @@
 # Intrinsic Proprietary and Confidential
 # Provided subject to written agreement between the parties.
 
-# Libraries related to Realtime Control Layer Parts.
-
 package(default_visibility = [
     "//visibility:public",
 ])
