@@ -4,6 +4,8 @@
 
 # Generic functionality for all hal parts.
 
+load("//bazel:go_macros.bzl", "go_proto_library")
+
 package(default_visibility = [
     "//intrinsic/icon:__subpackages__",
 ])
@@ -15,6 +17,11 @@ proto_library(
 
 cc_proto_library(
     name = "hal_part_config_cc_proto",
+    deps = [":hal_part_config_proto"],
+)
+
+go_proto_library(
+    name = "hal_part_config_go_proto",
     deps = [":hal_part_config_proto"],
 )
 

@@ -2,6 +2,8 @@
 # Intrinsic Proprietary and Confidential
 # Provided subject to written agreement between the parties.
 
+load("//bazel:go_macros.bzl", "go_proto_library")
+
 # Libraries related to Realtime Control Layer Parts.
 
 proto_library(
@@ -13,6 +15,12 @@ proto_library(
 
 cc_proto_library(
     name = "realtime_part_config_cc_proto",
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":realtime_part_config_proto"],
+)
+
+go_proto_library(
+    name = "realtime_part_config_go_proto",
     visibility = ["//intrinsic:__subpackages__"],
     deps = [":realtime_part_config_proto"],
 )
