@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -87,8 +88,18 @@ var claimCmd = &cobra.Command{
 		}
 		defer resp.Body.Close()
 
-		fmt.Printf("Got http code: %v\n", resp.StatusCode)
-		io.Copy(os.Stderr, resp.Body)
+		if resp.StatusCode == http.StatusNotFound {
+			return fmt.Errorf("cluster %q does not exist. please make sure that --cluster_name matches the --hostname from a previously registered cluster.\nIf you want to create a new cluster, do not use --device_role", clusterName)
+		}
+		if resp.StatusCode == http.StatusConflict {
+			return fmt.Errorf("cluster %q already exists. Cannot create it again. Please use a unique value for --hostname", hostname)
+		}
+
+		if resp.StatusCode != 200 {
+			io.Copy(os.Stderr, resp.Body)
+
+			return fmt.Errorf("request failed. http code: %v", resp.StatusCode)
+		}
 
 		// copybara_strip:begin
 		if deviceRole == "control-plane" {
@@ -99,10 +110,6 @@ var claimCmd = &cobra.Command{
 				hostname, hostname, projectName)
 		}
 		// copybara_strip:end
-
-		if resp.StatusCode != 200 {
-			return fmt.Errorf("request failed")
-		}
 
 		return nil
 	}}
