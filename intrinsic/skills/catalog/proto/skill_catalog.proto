@@ -47,11 +47,12 @@ message SkillMeta {
 
 message ListSkillsRequest {
   // Upper limit for the returned page size, i.e. the service might return fewer
-  // results. Setting this field to a non-zero value enforces that the results
-  // are sorted in reverse chronological order, i.e. most recent documents
-  // first.
+  // results.
   //
-  // Default behavior: If this field is unset or set to 0, return all documents.
+  // Default behavior: returns a page size of 20. A page_size of 0 will result
+  // in default behavior.
+  //
+  // Maximum value is 200. If this is exceeded, returns 200.
   int64 page_size = 1;
 
   // If the page token is empty, up to `page_size` first elements of the
@@ -59,6 +60,30 @@ message ListSkillsRequest {
   // `next_page_token` obtained from the previous call to retrieve the next
   // page.
   string page_token = 2;
+
+  enum ViewType {
+    VIEWTYPE_UNSPECIFIED = 0;
+    BASIC = 1;
+  }
+
+  ViewType view = 3;
+
+  message Filter {
+    // Filter for well-known tags.
+    optional Tag tag = 1;
+
+    // Optional. If provided, filter results by `id`. Must provide
+    // the complete `id` or a prefix.
+    optional string id = 2;
+  }
+
+  // Optional. Apply a filter to the query to retrieve a filtered set of
+  // results.
+  //
+  // N.B.: we name this field `strict_filter` for now, in case we decide to
+  // adopt the suggested more generic filtering specified in
+  // https://google.aip.dev/160.
+  optional Filter strict_filter = 4;
 }
 
 message ListSkillsResponse {
