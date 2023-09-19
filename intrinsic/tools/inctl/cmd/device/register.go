@@ -21,9 +21,9 @@ var (
 	deviceRole = ""
 )
 
-var claimCmd = &cobra.Command{
-	Use:   "claim",
-	Short: "Tool to claim hardware in setup flow",
+var registerCmd = &cobra.Command{
+	Use:   "register",
+	Short: "Tool to register hardware in setup flow",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName := viperLocal.GetString(keyProject)
 		hostname := viperLocal.GetString(keyHostname)
@@ -115,7 +115,7 @@ var claimCmd = &cobra.Command{
 	}}
 
 func init() {
-	deviceCmd.AddCommand(claimCmd)
+	deviceCmd.AddCommand(registerCmd)
 
-	claimCmd.Flags().StringVarP(&deviceRole, "device_role", "", "control-plane", "The role the device has in the cluster. Either 'control-plane' or 'worker'")
+	registerCmd.Flags().StringVarP(&deviceRole, "device_role", "", "control-plane", "The role the device has in the cluster. Either 'control-plane' or 'worker'")
 }

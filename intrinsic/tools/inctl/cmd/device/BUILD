@@ -9,9 +9,9 @@ package(default_visibility = ["//intrinsic/tools/inctl:__subpackages__"])
 go_library(
     name = "device",
     srcs = [
-        "claim.go",
         "config.go",
         "device.go",
+        "register.go",
     ],
     deps = [
         ":projectclient",
