@@ -13,9 +13,9 @@ from intrinsic.math.python import proto_conversion as math_proto_conversion
 from intrinsic.perception.proto import camera_config_pb2
 from intrinsic.perception.proto import camera_params_pb2
 from intrinsic.perception.proto import capture_result_pb2
-from intrinsic.perception.proto import image_buffer_pb2
 from intrinsic.perception.proto import sensor_config_pb2
 from intrinsic.perception.proto import sensor_image_pb2
+from intrinsic.perception.python import image_utils
 from intrinsic.perception.python.camera import _camera_utils
 from intrinsic.perception.service.proto import camera_server_pb2
 import numpy as np
@@ -246,15 +246,10 @@ class SensorImage:
     self._world_t_camera = world_t_camera
 
     try:
-      data_type = self._proto.buffer.type
-      if data_type == image_buffer_pb2.DataType.TYPE_8U:
-        dtype = np.uint8
-      elif data_type == image_buffer_pb2.DataType.TYPE_32F:
-        dtype = np.float32
-      else:
-        raise ValueError(f"Data type not supported: {data_type}.")
+      if not self._proto.buffer:
+        raise ValueError("No image buffer provided.")
 
-      buffer = _camera_utils.deserialize_image_buffer(self._proto.buffer, dtype)
+      buffer = image_utils.deserialize_image_buffer(self._proto.buffer)
       self._sensor_image_buffer = buffer
     except ValueError as e:
       raise ValueError("Could not deserialize sensor image buffer.") from e
