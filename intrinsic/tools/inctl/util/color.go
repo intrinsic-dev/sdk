@@ -8,6 +8,7 @@ package color
 import (
 	"fmt"
 	"io"
+	"os"
 )
 
 const reset = "\x1b[0m"
@@ -197,7 +198,7 @@ func (c x) LightWhiteBackground() x {
 // and background colors are controlled by the [C] object. It returns the number of bytes written
 // and any write error encountered.
 func (c x) Printf(format string, a ...any) (int, error) {
-	return fmt.Printf(c.fg+c.bg+format+reset, a...)
+	return c.Fprintf(os.Stdout, format, a...)
 }
 
 // Fprintf formats according to a format specifier and writes to w. The foreground
