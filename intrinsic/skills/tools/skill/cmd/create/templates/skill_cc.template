@@ -27,15 +27,14 @@ namespace {{strJoin .BazelPackage "::"}} {
 {{end}}
 using ::{{strJoin .ProtoPackage "::"}}::{{.SkillNameUpperCamelCase}}Params;
 
-using ::intrinsic_proto::skills::ExecuteRequest;
 using ::intrinsic_proto::skills::ExecuteResult;
 using ::intrinsic_proto::skills::PredictResult;
+using ::intrinsic::skills::ExecuteContext;
+using ::intrinsic::skills::ExecuteRequest;
+using ::intrinsic::skills::PredictContext;
+using ::intrinsic::skills::PredictRequest;
 using ::intrinsic::skills::SkillInterface;
 using ::intrinsic::skills::SkillProjectInterface;
-using ::intrinsic::skills::PredictRequest;
-using ::intrinsic::skills::PredictContext;
-using ::intrinsic::skills::ExecuteContext;
-using ::intrinsic::skills::UnpackParams;
 
 // -----------------------------------------------------------------------------
 // Skill signature.
@@ -64,11 +63,11 @@ absl::StatusOr<PredictResult> {{.SkillNameUpperCamelCase}}::Predict(
 // -----------------------------------------------------------------------------
 
 absl::StatusOr<ExecuteResult> {{.SkillNameUpperCamelCase}}::Execute(
-    const ExecuteRequest& execute_request, ExecuteContext& context) {
+    const ExecuteRequest& request, ExecuteContext& context) {
   
   // Get parameters.
   INTRINSIC_ASSIGN_OR_RETURN(
-      auto params, UnpackParams<{{.SkillNameUpperCamelCase}}Params>(execute_request));
+      auto params, request.params<{{.SkillNameUpperCamelCase}}Params>());
 
   // Log the text provided.
   LOG(INFO) << params.text();

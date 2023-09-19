@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <deque>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -50,7 +51,8 @@ class SkillExecutionOperation {
  public:
   // Creates a new operation.
   static absl::StatusOr<std::unique_ptr<SkillExecutionOperation>> Create(
-      std::unique_ptr<intrinsic_proto::skills::ExecuteRequest> request,
+      const intrinsic_proto::skills::ExecuteRequest* request,
+      const std::optional<::google::protobuf::Any>& param_defaults,
       std::shared_ptr<Canceller> canceller);
 
   // Starts execution of the specified skill.
@@ -70,12 +72,12 @@ class SkillExecutionOperation {
   // Gets the id_version of the skill executed by this operation.
   // id_version is defined by: intrinsic_proto.catalog.SkillMeta.id_version
   std::string GetSkillIdVersion() const {
-    return request_->instance().id_version();
+    return request_.instance().id_version();
   }
 
   // Gets the ExecuteRequest associated with this operation.
   const intrinsic_proto::skills::ExecuteRequest& GetExecuteRequest() const {
-    return *request_;
+    return request_;
   }
 
   // A copy of the underlying Operation proto.
@@ -106,11 +108,14 @@ class SkillExecutionOperation {
 
  private:
   SkillExecutionOperation(
-      std::unique_ptr<intrinsic_proto::skills::ExecuteRequest> request,
+      const intrinsic_proto::skills::ExecuteRequest* request,
+      const std::optional<::google::protobuf::Any>& param_defaults,
       std::shared_ptr<Canceller> canceller)
-      : request_(std::move(request)), canceller_(canceller) {
+      : request_(*request),
+        param_defaults_(param_defaults),
+        canceller_(canceller) {
     absl::MutexLock lock(&operation_mutex_);
-    operation_.set_name(request_->instance().instance_name());
+    operation_.set_name(request_.instance().instance_name());
   }
 
   // Marks the operation as finished, with an error and/or result.
@@ -118,7 +123,8 @@ class SkillExecutionOperation {
                       const intrinsic_proto::skills::ExecuteResult* result)
       ABSL_LOCKS_EXCLUDED(operation_mutex_);
 
-  std::unique_ptr<intrinsic_proto::skills::ExecuteRequest> request_;
+  intrinsic_proto::skills::ExecuteRequest request_;
+  std::optional<::google::protobuf::Any> param_defaults_;
 
   std::shared_ptr<Canceller> canceller_;
 
@@ -178,7 +184,8 @@ class SkillExecutionOperations {
   // Creates a new SkillExecutionOperation and starts executing the skill.
   absl::StatusOr<std::shared_ptr<SkillExecutionOperation>> Start(
       std::unique_ptr<SkillExecuteInterface> skill,
-      std::unique_ptr<intrinsic_proto::skills::ExecuteRequest> request,
+      const intrinsic_proto::skills::ExecuteRequest* request,
+      const std::optional<::google::protobuf::Any>& param_defaults,
       std::unique_ptr<ExecuteContextImpl> context,
       std::shared_ptr<Canceller> canceller,
       google::longrunning::Operation& initial_operation);
@@ -251,10 +258,6 @@ class SkillProjectorServiceImpl
                        intrinsic_proto::skills::PredictResult* result) override;
 
  private:
-  absl::StatusOr<const google::protobuf::Message* const> GetPrototypeMessage(
-      const internal::SkillRuntimeData& runtime_data)
-      ABSL_LOCKS_EXCLUDED(message_mutex_);
-
   absl::StatusOr<GetFootprintRequest> ProtoToGetFootprintRequest(
       const intrinsic_proto::skills::ProjectRequest& request);
 
@@ -323,10 +326,6 @@ class SkillExecutorServiceImpl
       const;
 
  private:
-  absl::StatusOr<const google::protobuf::Message* const> GetPrototypeMessage(
-      const internal::SkillRuntimeData& runtime_data)
-      ABSL_LOCKS_EXCLUDED(message_mutex_);
-
   SkillRepository& skill_repository_;
   std::shared_ptr<ObjectWorldService::StubInterface> object_world_service_;
   std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service_;

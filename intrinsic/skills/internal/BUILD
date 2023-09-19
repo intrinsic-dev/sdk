@@ -413,6 +413,7 @@ cc_library(
         ":error_utils",
         ":execute_context_impl",
         ":predict_context_impl",
+        ":runtime_data",
         ":skill_registry_client_interface",
         ":skill_repository",
         "//intrinsic/assets:id_utils",

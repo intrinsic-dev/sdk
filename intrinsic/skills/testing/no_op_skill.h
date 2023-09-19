@@ -29,8 +29,7 @@ class NoOpSkill : public SkillInterface {
   const google::protobuf::Descriptor* GetParameterDescriptor() const override;
 
   absl::StatusOr<intrinsic_proto::skills::ExecuteResult> Execute(
-      const intrinsic_proto::skills::ExecuteRequest& execute_request,
-      ExecuteContext& context) override;
+      const ExecuteRequest& execute_request, ExecuteContext& context) override;
 };
 
 }  // namespace intrinsic::skills

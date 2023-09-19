@@ -34,8 +34,7 @@ const google::protobuf::Descriptor* NoOpSkill::GetParameterDescriptor() const {
 }
 
 absl::StatusOr<intrinsic_proto::skills::ExecuteResult> NoOpSkill::Execute(
-    const intrinsic_proto::skills::ExecuteRequest& execute_request,
-    ExecuteContext& context) {
+    const ExecuteRequest& request, ExecuteContext& context) {
   return intrinsic_proto::skills::ExecuteResult();
 }
 

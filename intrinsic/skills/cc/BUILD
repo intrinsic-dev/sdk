@@ -69,11 +69,9 @@ cc_library(
     deps = [
         "//intrinsic/icon/release:status_helpers",
         "//intrinsic/skills/proto:equipment_cc_proto",
-        "//intrinsic/skills/proto:skill_service_cc_proto",
         "//intrinsic/skills/proto:skills_cc_proto",
         "//intrinsic/util/grpc:channel",
         "//intrinsic/util/grpc:connection_params",
-        "//intrinsic/util/proto:any",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
     ],

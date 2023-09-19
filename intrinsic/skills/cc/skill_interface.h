@@ -35,6 +35,15 @@
 namespace intrinsic {
 namespace skills {
 
+namespace internal {
+
+template <class TMsg>
+absl::StatusOr<TMsg> ResolveParams(
+    const ::google::protobuf::Any& params_any,
+    const std::optional<::google::protobuf::Any>& defaults_any);
+
+}  // namespace internal
+
 // Interface definition of Skill signature that includes the name, and
 // input / output parameter types.
 class SkillSignatureInterface {
@@ -158,22 +167,7 @@ class GetFootprintRequest {
   // The skill parameters proto.
   template <class TParams>
   absl::StatusOr<TParams> params() const {
-    TParams params;
-    if (!params_any_.UnpackTo(&params)) {
-      return absl::InternalError(absl::StrFormat(
-          "Failed to unpack params to %s.", TParams::descriptor()->name()));
-    }
-
-    TParams defaults;
-    if (param_defaults_any_.has_value() &&
-        !param_defaults_any_->UnpackTo(&defaults)) {
-      return absl::InternalError(absl::StrFormat(
-          "Failed to unpack defaults to %s.", TParams::descriptor()->name()));
-    }
-
-    INTRINSIC_RETURN_IF_ERROR(MergeUnset(defaults, params));
-
-    return params;
+    return internal::ResolveParams<TParams>(params_any_, param_defaults_any_);
   }
 
  private:
@@ -219,22 +213,7 @@ class PredictRequest {
   // The skill parameters proto.
   template <class TParams>
   absl::StatusOr<TParams> params() const {
-    TParams params;
-    if (!params_any_.UnpackTo(&params)) {
-      return absl::InternalError(absl::StrFormat(
-          "Failed to unpack params to %s.", TParams::descriptor()->name()));
-    }
-
-    TParams defaults;
-    if (param_defaults_any_.has_value() &&
-        !param_defaults_any_->UnpackTo(&defaults)) {
-      return absl::InternalError(absl::StrFormat(
-          "Failed to unpack defaults to %s.", TParams::descriptor()->name()));
-    }
-
-    INTRINSIC_RETURN_IF_ERROR(MergeUnset(defaults, params));
-
-    return params;
+    return internal::ResolveParams<TParams>(params_any_, param_defaults_any_);
   }
 
  private:
@@ -308,6 +287,52 @@ class SkillProjectInterface {
   virtual ~SkillProjectInterface() = default;
 };
 
+// A request for a call to SkillInterface::Execute.
+class ExecuteRequest {
+ public:
+  // `param_defaults` can specify default parameter values to merge into any
+  // unset fields of `params`.
+  ExecuteRequest(std::string internal_data,
+                 const ::google::protobuf::Message& params,
+                 ::google::protobuf::Message* param_defaults = nullptr)
+      : internal_data_(std::move(internal_data)) {
+    params_any_.PackFrom(params);
+    if (param_defaults != nullptr) {
+      param_defaults_any_ = google::protobuf::Any();
+      param_defaults_any_->PackFrom(*param_defaults);
+    }
+  }
+
+  // Defers conversion of input Any params to target proto type until accessed
+  // by the user in params().
+  //
+  // This constructor enables conversion from Any to the target type without
+  // needing a message pool/factory up front, since params() is templated on the
+  // target type.
+  ExecuteRequest(std::string internal_data, google::protobuf::Any params,
+                 std::optional<::google::protobuf::Any> param_defaults)
+      : internal_data_(std::move(internal_data)),
+        params_any_(std::move(params)),
+        param_defaults_any_(std::move(param_defaults)) {}
+
+  // Skill-specific data that can be communicated from previous calls to
+  // `GetFootprint` or `Predict`. Can be useful for optimizing skill execution
+  // by pre-computing plan-related information.
+  absl::string_view internal_data() const { return internal_data_; }
+
+  // The skill parameters proto.
+  template <class TParams>
+  absl::StatusOr<TParams> params() const {
+    return internal::ResolveParams<TParams>(params_any_, param_defaults_any_);
+  }
+
+ private:
+  std::string internal_data_;
+
+  ::google::protobuf::Any params_any_;
+  std::optional<::google::protobuf::Any> param_defaults_any_;
+};
+
 // Contains additional metadata and functionality for a skill execution that is
 // provided by the skill service server to a skill. Allows, e.g., to modify the
 // world or to invoke subskills.
@@ -373,8 +398,7 @@ class SkillExecuteInterface {
   // Implementations that support cancellation should return
   // absl::CancelledError if the skill is aborted due to a cancellation request.
   virtual absl::StatusOr<intrinsic_proto::skills::ExecuteResult> Execute(
-      const intrinsic_proto::skills::ExecuteRequest& execute_request,
-      ExecuteContext& context) {
+      const ExecuteRequest& request, ExecuteContext& context) {
     return absl::UnimplementedError("Skill does not implement execution.");
   }
 
@@ -396,6 +420,47 @@ class SkillInterface : public SkillSignatureInterface,
   ~SkillInterface() override = default;
 };
 
+namespace internal {
+
+template <class TMsg>
+absl::StatusOr<TMsg> UnpackParams(const ::google::protobuf::Any& msg_any,
+                                  absl::string_view name) {
+  if (msg_any.type_url().empty()) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "Cannot unpack empty Any %s to %s", name, TMsg::descriptor()->name()));
+  }
+  if (!msg_any.Is<TMsg>()) {
+    return absl::InvalidArgumentError(
+        absl::StrFormat("Cannot unpack Any %s of type %s to %s.", name,
+                        msg_any.type_url(), TMsg::descriptor()->name()));
+  }
+
+  TMsg msg;
+  if (!msg_any.UnpackTo(&msg)) {
+    return absl::InternalError(
+        absl::StrFormat("Failed to unpack Any %s of type %s to %s.", name,
+                        msg_any.type_url(), TMsg::descriptor()->name()));
+  }
+
+  return msg;
+}
+
+template <class TMsg>
+absl::StatusOr<TMsg> ResolveParams(
+    const ::google::protobuf::Any& params_any,
+    const std::optional<::google::protobuf::Any>& defaults_any) {
+  INTRINSIC_ASSIGN_OR_RETURN(TMsg params,
+                             UnpackParams<TMsg>(params_any, "params"));
+  if (defaults_any.has_value()) {
+    INTRINSIC_ASSIGN_OR_RETURN(TMsg defaults,
+                               UnpackParams<TMsg>(*defaults_any, "defaults"));
+    INTRINSIC_RETURN_IF_ERROR(MergeUnset(defaults, params));
+  }
+
+  return params;
+}
+
+}  // namespace internal
 }  // namespace skills
 }  // namespace intrinsic
 

@@ -39,6 +39,7 @@
 #include "intrinsic/skills/internal/error_utils.h"
 #include "intrinsic/skills/internal/execute_context_impl.h"
 #include "intrinsic/skills/internal/predict_context_impl.h"
+#include "intrinsic/skills/internal/runtime_data.h"
 #include "intrinsic/skills/internal/skill_registry_client_interface.h"
 #include "intrinsic/skills/internal/skill_repository.h"
 #include "intrinsic/skills/proto/error.pb.h"
@@ -86,47 +87,20 @@ absl::Status SetDefaultsInRequest(
   return absl::OkStatus();
 }
 
-absl::StatusOr<const google::protobuf::Message* const> LazyGetPrototypeMessage(
-    const internal::SkillRuntimeData& runtime_data,
-    google::protobuf::MessageFactory* message_factory,
-    absl::flat_hash_map<std::string, const google::protobuf::Message* const>&
-        message_prototype_by_skill_name) {
-  if (message_prototype_by_skill_name.contains(runtime_data.GetId())) {
-    return message_prototype_by_skill_name[runtime_data.GetId()];
-  }
-
-  const google::protobuf::Descriptor* descriptor =
-      runtime_data.GetParameterData().GetDescriptor();
-  if (descriptor == nullptr) {
-    return absl::InternalError("Skill does not define parameter descriptor");
-  }
-
-  const google::protobuf::Message* message_prototype =
-      message_factory->GetPrototype(descriptor);
-  if (message_prototype == nullptr) {
-    return absl::InternalError(absl::StrCat(
-        "Unable to create prototype message for ",
-        runtime_data.GetParameterData().GetDescriptor()->full_name()));
-  }
-
-  message_prototype_by_skill_name.insert(
-      {std::string(runtime_data.GetId()), message_prototype});
-  return message_prototype;
-}
-
 }  // namespace
 
 namespace internal {
 
 absl::StatusOr<std::unique_ptr<SkillExecutionOperation>>
 SkillExecutionOperation::Create(
-    std::unique_ptr<intrinsic_proto::skills::ExecuteRequest> request,
+    const intrinsic_proto::skills::ExecuteRequest* request,
+    const std::optional<::google::protobuf::Any>& param_defaults,
     std::shared_ptr<Canceller> canceller) {
   if (request == nullptr) {
     return absl::InvalidArgumentError("`request` is null.");
   }
   return absl::WrapUnique(
-      new SkillExecutionOperation(std::move(request), canceller));
+      new SkillExecutionOperation(request, param_defaults, canceller));
 }
 
 absl::Status SkillExecutionOperation::StartExecution(
@@ -149,7 +123,12 @@ absl::Status SkillExecutionOperation::StartExecution(
         [this, skill = std::move(skill),
          context = std::move(context)]() -> absl::Status {
           absl::StatusOr<intrinsic_proto::skills::ExecuteResult> skill_result;
-          { skill_result = skill->Execute(*request_, *context); }
+          {
+            skill_result = skill->Execute(
+                ExecuteRequest(request_.internal_data(), request_.parameters(),
+                               param_defaults_),
+                *context);
+          }
 
           if (!skill_result.ok()) {
             intrinsic_proto::skills::SkillErrorInfo error_info;
@@ -315,13 +294,15 @@ void SkillExecutionOperationCleaner::WaitThread(
 absl::StatusOr<std::shared_ptr<SkillExecutionOperation>>
 SkillExecutionOperations::Start(
     std::unique_ptr<SkillExecuteInterface> skill,
-    std::unique_ptr<intrinsic_proto::skills::ExecuteRequest> request,
+    const intrinsic_proto::skills::ExecuteRequest* request,
+    const std::optional<::google::protobuf::Any>& param_defaults,
     std::unique_ptr<ExecuteContextImpl> context,
     std::shared_ptr<Canceller> canceller,
     google::longrunning::Operation& initial_operation) {
   INTRINSIC_ASSIGN_OR_RETURN(
       std::shared_ptr<internal::SkillExecutionOperation> operation,
-      internal::SkillExecutionOperation::Create(std::move(request), canceller));
+      internal::SkillExecutionOperation::Create(request, param_defaults,
+                                                canceller));
   initial_operation = operation->GetOperation();
 
   INTRINSIC_RETURN_IF_ERROR(Add(operation));
@@ -600,14 +581,6 @@ grpc::Status SkillProjectorServiceImpl::Predict(
   return ::grpc::Status::OK;
 }
 
-absl::StatusOr<const google::protobuf::Message* const>
-SkillProjectorServiceImpl::GetPrototypeMessage(
-    const internal::SkillRuntimeData& runtime_data) {
-  absl::MutexLock l(&message_mutex_);
-  return LazyGetPrototypeMessage(runtime_data, message_factory_,
-                                 message_prototype_by_skill_name_);
-}
-
 SkillExecutorServiceImpl::SkillExecutorServiceImpl(
     SkillRepository& skill_repository,
     std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
@@ -631,27 +604,18 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
             << request->instance().id_version() << "' skill with world id '"
             << request->world_id() << "'";
 
-  auto prepared_request =
-      std::make_unique<intrinsic_proto::skills::ExecuteRequest>(*request);
-  INTRINSIC_RETURN_IF_ERROR(ValidateProjectOrExecuteRequest(*prepared_request));
+  INTRINSIC_RETURN_IF_ERROR(ValidateProjectOrExecuteRequest(*request));
 
   INTRINSIC_ASSIGN_OR_RETURN(
       std::string skill_id,
-      RemoveVersionFrom(prepared_request->instance().id_version()));
+      RemoveVersionFrom(request->instance().id_version()));
 
   INTRINSIC_ASSIGN_OR_RETURN(std::string name, NameFrom(skill_id));
   INTRINSIC_ASSIGN_OR_RETURN(internal::SkillRuntimeData runtime_data,
                              skill_repository_.GetSkillRuntimeData(name));
 
-  INTRINSIC_ASSIGN_OR_RETURN(
-      const google::protobuf::Message* const message_prototype,
-      GetPrototypeMessage(runtime_data));
-  INTRINSIC_RETURN_IF_ERROR(SetDefaultsInRequest(
-      *message_prototype, runtime_data, *prepared_request));
-
-  INTRINSIC_ASSIGN_OR_RETURN(
-      EquipmentPack equipment,
-      EquipmentPack::GetEquipmentPack(*prepared_request));
+  INTRINSIC_ASSIGN_OR_RETURN(EquipmentPack equipment,
+                             EquipmentPack::GetEquipmentPack(*request));
 
   std::shared_ptr<Canceller> skill_canceller;
   if (runtime_data.GetExecutionOptions().SupportsCancellation()) {
@@ -661,7 +625,7 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
   }
 
   auto execution_context = std::make_unique<ExecuteContextImpl>(
-      *prepared_request, object_world_service_, motion_planner_service_,
+      *request, object_world_service_, motion_planner_service_,
       std::move(equipment), skill_registry_client_, skill_canceller);
 
   INTRINSIC_ASSIGN_OR_RETURN(std::unique_ptr<SkillExecuteInterface> skill,
@@ -669,7 +633,8 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
 
   INTRINSIC_ASSIGN_OR_RETURN(
       std::shared_ptr<internal::SkillExecutionOperation> operation,
-      operations_.Start(std::move(skill), std::move(prepared_request),
+      operations_.Start(std::move(skill), request,
+                        runtime_data.GetParameterData().GetDefault(),
                         std::move(execution_context), skill_canceller,
                         *result));
 
@@ -718,14 +683,6 @@ grpc::Status SkillExecutorServiceImpl::ClearOperations(
     grpc::ServerContext* context, const google::protobuf::Empty* request,
     google::protobuf::Empty* result) {
   return operations_.Clear(false);
-}
-
-absl::StatusOr<const google::protobuf::Message* const>
-SkillExecutorServiceImpl::GetPrototypeMessage(
-    const internal::SkillRuntimeData& runtime_data) {
-  absl::MutexLock l(&message_mutex_);
-  return LazyGetPrototypeMessage(runtime_data, message_factory_,
-                                 message_prototype_by_skill_name_);
 }
 
 std::vector<intrinsic_proto::skills::ExecuteRequest>
