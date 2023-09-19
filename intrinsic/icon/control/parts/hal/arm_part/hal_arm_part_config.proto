@@ -34,6 +34,7 @@ message HalArmPartConfig {
   HardwareInterface joint_velocity_state = 5;
   HardwareInterface joint_acceleration_state = 6;
   HardwareInterface joint_torque_state = 7;
+  HardwareInterface process_wrench_command = 18;
   // May be omitted if world_robot_collection_name is given.
   //
   // Note: The two options aren't a oneof because the plan is to migrate to
