@@ -112,8 +112,8 @@ class Camera:
   """
 
   _camera_equipment: equipment_pb2.EquipmentHandle
-  _world_client: object_world_client.ObjectWorldClient
-  _world_object: object_world_resources.WorldObject
+  _world_client: Optional[object_world_client.ObjectWorldClient]
+  _world_object: Optional[object_world_resources.WorldObject]
   _client: camera_client.CameraClient
   _sensor_id_to_name: Mapping[int, str]
 
@@ -145,10 +145,31 @@ class Camera:
         world_client=world_client,
     )
 
+  @classmethod
+  def create_from_equipment_handle(
+      cls, equipment_handle: equipment_pb2.EquipmentHandle
+  ) -> Camera:
+    """Creates a Camera object from the given equipment handle.
+
+    Args:
+      equipment_handle: The equipment handle with which to connect to the
+        camera.
+
+    Returns:
+      A connected Camera object with sensor information cached. No object or
+      world information is available, so an identity pose will be used for
+      world_t_camera and all the world update methods will be a no-op.
+    """
+    camera_equipment = equipment_handle
+
+    return cls(
+        camera_equipment=camera_equipment,
+    )
+
   def __init__(
       self,
       camera_equipment: equipment_pb2.EquipmentHandle,
-      world_client: object_world_client.ObjectWorldClient,
+      world_client: Optional[object_world_client.ObjectWorldClient] = None,
   ):
     """Creates a Camera object from the given camera equipment and world.
 
@@ -163,7 +184,11 @@ class Camera:
     """
     self._camera_equipment = camera_equipment
     self._world_client = world_client
-    self._world_object = self._world_client.get_object(camera_equipment)
+    self._world_object = (
+        self._world_client.get_object(camera_equipment)
+        if self._world_client
+        else None
+    )
     self._sensor_id_to_name = {}
 
     # use unlimited message size for receiving images (e.g. -1)
@@ -316,13 +341,15 @@ class Camera:
       return self.config.distortion_params
 
   @property
-  def world_object(self) -> object_world_resources.WorldObject:
+  def world_object(self) -> Optional[object_world_resources.WorldObject]:
     """Camera world object."""
     return self._world_object
 
   @property
   def world_t_camera(self) -> pose3.Pose3:
     """Camera world pose."""
+    if self._world_client is None:
+      return pose3.Pose3()
     return self._world_client.get_transform(
         node_a=self._world_client.root,
         node_b=self._world_object,
@@ -377,6 +404,8 @@ class Camera:
     Args:
       world_t_camera: The new world_t_camera pose.
     """
+    if self._world_client is None:
+      return
     self._world_client.update_transform(
         node_a=self._world_client.root,
         node_b=self._world_object,
@@ -395,6 +424,8 @@ class Camera:
       other: The other object.
       camera_t_other: The relative transform.
     """
+    if self._world_client is None:
+      return
     self._world_client.update_transform(
         node_a=self._world_object,
         node_b=other,
@@ -413,6 +444,8 @@ class Camera:
       other: The other object.
       other_t_camera: The relative transform.
     """
+    if self._world_client is None:
+      return
     self._world_client.update_transform(
         node_a=other,
         node_b=self._world_object,
