@@ -79,8 +79,8 @@ py_library(
     deps = [
         "//intrinsic/perception/proto:frame_py_pb2",
         "//intrinsic/perception/proto:image_buffer_py_pb2",
+        "//intrinsic/perception/python:image_utils",
         requirement("matplotlib"),
-        requirement("numpy"),
     ],
 )
 

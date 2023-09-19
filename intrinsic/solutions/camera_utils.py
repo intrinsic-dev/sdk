@@ -6,48 +6,12 @@
 
 import base64
 import io
-from typing import Any, Optional, Type, Union
+from typing import Any
 
 from intrinsic.perception.proto import frame_pb2
 from intrinsic.perception.proto import image_buffer_pb2
+from intrinsic.perception.python import image_utils
 import matplotlib.pyplot as plt
-import numpy as np
-
-
-def _deserialize_image(
-    image: Optional[image_buffer_pb2.ImageBuffer],
-    dtype: Union[np.dtype, Type[np.generic]],
-) -> Optional[np.ndarray]:
-  """Deserializes image from proto format.
-
-  Computes the number of channels per pixel from the total data size, the
-  per-channel data type, and the number of pixels.
-
-  Args:
-    image: The serialized image.
-    dtype: Per-channel data type.
-
-  Returns:
-    The unpacked image of size [height, width, num_channels] or none, if the
-    input image is none.
-
-  Raises:
-    ValueError if the image buffer is compressed.
-    ValueError if the buffer size is invalid.
-  """
-  if not image or not image.data:
-    return None
-  if image.encoding != image_buffer_pb2.ENCODING_UNSPECIFIED:
-    raise ValueError('Image buffer is compressed')
-
-  buffer = np.frombuffer(image.data, dtype=dtype)
-  num_items = image.dimensions.cols * image.dimensions.rows * image.num_channels
-  if buffer.size != num_items:
-    raise ValueError('Invalid buffer size %d != %d' % (buffer.size, num_items))
-
-  return buffer.reshape(
-      image.dimensions.rows, image.dimensions.cols, image.num_channels
-  )
 
 
 class Frame:
@@ -66,8 +30,12 @@ class Frame:
     Args:
       frame: The proto representation of a frame.
     """
-    self.rgb8u = _deserialize_image(frame.rgb8u, np.uint8)
-    self.depth32f = _deserialize_image(frame.depth32f, np.float32)
+    self.rgb8u = None
+    if frame.rgb8u and frame.rgb8u.data:
+      self.rgb8u = image_utils.deserialize_image_buffer(frame.rgb8u)
+    self.depth32f = None
+    if frame.depth32f and frame.depth32f.data:
+      self.depth32f = image_utils.deserialize_image_buffer(frame.depth32f)
     self.acquisition_time = frame.acquisition_time
     self.camera_params = frame.camera_params
 
