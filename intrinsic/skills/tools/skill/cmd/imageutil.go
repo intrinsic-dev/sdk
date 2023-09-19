@@ -31,8 +31,11 @@ import (
 )
 
 var (
-	buildCommand = "bazel"
-	build        = buildExec // Stubbed out for testing.
+	buildCommand    = "bazel"
+	build           = buildExec // Stubbed out for testing.
+	buildConfigArgs = []string{
+		"-c", "opt",
+	}
 )
 
 const (
@@ -86,19 +89,26 @@ func buildExec(buildCommand string, buildArgs ...string) ([]byte, error) {
 // buildImage builds the given target. The built image's file path is returned.
 func buildImage(target string) (string, error) {
 	log.Printf("Building image %q using build command %q", target, buildCommand)
-	buildArgs := []string{"build", "-c", "opt"}
+	buildArgs := []string{"build"}
+	buildArgs = append(buildArgs, buildConfigArgs...)
 	buildArgs = append(buildArgs, target)
 	out, err := build(buildCommand, buildArgs...)
 	if err != nil {
 		return "", fmt.Errorf("could not build docker image: %v\n%s", err, out)
 	}
 
-	re := regexp.MustCompile(`bazel-.*\.tar`)
-	matches := re.FindAll(out, -1)
-	if len(matches) != 1 {
-		return "", fmt.Errorf("could not extract target path from build output\n%s", out)
+	outputs, err := getOutputFiles(target)
+	if err != nil {
+		return "", fmt.Errorf("could not determine output files: %v", err)
 	}
-	tarFile := matches[0]
+	// Assume rule has a single output file - the built image
+	if len(outputs) != 1 {
+		return "", fmt.Errorf("could not determine image from target [%s] output files\n%v", target, outputs)
+	}
+	tarFile := outputs[0]
+	if !strings.HasSuffix(tarFile, ".tar") {
+		return "", fmt.Errorf("output file did not have .tar extension\n%s", tarFile)
+	}
 	log.Printf("Finished building and the output filepath is %q", tarFile)
 	return string(tarFile), nil
 }
@@ -202,7 +212,10 @@ func getLabelFromArgument(target string, argument string) (string, error) {
 }
 
 func getOutputFiles(target string) ([]string, error) {
-	out, err := build(buildCommand, "cquery", "--output=files", target)
+	buildArgs := []string{"cquery"}
+	buildArgs = append(buildArgs, buildConfigArgs...)
+	buildArgs = append(buildArgs, "--output=files", target)
+	out, err := build(buildCommand, buildArgs...)
 	if err != nil {
 		return nil, fmt.Errorf("could not get output files: %v\n%s", err, out)
 	}
@@ -232,7 +245,10 @@ func extractSkillIDFromSkillRule(target string) (string, error) {
 		return "", fmt.Errorf("could not find skill_id argument on %s: %v", target, err)
 	}
 	// Build that label to make it extract the image id from the manifest
-	_, err = build(buildCommand, "build", label)
+	buildArgs := []string{"build"}
+	buildArgs = append(buildArgs, buildConfigArgs...)
+	buildArgs = append(buildArgs, label)
+	_, err = build(buildCommand, buildArgs...)
 	if err != nil {
 		return "", fmt.Errorf("could not build target to extract id from manifest %s: %v", label, err)
 	}
