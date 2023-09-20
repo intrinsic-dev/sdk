@@ -81,7 +81,19 @@ class ProjectionContext:
   and other services that a skill may use. Python sub-skills are not currently
   used; however, it would also allow skills to invoke subskills (see full
   functionality in skill_interface.h).
+
+  Attributes:
+    object_world: A client for interacting with the object world.
   """
+
+  @property
+  def object_world(self) -> object_world_client.ObjectWorldClient:
+    if self._object_world is None:
+      self._object_world = object_world_client.ObjectWorldClient(
+          self._world_id, self._object_world_service
+      )
+
+    return self._object_world
 
   def __init__(
       self,
@@ -109,18 +121,15 @@ class ProjectionContext:
     self._motion_planner_service = motion_planner_service
     self._equipment_handles = equipment_handles
 
-  def get_object_world(self) -> object_world_client.ObjectWorldClient:
-    return object_world_client.ObjectWorldClient(
-        self._world_id, self._object_world_service
-    )
+    self._object_world = None
 
   def get_kinematic_object_for_equipment(
       self, equipment_name: str
   ) -> object_world_resources.KinematicObject:
     """Returns the kinematic object that corresponds to this equipment.
 
-    The kinematic object is sourced from the same world that's available in
-    the get_object_world call.
+    The kinematic object is sourced from the same world that's available via
+    `object_world`.
 
     Args:
       equipment_name: The name of the expected equipment.
@@ -128,7 +137,7 @@ class ProjectionContext:
     Returns:
       A kinematic object from the world associated with this context.
     """
-    return self.get_object_world().get_kinematic_object(
+    return self.object_world.get_kinematic_object(
         self._equipment_handles[equipment_name]
     )
 
@@ -137,8 +146,8 @@ class ProjectionContext:
   ) -> object_world_resources.WorldObject:
     """Returns the world object that corresponds to this equipment.
 
-    The world object is sourced from the same world that's available in
-    the get_object_world call.
+    The world object is sourced from the same world that's available via
+    `object_world`.
 
     Args:
       equipment_name: The name of the expected equipment.
@@ -146,17 +155,15 @@ class ProjectionContext:
     Returns:
       A world object from the world associated with this context.
     """
-    return self.get_object_world().get_object(
-        self._equipment_handles[equipment_name]
-    )
+    return self.object_world.get_object(self._equipment_handles[equipment_name])
 
   def get_frame_for_equipment(
       self, equipment_name: str, frame_name: object_world_ids.FrameName
   ) -> object_world_resources.Frame:
     """Returns the frame by name for an object corresponding to some equipment.
 
-    The frame is sourced from the same world that's available in
-    the get_object_world call.
+    The frame is sourced from the same world that's available via
+    `object_world`.
 
     Args:
       equipment_name: The name of the expected equipment.
@@ -165,7 +172,7 @@ class ProjectionContext:
     Returns:
       A frame from the world associated with this context.
     """
-    return self.get_object_world().get_frame(
+    return self.object_world.get_frame(
         frame_name, self._equipment_handles[equipment_name]
     )
 
@@ -215,7 +222,29 @@ class ExecutionContext:
     cancelled: True if the skill framework has received a cancellation request.
     equipment_handles: A map of equipment names to handles.
     logging_context: The logging context of the execution.
+    object_world: A client for interacting with the object world.
   """
+
+  @property
+  def cancelled(self) -> bool:
+    return self._cancelled.is_set()
+
+  @property
+  def equipment_handles(self) -> Mapping[str, equipment_pb2.EquipmentHandle]:
+    return self._equipment_handles
+
+  @property
+  def logging_context(self) -> context_pb2.Context:
+    return self._logging_context
+
+  @property
+  def object_world(self) -> object_world_client.ObjectWorldClient:
+    if self._object_world is None:
+      self._object_world = object_world_client.ObjectWorldClient(
+          self._world_id, self._object_world_service
+      )
+
+    return self._object_world
 
   def __init__(
       self,
@@ -249,22 +278,7 @@ class ExecutionContext:
     self._cancelled = threading.Event()
     self._cancellation_cb = None
 
-  @property
-  def cancelled(self) -> bool:
-    return self._cancelled.is_set()
-
-  @property
-  def equipment_handles(self) -> Mapping[str, equipment_pb2.EquipmentHandle]:
-    return self._equipment_handles
-
-  @property
-  def logging_context(self) -> context_pb2.Context:
-    return self._logging_context
-
-  def get_object_world(self) -> object_world_client.ObjectWorldClient:
-    return object_world_client.ObjectWorldClient(
-        self._world_id, self._object_world_service
-    )
+    self._object_world = None
 
   def get_motion_planner(self) -> motion_planner_client.MotionPlannerClient:
     return motion_planner_client.MotionPlannerClient(

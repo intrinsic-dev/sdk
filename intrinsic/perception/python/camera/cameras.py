@@ -138,7 +138,7 @@ class Camera:
       A connected Camera object with sensor information cached.
     """
     camera_equipment = context.equipment_handles[slot]
-    world_client = context.get_object_world()
+    world_client = context.object_world
 
     return cls(
         camera_equipment=camera_equipment,
