@@ -239,6 +239,11 @@ class Camera:
     return self.config.identifier
 
   @property
+  def equipment_name(self) -> str:
+    """Camera equipment name."""
+    return self._camera_equipment.name
+
+  @property
   def dimensions(self) -> Optional[Tuple[int, int]]:
     """Camera intrinsic dimensions (width, height)."""
     return self.config.dimensions
