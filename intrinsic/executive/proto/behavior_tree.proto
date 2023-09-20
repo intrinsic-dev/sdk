@@ -97,6 +97,11 @@ message BehaviorTree {
     // This is only set by the executive on retrieval. It is ignored when
     // uploading a tree.
     optional State state = 7;
+
+    // This is only set by the executive and ignored when loading a tree. The
+    // field is set if and only if the state is FINISHED and reflects the
+    // outcome of the evaluation of this condition.
+    optional bool satisfied = 8;
   }
 
   // Children in the sequence will be executed in the given order.
