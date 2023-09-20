@@ -88,30 +88,29 @@ var registerCmd = &cobra.Command{
 		}
 		defer resp.Body.Close()
 
-		if resp.StatusCode == http.StatusNotFound {
-			return fmt.Errorf("cluster %q does not exist. please make sure that --cluster_name matches the --hostname from a previously registered cluster.\nIf you want to create a new cluster, do not use --device_role", clusterName)
-		}
-		if resp.StatusCode == http.StatusConflict {
+		switch resp.StatusCode {
+		case http.StatusOK:
+			// copybara_strip:begin
+			if deviceRole == "control-plane" {
+				fmt.Printf("Use these commands to add the cluster to your kubeconfig and connect via k9s:\n")
+				fmt.Printf(`	kubectl config set-cluster "%s" --server="https://www.endpoints.%s.cloud.goog/apis/core.kubernetes-relay/client/%s"`+"\n",
+					hostname, projectName, hostname)
+				fmt.Printf(`	kubectl config set-context "%s" --cluster "%s" --namespace "default" --user "gke_%s_us-central1-a_cloud-robotics"`+"\n",
+					hostname, hostname, projectName)
+			}
+			// copybara_strip:end
+			return nil
+		case http.StatusConflict:
 			return fmt.Errorf("cluster %q already exists. Cannot create it again. Please use a unique value for --hostname", hostname)
-		}
-
-		if resp.StatusCode != 200 {
+		case http.StatusPreconditionFailed:
+			return fmt.Errorf("cluster %q does not exist. please make sure that --cluster_name matches the --hostname from a previously registered cluster.\nIf you want to create a new cluster, do not use --device_role", clusterName)
+		case http.StatusNotFound:
+			return fmt.Errorf("device %q does not exist. please make sure you have the exact id from the device you are trying to register", deviceID)
+		default:
 			io.Copy(os.Stderr, resp.Body)
 
 			return fmt.Errorf("request failed. http code: %v", resp.StatusCode)
 		}
-
-		// copybara_strip:begin
-		if deviceRole == "control-plane" {
-			fmt.Printf("Use these commands to add the cluster to your kubeconfig and connect via k9s:\n")
-			fmt.Printf(`	kubectl config set-cluster "%s" --server="https://www.endpoints.%s.cloud.goog/apis/core.kubernetes-relay/client/%s"`+"\n",
-				hostname, projectName, hostname)
-			fmt.Printf(`	kubectl config set-context "%s" --cluster "%s" --namespace "default" --user "gke_%s_us-central1-a_cloud-robotics"`+"\n",
-				hostname, hostname, projectName)
-		}
-		// copybara_strip:end
-
-		return nil
 	}}
 
 func init() {
