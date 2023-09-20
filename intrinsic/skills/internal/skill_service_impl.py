@@ -146,10 +146,10 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       )
 
     projection_context = skl.ProjectionContext(
-        project_request.world_id,
-        self._object_world_service,
-        self._motion_planner_service,
-        footprint_request.internal_request.instance.equipment_handles,
+        world_id=project_request.world_id,
+        object_world_service=self._object_world_service,
+        motion_planner_service=self._motion_planner_service,
+        equipment_handles=footprint_request.internal_request.instance.equipment_handles,
     )
 
     try:
@@ -270,10 +270,10 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       )
 
     projection_context = skl.ProjectionContext(
-        project_request.world_id,
-        self._object_world_service,
-        self._motion_planner_service,
-        predict_request.internal_request.instance.equipment_handles,
+        world_id=project_request.world_id,
+        object_world_service=self._object_world_service,
+        motion_planner_service=self._motion_planner_service,
+        equipment_handles=predict_request.internal_request.instance.equipment_handles,
     )
 
     try:

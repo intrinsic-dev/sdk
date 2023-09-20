@@ -241,9 +241,6 @@ class PredictContext {
   //                    context.GetObjectWorld());
   virtual absl::StatusOr<const world::ObjectWorldClient> GetObjectWorld() = 0;
 
-  // Returns the world id of the world associated with the skill.
-  virtual std::string GetWorldId() const = 0;
-
   // Returns the world object that represents the equipment in the world as
   // required by the skill within this context.
   virtual absl::StatusOr<const world::KinematicObject>

@@ -99,7 +99,7 @@ class ProjectionContext:
     """Initializes this object.
 
     Args:
-      world_id: Id of the current world.
+      world_id: ID of the current world.
       object_world_service: Stub to object world service.
       motion_planner_service: Stub to motion planner service.
       equipment_handles: Handles for the required equipment for this skill
@@ -113,10 +113,6 @@ class ProjectionContext:
     return object_world_client.ObjectWorldClient(
         self._world_id, self._object_world_service
     )
-
-  def get_world_id(self) -> Optional[str]:
-    """Returns the world id used to create the ProjectionContext."""
-    return self._world_id
 
   def get_kinematic_object_for_equipment(
       self, equipment_name: str
@@ -264,9 +260,6 @@ class ExecutionContext:
   @property
   def logging_context(self) -> context_pb2.Context:
     return self._logging_context
-
-  def world_id(self) -> Optional[str]:
-    return self._world_id
 
   def get_object_world(self) -> object_world_client.ObjectWorldClient:
     return object_world_client.ObjectWorldClient(

@@ -42,7 +42,6 @@ class PredictContextImpl : public PredictContext {
       SkillRegistryClientInterface& skill_registry_client);
 
   absl::StatusOr<const world::ObjectWorldClient> GetObjectWorld() override;
-  std::string GetWorldId() const override { return world_id_; }
 
   absl::StatusOr<const world::KinematicObject> GetKinematicObjectForEquipment(
       absl::string_view equipment_name) override;

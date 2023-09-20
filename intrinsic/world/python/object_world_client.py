@@ -109,7 +109,14 @@ class ObjectWorldClient:
   The ObjectWorldClient is a Python client for the object world service. It
   gives access to objects and frames in the world and returns Python objects for
   frames and objects.
+
+  Attributes:
+    world_id: The world's ID.
   """
+
+  @property
+  def world_id(self) -> str:
+    return self._world_id
 
   def __init__(
       self,

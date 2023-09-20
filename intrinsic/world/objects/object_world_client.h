@@ -45,6 +45,9 @@ class ObjectWorldClient {
   ObjectWorldClient(ObjectWorldClient&& other) = default;
   ObjectWorldClient& operator=(ObjectWorldClient&& other) = default;
 
+  // Returns the ID of the world.
+  absl::string_view GetWorldID() const { return world_id_; }
+
   // Returns a local copy of the transform node identified by the given
   // reference.
   absl::StatusOr<TransformNode> GetTransformNode(
