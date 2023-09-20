@@ -224,6 +224,7 @@ class ExecutionContext:
   def __init__(
       self,
       equipment_handles: Mapping[str, equipment_pb2.EquipmentHandle],
+      logging_context: context_pb2.Context,
       world_id: str,
       object_world_service: object_world_service_pb2_grpc.ObjectWorldServiceStub,
       motion_planner_service: motion_planner_service_pb2_grpc.MotionPlannerServiceStub,
@@ -234,12 +235,14 @@ class ExecutionContext:
     Args:
       world_id: Id of the current world.
       equipment_handles: A map of equipment names to handles.
+      logging_context: The logging context of the execution.
       object_world_service: Stub to object world service.
       motion_planner_service: Stub to motion planner service.
       ready_for_cancellation_timeout: When cancelling, the maximum number of
         seconds to wait for the skill to be ready to cancel before timing out.
     """
     self._equipment_handles = equipment_handles
+    self._logging_context = logging_context
     self._world_id = world_id
     self._object_world_service = object_world_service
     self._motion_planner_service = motion_planner_service
