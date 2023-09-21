@@ -83,8 +83,18 @@ class ProjectionContext:
   functionality in skill_interface.h).
 
   Attributes:
+    motion_planner: A client for the motion planning service.
     object_world: A client for interacting with the object world.
   """
+
+  @property
+  def motion_planner(self) -> motion_planner_client.MotionPlannerClient:
+    if self._motion_planner is None:
+      self._motion_planner = motion_planner_client.MotionPlannerClient(
+          self._world_id, self._motion_planner_service
+      )
+
+    return self._motion_planner
 
   @property
   def object_world(self) -> object_world_client.ObjectWorldClient:
@@ -121,6 +131,7 @@ class ProjectionContext:
     self._motion_planner_service = motion_planner_service
     self._equipment_handles = equipment_handles
 
+    self._motion_planner = None
     self._object_world = None
 
   def get_kinematic_object_for_equipment(
@@ -176,11 +187,6 @@ class ProjectionContext:
         frame_name, self._equipment_handles[equipment_name]
     )
 
-  def get_motion_planner(self) -> motion_planner_client.MotionPlannerClient:
-    return motion_planner_client.MotionPlannerClient(
-        self._world_id, self._motion_planner_service
-    )
-
 
 @dataclasses.dataclass(frozen=True)
 class ExecuteRequest(Generic[TParamsType]):
@@ -222,6 +228,7 @@ class ExecutionContext:
     cancelled: True if the skill framework has received a cancellation request.
     equipment_handles: A map of equipment names to handles.
     logging_context: The logging context of the execution.
+    motion_planner: A client for the motion planning service.
     object_world: A client for interacting with the object world.
   """
 
@@ -236,6 +243,15 @@ class ExecutionContext:
   @property
   def logging_context(self) -> context_pb2.Context:
     return self._logging_context
+
+  @property
+  def motion_planner(self) -> motion_planner_client.MotionPlannerClient:
+    if self._motion_planner is None:
+      self._motion_planner = motion_planner_client.MotionPlannerClient(
+          self._world_id, self._motion_planner_service
+      )
+
+    return self._motion_planner
 
   @property
   def object_world(self) -> object_world_client.ObjectWorldClient:
@@ -278,12 +294,8 @@ class ExecutionContext:
     self._cancelled = threading.Event()
     self._cancellation_cb = None
 
+    self._motion_planner = None
     self._object_world = None
-
-  def get_motion_planner(self) -> motion_planner_client.MotionPlannerClient:
-    return motion_planner_client.MotionPlannerClient(
-        self._world_id, self._motion_planner_service
-    )
 
   def notify_ready_for_cancellation(self) -> None:
     """Notifies the context that the skill is ready to be cancelled."""
