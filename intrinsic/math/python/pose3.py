@@ -65,7 +65,6 @@ class Pose3(object):
     identity
     from_matrix_4x4
     from_vec7
-    from_proto
   """
 
   def __init__(
