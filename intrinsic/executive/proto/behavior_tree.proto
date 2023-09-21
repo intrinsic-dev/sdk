@@ -7,7 +7,6 @@ syntax = "proto3";
 package intrinsic_proto.executive;
 
 import "google/protobuf/any.proto";
-import "google/protobuf/timestamp.proto";
 import "intrinsic/executive/proto/any_list.proto";
 import "intrinsic/executive/proto/any_with_assignments.proto";
 import "intrinsic/executive/proto/behavior_call.proto";
@@ -526,7 +525,6 @@ message BehaviorTree {
 
   intrinsic_proto.skills.Skill description = 4;
   string return_value_expression = 5;
-  google.protobuf.Timestamp update_time = 6;
 
   // User provided data that is treated opaquely by the executive.
   // The data is assumed to be small (all data combined in the order of

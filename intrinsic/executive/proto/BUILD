@@ -190,7 +190,6 @@ proto_library(
         ":executive_execution_mode_proto",
         "//intrinsic/skills/proto:skills_proto",
         "@com_google_protobuf//:any_proto",
-        "@com_google_protobuf//:timestamp_proto",
     ],
 )
 
