@@ -30,7 +30,10 @@
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/footprint.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
+#include "intrinsic/world/objects/frame.h"
+#include "intrinsic/world/objects/kinematic_object.h"
 #include "intrinsic/world/objects/object_world_client.h"
+#include "intrinsic/world/objects/world_object.h"
 
 namespace intrinsic {
 namespace skills {
@@ -231,23 +234,15 @@ class PredictContext {
   virtual ~PredictContext() = default;
 
   // Returns the object-based view of the world associated with the skill.
-  //
-  // Note, it is impossible to unwrap a StatusOr<const T> into a const T,
-  // because const variables are not movable. However, it is possible to unwrap
-  // a StatusOr<const T> into a const T&, since const refs extend the lifetime
-  // of temporary objects. Hence, the following is the recommended usage of this
-  // function:
-  //   INTRINSIC_ASSIGN_OR_RETURN(const world::ObjectWorldClient& world,
-  //                    context.GetObjectWorld());
-  virtual absl::StatusOr<const world::ObjectWorldClient> GetObjectWorld() = 0;
+  virtual absl::StatusOr<world::ObjectWorldClient> GetObjectWorld() = 0;
 
   // Returns the world object that represents the equipment in the world as
   // required by the skill within this context.
-  virtual absl::StatusOr<const world::KinematicObject>
-  GetKinematicObjectForEquipment(absl::string_view equipment_name) = 0;
-  virtual absl::StatusOr<const world::WorldObject> GetObjectForEquipment(
+  virtual absl::StatusOr<world::KinematicObject> GetKinematicObjectForEquipment(
       absl::string_view equipment_name) = 0;
-  virtual absl::StatusOr<const world::Frame> GetFrameForEquipment(
+  virtual absl::StatusOr<world::WorldObject> GetObjectForEquipment(
+      absl::string_view equipment_name) = 0;
+  virtual absl::StatusOr<world::Frame> GetFrameForEquipment(
       absl::string_view equipment_name, absl::string_view frame_name) = 0;
 
   // Returns a motion planner based on the world associated with the skill
@@ -256,15 +251,32 @@ class PredictContext {
   GetMotionPlanner() = 0;
 };
 
+// Contains additional metadata and functionality for a skill footprint that is
+// provided by the skill service to a skill. Allows, e.g., to read the
+// world.
+class GetFootprintContext {
+ public:
+  virtual ~GetFootprintContext() = default;
+
+  // Returns the object-based view of the world associated with the skill.
+  virtual absl::StatusOr<world::ObjectWorldClient> GetObjectWorld() = 0;
+
+  // Returns the world object that represents the equipment in the world as
+  // required by the skill within this context.
+  virtual absl::StatusOr<world::KinematicObject> GetKinematicObjectForEquipment(
+      absl::string_view equipment_name) = 0;
+  virtual absl::StatusOr<world::WorldObject> GetObjectForEquipment(
+      absl::string_view equipment_name) = 0;
+  virtual absl::StatusOr<world::Frame> GetFrameForEquipment(
+      absl::string_view equipment_name, absl::string_view frame_name) = 0;
+};
+
 // Interface definition of Skill projecting.
 class SkillProjectInterface {
  public:
   using ProjectRequest = intrinsic_proto::skills::ProjectRequest;
   using ProjectResult = intrinsic_proto::skills::ProjectResult;
   using PredictResult = intrinsic_proto::skills::PredictResult;
-
-  // Computes the skill's footprint. `world` contains the world under which the
-  // skill is expected to operate, and this function should not modify it.
   virtual absl::StatusOr<ProjectResult> GetFootprint(
       const GetFootprintRequest& request, PredictContext& context) const {
     ProjectResult result;

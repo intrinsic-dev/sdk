@@ -6,7 +6,10 @@
 #define INTRINSIC_SKILLS_INTERNAL_DEFAULT_PARAMETERS_H_
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "google/protobuf/any.pb.h"
 #include "google/protobuf/message.h"
+#include "intrinsic/skills/proto/skills.pb.h"
 
 namespace intrinsic::skills {
 
@@ -21,6 +24,16 @@ namespace intrinsic::skills {
 // would return non-zero.
 absl::Status MergeUnset(const google::protobuf::Message& from,
                         google::protobuf::Message& to);
+
+// Extracts the parameters, then applies defaults to parameters.
+absl::StatusOr<std::unique_ptr<google::protobuf::Message>> ApplyDefaults(
+    const google::protobuf::Any& defaults,
+    const google::protobuf::Message& params);
+
+// Packs the parameters that may have defaults into Any.
+absl::StatusOr<google::protobuf::Any> PackParametersWithDefaults(
+    const intrinsic_proto::skills::SkillInstance& instance,
+    const google::protobuf::Message& params);
 
 }  // namespace intrinsic::skills
 

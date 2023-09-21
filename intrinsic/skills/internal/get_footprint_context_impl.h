@@ -2,8 +2,8 @@
 // Intrinsic Proprietary and Confidential
 // Provided subject to written agreement between the parties.
 
-#ifndef INTRINSIC_SKILLS_INTERNAL_PREDICT_CONTEXT_IMPL_H_
-#define INTRINSIC_SKILLS_INTERNAL_PREDICT_CONTEXT_IMPL_H_
+#ifndef INTRINSIC_SKILLS_INTERNAL_GET_FOOTPRINT_CONTEXT_IMPL_H_
+#define INTRINSIC_SKILLS_INTERNAL_GET_FOOTPRINT_CONTEXT_IMPL_H_
 
 #include <memory>
 #include <optional>
@@ -13,8 +13,6 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "intrinsic/logging/proto/context.pb.h"
-#include "intrinsic/motion_planning/motion_planner_client.h"
-#include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/internal/skill_registry_client_interface.h"
@@ -25,19 +23,15 @@
 namespace intrinsic {
 namespace skills {
 
-// Implementation of PredictContext as used by the skill service.
-class PredictContextImpl : public PredictContext {
+// Implementation of GetFootprintContext as used by the skill service.
+class GetFootprintContextImpl : public GetFootprintContext {
   using ObjectWorldService = ::intrinsic_proto::world::ObjectWorldService;
-  using MotionPlannerService =
-      ::intrinsic_proto::motion_planning::MotionPlannerService;
 
  public:
-  PredictContextImpl(
+  GetFootprintContextImpl(
       std::string world_id,
       const intrinsic_proto::data_logger::Context& log_context,
       std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
-      std::shared_ptr<MotionPlannerService::StubInterface>
-          motion_planner_service,
       EquipmentPack equipment,
       SkillRegistryClientInterface& skill_registry_client);
 
@@ -50,15 +44,9 @@ class PredictContextImpl : public PredictContext {
   absl::StatusOr<world::Frame> GetFrameForEquipment(
       absl::string_view equipment_name, absl::string_view frame_name) override;
 
-  absl::StatusOr<motion_planning::MotionPlannerClient> GetMotionPlanner()
-      override;
-
  private:
-  std::optional<motion_planning::MotionPlannerClient> motion_planner_client_;
-
   std::string world_id_;
   std::shared_ptr<ObjectWorldService::StubInterface> object_world_service_;
-  std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service_;
   EquipmentPack equipment_;
   SkillRegistryClientInterface& skill_registry_client_ ABSL_ATTRIBUTE_UNUSED;
   intrinsic_proto::data_logger::Context log_context_;
@@ -67,4 +55,4 @@ class PredictContextImpl : public PredictContext {
 }  // namespace skills
 }  // namespace intrinsic
 
-#endif  // INTRINSIC_SKILLS_INTERNAL_PREDICT_CONTEXT_IMPL_H_
+#endif  // INTRINSIC_SKILLS_INTERNAL_GET_FOOTPRINT_CONTEXT_IMPL_H_

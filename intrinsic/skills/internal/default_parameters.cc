@@ -9,9 +9,12 @@
 
 #include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/types/span.h"
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/message.h"
+#include "intrinsic/icon/release/status_helpers.h"
 
 namespace intrinsic::skills {
 
