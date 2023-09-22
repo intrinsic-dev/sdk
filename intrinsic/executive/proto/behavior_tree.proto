@@ -85,7 +85,8 @@ message BehaviorTree {
     }
 
     oneof condition_type {
-      Node tree = 1;  // root of a tree to evaluate
+      Node tree = 1 [deprecated = true];  // root of a tree to evaluate
+      BehaviorTree behavior_tree = 9;
       BlackboardExpression blackboard = 2;
       intrinsic_proto.executive.DomainFormula domain_formula = 3;
       LogicalCompound all_of = 4;
