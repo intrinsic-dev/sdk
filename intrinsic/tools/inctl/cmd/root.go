@@ -15,6 +15,7 @@ import (
 	log "github.com/golang/glog"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"go.opencensus.io/trace"
 	"golang.org/x/exp/slices"
 	intrinsic "intrinsic/production/intrinsic"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
@@ -124,10 +125,14 @@ func getCommandNames() ([]string, error) {
 // It returns true if the command was successful.
 // rewriteError rewrites an error into a helpful string.
 func Execute(ec executionContext) bool {
+	ctx := context.Background()
 	RootCmd.SetArgs(flag.Args())
 
+	ctx, span := trace.StartSpan(ctx, "inctl", trace.WithSampler(trace.AlwaysSample()))
+	defer span.End()
+
 	success := true
-	if err := RootCmd.ExecuteContext(context.Background()); err != nil {
+	if err := RootCmd.ExecuteContext(ctx); err != nil {
 		cmdNames, _ := getCommandNames() // ignore error, cmdNames will simply be nil
 		fmt.Fprintln(os.Stderr, "Error:", ec.RewriteError(err, cmdNames))
 		success = false
