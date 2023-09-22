@@ -36,3 +36,23 @@ go_proto_library(
     name = "id_go_proto",
     deps = [":id_proto"],
 )
+
+proto_library(
+    name = "vendor_proto",
+    srcs = ["vendor.proto"],
+)
+
+py_proto_library(
+    name = "vendor_py_pb2",
+    deps = [":vendor_proto"],
+)
+
+cc_proto_library(
+    name = "vendor_cc_proto",
+    deps = [":vendor_proto"],
+)
+
+go_proto_library(
+    name = "vendor_go_proto",
+    deps = [":vendor_proto"],
+)

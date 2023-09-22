@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-package intrinsic_proto.config;
+package intrinsic_proto.assets;
 
 message Vendor {
   // The name of the vendor that is to be displayed in the UI.

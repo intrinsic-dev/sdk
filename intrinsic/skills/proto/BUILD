@@ -412,8 +412,8 @@ proto_library(
     srcs = ["skill_manifest.proto"],
     deps = [
         ":equipment_proto",
-        ":vendor_proto",
         "//intrinsic/assets/proto:id_proto",
+        "//intrinsic/assets/proto:vendor_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:duration_proto",
     ],
@@ -428,7 +428,7 @@ go_proto_library(
     name = "skill_manifest_go_proto",
     go_deps = [
         ":equipment_go_proto",
-        ":vendor_go_proto",
+        "//intrinsic/assets/proto:vendor_go_proto",
         "//intrinsic/assets/proto:id_go_proto",
     ],
     deps = [":skill_manifest_proto"],
@@ -437,26 +437,6 @@ go_proto_library(
 py_proto_library(
     name = "skill_manifest_py_pb2",
     deps = [":skill_manifest_proto"],
-)
-
-proto_library(
-    name = "vendor_proto",
-    srcs = ["vendor.proto"],
-)
-
-py_proto_library(
-    name = "vendor_py_pb2",
-    deps = [":vendor_proto"],
-)
-
-cc_proto_library(
-    name = "vendor_cc_proto",
-    deps = [":vendor_proto"],
-)
-
-go_proto_library(
-    name = "vendor_go_proto",
-    deps = [":vendor_proto"],
 )
 
 proto_library(
