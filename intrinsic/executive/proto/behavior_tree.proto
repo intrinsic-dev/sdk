@@ -503,16 +503,16 @@ message BehaviorTree {
   // operations that are currently in the executive.
   // This can optionally be set as an input to refer to a specific (sub-)tree
   // later on. If it is not unique, the tree will fail to load, thus generating
-  // a UUID is advised.
-  // When not set, the executive will generate a unique id.
+  // an UUID is advised.
+  // When not set, the executive will automatically generate a unique id.
   // The format must follow: [a-zA-Z][a-zA-Z0-9_-]*
   //
   // For a parameterizable behavior tree, this field might be changed by the
-  // executive during import to guaranetee uniqueness. The reason is that the
-  // same PBT can be loaded multiple times, but then cannot have the same
-  // tre_id.
-  // When calling a PBT in a TaskNode via call_behavior, use the
-  // called_tree_state field to determine the tree_id of the PBT instance.
+  // executive during import to guarantee uniqueness. The reason is that the
+  // same PBT can be loaded multiple times which requires the trees to have
+  // different tree ids. When calling a PBT in a TaskNode via call_behavior,
+  // use the called_tree_state field to determine the tree_id of the PBT
+  // instance.
   optional string tree_id = 9;
 
   // The blackboard scope that any blackboard key in this behavior tree is in.

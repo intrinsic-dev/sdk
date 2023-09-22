@@ -102,3 +102,7 @@ message ErrorReport {
   // Optional.
   Data data = 3;
 }
+
+message ErrorReports {
+  repeated ErrorReport error_reports = 1;
+}
