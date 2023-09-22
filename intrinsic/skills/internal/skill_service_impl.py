@@ -20,6 +20,7 @@ from google.protobuf import message_factory
 from google.rpc import status_pb2
 import grpc
 from intrinsic.assets import id_utils
+from intrinsic.motion_planning import motion_planner_client
 from intrinsic.motion_planning.proto import motion_planner_service_pb2_grpc
 from intrinsic.skills.internal import default_parameters
 from intrinsic.skills.internal import error_utils
@@ -34,6 +35,7 @@ from intrinsic.skills.proto import skills_pb2
 from intrinsic.skills.python import proto_utils
 from intrinsic.skills.python import skill_interface as skl
 from intrinsic.world.proto import object_world_service_pb2_grpc
+from intrinsic.world.python import object_world_client
 from pybind11_abseil import status
 
 # Maximum number of operations to keep in a SkillExecutionOperations instance.
@@ -145,10 +147,16 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
           ),
       )
 
+    object_world = object_world_client.ObjectWorldClient(
+        project_request.world_id, self._object_world_service
+    )
+    motion_planner = motion_planner_client.MotionPlannerClient(
+        project_request.world_id, self._motion_planner_service
+    )
+
     projection_context = skl.ProjectionContext(
-        world_id=project_request.world_id,
-        object_world_service=self._object_world_service,
-        motion_planner_service=self._motion_planner_service,
+        object_world=object_world,
+        motion_planner=motion_planner,
         equipment_handles=footprint_request.internal_request.instance.equipment_handles,
     )
 
@@ -269,10 +277,16 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
           ),
       )
 
+    object_world = object_world_client.ObjectWorldClient(
+        project_request.world_id, self._object_world_service
+    )
+    motion_planner = motion_planner_client.MotionPlannerClient(
+        project_request.world_id, self._motion_planner_service
+    )
+
     projection_context = skl.ProjectionContext(
-        world_id=project_request.world_id,
-        object_world_service=self._object_world_service,
-        motion_planner_service=self._motion_planner_service,
+        object_world=object_world,
+        motion_planner=motion_planner,
         equipment_handles=predict_request.internal_request.instance.equipment_handles,
     )
 
@@ -600,12 +614,18 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
             ),
         )
 
+    object_world = object_world_client.ObjectWorldClient(
+        request.world_id, self._object_world_service
+    )
+    motion_planner = motion_planner_client.MotionPlannerClient(
+        request.world_id, self._motion_planner_service
+    )
+
     execution_context = skl.ExecutionContext(
         equipment_handles=dict(request.instance.equipment_handles),
         logging_context=request.context,
-        world_id=request.world_id,
-        object_world_service=self._object_world_service,
-        motion_planner_service=self._motion_planner_service,
+        object_world=object_world,
+        motion_planner=motion_planner,
     )
 
     return _SkillExecutionOperation(

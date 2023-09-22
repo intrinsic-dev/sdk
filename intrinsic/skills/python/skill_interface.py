@@ -12,11 +12,9 @@ from google.protobuf import descriptor
 from google.protobuf import message
 from intrinsic.logging.proto import context_pb2
 from intrinsic.motion_planning import motion_planner_client
-from intrinsic.motion_planning.proto import motion_planner_service_pb2_grpc
 from intrinsic.skills.proto import equipment_pb2
 from intrinsic.skills.proto import footprint_pb2
 from intrinsic.skills.proto import skill_service_pb2
-from intrinsic.world.proto import object_world_service_pb2_grpc
 from intrinsic.world.python import object_world_client
 from intrinsic.world.python import object_world_ids
 from intrinsic.world.python import object_world_resources
@@ -89,30 +87,25 @@ class ProjectionContext:
 
   @property
   def motion_planner(self) -> motion_planner_client.MotionPlannerClient:
-    if self._motion_planner is None:
-      self._motion_planner = motion_planner_client.MotionPlannerClient(
-          self._world_id, self._motion_planner_service
-      )
+    motion_planner = self._motion_planner
+    if motion_planner is None:
+      raise ValueError('The context does not have a motion planner client.')
 
-    return self._motion_planner
+    return motion_planner
 
   @property
   def object_world(self) -> object_world_client.ObjectWorldClient:
-    if self._object_world is None:
-      self._object_world = object_world_client.ObjectWorldClient(
-          self._world_id, self._object_world_service
-      )
+    object_world = self._object_world
+    if object_world is None:
+      raise ValueError('The context does not have an object world client.')
 
-    return self._object_world
+    return object_world
 
   def __init__(
       self,
-      world_id: Optional[str] = None,
-      object_world_service: Optional[
-          object_world_service_pb2_grpc.ObjectWorldServiceStub
-      ] = None,
-      motion_planner_service: Optional[
-          motion_planner_service_pb2_grpc.MotionPlannerServiceStub
+      object_world: Optional[object_world_client.ObjectWorldClient] = None,
+      motion_planner: Optional[
+          motion_planner_client.MotionPlannerClient
       ] = None,
       equipment_handles: Optional[
           Mapping[str, equipment_pb2.EquipmentHandle]
@@ -121,18 +114,14 @@ class ProjectionContext:
     """Initializes this object.
 
     Args:
-      world_id: ID of the current world.
-      object_world_service: Stub to object world service.
-      motion_planner_service: Stub to motion planner service.
+      object_world: The object world client to provide, or None for no client.
+      motion_planner: The motion planner client to provide, or None for no
+        client.
       equipment_handles: Handles for the required equipment for this skill
     """
-    self._world_id = world_id
-    self._object_world_service = object_world_service
-    self._motion_planner_service = motion_planner_service
+    self._object_world = object_world
+    self._motion_planner = motion_planner
     self._equipment_handles = equipment_handles
-
-    self._motion_planner = None
-    self._object_world = None
 
   def get_kinematic_object_for_equipment(
       self, equipment_name: str
@@ -246,29 +235,28 @@ class ExecutionContext:
 
   @property
   def motion_planner(self) -> motion_planner_client.MotionPlannerClient:
-    if self._motion_planner is None:
-      self._motion_planner = motion_planner_client.MotionPlannerClient(
-          self._world_id, self._motion_planner_service
-      )
+    motion_planner = self._motion_planner
+    if motion_planner is None:
+      raise ValueError('The context does not have a motion planner client.')
 
-    return self._motion_planner
+    return motion_planner
 
   @property
   def object_world(self) -> object_world_client.ObjectWorldClient:
-    if self._object_world is None:
-      self._object_world = object_world_client.ObjectWorldClient(
-          self._world_id, self._object_world_service
-      )
+    object_world = self._object_world
+    if object_world is None:
+      raise ValueError('The context does not have an object world client.')
 
-    return self._object_world
+    return object_world
 
   def __init__(
       self,
       equipment_handles: Mapping[str, equipment_pb2.EquipmentHandle],
       logging_context: context_pb2.Context,
-      world_id: str,
-      object_world_service: object_world_service_pb2_grpc.ObjectWorldServiceStub,
-      motion_planner_service: motion_planner_service_pb2_grpc.MotionPlannerServiceStub,
+      object_world: Optional[object_world_client.ObjectWorldClient] = None,
+      motion_planner: Optional[
+          motion_planner_client.MotionPlannerClient
+      ] = None,
       ready_for_cancellation_timeout: float = 30.0,
   ):
     """Initializes this object.
@@ -277,25 +265,22 @@ class ExecutionContext:
       world_id: Id of the current world.
       equipment_handles: A map of equipment names to handles.
       logging_context: The logging context of the execution.
-      object_world_service: Stub to object world service.
-      motion_planner_service: Stub to motion planner service.
+      object_world: The object world client to provide, or None for no client.
+      motion_planner: The motion planner client to provide, or None for no
+        client.
       ready_for_cancellation_timeout: When cancelling, the maximum number of
         seconds to wait for the skill to be ready to cancel before timing out.
     """
     self._equipment_handles = equipment_handles
     self._logging_context = logging_context
-    self._world_id = world_id
-    self._object_world_service = object_world_service
-    self._motion_planner_service = motion_planner_service
+    self._object_world = object_world
+    self._motion_planner = motion_planner
     self._ready_for_cancellation_timeout = ready_for_cancellation_timeout
 
     self._cancel_lock = threading.Lock()
     self._ready_for_cancellation = threading.Event()
     self._cancelled = threading.Event()
     self._cancellation_cb = None
-
-    self._motion_planner = None
-    self._object_world = None
 
   def notify_ready_for_cancellation(self) -> None:
     """Notifies the context that the skill is ready to be cancelled."""
