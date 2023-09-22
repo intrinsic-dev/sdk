@@ -155,9 +155,11 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
     )
 
     projection_context = skl.ProjectionContext(
-        object_world=object_world,
+        equipment_handles=dict(
+            footprint_request.internal_request.instance.equipment_handles
+        ),
         motion_planner=motion_planner,
-        equipment_handles=footprint_request.internal_request.instance.equipment_handles,
+        object_world=object_world,
     )
 
     try:
@@ -285,9 +287,11 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
     )
 
     projection_context = skl.ProjectionContext(
-        object_world=object_world,
+        equipment_handles=dict(
+            predict_request.internal_request.instance.equipment_handles
+        ),
         motion_planner=motion_planner,
-        equipment_handles=predict_request.internal_request.instance.equipment_handles,
+        object_world=object_world,
     )
 
     try:
@@ -624,8 +628,8 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
     execution_context = skl.ExecutionContext(
         equipment_handles=dict(request.instance.equipment_handles),
         logging_context=request.context,
-        object_world=object_world,
         motion_planner=motion_planner,
+        object_world=object_world,
     )
 
     return _SkillExecutionOperation(

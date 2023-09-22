@@ -103,25 +103,20 @@ class ProjectionContext:
 
   def __init__(
       self,
-      object_world: Optional[object_world_client.ObjectWorldClient] = None,
-      motion_planner: Optional[
-          motion_planner_client.MotionPlannerClient
-      ] = None,
-      equipment_handles: Optional[
-          Mapping[str, equipment_pb2.EquipmentHandle]
-      ] = None,
+      equipment_handles: dict[str, equipment_pb2.EquipmentHandle],
+      motion_planner: motion_planner_client.MotionPlannerClient,
+      object_world: object_world_client.ObjectWorldClient,
   ):
     """Initializes this object.
 
     Args:
-      object_world: The object world client to provide, or None for no client.
-      motion_planner: The motion planner client to provide, or None for no
-        client.
-      equipment_handles: Handles for the required equipment for this skill
+      equipment_handles: Handles for the required equipment for this skill.
+      motion_planner: The motion planner client to provide.
+      object_world: The object world client to provide.
     """
-    self._object_world = object_world
-    self._motion_planner = motion_planner
     self._equipment_handles = equipment_handles
+    self._motion_planner = motion_planner
+    self._object_world = object_world
 
   def get_kinematic_object_for_equipment(
       self, equipment_name: str
@@ -235,28 +230,18 @@ class ExecutionContext:
 
   @property
   def motion_planner(self) -> motion_planner_client.MotionPlannerClient:
-    motion_planner = self._motion_planner
-    if motion_planner is None:
-      raise ValueError('The context does not have a motion planner client.')
-
-    return motion_planner
+    return self._motion_planner
 
   @property
   def object_world(self) -> object_world_client.ObjectWorldClient:
-    object_world = self._object_world
-    if object_world is None:
-      raise ValueError('The context does not have an object world client.')
-
-    return object_world
+    return self._object_world
 
   def __init__(
       self,
-      equipment_handles: Mapping[str, equipment_pb2.EquipmentHandle],
+      equipment_handles: dict[str, equipment_pb2.EquipmentHandle],
       logging_context: context_pb2.Context,
-      object_world: Optional[object_world_client.ObjectWorldClient] = None,
-      motion_planner: Optional[
-          motion_planner_client.MotionPlannerClient
-      ] = None,
+      motion_planner: motion_planner_client.MotionPlannerClient,
+      object_world: object_world_client.ObjectWorldClient,
       ready_for_cancellation_timeout: float = 30.0,
   ):
     """Initializes this object.
@@ -265,16 +250,15 @@ class ExecutionContext:
       world_id: Id of the current world.
       equipment_handles: A map of equipment names to handles.
       logging_context: The logging context of the execution.
-      object_world: The object world client to provide, or None for no client.
-      motion_planner: The motion planner client to provide, or None for no
-        client.
+      object_world: The object world client to provide.
+      motion_planner: The motion planner client to provide.
       ready_for_cancellation_timeout: When cancelling, the maximum number of
         seconds to wait for the skill to be ready to cancel before timing out.
     """
     self._equipment_handles = equipment_handles
     self._logging_context = logging_context
-    self._object_world = object_world
     self._motion_planner = motion_planner
+    self._object_world = object_world
     self._ready_for_cancellation_timeout = ready_for_cancellation_timeout
 
     self._cancel_lock = threading.Lock()
