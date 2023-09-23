@@ -26,6 +26,11 @@ py_library(
 )
 
 py_library(
+    name = "skill_canceller",
+    srcs = ["skill_canceller.py"],
+)
+
+py_library(
     name = "proto_utils",
     srcs = ["proto_utils.py"],
     srcs_version = "PY3",
