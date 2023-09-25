@@ -193,6 +193,7 @@ py_library(
         "//intrinsic/skills/proto:skill_service_py_pb2_grpc",
         "//intrinsic/skills/proto:skills_py_pb2",
         "//intrinsic/skills/python:proto_utils",
+        "//intrinsic/skills/python:skill_canceller",
         "//intrinsic/skills/python:skill_interface",
         "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
         "//intrinsic/world/python:object_world_client",

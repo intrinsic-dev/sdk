@@ -33,6 +33,7 @@ from intrinsic.skills.proto import skill_service_pb2
 from intrinsic.skills.proto import skill_service_pb2_grpc
 from intrinsic.skills.proto import skills_pb2
 from intrinsic.skills.python import proto_utils
+from intrinsic.skills.python import skill_canceller
 from intrinsic.skills.python import skill_interface as skl
 from intrinsic.world.proto import object_world_service_pb2_grpc
 from intrinsic.world.python import object_world_client
@@ -456,7 +457,7 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
 
     try:
       operation.request_cancellation()
-    except skl.SkillAlreadyCancelledError:
+    except skill_canceller.SkillAlreadyCancelledError:
       _abort_with_status(
           context=context,
           code=status.StatusCode.FAILED_PRECONDITION,
@@ -618,14 +619,20 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
             ),
         )
 
-    object_world = object_world_client.ObjectWorldClient(
-        request.world_id, self._object_world_service
+    canceller = skill_canceller.SkillCancellationManager(
+        ready_timeout=(
+            skill_runtime_data.execution_options.cancellation_ready_timeout.total_seconds()
+        )
     )
     motion_planner = motion_planner_client.MotionPlannerClient(
         request.world_id, self._motion_planner_service
     )
+    object_world = object_world_client.ObjectWorldClient(
+        request.world_id, self._object_world_service
+    )
 
     execution_context = skl.ExecutionContext(
+        canceller=canceller,
         equipment_handles=dict(request.instance.equipment_handles),
         logging_context=request.context,
         motion_planner=motion_planner,
@@ -633,6 +640,7 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
     )
 
     return _SkillExecutionOperation(
+        canceller=canceller,
         context=execution_context,
         operation=operations_pb2.Operation(
             name=request.instance.instance_name, done=False
@@ -804,6 +812,7 @@ class _SkillExecutionOperation:
 
   def __init__(
       self,
+      canceller: skill_canceller.SkillCancellationManager,
       context: skl.ExecutionContext,
       operation: operations_pb2.Operation,
       request: skill_service_pb2.ExecuteRequest,
@@ -813,6 +822,7 @@ class _SkillExecutionOperation:
     """Initializes the instance.
 
     Args:
+      canceller: Supports cooperative cancellation of the skill.
       context: The skill's ExecutionContext.
       operation: The current operation proto for the skill execution.
       request: The skill's ExecuteRequest.
@@ -825,6 +835,7 @@ class _SkillExecutionOperation:
     if not operation.name:
       raise self.OperationHasNoNameError('Operation must have a name.')
 
+    self._canceller = canceller
     self._context = context
     self._operation = operation
     self._request = request
@@ -864,7 +875,9 @@ class _SkillExecutionOperation:
     """
     with self._lock:
       if self._cancelled:
-        raise skl.SkillAlreadyCancelledError('The skill was already cancelled.')
+        raise skill_canceller.SkillAlreadyCancelledError(
+            'The skill was already cancelled.'
+        )
       self._cancelled = True
 
       if not self._supports_cancellation:
@@ -882,10 +895,7 @@ class _SkillExecutionOperation:
         )
         return
 
-      context = self._context
-      assert context is not None
-
-    context._cancel()  # pylint: disable=protected-access
+    self._canceller.cancel()
 
   def wait(self, timeout: Optional[float] = None) -> operations_pb2.Operation:
     """Waits for the operation to finish.

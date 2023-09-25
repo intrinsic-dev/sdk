@@ -5,8 +5,7 @@
 """Skills Python APIs and definitions."""
 import abc
 import dataclasses
-import threading
-from typing import Callable, Generic, List, Mapping, Optional, TypeVar
+from typing import Generic, List, Mapping, Optional, TypeVar
 
 from google.protobuf import descriptor
 from google.protobuf import message
@@ -15,29 +14,15 @@ from intrinsic.motion_planning import motion_planner_client
 from intrinsic.skills.proto import equipment_pb2
 from intrinsic.skills.proto import footprint_pb2
 from intrinsic.skills.proto import skill_service_pb2
+from intrinsic.skills.python import skill_canceller
 from intrinsic.world.python import object_world_client
 from intrinsic.world.python import object_world_ids
 from intrinsic.world.python import object_world_resources
 
+# Imported for convenience of skill implementations.
+SkillCancelledError = skill_canceller.SkillCancelledError
+
 TParamsType = TypeVar('TParamsType', bound=message.Message)
-
-DEFAULT_READY_FOR_CANCELLATION_TIMEOUT = 30.0
-
-
-class CallbackAlreadyRegisteredError(RuntimeError):
-  """A callback was registered after a callback had already been registered."""
-
-
-class SkillAlreadyCancelledError(RuntimeError):
-  """A cancelled skill was cancelled again."""
-
-
-class SkillReadyForCancellationError(RuntimeError):
-  """An invalid action occurred on a skill that is ready for cancellation."""
-
-
-class SkillCancelledError(RuntimeError):
-  """A skill was aborted due to a cancellation request."""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -196,20 +181,14 @@ class ExecutionContext:
   used; however, it would also allow skills to invoke subskills (see full
   functionality in skill_interface.h).
 
-  ExecutionContext helps support cooperative skill cancellation. When a
-  cancellation request is received, the skill should stop as soon as possible
-  and leave resources in a safe and recoverable state.
-
-  If a skill supports cancellation, it must notify its ExecutionContext via
-  `notify_ready_for_cancellation` once it is ready to be cancelled.
-
-  A skill can implement cancellation in one of two ways:
-  1) Poll `cancelled`, and safely cancel operation if and when it becomes true.
-  2) Register a cancellation callback via `register_cancellation_callback`. This
-     callback will be invoked when the skill receives a cancellation request.
+  ExecutionContext helps support cooperative skill cancellation via `canceller`.
+  When a cancellation request is received, the skill should:
+  1) stop as soon as possible and leave resources in a safe and recoverable
+     state;
+  2) raise SkillCancelledError.
 
   Attributes:
-    cancelled: True if the skill framework has received a cancellation request.
+    canceller: Supports cooperative cancellation of the skill.
     equipment_handles: A map of equipment names to handles.
     logging_context: The logging context of the execution.
     motion_planner: A client for the motion planning service.
@@ -217,8 +196,8 @@ class ExecutionContext:
   """
 
   @property
-  def cancelled(self) -> bool:
-    return self._cancelled.is_set()
+  def canceller(self) -> skill_canceller.SkillCanceller:
+    return self._canceller
 
   @property
   def equipment_handles(self) -> Mapping[str, equipment_pb2.EquipmentHandle]:
@@ -238,94 +217,26 @@ class ExecutionContext:
 
   def __init__(
       self,
+      canceller: skill_canceller.SkillCanceller,
       equipment_handles: dict[str, equipment_pb2.EquipmentHandle],
       logging_context: context_pb2.Context,
       motion_planner: motion_planner_client.MotionPlannerClient,
       object_world: object_world_client.ObjectWorldClient,
-      ready_for_cancellation_timeout: float = 30.0,
   ):
     """Initializes this object.
 
     Args:
-      world_id: Id of the current world.
+      canceller: Supports cooperative cancellation of the skill.
       equipment_handles: A map of equipment names to handles.
       logging_context: The logging context of the execution.
-      object_world: The object world client to provide.
       motion_planner: The motion planner client to provide.
-      ready_for_cancellation_timeout: When cancelling, the maximum number of
-        seconds to wait for the skill to be ready to cancel before timing out.
+      object_world: The object world client to provide.
     """
+    self._canceller = canceller
     self._equipment_handles = equipment_handles
     self._logging_context = logging_context
     self._motion_planner = motion_planner
     self._object_world = object_world
-    self._ready_for_cancellation_timeout = ready_for_cancellation_timeout
-
-    self._cancel_lock = threading.Lock()
-    self._ready_for_cancellation = threading.Event()
-    self._cancelled = threading.Event()
-    self._cancellation_cb = None
-
-  def notify_ready_for_cancellation(self) -> None:
-    """Notifies the context that the skill is ready to be cancelled."""
-    self._ready_for_cancellation.set()
-
-  def register_cancellation_callback(self, cb: Callable[[], None]):
-    """Sets a callback that will be invoked when a cancellation is requested.
-
-    If a callback will be used, it must be registered before calling
-    `notify_ready_for_cancellation`. Only one callback may be registered, and
-    the callback will be called at most once.
-
-    Args:
-      cb: The cancellation callback. Will be called at most once.
-
-    Raises:
-      Exception: Any exception raised when calling the cancellation callback.
-      CallbackAlreadyRegisteredError: If a callback was already registered.
-      SkillReadyForCancellationError: If the skill is already ready for
-        cancellation.
-    """
-    with self._cancel_lock:
-      if self._ready_for_cancellation.is_set():
-        raise SkillReadyForCancellationError(
-            'A cancellation callback cannot be registered after the skill is'
-            ' ready for cancellation.'
-        )
-      if self._cancellation_cb is not None:
-        raise CallbackAlreadyRegisteredError(
-            'A cancellation callback was already registered.'
-        )
-
-      self._cancellation_cb = cb
-
-  def _cancel(self) -> None:
-    """Sets the cancelled flag and calls the cancellation callback (if set).
-
-    May be called by the owner of this object (e.g., SkillExecutorServicer).
-
-    Raises:
-      Exception: Any exception raised when calling the cancellation callback.
-      SkillAlreadyCancelledError: If the skill was already cancelled.
-      TimeoutError: If we timeout while waiting for the skill to be ready to
-        cancel.
-    """
-    if not self._ready_for_cancellation.wait(
-        self._ready_for_cancellation_timeout
-    ):
-      raise TimeoutError(
-          'Timed out waiting for the skill to be ready for cancellation.'
-      )
-
-    with self._cancel_lock:
-      if self.cancelled:
-        raise SkillAlreadyCancelledError('The skill was already cancelled.')
-      self._cancelled.set()
-
-      cb = self._cancellation_cb
-
-    if cb is not None:
-      cb()
 
 
 class SkillSignatureInterface(metaclass=abc.ABCMeta):
@@ -384,9 +295,9 @@ class SkillSignatureInterface(metaclass=abc.ABCMeta):
   def get_ready_for_cancellation_timeout(cls) -> float:
     """Returns the skill's ready for cancellation timeout, in seconds.
 
-    If the skill is cancelled, its ExecutionContext waits for at most this
-    timeout duration for the skill to have called
-    `notify_ready_for_cancellation` before raising a timeout error.
+    If the skill is cancelled, its ExecutionContext's SkillCanceller waits for
+    at most this timeout duration for the skill to have called `ready` before
+    raising a timeout error.
     """
     return 30.0
 

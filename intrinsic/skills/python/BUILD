@@ -12,6 +12,7 @@ py_library(
     srcs = ["skill_interface.py"],
     srcs_version = "PY3",
     deps = [
+        ":skill_canceller",
         "//intrinsic/geometry/service:geometry_service_py_pb2_grpc",
         "//intrinsic/logging/proto:context_py_pb2",
         "//intrinsic/motion_planning:motion_planner_client_py",
