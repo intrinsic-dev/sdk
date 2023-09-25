@@ -1,0 +1,32 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.resources;
+
+message OperationalStatus {
+  enum State {
+    // Indicates that the resource instance is in an unspecified state. It may
+    // be possible to get back to a known state by calling `ClearFaults` rpc.
+    UNSPECIFIED = 0;
+    // Indicates that the resource instance is disabled and not ready for use
+    // (e.g. it won't serve resource-specific rpc calls).
+    DISABLED = 1;
+    // Indicates that the resource instance is in an errorenous state. It may be
+    // possible to clear the faults by calling `ClearFaults` rpc.
+    FAULTED = 2;
+    // Indicates that the resource instance is enabled and ready for use.
+    ENABLED = 3;
+  }
+
+  // Current operational state of the resource instance.
+  State state = 1;
+
+  // [Optional] A human-readable explanation for the current operational state.
+  // For example, this can be used to provide details for why the operational
+  // state is `FAULTED` or `UNKNOWN`. It can be left empty for `DISABLED` and
+  // `ENABLED` states.
+  string explanation = 2;
+}

@@ -1,0 +1,51 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.resources;
+
+import "intrinsic/resources/proto/resource_operational_status.proto";
+
+message ResourceHealthStatusRequest {}
+message ResourceHealthStatusResponse {
+  // Current operational status of the resource instance.
+  intrinsic_proto.resources.OperationalStatus status = 1;
+}
+
+message ResourceEnableRequest {}
+message ResourceEnableResponse {}
+
+message ResourceDisableRequest {}
+message ResourceDisableResponse {}
+
+message ResourceClearFaultsRequest {}
+message ResourceClearFaultsResponse {}
+
+// Service to manage the health of a resource instance.
+service ResourceHealth {
+  // Reports the current health of the resource instance.
+  rpc CheckHealth(ResourceHealthStatusRequest)
+      returns (ResourceHealthStatusResponse) {}
+
+  // Attempts to enable the resource instance and, if successful, sets the
+  // internal operational state to `ENABLED` and returns grpc::Status::OK.
+  // The resource instance should only be enabled if it is not in `UNSPECIFIED`
+  // or `FAULTED` state. Otherwise, grpc::StatusCode::FAILED_PRECONDITION should
+  // be returned.
+  rpc Enable(ResourceEnableRequest) returns (ResourceEnableResponse) {}
+
+  // Attempts to disable the resource instance and, if successful, sets the
+  // internal operational state to `DISABLED` and returns grpc::Status::OK.
+  // The resource instance should only be disabled if it is not in `UNSPECIFIED`
+  // or `FAULTED` state. Otherwise, grpc::StatusCode::FAILED_PRECONDITION should
+  // be returned.
+  rpc Disable(ResourceDisableRequest) returns (ResourceDisableResponse) {}
+
+  // Attempts to clear the faults (if any) and disables the resource instance.
+  // If successful, sets the internal operational state to `DISABLED` and
+  // returns grpc::Status::OK.
+  rpc ClearFaults(ResourceClearFaultsRequest)
+      returns (ResourceClearFaultsResponse) {}
+}
