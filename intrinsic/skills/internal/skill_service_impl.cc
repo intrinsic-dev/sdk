@@ -38,6 +38,7 @@
 #include "intrinsic/skills/internal/equipment_utilities.h"
 #include "intrinsic/skills/internal/error_utils.h"
 #include "intrinsic/skills/internal/execute_context_impl.h"
+#include "intrinsic/skills/internal/get_footprint_context_impl.h"
 #include "intrinsic/skills/internal/predict_context_impl.h"
 #include "intrinsic/skills/internal/runtime_data.h"
 #include "intrinsic/skills/internal/skill_registry_client_interface.h"
@@ -493,11 +494,11 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
   INTRINSIC_ASSIGN_OR_RETURN(EquipmentPack equipment,
                              EquipmentPack::GetEquipmentPack(*request));
 
-  PredictContextImpl predict_context(
+  GetFootprintContextImpl footprint_context(
       request->world_id(), request->context(), object_world_service_,
-      motion_planner_service_, std::move(equipment), skill_registry_client_);
+      std::move(equipment), skill_registry_client_);
   auto skill_result =
-      skill->GetFootprint(get_footprint_request, predict_context);
+      skill->GetFootprint(get_footprint_request, footprint_context);
 
   if (!skill_result.ok()) {
     intrinsic_proto::skills::SkillErrorInfo error_info;

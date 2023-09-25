@@ -419,6 +419,7 @@ cc_library(
         ":equipment_utilities",
         ":error_utils",
         ":execute_context_impl",
+        ":get_footprint_context_impl",
         ":predict_context_impl",
         ":runtime_data",
         ":skill_registry_client_interface",
