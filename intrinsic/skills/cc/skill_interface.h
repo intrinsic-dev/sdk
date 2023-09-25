@@ -163,8 +163,8 @@ class GetFootprintRequest {
         param_defaults_any_(std::move(param_defaults)) {}
 
   // Skill-specific data that can be communicated from previous calls to
-  // `GetFootprint` or `Predict`. Can be useful for optimizing skill execution
-  // by pre-computing plan-related information.
+  // `Predict`. Can be useful for optimizing skill execution by pre-computing
+  // plan-related information.
   absl::string_view internal_data() const { return internal_data_; }
 
   // The skill parameters proto.
@@ -209,8 +209,8 @@ class PredictRequest {
         param_defaults_any_(std::move(param_defaults)) {}
 
   // Skill-specific data that can be communicated from previous calls to
-  // `GetFootprint` or `Predict`. Can be useful for optimizing skill execution
-  // by pre-computing plan-related information.
+  // `Predict`. Can be useful for optimizing skill execution by pre-computing
+  // plan-related information.
   absl::string_view internal_data() const { return internal_data_; }
 
   // The skill parameters proto.
@@ -274,14 +274,11 @@ class GetFootprintContext {
 // Interface definition of Skill projecting.
 class SkillProjectInterface {
  public:
-  using ProjectRequest = intrinsic_proto::skills::ProjectRequest;
-  using ProjectResult = intrinsic_proto::skills::ProjectResult;
   using PredictResult = intrinsic_proto::skills::PredictResult;
-  virtual absl::StatusOr<ProjectResult> GetFootprint(
+  using GetFootprintResult = intrinsic_proto::skills::GetFootprintResult;
+  virtual absl::StatusOr<GetFootprintResult> GetFootprint(
       const GetFootprintRequest& request, PredictContext& context) const {
-    ProjectResult result;
-    auto internal_data = request.internal_data();
-    result.set_internal_data(internal_data.data(), internal_data.size());
+    GetFootprintResult result;
     result.mutable_footprint()->set_lock_the_universe(true);
     return std::move(result);
   }
@@ -325,8 +322,8 @@ class ExecuteRequest {
         param_defaults_any_(std::move(param_defaults)) {}
 
   // Skill-specific data that can be communicated from previous calls to
-  // `GetFootprint` or `Predict`. Can be useful for optimizing skill execution
-  // by pre-computing plan-related information.
+  // `Predict`. Can be useful for optimizing skill execution by pre-computing
+  // plan-related information.
   absl::string_view internal_data() const { return internal_data_; }
 
   // The skill parameters proto.

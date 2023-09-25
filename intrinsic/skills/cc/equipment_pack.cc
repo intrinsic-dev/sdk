@@ -12,6 +12,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
+#include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
 
 namespace intrinsic {
@@ -24,7 +25,7 @@ EquipmentPack::EquipmentPack(
     : equipment_map_(equipment_handles.begin(), equipment_handles.end()) {}
 
 absl::StatusOr<EquipmentPack> EquipmentPack::GetEquipmentPack(
-    const intrinsic_proto::skills::ExecuteRequest& request) {
+    const intrinsic_proto::skills::PredictRequest& request) {
   if (!request.has_instance()) {
     return absl::InvalidArgumentError(
         "In `request`, expected a skill `instance`, but the `instance` is "
@@ -34,7 +35,17 @@ absl::StatusOr<EquipmentPack> EquipmentPack::GetEquipmentPack(
 }
 
 absl::StatusOr<EquipmentPack> EquipmentPack::GetEquipmentPack(
-    const intrinsic_proto::skills::ProjectRequest& request) {
+    const intrinsic_proto::skills::GetFootprintRequest& request) {
+  if (!request.has_instance()) {
+    return absl::InvalidArgumentError(
+        "In `request`, expected a skill `instance`, but the `instance` is "
+        "missing.");
+  }
+  return EquipmentPack(request.instance().equipment_handles());
+}
+
+absl::StatusOr<EquipmentPack> EquipmentPack::GetEquipmentPack(
+    const intrinsic_proto::skills::ExecuteRequest& request) {
   if (!request.has_instance()) {
     return absl::InvalidArgumentError(
         "In `request`, expected a skill `instance`, but the `instance` is "

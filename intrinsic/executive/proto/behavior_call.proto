@@ -58,7 +58,7 @@ message BehaviorCall {
   // Optional data that can be set when calling a skill.
   message SkillExecutionOptions {
     // When set, use the specified timeout instead of the default timeout when
-    // calling skill.project() (report failure if project does not finish within
+    // calling skill.predict() (report failure if predict does not finish within
     // this time bound).
     google.protobuf.Duration project_timeout = 1;
 
@@ -73,19 +73,19 @@ message BehaviorCall {
   }
   optional SkillExecutionOptions skill_execution_options = 7;
 
-  // The fields in SkillExecutionData are updated based on a skill.project()
+  // The fields in SkillExecutionData are updated based on a skill.predict()
   // call. They are passed to skill.execute() if set.
-  // At a later point these fields may be set, for example when projection was
+  // At a later point these fields may be set, for example when prediction was
   // run off-line. This is currently not implemented. Confer documentation of
-  // intrinsic_proto.skills.ProjectResult and
+  // intrinsic_proto.skills.PredictResult and
   // intrinsic_proto.skills.ExecuteRequest.
   message SkillExecutionData {
     // The footprint (required resources etc.) of the skill.
     intrinsic_proto.skills.Footprint footprint = 1;
 
-    // Arbitrary internal data from projection. This could be anything and you
+    // Arbitrary internal data from prediction. This could be anything and you
     // cannot make any assumptions on the structure. Since it's passed from a
-    // call to project to the call of execute on the exact same skill, it can
+    // call to predict to the call of execute on the exact same skill, it can
     // know what to expect.
     bytes internal_data = 2;
   }

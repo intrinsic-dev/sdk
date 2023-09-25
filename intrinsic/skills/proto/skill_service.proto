@@ -16,40 +16,24 @@ import "intrinsic/skills/proto/footprint.proto";
 import "intrinsic/skills/proto/prediction.proto";
 import "intrinsic/skills/proto/skills.proto";
 
-message ProjectRequest {
-  google.protobuf.Any parameters = 6;
+message PredictRequest {
+  google.protobuf.Any parameters = 2;
 
-  // Id of the world in the world service which holds the initial world state
-  // for the skill projection.
-  string world_id = 4;
-  intrinsic_proto.skills.SkillInstance instance = 3;
+  // ID of the world in the world service which holds the initial world state
+  // for the prediction.
+  string world_id = 3;
 
-  // OPTIONAL. Context of the projection of the skill instance (e.g. IDs of
-  // related plan instance, deployment configs etc.).
+  intrinsic_proto.skills.SkillInstance instance = 4;
+
+  // Logging context of the operation (e.g. IDs of related plan instance,
+  // deployment configs etc.).
   intrinsic_proto.data_logger.Context context = 5;
 
-  // OPTIONAL. Skill-internal data about the outcome of planning the skill. This
-  // data is optional and if provided can be used to make planning faster. It is
-  // intended to be used if the skill was previously planned and needs
-  // replanning.
-  bytes internal_data = 7;
-}
+  // Optional skill-internal data from a previous call to Predict.
+  bytes internal_data = 6;
 
-message ProjectResult {
-  intrinsic_proto.skills.Footprint footprint = 2;
-
-  // Skill-internal data about the outcome of planning the skill. Attempting to
-  // execute a skill without passing this data may result in behavior that does
-  // not match this ProjectResult.
-  bytes internal_data = 5;
-}
-
-message FootprintRequest {
-  ProjectRequest internal_request = 1;
-}
-
-message PredictRequest {
-  ProjectRequest internal_request = 1;
+  reserved 1;
+  reserved "internal_request";
 }
 
 message PredictResult {
@@ -61,18 +45,38 @@ message PredictResult {
   // would be generated from a call to GetFootprint() with the same arguments.
   repeated Prediction outcomes = 2;
 
-  // Skill-internal data generated while predicting the skill.
+  // Skill-internal data to pass to Projector.GetFootprint and
+  // Executor.StartExecute.
   bytes internal_data = 3;
 
   reserved 1;
   reserved "initial_world_snapshot_id";
 }
 
+message GetFootprintRequest {
+  google.protobuf.Any parameters = 1;
+
+  // ID of the world in the world service which holds the initial world state
+  // for getting the skill footprint.
+  string world_id = 2;
+
+  intrinsic_proto.skills.SkillInstance instance = 3;
+
+  // Logging context of the operation (e.g. IDs of related plan instance,
+  // deployment configs etc.).
+  intrinsic_proto.data_logger.Context context = 4;
+
+  // Skill-internal data from a previous call to Predict.
+  bytes internal_data = 5;
+}
+
+message GetFootprintResult {
+  intrinsic_proto.skills.Footprint footprint = 1;
+}
+
 service Projector {
-  // Returns the anticipated resources given the nominal initial world.
-  // Projection could entail planning (e.g., a motion), or simulating an
-  // execution.
-  rpc GetFootprint(FootprintRequest) returns (ProjectResult) {}
+  // Returns the anticipated resources needed, given the nominal initial world.
+  rpc GetFootprint(GetFootprintRequest) returns (GetFootprintResult) {}
 
   // Returns a distribution of possible states that the world could be in after
   // executing the skill with the provided parameters.
@@ -83,15 +87,18 @@ message ExecuteRequest {
   google.protobuf.Any parameters = 8;
 
   intrinsic_proto.skills.Footprint footprint = 2;
+
+  // Skill-internal data from a previous call to Projector.Predict.
   bytes internal_data = 3;
 
-  // Id of the world in the world service which holds the initial world state
+  // ID of the world in the world service which holds the initial world state
   // for the skill execution.
   string world_id = 7;
+
   intrinsic_proto.skills.SkillInstance instance = 5;
 
-  // OPTIONAL. Context of the execution of the skill instance (e.g. IDs of
-  // related plan instance, deployment configs etc.).
+  // Logging context of the operation (e.g. IDs of related plan instance,
+  // deployment configs etc.).
   intrinsic_proto.data_logger.Context context = 6;
 
   // Additional data associated with the skill. This field is currently required
@@ -105,66 +112,6 @@ message ExecuteResult {
   // this field, there will also be descriptor information for the type of data
   // in the Skill information retrieved from the registry.
   google.protobuf.Any result = 4;
-}
-
-// Logged by the skills client library after a skill execution.
-message ExecutionSummary {
-  intrinsic_proto.skills.SkillInstance instance = 1;
-
-  intrinsic_proto.skills.ExecuteResult result = 2;
-
-  google.protobuf.Duration duration = 3;
-
-  // The OpenCensus Trace ID associated with this skill execution.
-  // A 32 character hex string.
-  string trace_id = 4;
-
-  // Error information if the request failed for any reason.
-  int32 error_code = 5;
-  string error_message = 6;
-  SkillErrorInfo error_info = 7;
-}
-
-// Logged by the skills client library after a skill projection.
-message ProjectionSummary {
-  intrinsic_proto.skills.SkillInstance instance = 1;
-
-  intrinsic_proto.skills.ProjectResult result = 2;
-
-  google.protobuf.Duration duration = 3;
-
-  // Error information if the request failed for any reason.
-  int32 error_code = 4;
-  string error_message = 5;
-  SkillErrorInfo error_info = 6;
-}
-
-// Logged by the skills client library after a skill prediction.
-message PredictionSummary {
-  intrinsic_proto.skills.SkillInstance instance = 1;
-
-  intrinsic_proto.skills.PredictResult result = 2;
-
-  google.protobuf.Duration duration = 3;
-
-  // Error information if the request failed for any reason.
-  int32 error_code = 4;
-  string error_message = 5;
-  SkillErrorInfo error_info = 6;
-}
-
-// Logged by the skills client library after a skill get footprint.
-message FootprintSummary {
-  intrinsic_proto.skills.SkillInstance instance = 1;
-
-  intrinsic_proto.skills.ProjectResult result = 2;
-
-  google.protobuf.Duration duration = 3;
-
-  // Error information if the request failed for any reason.
-  int32 error_code = 4;
-  string error_message = 5;
-  SkillErrorInfo error_info = 6;
 }
 
 service Executor {
@@ -230,4 +177,102 @@ message SkillInformationResult {
 service SkillInformation {
   // Returns skill information.
   rpc GetSkillInfo(google.protobuf.Empty) returns (SkillInformationResult) {}
+}
+
+// Logged by the skills client library after a skill execution.
+message ExecutionSummary {
+  intrinsic_proto.skills.SkillInstance instance = 1;
+
+  intrinsic_proto.skills.ExecuteResult result = 2;
+
+  google.protobuf.Duration duration = 3;
+
+  // The OpenCensus Trace ID associated with this skill execution.
+  // A 32 character hex string.
+  string trace_id = 4;
+
+  // Error information if the request failed for any reason.
+  int32 error_code = 5;
+  string error_message = 6;
+  SkillErrorInfo error_info = 7;
+}
+
+// Logged by the skills client library after a skill prediction.
+message PredictionSummary {
+  intrinsic_proto.skills.SkillInstance instance = 1;
+
+  intrinsic_proto.skills.PredictResult result = 2;
+
+  google.protobuf.Duration duration = 3;
+
+  // Error information if the request failed for any reason.
+  int32 error_code = 4;
+  string error_message = 5;
+  SkillErrorInfo error_info = 6;
+}
+
+// Logged by the skills client library after a skill get footprint.
+message FootprintSummary {
+  intrinsic_proto.skills.SkillInstance instance = 1;
+
+  intrinsic_proto.skills.GetFootprintResult get_footprint_result = 7;
+
+  google.protobuf.Duration duration = 3;
+
+  // Error information if the request failed for any reason.
+  int32 error_code = 4;
+  string error_message = 5;
+  SkillErrorInfo error_info = 6;
+
+  reserved 2;
+  reserved "result";
+}
+
+message ProjectRequest {
+  option deprecated = true;
+
+  google.protobuf.Any parameters = 6;
+
+  // Id of the world in the world service which holds the initial world state
+  // for the skill projection.
+  string world_id = 4;
+
+  intrinsic_proto.skills.SkillInstance instance = 3;
+
+  // OPTIONAL. Context of the projection of the skill instance (e.g. IDs of
+  // related plan instance, deployment configs etc.).
+  intrinsic_proto.data_logger.Context context = 5;
+
+  // OPTIONAL. Skill-internal data about the outcome of planning the skill. This
+  // data is optional and if provided can be used to make planning faster. It is
+  // intended to be used if the skill was previously planned and needs
+  // replanning.
+  bytes internal_data = 7;
+}
+
+message ProjectResult {
+  option deprecated = true;
+
+  intrinsic_proto.skills.Footprint footprint = 2;
+
+  // Skill-internal data about the outcome of planning the skill. Attempting to
+  // execute a skill without passing this data may result in behavior that does
+  // not match this ProjectResult.
+  bytes internal_data = 5;
+}
+
+// Logged by the skills client library after a skill projection.
+message ProjectionSummary {
+  option deprecated = true;
+
+  intrinsic_proto.skills.SkillInstance instance = 1;
+
+  intrinsic_proto.skills.ProjectResult result = 2;
+
+  google.protobuf.Duration duration = 3;
+
+  // Error information if the request failed for any reason.
+  int32 error_code = 4;
+  string error_message = 5;
+  SkillErrorInfo error_info = 6;
 }

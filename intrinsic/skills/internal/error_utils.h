@@ -55,7 +55,7 @@ void SetErrorInfo(const intrinsic_proto::skills::SkillErrorInfo& error_info,
 intrinsic_proto::skills::SkillErrorInfo GetErrorInfo(
     const absl::Status& status);
 
-// T should be either a ProjectionSummary or ExecutionSummary.
+// T should be a PredictionSummary, FootprintSummary, or ExecutionSummary.
 template <typename T>
 void AddErrorToSummary(const absl::Status& absl_status, T& summary) {
   if (absl_status.ok()) return;

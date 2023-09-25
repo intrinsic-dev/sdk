@@ -27,6 +27,6 @@ class NoOpSkill(skl.Skill):
       self,
       params: skl.GetFootprintRequest[no_op_skill_pb2.NoOpSkillParams],
       context: skl.ProjectionContext,
-  ) -> skill_service_pb2.ProjectResult:
+  ) -> skill_service_pb2.GetFootprintResult:
     """See base class."""
-    return skill_service_pb2.ProjectResult()
+    return skill_service_pb2.GetFootprintResult()

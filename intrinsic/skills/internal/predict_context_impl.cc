@@ -5,7 +5,6 @@
 #include "intrinsic/skills/internal/predict_context_impl.h"
 
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 
@@ -14,7 +13,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
-#include "google/protobuf/message.h"
 #include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/skills/internal/default_parameters.h"

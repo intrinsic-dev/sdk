@@ -72,18 +72,18 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
 
   def GetFootprint(
       self,
-      footprint_request: skill_service_pb2.FootprintRequest,
+      footprint_request: skill_service_pb2.GetFootprintRequest,
       context: grpc.ServicerContext,
-  ) -> skill_service_pb2.ProjectResult:
+  ) -> skill_service_pb2.GetFootprintResult:
     """Runs Skill get_footprint operation with provided parameters.
 
     Args:
-      footprint_request: Project request with skill instance to run
+      footprint_request: GetFootprintRequest with skill instance to run
         get_footprint on.
       context: gRPC servicer context.
 
     Returns:
-      ProjectResult containing results of the footprint calculation.
+      GetFootprintResult containing results of the footprint calculation.
 
     Raises:
      grpc.RpcError:
@@ -93,8 +93,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       INVALID_ARGUMENT: When the required equipment does not match the
           requested.
     """
-    project_request = footprint_request.internal_request
-    skill_name = id_utils.name_from(project_request.instance.id_version)
+    skill_name = id_utils.name_from(footprint_request.instance.id_version)
     try:
       skill_project_instance = self._skill_repository.get_skill_project(
           skill_name
@@ -103,7 +102,9 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       _abort_with_status(
           context=context,
           code=status.StatusCode.NOT_FOUND,
-          message=f'Skill not found: {project_request.instance.id_version!r}.',
+          message=(
+              f'Skill not found: {footprint_request.instance.id_version!r}.'
+          ),
           skill_error_info=error_pb2.SkillErrorInfo(
               error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_GRPC
           ),
@@ -114,12 +115,12 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
         skill_name
     )
     defaults = skill_runtime_data.parameter_data.default_value
-    if defaults is not None and project_request.HasField('parameters'):
+    if defaults is not None and footprint_request.HasField('parameters'):
       try:
         default_parameters.apply_defaults_to_parameters(
             skill_runtime_data.parameter_data.descriptor,
             defaults,
-            project_request.parameters,
+            footprint_request.parameters,
         )
       except status.StatusNotOk as e:
         _abort_with_status(
@@ -141,7 +142,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
           code=status.StatusCode.INTERNAL,
           message=(
               'Could not construct get footprint request for skill'
-              f' {project_request.instance.id_version}: {err}.'
+              f' {footprint_request.instance.id_version}: {err}.'
           ),
           skill_error_info=error_pb2.SkillErrorInfo(
               error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
@@ -149,22 +150,20 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       )
 
     object_world = object_world_client.ObjectWorldClient(
-        project_request.world_id, self._object_world_service
+        footprint_request.world_id, self._object_world_service
     )
     motion_planner = motion_planner_client.MotionPlannerClient(
-        project_request.world_id, self._motion_planner_service
+        footprint_request.world_id, self._motion_planner_service
     )
 
     projection_context = skl.ProjectionContext(
-        equipment_handles=dict(
-            footprint_request.internal_request.instance.equipment_handles
-        ),
+        equipment_handles=dict(footprint_request.instance.equipment_handles),
         motion_planner=motion_planner,
         object_world=object_world,
     )
 
     try:
-      project_result = skill_project_instance.get_footprint(
+      get_footprint_result = skill_project_instance.get_footprint(
           request, projection_context
       )
     except Exception:  # pylint: disable=broad-except
@@ -184,9 +183,9 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
     # Add required equipment to the footprint automatically
     required_equipment = skill_runtime_data.resource_data.required_resources
     for name, selector in required_equipment.items():
-      if name in project_request.instance.equipment_handles:
-        handle = project_request.instance.equipment_handles[name]
-        project_result.footprint.equipment_resource.append(
+      if name in footprint_request.instance.equipment_handles:
+        handle = footprint_request.instance.equipment_handles[name]
+        get_footprint_result.footprint.equipment_resource.append(
             footprint_pb2.EquipmentResource(
                 type=selector.sharing_type, name=handle.name
             )
@@ -198,14 +197,14 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
             message=(
                 'Error when specifying equipment resources. Skill requires'
                 f' {list(required_equipment)} but got'
-                f' {list(project_request.instance.equipment_handles)}.'
+                f' {list(footprint_request.instance.equipment_handles)}.'
             ),
             skill_error_info=error_pb2.SkillErrorInfo(
                 error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
             ),
         )
 
-    return project_result
+    return get_footprint_result
 
   def Predict(
       self,
@@ -227,8 +226,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
         INVALID_ARGUMENT: If unable to apply the default parameters.
         INTERNAL: If an error occurred during prediction.
     """
-    project_request = predict_request.internal_request
-    skill_name = id_utils.name_from(project_request.instance.id_version)
+    skill_name = id_utils.name_from(predict_request.instance.id_version)
     try:
       skill_project_instance = self._skill_repository.get_skill_project(
           skill_name
@@ -237,7 +235,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       _abort_with_status(
           context=context,
           code=status.StatusCode.NOT_FOUND,
-          message=f'Skill not found: {project_request.instance.id_version!r}.',
+          message=f'Skill not found: {predict_request.instance.id_version!r}.',
           skill_error_info=error_pb2.SkillErrorInfo(
               error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_GRPC
           ),
@@ -248,12 +246,12 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
         skill_name
     )
     defaults = skill_runtime_data.parameter_data.default_value
-    if defaults is not None and project_request.HasField('parameters'):
+    if defaults is not None and predict_request.HasField('parameters'):
       try:
         default_parameters.apply_defaults_to_parameters(
             skill_runtime_data.parameter_data.descriptor,
             defaults,
-            project_request.parameters,
+            predict_request.parameters,
         )
       except status.StatusNotOk as e:
         _abort_with_status(
@@ -273,7 +271,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
           code=status.StatusCode.INTERNAL,
           message=(
               'Could not construct predict request for skill'
-              f' {project_request.instance.id_version}: {err}.'
+              f' {predict_request.instance.id_version}: {err}.'
           ),
           skill_error_info=error_pb2.SkillErrorInfo(
               error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
@@ -281,16 +279,14 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       )
 
     object_world = object_world_client.ObjectWorldClient(
-        project_request.world_id, self._object_world_service
+        predict_request.world_id, self._object_world_service
     )
     motion_planner = motion_planner_client.MotionPlannerClient(
-        project_request.world_id, self._motion_planner_service
+        predict_request.world_id, self._motion_planner_service
     )
 
     projection_context = skl.ProjectionContext(
-        equipment_handles=dict(
-            predict_request.internal_request.instance.equipment_handles
-        ),
+        equipment_handles=dict(predict_request.instance.equipment_handles),
         motion_planner=motion_planner,
         object_world=object_world,
     )
@@ -1052,10 +1048,10 @@ def _abort_with_status(
 
 
 def _proto_to_get_footprint_request(
-    proto: skill_service_pb2.FootprintRequest,
+    proto: skill_service_pb2.GetFootprintRequest,
     skill_runtime_data: rd.SkillRuntimeData,
 ) -> skl.GetFootprintRequest:
-  """Converts a FootprintRequest proto to the request to send to the skill.
+  """Converts a GetFootprintRequest proto to the request to send to the skill.
 
   Args:
     proto: The proto to convert.
@@ -1070,14 +1066,13 @@ def _proto_to_get_footprint_request(
   """
   try:
     params = _unpack_any_from_descriptor(
-        proto.internal_request.parameters,
-        skill_runtime_data.parameter_data.descriptor,
+        proto.parameters, skill_runtime_data.parameter_data.descriptor
     )
   except proto_utils.ProtoMismatchTypeError as err:
     raise _CannotConstructGetFootprintRequestError(str(err)) from err
 
   return skl.GetFootprintRequest(
-      internal_data=proto.internal_request.internal_data, params=params
+      internal_data=proto.internal_data, params=params
   )
 
 
@@ -1099,15 +1094,12 @@ def _proto_to_predict_request(
   """
   try:
     params = _unpack_any_from_descriptor(
-        proto.internal_request.parameters,
-        skill_runtime_data.parameter_data.descriptor,
+        proto.parameters, skill_runtime_data.parameter_data.descriptor
     )
   except proto_utils.ProtoMismatchTypeError as err:
     raise _CannotConstructPredictRequestError(str(err)) from err
 
-  return skl.PredictRequest(
-      internal_data=proto.internal_request.internal_data, params=params
-  )
+  return skl.PredictRequest(internal_data=proto.internal_data, params=params)
 
 
 def _unpack_any_from_descriptor(

@@ -19,7 +19,11 @@
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/internal/skill_registry_client_interface.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
+#include "intrinsic/skills/proto/skill_service.pb.h"
+#include "intrinsic/world/objects/frame.h"
+#include "intrinsic/world/objects/kinematic_object.h"
 #include "intrinsic/world/objects/object_world_client.h"
+#include "intrinsic/world/objects/world_object.h"
 #include "intrinsic/world/proto/object_world_service.grpc.pb.h"
 
 namespace intrinsic {

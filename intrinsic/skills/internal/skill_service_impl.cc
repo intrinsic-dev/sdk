@@ -56,9 +56,8 @@ using ::intrinsic::assets::RemoveVersionFrom;
 
 namespace {
 
-template <class ProjectOrExecuteRequest>
-absl::Status ValidateProjectOrExecuteRequest(
-    const ProjectOrExecuteRequest& request) {
+template <class Request>
+absl::Status ValidateRequest(const Request& request) {
   if (request.world_id().empty()) {
     return absl::InvalidArgumentError(
         "Cannot load a world with an empty world_id");
@@ -449,7 +448,7 @@ SkillProjectorServiceImpl::SkillProjectorServiceImpl(
 
 absl::StatusOr<GetFootprintRequest>
 SkillProjectorServiceImpl::ProtoToGetFootprintRequest(
-    const intrinsic_proto::skills::ProjectRequest& request) {
+    const intrinsic_proto::skills::GetFootprintRequest& request) {
   INTRINSIC_ASSIGN_OR_RETURN(
       std::string id, RemoveVersionFrom(request.instance().id_version()));
   INTRINSIC_ASSIGN_OR_RETURN(std::string skill_name, NameFrom(id));
@@ -461,7 +460,7 @@ SkillProjectorServiceImpl::ProtoToGetFootprintRequest(
 }
 
 absl::StatusOr<PredictRequest> SkillProjectorServiceImpl::ProtoToPredictRequest(
-    const intrinsic_proto::skills::ProjectRequest& request) {
+    const intrinsic_proto::skills::PredictRequest& request) {
   INTRINSIC_ASSIGN_OR_RETURN(
       std::string id, RemoveVersionFrom(request.instance().id_version()));
   INTRINSIC_ASSIGN_OR_RETURN(std::string skill_name, NameFrom(id));
@@ -474,34 +473,28 @@ absl::StatusOr<PredictRequest> SkillProjectorServiceImpl::ProtoToPredictRequest(
 
 grpc::Status SkillProjectorServiceImpl::GetFootprint(
     grpc::ServerContext* context,
-    const intrinsic_proto::skills::FootprintRequest* request,
-    intrinsic_proto::skills::ProjectResult* result) {
+    const intrinsic_proto::skills::GetFootprintRequest* request,
+    intrinsic_proto::skills::GetFootprintResult* result) {
   LOG(INFO) << "Attempting to get footprint '"
-            << request->internal_request().instance().id_version()
-            << "' skill with world id '"
-            << request->internal_request().world_id() << "'";
+            << request->instance().id_version() << "' skill with world id '"
+            << request->world_id() << "'";
 
-  INTRINSIC_RETURN_IF_ERROR(
-      ValidateProjectOrExecuteRequest(request->internal_request()));
+  INTRINSIC_RETURN_IF_ERROR(ValidateRequest(*request));
 
-  INTRINSIC_ASSIGN_OR_RETURN(
-      const std::string skill_name,
-      NameFrom(request->internal_request().instance().id_version()));
+  INTRINSIC_ASSIGN_OR_RETURN(const std::string skill_name,
+                             NameFrom(request->instance().id_version()));
   LOG(INFO) << "Calling GetFootprint for skill name: " << skill_name;
   INTRINSIC_ASSIGN_OR_RETURN(std::unique_ptr<SkillProjectInterface> skill,
                              skill_repository_.GetSkillProject(skill_name));
 
-  INTRINSIC_ASSIGN_OR_RETURN(
-      GetFootprintRequest get_footprint_request,
-      ProtoToGetFootprintRequest(request->internal_request()));
+  INTRINSIC_ASSIGN_OR_RETURN(GetFootprintRequest get_footprint_request,
+                             ProtoToGetFootprintRequest(*request));
 
-  INTRINSIC_ASSIGN_OR_RETURN(
-      EquipmentPack equipment,
-      EquipmentPack::GetEquipmentPack(request->internal_request()));
+  INTRINSIC_ASSIGN_OR_RETURN(EquipmentPack equipment,
+                             EquipmentPack::GetEquipmentPack(*request));
 
   PredictContextImpl predict_context(
-      request->internal_request().world_id(),
-      request->internal_request().context(), object_world_service_,
+      request->world_id(), request->context(), object_world_service_,
       motion_planner_service_, std::move(equipment), skill_registry_client_);
   auto skill_result =
       skill->GetFootprint(get_footprint_request, predict_context);
@@ -522,7 +515,7 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
       auto equipment_resources,
       ReserveEquipmentRequired(
           runtime_data.GetResourceData().GetRequiredResources(),
-          request->internal_request().instance().equipment_handles()));
+          request->instance().equipment_handles()));
   for (const auto& equipment_resource : equipment_resources) {
     *result->mutable_footprint()->add_equipment_resource() = equipment_resource;
   }
@@ -534,30 +527,23 @@ grpc::Status SkillProjectorServiceImpl::Predict(
     grpc::ServerContext* context,
     const intrinsic_proto::skills::PredictRequest* request,
     intrinsic_proto::skills::PredictResult* result) {
-  LOG(INFO) << "Attempting to predict '"
-            << request->internal_request().instance().id_version()
-            << "' skill with world id '"
-            << request->internal_request().world_id() << "'";
+  LOG(INFO) << "Attempting to predict '" << request->instance().id_version()
+            << "' skill with world id '" << request->world_id() << "'";
 
-  INTRINSIC_RETURN_IF_ERROR(
-      ValidateProjectOrExecuteRequest(request->internal_request()));
+  INTRINSIC_RETURN_IF_ERROR(ValidateRequest(*request));
 
-  INTRINSIC_ASSIGN_OR_RETURN(
-      const std::string skill_name,
-      NameFrom(request->internal_request().instance().id_version()));
+  INTRINSIC_ASSIGN_OR_RETURN(const std::string skill_name,
+                             NameFrom(request->instance().id_version()));
   LOG(INFO) << "Calling predict for skill[" << skill_name << "]";
 
-  INTRINSIC_ASSIGN_OR_RETURN(
-      PredictRequest predict_request,
-      ProtoToPredictRequest(request->internal_request()));
+  INTRINSIC_ASSIGN_OR_RETURN(PredictRequest predict_request,
+                             ProtoToPredictRequest(*request));
 
-  INTRINSIC_ASSIGN_OR_RETURN(
-      EquipmentPack equipment,
-      EquipmentPack::GetEquipmentPack(request->internal_request()));
+  INTRINSIC_ASSIGN_OR_RETURN(EquipmentPack equipment,
+                             EquipmentPack::GetEquipmentPack(*request));
 
   PredictContextImpl predict_context(
-      request->internal_request().world_id(),
-      request->internal_request().context(), object_world_service_,
+      request->world_id(), request->context(), object_world_service_,
       motion_planner_service_, std::move(equipment), skill_registry_client_);
   INTRINSIC_ASSIGN_OR_RETURN(std::unique_ptr<SkillProjectInterface> skill,
                              skill_repository_.GetSkillProject(skill_name));
@@ -604,7 +590,7 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
             << request->instance().id_version() << "' skill with world id '"
             << request->world_id() << "'";
 
-  INTRINSIC_RETURN_IF_ERROR(ValidateProjectOrExecuteRequest(*request));
+  INTRINSIC_RETURN_IF_ERROR(ValidateRequest(*request));
 
   INTRINSIC_ASSIGN_OR_RETURN(
       std::string skill_id,

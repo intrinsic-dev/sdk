@@ -31,8 +31,8 @@ class GetFootprintRequest(Generic[TParamsType]):
 
   Attributes:
     internal_data: Skill-specific data that can be communicated from previous
-      calls to `get_footprint` or `predict`. Can be useful for optimizing skill
-      execution by pre-computing plan-related information.
+      calls to `predict`. Can be useful for optimizing skill execution by
+      pre-computing plan-related information.
     params: The skill parameters proto. For static typing, GetFootprintRequest
       can be parameterized with the required type of this message.
   """
@@ -47,8 +47,8 @@ class PredictRequest(Generic[TParamsType]):
 
   Attributes:
     internal_data: Skill-specific data that can be communicated from previous
-      calls to `get_footprint` or `predict`. Can be useful for optimizing skill
-      execution by pre-computing plan-related information.
+      calls to `predict`. Can be useful for optimizing skill execution by
+      pre-computing plan-related information.
     params: The skill parameters proto. For static typing, PredictRequest can be
       parameterized with the required type of this message.
   """
@@ -162,8 +162,8 @@ class ExecuteRequest(Generic[TParamsType]):
   """A request for a call to Skill.execute.
 
   Attributes:
-    internal_data: Skill-specific data that can be communicated to `execute`
-      from other skill methods. Can be useful for optimizing skill execution by
+    internal_data: Skill-specific data that can be communicated from previous
+      calls to `predict`. Can be useful for optimizing skill execution by
       pre-computing plan-related information.
     params: The skill parameters proto. For static typing, ExecuteRequest can be
       parameterized with the required type of this message.
@@ -350,7 +350,7 @@ class SkillProjectInterface(metaclass=abc.ABCMeta):
 
   def get_footprint(
       self, request: GetFootprintRequest, context: ProjectionContext
-  ) -> skill_service_pb2.ProjectResult:
+  ) -> skill_service_pb2.GetFootprintResult:
     """Returns the required resources for running this skill.
 
     Skill authors should override this method with their implementation.
@@ -365,7 +365,7 @@ class SkillProjectInterface(metaclass=abc.ABCMeta):
     """
     del request  # Unused in this default implementation.
     del context  # Unused in this default implementation.
-    return skill_service_pb2.ProjectResult(
+    return skill_service_pb2.GetFootprintResult(
         footprint=footprint_pb2.Footprint(lock_the_universe=True)
     )
 

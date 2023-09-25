@@ -78,14 +78,17 @@ message LogItem {
       intrinsic_proto.error.ErrorReport error_report = 23;
 
       // ===== Skills =====
-      intrinsic_proto.skills.ExecuteRequest skills_execute_request = 21;
-      intrinsic_proto.skills.ExecutionSummary skills_execution_summary = 16;
-      intrinsic_proto.skills.ProjectRequest skills_project_request = 22;
-      intrinsic_proto.skills.ProjectionSummary skills_projection_summary = 20;
       intrinsic_proto.skills.PredictRequest skills_predict_request = 36;
       intrinsic_proto.skills.PredictionSummary skills_prediction_summary = 37;
-      intrinsic_proto.skills.FootprintRequest skills_footprint_request = 38;
+      intrinsic_proto.skills.GetFootprintRequest skills_get_footprint_request =
+          47;
       intrinsic_proto.skills.FootprintSummary skills_footprint_summary = 39;
+      intrinsic_proto.skills.ExecuteRequest skills_execute_request = 21;
+      intrinsic_proto.skills.ExecutionSummary skills_execution_summary = 16;
+      intrinsic_proto.skills.ProjectRequest skills_project_request = 22
+          [deprecated = true];
+      intrinsic_proto.skills.ProjectionSummary skills_projection_summary = 20
+          [deprecated = true];
 
       // ===== Executive =====
       intrinsic_proto.executive.ExecutiveState executive_state = 13;
@@ -104,8 +107,9 @@ message LogItem {
       intrinsic_proto.icon.Wrench icon_ft_wrench = 17;
       intrinsic_proto.icon.RobotStatus icon_robot_status = 27;
     }
-    reserved 2, 4, 5, 6, 9, 12, 15, 19, 28;
+    reserved 2, 4, 5, 6, 9, 12, 15, 19, 28, 38;
     reserved "optimization_measurement";
+    reserved "skills_footprint_request";
   }
 
   // Any structured data associated with this event.

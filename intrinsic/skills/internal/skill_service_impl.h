@@ -23,6 +23,7 @@
 #include "absl/time/time.h"
 #include "google/longrunning/operations.pb.h"
 #include "google/protobuf/empty.pb.h"
+#include "grpcpp/server_context.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/cc/skill_interface.h"
@@ -250,8 +251,8 @@ class SkillProjectorServiceImpl
 
   grpc::Status GetFootprint(
       grpc::ServerContext* context,
-      const intrinsic_proto::skills::FootprintRequest* request,
-      intrinsic_proto::skills::ProjectResult* result) override;
+      const intrinsic_proto::skills::GetFootprintRequest* request,
+      intrinsic_proto::skills::GetFootprintResult* result) override;
 
   grpc::Status Predict(grpc::ServerContext* context,
                        const intrinsic_proto::skills::PredictRequest* request,
@@ -259,10 +260,10 @@ class SkillProjectorServiceImpl
 
  private:
   absl::StatusOr<GetFootprintRequest> ProtoToGetFootprintRequest(
-      const intrinsic_proto::skills::ProjectRequest& request);
+      const intrinsic_proto::skills::GetFootprintRequest& request);
 
   absl::StatusOr<PredictRequest> ProtoToPredictRequest(
-      const intrinsic_proto::skills::ProjectRequest& request);
+      const intrinsic_proto::skills::PredictRequest& request);
 
   std::shared_ptr<ObjectWorldService::StubInterface> object_world_service_;
   std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service_;
