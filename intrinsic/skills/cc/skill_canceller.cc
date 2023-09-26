@@ -2,7 +2,7 @@
 // Intrinsic Proprietary and Confidential
 // Provided subject to written agreement between the parties.
 
-#include "intrinsic/skills/internal/canceller.h"
+#include "intrinsic/skills/cc/skill_canceller.h"
 
 #include <memory>
 #include <utility>

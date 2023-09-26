@@ -116,13 +116,13 @@ cc_library(
     srcs = ["execute_context_impl.cc"],
     hdrs = ["execute_context_impl.h"],
     deps = [
-        ":canceller",
         ":skill_registry_client_interface",
         "//intrinsic/icon/release:status_helpers",
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/motion_planning:motion_planner_client",
         "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
         "//intrinsic/skills/cc:equipment_pack",
+        "//intrinsic/skills/cc:skill_canceller",
         "//intrinsic/skills/cc:skill_interface",
         "//intrinsic/skills/proto:equipment_cc_proto",
         "//intrinsic/skills/proto:footprint_cc_proto",
@@ -137,20 +137,6 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/time",
-    ],
-)
-
-cc_library(
-    name = "canceller",
-    srcs = ["canceller.cc"],
-    hdrs = ["canceller.h"],
-    deps = [
-        "//intrinsic/icon/release:status_helpers",
-        "@com_google_absl//absl/functional:any_invocable",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
     ],
 )
@@ -414,7 +400,6 @@ cc_library(
     srcs = ["skill_service_impl.cc"],
     hdrs = ["skill_service_impl.h"],
     deps = [
-        ":canceller",
         ":default_parameters",
         ":equipment_utilities",
         ":error_utils",
@@ -428,6 +413,7 @@ cc_library(
         "//intrinsic/icon/release:status_helpers",
         "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
         "//intrinsic/skills/cc:equipment_pack",
+        "//intrinsic/skills/cc:skill_canceller",
         "//intrinsic/skills/cc:skill_interface",
         "//intrinsic/skills/proto:error_cc_proto",
         "//intrinsic/skills/proto:skill_service_cc_grpc_proto",

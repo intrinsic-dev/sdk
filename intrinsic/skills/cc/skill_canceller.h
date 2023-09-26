@@ -2,8 +2,8 @@
 // Intrinsic Proprietary and Confidential
 // Provided subject to written agreement between the parties.
 
-#ifndef INTRINSIC_SKILLS_INTERNAL_CANCELLER_H_
-#define INTRINSIC_SKILLS_INTERNAL_CANCELLER_H_
+#ifndef INTRINSIC_SKILLS_CC_SKILL_CANCELLER_H_
+#define INTRINSIC_SKILLS_CC_SKILL_CANCELLER_H_
 
 #include <memory>
 #include <string>
@@ -56,4 +56,4 @@ class Canceller {
 }  // namespace skills
 }  // namespace intrinsic
 
-#endif  // INTRINSIC_SKILLS_INTERNAL_CANCELLER_H_
+#endif  // INTRINSIC_SKILLS_CC_SKILL_CANCELLER_H_
