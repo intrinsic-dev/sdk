@@ -22,6 +22,7 @@
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
 #include "google/longrunning/operations.pb.h"
+#include "google/protobuf/any.pb.h"
 #include "google/protobuf/empty.pb.h"
 #include "grpcpp/server_context.h"
 #include "grpcpp/support/status.h"
@@ -50,15 +51,15 @@ constexpr int32_t kMaxNumOperations = 100;
 // Encapsulates a single skill execution operation.
 class SkillExecutionOperation {
  public:
-  // Creates a new operation.
+  // Creates a new operation from an ExecuteRequest.
   static absl::StatusOr<std::unique_ptr<SkillExecutionOperation>> Create(
       const intrinsic_proto::skills::ExecuteRequest* request,
       const std::optional<::google::protobuf::Any>& param_defaults,
       std::shared_ptr<Canceller> canceller);
 
-  // Starts execution of the specified skill.
-  absl::Status StartExecution(std::unique_ptr<SkillExecuteInterface> skill,
-                              std::unique_ptr<ExecuteContextImpl> context)
+  // Starts executing the specified skill.
+  absl::Status StartExecute(std::unique_ptr<SkillExecuteInterface> skill,
+                            std::unique_ptr<ExecuteContextImpl> context)
       ABSL_LOCKS_EXCLUDED(thread_mutex_);
 
   // True if the skill execution has finished.
@@ -72,13 +73,12 @@ class SkillExecutionOperation {
 
   // Gets the id_version of the skill executed by this operation.
   // id_version is defined by: intrinsic_proto.catalog.SkillMeta.id_version
-  std::string GetSkillIdVersion() const {
-    return request_.instance().id_version();
-  }
+  std::string GetSkillIdVersion() const { return id_version_; }
 
-  // Gets the ExecuteRequest associated with this operation.
-  const intrinsic_proto::skills::ExecuteRequest& GetExecuteRequest() const {
-    return request_;
+  // Gets the ExecuteRequest associated with this operation, if any.
+  const std::optional<intrinsic_proto::skills::ExecuteRequest>&
+  GetExecuteRequest() const {
+    return execute_request_;
   }
 
   // A copy of the underlying Operation proto.
@@ -109,14 +109,20 @@ class SkillExecutionOperation {
 
  private:
   SkillExecutionOperation(
-      const intrinsic_proto::skills::ExecuteRequest* request,
+      absl::string_view instance_name, absl::string_view id_version,
+      absl::string_view internal_data, const ::google::protobuf::Any& params,
       const std::optional<::google::protobuf::Any>& param_defaults,
-      std::shared_ptr<Canceller> canceller)
-      : request_(*request),
+      std::shared_ptr<Canceller> canceller,
+      const std::optional<intrinsic_proto::skills::ExecuteRequest>&
+          execute_request)
+      : execute_request_(execute_request),
+        id_version_(id_version),
+        internal_data_(internal_data),
+        params_(params),
         param_defaults_(param_defaults),
         canceller_(canceller) {
     absl::MutexLock lock(&operation_mutex_);
-    operation_.set_name(request_.instance().instance_name());
+    operation_.set_name(instance_name);
   }
 
   // Marks the operation as finished, with an error and/or result.
@@ -124,7 +130,11 @@ class SkillExecutionOperation {
                       const intrinsic_proto::skills::ExecuteResult* result)
       ABSL_LOCKS_EXCLUDED(operation_mutex_);
 
-  intrinsic_proto::skills::ExecuteRequest request_;
+  std::optional<intrinsic_proto::skills::ExecuteRequest> execute_request_;
+
+  std::string id_version_;
+  std::string internal_data_;
+  ::google::protobuf::Any params_;
   std::optional<::google::protobuf::Any> param_defaults_;
 
   std::shared_ptr<Canceller> canceller_;
@@ -183,7 +193,7 @@ class SkillExecutionOperationCleaner {
 class SkillExecutionOperations {
  public:
   // Creates a new SkillExecutionOperation and starts executing the skill.
-  absl::StatusOr<std::shared_ptr<SkillExecutionOperation>> Start(
+  absl::StatusOr<std::shared_ptr<SkillExecutionOperation>> StartExecute(
       std::unique_ptr<SkillExecuteInterface> skill,
       const intrinsic_proto::skills::ExecuteRequest* request,
       const std::optional<::google::protobuf::Any>& param_defaults,

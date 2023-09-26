@@ -99,11 +99,14 @@ SkillExecutionOperation::Create(
   if (request == nullptr) {
     return absl::InvalidArgumentError("`request` is null.");
   }
-  return absl::WrapUnique(
-      new SkillExecutionOperation(request, param_defaults, canceller));
+  return absl::WrapUnique(new SkillExecutionOperation(
+      /*instance_name=*/request->instance().instance_name(),
+      /*id_version=*/request->instance().id_version(),
+      /*internal_data=*/request->internal_data(),
+      /*params=*/request->parameters(), param_defaults, canceller, *request));
 }
 
-absl::Status SkillExecutionOperation::StartExecution(
+absl::Status SkillExecutionOperation::StartExecute(
     std::unique_ptr<SkillExecuteInterface> skill,
     std::unique_ptr<ExecuteContextImpl> context) {
   if (skill == nullptr) {
@@ -119,35 +122,32 @@ absl::Status SkillExecutionOperation::StartExecution(
       return absl::FailedPreconditionError(
           "An execution thread already exists.");
     }
-    thread_ = std::make_unique<Thread>(
-        [this, skill = std::move(skill),
-         context = std::move(context)]() -> absl::Status {
-          absl::StatusOr<intrinsic_proto::skills::ExecuteResult> skill_result;
-          {
-            skill_result = skill->Execute(
-                ExecuteRequest(request_.internal_data(), request_.parameters(),
-                               param_defaults_),
-                *context);
-          }
+    thread_ = std::make_unique<Thread>([this, skill = std::move(skill),
+                                        context = std::move(
+                                            context)]() -> absl::Status {
+      absl::StatusOr<intrinsic_proto::skills::ExecuteResult> skill_result;
+      {
+        skill_result = skill->Execute(
+            ExecuteRequest(internal_data_, params_, param_defaults_), *context);
+      }
 
-          if (!skill_result.ok()) {
-            intrinsic_proto::skills::SkillErrorInfo error_info;
-            error_info.set_error_type(
-                intrinsic_proto::skills::SkillErrorInfo::ERROR_TYPE_SKILL);
-            auto rpc_status =
-                ToGoogleRpcStatus(skill_result.status(), error_info);
-            LOG(ERROR) << "Skill: " << GetSkillIdVersion()
-                       << " returned an error during execution. code: "
-                       << rpc_status.code()
-                       << ", message: " << rpc_status.message();
+      if (!skill_result.ok()) {
+        intrinsic_proto::skills::SkillErrorInfo error_info;
+        error_info.set_error_type(
+            intrinsic_proto::skills::SkillErrorInfo::ERROR_TYPE_SKILL);
+        auto rpc_status = ToGoogleRpcStatus(skill_result.status(), error_info);
+        LOG(ERROR) << "Skill: " << GetSkillIdVersion()
+                   << " returned an error during execution. code: "
+                   << rpc_status.code()
+                   << ", message: " << rpc_status.message();
 
-            INTRINSIC_RETURN_IF_ERROR(Finish(&rpc_status, nullptr));
-          } else {
-            INTRINSIC_RETURN_IF_ERROR(Finish(nullptr, &(*skill_result)));
-          }
+        INTRINSIC_RETURN_IF_ERROR(Finish(&rpc_status, nullptr));
+      } else {
+        INTRINSIC_RETURN_IF_ERROR(Finish(nullptr, &(*skill_result)));
+      }
 
-          return absl::OkStatus();
-        });
+      return absl::OkStatus();
+    });
   }
 
   return absl::OkStatus();
@@ -292,7 +292,7 @@ void SkillExecutionOperationCleaner::WaitThread(
 }
 
 absl::StatusOr<std::shared_ptr<SkillExecutionOperation>>
-SkillExecutionOperations::Start(
+SkillExecutionOperations::StartExecute(
     std::unique_ptr<SkillExecuteInterface> skill,
     const intrinsic_proto::skills::ExecuteRequest* request,
     const std::optional<::google::protobuf::Any>& param_defaults,
@@ -308,7 +308,7 @@ SkillExecutionOperations::Start(
   INTRINSIC_RETURN_IF_ERROR(Add(operation));
 
   INTRINSIC_RETURN_IF_ERROR(
-      operation->StartExecution(std::move(skill), std::move(context)));
+      operation->StartExecute(std::move(skill), std::move(context)));
 
   INTRINSIC_RETURN_IF_ERROR(cleaner_.Watch(operation));
 
@@ -421,15 +421,19 @@ SkillExecutionOperations::GetExecuteRequests() const {
   std::vector<intrinsic_proto::skills::ExecuteRequest> execute_requests;
   execute_requests.reserve(operation_names_.size());
   for (const std::string& operation_name : operation_names_) {
-    if (operations_.find(operation_name) == operations_.end()) {
+    auto itr = operations_.find(operation_name);
+    if (itr == operations_.end()) {
       LOG(ERROR) << "operations_ and operation_names_ have inconsistent "
                     "view. operation_name_ == "
                  << operation_name
                  << " exists in operation_names_ but not operations_.";
       continue;
     }
-    execute_requests.push_back(
-        operations_.find(operation_name)->second->GetExecuteRequest());
+    std::optional<intrinsic_proto::skills::ExecuteRequest> request =
+        itr->second->GetExecuteRequest();
+    if (request.has_value()) {
+      execute_requests.push_back(*request);
+    }
   }
   return execute_requests;
 }
@@ -620,10 +624,10 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
 
   INTRINSIC_ASSIGN_OR_RETURN(
       std::shared_ptr<internal::SkillExecutionOperation> operation,
-      operations_.Start(std::move(skill), request,
-                        runtime_data.GetParameterData().GetDefault(),
-                        std::move(execution_context), skill_canceller,
-                        *result));
+      operations_.StartExecute(std::move(skill), request,
+                               runtime_data.GetParameterData().GetDefault(),
+                               std::move(execution_context), skill_canceller,
+                               *result));
 
   return grpc::Status::OK;
 }
