@@ -8,7 +8,6 @@ package robotics.messages;
 
 import "intrinsic/robotics/messages/array_format.proto";
 import "intrinsic/robotics/messages/coordinate_frame.proto";
-import "intrinsic/robotics/messages/vector.proto";
 
 // FiducialPatternConfig defines a block of patterns.
 //
@@ -104,17 +103,12 @@ message FiducialPatternConfig {
     AprilTagPatternConfig april_tag_pattern_config = 6;
   }
 
-  // Offset vector to be added to all 3D pattern points.  This can be used to
-  // represent the thickness of the fiducial board.
-  //
-  // The coordinate frame of the offset is the frame implicitly defined in
-  // GenerateFiducialPattern.  For April and chessboard patterns, the origin is
-  // at the center of the pattern with x-axis along rows, y-axis along columns,
-  // and z-axis pointing up.
-  //
-  // For example, if the pose of the fiducial board is given with respect to its
-  // bottom center, then the offset vector should be (0, 0, board_thickness).
-  robotics.messages.Vector3d offset = 7;
+  // Optional translation to be applied to the generated 3D pattern points.
+  repeated double new_translation_generated = 8
+      [packed = true, (.robotics.messages.array_format) = { shape: [ 3 ] }];
+
+  reserved 7;
+  reserved "offset";
 }
 
 message FiducialPatternGeometry {

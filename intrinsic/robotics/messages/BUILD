@@ -91,7 +91,6 @@ proto_library(
     deps = [
         ":array_format_proto",
         ":coordinate_frame_proto",
-        ":messages",
     ],
 )
 
