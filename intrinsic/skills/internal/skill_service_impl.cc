@@ -95,7 +95,7 @@ absl::StatusOr<std::unique_ptr<SkillExecutionOperation>>
 SkillExecutionOperation::Create(
     const intrinsic_proto::skills::ExecuteRequest* request,
     const std::optional<::google::protobuf::Any>& param_defaults,
-    std::shared_ptr<Canceller> canceller) {
+    std::shared_ptr<SkillCancellationManager> canceller) {
   if (request == nullptr) {
     return absl::InvalidArgumentError("`request` is null.");
   }
@@ -297,7 +297,7 @@ SkillExecutionOperations::StartExecute(
     const intrinsic_proto::skills::ExecuteRequest* request,
     const std::optional<::google::protobuf::Any>& param_defaults,
     std::unique_ptr<ExecuteContextImpl> context,
-    std::shared_ptr<Canceller> canceller,
+    std::shared_ptr<SkillCancellationManager> canceller,
     google::longrunning::Operation& initial_operation) {
   INTRINSIC_ASSIGN_OR_RETURN(
       std::shared_ptr<internal::SkillExecutionOperation> operation,
@@ -608,9 +608,9 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
   INTRINSIC_ASSIGN_OR_RETURN(EquipmentPack equipment,
                              EquipmentPack::GetEquipmentPack(*request));
 
-  std::shared_ptr<Canceller> skill_canceller;
+  std::shared_ptr<SkillCancellationManager> skill_canceller;
   if (runtime_data.GetExecutionOptions().SupportsCancellation()) {
-    skill_canceller = std::make_shared<Canceller>(
+    skill_canceller = std::make_shared<SkillCancellationManager>(
         runtime_data.GetExecutionOptions().GetCancellationReadyTimeout(),
         /*operation_name=*/absl::Substitute("skill '$0'", skill_id));
   }

@@ -101,7 +101,7 @@ message Options {
   //
   // During execution, if the skill is cancelled, its ExecutionContext waits for
   // at most this timeout duration for the skill to have called
-  // `NotifyReadyForCancellation` before raising a timeout error.
+  // Ready() (C++) or ready() (Python) before raising a timeout error.
   //
   // If this is not specified, then the default used by the skill execution
   // service is 30 seconds.

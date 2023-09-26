@@ -7,12 +7,8 @@
 
 #include <memory>
 #include <string>
-#include <utility>
-#include <vector>
 
 #include "absl/base/attributes.h"
-#include "absl/functional/any_invocable.h"
-#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
@@ -46,7 +42,9 @@ class ExecuteContextImpl : public ExecuteContext {
           motion_planner_service,
       EquipmentPack equipment,
       SkillRegistryClientInterface& skill_registry_client,
-      std::shared_ptr<Canceller> skill_canceller);
+      std::shared_ptr<SkillCanceller> skill_canceller);
+
+  SkillCanceller& GetCanceller() override { return *skill_canceller_; }
 
   absl::StatusOr<world::ObjectWorldClient> GetObjectWorld() override;
 
@@ -57,26 +55,6 @@ class ExecuteContextImpl : public ExecuteContext {
 
   const EquipmentPack& GetEquipment() const override { return equipment_; }
 
-  absl::Status RegisterCancellationCallback(
-      absl::AnyInvocable<absl::Status() const> cb) override {
-    if (skill_canceller_ == nullptr) {
-      return absl::FailedPreconditionError("Skill is not cancellable.");
-    }
-    return skill_canceller_->RegisterCancellationCallback(std::move(cb));
-  }
-
-  void NotifyReadyForCancellation() override {
-    if (skill_canceller_ == nullptr) return;
-    skill_canceller_->NotifyReadyForCancellation();
-  }
-
-  bool Cancelled() override {
-    if (skill_canceller_ == nullptr) {
-      return false;
-    }
-    return skill_canceller_->Cancelled();
-  }
-
  private:
   std::string world_id_;
 
@@ -85,7 +63,7 @@ class ExecuteContextImpl : public ExecuteContext {
   EquipmentPack equipment_;
   SkillRegistryClientInterface& skill_registry_client_ ABSL_ATTRIBUTE_UNUSED;
 
-  std::shared_ptr<Canceller> skill_canceller_;
+  std::shared_ptr<SkillCanceller> skill_canceller_;
 
   intrinsic_proto::data_logger::Context log_context_;
 };

@@ -12,7 +12,6 @@
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
-#include "absl/functional/any_invocable.h"
 #include "absl/log/check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -20,12 +19,14 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "google/protobuf/any.pb.h"
+#include "google/protobuf/descriptor.h"
 #include "google/protobuf/message.h"
 #include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
 #include "intrinsic/skills/cc/client_common.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
+#include "intrinsic/skills/cc/skill_canceller.h"
 #include "intrinsic/skills/internal/default_parameters.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/footprint.pb.h"
@@ -125,7 +126,7 @@ class SkillSignatureInterface {
   // Returns the skill's ready for cancellation timeout.
   //
   // If the skill is cancelled, its ExecuteContext waits for at most this
-  // timeout duration for the skill to have called `NotifyReadyForCancellation`
+  // timeout duration for the skill to have called SkillCanceller::Ready()
   // before raising a timeout error.
   virtual absl::Duration GetReadyForCancellationTimeout() const {
     return absl::Seconds(30);
@@ -346,20 +347,17 @@ class ExecuteRequest {
 // provided by the skill service server to a skill. Allows, e.g., to modify the
 // world or to invoke subskills.
 //
-// ExecuteContext helps support cooperative skill cancellation. When a
-// cancellation request is received, the skill should stop as soon as possible
-// and leave resources in a safe and recoverable state.
-//
-// If a skill supports cancellation, it must notify its ExecuteContext via
-// `NotifyReadyForCancellation` once it is ready to be cancelled.
-//
-// A skill can implement cancellation in one of two ways:
-// 1) Poll Cancelled(), and safely cancel the operation if and when it returns
-//    true.
-// 2) Register a cancellation callback via `RegisterCancellationCallback`. This
-//    callback will be invoked when the skill receives a cancellation request.
+// ExecutionContext helps support cooperative skill cancellation via a
+// SkillCanceller. When a cancellation request is received, the skill should:
+// 1) stop as soon as possible and leave resources in a safe and recoverable
+//    state;
+// 2) return absl::CancelledError.
 class ExecuteContext {
  public:
+  // Returns a SkillCanceller that supports cooperative cancellation of the
+  // skill.
+  virtual SkillCanceller& GetCanceller() = 0;
+
   // Returns the log context this skill is called with. It includes logging IDs
   // from the higher stack.
   virtual const intrinsic_proto::data_logger::Context& GetLogContext()
@@ -373,20 +371,6 @@ class ExecuteContext {
   // execution (see GetObjectWorld()).
   virtual absl::StatusOr<motion_planning::MotionPlannerClient>
   GetMotionPlanner() = 0;
-
-  // Notifies the context that the skill is ready to be cancelled.
-  virtual void NotifyReadyForCancellation() = 0;
-
-  // Returns true if the skill framework has received a cancellation request.
-  virtual bool Cancelled() = 0;
-
-  // Sets a callback that will be invoked when a cancellation is requested.
-  //
-  // If a callback will be used, it must be registered before calling
-  // `NotifyReadyForCancellation`. Only one callback may be registered, and the
-  // callback will be called at most once.
-  virtual absl::Status RegisterCancellationCallback(
-      absl::AnyInvocable<absl::Status() const> cb) = 0;
 
   // Returns the equipment mapping associated with this skill instance.
   virtual const EquipmentPack& GetEquipment() const = 0;

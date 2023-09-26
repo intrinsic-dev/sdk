@@ -18,19 +18,12 @@
 namespace intrinsic {
 namespace skills {
 
-Canceller::Canceller(const absl::Duration ready_for_cancellation_timeout,
-                     const absl::string_view operation_name)
-    : ready_for_cancellation_timeout_(ready_for_cancellation_timeout),
-      operation_name_(operation_name) {}
+SkillCancellationManager::SkillCancellationManager(
+    const absl::Duration ready_timeout, const absl::string_view operation_name)
+    : ready_timeout_(ready_timeout), operation_name_(operation_name) {}
 
-absl::Status Canceller::Cancel() {
-  // Wait for the operation to be ready for cancellation.
-  if (!ready_for_cancellation_.WaitForNotificationWithTimeout(
-          ready_for_cancellation_timeout_)) {
-    return absl::DeadlineExceededError(absl::Substitute(
-        "Timed out waiting for $0 to be ready for cancellation.",
-        operation_name_));
-  }
+absl::Status SkillCancellationManager::Cancel() {
+  INTRINSIC_RETURN_IF_ERROR(WaitForReady());
 
   // Calling the user callback with the lock held would lead to a deadlock if
   // the callback never returns, so we only keep the lock for the notification.
@@ -44,29 +37,37 @@ absl::Status Canceller::Cancel() {
     cancelled_.Notify();
   }
 
-  if (cancellation_callback_ != nullptr) {
-    INTRINSIC_RETURN_IF_ERROR((*cancellation_callback_)());
+  if (callback_ != nullptr) {
+    INTRINSIC_RETURN_IF_ERROR((*callback_)());
   }
 
   return absl::OkStatus();
 }
 
-absl::Status Canceller::RegisterCancellationCallback(
+absl::Status SkillCancellationManager::RegisterCallback(
     absl::AnyInvocable<absl::Status() const> callback) {
   absl::MutexLock lock(&cancel_mu_);
-  if (ready_for_cancellation_.HasBeenNotified()) {
+  if (ready_.HasBeenNotified()) {
     return absl::FailedPreconditionError(
-        absl::Substitute("A cancellation callback cannot be registered after"
+        absl::Substitute("A callback cannot be registered after"
                          "$0 is ready for cancellation.",
                          operation_name_));
   }
-  if (cancellation_callback_ != nullptr) {
-    return absl::AlreadyExistsError(
-        "A cancellation callback was already registered.");
+  if (callback_ != nullptr) {
+    return absl::AlreadyExistsError("A callback was already registered.");
   }
-  cancellation_callback_ =
-      std::make_unique<absl::AnyInvocable<absl::Status() const>>(
-          std::move(callback));
+  callback_ = std::make_unique<absl::AnyInvocable<absl::Status() const>>(
+      std::move(callback));
+
+  return absl::OkStatus();
+}
+
+absl::Status SkillCancellationManager::WaitForReady() {
+  if (!ready_.WaitForNotificationWithTimeout(ready_timeout_)) {
+    return absl::DeadlineExceededError(absl::Substitute(
+        "Timed out waiting for $0 to be ready for cancellation.",
+        operation_name_));
+  }
 
   return absl::OkStatus();
 }

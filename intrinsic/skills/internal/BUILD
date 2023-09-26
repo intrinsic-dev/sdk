@@ -132,7 +132,6 @@ cc_library(
         "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
         "@com_github_grpc_grpc//:grpc++_public_hdrs",
         "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

@@ -41,7 +41,7 @@ ExecuteContextImpl::ExecuteContextImpl(
     std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service,
     EquipmentPack equipment,
     SkillRegistryClientInterface& skill_registry_client,
-    std::shared_ptr<Canceller> skill_canceller)
+    std::shared_ptr<SkillCanceller> skill_canceller)
     : world_id_(request.world_id()),
       object_world_service_(std::move(object_world_service)),
       motion_planner_service_(std::move(motion_planner_service)),

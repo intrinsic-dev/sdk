@@ -48,6 +48,7 @@ cc_library(
     deps = [
         ":client_common",
         ":equipment_pack",
+        ":skill_canceller",
         "//intrinsic/icon/release:status_helpers",
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/motion_planning:motion_planner_client",
@@ -60,7 +61,6 @@ cc_library(
         "//intrinsic/world/objects:object_world_client",
         "//intrinsic/world/objects:world_object",
         "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

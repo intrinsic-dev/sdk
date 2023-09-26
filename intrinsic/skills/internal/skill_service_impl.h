@@ -55,7 +55,7 @@ class SkillExecutionOperation {
   static absl::StatusOr<std::unique_ptr<SkillExecutionOperation>> Create(
       const intrinsic_proto::skills::ExecuteRequest* request,
       const std::optional<::google::protobuf::Any>& param_defaults,
-      std::shared_ptr<Canceller> canceller);
+      std::shared_ptr<SkillCancellationManager> canceller);
 
   // Starts executing the specified skill.
   absl::Status StartExecute(std::unique_ptr<SkillExecuteInterface> skill,
@@ -112,7 +112,7 @@ class SkillExecutionOperation {
       absl::string_view instance_name, absl::string_view id_version,
       absl::string_view internal_data, const ::google::protobuf::Any& params,
       const std::optional<::google::protobuf::Any>& param_defaults,
-      std::shared_ptr<Canceller> canceller,
+      std::shared_ptr<SkillCancellationManager> canceller,
       const std::optional<intrinsic_proto::skills::ExecuteRequest>&
           execute_request)
       : execute_request_(execute_request),
@@ -137,7 +137,7 @@ class SkillExecutionOperation {
   ::google::protobuf::Any params_;
   std::optional<::google::protobuf::Any> param_defaults_;
 
-  std::shared_ptr<Canceller> canceller_;
+  std::shared_ptr<SkillCancellationManager> canceller_;
 
   // Notified when the operation is finished.
   absl::Notification finished_notification_;
@@ -198,7 +198,7 @@ class SkillExecutionOperations {
       const intrinsic_proto::skills::ExecuteRequest* request,
       const std::optional<::google::protobuf::Any>& param_defaults,
       std::unique_ptr<ExecuteContextImpl> context,
-      std::shared_ptr<Canceller> canceller,
+      std::shared_ptr<SkillCancellationManager> canceller,
       google::longrunning::Operation& initial_operation);
 
   // Gets an operation by name.
