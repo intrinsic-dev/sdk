@@ -81,14 +81,14 @@ message DeviceConfig {
 
 message SimBusModuleConfig {
   optional string world_id = 1;
-  // Resource ID to take sim devices from. The sim_bus HWM will automatically
-  // create hardware interfaces based on the corresponding World entity.
+  // Resource IDs to take sim devices from. The sim_bus HWM will automatically
+  // create hardware interfaces based on the corresponding World entities.
   // If not present, defaults to the resource ID of the hardware module itself
   // (if that is available).
-  optional string resource_id_for_devices = 2;
+  repeated string resource_ids_for_devices = 2;
   // Optional resource ID to extract a simulation service port from. If omitted,
-  // this defaults to `resource_id_for_devices` (or the hardware module's
-  // resource ID).
+  // the HWM sequentially tries `resource_ids_for_devices` (or the hardware
+  // module's resource ID as a fallback).
   //
   // Use this to connect multiple hardware modules to the same simulation
   // service. Not all models open up a separate simulation port, but sometimes
@@ -103,7 +103,7 @@ message SimBusModuleConfig {
   optional string resource_id_for_timeslicer_port = 3;
   // Map from device names to sim device configs. Use this in situations
   // where there is no resource instance associated with a simulated device's
-  // plugin tag. Otherwise, prefer using `resource_id_for_devices`.
+  // plugin tag. Otherwise, prefer using `resource_ids_for_devices`.
   //
   // NOTE: Order is important for joint devices! The hardware module exports
   // combined hardware interfaces that encompass all joints, and use the order
