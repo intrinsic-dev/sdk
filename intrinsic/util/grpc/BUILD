@@ -74,7 +74,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         "//intrinsic/util:decorators",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
     ],
 )
 
@@ -83,7 +83,7 @@ py_library(
     srcs = ["error_handling.py"],
     srcs_version = "PY3",
     deps = [
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         requirement("retrying"),
     ],
 )
@@ -95,7 +95,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":error_handling",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_absl_py//absl/testing:absltest",
     ],
 )

@@ -115,6 +115,7 @@ cc_grpc_library(
 py_grpc_library(
     name = "service_py_pb2_grpc",
     srcs = [":service_proto"],
+    grpc_library = requirement("grpcio"),
     deps = [":service_py_pb2"],
 )
 

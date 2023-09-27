@@ -6,6 +6,7 @@
 # Some files may still be exported as part of the Skills SDK, but they should
 # not needed to be included directly when authoring a Skill.
 
+load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("//bazel:go_macros.bzl", "go_library", "go_test")
 load("@io_bazel_rules_docker//python3:image.bzl", "py3_image")
 load("@rules_python//python:defs.bzl", "py_library")
@@ -90,7 +91,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         "//intrinsic/skills/proto:error_py_pb2",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_googleapis//google/rpc:status_py_proto",
     ],
 )
@@ -182,7 +183,7 @@ py_library(
         "//intrinsic/skills/python:skill_interface",
         "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
         "//intrinsic/world/python:object_world_client",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_absl_py//absl/logging",
         "@com_google_googleapis//google/longrunning:longrunning_py_proto",
         "@com_google_googleapis//google/rpc:status_py_proto",
@@ -388,7 +389,7 @@ py_library(
         "//intrinsic/skills/proto:skill_service_config_py_pb2",
         "//intrinsic/skills/proto:skill_service_py_pb2_grpc",
         "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_absl_py//absl/logging",
         "@com_google_protobuf//:protobuf_python",
     ],

@@ -4,6 +4,7 @@
 
 # Workcell Python client library
 
+load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
 
 package(default_visibility = [
@@ -34,7 +35,7 @@ py_library(
         "//intrinsic/solutions:worlds",
         "//intrinsic/solutions/internal:behavior_call",
         "//intrinsic/world/python:object_world_resources",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
     ],
 )
 

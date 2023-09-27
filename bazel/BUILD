@@ -15,3 +15,8 @@ bzl_library(
     name = "label",
     srcs = ["label.bzl"],
 )
+
+exports_files(
+    srcs = ["deps_0.bzl"],
+    visibility = ["//intrinsic/production/external:__pkg__"],
+)

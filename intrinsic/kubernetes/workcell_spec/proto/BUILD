@@ -4,6 +4,7 @@
 
 # gRPC service definition for the workcell-spec-service.
 
+load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_proto_library")
@@ -59,5 +60,6 @@ py_proto_library(
 py_grpc_library(
     name = "installer_py_pb2_grpc",
     srcs = [":installer_proto"],
+    grpc_library = requirement("grpcio"),
     deps = [":installer_py_pb2"],
 )

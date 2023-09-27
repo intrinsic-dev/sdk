@@ -121,7 +121,7 @@ py_library(
         "//intrinsic/kubernetes/workcell_spec/proto:installer_py_pb2_grpc",
         "//intrinsic/skills/client:skill_registry_client",
         "//intrinsic/util/grpc:error_handling",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_protobuf//:protobuf_python",
     ],
 )
@@ -145,7 +145,7 @@ py_test(
         "//intrinsic/kubernetes/workcell_spec/proto:installer_py_pb2",
         "//intrinsic/skills/client:skill_registry_client",
         "//intrinsic/skills/proto:skill_registry_py_pb2",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_protobuf//:protobuf_python",
     ],
@@ -200,7 +200,7 @@ py_library(
         "//intrinsic/skills/proto:equipment_registry_py_pb2",
         "//intrinsic/skills/proto:equipment_registry_py_pb2_grpc",
         "//intrinsic/util/grpc:error_handling",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
     ],
 )
 
@@ -282,7 +282,7 @@ py_library(
         "//intrinsic/executive/proto:run_metadata_py_pb2",
         "//intrinsic/solutions/internal:actions",
         "//intrinsic/util/grpc:error_handling",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_googleapis//google/longrunning:longrunning_py_proto",
         "@com_google_protobuf//:protobuf_python",
     ],
@@ -315,7 +315,7 @@ py_test(
         "//intrinsic/logging/proto:logger_service_py_pb2",
         "//intrinsic/solutions/internal:behavior_call",
         "//intrinsic/solutions/testing:test_skill_params_py_pb2",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
         "@com_google_googleapis//google/longrunning:longrunning_py_proto",
@@ -389,7 +389,7 @@ py_library(
         "//intrinsic/util/grpc:connection",
         "//intrinsic/util/grpc:error_handling",
         "//intrinsic/util/grpc:interceptor",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         requirement("matplotlib"),
         requirement("numpy"),
     ],
@@ -415,7 +415,7 @@ py_library(
         "//intrinsic/perception/service/proto:pose_estimation_service_pb2_grpc",
         "//intrinsic/perception/service/proto:pose_estimation_service_py_pb2",
         "//intrinsic/util/grpc:error_handling",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_protobuf//:protobuf_python",
     ],
 )
@@ -455,7 +455,7 @@ py_library(
         "//intrinsic/world/proto:object_world_service_py_pb2",
         "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
         "//intrinsic/world/python:object_world_resources",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_protobuf//:protobuf_python",
     ],
 )
@@ -527,7 +527,7 @@ py_library(
         "//intrinsic/world/proto:collision_settings_py_pb2",
         "//intrinsic/world/proto:object_world_refs_py_pb2",
         "//intrinsic/world/python:object_world_resources",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_protobuf//:protobuf_python",
     ],
 )
@@ -616,7 +616,7 @@ py_library(
         "//intrinsic/logging/proto:logger_service_py_pb2",
         "//intrinsic/logging/proto:logger_service_py_pb2_grpc",
         "//intrinsic/util/grpc:error_handling",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_protobuf//:protobuf_python",
         requirement("pandas"),
     ],
@@ -655,7 +655,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":auth",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
     ],
 )
 
@@ -675,7 +675,7 @@ py_test(
     deps = [
         ":auth",
         ":dialerutil",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_absl_py//absl/testing:absltest",
     ],
 )
@@ -716,7 +716,7 @@ py_library(
         "//intrinsic/world/python:object_world_client",
         "//intrinsic/world/python:object_world_ids",
         "//intrinsic/world/python:object_world_resources",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
     ],
 )
 

@@ -2,6 +2,7 @@
 # Intrinsic Proprietary and Confidential
 # Provided subject to written agreement between the parties.
 
+load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -15,7 +16,7 @@ py_library(
         "//intrinsic/skills/proto:skill_registry_py_pb2_grpc",
         "//intrinsic/skills/proto:skills_py_pb2",
         "//intrinsic/util/grpc:error_handling",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_protobuf//:protobuf_python",
     ],
 )

@@ -186,6 +186,7 @@ def intrinsic_sdks_deps_0():
             Label("//intrinsic/production/external/patches:0003-Remove-competing-local_config_python-definition.patch"),
             Label("//intrinsic/production/external/patches:0005-Remove-competing-go-deps.patch"),
             Label("//intrinsic/production/external/patches:0007-Also-generate-pyi-files-grpc.patch"),
+            Label("//intrinsic/production/external/patches:0011-Public-grpc_library-attr.patch"),
         ],
         sha256 = "315dbe5aa9235ccc5fcb4e40e6ada4c1135d4377238bf9ea65534fa38f7c695a",  # v1.55.0
         strip_prefix = "grpc-0bf4a618b17a3f0ed61c22364913c7f66fc1c61a",  # v1.55.0

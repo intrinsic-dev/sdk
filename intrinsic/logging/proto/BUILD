@@ -2,6 +2,7 @@
 # Intrinsic Proprietary and Confidential
 # Provided subject to written agreement between the parties.
 
+load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("//bazel:go_macros.bzl", "go_proto_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_proto_library")
@@ -104,6 +105,7 @@ py_proto_library(
 py_grpc_library(
     name = "logger_service_py_pb2_grpc",
     srcs = [":logger_service"],
+    grpc_library = requirement("grpcio"),
     deps = [":logger_service_py_pb2"],
 )
 
@@ -154,5 +156,6 @@ py_proto_library(
 py_grpc_library(
     name = "log_dispatcher_service_py_pb2_grpc",
     srcs = [":log_dispatcher_service"],
+    grpc_library = requirement("grpcio"),
     deps = [":log_dispatcher_service_py_pb2"],
 )

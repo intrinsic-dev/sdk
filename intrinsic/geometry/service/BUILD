@@ -4,6 +4,7 @@
 
 """ Intrinsic package geometry/service. """
 
+load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_proto_library")
 
@@ -32,6 +33,7 @@ py_proto_library(
 py_grpc_library(
     name = "geometry_service_py_pb2_grpc",
     srcs = [":geometry_service_proto"],
+    grpc_library = requirement("grpcio"),
     deps = [":geometry_service_py_pb2"],
 )
 

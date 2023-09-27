@@ -38,7 +38,7 @@ py_test(
         "//intrinsic/kinematics/types:joint_limits_py_pb2",
         "//intrinsic/world/proto:object_world_refs_py_pb2",
         "//intrinsic/world/proto:object_world_service_py_pb2",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_protobuf//:protobuf_python",
         requirement("numpy"),
@@ -78,7 +78,7 @@ py_library(
         "//intrinsic/world/proto:object_world_service_py_pb2",
         "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
         "//intrinsic/world/proto:object_world_updates_py_pb2",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
     ],
 )
 

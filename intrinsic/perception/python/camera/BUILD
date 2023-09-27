@@ -54,7 +54,7 @@ py_library(
         "//intrinsic/perception/service/proto:camera_server_py_pb2_grpc",
         "//intrinsic/util/grpc:connection",
         "//intrinsic/util/grpc:interceptor",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
     ],
 )
 
@@ -75,7 +75,7 @@ py_library(
         "//intrinsic/util/grpc:connection",
         "//intrinsic/world/python:object_world_client",
         "//intrinsic/world/python:object_world_resources",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
         "@com_google_absl_py//absl/logging",
         "@com_google_protobuf//:protobuf_python",
         requirement("numpy"),

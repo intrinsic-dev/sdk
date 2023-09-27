@@ -2,6 +2,7 @@
 # Intrinsic Proprietary and Confidential
 # Provided subject to written agreement between the parties.
 
+load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library")
 
 package(default_visibility = [
@@ -52,7 +53,7 @@ py_library(
         "//intrinsic/motion_planning/proto:motion_target_py_pb2",
         "//intrinsic/world/proto:collision_settings_py_pb2",
         "//intrinsic/world/python:object_world_ids",
-        "@com_github_grpc_grpc//src/python/grpcio/grpc:grpcio",
+        requirement("grpcio"),
     ],
 )
 

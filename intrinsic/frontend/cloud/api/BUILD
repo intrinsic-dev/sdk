@@ -2,6 +2,7 @@
 # Intrinsic Proprietary and Confidential
 # Provided subject to written agreement between the parties.
 
+load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_proto_library")
 
@@ -43,6 +44,7 @@ py_proto_library(
 py_grpc_library(
     name = "solutiondiscovery_api_py_pb2_grpc",
     srcs = [":solutiondiscovery_api_proto"],
+    grpc_library = requirement("grpcio"),
     deps = [":solutiondiscovery_api_py_pb2"],
 )
 

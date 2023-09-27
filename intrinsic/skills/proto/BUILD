@@ -2,6 +2,7 @@
 # Intrinsic Proprietary and Confidential
 # Provided subject to written agreement between the parties.
 
+load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_proto_library")
@@ -59,6 +60,7 @@ py_proto_library(
 py_grpc_library(
     name = "equipment_registry_py_pb2_grpc",
     srcs = [":equipment_registry_proto"],
+    grpc_library = requirement("grpcio"),
     deps = [":equipment_registry_py_pb2"],
 )
 
@@ -119,6 +121,7 @@ py_proto_library(
 py_grpc_library(
     name = "skill_registry_internal_py_pb2_grpc",
     srcs = [":skill_registry_internal_proto"],
+    grpc_library = requirement("grpcio"),
     deps = [":skill_registry_internal_py_pb2"],
 )
 
@@ -148,6 +151,7 @@ py_proto_library(
 py_grpc_library(
     name = "behavior_tree_registry_internal_py_pb2_grpc",
     srcs = [":behavior_tree_registry_internal_proto"],
+    grpc_library = requirement("grpcio"),
     deps = [":behavior_tree_registry_internal_py_pb2"],
 )
 
@@ -180,6 +184,7 @@ py_proto_library(
 py_grpc_library(
     name = "skill_registry_py_pb2_grpc",
     srcs = [":skill_registry_proto"],
+    grpc_library = requirement("grpcio"),
     deps = [":skill_registry_py_pb2"],
 )
 
@@ -221,6 +226,7 @@ py_proto_library(
 py_grpc_library(
     name = "behavior_tree_registry_py_pb2_grpc",
     srcs = [":behavior_tree_registry_proto"],
+    grpc_library = requirement("grpcio"),
     deps = [":behavior_tree_registry_py_pb2"],
 )
 
@@ -278,6 +284,7 @@ py_proto_library(
 py_grpc_library(
     name = "skill_service_py_pb2_grpc",
     srcs = [":skill_service_proto"],
+    grpc_library = requirement("grpcio"),
     deps = [":skill_service_py_pb2"],
 )
 
