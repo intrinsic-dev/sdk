@@ -1,0 +1,104 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+
+namespace intrinsic_fbs;
+
+// A point in 3D space expressed as a translation vector with respect to some
+// coordinate frame.
+// In geometry_types.proto, the Point is referred to as Vec3.
+struct Point {
+  x:double;
+  y:double;
+  z:double;
+}
+
+// A rotation expressed as a unit quaternion with respect to a coordinate frame.
+// In geometry_types.proto, the Rotation is referred to as Quat.
+struct Rotation {
+  qx:double;
+  qy:double;
+  qz:double;
+  qw:double; // Eigen::Quaternion stores in the following order {x, y, z, w}.
+}
+
+// A twist is a 6DOF velocity specified in m/s (x,y,z) and rad/s (RX,RY,RZ).
+// In geometry_types.proto, the Twist is referred to as Twist3D.
+struct Twist {
+  x:double;
+  y:double;
+  z:double;
+  rx:double;
+  ry:double;
+  rz:double;
+}
+
+// An acceleration is a 6DOF linear and angular acceleration specified in
+// m/ss (x,y,z) and rad/ss (rx,ry,rz).
+struct Acceleration {
+  x:double;
+  y:double;
+  z:double;
+  rx:double;
+  ry:double;
+  rz:double;
+}
+
+// A jerk a 6DOF time derivative of acceleration specified in m/sss (x,y,z)
+// and rad/sss (rx,ry,rz).
+struct Jerk {
+  x:double;
+  y:double;
+  z:double;
+  rx:double;
+  ry:double;
+  rz:double;
+}
+
+// A wrench is a x,y,z force and rx, ry, rz torque.
+// Unless otherwise noted, the wrench represents the force and torque that the
+// robot is exerting on the world, expressed in some cartesian frame.
+// The frame used to express the wrench should be documented for each use of it.
+// In geometry_types.proto, the Wrench is referred to as Wrench3D.
+struct Wrench {
+  x:double;
+  y:double;
+  z:double;
+  rx:double;
+  ry:double;
+  rz:double;
+}
+
+// Transform.
+//
+// A transform is a concrete representation of the pose of one frame with
+// respect to another frame.  It is represented as a translation and
+// a rotation.
+//
+// For example the transform a_pose_b describes the pose of frame b with respect
+// to frame a.  The translation is the position of the origin of b's
+// coordinate system expressed in a's coordinate system.  The rotation is the
+// orientation of b expressed in a's coordinate system.
+//
+// A point Pb expressed in b's coordinate system can be premultiplied by the
+// transform
+//     Pa = a_pose_b * Pb
+// to get the same point Pa expressed in a's coordinate system.
+//
+// A transform is represented here as a translation and a rotation.
+// In geometry_types.proto, the Transform is referred to as Pose3D.
+struct Transform {
+  position:Point;
+  rotation:Rotation;
+}
+
+//
+// Variable length types
+//
+
+// A variable length vector of type double.
+table VectorNd {
+  data:[double];
+}
+

@@ -5,7 +5,7 @@
 # Libraries related to Realtime Control Layer Parts.
 
 package(default_visibility = [
-    "//intrinsic/icon:__subpackages__",
+    "//visibility:public",
 ])
 
 proto_library(

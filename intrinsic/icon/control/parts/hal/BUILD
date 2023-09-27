@@ -7,7 +7,7 @@
 load("//bazel:go_macros.bzl", "go_proto_library")
 
 package(default_visibility = [
-    "//intrinsic/icon:__subpackages__",
+    "//visibility:public",
 ])
 
 proto_library(
