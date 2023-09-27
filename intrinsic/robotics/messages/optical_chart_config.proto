@@ -1,0 +1,41 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package robotics.messages;
+
+import "intrinsic/robotics/messages/color.proto";
+
+option cc_enable_arenas = true;
+
+// robotics:google3-begin(Matching struct in google3 internal code)
+// robotic:google3-end
+message OpticalChartConfigProto {
+  enum OpticalChartType {
+    UNSPECIFIED_CHART_TYPE = 0;
+    MACBETH = 1;
+    ESFR = 2;
+  }
+  // Name of the optical chart, e.g. macbeth, esfr, sfr.
+  OpticalChartType chart_type = 1;
+  // Num of markers can be used for color correction.
+  int32 num_color_correction_markers = 2;
+  // Color correction markers reference color in L*a*b* space.
+  Colors ref_color_marker_lab = 3;
+  // Color correction markers reference color in RGB space.
+  Colors ref_color_marker_rgb = 4;
+  // Color correction markers reference color in sRGB space.
+  Colors ref_color_marker_srgb = 5;
+  // Mean color marker value in L*a*b* space.
+  Color mean_color_marker_lab = 6;
+  // Mean color marker value in RGB space.
+  Color mean_color_marker_rgb = 7;
+  // Mean color marker value in sRGB space.
+  Color mean_color_marker_srgb = 8;
+
+  // Next id: 9
+}
+// robotics:google3-begin(Matching struct in google3 internal code)
+// robotic:google3-end

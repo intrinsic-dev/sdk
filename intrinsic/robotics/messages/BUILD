@@ -67,6 +67,12 @@ proto_library(
 # ======================================================================
 
 proto_library(
+    name = "optical_chart_config_proto",
+    srcs = ["optical_chart_config.proto"],
+    deps = [":messages"],
+)
+
+proto_library(
     name = "calibration_proto",
     srcs = ["calibration.proto"],
     deps = [
