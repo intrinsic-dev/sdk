@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -148,6 +149,9 @@ class Client {
   //  If the operational state of the server
   // is already kEnabled, then this does nothing and returns absl::OkStatus().
   // Returns an error if the server is faulted.
+  ABSL_DEPRECATED(
+      "Has no effect, ICON auto-enables now. Will be removed after all "
+      "call-sites are gone.")
   absl::Status Enable() const;
 
   // Disables all parts on the server. Ends all currently-active sessions.
@@ -160,16 +164,21 @@ class Client {
   // If the operational state of the server is already kDisabled, then this does
   // nothing and returns absl::OkStatus(). Returns an error if the server is
   // faulted.
+  ABSL_DEPRECATED(
+      "Has no effect, ICON auto-enables now. Will be removed after all "
+      "call-sites are gone.")
   absl::Status Disable() const;
 
-  // Clears all faults and returns the server to a disabled state. Returns OK if
+  // Clears all faults and returns the server to an enabled state. Returns OK if
   // faults were successfully cleared.
   //
+  // NOTE: ICON automatically enables after clearing faults!
+  //
   // NOTE: Clearing faults is something the user does directly. DO NOT call this
-  // from library code automatically to make things more convenient, ESPECIALLY
-  // not in connection with re-enabling the server afterwards! Human users must
-  // be able to rely on the robot to stay still unless they explicitly clear the
-  // fault(s) and enable it again.
+  // from library code automatically to make things more convenient. ICON will
+  // automatically re-enable when faults are cleared! Human users must be able
+  // to rely on the robot to stay still unless they explicitly clear the
+  // fault(s).
   //
   // Some classes of faults (internal server errors, or issues that have a
   // physical root cause) may require additional server- or hardware-specific

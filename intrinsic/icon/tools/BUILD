@@ -7,6 +7,7 @@ package(default_visibility = ["//visibility:public"])
 cc_binary(
     name = "disable_motion",
     srcs = ["disable_motion.cc"],
+    deprecation = "ICON now auto-enables. Disabling is not meaningful, since ICON will immediately re-enable.",
     deps = [
         "//intrinsic/icon/cc_client:client",
         "//intrinsic/icon/release/portable:init_xfa_absl",
@@ -23,6 +24,7 @@ cc_binary(
 cc_binary(
     name = "enable_motion",
     srcs = ["enable_motion.cc"],
+    deprecation = "ICON now auto-enables. Use this only if you need to clear faults without Flowstate in a pinch. Will be replaced by a pure clear_faults tool soon.",
     deps = [
         "//intrinsic/icon/cc_client:client",
         "//intrinsic/icon/release/portable:init_xfa_absl",

@@ -110,6 +110,7 @@ cc_library(
         "//intrinsic/icon/release:status_helpers",
         "//intrinsic/util:proto_time",
         "//intrinsic/util/grpc:channel_interface",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

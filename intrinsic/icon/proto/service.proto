@@ -440,10 +440,14 @@ service IconApi {
 
   // Enables all parts on the server, which performs all steps necessary to get
   // the parts ready to receive commands.
-  rpc Enable(EnableRequest) returns (EnableResponse);
+  rpc Enable(EnableRequest) returns (EnableResponse) {
+    option deprecated = true;
+  }
 
   // Disables all parts on the server. Ends all currently-active sessions.
-  rpc Disable(DisableRequest) returns (DisableResponse);
+  rpc Disable(DisableRequest) returns (DisableResponse) {
+    option deprecated = true;
+  }
 
   // Clears all faults and returns the server to a disabled state.
   // Returns an OkStatus if faults were successfully cleared.

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import enum
 from typing import Iterable, List, Mapping, Optional, Union
+import warnings
 
 import grpc
 from intrinsic.icon.proto import service_pb2
@@ -362,6 +363,11 @@ class Client:
     Raises:
       grpc.RpcError: An error occurred while enabling.
     """
+    warnings.warn(
+        "enable() is deprecated. ICON automatically enables whenever possible,"
+        " and this function will be removed once all call sites are gone.",
+        DeprecationWarning,
+    )
     self._stub.Enable(
         service_pb2.EnableRequest(), timeout=self._rpc_timeout_seconds
     )
@@ -380,6 +386,11 @@ class Client:
     Raises:
       grpc.RpcError: An error occurred while disabling.
     """
+    warnings.warn(
+        "enable() is deprecated. ICON automatically enables whenever possible,"
+        " and this function will be removed once all call sites are gone.",
+        DeprecationWarning,
+    )
     self._stub.Disable(
         service_pb2.DisableRequest(), timeout=self._rpc_timeout_seconds
     )
