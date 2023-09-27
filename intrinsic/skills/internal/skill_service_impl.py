@@ -627,7 +627,7 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
         request.world_id, self._object_world_service
     )
 
-    execution_context = skl.ExecutionContext(
+    execute_context = skl.ExecuteContext(
         canceller=canceller,
         equipment_handles=dict(request.instance.equipment_handles),
         logging_context=request.context,
@@ -637,7 +637,7 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
 
     return _SkillExecutionOperation(
         canceller=canceller,
-        context=execution_context,
+        context=execute_context,
         operation=operations_pb2.Operation(
             name=request.instance.instance_name, done=False
         ),
@@ -809,7 +809,7 @@ class _SkillExecutionOperation:
   def __init__(
       self,
       canceller: skill_canceller.SkillCancellationManager,
-      context: skl.ExecutionContext,
+      context: skl.ExecuteContext,
       operation: operations_pb2.Operation,
       request: skill_service_pb2.ExecuteRequest,
       skill_execute: skl.SkillExecuteInterface,
@@ -819,7 +819,7 @@ class _SkillExecutionOperation:
 
     Args:
       canceller: Supports cooperative cancellation of the skill.
-      context: The skill's ExecutionContext.
+      context: The skill's ExecuteContext.
       operation: The current operation proto for the skill execution.
       request: The skill's ExecuteRequest.
       skill_execute: The SkillExecute instance.

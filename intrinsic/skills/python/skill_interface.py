@@ -173,7 +173,7 @@ class ExecuteRequest(Generic[TParamsType]):
   params: TParamsType
 
 
-class ExecutionContext:
+class ExecuteContext:
   """Contains additional metadata and functionality for a skill execution.
 
   It is provided by the skill service to a skill and allows access to the world
@@ -181,7 +181,7 @@ class ExecutionContext:
   used; however, it would also allow skills to invoke subskills (see full
   functionality in skill_interface.h).
 
-  ExecutionContext helps support cooperative skill cancellation via `canceller`.
+  ExecuteContext helps support cooperative skill cancellation via `canceller`.
   When a cancellation request is received, the skill should:
   1) stop as soon as possible and leave resources in a safe and recoverable
      state;
@@ -295,7 +295,7 @@ class SkillSignatureInterface(metaclass=abc.ABCMeta):
   def get_ready_for_cancellation_timeout(cls) -> float:
     """Returns the skill's ready for cancellation timeout, in seconds.
 
-    If the skill is cancelled, its ExecutionContext's SkillCanceller waits for
+    If the skill is cancelled, its ExecuteContext's SkillCanceller waits for
     at most this timeout duration for the skill to have called `ready` before
     raising a timeout error.
     """
@@ -311,7 +311,7 @@ class SkillExecuteInterface(metaclass=abc.ABCMeta):
 
   @abc.abstractmethod
   def execute(
-      self, request: ExecuteRequest, context: ExecutionContext
+      self, request: ExecuteRequest, context: ExecuteContext
   ) -> skill_service_pb2.ExecuteResult:
     """Executes the skill.
 
@@ -398,7 +398,7 @@ class Skill(
 
   If a skill implementation supports cancellation, it should:
   1) Stop as soon as possible and leave resources in a safe and recoverable
-     state when a cancellation request is received (via its ExecutionContext).
+     state when a cancellation request is received (via its ExecuteContext).
      Cancelled skill executions should end by raising SkillCancelledError.
   2) Override `supports_cancellation` to return True.
   """

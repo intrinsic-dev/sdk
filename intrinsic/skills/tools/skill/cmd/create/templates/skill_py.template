@@ -57,7 +57,7 @@ class {{.SkillNameUpperCamelCase}}(skill_interface.Skill):
     def execute(
         self,
         request: skill_interface.ExecuteRequest,
-        context: skill_interface.ExecutionContext
+        context: skill_interface.ExecuteContext
     ) -> skill_service_pb2.ExecuteResult:
         logging.info(
             '"text" parameter passed in skill params: ' + request.params.text

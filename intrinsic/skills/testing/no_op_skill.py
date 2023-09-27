@@ -17,7 +17,7 @@ class NoOpSkill(skl.Skill):
   def execute(
       self,
       request: skl.ExecuteRequest[no_op_skill_pb2.NoOpSkillParams],
-      context: skl.ExecutionContext,
+      context: skl.ExecuteContext,
   ) -> skill_service_pb2.ExecuteResult:
     """See base class."""
     return skill_service_pb2.ExecuteResult()

@@ -88,7 +88,7 @@ class Camera:
   - Create and use a camera in the skill:
     ```
     def execute(
-        self, request: skl.ExecuteRequest, context: skl.ExecutionContext
+        self, request: skl.ExecuteRequest, context: skl.ExecuteContext
     ) -> skill_service_pb2.ExecuteResult:
     ...
 
@@ -124,13 +124,13 @@ class Camera:
   @classmethod
   def create(
       cls,
-      context: skill_interface.ExecutionContext,
+      context: skill_interface.ExecuteContext,
       slot: str,
   ) -> Camera:
     """Creates a Camera object from the skill's execution context.
 
     Args:
-      context: The skill's current skill_interface.ExecutionContext.
+      context: The skill's current skill_interface.ExecuteContext.
       slot: The camera slot created in skill's required_equipment
         implementation.
 

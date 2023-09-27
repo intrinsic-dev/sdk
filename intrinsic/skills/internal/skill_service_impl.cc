@@ -615,7 +615,7 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
         /*operation_name=*/absl::Substitute("skill '$0'", skill_id));
   }
 
-  auto execution_context = std::make_unique<ExecuteContextImpl>(
+  auto execute_context = std::make_unique<ExecuteContextImpl>(
       *request, object_world_service_, motion_planner_service_,
       std::move(equipment), skill_registry_client_, skill_canceller);
 
@@ -626,7 +626,7 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
       std::shared_ptr<internal::SkillExecutionOperation> operation,
       operations_.StartExecute(std::move(skill), request,
                                runtime_data.GetParameterData().GetDefault(),
-                               std::move(execution_context), skill_canceller,
+                               std::move(execute_context), skill_canceller,
                                *result));
 
   return grpc::Status::OK;

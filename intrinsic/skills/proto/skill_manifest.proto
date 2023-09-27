@@ -99,7 +99,7 @@ message Options {
 
   // Sets the cancellation ready time for the skill during execution.
   //
-  // During execution, if the skill is cancelled, its ExecutionContext waits for
+  // During execution, if the skill is cancelled, its ExecuteContext waits for
   // at most this timeout duration for the skill to have called
   // Ready() (C++) or ready() (Python) before raising a timeout error.
   //
