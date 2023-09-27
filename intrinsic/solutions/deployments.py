@@ -60,7 +60,7 @@ _GRPC_OPTIONS = [
 # error.
 _REQUIRED_BACKENDS = [
     "executive",
-    "equipment-registry",
+    "resource-registry",
     "skill-registry",
     "logger",
 ]
