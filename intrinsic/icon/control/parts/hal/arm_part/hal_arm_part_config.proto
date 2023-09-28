@@ -35,12 +35,6 @@ message HalArmPartConfig {
   HardwareInterface joint_acceleration_state = 6;
   HardwareInterface joint_torque_state = 7;
   HardwareInterface process_wrench_command = 18;
-  // May be omitted if world_robot_collection_name is given.
-  //
-  // Note: The two options aren't a oneof because the plan is to migrate to
-  // world_robot_collection_name as the only option soon, and changing to a
-  // oneof and back to a single value would be more overhead.
-  HardwareInterface joint_limits = 8;
   // If present, extract limits from a RobotCollection in WorldService instead
   // of reading them from a hardware module.
   // This name must match a unique local name or global alias of a
