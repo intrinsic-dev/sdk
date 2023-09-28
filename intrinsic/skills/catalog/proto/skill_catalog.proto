@@ -45,6 +45,21 @@ message SkillMeta {
   Tag tag = 10;
 }
 
+message GetSkillRequest {
+  // The fully-qualified globally unique id of the skill. formatted as:
+  // <package_name>.<name>.<version>
+  string id_version = 1;
+
+  // The information view required when getting the skill. Will default to
+  // VIEW_TYPE_BASIC if unset.
+  ViewType view = 2;
+}
+
+message GetSkillResponse {
+  // The requested skill.
+  SkillMeta skill = 1;
+}
+
 message ListSkillsRequest {
   // Upper limit for the returned page size, i.e. the service might return fewer
   // results.
@@ -61,11 +76,8 @@ message ListSkillsRequest {
   // page.
   string page_token = 2;
 
-  enum ViewType {
-    VIEWTYPE_UNSPECIFIED = 0;
-    BASIC = 1;
-  }
-
+  // The information view required when listing skills. Will default to
+  // VIEW_TYPE_BASIC if unset.
   ViewType view = 3;
 
   message Filter {
@@ -136,6 +148,9 @@ message CreateSkillReleaseRequest {
 message CreateSkillResponse {}
 
 service SkillCatalog {
+  // Retrieves a SkillMeta from the Catalog
+  rpc GetSkill(GetSkillRequest) returns (GetSkillResponse);
+
   // Retrieves a list of the SkillMeta in the Catalog
   rpc ListSkills(ListSkillsRequest) returns (ListSkillsResponse);
 
@@ -146,4 +161,29 @@ service SkillCatalog {
 
   // Creates the skill in the catalog
   rpc CreateSkill(CreateSkillReleaseRequest) returns (CreateSkillResponse);
+}
+
+enum ViewType {
+  // The default/unset value.
+  VIEW_TYPE_UNSPECIFIED = 0;
+
+  // The view that provides minimal/basic information.
+  //
+  // This view includes the following fields:
+  // * id_version
+  // * id
+  // * version
+  VIEW_TYPE_BASIC = 1;
+
+  // The view that provides detailed information.
+  //
+  // This view includes the following fields:
+  // * id_version
+  // * id
+  // * version
+  // * name
+  // * package_name
+  // * vendor
+  // * doc_string
+  VIEW_TYPE_DETAIL = 2;
 }
