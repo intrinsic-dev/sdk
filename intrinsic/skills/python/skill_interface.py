@@ -41,6 +41,108 @@ class GetFootprintRequest(Generic[TParamsType]):
   params: TParamsType
 
 
+class GetFootprintContext:
+  """Contains additional context for computing a skill footprint.
+
+  It is provided by the skill service to a skill and allows access to the world
+  and other services that a skill may use.
+
+  Attributes:
+    motion_planner: A client for the motion planning service.
+    object_world: A client for interacting with the object world.
+  """
+
+  @property
+  def motion_planner(self) -> motion_planner_client.MotionPlannerClient:
+    motion_planner = self._motion_planner
+    if motion_planner is None:
+      raise ValueError(
+          'The GetFootprintContext does not have a motion planner client.'
+      )
+
+    return motion_planner
+
+  @property
+  def object_world(self) -> object_world_client.ObjectWorldClient:
+    object_world = self._object_world
+    if object_world is None:
+      raise ValueError(
+          'The GetFootprintContext does not have an object world client.'
+      )
+
+    return object_world
+
+  def __init__(
+      self,
+      equipment_handles: dict[str, equipment_pb2.EquipmentHandle],
+      motion_planner: motion_planner_client.MotionPlannerClient,
+      object_world: object_world_client.ObjectWorldClient,
+  ):
+    """Initializes this object.
+
+    Args:
+      equipment_handles: Handles for the required equipment for this skill.
+      motion_planner: The motion planner client to provide.
+      object_world: The object world client to provide.
+    """
+    self._equipment_handles = equipment_handles
+    self._motion_planner = motion_planner
+    self._object_world = object_world
+
+  def get_kinematic_object_for_equipment(
+      self, equipment_name: str
+  ) -> object_world_resources.KinematicObject:
+    """Returns the kinematic object that corresponds to this equipment.
+
+    The kinematic object is sourced from the same world that's available via
+    `object_world`.
+
+    Args:
+      equipment_name: The name of the expected equipment.
+
+    Returns:
+      A kinematic object from the world associated with this context.
+    """
+    return self.object_world.get_kinematic_object(
+        self._equipment_handles[equipment_name]
+    )
+
+  def get_object_for_equipment(
+      self, equipment_name: str
+  ) -> object_world_resources.WorldObject:
+    """Returns the world object that corresponds to this equipment.
+
+    The world object is sourced from the same world that's available via
+    `object_world`.
+
+    Args:
+      equipment_name: The name of the expected equipment.
+
+    Returns:
+      A world object from the world associated with this context.
+    """
+    return self.object_world.get_object(self._equipment_handles[equipment_name])
+
+  def get_frame_for_equipment(
+      self, equipment_name: str, frame_name: object_world_ids.FrameName
+  ) -> object_world_resources.Frame:
+    """Returns the frame by name for an object corresponding to some equipment.
+
+    The frame is sourced from the same world that's available via
+    `object_world`.
+
+    Args:
+      equipment_name: The name of the expected equipment.
+      frame_name: The name of the frame within the equipment's object.
+
+    Returns:
+      A frame from the world associated with this context.
+    """
+    return self.object_world.get_frame(
+        frame_name, self._equipment_handles[equipment_name]
+    )
+
+
 @dataclasses.dataclass(frozen=True)
 class PredictRequest(Generic[TParamsType]):
   """A request for a call to Skill.predict.
@@ -349,7 +451,7 @@ class SkillProjectInterface(metaclass=abc.ABCMeta):
   """
 
   def get_footprint(
-      self, request: GetFootprintRequest, context: ProjectionContext
+      self, request: GetFootprintRequest, context: GetFootprintContext
   ) -> skill_service_pb2.GetFootprintResult:
     """Returns the required resources for running this skill.
 

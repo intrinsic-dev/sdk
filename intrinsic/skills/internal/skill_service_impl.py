@@ -156,7 +156,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
         footprint_request.world_id, self._motion_planner_service
     )
 
-    projection_context = skl.ProjectionContext(
+    footprint_context = skl.GetFootprintContext(
         equipment_handles=dict(footprint_request.instance.equipment_handles),
         motion_planner=motion_planner,
         object_world=object_world,
@@ -164,7 +164,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
 
     try:
       get_footprint_result = skill_project_instance.get_footprint(
-          request, projection_context
+          request, footprint_context
       )
     except Exception:  # pylint: disable=broad-except
       msg = traceback.format_exc()

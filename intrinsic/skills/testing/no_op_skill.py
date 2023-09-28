@@ -26,7 +26,7 @@ class NoOpSkill(skl.Skill):
   def get_footprint(
       self,
       params: skl.GetFootprintRequest[no_op_skill_pb2.NoOpSkillParams],
-      context: skl.ProjectionContext,
+      context: skl.GetFootprintContext,
   ) -> skill_service_pb2.GetFootprintResult:
     """See base class."""
     return skill_service_pb2.GetFootprintResult()
