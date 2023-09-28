@@ -405,7 +405,6 @@ cc_library(
         ":error_utils",
         ":execute_context_impl",
         ":get_footprint_context_impl",
-        ":predict_context_impl",
         ":runtime_data",
         ":skill_registry_client_interface",
         ":skill_repository",
@@ -525,34 +524,6 @@ cc_binary(
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_protobuf//:protobuf",
-    ],
-)
-
-cc_library(
-    name = "predict_context_impl",
-    srcs = ["predict_context_impl.cc"],
-    hdrs = ["predict_context_impl.h"],
-    deps = [
-        ":default_parameters",
-        ":skill_registry_client_interface",
-        "//intrinsic/icon/release:status_helpers",
-        "//intrinsic/logging/proto:context_cc_proto",
-        "//intrinsic/motion_planning:motion_planner_client",
-        "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
-        "//intrinsic/skills/cc:equipment_pack",
-        "//intrinsic/skills/cc:skill_interface",
-        "//intrinsic/skills/proto:equipment_cc_proto",
-        "//intrinsic/skills/proto:skill_service_cc_proto",
-        "//intrinsic/skills/proto:skills_cc_proto",
-        "//intrinsic/world/objects:frame",
-        "//intrinsic/world/objects:kinematic_object",
-        "//intrinsic/world/objects:object_world_client",
-        "//intrinsic/world/objects:world_object",
-        "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/time",
     ],
 )
 

@@ -28,11 +28,8 @@ namespace {{strJoin .BazelPackage "::"}} {
 using ::{{strJoin .ProtoPackage "::"}}::{{.SkillNameUpperCamelCase}}Params;
 
 using ::intrinsic_proto::skills::ExecuteResult;
-using ::intrinsic_proto::skills::PredictResult;
 using ::intrinsic::skills::ExecuteContext;
 using ::intrinsic::skills::ExecuteRequest;
-using ::intrinsic::skills::PredictContext;
-using ::intrinsic::skills::PredictRequest;
 using ::intrinsic::skills::SkillInterface;
 using ::intrinsic::skills::SkillProjectInterface;
 
@@ -42,20 +39,6 @@ using ::intrinsic::skills::SkillProjectInterface;
 
 std::unique_ptr<SkillInterface> {{.SkillNameUpperCamelCase}}::CreateSkill() {
   return std::make_unique<{{.SkillNameUpperCamelCase}}>();
-}
-
-absl::StatusOr<PredictResult> {{.SkillNameUpperCamelCase}}::Predict(
-    const PredictRequest& request, 
-    PredictContext& context) const {
-
-  LOG(WARNING) 
-    << "Missing `{{.SkillNameUpperCamelCase}}.Predict` implementation. "
-       "For a production-ready skill, this method needs to be implemented by "
-       "the skill author.";
-
-  PredictResult result;
-  result.add_outcomes()->set_probability(1.0);
-  return std::move(result); 
 }
 
 // -----------------------------------------------------------------------------

@@ -8,7 +8,6 @@ Provided subject to written agreement between the parties.
 
 from absl import logging
 
-from intrinsic.skills.proto import prediction_pb2
 from intrinsic.skills.proto import skill_service_pb2
 from intrinsic.skills.python import proto_utils
 from intrinsic.skills.python import skill_interface
@@ -22,36 +21,6 @@ class {{.SkillNameUpperCamelCase}}(skill_interface.Skill):
 
     def __init__(self) -> None:
         pass
-
-    @overrides(skill_interface.Skill)
-    def predict(
-      self,
-      request: skill_interface.PredictRequest,
-      context: skill_interface.PredictContext,
-    ) -> skill_service_pb2.PredictResult:
-        """Predicts a distribution of possible outcomes when running the skill.
-
-        TODO: Skill authors should override this method with their implementation.
-
-        Args:
-        request: The predict request.
-        context: Provides access to the world and other services that a skill may
-            use.
-
-        Returns:
-        A list of prediction protos containing the possible outcomes.
-        """
-
-        logging.warning("""Missing `Skilltest.predict()` implementation.
-        For a production-ready skill, this method needs to be implemented 
-        by the author.""")
-        return skill_service_pb2.PredictResult(
-            outcomes=[
-                prediction_pb2.Prediction(
-                    probability=1.0,
-                )
-            ],
-        )
 
     @overrides(skill_interface.Skill)
     def execute(

@@ -110,14 +110,13 @@ class SkillExecutionOperation {
  private:
   SkillExecutionOperation(
       absl::string_view instance_name, absl::string_view id_version,
-      absl::string_view internal_data, const ::google::protobuf::Any& params,
+      const ::google::protobuf::Any& params,
       const std::optional<::google::protobuf::Any>& param_defaults,
       std::shared_ptr<SkillCancellationManager> canceller,
       const std::optional<intrinsic_proto::skills::ExecuteRequest>&
           execute_request)
       : execute_request_(execute_request),
         id_version_(id_version),
-        internal_data_(internal_data),
         params_(params),
         param_defaults_(param_defaults),
         canceller_(canceller) {
@@ -133,7 +132,6 @@ class SkillExecutionOperation {
   std::optional<intrinsic_proto::skills::ExecuteRequest> execute_request_;
 
   std::string id_version_;
-  std::string internal_data_;
   ::google::protobuf::Any params_;
   std::optional<::google::protobuf::Any> param_defaults_;
 
@@ -271,9 +269,6 @@ class SkillProjectorServiceImpl
  private:
   absl::StatusOr<GetFootprintRequest> ProtoToGetFootprintRequest(
       const intrinsic_proto::skills::GetFootprintRequest& request);
-
-  absl::StatusOr<PredictRequest> ProtoToPredictRequest(
-      const intrinsic_proto::skills::PredictRequest& request);
 
   std::shared_ptr<ObjectWorldService::StubInterface> object_world_service_;
   std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service_;

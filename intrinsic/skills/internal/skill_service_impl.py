@@ -211,113 +211,10 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       predict_request: skill_service_pb2.PredictRequest,
       context: grpc.ServicerContext,
   ) -> skill_service_pb2.PredictResult:
-    """Runs Skill predict operation with provided parameters.
-
-    Args:
-      predict_request: Predict request with skill instance to run predict on.
-      context: gRPC servicer context.
-
-    Returns:
-      PredictResult containing results of the predict operation.
-
-    Raises:
-      grpc.RpcError:
-        NOT_FOUND: If the skill is not found.
-        INVALID_ARGUMENT: If unable to apply the default parameters.
-        INTERNAL: If an error occurred during prediction.
-    """
-    skill_name = id_utils.name_from(predict_request.instance.id_version)
-    try:
-      skill_project_instance = self._skill_repository.get_skill_project(
-          skill_name
-      )
-    except skill_repo.InvalidSkillAliasError:
-      _abort_with_status(
-          context=context,
-          code=status.StatusCode.NOT_FOUND,
-          message=f'Skill not found: {predict_request.instance.id_version!r}.',
-          skill_error_info=error_pb2.SkillErrorInfo(
-              error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_GRPC
-          ),
-      )
-
-    # Apply default parameters if available.
-    skill_runtime_data = self._skill_repository.get_skill_runtime_data(
-        skill_name
+    return skill_service_pb2.PredictResult(
+        outcomes=[prediction_pb2.Prediction(probability=1.0)],
+        internal_data=predict_request.internal_data,
     )
-    defaults = skill_runtime_data.parameter_data.default_value
-    if defaults is not None and predict_request.HasField('parameters'):
-      try:
-        default_parameters.apply_defaults_to_parameters(
-            skill_runtime_data.parameter_data.descriptor,
-            defaults,
-            predict_request.parameters,
-        )
-      except status.StatusNotOk as e:
-        _abort_with_status(
-            context=context,
-            code=e.status.code(),
-            message=str(e),
-            skill_error_info=error_pb2.SkillErrorInfo(
-                error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
-            ),
-        )
-
-    try:
-      request = _proto_to_predict_request(predict_request, skill_runtime_data)
-    except _CannotConstructPredictRequestError as err:
-      _abort_with_status(
-          context=context,
-          code=status.StatusCode.INTERNAL,
-          message=(
-              'Could not construct predict request for skill'
-              f' {predict_request.instance.id_version}: {err}.'
-          ),
-          skill_error_info=error_pb2.SkillErrorInfo(
-              error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
-          ),
-      )
-
-    object_world = object_world_client.ObjectWorldClient(
-        predict_request.world_id, self._object_world_service
-    )
-    motion_planner = motion_planner_client.MotionPlannerClient(
-        predict_request.world_id, self._motion_planner_service
-    )
-
-    predict_context = skl.PredictContext(
-        equipment_handles=dict(predict_request.instance.equipment_handles),
-        motion_planner=motion_planner,
-        object_world=object_world,
-    )
-
-    try:
-      return skill_project_instance.predict(request, predict_context)
-    except NotImplementedError:
-      logging.warning(
-          (
-              "No user-supplied implementation of Predict() for skill '%s'. "
-              'Returning empty prediction.'
-          ),
-          skill_name,
-      )
-      return skill_service_pb2.PredictResult(
-          outcomes=[prediction_pb2.Prediction(probability=1.0)],
-          internal_data=request.internal_data,
-      )
-    except Exception:  # pylint: disable=broad-except
-      msg = traceback.format_exc()
-      logging.error(
-          'Skill returned an error during prediction. Exception:\n%s', msg
-      )
-      _abort_with_status(
-          context=context,
-          code=status.StatusCode.INTERNAL,
-          message=f'Failure during prediction of skill. Error: {msg}',
-          skill_error_info=error_pb2.SkillErrorInfo(
-              error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
-          ),
-      )
 
 
 class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
@@ -1012,7 +909,6 @@ class _SkillExecutionOperation:
       raise _CannotConstructExecuteRequestError(str(err)) from err
 
     return skl.ExecuteRequest(
-        internal_data=proto.internal_data,
         params=params,
     )
 
@@ -1072,34 +968,8 @@ def _proto_to_get_footprint_request(
     raise _CannotConstructGetFootprintRequestError(str(err)) from err
 
   return skl.GetFootprintRequest(
-      internal_data=proto.internal_data, params=params
+      params=params,
   )
-
-
-def _proto_to_predict_request(
-    proto: skill_service_pb2.PredictRequest,
-    skill_runtime_data: rd.SkillRuntimeData,
-) -> skl.PredictRequest:
-  """Converts a PredictRequest proto to the request to send to the skill.
-
-  Args:
-    proto: The proto to convert.
-    skill_runtime_data: The runtime data for the skill.
-
-  Returns:
-    The request to send to the skill.
-
-  Raises:
-    _CannotConstructPredictRequestError: If the request cannot be converted.
-  """
-  try:
-    params = _unpack_any_from_descriptor(
-        proto.parameters, skill_runtime_data.parameter_data.descriptor
-    )
-  except proto_utils.ProtoMismatchTypeError as err:
-    raise _CannotConstructPredictRequestError(str(err)) from err
-
-  return skl.PredictRequest(internal_data=proto.internal_data, params=params)
 
 
 def _unpack_any_from_descriptor(

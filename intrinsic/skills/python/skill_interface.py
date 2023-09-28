@@ -30,14 +30,10 @@ class GetFootprintRequest(Generic[TParamsType]):
   """A request for a call to Skill.get_footprint.
 
   Attributes:
-    internal_data: Skill-specific data that can be communicated from previous
-      calls to `predict`. Can be useful for optimizing skill execution by
-      pre-computing plan-related information.
     params: The skill parameters proto. For static typing, GetFootprintRequest
       can be parameterized with the required type of this message.
   """
 
-  internal_data: bytes
   params: TParamsType
 
 
@@ -144,134 +140,14 @@ class GetFootprintContext:
 
 
 @dataclasses.dataclass(frozen=True)
-class PredictRequest(Generic[TParamsType]):
-  """A request for a call to Skill.predict.
-
-  Attributes:
-    internal_data: Skill-specific data that can be communicated from previous
-      calls to `predict`. Can be useful for optimizing skill execution by
-      pre-computing plan-related information.
-    params: The skill parameters proto. For static typing, PredictRequest can be
-      parameterized with the required type of this message.
-  """
-
-  internal_data: bytes
-  params: TParamsType
-
-
-class PredictContext:
-  """Contains additional metadata and functionality for a skill prediction.
-
-  It is provided by the skill service to a skill and allows access to the world
-  and other services that a skill may use. Python sub-skills are not currently
-  used; however, it would also allow skills to invoke subskills (see full
-  functionality in skill_interface.h).
-
-  Attributes:
-    motion_planner: A client for the motion planning service.
-    object_world: A client for interacting with the object world.
-  """
-
-  @property
-  def motion_planner(self) -> motion_planner_client.MotionPlannerClient:
-    motion_planner = self._motion_planner
-    if motion_planner is None:
-      raise ValueError('The context does not have a motion planner client.')
-
-    return motion_planner
-
-  @property
-  def object_world(self) -> object_world_client.ObjectWorldClient:
-    object_world = self._object_world
-    if object_world is None:
-      raise ValueError('The context does not have an object world client.')
-
-    return object_world
-
-  def __init__(
-      self,
-      equipment_handles: dict[str, equipment_pb2.EquipmentHandle],
-      motion_planner: motion_planner_client.MotionPlannerClient,
-      object_world: object_world_client.ObjectWorldClient,
-  ):
-    """Initializes this object.
-
-    Args:
-      equipment_handles: Handles for the required equipment for this skill.
-      motion_planner: The motion planner client to provide.
-      object_world: The object world client to provide.
-    """
-    self._equipment_handles = equipment_handles
-    self._motion_planner = motion_planner
-    self._object_world = object_world
-
-  def get_kinematic_object_for_equipment(
-      self, equipment_name: str
-  ) -> object_world_resources.KinematicObject:
-    """Returns the kinematic object that corresponds to this equipment.
-
-    The kinematic object is sourced from the same world that's available via
-    `object_world`.
-
-    Args:
-      equipment_name: The name of the expected equipment.
-
-    Returns:
-      A kinematic object from the world associated with this context.
-    """
-    return self.object_world.get_kinematic_object(
-        self._equipment_handles[equipment_name]
-    )
-
-  def get_object_for_equipment(
-      self, equipment_name: str
-  ) -> object_world_resources.WorldObject:
-    """Returns the world object that corresponds to this equipment.
-
-    The world object is sourced from the same world that's available via
-    `object_world`.
-
-    Args:
-      equipment_name: The name of the expected equipment.
-
-    Returns:
-      A world object from the world associated with this context.
-    """
-    return self.object_world.get_object(self._equipment_handles[equipment_name])
-
-  def get_frame_for_equipment(
-      self, equipment_name: str, frame_name: object_world_ids.FrameName
-  ) -> object_world_resources.Frame:
-    """Returns the frame by name for an object corresponding to some equipment.
-
-    The frame is sourced from the same world that's available via
-    `object_world`.
-
-    Args:
-      equipment_name: The name of the expected equipment.
-      frame_name: The name of the frame within the equipment's object.
-
-    Returns:
-      A frame from the world associated with this context.
-    """
-    return self.object_world.get_frame(
-        frame_name, self._equipment_handles[equipment_name]
-    )
-
-
-@dataclasses.dataclass(frozen=True)
 class ExecuteRequest(Generic[TParamsType]):
   """A request for a call to Skill.execute.
 
   Attributes:
-    internal_data: Skill-specific data that can be communicated from previous
-      calls to `predict`. Can be useful for optimizing skill execution by
-      pre-computing plan-related information.
     params: The skill parameters proto. For static typing, ExecuteRequest can be
       parameterized with the required type of this message.
   """
 
-  internal_data: bytes
   params: TParamsType
 
 
@@ -470,25 +346,6 @@ class SkillProjectInterface(metaclass=abc.ABCMeta):
     return skill_service_pb2.GetFootprintResult(
         footprint=footprint_pb2.Footprint(lock_the_universe=True)
     )
-
-  def predict(
-      self, request: PredictRequest, context: PredictContext
-  ) -> skill_service_pb2.PredictResult:
-    """Predicts a distribution of possible outcomes when running the skill.
-
-    Skill authors should override this method with their implementation.
-
-    Args:
-      request: The predict request.
-      context: Provides access to the world and other services that a skill may
-        use.
-
-    Returns:
-      A list of prediction protos containing the possible outcomes.
-    """
-    del request  # Unused in this default implementation.
-    del context  # Unused in this default implementation.
-    raise NotImplementedError('No user-defined call for Predict()')
 
 
 class Skill(

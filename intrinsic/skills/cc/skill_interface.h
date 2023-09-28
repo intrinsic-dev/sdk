@@ -140,10 +140,8 @@ class GetFootprintRequest {
  public:
   // As a convenience, `param_defaults` can specify default parameter values to
   // merge into any unset fields of `params`.
-  GetFootprintRequest(std::string internal_data,
-                      const ::google::protobuf::Message& params,
-                      ::google::protobuf::Message* param_defaults = nullptr)
-      : internal_data_(std::move(internal_data)) {
+  GetFootprintRequest(const ::google::protobuf::Message& params,
+                      ::google::protobuf::Message* param_defaults = nullptr) {
     params_any_.PackFrom(params);
     if (param_defaults != nullptr) {
       param_defaults_any_ = google::protobuf::Any();
@@ -157,16 +155,11 @@ class GetFootprintRequest {
   // This constructor enables conversion from Any to the target type without
   // needing a message pool/factory up front, since params() is templated on the
   // target type.
-  GetFootprintRequest(std::string internal_data, google::protobuf::Any params,
+  GetFootprintRequest(google::protobuf::Any params,
                       std::optional<::google::protobuf::Any> param_defaults)
-      : internal_data_(std::move(internal_data)),
+      :  //
         params_any_(std::move(params)),
         param_defaults_any_(std::move(param_defaults)) {}
-
-  // Skill-specific data that can be communicated from previous calls to
-  // `Predict`. Can be useful for optimizing skill execution by pre-computing
-  // plan-related information.
-  absl::string_view internal_data() const { return internal_data_; }
 
   // The skill parameters proto.
   template <class TParams>
@@ -175,81 +168,8 @@ class GetFootprintRequest {
   }
 
  private:
-  std::string internal_data_;
-
   ::google::protobuf::Any params_any_;
   std::optional<::google::protobuf::Any> param_defaults_any_;
-};
-
-// A request for a call to SkillInterface::Predict.
-class PredictRequest {
- public:
-  // As a convenience, `param_defaults` can specify default parameter values to
-  // merge into any unset fields of `params`.
-  PredictRequest(std::string internal_data,
-                 const ::google::protobuf::Message& params,
-                 ::google::protobuf::Message* param_defaults = nullptr)
-      : internal_data_(std::move(internal_data)) {
-    params_any_.PackFrom(params);
-    if (param_defaults != nullptr) {
-      param_defaults_any_ = google::protobuf::Any();
-      param_defaults_any_->PackFrom(*param_defaults);
-    }
-  }
-
-  // Defers conversion of input Any params to target proto type until accessed
-  // by the user in params().
-  //
-  // This constructor enables conversion from Any to the target type without
-  // needing a message pool/factory up front, since params() is templated on the
-  // target type.
-  PredictRequest(std::string internal_data, google::protobuf::Any params,
-                 std::optional<::google::protobuf::Any> param_defaults)
-      : internal_data_(std::move(internal_data)),
-        params_any_(std::move(params)),
-        param_defaults_any_(std::move(param_defaults)) {}
-
-  // Skill-specific data that can be communicated from previous calls to
-  // `Predict`. Can be useful for optimizing skill execution by pre-computing
-  // plan-related information.
-  absl::string_view internal_data() const { return internal_data_; }
-
-  // The skill parameters proto.
-  template <class TParams>
-  absl::StatusOr<TParams> params() const {
-    return internal::ResolveParams<TParams>(params_any_, param_defaults_any_);
-  }
-
- private:
-  std::string internal_data_;
-
-  ::google::protobuf::Any params_any_;
-  std::optional<::google::protobuf::Any> param_defaults_any_;
-};
-
-// Contains additional metadata and functionality for a call to
-// SkillInterface::Predict that is provided by the skill service to a skill.
-// Allows, e.g., to read the world.
-class PredictContext {
- public:
-  virtual ~PredictContext() = default;
-
-  // Returns the object-based view of the world associated with the skill.
-  virtual absl::StatusOr<world::ObjectWorldClient> GetObjectWorld() = 0;
-
-  // Returns the world object that represents the equipment in the world as
-  // required by the skill within this context.
-  virtual absl::StatusOr<world::KinematicObject> GetKinematicObjectForEquipment(
-      absl::string_view equipment_name) = 0;
-  virtual absl::StatusOr<world::WorldObject> GetObjectForEquipment(
-      absl::string_view equipment_name) = 0;
-  virtual absl::StatusOr<world::Frame> GetFrameForEquipment(
-      absl::string_view equipment_name, absl::string_view frame_name) = 0;
-
-  // Returns a motion planner based on the world associated with the skill
-  // (see GetObjectWorld()).
-  virtual absl::StatusOr<motion_planning::MotionPlannerClient>
-  GetMotionPlanner() = 0;
 };
 
 // Contains additional metadata and functionality for a skill footprint that is
@@ -275,7 +195,6 @@ class GetFootprintContext {
 // Interface definition of Skill projecting.
 class SkillProjectInterface {
  public:
-  using PredictResult = intrinsic_proto::skills::PredictResult;
   using GetFootprintResult = intrinsic_proto::skills::GetFootprintResult;
 
   // Computes the skill's footprint. `world` contains the world under which the
@@ -287,13 +206,6 @@ class SkillProjectInterface {
     return std::move(result);
   }
 
-  // Generates a distribution of possible outcomes from running this skill with
-  // the provided parameters.
-  virtual absl::StatusOr<PredictResult> Predict(const PredictRequest& request,
-                                                PredictContext& context) const {
-    return absl::UnimplementedError("No user-defined call for Predict()");
-  }
-
   virtual ~SkillProjectInterface() = default;
 };
 
@@ -302,10 +214,8 @@ class ExecuteRequest {
  public:
   // `param_defaults` can specify default parameter values to merge into any
   // unset fields of `params`.
-  ExecuteRequest(std::string internal_data,
-                 const ::google::protobuf::Message& params,
-                 ::google::protobuf::Message* param_defaults = nullptr)
-      : internal_data_(std::move(internal_data)) {
+  ExecuteRequest(const ::google::protobuf::Message& params,
+                 ::google::protobuf::Message* param_defaults = nullptr) {
     params_any_.PackFrom(params);
     if (param_defaults != nullptr) {
       param_defaults_any_ = google::protobuf::Any();
@@ -319,16 +229,11 @@ class ExecuteRequest {
   // This constructor enables conversion from Any to the target type without
   // needing a message pool/factory up front, since params() is templated on the
   // target type.
-  ExecuteRequest(std::string internal_data, google::protobuf::Any params,
+  ExecuteRequest(google::protobuf::Any params,
                  std::optional<::google::protobuf::Any> param_defaults)
-      : internal_data_(std::move(internal_data)),
+      :  //
         params_any_(std::move(params)),
         param_defaults_any_(std::move(param_defaults)) {}
-
-  // Skill-specific data that can be communicated from previous calls to
-  // `Predict`. Can be useful for optimizing skill execution by pre-computing
-  // plan-related information.
-  absl::string_view internal_data() const { return internal_data_; }
 
   // The skill parameters proto.
   template <class TParams>
@@ -337,8 +242,6 @@ class ExecuteRequest {
   }
 
  private:
-  std::string internal_data_;
-
   ::google::protobuf::Any params_any_;
   std::optional<::google::protobuf::Any> param_defaults_any_;
 };

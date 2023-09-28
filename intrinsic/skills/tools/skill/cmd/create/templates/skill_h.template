@@ -31,16 +31,6 @@ class {{.SkillNameUpperCamelCase}} : public intrinsic::skills::SkillInterface {
   // Factory method to create an instance of the skill.
   static std::unique_ptr<intrinsic::skills::SkillInterface> CreateSkill();
 
-  // Generates a distribution of possible outcomes from running this skill with
-  // the provided parameters.
-  // TODO: A default no-op implementation is provided for 
-  //       `{{.SkillNameUpperCamelCase}}.Predict`.
-  //       For a production-ready skill, this method needs to be implemented
-  //       by the skill author. 
-  absl::StatusOr<PredictResult> Predict(
-      const intrinsic::skills::PredictRequest& request, 
-      intrinsic::skills::PredictContext& context) const override;
-
   // ---------------------------------------------------------------------------
   // Skill execution (see intrinsic::skills::SkillExecuteInterface)
   // ---------------------------------------------------------------------------
