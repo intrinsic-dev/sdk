@@ -16,7 +16,7 @@ fonttools==4.41.1
     # via matplotlib
 graphviz==0.20
     # via -r requirements.in
-grpcio==1.55.0
+grpcio==1.56.0
     # via -r requirements.in
 kiwisolver==1.4.4
     # via matplotlib

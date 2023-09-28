@@ -24,10 +24,10 @@ def parse_args():
 
 def main():
   args = parse_args()
-  sha = "315dbe5aa9235ccc5fcb4e40e6ada4c1135d4377238bf9ea65534fa38f7c695a"
+  sha = "194dcaae20b7bcd9fc4fc9a1e091215207842ddb9a1df01419c7c55d3077979b"
   assert f'sha256 = "{sha}"' in args.deps_0.read_text()
-  assert "grpcio==1.55.0" in args.requirements_in.read_text()
-  assert "grpcio==1.55.0" in args.requirements_txt.read_text()
+  assert "grpcio==1.56.0" in args.requirements_in.read_text()
+  assert "grpcio==1.56.0" in args.requirements_txt.read_text()
 
 
 if __name__ == "__main__":

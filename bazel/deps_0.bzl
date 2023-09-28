@@ -86,9 +86,9 @@ def intrinsic_sdks_deps_0():
     maybe(
         http_archive,
         name = "rules_python",
-        strip_prefix = "rules_python-0.14.0",
-        url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.14.0.zip",
-        sha256 = "329a6a0f9a9a266b185e94ddf0f6ae6732ff5e1ce759b7d703b96041af36b7f9",
+        strip_prefix = "rules_python-0.17.3",
+        url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.17.3.zip",
+        sha256 = "3046a47488b4e67317cdfa4c53e32b99ea68657ef53b82204aac46e22957ceac",
     )
 
     # Docker
@@ -185,12 +185,11 @@ def intrinsic_sdks_deps_0():
             Label("//intrinsic/production/external/patches:0002-Add-warning-suppressions-to-cython_library.patch"),
             Label("//intrinsic/production/external/patches:0003-Remove-competing-local_config_python-definition.patch"),
             Label("//intrinsic/production/external/patches:0005-Remove-competing-go-deps.patch"),
-            Label("//intrinsic/production/external/patches:0007-Also-generate-pyi-files-grpc.patch"),
             Label("//intrinsic/production/external/patches:0011-Public-grpc_library-attr.patch"),
         ],
-        sha256 = "315dbe5aa9235ccc5fcb4e40e6ada4c1135d4377238bf9ea65534fa38f7c695a",  # v1.55.0
-        strip_prefix = "grpc-0bf4a618b17a3f0ed61c22364913c7f66fc1c61a",  # v1.55.0
-        urls = ["https://github.com/grpc/grpc/archive/0bf4a618b17a3f0ed61c22364913c7f66fc1c61a.zip"],  # v1.55.0
+        sha256 = "194dcaae20b7bcd9fc4fc9a1e091215207842ddb9a1df01419c7c55d3077979b",  # v1.56.0
+        strip_prefix = "grpc-6e85620c7e258df79666a4743f862f2f82701c2d",  # v1.56.0
+        urls = ["https://github.com/grpc/grpc/archive/6e85620c7e258df79666a4743f862f2f82701c2d.zip"],  # v1.56.0
     )
 
     # Dependency of Protobuf and gRPC, explicitly pinned here so that we don't get the definition

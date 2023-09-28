@@ -88,7 +88,7 @@ def intrinsic_sdks_deps_1(register_go_toolchain = True):
     # Python toolchain
     python_register_toolchains(
         name = "local_config_python",
-        python_version = "3.10",
+        python_version = "3.11",
     )
 
     # Docker
