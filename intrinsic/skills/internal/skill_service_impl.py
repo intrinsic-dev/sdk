@@ -285,14 +285,14 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
         predict_request.world_id, self._motion_planner_service
     )
 
-    projection_context = skl.ProjectionContext(
+    predict_context = skl.PredictContext(
         equipment_handles=dict(predict_request.instance.equipment_handles),
         motion_planner=motion_planner,
         object_world=object_world,
     )
 
     try:
-      return skill_project_instance.predict(request, projection_context)
+      return skill_project_instance.predict(request, predict_context)
     except NotImplementedError:
       logging.warning(
           (

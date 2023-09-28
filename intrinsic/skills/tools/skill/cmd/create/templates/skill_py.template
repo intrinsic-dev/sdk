@@ -27,7 +27,7 @@ class {{.SkillNameUpperCamelCase}}(skill_interface.Skill):
     def predict(
       self,
       request: skill_interface.PredictRequest,
-      context: skill_interface.ProjectionContext,
+      context: skill_interface.PredictContext,
     ) -> skill_service_pb2.PredictResult:
         """Predicts a distribution of possible outcomes when running the skill.
 

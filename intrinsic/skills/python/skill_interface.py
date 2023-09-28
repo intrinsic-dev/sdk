@@ -159,8 +159,8 @@ class PredictRequest(Generic[TParamsType]):
   params: TParamsType
 
 
-class ProjectionContext:
-  """Contains additional metadata and functionality for a skill projection.
+class PredictContext:
+  """Contains additional metadata and functionality for a skill prediction.
 
   It is provided by the skill service to a skill and allows access to the world
   and other services that a skill may use. Python sub-skills are not currently
@@ -472,7 +472,7 @@ class SkillProjectInterface(metaclass=abc.ABCMeta):
     )
 
   def predict(
-      self, request: PredictRequest, context: ProjectionContext
+      self, request: PredictRequest, context: PredictContext
   ) -> skill_service_pb2.PredictResult:
     """Predicts a distribution of possible outcomes when running the skill.
 
