@@ -34,7 +34,6 @@
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_canceller.h"
 #include "intrinsic/skills/cc/skill_interface.h"
-#include "intrinsic/skills/internal/default_parameters.h"
 #include "intrinsic/skills/internal/equipment_utilities.h"
 #include "intrinsic/skills/internal/error_utils.h"
 #include "intrinsic/skills/internal/execute_context_impl.h"
@@ -45,6 +44,7 @@
 #include "intrinsic/skills/proto/error.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
+#include "intrinsic/util/proto/merge.h"
 #include "intrinsic/util/thread/thread.h"
 #include "intrinsic/world/proto/object_world_service.grpc.pb.h"
 

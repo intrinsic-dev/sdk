@@ -15,22 +15,20 @@
 #include "absl/log/check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/message.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
 #include "intrinsic/skills/cc/client_common.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_canceller.h"
-#include "intrinsic/skills/internal/default_parameters.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/footprint.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
+#include "intrinsic/util/proto/any.h"
 #include "intrinsic/world/objects/frame.h"
 #include "intrinsic/world/objects/kinematic_object.h"
 #include "intrinsic/world/objects/object_world_client.h"
@@ -38,15 +36,6 @@
 
 namespace intrinsic {
 namespace skills {
-
-namespace internal {
-
-template <class TMsg>
-absl::StatusOr<TMsg> ResolveParams(
-    const ::google::protobuf::Any& params_any,
-    const std::optional<::google::protobuf::Any>& defaults_any);
-
-}  // namespace internal
 
 // Interface definition of Skill signature that includes the name, and
 // input / output parameter types.
@@ -164,7 +153,7 @@ class GetFootprintRequest {
   // The skill parameters proto.
   template <class TParams>
   absl::StatusOr<TParams> params() const {
-    return internal::ResolveParams<TParams>(params_any_, param_defaults_any_);
+    return UnpackAnyAndMerge<TParams>(params_any_, param_defaults_any_);
   }
 
  private:
@@ -238,7 +227,7 @@ class ExecuteRequest {
   // The skill parameters proto.
   template <class TParams>
   absl::StatusOr<TParams> params() const {
-    return internal::ResolveParams<TParams>(params_any_, param_defaults_any_);
+    return UnpackAnyAndMerge<TParams>(params_any_, param_defaults_any_);
   }
 
  private:
@@ -316,47 +305,6 @@ class SkillInterface : public SkillSignatureInterface,
   ~SkillInterface() override = default;
 };
 
-namespace internal {
-
-template <class TMsg>
-absl::StatusOr<TMsg> UnpackParams(const ::google::protobuf::Any& msg_any,
-                                  absl::string_view name) {
-  if (msg_any.type_url().empty()) {
-    return absl::InvalidArgumentError(absl::StrFormat(
-        "Cannot unpack empty Any %s to %s", name, TMsg::descriptor()->name()));
-  }
-  if (!msg_any.Is<TMsg>()) {
-    return absl::InvalidArgumentError(
-        absl::StrFormat("Cannot unpack Any %s of type %s to %s.", name,
-                        msg_any.type_url(), TMsg::descriptor()->name()));
-  }
-
-  TMsg msg;
-  if (!msg_any.UnpackTo(&msg)) {
-    return absl::InternalError(
-        absl::StrFormat("Failed to unpack Any %s of type %s to %s.", name,
-                        msg_any.type_url(), TMsg::descriptor()->name()));
-  }
-
-  return msg;
-}
-
-template <class TMsg>
-absl::StatusOr<TMsg> ResolveParams(
-    const ::google::protobuf::Any& params_any,
-    const std::optional<::google::protobuf::Any>& defaults_any) {
-  INTRINSIC_ASSIGN_OR_RETURN(TMsg params,
-                             UnpackParams<TMsg>(params_any, "params"));
-  if (defaults_any.has_value()) {
-    INTRINSIC_ASSIGN_OR_RETURN(TMsg defaults,
-                               UnpackParams<TMsg>(*defaults_any, "defaults"));
-    INTRINSIC_RETURN_IF_ERROR(MergeUnset(defaults, params));
-  }
-
-  return params;
-}
-
-}  // namespace internal
 }  // namespace skills
 }  // namespace intrinsic
 

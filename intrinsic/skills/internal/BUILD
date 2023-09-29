@@ -33,11 +33,10 @@ cc_library(
     deps = [
         "//intrinsic/icon/release:status_helpers",
         "//intrinsic/skills/proto:skills_cc_proto",
-        "@com_google_absl//absl/container:flat_hash_set",
+        "//intrinsic/util/proto:merge",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/types:span",
         "@com_google_protobuf//:protobuf",
     ],
 )
@@ -400,7 +399,6 @@ cc_library(
     srcs = ["skill_service_impl.cc"],
     hdrs = ["skill_service_impl.h"],
     deps = [
-        ":default_parameters",
         ":equipment_utilities",
         ":error_utils",
         ":execute_context_impl",
@@ -418,6 +416,7 @@ cc_library(
         "//intrinsic/skills/proto:skill_service_cc_grpc_proto",
         "//intrinsic/skills/proto:skill_service_cc_proto",
         "//intrinsic/skills/proto:skills_cc_proto",
+        "//intrinsic/util/proto:merge",
         "//intrinsic/util/thread",
         "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
         "@com_github_grpc_grpc//:grpc++_public_hdrs",
