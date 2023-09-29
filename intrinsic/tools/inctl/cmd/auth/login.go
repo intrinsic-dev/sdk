@@ -37,6 +37,11 @@ const (
 	sensibleBrowser = "/usr/bin/sensible-browser"
 )
 
+// Exposed for testing
+var (
+	queryProject = queryProjectForAPIKey
+)
+
 var loginParams *viper.Viper
 
 var loginCmd = &cobra.Command{
@@ -154,9 +159,12 @@ func loginCmdE(cmd *cobra.Command, _ []string) (err error) {
 
 	// If we are passed an org, we don't know the project yet
 	if projectName == "" {
-		projectName, err = queryProjectForAPIKey(cmd.Context(), apiKey)
+		projectName, err = queryProject(cmd.Context(), apiKey)
 		if err != nil {
 			return err
+		}
+		if err := authStore.WriteOrgInfo(&auth.OrgInfo{Organization: orgName, Project: projectName}); err != nil {
+			return fmt.Errorf("store org info: %w", err)
 		}
 	}
 

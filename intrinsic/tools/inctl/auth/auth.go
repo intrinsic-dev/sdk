@@ -23,6 +23,7 @@ const (
 
 	storeDirectory      = "intrinsic/projects"
 	authConfigExtension = ".user-token"
+	orgStoreDirectory = "intrinsic/organizations"
 
 	directoryMode  os.FileMode = 0700
 	fileMode       os.FileMode = 0600
@@ -51,6 +52,12 @@ func (t *RFC3339Time) UnmarshalText(text []byte) error {
 // timestamp in RFC3339 format.
 func (t *RFC3339Time) MarshalText() (text []byte, err error) {
 	return []byte((time.Time(*t)).Format(time.RFC3339)), nil
+}
+
+// OrgInfo encapsulates the information needed to use organization names in inctl.
+type OrgInfo struct {
+	Organization string `json:"org"`
+	Project      string `json:"project"`
 }
 
 // ProjectToken represents cloud project bound API Token for user authorization
@@ -315,4 +322,64 @@ func (s *Store) RemoveConfiguration(name string) error {
 		return fmt.Errorf("cannot remove configuration: %w", err)
 	}
 	return os.RemoveAll(filename)
+}
+
+func (s *Store) orgFilename(name string) (string, error) {
+	configDir, err := s.getConfigDir()
+	if err != nil {
+		return "", fmt.Errorf("get config directory: %w", err)
+	}
+
+	return filepath.Join(configDir, orgStoreDirectory, fmt.Sprintf("%s.json", name)), nil
+}
+
+// WriteOrgInfo writes the information we have about an org to file
+func (s *Store) WriteOrgInfo(o *OrgInfo) error {
+	filename, err := s.orgFilename(o.Organization)
+	if err != nil {
+		return err
+	}
+
+	// we make sure we have whole directory structure before we create file.
+	// os.MkdirAll() calls os.Stat() on path, so there is no point to do it here.
+	if err = os.MkdirAll(filepath.Dir(filename), directoryMode); err != nil {
+		return fmt.Errorf("create target directory: %w", err)
+	}
+
+	file, err := os.OpenFile(filename, writeFileFlags, fileMode)
+	if err != nil {
+		return fmt.Errorf("open configuration file: %w", err)
+	}
+
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(o); err != nil {
+		return fmt.Errorf("serialize configuration: %w", err)
+	}
+
+	// if sync fails, we did not write into store.
+	return file.Sync()
+}
+
+// ReadOrgInfo reads the information about an organization previously written to the auth store.
+func (s *Store) ReadOrgInfo(orgName string) (OrgInfo, error) {
+	filename, err := s.orgFilename(orgName)
+	if err != nil {
+		return OrgInfo{}, err
+	}
+
+	file, err := os.Open(filename)
+	if err != nil {
+		return OrgInfo{}, fmt.Errorf("open configuration file: %w", err)
+	}
+	defer file.Close()
+
+	ret := OrgInfo{}
+	if err := json.NewDecoder(file).Decode(&ret); err != nil {
+		return OrgInfo{}, fmt.Errorf("deserialize configuration: %w", err)
+	}
+
+	return ret, nil
 }
