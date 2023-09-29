@@ -19,6 +19,7 @@
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/internal/skill_registry_client_interface.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
+#include "intrinsic/skills/proto/footprint.pb.h"
 #include "intrinsic/world/objects/object_world_client.h"
 #include "intrinsic/world/proto/object_world_service.grpc.pb.h"
 

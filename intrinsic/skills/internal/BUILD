@@ -540,6 +540,7 @@ cc_library(
         "//intrinsic/skills/cc:equipment_pack",
         "//intrinsic/skills/cc:skill_interface",
         "//intrinsic/skills/proto:equipment_cc_proto",
+        "//intrinsic/skills/proto:footprint_cc_proto",
         "//intrinsic/skills/proto:skill_service_cc_proto",
         "//intrinsic/skills/proto:skills_cc_proto",
         "//intrinsic/world/objects:frame",

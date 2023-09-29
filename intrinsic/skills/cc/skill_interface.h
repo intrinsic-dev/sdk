@@ -189,14 +189,12 @@ class GetFootprintContext {
 // Interface definition of Skill projecting.
 class SkillProjectInterface {
  public:
-  using GetFootprintResult = intrinsic_proto::skills::GetFootprintResult;
-
   // Computes the skill's footprint. `world` contains the world under which the
   // skill is expected to operate, and this function should not modify it.
-  virtual absl::StatusOr<GetFootprintResult> GetFootprint(
+  virtual absl::StatusOr<intrinsic_proto::skills::Footprint> GetFootprint(
       const GetFootprintRequest& request, GetFootprintContext& context) const {
-    GetFootprintResult result;
-    result.mutable_footprint()->set_lock_the_universe(true);
+    intrinsic_proto::skills::Footprint result;
+    result.set_lock_the_universe(true);
     return std::move(result);
   }
 

@@ -21,6 +21,7 @@
 #include "intrinsic/skills/internal/default_parameters.h"
 #include "intrinsic/skills/internal/skill_registry_client_interface.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
+#include "intrinsic/skills/proto/footprint.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
 #include "intrinsic/world/objects/frame.h"
