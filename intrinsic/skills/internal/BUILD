@@ -535,6 +535,8 @@ cc_library(
         ":skill_registry_client_interface",
         "//intrinsic/icon/release:status_helpers",
         "//intrinsic/logging/proto:context_cc_proto",
+        "//intrinsic/motion_planning:motion_planner_client",
+        "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
         "//intrinsic/skills/cc:equipment_pack",
         "//intrinsic/skills/cc:skill_interface",
         "//intrinsic/skills/proto:equipment_cc_proto",

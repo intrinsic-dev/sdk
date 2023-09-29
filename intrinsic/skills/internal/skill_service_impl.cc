@@ -486,7 +486,7 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
 
   GetFootprintContextImpl footprint_context(
       request->world_id(), request->context(), object_world_service_,
-      std::move(equipment), skill_registry_client_);
+      motion_planner_service_, std::move(equipment), skill_registry_client_);
   auto skill_result =
       skill->GetFootprint(get_footprint_request, footprint_context);
 

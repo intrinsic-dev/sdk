@@ -13,6 +13,8 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "intrinsic/logging/proto/context.pb.h"
+#include "intrinsic/motion_planning/motion_planner_client.h"
+#include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/internal/skill_registry_client_interface.h"
@@ -25,13 +27,15 @@ namespace skills {
 
 // Implementation of GetFootprintContext as used by the skill service.
 class GetFootprintContextImpl : public GetFootprintContext {
-  using ObjectWorldService = ::intrinsic_proto::world::ObjectWorldService;
-
  public:
   GetFootprintContextImpl(
       std::string world_id,
       const intrinsic_proto::data_logger::Context& log_context,
-      std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
+      std::shared_ptr<intrinsic_proto::world::ObjectWorldService::StubInterface>
+          object_world_service,
+      std::shared_ptr<
+          intrinsic_proto::motion_planning::MotionPlannerService::StubInterface>
+          motion_planner_service,
       EquipmentPack equipment,
       SkillRegistryClientInterface& skill_registry_client);
 
@@ -44,9 +48,16 @@ class GetFootprintContextImpl : public GetFootprintContext {
   absl::StatusOr<world::Frame> GetFrameForEquipment(
       absl::string_view equipment_name, absl::string_view frame_name) override;
 
+  absl::StatusOr<motion_planning::MotionPlannerClient> GetMotionPlanner()
+      override;
+
  private:
   std::string world_id_;
-  std::shared_ptr<ObjectWorldService::StubInterface> object_world_service_;
+  std::shared_ptr<intrinsic_proto::world::ObjectWorldService::StubInterface>
+      object_world_service_;
+  std::shared_ptr<
+      intrinsic_proto::motion_planning::MotionPlannerService::StubInterface>
+      motion_planner_service_;
   EquipmentPack equipment_;
   SkillRegistryClientInterface& skill_registry_client_ ABSL_ATTRIBUTE_UNUSED;
   intrinsic_proto::data_logger::Context log_context_;

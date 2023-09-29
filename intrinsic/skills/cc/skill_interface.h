@@ -179,6 +179,11 @@ class GetFootprintContext {
       absl::string_view equipment_name) = 0;
   virtual absl::StatusOr<world::Frame> GetFrameForEquipment(
       absl::string_view equipment_name, absl::string_view frame_name) = 0;
+
+  // Returns a motion planner based on the world associated with the skill
+  // (see GetObjectWorld()).
+  virtual absl::StatusOr<motion_planning::MotionPlannerClient>
+  GetMotionPlanner() = 0;
 };
 
 // Interface definition of Skill projecting.
