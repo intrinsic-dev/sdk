@@ -10,14 +10,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	skillcataloggrpcpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
-	skillcatalogpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillCmd "intrinsic/skills/tools/skill/cmd/cmd"
 	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
-	"intrinsic/skills/tools/skill/cmd/listutil"
-	"intrinsic/tools/inctl/cmd/root"
-	"intrinsic/tools/inctl/util/printer"
 )
 
 var cmdFlags = cmdutil.NewCmdFlags()
@@ -44,18 +39,7 @@ var listReleasedCmd = &cobra.Command{
 		}
 		defer conn.Close()
 
-		client := skillcataloggrpcpb.NewSkillCatalogClient(conn)
-		resp, err := client.ListSkills(ctx, &skillcatalogpb.ListSkillsRequest{})
-		if err != nil {
-			return fmt.Errorf("could not list skills: %w", err)
-		}
-
-		prtr, err := printer.NewPrinter(root.FlagOutput)
-		if err != nil {
-			return err
-		}
-
-		prtr.Print(listutil.SkillDescriptionsFromSkillMetas(resp.GetSkills()))
+		return fmt.Errorf("unimplemented")
 
 		return nil
 	},

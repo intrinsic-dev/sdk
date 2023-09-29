@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strings"
 
-	skillcatalogpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	spb "intrinsic/skills/proto/skills_go_proto"
 )
 
@@ -31,27 +30,6 @@ type SkillDescription struct {
 // SkillDescriptions wraps the required data for the output of skill list commands.
 type SkillDescriptions struct {
 	Skills []SkillDescription `json:"skills"`
-}
-
-// SkillDescriptionsFromSkillMetas creates a SkillDescriptions instance from SkillMeta protos
-func SkillDescriptionsFromSkillMetas(skillMetas []*skillcatalogpb.SkillMeta) *SkillDescriptions {
-	out := SkillDescriptions{Skills: make([]SkillDescription, len(skillMetas))}
-
-	for i, skillMeta := range skillMetas {
-		out.Skills[i] = SkillDescription{
-			Name:         skillMeta.GetName(),
-			Vendor:       skillMeta.GetVendor(),
-			PackageName:  skillMeta.GetPackageName(),
-			Version:      skillMeta.GetVersion(),
-			UpdateTime:   skillMeta.GetUpdateTime().AsTime().String(),
-			ID:           skillMeta.GetId(),
-			IDVersion:    skillMeta.GetIdVersion(),
-			ReleaseNotes: skillMeta.GetReleaseNotes(),
-			DocString:    skillMeta.GetDocString(),
-		}
-	}
-
-	return &out
 }
 
 // SkillDescriptionsFromSkills creates a SkillDescriptions instance from Skill protos

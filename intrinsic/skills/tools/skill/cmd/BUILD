@@ -115,7 +115,6 @@ go_library(
     name = "listutil",
     srcs = ["listutil.go"],
     deps = [
-        "//intrinsic/skills/catalog/proto:skill_catalog_go_grpc_proto",
         "//intrinsic/skills/proto:skills_go_proto",
     ],
 )
