@@ -277,11 +277,28 @@ class SkillExecuteInterface {
   // services that a skill may use.
   //
   // The skill should return an error if execution failed, and otherwise an
-  // ExecuteResult. This result is typically empty, but may be populated with
-  // arbitrary data in the `result` field.
+  // ExecuteResult. This result may be populated with arbitrary data in the
+  // `result` field.
   //
-  // Implementations that support cancellation should return
-  // absl::CancelledError if the skill is aborted due to a cancellation request.
+  // If the skill fails for one of the following reasons, it should return the
+  // specified error along with a descriptive and, if possible, actionable error
+  // message:
+  // - `absl::CancelledError` if the skill is aborted due to a cancellation
+  //   request (assuming the skill supports the cancellation).
+  // - `absl::InvalidArgumentError` if the arguments provided as skill
+  //   parameters are invalid.
+  //
+  // The skill can return `absl::InternalError` if its objective was not
+  // achieved. Refer to absl status documentation for other errors:
+  // https://github.com/abseil/abseil-cpp/blob/master/absl/status/status.h
+  //
+  // If the skill returns an error, it will cause the Process to fail
+  // immediately, unless the skill is part of a `FallbackNode` in the Process
+  // tree. Currently, there is no way to distinguish between potentially
+  // recoverable failures that should lead to fallback handling via that node
+  // (e.g., failure to achieve the skill's objective) and other failures that
+  // should abort the entire process (e.g., failure to connect to a gRPC
+  // service).
   virtual absl::StatusOr<intrinsic_proto::skills::ExecuteResult> Execute(
       const ExecuteRequest& request, ExecuteContext& context) {
     return absl::UnimplementedError("Skill does not implement execution.");
