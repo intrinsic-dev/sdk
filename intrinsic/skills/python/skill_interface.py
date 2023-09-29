@@ -290,7 +290,7 @@ class SkillExecuteInterface(metaclass=abc.ABCMeta):
   @abc.abstractmethod
   def execute(
       self, request: ExecuteRequest, context: ExecuteContext
-  ) -> skill_service_pb2.ExecuteResult:
+  ) -> message.Message | None:
     """Executes the skill.
 
     Skill authors should override this method with their implementation.
@@ -304,7 +304,7 @@ class SkillExecuteInterface(metaclass=abc.ABCMeta):
         use.
 
     Returns:
-      The execute result proto.
+      The skill's result message, or None if it does not return a result.
 
     Raises:
       SkillCancelledError: If the skill is aborted due to a cancellation

@@ -822,7 +822,20 @@ class _SkillExecutionOperation:
     error_status = None
     try:
       request = self._proto_to_execute_request(self._request)
-      result = skill.execute(request, context)
+      returned_result = skill.execute(request, context)
+      if isinstance(returned_result, skill_service_pb2.ExecuteResult):
+        logging.warning(
+            'Execute returned ExecuteResult instead of the message to be'
+            ' wrapped.  Using the returned message directly.'
+        )
+        result = returned_result
+      else:
+        result_any = None
+        if returned_result is not None:
+          result_any = any_pb2.Any()
+          result_any.Pack(returned_result)
+        result = skill_service_pb2.ExecuteResult(result=result_any)
+
     except _CannotConstructExecuteRequestError as err:
       error_status = status_pb2.Status(
           code=status.StatusCode.INTERNAL,

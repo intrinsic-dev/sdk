@@ -18,9 +18,9 @@ class NoOpSkill(skl.Skill):
       self,
       request: skl.ExecuteRequest[no_op_skill_pb2.NoOpSkillParams],
       context: skl.ExecuteContext,
-  ) -> skill_service_pb2.ExecuteResult:
+  ) -> None:
     """See base class."""
-    return skill_service_pb2.ExecuteResult()
+    return None
 
   @overrides(skl.Skill)
   def get_footprint(
