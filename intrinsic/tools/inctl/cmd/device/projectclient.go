@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"strings"
 
 	"intrinsic/tools/inctl/auth/auth"
 )
@@ -25,14 +26,19 @@ var (
 
 // AuthedClient injects an api key for the project into every request.
 type AuthedClient struct {
-	client      *http.Client
-	baseURL     url.URL
-	tokenSource *auth.ProjectToken
+	client       *http.Client
+	baseURL      url.URL
+	tokenSource  *auth.ProjectToken
+	organization string
 }
 
 // Do is the primary function of the http client interface.
 func (c *AuthedClient) Do(req *http.Request) (*http.Response, error) {
 	req, err := c.tokenSource.HTTPAuthorization(req)
+	if c.organization != "" {
+		req.AddCookie(&http.Cookie{Name: "org-id", Value: c.organization})
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +47,17 @@ func (c *AuthedClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 // Client returns a http.Client compatible that injects auth for the project into every request.
-func Client(projectName string) (AuthedClient, error) {
+func Client(projectName string, orgName string) (AuthedClient, error) {
+	if projectName == "" {
+		info, err := auth.NewStore().ReadOrgInfo(orgName)
+		if err != nil {
+			return AuthedClient{}, fmt.Errorf("get org info: %w", err)
+		}
+
+		projectName = info.Project
+		orgName = strings.Split(orgName, "@")[0]
+	}
+
 	configuration, err := auth.NewStore().GetConfiguration(projectName)
 	if err != nil {
 		return AuthedClient{}, fmt.Errorf("get credential store: %w", err)
@@ -59,7 +75,8 @@ func Client(projectName string) (AuthedClient, error) {
 			Host:   fmt.Sprintf("www.endpoints.%s.cloud.goog", projectName),
 			Path:   "/api/devices/",
 		},
-		tokenSource: token,
+		tokenSource:  token,
+		organization: orgName,
 	}, nil
 }
 

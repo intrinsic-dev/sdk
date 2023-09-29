@@ -60,8 +60,9 @@ var configGetCmd = &cobra.Command{
 		}
 
 		projectName := viperLocal.GetString(keyProject)
+		orgName := viperLocal.GetString(keyOrganization)
 
-		client, err := projectclient.Client(projectName)
+		client, err := projectclient.Client(projectName, orgName)
 		if err != nil {
 			return fmt.Errorf("get project client: %w", err)
 		}
@@ -170,8 +171,8 @@ var configSetCmd = &cobra.Command{
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName := viperLocal.GetString(keyProject)
-
-		client, err := projectclient.Client(projectName)
+		orgName := viperLocal.GetString(keyOrganization)
+		client, err := projectclient.Client(projectName, orgName)
 		if err != nil {
 			return fmt.Errorf("get project client: %w", err)
 		}

@@ -14,6 +14,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"intrinsic/frontend/cloud/devicemanager/shared/shared"
+	"intrinsic/tools/inctl/auth/auth"
 	"intrinsic/tools/inctl/cmd/device/projectclient"
 )
 
@@ -27,6 +28,7 @@ var registerCmd = &cobra.Command{
 	Short: "Tool to register hardware in setup flow",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName := viperLocal.GetString(keyProject)
+		orgName := viperLocal.GetString(keyOrganization)
 		hostname := viperLocal.GetString(keyHostname)
 		if hostname == "" {
 			hostname = deviceID
@@ -35,6 +37,19 @@ var registerCmd = &cobra.Command{
 			fmt.Printf("--cluster_name needs to be provided for role %q\n", deviceRole)
 			return fmt.Errorf("invalid arguments")
 		}
+
+		client, err := projectclient.Client(projectName, orgName)
+		if err != nil {
+			return fmt.Errorf("get client for project: %w", err)
+		}
+		if projectName == "" {
+			info, err := auth.NewStore().ReadOrgInfo(orgName)
+			if err != nil {
+				return fmt.Errorf("get org info: %w", err)
+			}
+			projectName = info.Project
+		}
+
 		// This map represents a json mapping of the config struct which lives in GoB:
 		// https://source.corp.google.com/h/intrinsic/xfa-tools/+/main:internal/config/config.go
 		config := map[string]any{
@@ -77,11 +92,6 @@ var registerCmd = &cobra.Command{
 		body, err := json.Marshal(data)
 		if err != nil {
 			return fmt.Errorf("failed to marshal config: %w", err)
-		}
-
-		client, err := projectclient.Client(projectName)
-		if err != nil {
-			return fmt.Errorf("get client for project: %w", err)
 		}
 
 		resp, err := client.PostDevice(cmd.Context(), clusterName, deviceID, "configure", bytes.NewBuffer(body))

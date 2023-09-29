@@ -16,6 +16,7 @@ go_library(
     deps = [
         ":projectclient",
         "//intrinsic/frontend/cloud/devicemanager/shared",
+        "//intrinsic/tools/inctl/auth",
         "//intrinsic/tools/inctl/cmd:root",
         "//intrinsic/tools/inctl/util:printer",
         "//intrinsic/tools/inctl/util:viperutil",
@@ -29,5 +30,7 @@ go_library(
 go_library(
     name = "projectclient",
     srcs = ["projectclient.go"],
-    deps = ["//intrinsic/tools/inctl/auth"],
+    deps = [
+        "//intrinsic/tools/inctl/auth",
+    ],
 )
