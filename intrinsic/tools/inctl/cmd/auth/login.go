@@ -6,14 +6,21 @@ package auth
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	projectdiscoverygrpcpb "intrinsic/frontend/cloud/api/projectdiscovery_grpc_go_proto"
+	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/auth/auth"
 	"intrinsic/tools/inctl/util/viperutil"
 )
@@ -21,7 +28,8 @@ import (
 const (
 	keyNoBrowser = "no_browser"
 
-	projectTokenURLFmt = "https://portal.intrinsic.ai/proxy/projects/%s/generate-keys"
+	orgTokenURLFmt     = "https://%s/o/%s/generate-keys"
+	projectTokenURLFmt = "https://%s/proxy/projects/%s/generate-keys"
 	// We are going to use system defaults to ensure we open web-url correctly.
 	// For dev container running via VS Code the sensible-browser redirects
 	// call into code client from server to ensure URL is opened in valid
@@ -37,6 +45,14 @@ var loginCmd = &cobra.Command{
 	Long:  "Logs in user into project to allow interactions with solutions.",
 	Args:  cobra.NoArgs,
 	RunE:  loginCmdE,
+
+	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+		if loginParams.GetString(keyProject) == "" && loginParams.GetString(keyOrganization) == "" {
+			return fmt.Errorf("at least one of --project or --organization needs to be set")
+		}
+
+		return nil
+	},
 }
 
 func readAPIKeyFromPipe(reader *bufio.Reader) (string, error) {
@@ -54,9 +70,63 @@ func readAPIKeyFromPipe(reader *bufio.Reader) (string, error) {
 	return "", nil
 }
 
+func queryForAPIKey(ctx context.Context, writer io.Writer, in *bufio.Reader, organization, project string) (string, error) {
+	portal := loginParams.GetString(keyPortal)
+	authorizationURL := fmt.Sprintf(projectTokenURLFmt, portal, project)
+	if organization != "" {
+		authorizationURL = fmt.Sprintf(orgTokenURLFmt, portal, url.PathEscape(organization))
+	}
+	fmt.Fprintf(writer, "Open URL in your browser to obtain authorization token: %s\n", authorizationURL)
+
+	ignoreBrowser := loginParams.GetBool(keyNoBrowser)
+	if !ignoreBrowser {
+		_, _ = fmt.Fprintln(writer, "Attempting to open URL in your browser...")
+		browser := exec.CommandContext(ctx, sensibleBrowser, authorizationURL)
+		browser.Stdout = io.Discard
+		browser.Stderr = io.Discard
+		if err := browser.Start(); err != nil {
+			fmt.Fprintf(writer, "Failed to open URL in your browser, please run command again with '--%s'.\n", keyNoBrowser)
+			return "", fmt.Errorf("rerun with '--%s', got error %w", keyNoBrowser, err)
+		}
+	}
+	fmt.Fprintf(writer, "\nPaste access token from website: ")
+
+	apiKey, err := in.ReadString('\n')
+	if err != nil {
+		return "", fmt.Errorf("cannot read from input device: %w", err)
+	}
+	return strings.TrimSpace(apiKey), nil
+}
+
+func queryProjectForAPIKey(ctx context.Context, apiKey string) (string, error) {
+	portal := loginParams.GetString(keyPortal)
+	address := fmt.Sprintf("dns:///%s:443", portal)
+	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
+		Address:   address,
+		CredToken: apiKey,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to dial: %w", err)
+	}
+	defer conn.Close()
+
+	client := projectdiscoverygrpcpb.NewProjectDiscoveryServiceClient(conn)
+	resp, err := client.GetProject(ctx, &emptypb.Empty{})
+	if err != nil {
+		if code, ok := status.FromError(err); ok && code.Code() == codes.NotFound {
+			fmt.Printf("Could not find the project for this token. Please restart the login process and make sure to provide the exact key shown by the portal.\n")
+			return "", fmt.Errorf("validate token")
+		}
+		return "", fmt.Errorf("request to list clusters failed: %w", err)
+	}
+
+	return resp.GetProject(), nil
+}
+
 func loginCmdE(cmd *cobra.Command, _ []string) (err error) {
 	writer := cmd.OutOrStdout()
 	projectName := loginParams.GetString(keyProject)
+	orgName := loginParams.GetString(keyOrganization)
 	in := bufio.NewReader(cmd.InOrStdin())
 	// In the future multiple aliases should be supported for one project.
 	alias := auth.AliasDefaultToken
@@ -76,28 +146,20 @@ func loginCmdE(cmd *cobra.Command, _ []string) (err error) {
 	}
 
 	if apiKey == "" {
-		authorizationURL := fmt.Sprintf(projectTokenURLFmt, projectName)
-		fmt.Fprintf(writer, "Open URL in your browser to obtain authorization token: %s\n", authorizationURL)
-
-		ignoreBrowser := loginParams.GetBool(keyNoBrowser)
-		if !ignoreBrowser {
-			_, _ = fmt.Fprintln(writer, "Attempting to open URL in your browser...")
-			browser := exec.CommandContext(cmd.Context(), sensibleBrowser, authorizationURL)
-			browser.Stdout = io.Discard
-			browser.Stderr = io.Discard
-			if err = browser.Start(); err != nil {
-				fmt.Fprintf(writer, "Failed to open URL in your browser, please run command again with '--%s'.\n", keyNoBrowser)
-				return fmt.Errorf("rerun with '--%s', got error %w", keyNoBrowser, err)
-			}
-		}
-		fmt.Fprintf(writer, "\nPaste access token from website: ")
-
-		apiKey, err = in.ReadString('\n')
+		apiKey, err = queryForAPIKey(cmd.Context(), writer, in, orgName, projectName)
 		if err != nil {
-			return fmt.Errorf("cannot read from input device: %w", err)
+			return err
 		}
-		apiKey = strings.TrimSpace(apiKey) // normalizing the input
 	}
+
+	// If we are passed an org, we don't know the project yet
+	if projectName == "" {
+		projectName, err = queryProjectForAPIKey(cmd.Context(), apiKey)
+		if err != nil {
+			return err
+		}
+	}
+
 	var config *auth.ProjectConfiguration
 	if authStore.HasConfiguration(projectName) {
 		if config, err = authStore.GetConfiguration(projectName); err != nil {
@@ -135,13 +197,11 @@ func init() {
 	flags := loginCmd.Flags()
 	// we will use viper to fetch data, we do not need local variables
 	flags.StringP(keyProject, keyProjectShort, "", "Name of the Google cloud project to authorize for")
+	flags.StringP(keyOrganization, "", "", "Name of the Intrinsic organization to authorize for")
 	flags.Bool(keyNoBrowser, false, "Disables attempt to open login URL in browser automatically")
 	flags.Bool(keyBatch, false, "Suppresses command prompts and assume Yes or default as an answer. Use with shell scripts.")
+	flags.StringP(keyPortal, "", "portal.intrinsic.ai", "Hostname of the intrinsic portal to authenticate with.")
+	flags.MarkHidden(keyPortal)
 
-	loginParams = viperutil.BindToViper(flags, viperutil.BindToListEnv(keyProject))
-
-	// This is to workaround Cobra not cooperating with Viper.
-	if !loginParams.IsSet(keyProject) {
-		_ = loginCmd.MarkFlagRequired(keyProject)
-	}
+	loginParams = viperutil.BindToViper(flags, viperutil.BindToListEnv(keyProject, keyOrganization))
 }

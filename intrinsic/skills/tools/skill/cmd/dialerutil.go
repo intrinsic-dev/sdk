@@ -64,15 +64,19 @@ type DialInfoParams struct {
 	Cluster   string // The name of the server to install to
 	CredName  string // The name of the credentials to load from auth.Store
 	CredAlias string // Optional alias for key to load
+	CredToken string // Optional the credential value itself. This bypasses the store
 }
 
 // insecure returns an insecure dial option when the user has physical access to
 // the server, otherwise it returns nil.
 func insecureOpts(address string) *[]grpc.DialOption {
-	if !strings.HasPrefix(address, "dns:///www.endpoints") {
-		return &[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	for _, prefix := range []string{"dns:///www.endpoints", "dns:///portal.intrinsic.ai", "dns:///portal-qa.intrinsic.ai"} {
+		if strings.HasPrefix(address, prefix) {
+			return nil
+		}
 	}
-	return nil
+
+	return &[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 }
 
 // DialInfo is now deprecated, please use DialInfoCtx
@@ -175,6 +179,10 @@ func (e *ErrCredentialsNotFound) Error() string {
 func (e *ErrCredentialsNotFound) Unwrap() error { return e.Err }
 
 func createCredentials(params DialInfoParams) (credentials.PerRPCCredentials, error) {
+	if params.CredToken != "" {
+		return &auth.ProjectToken{APIKey: params.CredToken}, nil
+	}
+
 	if params.CredName != "" {
 		configuration, err := auth.NewStore().GetConfiguration(params.CredName)
 		if err != nil {
