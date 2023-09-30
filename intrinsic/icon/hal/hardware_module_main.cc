@@ -81,8 +81,7 @@ absl::Status ModuleMain() {
   pthread_sigmask(SIG_BLOCK, &sigset, nullptr);
 
   INTRINSIC_ASSIGN_OR_RETURN(const auto module_config, LoadConfig());
-  LOG(INFO) << "Starting hardware module with config:\n"
-            << module_config.DebugString();
+  LOG(INFO) << "Starting hardware module with config:\n" << module_config;
 
   std::unique_ptr<intrinsic::icon::RealtimeClock> realtime_clock = nullptr;
   if (module_config.drives_realtime_clock()) {

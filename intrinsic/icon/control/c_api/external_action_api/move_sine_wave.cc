@@ -67,7 +67,7 @@ absl::Status Main(const ConnectionParams& connection_params,
                              SineWavePluginAction::kStateVariableTimeSinceStart,
                              2 * kCycleDuration))
           .WithHandle(timed_out));
-  LOG(INFO) << "AddAction. Parameters: " << params.DebugString();
+  LOG(INFO) << "AddAction. Parameters: " << params;
   INTRINSIC_ASSIGN_OR_RETURN(auto action, session->AddAction(sine_move));
   LOG(INFO) << "StartAction";
   INTRINSIC_RETURN_IF_ERROR(session->StartAction(action));
