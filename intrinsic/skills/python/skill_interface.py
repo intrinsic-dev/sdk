@@ -22,6 +22,11 @@ from intrinsic.world.python import object_world_resources
 # Imported for convenience of skill implementations.
 SkillCancelledError = skill_canceller.SkillCancelledError
 
+
+class InvalidSkillParametersError(ValueError):
+  """Invalid arguments were passed to the skill parameters."""
+
+
 TParamsType = TypeVar('TParamsType', bound=message.Message)
 
 
@@ -295,8 +300,12 @@ class SkillExecuteInterface(metaclass=abc.ABCMeta):
 
     Skill authors should override this method with their implementation.
 
-    Implementations that support cancellation should raise SkillCancelledError
-    if the skill is aborted due to a cancellation request.
+    If the skill raises an error, it will cause the Process to fail immediately,
+    unless the skill is part of a `FallbackNode` in the Process tree. Currently,
+    there is no way to distinguish between potentially recoverable failures that
+    should lead to fallback handling via that node (e.g., failure to achieve the
+    skill's objective) and other failures that should abort the entire process
+    (e.g., failure to connect to a gRPC service).
 
     Args:
       request: The execute request.
@@ -309,6 +318,8 @@ class SkillExecuteInterface(metaclass=abc.ABCMeta):
     Raises:
       SkillCancelledError: If the skill is aborted due to a cancellation
         request.
+      InvalidSkillParametersError: If the arguments provided to skill parameters
+        are invalid.
     """
     raise NotImplementedError('Method not implemented!')
 
