@@ -4,7 +4,7 @@
 
 """A skill that always returns OK and has an empty equipment set."""
 
-from intrinsic.skills.proto import skill_service_pb2
+from intrinsic.skills.proto import footprint_pb2
 from intrinsic.skills.python import skill_interface as skl
 from intrinsic.skills.testing import no_op_skill_pb2
 from intrinsic.util.decorators import overrides
@@ -27,6 +27,6 @@ class NoOpSkill(skl.Skill):
       self,
       params: skl.GetFootprintRequest[no_op_skill_pb2.NoOpSkillParams],
       context: skl.GetFootprintContext,
-  ) -> skill_service_pb2.GetFootprintResult:
+  ) -> footprint_pb2.Footprint:
     """See base class."""
-    return skill_service_pb2.GetFootprintResult()
+    return footprint_pb2.Footprint()

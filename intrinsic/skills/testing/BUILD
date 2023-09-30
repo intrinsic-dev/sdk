@@ -33,7 +33,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":no_op_skill_py_pb2",
-        "//intrinsic/skills/proto:skill_service_py_pb2",
+        "//intrinsic/skills/proto:footprint_py_pb2",
         "//intrinsic/skills/python:skill_interface",
         "//intrinsic/util:decorators",
     ],

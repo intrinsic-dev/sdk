@@ -339,7 +339,7 @@ class SkillProjectInterface(metaclass=abc.ABCMeta):
 
   def get_footprint(
       self, request: GetFootprintRequest, context: GetFootprintContext
-  ) -> skill_service_pb2.GetFootprintResult:
+  ) -> footprint_pb2.Footprint:
     """Returns the required resources for running this skill.
 
     Skill authors should override this method with their implementation.
@@ -350,13 +350,11 @@ class SkillProjectInterface(metaclass=abc.ABCMeta):
         use.
 
     Returns:
-      The project result proto containing the footprint.
+      The skill's footprint.
     """
     del request  # Unused in this default implementation.
     del context  # Unused in this default implementation.
-    return skill_service_pb2.GetFootprintResult(
-        footprint=footprint_pb2.Footprint(lock_the_universe=True)
-    )
+    return footprint_pb2.Footprint(lock_the_universe=True)
 
 
 class Skill(

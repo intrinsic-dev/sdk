@@ -163,7 +163,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
     )
 
     try:
-      get_footprint_result = skill_project_instance.get_footprint(
+      skill_footprint = skill_project_instance.get_footprint(
           request, footprint_context
       )
     except Exception:  # pylint: disable=broad-except
@@ -185,7 +185,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
     for name, selector in required_equipment.items():
       if name in footprint_request.instance.equipment_handles:
         handle = footprint_request.instance.equipment_handles[name]
-        get_footprint_result.footprint.equipment_resource.append(
+        skill_footprint.equipment_resource.append(
             footprint_pb2.EquipmentResource(
                 type=selector.sharing_type, name=handle.name
             )
@@ -204,7 +204,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
             ),
         )
 
-    return get_footprint_result
+    return skill_service_pb2.GetFootprintResult(footprint=skill_footprint)
 
   def Predict(
       self,
