@@ -12,6 +12,9 @@ package(default_visibility = [
 proto_library(
     name = "hardware_module_config_proto",
     srcs = ["proto/hardware_module_config.proto"],
+    visibility = [
+        "//intrinsic:__subpackages__",
+    ],
     deps = [
         "//intrinsic/icon/hardware_modules/sim_bus:sim_bus_hardware_module_proto",
         "@com_google_protobuf//:any_proto",
