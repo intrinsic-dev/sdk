@@ -282,7 +282,10 @@ class Executive:
     if self._operation is not None:
       try:
         self._operation.update()
-      except OperationNotFoundError:
+      except grpc.RpcError as e:
+        rpc_call = cast(grpc.Call, e)
+        if rpc_call.code() != grpc.StatusCode.NOT_FOUND:
+          raise
         self._operation = None
 
     # No operation, there was none or it became invalid, try to fetch new
@@ -880,13 +883,13 @@ class Executive:
           value.value_access_path(), value.scope()
       ).value
     except grpc.RpcError as e:
-      if hasattr(e, "code"):
-        if e.code() == grpc.StatusCode.NOT_FOUND:
-          raise solutions_errors.NotFoundError(
-              "Could not find blackboard value for key"
-              f" {value.value_access_path()} in scope {value.scope()} in the"
-              " blackboard."
-          ) from e
+      rpc_call = cast(grpc.Call, e)
+      if rpc_call.code() == grpc.StatusCode.NOT_FOUND:
+        raise solutions_errors.NotFoundError(
+            "Could not find blackboard value for key"
+            f" {value.value_access_path()} in scope {value.scope()} in the"
+            " blackboard."
+        ) from e
       raise
 
     blackboard_message = value.value_type()
