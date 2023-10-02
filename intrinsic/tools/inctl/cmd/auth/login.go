@@ -53,7 +53,7 @@ var loginCmd = &cobra.Command{
 
 	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 		if loginParams.GetString(keyProject) == "" && loginParams.GetString(keyOrganization) == "" {
-			return fmt.Errorf("at least one of --project or --organization needs to be set")
+			return fmt.Errorf("at least one of --project or --org needs to be set")
 		}
 
 		return nil
