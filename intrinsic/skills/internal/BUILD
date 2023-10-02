@@ -149,6 +149,8 @@ py_library(
     ],
     deps = [
         ":module_utils",
+        ":runtime_data_py",
+        ":single_skill_factory_py",
         ":skill_init_py",
         "//intrinsic/skills/proto:skill_service_config_py_pb2",
         "//intrinsic/skills/python:skill_interface",

@@ -61,7 +61,6 @@ py_library(
     testonly = False,
     srcs = ["map_skill_repository.py"],
     deps = [
-        "//intrinsic/assets:id_utils_py",
         "//intrinsic/skills/internal:runtime_data_py",
         "//intrinsic/skills/internal:single_skill_factory_py",
         "//intrinsic/skills/internal:skill_repository_py",

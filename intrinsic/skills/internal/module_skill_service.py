@@ -8,9 +8,13 @@ Initializes a server with SkillProjectorServicer and SkillExecutorServicer
 servicers. Skills provided by these servicers are from a given module.
 """
 
+from typing import Dict
+
 from absl import app
 from absl import flags
 from intrinsic.skills.internal import module_utils
+from intrinsic.skills.internal import runtime_data as rd
+from intrinsic.skills.internal import single_skill_factory
 from intrinsic.skills.internal import skill_init
 from intrinsic.skills.proto import skill_service_config_pb2
 from intrinsic.skills.python import skill_interface as skl
@@ -84,9 +88,14 @@ def main(argv):
       module_names=service_config.python_config.module_names[:],
       module_baseclass=skl.Skill,
   )
-  skill_repository = map_skill_repository.MapSkillRepository()
+  map_repo: Dict[str, single_skill_factory.SingleSkillFactory] = {}
   for skill in skill_class_list:
-    skill_repository.insert_or_assign_skill(skill.name(), skill)
+    runtime_data = rd.get_runtime_data_from_signature(skill())
+    map_repo[skill.name()] = single_skill_factory.SingleSkillFactory(
+        skill_runtime_data=runtime_data, create_skill=skill
+    )
+
+  skill_repository = map_skill_repository.MapSkillRepository(map_repo)
 
   skill_init.skill_init(
       skill_repository=skill_repository,

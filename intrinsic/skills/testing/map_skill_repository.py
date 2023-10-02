@@ -5,9 +5,8 @@
 """Implementation of SkillRepository to store skills in a map."""
 
 import threading
-from typing import Callable, Dict, List
+from typing import Dict, List
 
-from intrinsic.assets import id_utils
 from intrinsic.skills.internal import runtime_data as rd
 from intrinsic.skills.internal import single_skill_factory as skill_factory
 from intrinsic.skills.internal import skill_repository as repo
@@ -18,9 +17,19 @@ from intrinsic.util.decorators import overrides
 class MapSkillRepository(repo.SkillRepository):
   """Implementation of SkillRepository to store skills in a map."""
 
-  def __init__(self):
+  def __init__(
+      self,
+      skill_factories: Dict[str, skill_factory.SingleSkillFactory],
+  ):
+    """Initializes the MapSkillRepository.
+
+    Args:
+      skill_factories: Maps a skill alias to a single skill factory.
+    """
     self._lock = threading.Lock()
-    self._skill_factories: Dict[str, skill_factory.SingleSkillFactory] = {}
+    self._skill_factories: Dict[str, skill_factory.SingleSkillFactory] = (
+        skill_factories
+    )
 
   @overrides(repo.SkillRepository)
   def get_skill(self, skill_alias: str) -> skl.Skill:
@@ -103,38 +112,3 @@ class MapSkillRepository(repo.SkillRepository):
     """Returns the list of aliases of all registered skills."""
     with self._lock:
       return self._skill_factories.keys()
-  def insert_or_assign_skill(
-      self, skill_alias: str, create_skill: Callable[[], skl.Skill]
-  ) -> None:
-    """Adds a single skill to the repository.
-
-    If a skill with that alias has been registered before it will be
-    overwritten.
-
-    Args:
-      skill_alias: The skill's alias.
-      create_skill: The function to create a skill instance.
-    """
-    with self._lock:
-      self._skill_factories[skill_alias] = skill_factory.SingleSkillFactory(
-          rd.get_runtime_data_from_signature(create_skill()), create_skill
-      )
-
-  def insert_or_assign_skill_runtime_data(
-      self,
-      skill_runtime_data: rd.SkillRuntimeData,
-      create_skill: Callable[[], skl.Skill],
-  ) -> None:
-    """Adds a single skill to the repository.
-
-    If a skill with that alias has been registered before it will be
-    overwritten.
-
-    Args:
-      skill_runtime_data: The skill runtime data.
-      create_skill: The function to create a skill instance.
-    """
-    with self._lock:
-      self._skill_factories[id_utils.name_from(skill_runtime_data.skill_id)] = (
-          skill_factory.SingleSkillFactory(skill_runtime_data, create_skill)
-      )
