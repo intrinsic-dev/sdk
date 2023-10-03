@@ -197,8 +197,7 @@ GetSkillServiceConfig(absl::string_view skill_service_config_filename) {
         service_config,
         GetBinaryProto<intrinsic_proto::skills::SkillServiceConfig>(
             skill_service_config_filename));
-    LOG(INFO) << "\nUsing skill configuration proto:\n"
-              << service_config.DebugString();
+    LOG(INFO) << "\nUsing skill configuration proto:\n" << service_config;
   }
   return service_config;
 }
