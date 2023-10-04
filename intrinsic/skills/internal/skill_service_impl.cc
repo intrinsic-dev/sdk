@@ -101,7 +101,7 @@ SkillExecutionOperation::Create(
   return absl::WrapUnique(new SkillExecutionOperation(
       /*instance_name=*/request->instance().instance_name(),
       /*id_version=*/request->instance().id_version(),
-      /*params=*/request->parameters(), param_defaults, canceller, *request));
+      /*params=*/request->parameters(), param_defaults, canceller));
 }
 
 absl::Status SkillExecutionOperation::StartExecute(
@@ -394,48 +394,6 @@ absl::Status SkillExecutionOperations::Clear(bool wait_for_operations) {
   return absl::OkStatus();
 }
 
-std::vector<std::string> SkillExecutionOperations::GetOperationSkillIdVersions()
-    const {
-  absl::MutexLock lock(&update_mutex_);
-  std::vector<std::string> skill_id_versions;
-  skill_id_versions.reserve(operation_names_.size());
-  for (const std::string& operation_name : operation_names_) {
-    if (operations_.find(operation_name) == operations_.end()) {
-      LOG(ERROR) << "operations_ and operation_names_ have inconsistent "
-                    "view. operation_name_ == "
-                 << operation_name
-                 << " exists in operation_names_ but not operations_.";
-      continue;
-    }
-    skill_id_versions.push_back(
-        operations_.find(operation_name)->second->GetSkillIdVersion());
-  }
-  return skill_id_versions;
-}
-
-std::vector<intrinsic_proto::skills::ExecuteRequest>
-SkillExecutionOperations::GetExecuteRequests() const {
-  absl::MutexLock lock(&update_mutex_);
-  std::vector<intrinsic_proto::skills::ExecuteRequest> execute_requests;
-  execute_requests.reserve(operation_names_.size());
-  for (const std::string& operation_name : operation_names_) {
-    auto itr = operations_.find(operation_name);
-    if (itr == operations_.end()) {
-      LOG(ERROR) << "operations_ and operation_names_ have inconsistent "
-                    "view. operation_name_ == "
-                 << operation_name
-                 << " exists in operation_names_ but not operations_.";
-      continue;
-    }
-    std::optional<intrinsic_proto::skills::ExecuteRequest> request =
-        itr->second->GetExecuteRequest();
-    if (request.has_value()) {
-      execute_requests.push_back(*request);
-    }
-  }
-  return execute_requests;
-}
-
 }  // namespace internal
 
 SkillProjectorServiceImpl::SkillProjectorServiceImpl(
@@ -527,11 +485,13 @@ SkillExecutorServiceImpl::SkillExecutorServiceImpl(
     SkillRepository& skill_repository,
     std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
     std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service,
-    SkillRegistryClientInterface& skill_registry_client)
+    SkillRegistryClientInterface& skill_registry_client,
+    RequestWatcher* request_watcher)
     : skill_repository_(skill_repository),
       object_world_service_(std::move(object_world_service)),
       motion_planner_service_(std::move(motion_planner_service)),
       skill_registry_client_(skill_registry_client),
+      request_watcher_(request_watcher),
       message_factory_(google::protobuf::MessageFactory::generated_factory()) {}
 
 SkillExecutorServiceImpl::~SkillExecutorServiceImpl() {
@@ -545,6 +505,10 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
   LOG(INFO) << "Attempting to start execution of '"
             << request->instance().id_version() << "' skill with world id '"
             << request->world_id() << "'";
+
+  if (request_watcher_ != nullptr) {
+    request_watcher_->AddRequest(*request);
+  }
 
   INTRINSIC_RETURN_IF_ERROR(ValidateRequest(*request));
 
@@ -625,16 +589,6 @@ grpc::Status SkillExecutorServiceImpl::ClearOperations(
     grpc::ServerContext* context, const google::protobuf::Empty* request,
     google::protobuf::Empty* result) {
   return operations_.Clear(false);
-}
-
-std::vector<intrinsic_proto::skills::ExecuteRequest>
-SkillExecutorServiceImpl::GetExecuteRequests() const {
-  return operations_.GetExecuteRequests();
-}
-
-std::vector<std::string> SkillExecutorServiceImpl::GetExecutedSkillIdVersions()
-    const {
-  return operations_.GetOperationSkillIdVersions();
 }
 
 ::grpc::Status SkillInformationServiceImpl::GetSkillInfo(

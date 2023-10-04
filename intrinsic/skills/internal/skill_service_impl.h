@@ -24,6 +24,7 @@
 #include "google/longrunning/operations.pb.h"
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/empty.pb.h"
+#include "google/protobuf/message.h"
 #include "grpcpp/server_context.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
@@ -75,12 +76,6 @@ class SkillExecutionOperation {
   // id_version is defined by: intrinsic_proto.catalog.SkillMeta.id_version
   std::string GetSkillIdVersion() const { return id_version_; }
 
-  // Gets the ExecuteRequest associated with this operation, if any.
-  const std::optional<intrinsic_proto::skills::ExecuteRequest>&
-  GetExecuteRequest() const {
-    return execute_request_;
-  }
-
   // A copy of the underlying Operation proto.
   google::longrunning::Operation GetOperation() {
     absl::ReaderMutexLock lock(&operation_mutex_);
@@ -112,11 +107,8 @@ class SkillExecutionOperation {
       absl::string_view instance_name, absl::string_view id_version,
       const ::google::protobuf::Any& params,
       const std::optional<::google::protobuf::Any>& param_defaults,
-      std::shared_ptr<SkillCancellationManager> canceller,
-      const std::optional<intrinsic_proto::skills::ExecuteRequest>&
-          execute_request)
-      : execute_request_(execute_request),
-        id_version_(id_version),
+      std::shared_ptr<SkillCancellationManager> canceller)
+      : id_version_(id_version),
         params_(params),
         param_defaults_(param_defaults),
         canceller_(canceller) {
@@ -128,8 +120,6 @@ class SkillExecutionOperation {
   absl::Status Finish(const ::google::rpc::Status* error,
                       const intrinsic_proto::skills::ExecuteResult* result)
       ABSL_LOCKS_EXCLUDED(operation_mutex_);
-
-  std::optional<intrinsic_proto::skills::ExecuteRequest> execute_request_;
 
   std::string id_version_;
   ::google::protobuf::Any params_;
@@ -211,15 +201,6 @@ class SkillExecutionOperations {
   absl::Status Clear(bool wait_for_operations)
       ABSL_LOCKS_EXCLUDED(update_mutex_);
 
-  // Returns the SkillIdVersions of operations in order of operation addition.
-  // id_version is defined by: intrinsic_proto.catalog.SkillMeta.id_version
-  std::vector<std::string> GetOperationSkillIdVersions() const
-      ABSL_LOCKS_EXCLUDED(update_mutex_);
-
-  // Returns the ExecuteRequests of operations in order of operation addition.
-  std::vector<intrinsic_proto::skills::ExecuteRequest> GetExecuteRequests()
-      const ABSL_LOCKS_EXCLUDED(update_mutex_);
-
  private:
   // Adds an operation to the collection.
   absl::Status Add(std::shared_ptr<SkillExecutionOperation> operation)
@@ -240,6 +221,56 @@ class SkillExecutionOperations {
 };
 
 }  // namespace internal
+
+// Can be provided to the service to inspect the requests that it handles.
+class RequestWatcher {
+ public:
+  RequestWatcher() = default;
+
+  // Not copyable or movable, unless needed in the future.
+  RequestWatcher(const RequestWatcher&) = delete;
+  RequestWatcher& operator=(const RequestWatcher&) = delete;
+  RequestWatcher(const RequestWatcher&&) = delete;
+  RequestWatcher& operator=(const RequestWatcher&&) = delete;
+
+  // Adds a request.
+  void AddRequest(const ::google::protobuf::Message& request) {
+    google::protobuf::Any request_any;
+    request_any.PackFrom(request);
+    requests_.push_back(request_any);
+  }
+
+  // Gets the list of skill IDVersions of requests that match the template type
+  // TRequest.
+  template <typename TRequest>
+  std::vector<std::string> GetSkillIdVersions() const {
+    std::vector<std::string> skill_id_versions;
+    for (const auto& request : GetRequests<TRequest>()) {
+      skill_id_versions.push_back(request.instance().id_version());
+    }
+    return skill_id_versions;
+  }
+
+  // Gets the list of added requests that match the template type TRequest.
+  template <typename TRequest>
+  std::vector<TRequest> GetRequests() const {
+    std::vector<TRequest> requests;
+    for (const auto& request_any : requests_) {
+      if (!request_any.Is<TRequest>()) continue;
+
+      TRequest request;
+      request_any.UnpackTo(&request);
+      requests.push_back(request);
+    }
+    return requests;
+  }
+
+  // Clears any accumulated requests.
+  void Clear() { requests_.clear(); }
+
+ private:
+  std::vector<::google::protobuf::Any> requests_;
+};
 
 class SkillProjectorServiceImpl
     : public intrinsic_proto::skills::Projector::Service {
@@ -290,12 +321,16 @@ class SkillExecutorServiceImpl
  public:
   // All of the given references will be kept for the lifetime of the created
   // instance.
+  //
+  // A request watcher can be specified for testing. The service will use it to
+  // record all requests that it handles.
   explicit SkillExecutorServiceImpl(
       SkillRepository& skill_repository,
       std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
       std::shared_ptr<MotionPlannerService::StubInterface>
           motion_planner_service,
-      SkillRegistryClientInterface& skill_registry_client);
+      SkillRegistryClientInterface& skill_registry_client,
+      RequestWatcher* request_watcher = nullptr);
 
   ~SkillExecutorServiceImpl() override;
 
@@ -323,19 +358,13 @@ class SkillExecutorServiceImpl
                                const google::protobuf::Empty* request,
                                google::protobuf::Empty* result) override;
 
-  // Returns a list of the executed skill id_versions in order of execution.
-  // id_version is defined by: intrinsic_proto.catalog.SkillMeta.id_version
-  std::vector<std::string> GetExecutedSkillIdVersions() const;
-
-  // Returns a list of the executed skill requests in order of execution.
-  std::vector<intrinsic_proto::skills::ExecuteRequest> GetExecuteRequests()
-      const;
-
  private:
   SkillRepository& skill_repository_;
   std::shared_ptr<ObjectWorldService::StubInterface> object_world_service_;
   std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service_;
   SkillRegistryClientInterface& skill_registry_client_;
+  RequestWatcher* request_watcher_;
+
   absl::Mutex message_mutex_;
   google::protobuf::MessageFactory* message_factory_
       ABSL_GUARDED_BY(message_mutex_);
