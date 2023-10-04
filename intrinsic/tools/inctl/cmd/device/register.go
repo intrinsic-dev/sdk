@@ -13,8 +13,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"intrinsic/frontend/cloud/devicemanager/shared/shared"
-	"intrinsic/tools/inctl/auth/auth"
+	"intrinsic/frontend/cloud/devicemanager/shared"
+	"intrinsic/tools/inctl/auth"
 	"intrinsic/tools/inctl/cmd/device/projectclient"
 )
 

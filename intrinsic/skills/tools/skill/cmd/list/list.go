@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	skillregistrygrpcpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
-	skillCmd "intrinsic/skills/tools/skill/cmd/cmd"
+	skillCmd "intrinsic/skills/tools/skill/cmd"
 	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/listutil"

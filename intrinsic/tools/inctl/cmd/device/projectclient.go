@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"intrinsic/tools/inctl/auth/auth"
+	"intrinsic/tools/inctl/auth"
 )
 
 var (

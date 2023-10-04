@@ -28,7 +28,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
-	"intrinsic/icon/hal/tools/hwmodule/cmd/cmd"
+	"intrinsic/icon/hal/tools/hwmodule/cmd"
 	"intrinsic/icon/hal/tools/hwmodule/cmd/imageutil"
 	"intrinsic/kubernetes/workcell_spec/imagetags"
 )

@@ -17,7 +17,7 @@ import (
 	backoff "github.com/cenkalti/backoff/v4"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
-	"intrinsic/frontend/cloud/devicemanager/shared/shared"
+	"intrinsic/frontend/cloud/devicemanager/shared"
 	"intrinsic/tools/inctl/cmd/device/projectclient"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/printer"

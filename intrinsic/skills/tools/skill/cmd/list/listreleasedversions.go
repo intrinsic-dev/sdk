@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	skillCmd "intrinsic/skills/tools/skill/cmd/cmd"
+	skillCmd "intrinsic/skills/tools/skill/cmd"
 	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 )

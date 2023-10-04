@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/credentials/oauth"
 	"google.golang.org/grpc/metadata"
-	"intrinsic/tools/inctl/auth/auth"
+	"intrinsic/tools/inctl/auth"
 )
 
 const (

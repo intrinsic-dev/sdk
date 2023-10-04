@@ -21,7 +21,7 @@ import (
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	projectdiscoverygrpcpb "intrinsic/frontend/cloud/api/projectdiscovery_grpc_go_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
-	"intrinsic/tools/inctl/auth/auth"
+	"intrinsic/tools/inctl/auth"
 	"intrinsic/tools/inctl/util/viperutil"
 )
 
