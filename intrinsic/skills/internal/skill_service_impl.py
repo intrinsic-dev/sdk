@@ -8,7 +8,7 @@ from __future__ import annotations
 from concurrent import futures
 import threading
 import traceback
-from typing import Dict, NoReturn, Optional
+from typing import Callable, Dict, NoReturn, Optional
 
 from absl import logging
 from google.longrunning import operations_pb2
@@ -39,22 +39,14 @@ from intrinsic.world.proto import object_world_service_pb2_grpc
 from intrinsic.world.python import object_world_client
 from pybind11_abseil import status
 
-# Maximum number of operations to keep in a SkillExecutionOperations instance.
+# Maximum number of operations to keep in a SkillOperations instance.
 # This value places a hard upper limit on the number of one type of skill that
 # can execute simultaneously.
 MAX_NUM_OPERATIONS = 100
 
 
-class _CannotConstructGetFootprintRequestError(Exception):
-  """The service cannot construct a GetFootprintRequest for a skill."""
-
-
-class _CannotConstructPredictRequestError(Exception):
-  """The service cannot construct a PredictRequest for a skill."""
-
-
-class _CannotConstructExecuteRequestError(Exception):
-  """The service cannot construct an ExecuteRequest for a skill."""
+class _CannotConstructRequestError(Exception):
+  """The service cannot construct a request for a skill."""
 
 
 class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
@@ -136,7 +128,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       request = _proto_to_get_footprint_request(
           footprint_request, skill_runtime_data
       )
-    except _CannotConstructGetFootprintRequestError as err:
+    except _CannotConstructRequestError as err:
       _abort_with_status(
           context=context,
           code=status.StatusCode.INTERNAL,
@@ -234,7 +226,7 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
     self._object_world_service = object_world_service
     self._motion_planner_service = motion_planner_service
 
-    self._operations = _SkillExecutionOperations()
+    self._operations = _SkillOperations()
 
   def StartExecute(
       self,
@@ -259,27 +251,60 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
         FAILED_PRECONDITION: If the operation cache is already full of
             unfinished operations.
     """
-    operation = self._prepare_execution_operation(request, context)
-    try:
-      self._operations.add(operation)
-    except self._operations.OperationError as err:
-      if isinstance(err, self._operations.OperationAlreadyExistsError):
-        code = status.StatusCode.ALREADY_EXISTS
-      elif isinstance(err, self._operations.OperationCacheFullError):
-        code = status.StatusCode.FAILED_PRECONDITION
-      else:
-        code = status.StatusCode.INTERNAL
+    skill_name = id_utils.name_from(request.instance.id_version)
+    operation = self._make_operation(
+        name=request.instance.instance_name,
+        skill_name=skill_name,
+        context=context,
+    )
 
+    skill = self._skill_repository.get_skill_execute(skill_name)
+
+    try:
+      skill_request = skl.ExecuteRequest(
+          params=_resolve_params(request.parameters, operation.runtime_data),
+      )
+    except _CannotConstructRequestError as err:
       _abort_with_status(
-          context,
-          code=code,
-          message=str(err),
+          context=context,
+          code=status.StatusCode.INTERNAL,
+          message=(
+              'Could not construct execute request for skill'
+              f' {operation.runtime_data.skill_id}: {err}'
+          ),
           skill_error_info=error_pb2.SkillErrorInfo(
-              error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_GRPC
+              error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
           ),
       )
 
-    operation.start_execution()
+    skill_context = skl.ExecuteContext(
+        canceller=operation.canceller,
+        equipment_handles=dict(request.instance.equipment_handles),
+        logging_context=request.context,
+        motion_planner=motion_planner_client.MotionPlannerClient(
+            request.world_id, self._motion_planner_service
+        ),
+        object_world=object_world_client.ObjectWorldClient(
+            request.world_id, self._object_world_service
+        ),
+    )
+
+    def execute() -> skill_service_pb2.ExecuteResult:
+      result = skill.execute(skill_request, skill_context)
+      if isinstance(result, skill_service_pb2.ExecuteResult):
+        logging.warning(
+            'Execute returned ExecuteResult instead of the message to be'
+            ' wrapped.  Using the returned message directly.'
+        )
+        return result
+
+      result_any = None
+      if result is not None:
+        result_any = any_pb2.Any()
+        result_any.Pack(result)
+      return skill_service_pb2.ExecuteResult(result=result_any)
+
+    operation.start(op=execute, op_name='execute')
 
     return operation.operation
 
@@ -455,93 +480,44 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
 
     return empty_pb2.Empty()
 
-  def _prepare_execution_operation(
-      self,
-      request: skill_service_pb2.ExecuteRequest,
-      context: grpc.ServicerContext,
-  ) -> _SkillExecutionOperation:
-    """Prepares a single skill execution operation.
-
-    Args:
-      request: Execute request with skill instance to execute.
-      context: gRPC servicer context.
-
-    Returns:
-      A `_SkillExecutionOperation` for the execution operation.
-
-    Raises:
-      grpc.RpcError:
-        NOT_FOUND: If the skill cannot be found.
-        INTERNAL: If the default parameters cannot be applied.
-    """
-    skill_name = id_utils.name_from(request.instance.id_version)
+  def _make_operation(
+      self, name: str, skill_name: str, context: grpc.ServicerContext
+  ) -> _SkillOperation:
+    """Makes a new skill operation and adds it to the collection."""
     try:
-      skill_execute = self._skill_repository.get_skill_execute(skill_name)
+      runtime_data = self._skill_repository.get_skill_runtime_data(skill_name)
     except skill_repo.InvalidSkillAliasError:
       _abort_with_status(
           context=context,
           code=status.StatusCode.NOT_FOUND,
-          message=f'Skill not found: {request.instance.id_version!r}.',
+          message=f'Skill not found: {skill_name!r}.',
           skill_error_info=error_pb2.SkillErrorInfo(
               error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_GRPC
           ),
       )
 
-    # Apply default parameters if available.
-    skill_runtime_data = self._skill_repository.get_skill_runtime_data(
-        skill_name
-    )
-    defaults = skill_runtime_data.parameter_data.default_value
-    if defaults is not None and request.HasField('parameters'):
-      try:
-        default_parameters.apply_defaults_to_parameters(
-            skill_runtime_data.parameter_data.descriptor,
-            defaults,
-            request.parameters,
-        )
-      except status.StatusNotOk as e:
-        _abort_with_status(
-            context=context,
-            code=status.StatusCode.INTERNAL,
-            message=(
-                'Failure while applying default values to parameters.'
-                f' Error: {e}'
-            ),
-            skill_error_info=error_pb2.SkillErrorInfo(
-                error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
-            ),
-        )
+    operation = _SkillOperation(name=name, runtime_data=runtime_data)
 
-    canceller = skill_canceller.SkillCancellationManager(
-        ready_timeout=(
-            skill_runtime_data.execution_options.cancellation_ready_timeout.total_seconds()
-        )
-    )
-    motion_planner = motion_planner_client.MotionPlannerClient(
-        request.world_id, self._motion_planner_service
-    )
-    object_world = object_world_client.ObjectWorldClient(
-        request.world_id, self._object_world_service
-    )
+    try:
+      self._operations.add(operation)
+    except self._operations.OperationError as err:
+      if isinstance(err, self._operations.OperationAlreadyExistsError):
+        code = status.StatusCode.ALREADY_EXISTS
+      elif isinstance(err, self._operations.OperationCacheFullError):
+        code = status.StatusCode.FAILED_PRECONDITION
+      else:
+        code = status.StatusCode.INTERNAL
 
-    execute_context = skl.ExecuteContext(
-        canceller=canceller,
-        equipment_handles=dict(request.instance.equipment_handles),
-        logging_context=request.context,
-        motion_planner=motion_planner,
-        object_world=object_world,
-    )
+      _abort_with_status(
+          context,
+          code=code,
+          message=str(err),
+          skill_error_info=error_pb2.SkillErrorInfo(
+              error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_GRPC
+          ),
+      )
 
-    return _SkillExecutionOperation(
-        canceller=canceller,
-        context=execute_context,
-        operation=operations_pb2.Operation(
-            name=request.instance.instance_name, done=False
-        ),
-        request=request,
-        skill_execute=skill_execute,
-        skill_runtime_data=skill_runtime_data,
-    )
+    return operation
 
 
 class SkillInformationServicer(skill_service_pb2_grpc.SkillInformationServicer):
@@ -567,11 +543,11 @@ class SkillInformationServicer(skill_service_pb2_grpc.SkillInformationServicer):
     return result
 
 
-class _SkillExecutionOperations:
-  """A collection of skill execution operations."""
+class _SkillOperations:
+  """A collection of skill operations."""
 
   class OperationError(Exception):
-    """Base SkillExecutionOperations error."""
+    """Base _SkillOperations error."""
 
   class OperationAlreadyExistsError(OperationError, ValueError):
     """An operation already exists in the collection."""
@@ -587,9 +563,9 @@ class _SkillExecutionOperations:
 
   def __init__(self):
     self._lock = threading.Lock()
-    self._operations: Dict[str, _SkillExecutionOperation] = {}
+    self._operations: Dict[str, _SkillOperation] = {}
 
-  def add(self, operation: _SkillExecutionOperation) -> None:
+  def add(self, operation: _SkillOperation) -> None:
     """Adds an operation to the collection.
 
     Args:
@@ -627,7 +603,7 @@ class _SkillExecutionOperations:
 
       self._operations[operation.name] = operation
 
-  def get(self, name: str) -> _SkillExecutionOperation:
+  def get(self, name: str) -> _SkillOperation:
     """Gets an operation by name.
 
     Args:
@@ -672,23 +648,23 @@ class _SkillExecutionOperations:
       self._operations = {}
 
 
-class _SkillExecutionOperation:
-  """Information about a single skill execution operation.
+class _SkillOperation:
+  """Encapsulates a single skill operation.
 
   Attributes:
-    finished: True if the skill execution has finished.
-    name: A unique name for the skill execution operation.
-    operation: The current operation proto for the skill execution.
+    canceller: Supports cooperative cancellation of the operation.
+    finished: True if the operation has finished.
+    name: A unique name for the operation.
+    operation: The current operation proto for the operation.
+    runtime_data: The skill's runtime data.
   """
 
   class OperationAlreadyStartedError(RuntimeError):
     """A disallowed action was taken on an already-started operation."""
 
-  class OperationAlreadyFinishedError(RuntimeError):
-    """A disallowed action was taken on a finished operation."""
-
-  class OperationHasNoNameError(ValueError):
-    """An attempt was made to create an operation with no name."""
+  @property
+  def canceller(self) -> skill_canceller.SkillCancellationManager:
+    return self._canceller
 
   @property
   def finished(self) -> bool:
@@ -703,41 +679,25 @@ class _SkillExecutionOperation:
     with self._lock:
       return self._operation
 
-  def __init__(
-      self,
-      canceller: skill_canceller.SkillCancellationManager,
-      context: skl.ExecuteContext,
-      operation: operations_pb2.Operation,
-      request: skill_service_pb2.ExecuteRequest,
-      skill_execute: skl.SkillExecuteInterface,
-      skill_runtime_data: rd.SkillRuntimeData,
-  ) -> None:
+  @property
+  def runtime_data(self) -> rd.SkillRuntimeData:
+    return self._runtime_data
+
+  def __init__(self, name: str, runtime_data: rd.SkillRuntimeData) -> None:
     """Initializes the instance.
 
     Args:
-      canceller: Supports cooperative cancellation of the skill.
-      context: The skill's ExecuteContext.
-      operation: The current operation proto for the skill execution.
-      request: The skill's ExecuteRequest.
-      skill_execute: The SkillExecute instance.
-      skill_runtime_data: The skill's runtime data.
-
-    Raises:
-      OperationHasNoNameError: If the specified operation has no name.
+      name: A unique name for the operation.
+      runtime_data: The skill's runtime data.
     """
-    if not operation.name:
-      raise self.OperationHasNoNameError('Operation must have a name.')
-
-    self._canceller = canceller
-    self._context = context
-    self._operation = operation
-    self._request = request
-    self._skill_execute = skill_execute
-    self._skill_runtime_data = skill_runtime_data
-
-    self._supports_cancellation = (
-        skill_runtime_data.execution_options.supports_cancellation
+    self._canceller = skill_canceller.SkillCancellationManager(
+        ready_timeout=(
+            runtime_data.execution_options.cancellation_ready_timeout.total_seconds()
+        )
     )
+    self._operation = operations_pb2.Operation(name=name, done=False)
+    self._runtime_data = runtime_data
+
     self._started = False
     self._cancelled = False
     self._finished_event = threading.Event()
@@ -745,8 +705,20 @@ class _SkillExecutionOperation:
 
     self._pool = futures.ThreadPoolExecutor()
 
-  def start_execution(self) -> None:
-    """Starts execution of the skill."""
+  def start(
+      self,
+      op: Callable[[], proto_message.Message],
+      op_name: str,
+  ) -> None:
+    """Starts executing the skill operation.
+
+    Args:
+      op: The operation callable. It should return a proto result.
+      op_name: A name to describe the operation.
+
+    Raises:
+      OperationAlreadyStartedError: If an operation has already started.
+    """
     with self._lock:
       if self._started:
         raise self.OperationAlreadyStartedError(
@@ -754,7 +726,7 @@ class _SkillExecutionOperation:
         )
       self._started = True
 
-    self._pool.submit(self._execute)
+    self._pool.submit(self._execute, op, op_name)
 
   def request_cancellation(self) -> None:
     """Requests cancellation of the operation.
@@ -766,29 +738,25 @@ class _SkillExecutionOperation:
       NotImplementedError: If the skill does not support cancellation.
       SkillAlreadyCancelledError: If the skill was already cancelled.
     """
-    with self._lock:
-      if self._cancelled:
-        raise skill_canceller.SkillAlreadyCancelledError(
-            'The skill was already cancelled.'
-        )
-      self._cancelled = True
+    if not self.runtime_data.execution_options.supports_cancellation:
+      raise NotImplementedError(
+          f'Skill does not support cancellation: {self.name!r}.'
+      )
+    if self.canceller.cancelled:
+      raise skill_canceller.SkillAlreadyCancelledError(
+          f'The skill was already cancelled: {self.name!r}.'
+      )
+    if self.finished:
+      logging.debug(
+          (
+              'Ignoring cancellation request, since operation %r has already'
+              ' finished.'
+          ),
+          self.name,
+      )
+      return
 
-      if not self._supports_cancellation:
-        raise NotImplementedError(
-            f'Skill does not support cancellation: {self.name!r}.'
-        )
-
-      if self.finished:
-        logging.debug(
-            (
-                'Ignoring cancellation request, since operation %r has already'
-                ' finished.'
-            ),
-            self.name,
-        )
-        return
-
-    self._canceller.cancel()
+    self.canceller.cancel()
 
   def wait(self, timeout: Optional[float] = None) -> operations_pb2.Operation:
     """Waits for the operation to finish.
@@ -798,54 +766,29 @@ class _SkillExecutionOperation:
         finish, or None for no timeout.
 
     Returns:
-      The state of the Operation when it either finished or the wait timed out.
+      The state of the Operation when it finished or the wait timed out.
     """
     self._finished_event.wait(timeout=timeout)
 
     return self.operation
 
-  def _execute(self) -> None:
-    """Executes the skill."""
-    with self._lock:
-      if self.finished:
-        raise self.OperationAlreadyFinishedError(
-            f'The operation has already finished: {self.name!r}.'
-        )
+  def _execute(
+      self, op: Callable[[], proto_message.Message], op_name: str
+  ) -> None:
+    """Executes the skill operation.
 
-      skill = self._skill_execute
-      assert skill is not None
-
-      context = self._context
-      assert context is not None
-
+    Args:
+      op: The operation callable. It should return a proto result.
+      op_name: A name to describe the operation.
+    """
     result = None
     error_status = None
     try:
-      request = self._proto_to_execute_request(self._request)
-      returned_result = skill.execute(request, context)
-      if isinstance(returned_result, skill_service_pb2.ExecuteResult):
-        logging.warning(
-            'Execute returned ExecuteResult instead of the message to be'
-            ' wrapped.  Using the returned message directly.'
-        )
-        result = returned_result
-      else:
-        result_any = None
-        if returned_result is not None:
-          result_any = any_pb2.Any()
-          result_any.Pack(returned_result)
-        result = skill_service_pb2.ExecuteResult(result=result_any)
-
-    except _CannotConstructExecuteRequestError as err:
-      error_status = status_pb2.Status(
-          code=status.StatusCode.INTERNAL,
-          message=(
-              'Could not construct execute request for skill'
-              f' {self._request.instance.id_version}: {err}.'
-          ),
-      )
+      result = op()
     except skl.SkillCancelledError as err:
-      message = f'Skill cancelled during operation {self.name!r}: {err}'
+      message = (
+          f'Skill cancelled during {op_name} operation {self.name!r}: {err}'
+      )
       logging.info(message)
 
       error_status = status_pb2.Status(
@@ -854,13 +797,13 @@ class _SkillExecutionOperation:
     # Since we are calling user-provided code here, we want to be as broad as
     # possible and catch anything that could occur.
     except Exception:  # pylint: disable=broad-except
-      logging.exception('Skill returned an error duration execution.')
+      logging.exception('Skill returned an error during %s.', op_name)
 
       error_status = status_pb2.Status(
           code=status.StatusCode.INTERNAL,
           message=(
-              'Failure during execution of skill'
-              f' {self._request.instance.id_version}. Error:'
+              f'Failure during {op_name} of skill'
+              f' {self._runtime_data.skill_id}. Error:'
               f' {traceback.format_exc()}'
           ),
       )
@@ -871,59 +814,13 @@ class _SkillExecutionOperation:
               error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
           )
       )
+      self.operation.error.CopyFrom(error_status)
+    if result is not None:
+      self.operation.response.Pack(result)
 
-    self._finish(error_status, result)
+    self.operation.done = True
 
-  def _finish(
-      self,
-      error: status_pb2.Status | None,
-      result: skill_service_pb2.ExecuteResult | None,
-  ) -> None:
-    """Marks the operation as finished, with an error and/or result."""
-    with self._lock:
-      if self.finished:
-        raise self.OperationAlreadyFinishedError(
-            f'The operation has already finished: {self.name!r}.'
-        )
-
-      if error is not None:
-        self._operation.error.CopyFrom(error)
-      if result is not None:
-        result_any = any_pb2.Any()
-        result_any.Pack(result)
-        self._operation.response.CopyFrom(result_any)
-      self._operation.done = True
-
-      # Clean up some variables to free memory.
-      self._context = None
-      self._skill = None
-
-      self._finished_event.set()
-
-  def _proto_to_execute_request(
-      self, proto: skill_service_pb2.ExecuteRequest
-  ) -> skl.ExecuteRequest:
-    """Converts an ExecuteRequest proto to the request to send to the skill.
-
-    Args:
-      proto: The proto to convert.
-
-    Returns:
-      The request to send to the skill.
-
-    Raises:
-      _CannotConstructExecuteRequestError: If the request cannot be converted.
-    """
-    try:
-      params = _unpack_any_from_descriptor(
-          proto.parameters, self._skill_runtime_data.parameter_data.descriptor
-      )
-    except proto_utils.ProtoMismatchTypeError as err:
-      raise _CannotConstructExecuteRequestError(str(err)) from err
-
-    return skl.ExecuteRequest(
-        params=params,
-    )
+    self._finished_event.set()
 
 
 def _abort_with_status(
@@ -970,19 +867,41 @@ def _proto_to_get_footprint_request(
     The request to send to the skill.
 
   Raises:
-    _CannotConstructGetFootprintRequestError: If the request cannot be
-      converted.
+    _CannotConstructRequestError: If the request cannot be converted.
   """
   try:
     params = _unpack_any_from_descriptor(
         proto.parameters, skill_runtime_data.parameter_data.descriptor
     )
   except proto_utils.ProtoMismatchTypeError as err:
-    raise _CannotConstructGetFootprintRequestError(str(err)) from err
+    raise _CannotConstructRequestError(str(err)) from err
 
   return skl.GetFootprintRequest(
       params=params,
   )
+
+
+def _resolve_params(
+    params_any: any_pb2.Any, skill_runtime_data: rd.SkillRuntimeData
+) -> proto_message.Message:
+  """Applies defaults and resolves a params Any into its target message type."""
+  defaults = skill_runtime_data.parameter_data.default_value
+  if defaults is not None:
+    try:
+      default_parameters.apply_defaults_to_parameters(
+          msg_descriptor=skill_runtime_data.parameter_data.descriptor,
+          default_value_any=defaults,
+          parameters_any=params_any,
+      )
+    except status.StatusNotOk as err:
+      raise _CannotConstructRequestError(str(err)) from err
+
+  try:
+    return _unpack_any_from_descriptor(
+        params_any, skill_runtime_data.parameter_data.descriptor
+    )
+  except proto_utils.ProtoMismatchTypeError as err:
+    raise _CannotConstructRequestError(str(err)) from err
 
 
 def _unpack_any_from_descriptor(

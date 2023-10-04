@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/functional/any_invocable.h"
 #include "absl/log/log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -19,7 +20,6 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
-#include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
@@ -32,7 +32,6 @@
 #include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
-#include "intrinsic/skills/cc/skill_canceller.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/internal/equipment_utilities.h"
 #include "intrinsic/skills/internal/error_utils.h"
@@ -90,130 +89,109 @@ absl::Status SetDefaultsInRequest(
 
 namespace internal {
 
-absl::StatusOr<std::unique_ptr<SkillExecutionOperation>>
-SkillExecutionOperation::Create(
-    const intrinsic_proto::skills::ExecuteRequest* request,
-    const std::optional<::google::protobuf::Any>& param_defaults,
-    std::shared_ptr<SkillCancellationManager> canceller) {
-  if (request == nullptr) {
-    return absl::InvalidArgumentError("`request` is null.");
-  }
-  return absl::WrapUnique(new SkillExecutionOperation(
-      /*instance_name=*/request->instance().instance_name(),
-      /*id_version=*/request->instance().id_version(),
-      /*params=*/request->parameters(), param_defaults, canceller));
-}
-
-absl::Status SkillExecutionOperation::StartExecute(
-    std::unique_ptr<SkillExecuteInterface> skill,
-    std::unique_ptr<ExecuteContextImpl> context) {
-  if (skill == nullptr) {
-    return absl::InvalidArgumentError("`skill` is null.");
-  }
-  if (context == nullptr) {
-    return absl::InvalidArgumentError("`context` is null.");
-  }
-
+absl::Status SkillOperation::Start(
+    absl::AnyInvocable<
+        absl::StatusOr<std::unique_ptr<::google::protobuf::Message>>()>
+        op,
+    absl::string_view op_name) {
   {
     absl::MutexLock lock(&thread_mutex_);
+
     if (thread_ != nullptr) {
       return absl::FailedPreconditionError(
           "An execution thread already exists.");
     }
-    thread_ = std::make_unique<Thread>([this, skill = std::move(skill),
-                                        context = std::move(
-                                            context)]() -> absl::Status {
-      absl::StatusOr<intrinsic_proto::skills::ExecuteResult> skill_result;
-      {
-        skill_result =
-            skill->Execute(ExecuteRequest(params_, param_defaults_), *context);
-      }
+    thread_ = std::make_unique<Thread>(
+        [this,
+         op = std::make_unique<absl::AnyInvocable<
+             absl::StatusOr<std::unique_ptr<::google::protobuf::Message>>()>>(
+             std::move(op)),
+         op_name]() -> absl::Status {
+          absl::StatusOr<std::unique_ptr<::google::protobuf::Message>> result =
+              (*op)();
 
-      if (!skill_result.ok()) {
-        intrinsic_proto::skills::SkillErrorInfo error_info;
-        error_info.set_error_type(
-            intrinsic_proto::skills::SkillErrorInfo::ERROR_TYPE_SKILL);
-        auto rpc_status = ToGoogleRpcStatus(skill_result.status(), error_info);
-        LOG(ERROR) << "Skill: " << GetSkillIdVersion()
-                   << " returned an error during execution. code: "
-                   << rpc_status.code()
-                   << ", message: " << rpc_status.message();
+          {
+            absl::MutexLock lock(&operation_mutex_);
 
-        INTRINSIC_RETURN_IF_ERROR(Finish(&rpc_status, nullptr));
-      } else {
-        INTRINSIC_RETURN_IF_ERROR(Finish(nullptr, &(*skill_result)));
-      }
+            if (result.ok()) {
+              operation_.mutable_response()->PackFrom(**result);
+            } else {
+              intrinsic_proto::skills::SkillErrorInfo error_info;
+              error_info.set_error_type(
+                  intrinsic_proto::skills::SkillErrorInfo::ERROR_TYPE_SKILL);
 
-      return absl::OkStatus();
-    });
+              ::google::rpc::Status rpc_status =
+                  ToGoogleRpcStatus(result.status(), error_info);
+              operation_.mutable_error()->MergeFrom(rpc_status);
+
+              LOG(ERROR) << "Skill: " << runtime_data().GetId()
+                         << " returned an error during " << op_name
+                         << ". code: " << rpc_status.code()
+                         << ", message: " << rpc_status.message();
+            }
+
+            operation_.set_done(true);
+          }
+
+          finished_notification_.Notify();
+
+          return absl::OkStatus();
+        });
   }
 
   return absl::OkStatus();
 }
 
-absl::Status SkillExecutionOperation::RequestCancellation() {
-  if (canceller_ == nullptr) {
-    return absl::UnimplementedError(
-        absl::StrFormat("Skill does not support cancellation: %s.", GetName()));
+absl::Status SkillOperation::RequestCancellation() {
+  if (!runtime_data_.GetExecutionOptions().SupportsCancellation()) {
+    return absl::UnimplementedError(absl::StrFormat(
+        "Skill does not support cancellation: %s.", runtime_data().GetId()));
+  }
+  if (canceller_->cancelled()) {
+    return absl::FailedPreconditionError(absl::StrFormat(
+        "Skill was already cancelled: %s.", runtime_data().GetId()));
+  }
+  if (finished()) {
+    LOG(INFO) << "Ignoring cancellation request, since operation %r has "
+                 "already finished.";
+    return absl::OkStatus();
   }
 
   return canceller_->Cancel();
 }
 
-absl::StatusOr<google::longrunning::Operation>
-SkillExecutionOperation::WaitExecution(absl::Time deadline) {
+absl::StatusOr<google::longrunning::Operation> SkillOperation::WaitExecution(
+    absl::Time deadline) {
   finished_notification_.WaitForNotificationWithDeadline(deadline);
 
-  return GetOperation();
+  return operation();
 }
 
-void SkillExecutionOperation::WaitOperation(absl::string_view caller_name) {
-  // Wait for skill execution to finish.
-  LOG(INFO) << caller_name << " waiting for operation to finish: \""
-            << GetName() << "\".";
+void SkillOperation::WaitOperation(absl::string_view caller_name) {
+  // Wait for the skill operation to finish.
+  LOG(INFO) << caller_name << " waiting for operation to finish: \"" << name()
+            << "\".";
   finished_notification_.WaitForNotification();
 
-  // Wait until the thread that executed the skill is finished. This wait
+  // Wait until the thread that executed the operation is finished. This wait
   // shouldn't take long, since `finished_notification_` is notified as the
   // last step of execution.
   {
     absl::MutexLock lock(&thread_mutex_);
     if (thread_ != nullptr && thread_->Joinable()) {
-      LOG(INFO) << caller_name << " joining operation thread: \"" << GetName()
+      LOG(INFO) << caller_name << " joining operation thread: \"" << name()
                 << "\".";
       thread_->Join();
       thread_.reset();
     }
   }
 
-  LOG(INFO) << caller_name << " finished waiting for operation: \"" << GetName()
+  LOG(INFO) << caller_name << " finished waiting for operation: \"" << name()
             << "\".";
 }
 
-absl::Status SkillExecutionOperation::Finish(
-    const ::google::rpc::Status* error,
-    const intrinsic_proto::skills::ExecuteResult* result) {
-  absl::MutexLock lock(&operation_mutex_);
-  if (GetFinished()) {
-    return absl::FailedPreconditionError(
-        absl::StrFormat("The operation has already finished: %s.", GetName()));
-  }
-
-  if (error != nullptr) {
-    operation_.mutable_error()->MergeFrom(*error);
-  }
-  if (result != nullptr) {
-    operation_.mutable_response()->PackFrom(*result);
-  }
-  operation_.set_done(true);
-
-  finished_notification_.Notify();
-
-  return absl::OkStatus();
-}
-
-absl::Status SkillExecutionOperationCleaner::Watch(
-    std::shared_ptr<SkillExecutionOperation> operation) {
+absl::Status SkillOperationCleaner::Watch(
+    std::shared_ptr<SkillOperation> operation) {
   bool start_processing_queue = false;
   {
     absl::MutexLock lock(&queue_mutex_);
@@ -238,8 +216,7 @@ absl::Status SkillExecutionOperationCleaner::Watch(
   return absl::OkStatus();
 }
 
-void SkillExecutionOperationCleaner::WaitOperations(
-    const std::string& caller_name) {
+void SkillOperationCleaner::WaitOperations(const std::string& caller_name) {
   std::shared_ptr<absl::Notification> queue_processed;
   {
     absl::MutexLock lock(&queue_mutex_);
@@ -258,9 +235,9 @@ void SkillExecutionOperationCleaner::WaitOperations(
   LOG(INFO) << caller_name << " finished waiting.";
 }
 
-void SkillExecutionOperationCleaner::ProcessQueue() {
+void SkillOperationCleaner::ProcessQueue() {
   while (true) {
-    std::shared_ptr<SkillExecutionOperation> operation;
+    std::shared_ptr<SkillOperation> operation;
     {
       absl::MutexLock lock(&queue_mutex_);
       if (queue_.empty()) {
@@ -278,8 +255,7 @@ void SkillExecutionOperationCleaner::ProcessQueue() {
   }
 }
 
-void SkillExecutionOperationCleaner::WaitThread(
-    const std::string& caller_name) {
+void SkillOperationCleaner::WaitThread(const std::string& caller_name) {
   if (thread_ != nullptr) {
     if (!caller_name.empty()) {
       LOG(INFO) << caller_name << " joining cleaner thread.";
@@ -289,32 +265,7 @@ void SkillExecutionOperationCleaner::WaitThread(
   }
 }
 
-absl::StatusOr<std::shared_ptr<SkillExecutionOperation>>
-SkillExecutionOperations::StartExecute(
-    std::unique_ptr<SkillExecuteInterface> skill,
-    const intrinsic_proto::skills::ExecuteRequest* request,
-    const std::optional<::google::protobuf::Any>& param_defaults,
-    std::unique_ptr<ExecuteContextImpl> context,
-    std::shared_ptr<SkillCancellationManager> canceller,
-    google::longrunning::Operation& initial_operation) {
-  INTRINSIC_ASSIGN_OR_RETURN(
-      std::shared_ptr<internal::SkillExecutionOperation> operation,
-      internal::SkillExecutionOperation::Create(request, param_defaults,
-                                                canceller));
-  initial_operation = operation->GetOperation();
-
-  INTRINSIC_RETURN_IF_ERROR(Add(operation));
-
-  INTRINSIC_RETURN_IF_ERROR(
-      operation->StartExecute(std::move(skill), std::move(context)));
-
-  INTRINSIC_RETURN_IF_ERROR(cleaner_.Watch(operation));
-
-  return operation;
-}
-
-absl::Status SkillExecutionOperations::Add(
-    std::shared_ptr<SkillExecutionOperation> operation) {
+absl::Status SkillOperations::Add(std::shared_ptr<SkillOperation> operation) {
   absl::MutexLock lock(&update_mutex_);
 
   // First remove the oldest finished operation if we've reached our limit of
@@ -328,7 +279,7 @@ absl::Status SkillExecutionOperations::Add(
         return absl::InternalError(absl::StrFormat(
             "%s found in operation_names_ but not in operations_.", *name_it));
       }
-      if (op_it->second->GetFinished()) {
+      if (op_it->second->finished()) {
         finished_operation_found = true;
         operation_names_.erase(name_it);
         operations_.erase(op_it);
@@ -339,11 +290,11 @@ absl::Status SkillExecutionOperations::Add(
       return absl::FailedPreconditionError(
           absl::StrFormat("Cannot add operation %s, since there are already %d "
                           "unfinished operations.",
-                          operation->GetName(), operations_.size()));
+                          operation->name(), operations_.size()));
     }
   }
 
-  std::string operation_name = operation->GetName();
+  std::string operation_name = operation->name();
 
   if (auto [_, inserted] = operations_.emplace(operation_name, operation);
       !inserted) {
@@ -353,11 +304,13 @@ absl::Status SkillExecutionOperations::Add(
 
   operation_names_.push_back(operation_name);
 
+  INTRINSIC_RETURN_IF_ERROR(cleaner_.Watch(operation));
+
   return absl::OkStatus();
 }
 
-absl::StatusOr<std::shared_ptr<SkillExecutionOperation>>
-SkillExecutionOperations::Get(absl::string_view name) {
+absl::StatusOr<std::shared_ptr<SkillOperation>> SkillOperations::Get(
+    absl::string_view name) {
   absl::MutexLock lock(&update_mutex_);
   auto itr = operations_.find(name);
   if (itr == operations_.end()) {
@@ -367,16 +320,16 @@ SkillExecutionOperations::Get(absl::string_view name) {
   return itr->second;
 }
 
-absl::Status SkillExecutionOperations::Clear(bool wait_for_operations) {
+absl::Status SkillOperations::Clear(bool wait_for_operations) {
   absl::MutexLock lock(&update_mutex_);
 
   std::vector<std::string> unfinished_operation_names;
   for (auto& [_, operation] : operations_) {
-    if (operation->GetFinished() || wait_for_operations) {
+    if (operation->finished() || wait_for_operations) {
       // Wait until the operation thread is finished.
       operation->WaitOperation("Clear operations");
     } else {
-      unfinished_operation_names.push_back(operation->GetName());
+      unfinished_operation_names.push_back(operation->name());
     }
   }
   if (!unfinished_operation_names.empty()) {
@@ -512,37 +465,42 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
 
   INTRINSIC_RETURN_IF_ERROR(ValidateRequest(*request));
 
+  INTRINSIC_ASSIGN_OR_RETURN(std::string skill_name,
+                             NameFrom(request->instance().id_version()));
   INTRINSIC_ASSIGN_OR_RETURN(
-      std::string skill_id,
-      RemoveVersionFrom(request->instance().id_version()));
+      std::shared_ptr<internal::SkillOperation> operation,
+      MakeOperation(/*name=*/request->instance().instance_name(), skill_name,
+                    context));
 
-  INTRINSIC_ASSIGN_OR_RETURN(std::string name, NameFrom(skill_id));
-  INTRINSIC_ASSIGN_OR_RETURN(internal::SkillRuntimeData runtime_data,
-                             skill_repository_.GetSkillRuntimeData(name));
+  INTRINSIC_ASSIGN_OR_RETURN(std::unique_ptr<SkillExecuteInterface> skill,
+                             skill_repository_.GetSkillExecute(skill_name));
+
+  auto skill_request = std::make_unique<ExecuteRequest>(
+      /*params=*/request->parameters(),
+      /*param_defaults=*/
+      operation->runtime_data().GetParameterData().GetDefault());
 
   INTRINSIC_ASSIGN_OR_RETURN(EquipmentPack equipment,
                              EquipmentPack::GetEquipmentPack(*request));
 
-  std::shared_ptr<SkillCancellationManager> skill_canceller;
-  if (runtime_data.GetExecutionOptions().SupportsCancellation()) {
-    skill_canceller = std::make_shared<SkillCancellationManager>(
-        runtime_data.GetExecutionOptions().GetCancellationReadyTimeout(),
-        /*operation_name=*/absl::Substitute("skill '$0'", skill_id));
-  }
-
-  auto execute_context = std::make_unique<ExecuteContextImpl>(
+  auto skill_context = std::make_unique<ExecuteContextImpl>(
       *request, object_world_service_, motion_planner_service_,
-      std::move(equipment), skill_registry_client_, skill_canceller);
+      std::move(equipment), skill_registry_client_, operation->canceller());
 
-  INTRINSIC_ASSIGN_OR_RETURN(std::unique_ptr<SkillExecuteInterface> skill,
-                             skill_repository_.GetSkillExecute(name));
+  INTRINSIC_RETURN_IF_ERROR(operation->Start(
+      [skill = std::move(skill), skill_request = std::move(skill_request),
+       skill_context = std::move(skill_context)]()
+          -> absl::StatusOr<
+              std::unique_ptr<intrinsic_proto::skills::ExecuteResult>> {
+        INTRINSIC_ASSIGN_OR_RETURN(
+            intrinsic_proto::skills::ExecuteResult result,
+            skill->Execute(*skill_request, *skill_context));
 
-  INTRINSIC_ASSIGN_OR_RETURN(
-      std::shared_ptr<internal::SkillExecutionOperation> operation,
-      operations_.StartExecute(std::move(skill), request,
-                               runtime_data.GetParameterData().GetDefault(),
-                               std::move(execute_context), skill_canceller,
-                               *result));
+        return std::make_unique<intrinsic_proto::skills::ExecuteResult>(result);
+      },
+      /*op_name=*/"execute"));
+
+  *result = operation->operation();
 
   return grpc::Status::OK;
 }
@@ -552,10 +510,10 @@ grpc::Status SkillExecutorServiceImpl::GetOperation(
     const google::longrunning::GetOperationRequest* request,
     google::longrunning::Operation* result) {
   INTRINSIC_ASSIGN_OR_RETURN(
-      std::shared_ptr<internal::SkillExecutionOperation> operation,
+      std::shared_ptr<internal::SkillOperation> operation,
       operations_.Get(request->name()));
 
-  *result = operation->GetOperation();
+  *result = operation->operation();
   return grpc::Status::OK;
 }
 
@@ -564,7 +522,7 @@ grpc::Status SkillExecutorServiceImpl::CancelOperation(
     const google::longrunning::CancelOperationRequest* request,
     google::protobuf::Empty* result) {
   INTRINSIC_ASSIGN_OR_RETURN(
-      std::shared_ptr<internal::SkillExecutionOperation> operation,
+      std::shared_ptr<internal::SkillOperation> operation,
       operations_.Get(request->name()));
 
   INTRINSIC_RETURN_IF_ERROR(operation->RequestCancellation());
@@ -577,7 +535,7 @@ grpc::Status SkillExecutorServiceImpl::WaitOperation(
     const google::longrunning::WaitOperationRequest* request,
     google::longrunning::Operation* result) {
   INTRINSIC_ASSIGN_OR_RETURN(
-      std::shared_ptr<internal::SkillExecutionOperation> operation,
+      std::shared_ptr<internal::SkillOperation> operation,
       operations_.Get(request->name()));
   INTRINSIC_ASSIGN_OR_RETURN(
       *result, operation->WaitExecution(absl::FromChrono(context->deadline())));
@@ -589,6 +547,21 @@ grpc::Status SkillExecutorServiceImpl::ClearOperations(
     grpc::ServerContext* context, const google::protobuf::Empty* request,
     google::protobuf::Empty* result) {
   return operations_.Clear(false);
+}
+
+absl::StatusOr<std::shared_ptr<internal::SkillOperation>>
+SkillExecutorServiceImpl::MakeOperation(absl::string_view name,
+                                        absl::string_view skill_name,
+                                        grpc::ServerContext* context) {
+  INTRINSIC_ASSIGN_OR_RETURN(internal::SkillRuntimeData runtime_data,
+                             skill_repository_.GetSkillRuntimeData(skill_name));
+
+  auto operation =
+      std::make_shared<internal::SkillOperation>(name, runtime_data);
+
+  INTRINSIC_RETURN_IF_ERROR(operations_.Add(operation));
+
+  return operation;
 }
 
 ::grpc::Status SkillInformationServiceImpl::GetSkillInfo(
