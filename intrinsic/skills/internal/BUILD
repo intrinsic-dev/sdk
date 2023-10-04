@@ -130,7 +130,6 @@ cc_library(
         "//intrinsic/skills/proto:skills_cc_proto",
         "//intrinsic/world/objects:object_world_client",
         "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
-        "@com_github_grpc_grpc//:grpc++_public_hdrs",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",

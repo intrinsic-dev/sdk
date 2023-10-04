@@ -306,6 +306,7 @@ proto_library(
         "//intrinsic/world/proto:object_world_updates_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:duration_proto",
+        "@com_google_protobuf//:timestamp_proto",
     ],
 )
 

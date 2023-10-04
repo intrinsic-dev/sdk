@@ -4,18 +4,16 @@
 
 #include "intrinsic/skills/internal/execute_context_impl.h"
 
-#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
-#include "grpcpp/grpcpp.h"
 #include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
@@ -58,11 +56,6 @@ absl::StatusOr<motion_planning::MotionPlannerClient>
 ExecuteContextImpl::GetMotionPlanner() {
   return motion_planning::MotionPlannerClient(world_id_,
                                               motion_planner_service_);
-}
-
-const intrinsic_proto::data_logger::Context& ExecuteContextImpl::GetLogContext()
-    const {
-  return log_context_;
 }
 
 }  // namespace skills

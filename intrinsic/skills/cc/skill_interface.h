@@ -34,6 +34,9 @@
 #include "intrinsic/world/objects/object_world_client.h"
 #include "intrinsic/world/objects/world_object.h"
 
+// IWYU pragma: begin_exports
+// IWYU pragma: end_exports
+
 namespace intrinsic {
 namespace skills {
 

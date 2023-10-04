@@ -8,10 +8,18 @@ package intrinsic_proto.skills;
 
 import "google/protobuf/any.proto";
 import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 import "intrinsic/world/proto/object_world_updates.proto";
 
 message TimedWorldUpdate {
-  // Elapsed time describing when the given updates are expected to happen.
+  // Time at which the update is expected to start.
+  //
+  // If omitted, the update is assumed to start immediately at the end of the
+  // previous update, or at the beginning of skill execution if there is no
+  // previous update.
+  google.protobuf.Timestamp start_time = 3;
+
+  // The expected duration of the update.
   google.protobuf.Duration time_until_update = 1;
 
   // World updates to apply.

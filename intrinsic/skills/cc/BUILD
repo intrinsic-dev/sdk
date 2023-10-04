@@ -29,20 +29,6 @@ cc_library(
 )
 
 cc_library(
-    name = "skill_canceller",
-    srcs = ["skill_canceller.cc"],
-    hdrs = ["skill_canceller.h"],
-    deps = [
-        "//intrinsic/icon/release:status_helpers",
-        "@com_google_absl//absl/functional:any_invocable",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
-        "@com_google_absl//absl/time",
-    ],
-)
-
-cc_library(
     name = "skill_interface",
     hdrs = ["skill_interface.h"],
     deps = [
@@ -66,6 +52,20 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
         "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
+    name = "skill_canceller",
+    srcs = ["skill_canceller.cc"],
+    hdrs = ["skill_canceller.h"],
+    deps = [
+        "//intrinsic/icon/release:status_helpers",
+        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
     ],
 )
 

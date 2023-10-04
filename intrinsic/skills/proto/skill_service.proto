@@ -75,12 +75,12 @@ message GetFootprintResult {
 }
 
 service Projector {
-  // Returns the anticipated resources needed, given the nominal initial world.
-  rpc GetFootprint(GetFootprintRequest) returns (GetFootprintResult) {}
-
   // Returns a distribution of possible states that the world could be in after
   // executing the skill with the provided parameters.
   rpc Predict(PredictRequest) returns (PredictResult) {}
+
+  // Returns the anticipated resources needed, given the nominal initial world.
+  rpc GetFootprint(GetFootprintRequest) returns (GetFootprintResult) {}
 }
 
 message ExecuteRequest {
@@ -112,6 +112,37 @@ message ExecuteResult {
   // this field, there will also be descriptor information for the type of data
   // in the Skill information retrieved from the registry.
   google.protobuf.Any result = 4;
+}
+
+message PreviewRequest {
+  google.protobuf.Any parameters = 1;
+
+  intrinsic_proto.skills.Footprint footprint = 2;
+
+  // Skill-internal data from a previous call to Projector.Predict.
+  bytes internal_data = 3;
+
+  // ID of the world in the world service which holds the initial world state
+  // for the skill preview.
+  string world_id = 4;
+
+  intrinsic_proto.skills.SkillInstance instance = 5;
+
+  // Logging context of the operation (e.g. IDs of related plan instance,
+  // deployment configs etc.).
+  intrinsic_proto.data_logger.Context context = 6;
+}
+
+message PreviewResult {
+  // The expected return values from the skill. Has the same caveats as the
+  // result in intrinsic_proto.skills.ExecuteResult.
+  google.protobuf.Any result = 1;
+
+  // The expected world states during execution of the skill. Updates are
+  // ordered such that each subsequent update should be applied to the previous
+  // one after the elapsed duration. The first update should be applied to the
+  // initial world used for generating the preview.
+  repeated TimedWorldUpdate expected_states = 2;
 }
 
 service Executor {

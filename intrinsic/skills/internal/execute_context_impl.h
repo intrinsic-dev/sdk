@@ -48,7 +48,9 @@ class ExecuteContextImpl : public ExecuteContext {
 
   absl::StatusOr<world::ObjectWorldClient> GetObjectWorld() override;
 
-  const intrinsic_proto::data_logger::Context& GetLogContext() const override;
+  const intrinsic_proto::data_logger::Context& GetLogContext() const override {
+    return log_context_;
+  };
 
   absl::StatusOr<motion_planning::MotionPlannerClient> GetMotionPlanner()
       override;
