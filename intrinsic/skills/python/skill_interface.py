@@ -321,7 +321,9 @@ class SkillExecuteInterface(metaclass=abc.ABCMeta):
       InvalidSkillParametersError: If the arguments provided to skill parameters
         are invalid.
     """
-    raise NotImplementedError('Method not implemented!')
+    raise NotImplementedError(
+        f'Skill "{type(self).__name__!r} has not implemented `execute`.'
+    )
 
 
 class SkillProjectInterface(metaclass=abc.ABCMeta):

@@ -139,9 +139,9 @@ message PreviewResult {
   google.protobuf.Any result = 1;
 
   // The expected world states during execution of the skill. Updates are
-  // ordered such that each subsequent update should be applied to the previous
-  // one after the elapsed duration. The first update should be applied to the
-  // initial world used for generating the preview.
+  // ordered such that each subsequent update should be applied at the specified
+  // time and for the specified duration. The first update should be applied to
+  // the initial world used for generating the preview.
   repeated TimedWorldUpdate expected_states = 2;
 }
 
@@ -151,18 +151,25 @@ service Executor {
   The RPC fails with:
   - NOT_FOUND if the skill cannot be found.
   - INTERNAL if default parameters cannot be applied.
-  - ALREADY_EXISTS if a skill execution operation with the specified name (i.e.,
-      the skill instance name) already exists. */
+  - ALREADY_EXISTS if an operation with the derived name already exists. */
   rpc StartExecute(ExecuteRequest) returns (google.longrunning.Operation) {}
 
-  /* Gets the current state of a skill execution operation.
+  /* Starts previewing execution of the skill as a long-running operation.
+
+  The RPC fails with:
+  - NOT_FOUND if the skill cannot be found.
+  - INTERNAL if default parameters cannot be applied.
+  - ALREADY_EXISTS if an operation with the derived name already exists. */
+  rpc StartPreview(PreviewRequest) returns (google.longrunning.Operation) {}
+
+  /* Gets the current state of a skill operation.
 
   The RPC fails with:
   - NOT_FOUND if the operation cannot be found. */
   rpc GetOperation(google.longrunning.GetOperationRequest)
       returns (google.longrunning.Operation) {}
 
-  /* Requests cancellation of a skill execution operation.
+  /* Requests cancellation of a skill operation.
 
   NOTE: The skill may finish successfully before it can be cancelled. The actual
   outcome can be inferred from the state returned by a subsequent call to
@@ -176,22 +183,22 @@ service Executor {
   rpc CancelOperation(google.longrunning.CancelOperationRequest)
       returns (google.protobuf.Empty) {}
 
-  /* Waits for a skill execution operation to finish.
+  /* Waits for a skill operation to finish.
 
   Unless the wait timed out, the returned state reflects the final outcome of
   skill execution. NOTE that an unfinished operation will be returned if the
   wait times out.
 
-  If skill execution succeeded, the operation's `response` will be the resulting
-  ExecuteResult. Otherwise, the operation's `error` will contain information
-  about the failure.
+  If the operation succeeded, the operation's `response` will be the resulting
+  ExecuteResult or PreviewResult. Otherwise, the operation's `error` will
+  contain information about the failure.
 
   The RPC fails with:
   - NOT_FOUND if the operation cannot be found. */
   rpc WaitOperation(google.longrunning.WaitOperationRequest)
       returns (google.longrunning.Operation) {}
 
-  /* Clears the internal store of skill execution operations.
+  /* Clears the internal store of skill operations.
 
   Should only be called once all operations are finished.
 

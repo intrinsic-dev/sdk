@@ -307,7 +307,7 @@ class SkillExecuteInterface {
   // service).
   virtual absl::StatusOr<intrinsic_proto::skills::ExecuteResult> Execute(
       const ExecuteRequest& request, ExecuteContext& context) {
-    return absl::UnimplementedError("Skill does not implement execution.");
+    return absl::UnimplementedError("Skill does not implement `Execute`.");
   }
 
   virtual ~SkillExecuteInterface() = default;

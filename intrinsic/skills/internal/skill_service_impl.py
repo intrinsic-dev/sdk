@@ -302,9 +302,49 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
       if result is not None:
         result_any = any_pb2.Any()
         result_any.Pack(result)
+
       return skill_service_pb2.ExecuteResult(result=result_any)
 
     operation.start(op=execute, op_name='execute')
+
+    return operation.operation
+
+  def StartPreview(
+      self,
+      request: skill_service_pb2.PreviewRequest,
+      context: grpc.ServicerContext,
+  ) -> operations_pb2.Operation:
+    """Starts previewing the skill as a long-running operation.
+
+    Args:
+      request: Preview request with skill instance to preview.
+      context: gRPC servicer context.
+
+    Returns:
+      Operation representing the skill execution operation.
+
+    Raises:
+      grpc.RpcError:
+        NOT_FOUND: If the skill cannot be found.
+        INTERNAL: If the default parameters cannot be applied.
+        ALREADY_EXISTS: If a skill execution operation with the specified name
+            (i.e., the skill instance name) already exists.
+        FAILED_PRECONDITION: If the operation cache is already full of
+            unfinished operations.
+    """
+    skill_name = id_utils.name_from(request.instance.id_version)
+    operation = self._make_operation(
+        name=request.instance.instance_name,
+        skill_name=skill_name,
+        context=context,
+    )
+
+    skill = self._skill_repository.get_skill_execute(skill_name)
+
+    def preview() -> skill_service_pb2.PreviewResult:
+      raise NotImplementedError('Preview is not yet supported.')
+
+    operation.start(op=preview, op_name='preview')
 
     return operation.operation
 

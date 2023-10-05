@@ -505,6 +505,43 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
   return grpc::Status::OK;
 }
 
+grpc::Status SkillExecutorServiceImpl::StartPreview(
+    grpc::ServerContext* context,
+    const intrinsic_proto::skills::PreviewRequest* request,
+    google::longrunning::Operation* result) {
+  LOG(INFO) << "Attempting to start preview of '"
+            << request->instance().id_version() << "' skill with world id '"
+            << request->world_id() << "'";
+
+  INTRINSIC_RETURN_IF_ERROR(ValidateRequest(*request));
+
+  INTRINSIC_ASSIGN_OR_RETURN(std::string skill_name,
+                             NameFrom(request->instance().id_version()));
+  INTRINSIC_ASSIGN_OR_RETURN(
+      std::shared_ptr<internal::SkillOperation> operation,
+      MakeOperation(/*name=*/request->instance().instance_name(), skill_name,
+                    context));
+
+  INTRINSIC_ASSIGN_OR_RETURN(std::unique_ptr<SkillExecuteInterface> skill,
+                             skill_repository_.GetSkillExecute(skill_name));
+
+  auto skill_request = nullptr;
+  auto skill_context = nullptr;
+
+  INTRINSIC_RETURN_IF_ERROR(operation->Start(
+      [skill = std::move(skill), skill_request = std::move(skill_request),
+       skill_context = std::move(skill_context)]()
+          -> absl::StatusOr<
+              std::unique_ptr<intrinsic_proto::skills::PreviewResult>> {
+        return absl::UnimplementedError("Preview is not yet supported.");
+      },
+      /*op_name=*/"preview"));
+
+  *result = operation->operation();
+
+  return grpc::Status::OK;
+}
+
 grpc::Status SkillExecutorServiceImpl::GetOperation(
     grpc::ServerContext* context,
     const google::longrunning::GetOperationRequest* request,

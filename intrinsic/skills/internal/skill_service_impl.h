@@ -319,6 +319,11 @@ class SkillExecutorServiceImpl
       const intrinsic_proto::skills::ExecuteRequest* request,
       google::longrunning::Operation* result) override;
 
+  grpc::Status StartPreview(
+      grpc::ServerContext* context,
+      const intrinsic_proto::skills::PreviewRequest* request,
+      google::longrunning::Operation* result) override;
+
   grpc::Status GetOperation(
       grpc::ServerContext* context,
       const google::longrunning::GetOperationRequest* request,
