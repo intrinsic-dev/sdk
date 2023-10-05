@@ -9,6 +9,7 @@ go 1.19
 require (
 	cloud.google.com/go/firestore v1.13.0
 	cloud.google.com/go/storage v1.33.0
+	dario.cat/mergo v1.0.0
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/bazelbuild/buildtools v0.0.0-20230926111657-7d855c59baeb
 	github.com/bazelbuild/remote-apis-sdks v0.0.0-20230919142202-aa1c266ae342
@@ -83,6 +84,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
