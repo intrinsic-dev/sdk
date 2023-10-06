@@ -7,7 +7,6 @@
 # not needed to be included directly when authoring a Skill.
 
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
-load("//bazel:go_macros.bzl", "go_library", "go_test")
 load("@io_bazel_rules_docker//python3:image.bzl", "py3_image")
 load("@rules_python//python:defs.bzl", "py_library")
 load("@rules_python//python:packaging.bzl", "py_package", "py_wheel")

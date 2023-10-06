@@ -2,7 +2,7 @@
 # Intrinsic Proprietary and Confidential
 # Provided subject to written agreement between the parties.
 
-load("//bazel:go_macros.bzl", "go_library", "go_test")
+load("//bazel:go_macros.bzl", "go_library")
 
 # This package contains the tools to handle tar archives.
 

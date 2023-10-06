@@ -5,7 +5,7 @@
 """Helper utilities for applications using grpc."""
 
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
-load("//bazel:go_macros.bzl", "go_library", "go_test")
+load("//bazel:go_macros.bzl", "go_library")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
 
 package(

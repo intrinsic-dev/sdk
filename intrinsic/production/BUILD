@@ -2,8 +2,7 @@
 # Intrinsic Proprietary and Confidential
 # Provided subject to written agreement between the parties.
 
-load("//bazel:go_macros.bzl", "go_library", "go_test")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("//bazel:go_macros.bzl", "go_library")
 
 package(default_visibility = [
     "//visibility:public",

@@ -2,7 +2,6 @@
 # Intrinsic Proprietary and Confidential
 # Provided subject to written agreement between the parties.
 
-load("//bazel:go_macros.bzl", "go_test")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
 
 package(default_visibility = ["//visibility:public"])
