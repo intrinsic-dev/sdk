@@ -157,6 +157,43 @@ func applyConfig(ctx context.Context, client *projectclient.AuthedClient, cluste
 	return nil
 }
 
+func setConfig(ctx context.Context, client *projectclient.AuthedClient, clusterName, deviceID, config string) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+	defer cancel()
+
+	const timeoutWarning = "Warning: Timeout while sending config to the device. This may indicate that the config is unusable, but could also be a transient network error."
+	resp, err := client.PostDevice(ctx, clusterName, deviceID, "relay/v1alpha1/config/network", strings.NewReader(config))
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			fmt.Println(timeoutWarning)
+			return nil
+		}
+		if errors.Is(err, projectclient.ErrNotFound) {
+			fmt.Fprintf(os.Stderr, "Cluster does not exist. Either it does not exist, or you don't have access to it.\n")
+			return err
+		}
+
+		return fmt.Errorf("post config: %w", err)
+	}
+	defer resp.Body.Close()
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		// Do nothing
+	case http.StatusGatewayTimeout:
+		fmt.Println(timeoutWarning)
+		return nil
+	case http.StatusNotFound:
+		fmt.Fprintf(os.Stderr, "Cluster does not exist. Either it does not exist, or you don't have access to it.\n")
+		return fmt.Errorf("http code %v", resp.StatusCode)
+	default:
+		io.Copy(os.Stderr, resp.Body)
+		return fmt.Errorf("server returned error: %v", resp.StatusCode)
+	}
+
+	return nil
+}
+
 var configSetCmd = &cobra.Command{
 	Use:   "set",
 	Short: "Set the network config",
@@ -184,21 +221,8 @@ var configSetCmd = &cobra.Command{
 			return err
 		}
 
-		resp, err := client.PostDevice(cmd.Context(), clusterName, deviceID, "relay/v1alpha1/config/network", strings.NewReader(configString))
-		if err != nil {
-			return fmt.Errorf("post config: %w", err)
-		}
-		defer resp.Body.Close()
-
-		switch resp.StatusCode {
-		case http.StatusOK:
-			// Do nothing
-		case http.StatusNotFound:
-			fmt.Fprintf(os.Stderr, "Cluster does not exist. Either it does not exist, or you don't have access to it.\n")
-			return fmt.Errorf("http code %v", resp.StatusCode)
-		default:
-			io.Copy(os.Stderr, resp.Body)
-			return fmt.Errorf("server returned error: %v", resp.StatusCode)
+		if err := setConfig(cmd.Context(), &client, clusterName, deviceID, configString); err != nil {
+			return fmt.Errorf("set config: %w", err)
 		}
 
 		if err := applyConfig(cmd.Context(), &client, clusterName, deviceID); err != nil {
