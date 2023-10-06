@@ -186,16 +186,17 @@ var configSetCmd = &cobra.Command{
 
 		resp, err := client.PostDevice(cmd.Context(), clusterName, deviceID, "relay/v1alpha1/config/network", strings.NewReader(configString))
 		if err != nil {
-			if errors.Is(err, projectclient.ErrNotFound) {
-				fmt.Fprintf(os.Stderr, "Cluster does not exist. Either it does not exist, or you don't have access to it.\n")
-				return err
-			}
-
 			return fmt.Errorf("post config: %w", err)
 		}
 		defer resp.Body.Close()
 
-		if resp.StatusCode != 200 {
+		switch resp.StatusCode {
+		case http.StatusOK:
+			// Do nothing
+		case http.StatusNotFound:
+			fmt.Fprintf(os.Stderr, "Cluster does not exist. Either it does not exist, or you don't have access to it.\n")
+			return fmt.Errorf("http code %v", resp.StatusCode)
+		default:
 			io.Copy(os.Stderr, resp.Body)
 			return fmt.Errorf("server returned error: %v", resp.StatusCode)
 		}
