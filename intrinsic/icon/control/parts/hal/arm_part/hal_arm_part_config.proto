@@ -8,7 +8,6 @@ package intrinsic_proto.icon;
 
 import "intrinsic/icon/control/parts/hal/hal_part_config.proto";
 import "intrinsic/icon/control/parts/mode_of_safe_operation_limits_config.proto";
-import "intrinsic/icon/proto/cart_space.proto";
 import "intrinsic/icon/proto/joint_position_pid_torque_controller_config.proto";
 import "intrinsic/icon/proto/linear_joint_acceleration_filter_config.proto";
 
@@ -50,7 +49,6 @@ message HalArmPartConfig {
   // If omitted, the HalArmPart does not offer the Dynamics Feature
   // Interface.
   optional string world_robot_collection_name = 17;
-  intrinsic_proto.icon.CartesianLimits cartesian_limits = 9;
 
   // If present, the kinematics model name needs to correspond to one of the
   // kinematics models available via KinematicsService. Which models are

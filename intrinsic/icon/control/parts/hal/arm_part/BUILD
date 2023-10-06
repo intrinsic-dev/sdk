@@ -14,7 +14,6 @@ proto_library(
     deps = [
         "//intrinsic/icon/control/parts:mode_of_safe_operation_limits_config_proto",
         "//intrinsic/icon/control/parts/hal:hal_part_config_proto",
-        "//intrinsic/icon/proto:cart_space_proto",
         "//intrinsic/icon/proto:joint_position_pid_torque_controller_config_proto",
         "//intrinsic/icon/proto:linear_joint_acceleration_filter_config_proto",
     ],
