@@ -6,6 +6,7 @@ package device
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -170,6 +171,7 @@ var configSetCmd = &cobra.Command{
 	},
 
 	RunE: func(cmd *cobra.Command, args []string) error {
+		configString := args[0]
 		projectName := viperLocal.GetString(keyProject)
 		orgName := viperLocal.GetString(keyOrganization)
 		client, err := projectclient.Client(projectName, orgName)
@@ -177,7 +179,12 @@ var configSetCmd = &cobra.Command{
 			return fmt.Errorf("get project client: %w", err)
 		}
 
-		resp, err := client.PostDevice(cmd.Context(), clusterName, deviceID, "relay/v1alpha1/config/network", strings.NewReader(args[0]))
+		if err := json.Unmarshal([]byte(configString), &networkConfigInfo{}); err != nil {
+			fmt.Fprintf(os.Stderr, "Provided configuration is not a valid configuration string.\n")
+			return err
+		}
+
+		resp, err := client.PostDevice(cmd.Context(), clusterName, deviceID, "relay/v1alpha1/config/network", strings.NewReader(configString))
 		if err != nil {
 			if errors.Is(err, projectclient.ErrNotFound) {
 				fmt.Fprintf(os.Stderr, "Cluster does not exist. Either it does not exist, or you don't have access to it.\n")
