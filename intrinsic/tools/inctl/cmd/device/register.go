@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 
 	"github.com/spf13/cobra"
 	"intrinsic/frontend/cloud/devicemanager/shared"
@@ -18,10 +19,19 @@ import (
 	"intrinsic/tools/inctl/cmd/device/projectclient"
 )
 
+const (
+	// https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names
+	hostnameRegexString = `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`
+)
+
 var (
 	deviceRole    = ""
 	privateDevice = false
 )
+
+func validHostname(hostname string) bool {
+	return regexp.MustCompile(hostnameRegexString).MatchString(hostname)
+}
 
 var registerCmd = &cobra.Command{
 	Use:   "register",
@@ -36,6 +46,11 @@ var registerCmd = &cobra.Command{
 		if deviceRole != "control-plane" && clusterName == "" {
 			fmt.Printf("--cluster_name needs to be provided for role %q\n", deviceRole)
 			return fmt.Errorf("invalid arguments")
+		}
+
+		if !validHostname(hostname) {
+			fmt.Printf("%q is not a valid as hostname. Provide a valid hostname.\nSee https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names for more information.\n", hostname)
+			return fmt.Errorf("invalid hostname")
 		}
 
 		client, err := projectclient.Client(projectName, orgName)
