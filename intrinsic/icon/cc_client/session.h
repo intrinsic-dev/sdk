@@ -391,7 +391,8 @@ class Session {
               watcher_stream,
           std::unique_ptr<intrinsic_proto::icon::IconApi::StubInterface> stub,
           SessionId session_id,
-          const intrinsic_proto::data_logger::Context& context);
+          const intrinsic_proto::data_logger::Context& context,
+          ClientContextFactory client_context_factory);
 
   // Creates a vector of actions from the `action_descriptors`.
   static std::vector<Action> MakeActionVector(
@@ -482,6 +483,11 @@ class Session {
       reaction_handle_to_id_and_loc_;
 
   SessionId session_id_;
+
+  // Factory function that produces ::grpc::ClientContext objects before each
+  // gRPC request. This is required to make new grpc calls on the fly since we
+  // need to propagate the original icon connection parameters stored in here.
+  ClientContextFactory client_context_factory_;
 };
 
 }  // namespace icon

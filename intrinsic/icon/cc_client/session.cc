@@ -298,10 +298,11 @@ absl::StatusOr<std::unique_ptr<Session>> Session::StartImpl(
         "ready.");
   }
 
-  return absl::WrapUnique(new Session(
-      std::move(icon_channel), std::move(action_context),
-      std::move(action_stream), std::move(watcher_context),
-      std::move(watcher_stream), std::move(stub), session_id, context));
+  return absl::WrapUnique(
+      new Session(std::move(icon_channel), std::move(action_context),
+                  std::move(action_stream), std::move(watcher_context),
+                  std::move(watcher_stream), std::move(stub), session_id,
+                  context, client_context_factory));
 }
 
 Session::~Session() {
@@ -555,27 +556,27 @@ void Session::QuitWatcherLoop() {
 
 absl::StatusOr<::intrinsic_proto::icon::StreamingOutput>
 Session::GetLatestOutput(ActionInstanceId id, absl::Time deadline) {
-  grpc::ClientContext context;
-  context.set_deadline(absl::ToChronoTime(deadline));
+  std::unique_ptr<grpc::ClientContext> context = client_context_factory_();
+  context->set_deadline(absl::ToChronoTime(deadline));
   ::intrinsic_proto::icon::GetLatestStreamingOutputRequest request;
   request.set_session_id(session_id_.value());
   request.set_action_id(id.value());
   ::intrinsic_proto::icon::GetLatestStreamingOutputResponse response;
   INTRINSIC_RETURN_IF_ERROR(
-      stub_->GetLatestStreamingOutput(&context, request, &response));
+      stub_->GetLatestStreamingOutput(context.get(), request, &response));
   return response.output();
 }
 
 absl::StatusOr<::intrinsic_proto::icon::JointTrajectoryPVA>
 Session::GetPlannedTrajectory(ActionInstanceId id) {
-  ::grpc::ClientContext context;
+  std::unique_ptr<grpc::ClientContext> context = client_context_factory_();
   ::intrinsic_proto::icon::GetPlannedTrajectoryRequest request;
   request.set_session_id(session_id_.value());
   request.set_action_id(id.value());
 
   std::unique_ptr<::grpc::ClientReaderInterface<
       ::intrinsic_proto::icon::GetPlannedTrajectoryResponse>>
-      stream = stub_->GetPlannedTrajectory(&context, request);
+      stream = stub_->GetPlannedTrajectory(context.get(), request);
 
   ::intrinsic_proto::icon::GetPlannedTrajectoryResponse response;
   std::vector<::intrinsic_proto::icon::JointTrajectoryPVA>
@@ -648,7 +649,8 @@ Session::Session(
         intrinsic_proto::icon::WatchReactionsResponse>>
         watcher_stream,
     std::unique_ptr<intrinsic_proto::icon::IconApi::StubInterface> stub,
-    SessionId session_id, const intrinsic_proto::data_logger::Context& context)
+    SessionId session_id, const intrinsic_proto::data_logger::Context& context,
+    ClientContextFactory client_context_factory)
     : channel_(std::move(icon_channel)),
       session_ended_(false),
       action_context_(std::move(action_context)),
@@ -657,7 +659,8 @@ Session::Session(
       watcher_stream_(std::move(watcher_stream)),
       watcher_read_thread_(&Session::WatchReactionsThreadBody, this),
       stub_(std::move(stub)),
-      session_id_(session_id) {}
+      session_id_(session_id),
+      client_context_factory_(client_context_factory) {}
 
 absl::Status Session::CheckReactionHandlesUnique(
     absl::Span<const ReactionDescriptor> reaction_descriptors) const {
