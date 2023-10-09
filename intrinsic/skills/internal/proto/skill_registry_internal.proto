@@ -12,8 +12,6 @@ import "intrinsic/skills/proto/skill_registry_config.proto";
 import "intrinsic/skills/proto/skills.proto";
 
 message GetInstanceRequest {
-  string skill_name = 1 [deprecated = true];
-
   // The identifier for the skill. This can either be the id or the id_version
   // as described by intrinsic_proto.catalog.SkillMeta.id and
   // instrinsic_proto.SkillMeta.id_version, respectively.
@@ -25,6 +23,8 @@ message GetInstanceRequest {
 
   // The equipment the instance will use.
   map<string, intrinsic_proto.skills.EquipmentHandle> handles = 2;
+
+  reserved 1;
 }
 
 message GetInstanceResponse {

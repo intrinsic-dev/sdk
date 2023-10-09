@@ -111,18 +111,6 @@ SkillRegistryClient::GetSkillById(absl::string_view skill_id) const {
 
 namespace {
 
-intrinsic_proto::skills::GetInstanceRequest CreateGetInstanceRequestByName(
-    absl::string_view skill_name, std::optional<absl::string_view> instance_id,
-    const EquipmentPack& equipment) {
-  ::intrinsic_proto::skills::GetInstanceRequest request;
-  request.set_skill_name(std::string(skill_name));
-  if (instance_id.has_value()) {
-    request.set_instance_id(std::string(*instance_id));
-  }
-  request.mutable_handles()->insert(equipment.begin(), equipment.end());
-  return request;
-}
-
 intrinsic_proto::skills::GetInstanceRequest CreateGetInstanceRequest(
     absl::string_view id, std::optional<absl::string_view> instance_id,
     const EquipmentPack& equipment) {
@@ -136,25 +124,6 @@ intrinsic_proto::skills::GetInstanceRequest CreateGetInstanceRequest(
 }
 
 }  // namespace
-
-absl::StatusOr<intrinsic_proto::skills::SkillInstance>
-SkillRegistryClient::GetInstanceByName(absl::string_view skill_name,
-                                       const EquipmentPack& equipment) const {
-  ::grpc::ClientContext context;
-  context.set_deadline(absl::ToChronoTime(absl::Now() + kClientDefaultTimeout));
-  auto request =
-      CreateGetInstanceRequestByName(skill_name, std::nullopt, equipment);
-  ::intrinsic_proto::skills::GetInstanceResponse response;
-
-  ::grpc::Status status =
-      stub_internal_->GetInstance(&context, request, &response);
-  if (!status.ok()) {
-    return AnnotateError(status,
-                         absl::StrCat("SkillRegistryClient::GetInstanceByName(",
-                                      skill_name, ") gRPC call failed"));
-  }
-  return response.instance();
-}
 
 absl::StatusOr<intrinsic_proto::skills::SkillInstance>
 SkillRegistryClient::GetInstance(absl::string_view id,

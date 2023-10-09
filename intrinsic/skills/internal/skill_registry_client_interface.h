@@ -53,20 +53,6 @@ class SkillRegistryClientInterface {
   virtual absl::StatusOr<intrinsic_proto::skills::Skill> GetSkillById(
       absl::string_view skill_id) const = 0;
 
-  // Fetches a skill instance matching the given request. `skill_name` is the
-  // name of the skill to get an instance of. `equipment` describes which
-  // equipment should be used for which equipment slots.
-  //
-  // This makes a blocking GRPC request.
-  //
-  // Returns `DeadlineExceededError` if the request hasn't completed after
-  // `timeout`.
-  //
-  // Returns any errors from the GRPC invocation.
-  virtual absl::StatusOr<intrinsic_proto::skills::SkillInstance>
-  GetInstanceByName(absl::string_view skill_name,
-                    const EquipmentPack& equipment) const = 0;
-
   // Fetches a skill instance matching the given request. `id` is the
   // id of the skill to get an instance of. `equipment` describes which
   // equipment should be used for which equipment slots.

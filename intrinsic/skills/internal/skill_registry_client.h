@@ -73,9 +73,6 @@ class SkillRegistryClient : public SkillRegistryClientInterface {
   absl::StatusOr<intrinsic_proto::skills::Skill> GetSkillById(
       absl::string_view skill_id) const final;
 
-  absl::StatusOr<intrinsic_proto::skills::SkillInstance> GetInstanceByName(
-      absl::string_view skill_name, const EquipmentPack& equipment) const final;
-
   absl::StatusOr<intrinsic_proto::skills::SkillInstance> GetInstance(
       absl::string_view id, const EquipmentPack& equipment) const final;
 
