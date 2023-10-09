@@ -490,7 +490,7 @@ message ListWorldsResponse {
 
 message ObjectFullPath {
   // The list of object names from the root object(excluding root) to the
-  // addresssed object(including addresssed object). An empty list indicates the
+  // addressed object(including addressed object). An empty list indicates the
   // root object.
   repeated string object_names = 1;
 }
