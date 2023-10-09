@@ -9,6 +9,8 @@
 
 namespace intrinsic {
 
+CartesianLimits::CartesianLimits() { SetUnlimited(); }
+
 const CartesianLimits& CartesianLimits::Unlimited() {
   static const CartesianLimits* limits = []() {
     auto ret = new CartesianLimits();

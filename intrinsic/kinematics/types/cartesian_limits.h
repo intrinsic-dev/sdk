@@ -13,6 +13,9 @@ namespace intrinsic {
 // acceleration and jerk, as well as rotational velocity, acceleration and jerk.
 struct CartesianLimits {
  public:
+  // Default constructs the Cartesian Limits with unlimited values.
+  CartesianLimits();
+
   // Sets each limit range to (-infinity, infinity).
   void SetUnlimited();
 
