@@ -117,15 +117,6 @@ var registerCmd = &cobra.Command{
 
 		switch resp.StatusCode {
 		case http.StatusOK:
-			// copybara_strip:begin
-			if deviceRole == "control-plane" {
-				fmt.Printf("Use these commands to add the cluster to your kubeconfig and connect via k9s:\n")
-				fmt.Printf(`	kubectl config set-cluster "%s" --server="https://www.endpoints.%s.cloud.goog/apis/core.kubernetes-relay/client/%s"`+"\n",
-					hostname, projectName, hostname)
-				fmt.Printf(`	kubectl config set-context "%s" --cluster "%s" --namespace "default" --user "gke_%s_us-central1-a_cloud-robotics"`+"\n",
-					hostname, hostname, projectName)
-			}
-			// copybara_strip:end
 			return nil
 		case http.StatusConflict:
 			return fmt.Errorf("cluster %q already exists. Cannot create it again. Please use a unique value for --hostname", hostname)
