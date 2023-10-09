@@ -11,35 +11,11 @@ import "intrinsic/perception/proto/dimensions.proto";
 import "intrinsic/perception/proto/pattern_detection_result.proto";
 
 message IntrinsicCalibrationRequest {
-  enum OptimizationAlgorithm {
-    // This will default to STROBL.
-    AUTO = 0;
-    // Based on this paper: https://elib.dlr.de/71888/1/strobl_2011iccv.pdf
-    STROBL = 1;
-    // Halcon's implementation.
-    HALCON = 2;
-  }
-
-  message InitializationParams {
-    double focal_length = 2;
-    double sensor_size_x = 3;
-    double sensor_size_y = 4;
-
-    reserved 1;
-  }
-
   // Detections of the calibration plate.
   repeated PatternDetection pattern_detections = 1;
 
-  // Initial values for the camera parameters that are used to initialize the
-  // algorithm. Only used for HALCON OptimizationAlgorithm.
-  optional InitializationParams initial_params = 2;
-
   // Image dimensions.
-  Dimensions dimensions = 4;
-
-  // The optimization algorithm which should be used.
-  OptimizationAlgorithm algorithm = 3;
+  Dimensions dimensions = 2;
 }
 
 message IntrinsicCalibrationResult {
