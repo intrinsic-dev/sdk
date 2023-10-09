@@ -463,10 +463,6 @@ absl::Status Session::ClearAllActionsAndReactions() {
   return EndAndLogOnAbort(response.status());
 }
 
-absl::Status Session::ClearAllActions() {
-  return ClearAllActionsAndReactions();
-}
-
 absl::Status Session::StartAction(const Action& action,
                                   bool stop_active_actions) {
   return StartActions({action}, stop_active_actions);

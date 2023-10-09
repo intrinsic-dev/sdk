@@ -288,10 +288,6 @@ class Session {
   // obtained from this Session.
   absl::Status ClearAllActionsAndReactions();
 
-  // Use ClearAllActionsAndReactions instead.
-  ABSL_DEPRECATED("use ClearAllActionsAndReactions() instead")
-  absl::Status ClearAllActions();
-
   // Starts the given actions on the server.
   //
   // All `actions` must have non overlapping part sets. Otherwise this function
