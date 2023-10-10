@@ -6,18 +6,15 @@ syntax = "proto3";
 
 package intrinsic_proto.motion_planning;
 
-import "google/protobuf/duration.proto";
 import "intrinsic/geometry/proto/shape_data.proto";
 import "intrinsic/icon/proto/cart_space.proto";
 import "intrinsic/icon/proto/joint_space.proto";
 import "intrinsic/kinematics/types/joint_limits.proto";
-import "intrinsic/math/proto/point.proto";
 import "intrinsic/math/proto/pose.proto";
 import "intrinsic/motion_planning/proto/motion_planner_config.proto";
 import "intrinsic/motion_planning/proto/motion_specification.proto";
 import "intrinsic/motion_planning/proto/motion_target.proto";
 import "intrinsic/world/proto/collision_settings.proto";
-import "intrinsic/world/proto/geometric_constraints.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 
 // Different ways to specify a robot.
