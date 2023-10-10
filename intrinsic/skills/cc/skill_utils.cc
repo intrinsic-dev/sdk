@@ -16,10 +16,10 @@
 namespace intrinsic::skills {
 
 absl::StatusOr<intrinsic::ConnectionParams> GetConnectionParamsFromHandle(
-    const intrinsic_proto::skills::EquipmentHandle& handle) {
+    const intrinsic_proto::skills::ResourceHandle& handle) {
   if (!handle.connection_info().has_grpc()) {
     return absl::InvalidArgumentError(absl::StrFormat(
-        "Equipment handle \"%s\" does not specify grpc connection_info",
+        "Resource handle \"%s\" does not specify grpc connection_info",
         handle.name()));
   }
   return icon::ConnectionParams{
@@ -30,7 +30,7 @@ absl::StatusOr<intrinsic::ConnectionParams> GetConnectionParamsFromHandle(
 }
 
 absl::StatusOr<std::shared_ptr<intrinsic::Channel>> CreateChannelFromHandle(
-    const intrinsic_proto::skills::EquipmentHandle& handle) {
+    const intrinsic_proto::skills::ResourceHandle& handle) {
   INTRINSIC_ASSIGN_OR_RETURN(
       const intrinsic::ConnectionParams connection_params,
       GetConnectionParamsFromHandle(handle));

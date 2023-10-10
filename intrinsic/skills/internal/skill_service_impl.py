@@ -149,7 +149,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
     )
 
     footprint_context = skl.GetFootprintContext(
-        equipment_handles=dict(footprint_request.instance.equipment_handles),
+        resource_handles=dict(footprint_request.instance.resource_handles),
         motion_planner=motion_planner,
         object_world=object_world,
     )
@@ -175,8 +175,8 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
     # Add required equipment to the footprint automatically
     required_equipment = skill_runtime_data.resource_data.required_resources
     for name, selector in required_equipment.items():
-      if name in footprint_request.instance.equipment_handles:
-        handle = footprint_request.instance.equipment_handles[name]
+      if name in footprint_request.instance.resource_handles:
+        handle = footprint_request.instance.resource_handles[name]
         skill_footprint.equipment_resource.append(
             footprint_pb2.EquipmentResource(
                 type=selector.sharing_type, name=handle.name
@@ -189,7 +189,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
             message=(
                 'Error when specifying equipment resources. Skill requires'
                 f' {list(required_equipment)} but got'
-                f' {list(footprint_request.instance.equipment_handles)}.'
+                f' {list(footprint_request.instance.resource_handles)}.'
             ),
             skill_error_info=error_pb2.SkillErrorInfo(
                 error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
@@ -279,7 +279,7 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
 
     skill_context = skl.ExecuteContext(
         canceller=operation.canceller,
-        equipment_handles=dict(request.instance.equipment_handles),
+        resource_handles=dict(request.instance.resource_handles),
         logging_context=request.context,
         motion_planner=motion_planner_client.MotionPlannerClient(
             request.world_id, self._motion_planner_service

@@ -10,7 +10,7 @@ import "google/protobuf/any.proto";
 import "intrinsic/skills/proto/footprint.proto";
 
 message EquipmentSelector {
-  // An EquipmentHandle must include all of the types specified here to be
+  // An ResourceHandle must include all of the types specified here to be
   // considered a match for this selector.
   repeated string equipment_type_names = 1;
 
@@ -22,7 +22,7 @@ message EquipmentSelector {
   intrinsic_proto.skills.EquipmentResource.SharingType sharing_type = 2;
 }
 
-message EquipmentHandle {
+message ResourceHandle {
   message EquipmentData {
     // Data that can be used to access or interact with the equipment
     // represented by this equipment data.

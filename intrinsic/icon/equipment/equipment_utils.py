@@ -32,7 +32,7 @@ def make_icon_equipment_selector(
     with_rangefinder_part: bool = False,
     with_observation_stream: bool = False,
 ) -> equipment_pb2.EquipmentSelector:
-  """Creates an equipment selector for an ICON equipment handle with specific parts.
+  """Creates an equipment selector for an ICON resource handle with specific parts.
 
   Args:
     with_position_controlled_part: If true, requires a position-controlled part.
@@ -69,42 +69,42 @@ def make_icon_equipment_selector(
 
 
 def _get_params_from_connection_info(
-    equipment_handle: equipment_pb2.EquipmentHandle,
+    resource_handle: equipment_pb2.ResourceHandle,
 ) -> Optional[connection.ConnectionParams]:
   """Creates params to start an ICON client from a handle's connection_info.
 
   Args:
-    equipment_handle: The equipment handle for the robot we want to control.
+    resource_handle: The resource handle for the robot we want to control.
 
   Returns:
     The connected ConnectionParams if the handle provides enough information.
   """
-  if not equipment_handle.HasField("connection_info"):
+  if not resource_handle.HasField("connection_info"):
     return None
-  if not equipment_handle.connection_info.HasField("grpc"):
+  if not resource_handle.connection_info.HasField("grpc"):
     return None
   return connection.ConnectionParams(
-      equipment_handle.connection_info.grpc.address,
-      equipment_handle.connection_info.grpc.server_instance,
-      equipment_handle.connection_info.grpc.header,
+      resource_handle.connection_info.grpc.address,
+      resource_handle.connection_info.grpc.server_instance,
+      resource_handle.connection_info.grpc.header,
   )
 
 
 def init_icon_client(
-    equipment_handle: equipment_pb2.EquipmentHandle,
+    resource_handle: equipment_pb2.ResourceHandle,
 ) -> icon_api.Client:
   """Creates a client for talking to the icon server.
 
   Args:
-    equipment_handle: The equipment handle for the robot we want to control.
+    resource_handle: The resource handle for the robot we want to control.
 
   Returns:
     The connected Client.
 
   Raises:
-    KeyError: If equipment_handle does not include any connection config.
+    KeyError: If resource_handle does not include any connection config.
   """
-  connection_params = _get_params_from_connection_info(equipment_handle)
+  connection_params = _get_params_from_connection_info(resource_handle)
 
   if not connection_params:
     raise KeyError("No ICON connection config was provided.")
@@ -114,110 +114,108 @@ def init_icon_client(
 
 
 def get_position_part_name(
-    equipment_handle: equipment_pb2.EquipmentHandle,
+    resource_handle: equipment_pb2.ResourceHandle,
 ) -> str:
   """Gets the name of the Icon2PositionPart from the equipment data.
 
   Args:
-    equipment_handle: The equipment handle for the robot we want to control.
+    resource_handle: The resource handle for the robot we want to control.
 
   Returns:
     The part name.
 
   Raises:
-    KeyError: If equipment_handle does not include an Icon2PositionPart data.
+    KeyError: If resource_handle does not include an Icon2PositionPart data.
   """
   icon_position_part = icon_equipment_pb2.Icon2PositionPart()
   pos_key = ICON2_POSITION_PART_KEY
-  if pos_key not in equipment_handle.equipment_data:
+  if pos_key not in resource_handle.equipment_data:
     raise KeyError(
-        "%s is not in equipment_handle.equipment_data. Available: %r"
-        % (pos_key, equipment_handle.equipment_data.keys())
+        "%s is not in resource_handle.equipment_data. Available: %r"
+        % (pos_key, resource_handle.equipment_data.keys())
     )
-  equipment_handle.equipment_data[pos_key].contents.Unpack(icon_position_part)
+  resource_handle.equipment_data[pos_key].contents.Unpack(icon_position_part)
   logging.info("ICON position_part: %s", icon_position_part)
   return icon_position_part.part_name
 
 
 def get_torque_part_name(
-    equipment_handle: equipment_pb2.EquipmentHandle,
+    resource_handle: equipment_pb2.ResourceHandle,
 ) -> str:
   """Gets the name of the Icon2TorquePart from the equipment data.
 
   Args:
-    equipment_handle: The equipment handle for the robot we want to control.
+    resource_handle: The resource handle for the robot we want to control.
 
   Returns:
     The part name.
 
   Raises:
-    KeyError: If equipment_handle does not include an Icon2TorquePart data.
+    KeyError: If resource_handle does not include an Icon2TorquePart data.
   """
   icon_torque_part = icon_equipment_pb2.Icon2TorquePart()
   torque_key = ICON2_TORQUE_PART_KEY
-  if torque_key not in equipment_handle.equipment_data:
+  if torque_key not in resource_handle.equipment_data:
     raise KeyError(
-        "%s is not in equipment_handle.equipment_data. Available: %r"
-        % (torque_key, equipment_handle.equipment_data.keys())
+        "%s is not in resource_handle.equipment_data. Available: %r"
+        % (torque_key, resource_handle.equipment_data.keys())
     )
-  equipment_handle.equipment_data[torque_key].contents.Unpack(icon_torque_part)
+  resource_handle.equipment_data[torque_key].contents.Unpack(icon_torque_part)
   logging.info("ICON torque_part: %s", icon_torque_part)
   return icon_torque_part.part_name
 
 
 def get_gripper_part_name(
-    equipment_handle: equipment_pb2.EquipmentHandle,
+    resource_handle: equipment_pb2.ResourceHandle,
 ) -> str:
   """Gets the name of the Icon2GripperPart from the equipment data.
 
   Args:
-    equipment_handle: The equipment handle for the robot we want to control.
+    resource_handle: The resource handle for the robot we want to control.
 
   Returns:
     The part name.
 
   Raises:
-    KeyError: If equipment_handle does not include an Icon2GripperPart data.
+    KeyError: If resource_handle does not include an Icon2GripperPart data.
   """
   icon_gripper_part = icon_equipment_pb2.Icon2GripperPart()
   gripper_key = ICON2_GRIPPER_PART_KEY
-  if gripper_key not in equipment_handle.equipment_data:
+  if gripper_key not in resource_handle.equipment_data:
     raise KeyError(
-        "%s is not in equipment_handle.equipment_data. Available: %r"
-        % (gripper_key, equipment_handle.equipment_data.keys())
+        "%s is not in resource_handle.equipment_data. Available: %r"
+        % (gripper_key, resource_handle.equipment_data.keys())
     )
-  equipment_handle.equipment_data[gripper_key].contents.Unpack(
-      icon_gripper_part
-  )
+  resource_handle.equipment_data[gripper_key].contents.Unpack(icon_gripper_part)
   logging.info("ICON gripper_part: %s", icon_gripper_part)
   return icon_gripper_part.part_name
 
 
 def get_force_torque_sensor_part_name(
-    equipment_handle: equipment_pb2.EquipmentHandle,
+    resource_handle: equipment_pb2.ResourceHandle,
 ) -> str:
   """Gets the name of the Icon2ForceTorqueSensorPart from the equipment data.
 
   Args:
-    equipment_handle: The equipment handle for the robot we want to control.
+    resource_handle: The resource handle for the robot we want to control.
 
   Returns:
     The part name.
 
   Raises:
-    KeyError: If equipment_handle does not include an Icon2ForceTorqueSensorPart
+    KeyError: If resource_handle does not include an Icon2ForceTorqueSensorPart
     data.
   """
   icon_force_torque_sensor_part = (
       icon_equipment_pb2.Icon2ForceTorqueSensorPart()
   )
   ft_key = ICON2_FORCE_TORQUE_SENSOR_PART_KEY
-  if ft_key not in equipment_handle.equipment_data:
+  if ft_key not in resource_handle.equipment_data:
     raise KeyError(
-        "%s is not in equipment_handle.equipment_data. Available: %r"
-        % (ft_key, equipment_handle.equipment_data.keys())
+        "%s is not in resource_handle.equipment_data. Available: %r"
+        % (ft_key, resource_handle.equipment_data.keys())
     )
-  equipment_handle.equipment_data[ft_key].contents.Unpack(
+  resource_handle.equipment_data[ft_key].contents.Unpack(
       icon_force_torque_sensor_part
   )
   logging.info(
@@ -226,28 +224,28 @@ def get_force_torque_sensor_part_name(
   return icon_force_torque_sensor_part.part_name
 
 
-def get_adio_part_name(equipment_handle: equipment_pb2.EquipmentHandle) -> str:
+def get_adio_part_name(resource_handle: equipment_pb2.ResourceHandle) -> str:
   """Gets the name of the Icon2AdioPart from the equipment data.
 
   Args:
-    equipment_handle: The equipment handle for the adio we want to read/control.
+    resource_handle: The resource handle for the adio we want to read/control.
 
   Returns:
     The part name.
 
   Raises:
-    KeyError: If equipment_handle does not include an Icon2AdioPart data.
+    KeyError: If resource_handle does not include an Icon2AdioPart data.
     ValueError: If adio_part does not include an icon_target data, i.e. a adio
       configuration that uses a different backend than icon.
   """
   adio_key = ICON2_ADIO_PART_KEY
   icon_adio_part = icon_equipment_pb2.Icon2AdioPart()
-  if adio_key not in equipment_handle.equipment_data:
+  if adio_key not in resource_handle.equipment_data:
     raise KeyError(
-        "%s is not in equipment_handle.equipment_data. Available: %r"
-        % (adio_key, equipment_handle.equipment_data.keys())
+        "%s is not in resource_handle.equipment_data. Available: %r"
+        % (adio_key, resource_handle.equipment_data.keys())
     )
-  equipment_handle.equipment_data[adio_key].contents.Unpack(icon_adio_part)
+  resource_handle.equipment_data[adio_key].contents.Unpack(icon_adio_part)
   if not icon_adio_part.HasField("icon_target"):
     raise ValueError(
         "adio part is not an icon_target and thus does not have a part name."
@@ -256,27 +254,27 @@ def get_adio_part_name(equipment_handle: equipment_pb2.EquipmentHandle) -> str:
 
 
 def get_rangefinder_part_name(
-    equipment_handle: equipment_pb2.EquipmentHandle,
+    resource_handle: equipment_pb2.ResourceHandle,
 ) -> str:
   """Gets the name of the Icon2RangefinderPart from the equipment data.
 
   Args:
-    equipment_handle: The equipment handle for the robot we want to control.
+    resource_handle: The resource handle for the robot we want to control.
 
   Returns:
     The part name.
 
   Raises:
-    KeyError: If equipment_handle does not include Icon2RangefinderPart data.
+    KeyError: If resource_handle does not include Icon2RangefinderPart data.
   """
   icon_rangefinder_part = icon_equipment_pb2.Icon2RangefinderPart()
   part_key = ICON2_RANGEFINDER_PART_KEY
-  if part_key not in equipment_handle.equipment_data:
+  if part_key not in resource_handle.equipment_data:
     raise KeyError(
-        "%s is not in equipment_handle.equipment_data. Available: %r"
-        % (part_key, equipment_handle.equipment_data.keys())
+        "%s is not in resource_handle.equipment_data. Available: %r"
+        % (part_key, resource_handle.equipment_data.keys())
     )
-  if not equipment_handle.equipment_data[part_key].contents.Unpack(
+  if not resource_handle.equipment_data[part_key].contents.Unpack(
       icon_rangefinder_part
   ):
     raise ValueError(

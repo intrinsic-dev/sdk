@@ -16,11 +16,11 @@ namespace intrinsic {
 namespace skills {
 
 absl::StatusOr<ConnectionParams> GetConnectionParamsFromHandle(
-    const intrinsic_proto::skills::EquipmentHandle& handle);
+    const intrinsic_proto::skills::ResourceHandle& handle);
 
 // Creates client channel for communicating with equipment.
 absl::StatusOr<std::shared_ptr<intrinsic::Channel>> CreateChannelFromHandle(
-    const intrinsic_proto::skills::EquipmentHandle& handle);
+    const intrinsic_proto::skills::ResourceHandle& handle);
 
 }  // namespace skills
 }  // namespace intrinsic

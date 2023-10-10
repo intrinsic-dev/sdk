@@ -19,20 +19,19 @@
 namespace intrinsic {
 namespace skills {
 
-// Provides easy access to the contents of a proto::EquipmentHandle map, based
+// Provides easy access to the contents of a proto::ResourceHandle map, based
 // on the equipment key.
 class EquipmentPack {
  private:
   using EquipmentMap =
-      absl::flat_hash_map<std::string,
-                          intrinsic_proto::skills::EquipmentHandle>;
+      absl::flat_hash_map<std::string, intrinsic_proto::skills::ResourceHandle>;
   using EquipmentIterator = EquipmentMap::const_iterator;
 
  public:
   EquipmentPack() = default;
   explicit EquipmentPack(const google::protobuf::Map<
-                         std::string, intrinsic_proto::skills::EquipmentHandle>&
-                             equipment_handles);
+                         std::string, intrinsic_proto::skills::ResourceHandle>&
+                             resource_handles);
 
   static absl::StatusOr<EquipmentPack> GetEquipmentPack(
       const intrinsic_proto::skills::PredictRequest& request);
@@ -50,19 +49,19 @@ class EquipmentPack {
   absl::StatusOr<EquipmentType> Unpack(absl::string_view key,
                                        absl::string_view type) const;
 
-  // Returns the equipment handle itself for the given key. This is useful if
+  // Returns the resource handle itself for the given key. This is useful if
   // you need something other than the content of the equipment.
-  absl::StatusOr<intrinsic_proto::skills::EquipmentHandle> GetHandle(
+  absl::StatusOr<intrinsic_proto::skills::ResourceHandle> GetHandle(
       absl::string_view key) const;
 
-  // Removes the equipment handle from this equipment pack by key.
+  // Removes the resource handle from this equipment pack by key.
   absl::Status Remove(absl::string_view key);
 
-  // Adds the equipment handle to this equipment pack.
+  // Adds the resource handle to this equipment pack.
   absl::Status Add(absl::string_view key,
-                   intrinsic_proto::skills::EquipmentHandle handle);
+                   intrinsic_proto::skills::ResourceHandle handle);
 
-  // Allow const iteration through the equipment handles.
+  // Allow const iteration through the resource handles.
   EquipmentIterator begin() const { return equipment_map_.begin(); }
   EquipmentIterator end() const { return equipment_map_.end(); }
 

@@ -183,7 +183,7 @@ class ObjectWorldClient:
       object_reference: Union[
           object_world_ids.WorldObjectName,
           object_world_refs_pb2.ObjectReference,
-          equipment_pb2.EquipmentHandle,
+          equipment_pb2.ResourceHandle,
       ],
   ) -> object_world_service_pb2.Object:
     """Returns the proto of an object by its unique name."""
@@ -197,11 +197,11 @@ class ObjectWorldClient:
       request.object.by_name.object_name = object_reference
     elif isinstance(object_reference, object_world_refs_pb2.ObjectReference):
       request.object.CopyFrom(object_reference)
-    elif isinstance(object_reference, equipment_pb2.EquipmentHandle):
-      request.equipment_handle_name = object_reference.name
+    elif isinstance(object_reference, equipment_pb2.ResourceHandle):
+      request.resource_handle_name = object_reference.name
     else:
       raise TypeError(
-          'Only ObjectReference,  WorldObjectName or EquipmentHandle are '
+          'Only ObjectReference,  WorldObjectName or ResourceHandle are '
           'valid input types.'
       )
     request.view = object_world_updates_pb2.ObjectView.FULL
@@ -295,7 +295,7 @@ class ObjectWorldClient:
       object_reference: Union[
           object_world_ids.WorldObjectName,
           object_world_refs_pb2.ObjectReference,
-          equipment_pb2.EquipmentHandle,
+          equipment_pb2.ResourceHandle,
       ],
   ) -> object_world_resources.WorldObject:
     """Returns an object by its unique name.
@@ -316,7 +316,7 @@ class ObjectWorldClient:
       object_reference: Union[
           object_world_ids.WorldObjectName,
           object_world_refs_pb2.ObjectReference,
-          equipment_pb2.EquipmentHandle,
+          equipment_pb2.ResourceHandle,
       ],
   ) -> object_world_resources.KinematicObject:
     """Returns a kinematic object by its unique name.
@@ -343,7 +343,7 @@ class ObjectWorldClient:
           object_world_refs_pb2.FrameReference, object_world_ids.FrameName
       ],
       object_name: Optional[
-          Union[object_world_ids.WorldObjectName, equipment_pb2.EquipmentHandle]
+          Union[object_world_ids.WorldObjectName, equipment_pb2.ResourceHandle]
       ] = None,
   ) -> object_world_resources.Frame:
     """Returns a frame by its reference.
@@ -359,7 +359,7 @@ class ObjectWorldClient:
             frame_name='my_frame',
             object_name='my_object')))
 
-    Note, if you provide an object by its equipment handle, then the frame must
+    Note, if you provide an object by its resource handle, then the frame must
     be referenced by the frame's name.
 
     Only in Jupyter does it also work with normal strings:
@@ -385,7 +385,7 @@ class ObjectWorldClient:
       # environments like jupyter it checks for type str here.
       request.frame.by_name.object_name = object_name
       request.frame.by_name.frame_name = frame_reference
-    elif isinstance(object_name, equipment_pb2.EquipmentHandle) and isinstance(
+    elif isinstance(object_name, equipment_pb2.ResourceHandle) and isinstance(
         frame_reference, str
     ):
       return self.get_object(object_name).get_frame(frame_reference)

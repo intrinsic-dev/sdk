@@ -134,7 +134,7 @@ message SkillInstance {
   // Maps equipment slot name to a handle satisfying the slot's selector. This
   // map must contain an entry for each slot in the implementation's
   // equipment_selectors map.
-  map<string, intrinsic_proto.skills.EquipmentHandle> equipment_handles = 6;
+  map<string, intrinsic_proto.skills.ResourceHandle> resource_handles = 6;
 
   // DEPRECATED: Please retrieve default parameters via the ParameterDescription
   // returned by SkillRegistry::GetSkills, and not through a SkillInstance.

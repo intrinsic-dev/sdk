@@ -16,10 +16,10 @@ message SingleView {
 }
 
 message StereoPairIds {
-  // Name of the first camera. For example this can be the equipment handle name
+  // Name of the first camera. For example this can be the resource handle name
   // of the left camera in a stereo pair.
   string first = 1;
-  // Name of the second camera. For example this can be the equipment handle
+  // Name of the second camera. For example this can be the resource handle
   // name of the right camera in a stereo pair.
   string second = 2;
 }

@@ -19,10 +19,9 @@ namespace intrinsic {
 namespace skills {
 
 EquipmentPack::EquipmentPack(
-    const google::protobuf::Map<std::string,
-                                intrinsic_proto::skills::EquipmentHandle>&
-        equipment_handles)
-    : equipment_map_(equipment_handles.begin(), equipment_handles.end()) {}
+    const google::protobuf::Map<
+        std::string, intrinsic_proto::skills::ResourceHandle>& resource_handles)
+    : equipment_map_(resource_handles.begin(), resource_handles.end()) {}
 
 absl::StatusOr<EquipmentPack> EquipmentPack::GetEquipmentPack(
     const intrinsic_proto::skills::PredictRequest& request) {
@@ -31,7 +30,7 @@ absl::StatusOr<EquipmentPack> EquipmentPack::GetEquipmentPack(
         "In `request`, expected a skill `instance`, but the `instance` is "
         "missing.");
   }
-  return EquipmentPack(request.instance().equipment_handles());
+  return EquipmentPack(request.instance().resource_handles());
 }
 
 absl::StatusOr<EquipmentPack> EquipmentPack::GetEquipmentPack(
@@ -41,7 +40,7 @@ absl::StatusOr<EquipmentPack> EquipmentPack::GetEquipmentPack(
         "In `request`, expected a skill `instance`, but the `instance` is "
         "missing.");
   }
-  return EquipmentPack(request.instance().equipment_handles());
+  return EquipmentPack(request.instance().resource_handles());
 }
 
 absl::StatusOr<EquipmentPack> EquipmentPack::GetEquipmentPack(
@@ -51,10 +50,10 @@ absl::StatusOr<EquipmentPack> EquipmentPack::GetEquipmentPack(
         "In `request`, expected a skill `instance`, but the `instance` is "
         "missing.");
   }
-  return EquipmentPack(request.instance().equipment_handles());
+  return EquipmentPack(request.instance().resource_handles());
 }
 
-absl::StatusOr<intrinsic_proto::skills::EquipmentHandle>
+absl::StatusOr<intrinsic_proto::skills::ResourceHandle>
 EquipmentPack::GetHandle(absl::string_view key) const {
   if (!equipment_map_.contains(key)) {
     return internal::MissingEquipmentError(key);
@@ -71,7 +70,7 @@ absl::Status EquipmentPack::Remove(absl::string_view key) {
 }
 
 absl::Status EquipmentPack::Add(
-    absl::string_view key, intrinsic_proto::skills::EquipmentHandle handle) {
+    absl::string_view key, intrinsic_proto::skills::ResourceHandle handle) {
   if (equipment_map_.contains(key)) {
     return absl::InvalidArgumentError(
         absl::StrCat("Equipment pack already contains handle for key: ", key));
@@ -85,7 +84,7 @@ namespace internal {
 
 absl::Status MissingEquipmentError(absl::string_view key) {
   return {absl::StatusCode::kInvalidArgument,
-          absl::StrCat("Missing equipment handle for slot: ", key)};
+          absl::StrCat("Missing resource handle for slot: ", key)};
 }
 
 absl::Status EquipmentContentsTypeError() {

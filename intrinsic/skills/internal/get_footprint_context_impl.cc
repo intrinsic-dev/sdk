@@ -62,7 +62,7 @@ GetFootprintContextImpl::GetKinematicObjectForEquipment(
     absl::string_view equipment_name) {
   INTRINSIC_ASSIGN_OR_RETURN(const ObjectWorldClient& world, GetObjectWorld());
   INTRINSIC_ASSIGN_OR_RETURN(
-      const intrinsic_proto::skills::EquipmentHandle handle,
+      const intrinsic_proto::skills::ResourceHandle handle,
       equipment_.GetHandle(equipment_name));
   return world.GetKinematicObject(handle);
 }
@@ -72,7 +72,7 @@ GetFootprintContextImpl::GetObjectForEquipment(
     absl::string_view equipment_name) {
   INTRINSIC_ASSIGN_OR_RETURN(const ObjectWorldClient& world, GetObjectWorld());
   INTRINSIC_ASSIGN_OR_RETURN(
-      const intrinsic_proto::skills::EquipmentHandle handle,
+      const intrinsic_proto::skills::ResourceHandle handle,
       equipment_.GetHandle(equipment_name));
   return world.GetObject(handle);
 }
@@ -81,7 +81,7 @@ absl::StatusOr<world::Frame> GetFootprintContextImpl::GetFrameForEquipment(
     absl::string_view equipment_name, absl::string_view frame_name) {
   INTRINSIC_ASSIGN_OR_RETURN(const ObjectWorldClient& world, GetObjectWorld());
   INTRINSIC_ASSIGN_OR_RETURN(
-      const intrinsic_proto::skills::EquipmentHandle handle,
+      const intrinsic_proto::skills::ResourceHandle handle,
       equipment_.GetHandle(equipment_name));
   return world.GetFrame(handle, FrameName(frame_name));
 }

@@ -417,7 +417,7 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
       auto equipment_resources,
       ReserveEquipmentRequired(
           runtime_data.GetResourceData().GetRequiredResources(),
-          request->instance().equipment_handles()));
+          request->instance().resource_handles()));
   for (const auto& equipment_resource : equipment_resources) {
     *result->mutable_footprint()->add_equipment_resource() = equipment_resource;
   }

@@ -75,18 +75,18 @@ class GetFootprintContext:
 
   def __init__(
       self,
-      equipment_handles: dict[str, equipment_pb2.EquipmentHandle],
+      resource_handles: dict[str, equipment_pb2.ResourceHandle],
       motion_planner: motion_planner_client.MotionPlannerClient,
       object_world: object_world_client.ObjectWorldClient,
   ):
     """Initializes this object.
 
     Args:
-      equipment_handles: Handles for the required equipment for this skill.
+      resource_handles: Handles for the required equipment for this skill.
       motion_planner: The motion planner client to provide.
       object_world: The object world client to provide.
     """
-    self._equipment_handles = equipment_handles
+    self._resource_handles = resource_handles
     self._motion_planner = motion_planner
     self._object_world = object_world
 
@@ -105,7 +105,7 @@ class GetFootprintContext:
       A kinematic object from the world associated with this context.
     """
     return self.object_world.get_kinematic_object(
-        self._equipment_handles[equipment_name]
+        self._resource_handles[equipment_name]
     )
 
   def get_object_for_equipment(
@@ -122,7 +122,7 @@ class GetFootprintContext:
     Returns:
       A world object from the world associated with this context.
     """
-    return self.object_world.get_object(self._equipment_handles[equipment_name])
+    return self.object_world.get_object(self._resource_handles[equipment_name])
 
   def get_frame_for_equipment(
       self, equipment_name: str, frame_name: object_world_ids.FrameName
@@ -140,7 +140,7 @@ class GetFootprintContext:
       A frame from the world associated with this context.
     """
     return self.object_world.get_frame(
-        frame_name, self._equipment_handles[equipment_name]
+        frame_name, self._resource_handles[equipment_name]
     )
 
 
@@ -172,7 +172,7 @@ class ExecuteContext:
 
   Attributes:
     canceller: Supports cooperative cancellation of the skill.
-    equipment_handles: A map of equipment names to handles.
+    resource_handles: A map of equipment names to handles.
     logging_context: The logging context of the execution.
     motion_planner: A client for the motion planning service.
     object_world: A client for interacting with the object world.
@@ -183,8 +183,8 @@ class ExecuteContext:
     return self._canceller
 
   @property
-  def equipment_handles(self) -> Mapping[str, equipment_pb2.EquipmentHandle]:
-    return self._equipment_handles
+  def resource_handles(self) -> Mapping[str, equipment_pb2.ResourceHandle]:
+    return self._resource_handles
 
   @property
   def logging_context(self) -> context_pb2.Context:
@@ -201,7 +201,7 @@ class ExecuteContext:
   def __init__(
       self,
       canceller: skill_canceller.SkillCanceller,
-      equipment_handles: dict[str, equipment_pb2.EquipmentHandle],
+      resource_handles: dict[str, equipment_pb2.ResourceHandle],
       logging_context: context_pb2.Context,
       motion_planner: motion_planner_client.MotionPlannerClient,
       object_world: object_world_client.ObjectWorldClient,
@@ -210,13 +210,13 @@ class ExecuteContext:
 
     Args:
       canceller: Supports cooperative cancellation of the skill.
-      equipment_handles: A map of equipment names to handles.
+      resource_handles: A map of equipment names to handles.
       logging_context: The logging context of the execution.
       motion_planner: The motion planner client to provide.
       object_world: The object world client to provide.
     """
     self._canceller = canceller
-    self._equipment_handles = equipment_handles
+    self._resource_handles = resource_handles
     self._logging_context = logging_context
     self._motion_planner = motion_planner
     self._object_world = object_world

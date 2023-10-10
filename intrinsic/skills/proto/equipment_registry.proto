@@ -15,7 +15,7 @@ message EquipmentBySelectorRequest {
 }
 
 message EquipmentBySelectorResponse {
-  repeated intrinsic_proto.skills.EquipmentHandle handles = 2;
+  repeated intrinsic_proto.skills.ResourceHandle handles = 2;
 
   reserved 1;
   reserved "status";
@@ -33,12 +33,12 @@ message EquipmentBySelectorBatchResponse {
 }
 
 message EquipmentByNameRequest {
-  // The name of the equipment handle we are looking for.
+  // The name of the resource handle we are looking for.
   string equipment_name = 1;
 }
 
 message EquipmentByNameResponse {
-  intrinsic_proto.skills.EquipmentHandle handle = 2;
+  intrinsic_proto.skills.ResourceHandle handle = 2;
 
   reserved 1;
   reserved "status";
@@ -47,11 +47,11 @@ message EquipmentByNameResponse {
 message ListEquipmentRequest {}
 
 message ListEquipmentResponse {
-  repeated intrinsic_proto.skills.EquipmentHandle handles = 1;
+  repeated intrinsic_proto.skills.ResourceHandle handles = 1;
 }
 
-message EquipmentHandles {
-  repeated intrinsic_proto.skills.EquipmentHandle handles = 1;
+message ResourceHandles {
+  repeated intrinsic_proto.skills.ResourceHandle handles = 1;
 }
 
 service EquipmentRegistry {
@@ -78,7 +78,7 @@ service EquipmentRegistry {
     
   }
 
-  // Returns list of all registered equipment. The ordering of equipment handles
+  // Returns list of all registered equipment. The ordering of resource handles
   // in the response is unspecified.
   rpc ListEquipment(ListEquipmentRequest) returns (ListEquipmentResponse) {
     

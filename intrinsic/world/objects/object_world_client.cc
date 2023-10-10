@@ -241,10 +241,10 @@ absl::StatusOr<WorldObject> ObjectWorldClient::GetObject(
 }
 
 absl::StatusOr<WorldObject> ObjectWorldClient::GetObject(
-    const intrinsic_proto::skills::EquipmentHandle& equipment_handle) const {
+    const intrinsic_proto::skills::ResourceHandle& resource_handle) const {
   intrinsic_proto::world::GetObjectRequest request;
   request.set_world_id(world_id_);
-  request.set_equipment_handle_name(equipment_handle.name());
+  request.set_resource_handle_name(resource_handle.name());
   return GetObjectAsWorldObject(std::move(request), *object_world_service_);
 }
 
@@ -348,18 +348,17 @@ absl::StatusOr<KinematicObject> ObjectWorldClient::GetKinematicObject(
 }
 
 absl::StatusOr<KinematicObject> ObjectWorldClient::GetKinematicObject(
-    const intrinsic_proto::skills::EquipmentHandle& equipment_handle) const {
+    const intrinsic_proto::skills::ResourceHandle& resource_handle) const {
   intrinsic_proto::world::GetObjectRequest request;
   request.set_world_id(world_id_);
-  request.set_equipment_handle_name(equipment_handle.name());
+  request.set_resource_handle_name(resource_handle.name());
   INTRINSIC_ASSIGN_OR_RETURN(
       intrinsic_proto::world::Object proto,
       CallGetObjectUsingFullView(std::move(request), *object_world_service_));
   if (proto.type() != intrinsic_proto::world::ObjectType::KINEMATIC_OBJECT) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("The object associated with the equipment handle name \"",
-                     equipment_handle.name(),
-                     "\" exists but it is not a kinematic object."));
+    return absl::InvalidArgumentError(absl::StrCat(
+        "The object associated with the resource handle name \"",
+        resource_handle.name(), "\" exists but it is not a kinematic object."));
   }
   return KinematicObject::Create(std::move(proto));
 }
@@ -402,12 +401,12 @@ absl::StatusOr<Frame> ObjectWorldClient::GetFrame(
 }
 
 absl::StatusOr<Frame> ObjectWorldClient::GetFrame(
-    const intrinsic_proto::skills::EquipmentHandle& object_equipment_handle,
+    const intrinsic_proto::skills::ResourceHandle& object_resource_handle,
     const FrameName& frame_name) const {
   // This could also be supported directly by the backend so that we would not
   // have to request the entire object with all of its frames.
   INTRINSIC_ASSIGN_OR_RETURN(WorldObject object,
-                             GetObject(object_equipment_handle));
+                             GetObject(object_resource_handle));
   return object.GetFrame(frame_name);
 }
 

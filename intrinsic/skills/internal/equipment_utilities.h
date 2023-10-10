@@ -23,8 +23,8 @@ ReserveEquipmentRequired(
                               intrinsic_proto::skills::EquipmentSelector>&
         equipment_required,
     const google::protobuf::Map<std::string,
-                                intrinsic_proto::skills::EquipmentHandle>&
-        equipment_handles);
+                                intrinsic_proto::skills::ResourceHandle>&
+        resource_handles);
 
 }  // namespace intrinsic::skills
 
