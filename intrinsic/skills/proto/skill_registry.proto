@@ -35,6 +35,8 @@ message GetSkillResponse {
 }
 
 service SkillRegistry {
+  // Auth annotations for consumption by the following helm_chart:
+  //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
   
 
   // Returns skill implementations matching the given request.

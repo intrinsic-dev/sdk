@@ -142,6 +142,8 @@ message SyncResponse {
 // Service to persistently store and retrieve structured data on-prem.
 // Data is buffered locally on disk and uploaded to the cloud in the background.
 service DataLogger {
+  // Auth annotations for consumption by the following helm_chart:
+  //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
   
   
 

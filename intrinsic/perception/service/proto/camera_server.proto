@@ -37,6 +37,8 @@ service CameraServer {
   // settings that were specified during its creation. The user is free to
   // override any camera parameters.
   rpc CreateCamera(CreateCameraRequest) returns (CreateCameraResponse) {
+    // Auth annotations for consumption by the following helm_chart:
+    //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
     
   }
 
@@ -45,11 +47,15 @@ service CameraServer {
 
   // Captures image data from the requested sensors of the specified camera.
   rpc Capture(CaptureRequest) returns (CaptureResponse) {
+    // Auth annotations for consumption by the following helm_chart:
+    //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
     
   }
 
   // Returns the current frame from the specified camera.
   rpc GetFrame(GetFrameRequest) returns (GetFrameResponse) {
+    // Auth annotations for consumption by the following helm_chart:
+    //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
     
   }
 

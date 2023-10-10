@@ -20,6 +20,8 @@ service SimulationService {
   // Reset the current simulation to its initial state and make sure that all
   // affected components such as ICON are in a working state.
   rpc ResetSimulation(ResetSimulationRequest) returns (google.protobuf.Empty) {
+    // Auth annotations for consumption by the following helm_chart:
+    //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
     
   }
 

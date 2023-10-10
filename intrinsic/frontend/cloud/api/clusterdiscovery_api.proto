@@ -55,6 +55,8 @@ message ListClusterDescriptionsResponse {
 }
 
 service ClusterDiscoveryService {
+  // Auth annotations for consumption by the following helm_chart:
+  //   cs/symbol://intrinsic/frontend/cloud:frontend
   
   
   
