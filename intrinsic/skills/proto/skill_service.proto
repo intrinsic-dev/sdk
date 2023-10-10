@@ -217,24 +217,6 @@ service SkillInformation {
   rpc GetSkillInfo(google.protobuf.Empty) returns (SkillInformationResult) {}
 }
 
-// Logged by the skills client library after a skill execution.
-message ExecutionSummary {
-  intrinsic_proto.skills.SkillInstance instance = 1;
-
-  intrinsic_proto.skills.ExecuteResult result = 2;
-
-  google.protobuf.Duration duration = 3;
-
-  // The OpenCensus Trace ID associated with this skill execution.
-  // A 32 character hex string.
-  string trace_id = 4;
-
-  // Error information if the request failed for any reason.
-  int32 error_code = 5;
-  string error_message = 6;
-  SkillErrorInfo error_info = 7;
-}
-
 // Logged by the skills client library after a skill prediction.
 message PredictionSummary {
   intrinsic_proto.skills.SkillInstance instance = 1;
@@ -264,6 +246,42 @@ message FootprintSummary {
 
   reserved 2;
   reserved "result";
+}
+
+// Logged by the skills client library after a skill execution.
+message ExecutionSummary {
+  intrinsic_proto.skills.SkillInstance instance = 1;
+
+  intrinsic_proto.skills.ExecuteResult result = 2;
+
+  google.protobuf.Duration duration = 3;
+
+  // The OpenCensus Trace ID associated with this skill execution.
+  // A 32 character hex string.
+  string trace_id = 4;
+
+  // Error information if the request failed for any reason.
+  int32 error_code = 5;
+  string error_message = 6;
+  SkillErrorInfo error_info = 7;
+}
+
+// Logged by the skills client library after a skill preview.
+message PreviewSummary {
+  intrinsic_proto.skills.SkillInstance instance = 1;
+
+  intrinsic_proto.skills.PreviewResult result = 2;
+
+  google.protobuf.Duration duration = 3;
+
+  // The OpenCensus Trace ID associated with this skill preview.
+  // A 32 character hex string.
+  string trace_id = 4;
+
+  // Error information if the request failed for any reason.
+  int32 error_code = 5;
+  string error_message = 6;
+  SkillErrorInfo error_info = 7;
 }
 
 message ProjectRequest {

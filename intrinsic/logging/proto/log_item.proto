@@ -78,6 +78,8 @@ message LogItem {
       intrinsic_proto.error.ErrorReport error_report = 23;
 
       // ===== Skills =====
+      intrinsic_proto.skills.PreviewRequest skills_preview_request = 48;
+      intrinsic_proto.skills.PreviewSummary skills_preview_summary = 49;
       intrinsic_proto.skills.PredictRequest skills_predict_request = 36;
       intrinsic_proto.skills.PredictionSummary skills_prediction_summary = 37;
       intrinsic_proto.skills.GetFootprintRequest skills_get_footprint_request =
