@@ -26,6 +26,7 @@ const (
 
 var (
 	deviceRole    = ""
+	deviceRegion  = ""
 	privateDevice = false
 )
 
@@ -99,6 +100,7 @@ var registerCmd = &cobra.Command{
 			Role:     deviceRole,
 			Cluster:  clusterName,
 			Private:  privateDevice,
+			Region:   deviceRegion,
 		}
 		if testID := os.Getenv("INCTL_CREATED_BY_TEST"); testID != "" {
 			// This is an automated test.
@@ -141,4 +143,5 @@ func init() {
 
 	registerCmd.Flags().StringVarP(&deviceRole, "device_role", "", "control-plane", "The role the device has in the cluster. Either 'control-plane' or 'worker'")
 	registerCmd.Flags().BoolVarP(&privateDevice, "private", "", false, "If set to 'true', the device will not be visible to other organization members")
+	registerCmd.Flags().StringVarP(&deviceRegion, "region", "", "unspecified", "This can be used for inventory tracking")
 }
