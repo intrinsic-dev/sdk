@@ -1,0 +1,15 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.FieldOptions {
+  // Set this to true if the value can only be returned as a status value but
+  // not be set as an input.
+  optional bool output_only = 28434510;
+}

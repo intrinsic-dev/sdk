@@ -181,11 +181,34 @@ py_proto_library(
     deps = [":executive_state_proto"],
 )
 
+# annotations
+proto_library(
+    name = "annotations_proto",
+    srcs = ["annotations.proto"],
+    deps = ["@com_google_protobuf//:descriptor_proto"],
+)
+
+cc_proto_library(
+    name = "annotations_cc_proto",
+    deps = [":annotations_proto"],
+)
+
+py_proto_library(
+    name = "annotations_py_pb2",
+    deps = [":annotations_proto"],
+)
+
+go_proto_library(
+    name = "annotations_go_proto",
+    deps = [":annotations_proto"],
+)
+
 # behavior tree
 proto_library(
     name = "behavior_tree_proto",
     srcs = ["behavior_tree.proto"],
     deps = [
+        ":annotations_proto",
         ":any_list_proto",
         ":any_with_assignments_proto",
         ":behavior_call_proto",
@@ -209,6 +232,7 @@ py_proto_library(
 go_proto_library(
     name = "behavior_tree_go_proto",
     go_deps = [
+        "//intrinsic/executive/proto:annotations_go_proto",
         "//intrinsic/executive/proto:any_list_go_proto",
         "//intrinsic/executive/proto:any_with_assignments_go_proto",
         "//intrinsic/executive/proto:behavior_call_go_proto",

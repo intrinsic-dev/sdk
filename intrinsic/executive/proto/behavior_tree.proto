@@ -7,6 +7,7 @@ syntax = "proto3";
 package intrinsic_proto.executive;
 
 import "google/protobuf/any.proto";
+import "intrinsic/executive/proto/annotations.proto";
 import "intrinsic/executive/proto/any_list.proto";
 import "intrinsic/executive/proto/any_with_assignments.proto";
 import "intrinsic/executive/proto/behavior_call.proto";
@@ -96,12 +97,12 @@ message BehaviorTree {
 
     // This is only set by the executive on retrieval. It is ignored when
     // uploading a tree.
-    optional State state = 7;
+    optional State state = 7 [(output_only) = true];
 
     // This is only set by the executive and ignored when loading a tree. The
     // field is set if and only if the state is FINISHED and reflects the
     // outcome of the evaluation of this condition.
-    optional bool satisfied = 8;
+    optional bool satisfied = 8 [(output_only) = true];
   }
 
   // Children in the sequence will be executed in the given order.
@@ -291,7 +292,7 @@ message BehaviorTree {
     // parameterizable behavior tree.
     // This is only set by the executive on retrieval. It is an error when
     // uploading a tree.
-    optional BehaviorTree called_tree_state = 4;
+    optional BehaviorTree called_tree_state = 4 [(output_only) = true];
 
     reserved "call_skill";
     reserved 2;
@@ -433,8 +434,8 @@ message BehaviorTree {
 
     // This is only set on retrieval by the executive. It is ignored when
     // uploading a tree.
-    optional State state = 13;
-    optional FailureReason failure_reason = 14;
+    optional State state = 13 [(output_only) = true];
+    optional FailureReason failure_reason = 14 [(output_only) = true];
 
     // An optional (display) name for the node.
     optional string name = 15;
@@ -518,11 +519,11 @@ message BehaviorTree {
 
   // The blackboard scope that any blackboard key in this behavior tree is in.
   // This is an output only field.
-  optional string blackboard_scope = 8;
+  optional string blackboard_scope = 8 [(output_only) = true];
 
   // This is only set on retrieval by the executive. It is ignored when
   // uploading a tree.
-  optional State state = 7;
+  optional State state = 7 [(output_only) = true];
 
   intrinsic_proto.skills.Skill description = 4;
   string return_value_expression = 5;
