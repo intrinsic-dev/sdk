@@ -10,7 +10,7 @@ import "google/protobuf/any.proto";
 import "intrinsic/skills/proto/footprint.proto";
 
 message EquipmentSelector {
-  // An ResourceHandle must include all of the types specified here to be
+  // A ResourceHandle must include all of the types specified here to be
   // considered a match for this selector.
   repeated string equipment_type_names = 1;
 
