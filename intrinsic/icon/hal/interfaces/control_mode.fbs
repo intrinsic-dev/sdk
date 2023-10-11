@@ -1,0 +1,19 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+namespace intrinsic_fbs;
+
+// Enum of potential motor control modes.
+enum ControlMode : uint8 {
+  kUnknown = 0,
+  kCyclicPosition = 1,
+  kCyclicVelocity = 2,
+  kCyclicTorque = 3,
+  kHandguiding = 4,
+}
+
+// Message that contains the ControlMode status.
+table ControlModeStatus {
+  status : ControlMode;
+}

@@ -109,3 +109,31 @@ cc_library(
         "@com_google_protobuf//:protobuf_lite",
     ],
 )
+
+fbs_library(
+    name = "control_mode_fbs",
+    srcs = [
+        "control_mode.fbs",
+    ],
+)
+
+cc_fbs_library(
+    name = "control_mode_fbs_cc",
+    deps = [":control_mode_fbs"],
+)
+
+cc_library(
+    name = "control_mode_fbs_utils",
+    srcs = [
+        "control_mode_utils.cc",
+    ],
+    hdrs = [
+        "control_mode_utils.h",
+    ],
+    deps = [
+        ":control_mode_fbs_cc",
+        "//intrinsic/icon/utils:fixed_string",
+        "@com_github_google_flatbuffers//:flatbuffers",
+        "@com_github_google_flatbuffers//:runtime_cc",
+    ],
+)
