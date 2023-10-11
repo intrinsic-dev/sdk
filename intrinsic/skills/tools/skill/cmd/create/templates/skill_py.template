@@ -25,7 +25,7 @@ class {{.SkillNameUpperCamelCase}}(skill_interface.Skill):
     @overrides(skill_interface.Skill)
     def execute(
         self,
-        request: skill_interface.ExecuteRequest,
+        request: skill_interface.ExecuteRequest[{{.SkillNameSnakeCase}}_pb2.{{.SkillNameUpperCamelCase}}Params],
         context: skill_interface.ExecuteContext
     ) -> skill_service_pb2.ExecuteResult:
         logging.info(
