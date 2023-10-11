@@ -207,21 +207,29 @@ class Session {
   // before each gRPC request to obtain a ::grpc::ClientContext.  This provides
   // an opportunity to set client metadata, or other ClientContext settings, for
   // all ICON API requests made by the Session.
+  //
+  // `deadline` is an optional deadline for establishing the session. If given,
+  // it overrides any deadline set by the ClientContext factory.
   static absl::StatusOr<std::unique_ptr<Session>> Start(
       std::shared_ptr<ChannelInterface> icon_channel,
       absl::Span<const std::string> parts,
-      const intrinsic_proto::data_logger::Context& context = {});
+      const intrinsic_proto::data_logger::Context& context = {},
+      std::optional<absl::Time> deadline = std::nullopt);
 
   // Creates a Session for the `parts` and starts it.
   //
   // The resulting session uses default-constructed ::grpc::ClientContext
   // objects.
+  //
+  // `deadline` is an optional deadline for establishing the session. If given,
+  // it overrides any deadline set by the ClientContext factory.
   static absl::StatusOr<std::unique_ptr<Session>> Start(
       std::unique_ptr<intrinsic_proto::icon::IconApi::StubInterface> stub,
       absl::Span<const std::string> parts,
       const ClientContextFactory& client_context_factory =
           DefaultClientContextFactory,
-      const intrinsic_proto::data_logger::Context& context = {});
+      const intrinsic_proto::data_logger::Context& context = {},
+      std::optional<absl::Time> deadline = std::nullopt);
 
   // Disallow move.
   Session(Session&&) = delete;
@@ -373,7 +381,8 @@ class Session {
       std::shared_ptr<ChannelInterface> icon_channel,
       std::unique_ptr<intrinsic_proto::icon::IconApi::StubInterface> stub,
       absl::Span<const std::string> parts,
-      const ClientContextFactory& client_context_factory);
+      const ClientContextFactory& client_context_factory,
+      std::optional<absl::Time> deadline);
 
   Session(std::shared_ptr<ChannelInterface> icon_channel,
           std::unique_ptr<grpc::ClientContext> action_context,

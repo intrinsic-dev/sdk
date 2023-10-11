@@ -29,6 +29,7 @@
 #include "absl/types/variant.h"
 #include "google/protobuf/any.pb.h"
 #include "google/rpc/status.pb.h"
+#include "grpcpp/client_context.h"
 #include "grpcpp/support/sync_stream.h"
 #include "intrinsic/icon/cc_client/condition.h"
 #include "intrinsic/icon/common/id_types.h"
@@ -43,6 +44,7 @@
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/platform/common/buffers/realtime_write_queue.h"
 #include "intrinsic/util/grpc/channel_interface.h"
+#include "intrinsic/util/proto_time.h"
 #include "intrinsic/util/thread/thread.h"
 
 namespace intrinsic {
@@ -100,11 +102,16 @@ absl::StatusOr<SessionId> InitializeSessionOrEndCall(
         intrinsic_proto::icon::OpenSessionRequest,
         intrinsic_proto::icon::OpenSessionResponse>* stream,
     absl::Span<const std::string> parts,
-    const intrinsic_proto::data_logger::Context& context) {
+    const intrinsic_proto::data_logger::Context& context,
+    std::optional<absl::Time> deadline) {
   intrinsic_proto::icon::OpenSessionRequest request_message;
   *request_message.mutable_initial_session_data()
        ->mutable_allocate_parts()
        ->mutable_part() = {parts.begin(), parts.end()};
+  if (deadline.has_value()) {
+    *request_message.mutable_initial_session_data()->mutable_deadline() =
+        ::intrinsic::ToProtoClampToValidRange(*deadline);
+  }
   *request_message.mutable_log_context() = context;
 
   absl::StatusOr<intrinsic_proto::icon::OpenSessionResponse>
@@ -242,20 +249,22 @@ Action::Action(ActionInstanceId id) : id_(id) {}
 absl::StatusOr<std::unique_ptr<Session>> Session::Start(
     std::shared_ptr<ChannelInterface> icon_channel,
     absl::Span<const std::string> parts,
-    const intrinsic_proto::data_logger::Context& context) {
+    const intrinsic_proto::data_logger::Context& context,
+    std::optional<absl::Time> deadline) {
   return StartImpl(
       context, icon_channel,
       intrinsic_proto::icon::IconApi::NewStub(icon_channel->GetChannel()),
-      parts, icon_channel->GetClientContextFactory());
+      parts, icon_channel->GetClientContextFactory(), deadline);
 }
 
 absl::StatusOr<std::unique_ptr<Session>> Session::Start(
     std::unique_ptr<intrinsic_proto::icon::IconApi::StubInterface> stub,
     absl::Span<const std::string> parts,
     const ClientContextFactory& client_context_factory,
-    const intrinsic_proto::data_logger::Context& context) {
+    const intrinsic_proto::data_logger::Context& context,
+    std::optional<absl::Time> deadline) {
   return StartImpl(context, nullptr, std::move(stub), parts,
-                   client_context_factory);
+                   client_context_factory, deadline);
 }
 
 absl::StatusOr<std::unique_ptr<Session>> Session::StartImpl(
@@ -263,16 +272,17 @@ absl::StatusOr<std::unique_ptr<Session>> Session::StartImpl(
     std::shared_ptr<ChannelInterface> icon_channel,
     std::unique_ptr<intrinsic_proto::icon::IconApi::StubInterface> stub,
     absl::Span<const std::string> parts,
-    const ClientContextFactory& client_context_factory) {
-  std::unique_ptr<grpc::ClientContext> action_context =
+    const ClientContextFactory& client_context_factory,
+    std::optional<absl::Time> deadline) {
+  std::unique_ptr<grpc::ClientContext> start_session_context =
       client_context_factory();
   std::unique_ptr<grpc::ClientReaderWriterInterface<
       intrinsic_proto::icon::OpenSessionRequest,
       intrinsic_proto::icon::OpenSessionResponse>>
-      action_stream = stub->OpenSession(action_context.get());
+      action_stream = stub->OpenSession(start_session_context.get());
   INTRINSIC_ASSIGN_OR_RETURN(
-      SessionId session_id,
-      InitializeSessionOrEndCall(action_stream.get(), parts, context));
+      SessionId session_id, InitializeSessionOrEndCall(
+                                action_stream.get(), parts, context, deadline));
 
   // Initialize the watcher stream at session start, so that no reactions can
   // be missed by the client. This allows reactions associated with this
@@ -299,7 +309,7 @@ absl::StatusOr<std::unique_ptr<Session>> Session::StartImpl(
   }
 
   return absl::WrapUnique(
-      new Session(std::move(icon_channel), std::move(action_context),
+      new Session(std::move(icon_channel), std::move(start_session_context),
                   std::move(action_stream), std::move(watcher_context),
                   std::move(watcher_stream), std::move(stub), session_id,
                   context, client_context_factory));
