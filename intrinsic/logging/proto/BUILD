@@ -15,6 +15,7 @@ proto_library(
     deps = [
         ":blob_proto",
         ":context_proto",
+        ":flowstate_event",
         "//intrinsic/executive/proto:executive_state_proto",
         "//intrinsic/icon/proto:cart_space_proto",
         "//intrinsic/icon/proto:joint_space_proto",
@@ -58,6 +59,27 @@ py_proto_library(
 proto_library(
     name = "context_proto",
     srcs = ["context.proto"],
+)
+
+proto_library(
+    name = "flowstate_event",
+    srcs = ["flowstate_event.proto"],
+    visibility = ["//intrinsic/production:__subpackages__"],
+)
+
+cc_proto_library(
+    name = "flowstate_event_cc_proto",
+    deps = [":flowstate_event"],
+)
+
+go_proto_library(
+    name = "flowstate_event_go_proto",
+    deps = [":flowstate_event"],
+)
+
+py_proto_library(
+    name = "flowstate_event_py_pb2",
+    deps = [":flowstate_event"],
 )
 
 py_proto_library(

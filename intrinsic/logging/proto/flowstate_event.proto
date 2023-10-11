@@ -1,0 +1,35 @@
+// Copyright 2023 Intrinsic Innovation LLC
+// Intrinsic Proprietary and Confidential
+// Provided subject to written agreement between the parties.
+
+syntax = "proto3";
+
+package intrinsic_proto.flowstate_event;
+
+// FlowStateEvent are representation of events to be recorded by flowstate
+// workcell applications. These events are piped into a BigQuery table which
+// acts as the base of dashboards and other analysis.
+//
+// See go/intrinsic-event-schema#bookmark=id.u8ad3dvlrnid for examples of how to
+// use the schema
+message FlowStateEvent {
+  // event_type is an identifier for an event. (e.g., SOLUTION,
+  // HUMAN_USER_ACTION, ROBOT_METADATA)
+  string event_type = 1;
+  // resource ID is the identifier of the resource that was modified (e.g.,
+  // solution that was created or run, robot id that was registered)
+  string resource_id = 2;
+  // subject identifies the user id or other such identifier of the actor who
+  // committed the event/action.
+  string subject = 3;
+  // action is a verb that signifies the nature of the event (created, run,
+  // deleted, modified).
+  string action = 4;
+  // result signifies the result of the committed action, e.g., success/failure
+  // of a BT run.
+  string result = 5;
+  // labels contain additional key value pairs to label the data with.
+  map<string, string> labels = 6;
+  // organization_id is the Intrinsic organization identifier
+  optional string organization_id = 7;
+}
