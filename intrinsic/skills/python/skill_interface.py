@@ -4,222 +4,29 @@
 
 """Skills Python APIs and definitions."""
 import abc
-import dataclasses
-from typing import Generic, List, Mapping, Optional, TypeVar
+from typing import List, Mapping, Optional
 
 from google.protobuf import descriptor
 from google.protobuf import message
-from intrinsic.logging.proto import context_pb2
-from intrinsic.motion_planning import motion_planner_client
 from intrinsic.skills.proto import equipment_pb2
 from intrinsic.skills.proto import footprint_pb2
 from intrinsic.skills.proto import skill_service_pb2
+from intrinsic.skills.python import execute_context
+from intrinsic.skills.python import execute_request
+from intrinsic.skills.python import get_footprint_context
+from intrinsic.skills.python import get_footprint_request
 from intrinsic.skills.python import skill_canceller
-from intrinsic.world.python import object_world_client
-from intrinsic.world.python import object_world_ids
-from intrinsic.world.python import object_world_resources
 
 # Imported for convenience of skill implementations.
+ExecuteContext = execute_context.ExecuteContext
+ExecuteRequest = execute_request.ExecuteRequest
+GetFootprintContext = get_footprint_context.GetFootprintContext
+GetFootprintRequest = get_footprint_request.GetFootprintRequest
 SkillCancelledError = skill_canceller.SkillCancelledError
 
 
 class InvalidSkillParametersError(ValueError):
   """Invalid arguments were passed to the skill parameters."""
-
-
-TParamsType = TypeVar('TParamsType', bound=message.Message)
-
-
-@dataclasses.dataclass(frozen=True)
-class GetFootprintRequest(Generic[TParamsType]):
-  """A request for a call to Skill.get_footprint.
-
-  Attributes:
-    params: The skill parameters proto. For static typing, GetFootprintRequest
-      can be parameterized with the required type of this message.
-  """
-
-  params: TParamsType
-
-
-class GetFootprintContext:
-  """Contains additional context for computing a skill footprint.
-
-  It is provided by the skill service to a skill and allows access to the world
-  and other services that a skill may use.
-
-  Attributes:
-    motion_planner: A client for the motion planning service.
-    object_world: A client for interacting with the object world.
-  """
-
-  @property
-  def motion_planner(self) -> motion_planner_client.MotionPlannerClient:
-    motion_planner = self._motion_planner
-    if motion_planner is None:
-      raise ValueError(
-          'The GetFootprintContext does not have a motion planner client.'
-      )
-
-    return motion_planner
-
-  @property
-  def object_world(self) -> object_world_client.ObjectWorldClient:
-    object_world = self._object_world
-    if object_world is None:
-      raise ValueError(
-          'The GetFootprintContext does not have an object world client.'
-      )
-
-    return object_world
-
-  def __init__(
-      self,
-      resource_handles: dict[str, equipment_pb2.ResourceHandle],
-      motion_planner: motion_planner_client.MotionPlannerClient,
-      object_world: object_world_client.ObjectWorldClient,
-  ):
-    """Initializes this object.
-
-    Args:
-      resource_handles: Handles for the required equipment for this skill.
-      motion_planner: The motion planner client to provide.
-      object_world: The object world client to provide.
-    """
-    self._resource_handles = resource_handles
-    self._motion_planner = motion_planner
-    self._object_world = object_world
-
-  def get_kinematic_object_for_equipment(
-      self, equipment_name: str
-  ) -> object_world_resources.KinematicObject:
-    """Returns the kinematic object that corresponds to this equipment.
-
-    The kinematic object is sourced from the same world that's available via
-    `object_world`.
-
-    Args:
-      equipment_name: The name of the expected equipment.
-
-    Returns:
-      A kinematic object from the world associated with this context.
-    """
-    return self.object_world.get_kinematic_object(
-        self._resource_handles[equipment_name]
-    )
-
-  def get_object_for_equipment(
-      self, equipment_name: str
-  ) -> object_world_resources.WorldObject:
-    """Returns the world object that corresponds to this equipment.
-
-    The world object is sourced from the same world that's available via
-    `object_world`.
-
-    Args:
-      equipment_name: The name of the expected equipment.
-
-    Returns:
-      A world object from the world associated with this context.
-    """
-    return self.object_world.get_object(self._resource_handles[equipment_name])
-
-  def get_frame_for_equipment(
-      self, equipment_name: str, frame_name: object_world_ids.FrameName
-  ) -> object_world_resources.Frame:
-    """Returns the frame by name for an object corresponding to some equipment.
-
-    The frame is sourced from the same world that's available via
-    `object_world`.
-
-    Args:
-      equipment_name: The name of the expected equipment.
-      frame_name: The name of the frame within the equipment's object.
-
-    Returns:
-      A frame from the world associated with this context.
-    """
-    return self.object_world.get_frame(
-        frame_name, self._resource_handles[equipment_name]
-    )
-
-
-@dataclasses.dataclass(frozen=True)
-class ExecuteRequest(Generic[TParamsType]):
-  """A request for a call to Skill.execute.
-
-  Attributes:
-    params: The skill parameters proto. For static typing, ExecuteRequest can be
-      parameterized with the required type of this message.
-  """
-
-  params: TParamsType
-
-
-class ExecuteContext:
-  """Contains additional metadata and functionality for a skill execution.
-
-  It is provided by the skill service to a skill and allows access to the world
-  and other services that a skill may use. Python sub-skills are not currently
-  used; however, it would also allow skills to invoke subskills (see full
-  functionality in skill_interface.h).
-
-  ExecuteContext helps support cooperative skill cancellation via `canceller`.
-  When a cancellation request is received, the skill should:
-  1) stop as soon as possible and leave resources in a safe and recoverable
-     state;
-  2) raise SkillCancelledError.
-
-  Attributes:
-    canceller: Supports cooperative cancellation of the skill.
-    resource_handles: A map of equipment names to handles.
-    logging_context: The logging context of the execution.
-    motion_planner: A client for the motion planning service.
-    object_world: A client for interacting with the object world.
-  """
-
-  @property
-  def canceller(self) -> skill_canceller.SkillCanceller:
-    return self._canceller
-
-  @property
-  def resource_handles(self) -> Mapping[str, equipment_pb2.ResourceHandle]:
-    return self._resource_handles
-
-  @property
-  def logging_context(self) -> context_pb2.Context:
-    return self._logging_context
-
-  @property
-  def motion_planner(self) -> motion_planner_client.MotionPlannerClient:
-    return self._motion_planner
-
-  @property
-  def object_world(self) -> object_world_client.ObjectWorldClient:
-    return self._object_world
-
-  def __init__(
-      self,
-      canceller: skill_canceller.SkillCanceller,
-      resource_handles: dict[str, equipment_pb2.ResourceHandle],
-      logging_context: context_pb2.Context,
-      motion_planner: motion_planner_client.MotionPlannerClient,
-      object_world: object_world_client.ObjectWorldClient,
-  ):
-    """Initializes this object.
-
-    Args:
-      canceller: Supports cooperative cancellation of the skill.
-      resource_handles: A map of equipment names to handles.
-      logging_context: The logging context of the execution.
-      motion_planner: The motion planner client to provide.
-      object_world: The object world client to provide.
-    """
-    self._canceller = canceller
-    self._resource_handles = resource_handles
-    self._logging_context = logging_context
-    self._motion_planner = motion_planner
-    self._object_world = object_world
 
 
 class SkillSignatureInterface(metaclass=abc.ABCMeta):

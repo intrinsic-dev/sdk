@@ -111,6 +111,51 @@ py_library(
 )
 
 cc_library(
+    name = "get_footprint_context_impl",
+    srcs = ["get_footprint_context_impl.cc"],
+    hdrs = ["get_footprint_context_impl.h"],
+    deps = [
+        ":default_parameters",
+        ":skill_registry_client_interface",
+        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/logging/proto:context_cc_proto",
+        "//intrinsic/motion_planning:motion_planner_client",
+        "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
+        "//intrinsic/skills/cc:equipment_pack",
+        "//intrinsic/skills/cc:skill_interface",
+        "//intrinsic/skills/proto:equipment_cc_proto",
+        "//intrinsic/skills/proto:footprint_cc_proto",
+        "//intrinsic/skills/proto:skill_service_cc_proto",
+        "//intrinsic/skills/proto:skills_cc_proto",
+        "//intrinsic/world/objects:frame",
+        "//intrinsic/world/objects:kinematic_object",
+        "//intrinsic/world/objects:object_world_client",
+        "//intrinsic/world/objects:object_world_ids",
+        "//intrinsic/world/objects:world_object",
+        "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+py_library(
+    name = "get_footprint_context_impl_py",
+    srcs = ["get_footprint_context_impl.py"],
+    deps = [
+        "//intrinsic/geometry/service:geometry_service_py_pb2_grpc",
+        "//intrinsic/motion_planning:motion_planner_client_py",
+        "//intrinsic/skills/proto:equipment_py_pb2",
+        "//intrinsic/skills/python:get_footprint_context",
+        "//intrinsic/world/python:object_world_client",
+        "//intrinsic/world/python:object_world_ids",
+        "//intrinsic/world/python:object_world_resources",
+    ],
+)
+
+cc_library(
     name = "execute_context_impl",
     srcs = ["execute_context_impl.cc"],
     hdrs = ["execute_context_impl.h"],
@@ -135,6 +180,20 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
+    ],
+)
+
+py_library(
+    name = "execute_context_impl_py",
+    srcs = ["execute_context_impl.py"],
+    deps = [
+        "//intrinsic/geometry/service:geometry_service_py_pb2_grpc",
+        "//intrinsic/logging/proto:context_py_pb2",
+        "//intrinsic/motion_planning:motion_planner_client_py",
+        "//intrinsic/skills/proto:equipment_py_pb2",
+        "//intrinsic/skills/python:execute_context",
+        "//intrinsic/skills/python:skill_canceller",
+        "//intrinsic/world/python:object_world_client",
     ],
 )
 
@@ -166,6 +225,8 @@ py_library(
     deps = [
         ":default_parameters_py",
         ":error_utils_py",
+        ":execute_context_impl_py",
+        ":get_footprint_context_impl_py",
         ":runtime_data_py",
         ":skill_repository_py",
         "//intrinsic/assets:id_utils_py",
@@ -523,37 +584,6 @@ cc_binary(
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
-        "@com_google_protobuf//:protobuf",
-    ],
-)
-
-cc_library(
-    name = "get_footprint_context_impl",
-    srcs = ["get_footprint_context_impl.cc"],
-    hdrs = ["get_footprint_context_impl.h"],
-    deps = [
-        ":default_parameters",
-        ":skill_registry_client_interface",
-        "//intrinsic/icon/release:status_helpers",
-        "//intrinsic/logging/proto:context_cc_proto",
-        "//intrinsic/motion_planning:motion_planner_client",
-        "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
-        "//intrinsic/skills/cc:equipment_pack",
-        "//intrinsic/skills/cc:skill_interface",
-        "//intrinsic/skills/proto:equipment_cc_proto",
-        "//intrinsic/skills/proto:footprint_cc_proto",
-        "//intrinsic/skills/proto:skill_service_cc_proto",
-        "//intrinsic/skills/proto:skills_cc_proto",
-        "//intrinsic/world/objects:frame",
-        "//intrinsic/world/objects:kinematic_object",
-        "//intrinsic/world/objects:object_world_client",
-        "//intrinsic/world/objects:object_world_ids",
-        "//intrinsic/world/objects:world_object",
-        "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/time",
         "@com_google_protobuf//:protobuf",
     ],
 )

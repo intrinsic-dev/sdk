@@ -6,7 +6,6 @@
 #define INTRINSIC_SKILLS_CC_SKILL_INTERFACE_H_
 
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -21,20 +20,15 @@
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/message.h"
 #include "intrinsic/logging/proto/context.pb.h"
-#include "intrinsic/motion_planning/motion_planner_client.h"
-#include "intrinsic/skills/cc/client_common.h"
-#include "intrinsic/skills/cc/equipment_pack.h"
-#include "intrinsic/skills/cc/skill_canceller.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/footprint.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
-#include "intrinsic/util/proto/any.h"
-#include "intrinsic/world/objects/frame.h"
-#include "intrinsic/world/objects/kinematic_object.h"
-#include "intrinsic/world/objects/object_world_client.h"
-#include "intrinsic/world/objects/world_object.h"
 
 // IWYU pragma: begin_exports
+#include "intrinsic/skills/cc/execute_context.h"
+#include "intrinsic/skills/cc/execute_request.h"
+#include "intrinsic/skills/cc/get_footprint_context.h"
+#include "intrinsic/skills/cc/get_footprint_request.h"
 // IWYU pragma: end_exports
 
 namespace intrinsic {
@@ -127,68 +121,6 @@ class SkillSignatureInterface {
   virtual ~SkillSignatureInterface() = default;
 };
 
-// A request for a call to SkillInterface::GetFootprint.
-class GetFootprintRequest {
- public:
-  // As a convenience, `param_defaults` can specify default parameter values to
-  // merge into any unset fields of `params`.
-  GetFootprintRequest(const ::google::protobuf::Message& params,
-                      ::google::protobuf::Message* param_defaults = nullptr) {
-    params_any_.PackFrom(params);
-    if (param_defaults != nullptr) {
-      param_defaults_any_ = google::protobuf::Any();
-      param_defaults_any_->PackFrom(*param_defaults);
-    }
-  }
-
-  // Defers conversion of input Any params to target proto type until accessed
-  // by the user in params().
-  //
-  // This constructor enables conversion from Any to the target type without
-  // needing a message pool/factory up front, since params() is templated on the
-  // target type.
-  GetFootprintRequest(google::protobuf::Any params,
-                      std::optional<::google::protobuf::Any> param_defaults)
-      :  //
-        params_any_(std::move(params)),
-        param_defaults_any_(std::move(param_defaults)) {}
-
-  // The skill parameters proto.
-  template <class TParams>
-  absl::StatusOr<TParams> params() const {
-    return UnpackAnyAndMerge<TParams>(params_any_, param_defaults_any_);
-  }
-
- private:
-  ::google::protobuf::Any params_any_;
-  std::optional<::google::protobuf::Any> param_defaults_any_;
-};
-
-// Contains additional metadata and functionality for a skill footprint that is
-// provided by the skill service to a skill. Allows, e.g., to read the
-// world.
-class GetFootprintContext {
- public:
-  virtual ~GetFootprintContext() = default;
-
-  // Returns the object-based view of the world associated with the skill.
-  virtual absl::StatusOr<world::ObjectWorldClient> GetObjectWorld() = 0;
-
-  // Returns the world object that represents the equipment in the world as
-  // required by the skill within this context.
-  virtual absl::StatusOr<world::KinematicObject> GetKinematicObjectForEquipment(
-      absl::string_view equipment_name) = 0;
-  virtual absl::StatusOr<world::WorldObject> GetObjectForEquipment(
-      absl::string_view equipment_name) = 0;
-  virtual absl::StatusOr<world::Frame> GetFrameForEquipment(
-      absl::string_view equipment_name, absl::string_view frame_name) = 0;
-
-  // Returns a motion planner based on the world associated with the skill
-  // (see GetObjectWorld()).
-  virtual absl::StatusOr<motion_planning::MotionPlannerClient>
-  GetMotionPlanner() = 0;
-};
-
 // Interface definition of Skill projecting.
 class SkillProjectInterface {
  public:
@@ -202,78 +134,6 @@ class SkillProjectInterface {
   }
 
   virtual ~SkillProjectInterface() = default;
-};
-
-// A request for a call to SkillInterface::Execute.
-class ExecuteRequest {
- public:
-  // `param_defaults` can specify default parameter values to merge into any
-  // unset fields of `params`.
-  ExecuteRequest(const ::google::protobuf::Message& params,
-                 ::google::protobuf::Message* param_defaults = nullptr) {
-    params_any_.PackFrom(params);
-    if (param_defaults != nullptr) {
-      param_defaults_any_ = google::protobuf::Any();
-      param_defaults_any_->PackFrom(*param_defaults);
-    }
-  }
-
-  // Defers conversion of input Any params to target proto type until accessed
-  // by the user in params().
-  //
-  // This constructor enables conversion from Any to the target type without
-  // needing a message pool/factory up front, since params() is templated on the
-  // target type.
-  ExecuteRequest(google::protobuf::Any params,
-                 std::optional<::google::protobuf::Any> param_defaults)
-      :  //
-        params_any_(std::move(params)),
-        param_defaults_any_(std::move(param_defaults)) {}
-
-  // The skill parameters proto.
-  template <class TParams>
-  absl::StatusOr<TParams> params() const {
-    return UnpackAnyAndMerge<TParams>(params_any_, param_defaults_any_);
-  }
-
- private:
-  ::google::protobuf::Any params_any_;
-  std::optional<::google::protobuf::Any> param_defaults_any_;
-};
-
-// Contains additional metadata and functionality for a skill execution that is
-// provided by the skill service server to a skill. Allows, e.g., to modify the
-// world or to invoke subskills.
-//
-// ExecutionContext helps support cooperative skill cancellation via a
-// SkillCanceller. When a cancellation request is received, the skill should:
-// 1) stop as soon as possible and leave resources in a safe and recoverable
-//    state;
-// 2) return absl::CancelledError.
-class ExecuteContext {
- public:
-  // Returns a SkillCanceller that supports cooperative cancellation of the
-  // skill.
-  virtual SkillCanceller& GetCanceller() = 0;
-
-  // Returns the log context this skill is called with. It includes logging IDs
-  // from the higher stack.
-  virtual const intrinsic_proto::data_logger::Context& GetLogContext()
-      const = 0;
-
-  // Returns the object-based view of the world associated with the current
-  // execution so that the skill can query and modify it.
-  virtual absl::StatusOr<world::ObjectWorldClient> GetObjectWorld() = 0;
-
-  // Returns a motion planner based on the world associated with the current
-  // execution (see GetObjectWorld()).
-  virtual absl::StatusOr<motion_planning::MotionPlannerClient>
-  GetMotionPlanner() = 0;
-
-  // Returns the equipment mapping associated with this skill instance.
-  virtual const EquipmentPack& GetEquipment() const = 0;
-
-  virtual ~ExecuteContext() = default;
 };
 
 // Interface for Skill execution.

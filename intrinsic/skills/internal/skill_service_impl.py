@@ -24,6 +24,8 @@ from intrinsic.motion_planning import motion_planner_client
 from intrinsic.motion_planning.proto import motion_planner_service_pb2_grpc
 from intrinsic.skills.internal import default_parameters
 from intrinsic.skills.internal import error_utils
+from intrinsic.skills.internal import execute_context_impl
+from intrinsic.skills.internal import get_footprint_context_impl
 from intrinsic.skills.internal import runtime_data as rd
 from intrinsic.skills.internal import skill_repository as skill_repo
 from intrinsic.skills.proto import error_pb2
@@ -148,10 +150,10 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
         footprint_request.world_id, self._motion_planner_service
     )
 
-    footprint_context = skl.GetFootprintContext(
-        resource_handles=dict(footprint_request.instance.resource_handles),
+    footprint_context = get_footprint_context_impl.GetFootprintContextImpl(
         motion_planner=motion_planner,
         object_world=object_world,
+        resource_handles=dict(footprint_request.instance.resource_handles),
     )
 
     try:
@@ -277,9 +279,8 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
           ),
       )
 
-    skill_context = skl.ExecuteContext(
+    skill_context = execute_context_impl.ExecuteContextImpl(
         canceller=operation.canceller,
-        resource_handles=dict(request.instance.resource_handles),
         logging_context=request.context,
         motion_planner=motion_planner_client.MotionPlannerClient(
             request.world_id, self._motion_planner_service
@@ -287,6 +288,7 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
         object_world=object_world_client.ObjectWorldClient(
             request.world_id, self._object_world_service
         ),
+        resource_handles=dict(request.instance.resource_handles),
     )
 
     def execute() -> skill_service_pb2.ExecuteResult:

@@ -32,25 +32,79 @@ cc_library(
     name = "skill_interface",
     hdrs = ["skill_interface.h"],
     deps = [
-        ":client_common",
-        ":equipment_pack",
-        ":skill_canceller",
+        ":execute_context",
+        ":execute_request",
+        ":get_footprint_context",
+        ":get_footprint_request",
         "//intrinsic/logging/proto:context_cc_proto",
-        "//intrinsic/motion_planning:motion_planner_client",
         "//intrinsic/skills/proto:equipment_cc_proto",
         "//intrinsic/skills/proto:footprint_cc_proto",
         "//intrinsic/skills/proto:skill_service_cc_proto",
-        "//intrinsic/util/proto:any",
-        "//intrinsic/world/objects:frame",
-        "//intrinsic/world/objects:kinematic_object",
-        "//intrinsic/world/objects:object_world_client",
-        "//intrinsic/world/objects:world_object",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
+    name = "get_footprint_context",
+    hdrs = ["get_footprint_context.h"],
+    deps = [
+        "//intrinsic/motion_planning:motion_planner_client",
+        "//intrinsic/skills/proto:footprint_cc_proto",
+        "//intrinsic/world/objects:frame",
+        "//intrinsic/world/objects:kinematic_object",
+        "//intrinsic/world/objects:object_world_client",
+        "//intrinsic/world/objects:world_object",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
+    name = "get_footprint_request",
+    hdrs = ["get_footprint_request.h"],
+    deps = [
+        "//intrinsic/util/proto:any",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
+    name = "execute_context",
+    hdrs = ["execute_context.h"],
+    deps = [
+        ":client_common",
+        ":equipment_pack",
+        ":skill_canceller",
+        "//intrinsic/logging/proto:context_cc_proto",
+        "//intrinsic/motion_planning:motion_planner_client",
+        "//intrinsic/skills/proto:skill_service_cc_proto",
+        "//intrinsic/world/objects:object_world_client",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_library(
+    name = "execute_request",
+    hdrs = ["execute_request.h"],
+    deps = [
+        "//intrinsic/util/proto:any",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_protobuf//:protobuf",
     ],
 )
