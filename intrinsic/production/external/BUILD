@@ -35,6 +35,7 @@ exports_files(
         "BUILD.retrying",
         "BUILD.sysroot",
         "BUILD.workspace_root",
+        "LICENSE",
         "WORKSPACE",
         "copy.bara.sky",
         "go.mod",
