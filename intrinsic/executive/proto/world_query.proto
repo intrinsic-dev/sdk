@@ -17,12 +17,20 @@ message WorldQuery {
       // Fills for_each with intrinsic_proto.world.FrameReference from the
       // immediate child frames of the given ObjectReference.
       intrinsic_proto.world.ObjectReference child_frames_of = 1;
+
       // Fills for_each with intrinsic_proto.world.ObjectReference from the
       // immediate child objects of the given ObjectReference.
       intrinsic_proto.world.ObjectReference child_objects_of = 2;
+
       // Fills for_each with intrinsic_proto.world.TransformNodeReference from
       // the immediate child frames or objects of the given ObjectReference.
       intrinsic_proto.world.ObjectReference children_of = 3;
+
+      // Fills for_each with intrinsic_proto.world.NamedJointConfiguration of
+      // the object identified by the given ObjectReference. This must be a
+      // kinematic object. Use the name filter to select a specific
+      // configuration.
+      intrinsic_proto.world.ObjectReference joint_configurations_of = 4;
     }
   }
 
