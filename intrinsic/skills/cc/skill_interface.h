@@ -154,17 +154,20 @@ class SkillExecuteInterface {
   // - `absl::InvalidArgumentError` if the arguments provided as skill
   //   parameters are invalid.
   //
-  // The skill can return `absl::InternalError` if its objective was not
-  // achieved. Refer to absl status documentation for other errors:
+  // Refer to absl status documentation for other errors:
   // https://github.com/abseil/abseil-cpp/blob/master/absl/status/status.h
   //
-  // If the skill returns an error, it will cause the Process to fail
-  // immediately, unless the skill is part of a `FallbackNode` in the Process
-  // tree. Currently, there is no way to distinguish between potentially
-  // recoverable failures that should lead to fallback handling via that node
-  // (e.g., failure to achieve the skill's objective) and other failures that
-  // should abort the entire process (e.g., failure to connect to a gRPC
-  // service).
+  // Any error status returned by the skill will be handled by the executive
+  // that runs the process to which the skill belongs. The effect of the error
+  // will depend on how the skill is integrated into that process' behavior
+  // tree. For instance, if the skill is part of a fallback node, a skill error
+  // will trigger the fallback behavior. If the skill is not part of any node
+  // that handles errors, then a skill error will cause the process to fail.
+  //
+  // Currently, there is no way to distinguish between potentially recoverable
+  // failures that should lead to fallback handling (e.g., failure to achieve
+  // the skill's objective) and other failures that should cause the entire
+  // process to abort (e.g., failure to connect to a gRPC service).
   virtual absl::StatusOr<intrinsic_proto::skills::ExecuteResult> Execute(
       const ExecuteRequest& request, ExecuteContext& context) {
     return absl::UnimplementedError("Skill does not implement `Execute`.");

@@ -107,12 +107,17 @@ class SkillExecuteInterface(metaclass=abc.ABCMeta):
 
     Skill authors should override this method with their implementation.
 
-    If the skill raises an error, it will cause the Process to fail immediately,
-    unless the skill is part of a `FallbackNode` in the Process tree. Currently,
-    there is no way to distinguish between potentially recoverable failures that
-    should lead to fallback handling via that node (e.g., failure to achieve the
-    skill's objective) and other failures that should abort the entire process
-    (e.g., failure to connect to a gRPC service).
+    Any error raised by the skill will be handled by the executive that runs the
+    process to which the skill belongs. The effect of the error will depend on
+    how the skill is integrated into that process' behavior tree. For instance,
+    if the skill is part of a fallback node, a skill error will trigger the
+    fallback behavior. If the skill is not part of any node that handles errors,
+    then a skill error will cause the process to fail.
+
+    Currently, there is no way to distinguish between potentially recoverable
+    failures that should lead to fallback handling (e.g., failure to achieve the
+    skill's objective) and other failures that should cause the entire process
+    to abort (e.g., failure to connect to a gRPC service).
 
     Args:
       request: The execute request.
@@ -123,10 +128,10 @@ class SkillExecuteInterface(metaclass=abc.ABCMeta):
       The skill's result message, or None if it does not return a result.
 
     Raises:
-      SkillCancelledError: If the skill is aborted due to a cancellation
-        request.
       InvalidSkillParametersError: If the arguments provided to skill parameters
         are invalid.
+      SkillCancelledError: If the skill is aborted due to a cancellation
+        request.
     """
     raise NotImplementedError(
         f'Skill "{type(self).__name__!r} has not implemented `execute`.'
