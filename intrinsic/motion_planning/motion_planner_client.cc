@@ -296,5 +296,6 @@ MotionPlannerClient::ClearCache() {
       &ctx, intrinsic_proto::motion_planning::ClearCacheRequest(), &response));
   return response;
 }
+
 }  // namespace motion_planning
 }  // namespace intrinsic
