@@ -392,6 +392,26 @@ message BehaviorTree {
       FAILED_EXECUTION = 2;  // error while executing the tree
     }
 
+    message ExecutionSettings {
+      enum Mode {
+        UNSPECIFIED = 0;
+        NORMAL = 1;
+        DISABLED = 2;
+      }
+      Mode mode = 1;
+
+      // This is a subset of the State enum.
+      enum DisabledResultState {
+        DISABLED_RESULT_STATE_UNSPECIFIED = 0;
+        SUCCEEDED = 1;
+        FAILED = 2;
+      }
+      // If DISABLED, do not set the resulting state based on execution
+      // semantics, but force the resulting state. Only SUCCEEDED or FAILED are
+      // valid.
+      optional DisabledResultState disabled_result_state = 2;
+    }
+
     message Decorators {
       // Condition to denote whether a SELECTED node can transition to RUNNING.
       // If the condition is unsatisfied when a node is selected the node
@@ -413,6 +433,8 @@ message BehaviorTree {
       optional ExtensionPointType extension_point = 2;
 
       optional Breakpoint.Type breakpoint = 3;
+
+      optional ExecutionSettings execution_settings = 4;
     }
 
     oneof node_type {
