@@ -14,7 +14,26 @@ import "intrinsic/executive/proto/executive_execution_mode.proto";
 import "intrinsic/executive/proto/run_metadata.proto";
 
 
-// The executive is responsible for executing and monitoring Behavior Trees.
+// The Executive is responsible for executing and monitoring Behavior Trees.
+//
+// Given the declarative description in the form of a behavior tree, the
+// Executive executes the tree according to the defined semantics, for example
+// by executing one child after the other for a sequence node. As part of the
+// execution it invokes skills according to the skill API contract.
+//
+// Key concepts of the executive:
+// - Behavior Tree: declarative behavior specification to define a process.
+// - Blackboard: an internal key-value store for data flow.
+// - Operation: the operational envelope for one Behavior Tree.
+//
+// The concept of an operation is central to the Executive Service API: by
+// creating an operation a behavior tree is loaded. Then the operation
+// is the reference item to start, suspend, resume. The operation and in
+// turn the Behavior Tree it encloses.
+// Note: at this point in time there can be at most one operation. Creating a
+// second operation fails, even if the previous operation was completed. It
+// must be deleted (and possibly stopped if still active) before creating
+// another one.
 service ExecutiveService {
   // Auth annotations for consumption by the following helm_chart:
   //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
@@ -25,15 +44,15 @@ service ExecutiveService {
   // An operation manages the lifecycle of a Behavior Tree. It is the
   // operational envelope. It is identified by a unique name. The operation name
   // changes for every operation, cannot be reused, and is independent of any
-  // Behavior Tree ID or name.
+  // Behavior Tree ID or name. Treat it as an opaque random string.
   //
   // Operations follow the log-running operations specification in
   // https://google.aip.dev/151.
   //
   // At this time, the executive only supports a single active operation. The
   // operation's metadata is crucial to understanding the state fully. The done
-  // flag in the Operation message will only denote whether the associated BT
-  // is in a TERMINAL state (see below).
+  // flag in the Operation message only denotes whether the associated
+  // Behavior Tree is in a TERMINAL state (see below).
   //
   // NOTE: Below, we use the following labels to refer to conjunctions of
   // behavior tree states:
@@ -41,8 +60,8 @@ service ExecutiveService {
   //  WAITING := ACCEPTED | SUSPENDED | FAILED | SUCCEEDED | CANCELLED
   //  TERMINAL := SUCCEEDED | FAILED | CANCELLED
 
-  // Loads a behavior tree. This will only work if the executive has no
-  // operation.
+  // Loads a behavior tree. It is an error to call this method while an
+  // operation already exists.
   rpc CreateOperation(CreateOperationRequest)
       returns (google.longrunning.Operation) {
     option (google.longrunning.operation_info) = {
@@ -56,6 +75,10 @@ service ExecutiveService {
       returns (google.longrunning.ListOperationsResponse) {}
 
   // Get a particular operation by name.
+  // The returned operation can be used to:
+  // - check whether it has completed (the `done` field will be true)
+  // - access the result when done done (`error` or `response` field set)
+  // - inspect the detailed state in the operation's metadata.
   rpc GetOperation(google.longrunning.GetOperationRequest)
       returns (google.longrunning.Operation) {}
 
@@ -63,64 +86,68 @@ service ExecutiveService {
   rpc GetOperationView(GetOperationViewRequest)
       returns (google.longrunning.Operation) {}
 
-  // Deletes a long-running operation. This method indicates that the client is
-  // no longer interested in the operation result. It does not cancel the
-  // operation. This returns an error if the operation's BT is not in a WAITING
+  // Deletes an operation. This method indicates that the client is no longer
+  // interested in the operation result. It does not cancel the operation. This
+  // returns an error if the operation's Behavior Tree is not in a WAITING
   // state.
   rpc DeleteOperation(google.longrunning.DeleteOperationRequest)
       returns (google.protobuf.Empty) {}
 
   // Starts the operation and thus the execution of its Behavior Tree. Only
-  // valid if BT is in ACCEPTED state.
+  // valid if the Behavior Tree is in the ACCEPTED state.
   rpc StartOperation(StartOperationRequest)
       returns (google.longrunning.Operation) {}
 
   // Starts asynchronous cancellation on a long-running operation. Clients can
-  // use [GetOperation][google.longrunning.Operations.GetOperation] to check
-  // whether the cancellation succeeded or whether the operation completed
-  // despite cancellation. On successful cancellation, the operation is not
-  // deleted; instead, it becomes an operation with an [Operation.error][] value
-  // with a [google.rpc.Status.code][] of 1, corresponding to `Code.CANCELLED`.
+  // use GetOperation to check whether the cancellation succeeded or whether the
+  // operation completed despite cancellation. On successful cancellation, the
+  // operation is not deleted; instead, it becomes an operation with an
+  // [Operation.error][] value with a [google.rpc.Status.code][] of 1,
+  // corresponding to `Code.CANCELLED`.
   //
-  // Returns an error if the BT is not in a CANCELLABLE state.
+  // Returns an error if the Behavior Tree is not in a CANCELLABLE state.
   rpc CancelOperation(google.longrunning.CancelOperationRequest)
       returns (google.protobuf.Empty) {}
 
-  // Waits until the specified long-running operation is done (SUCCEEDED,
-  // FAILED, or CANCELLED) or reaches at most a specified timeout, returning the
-  // latest state. If the operation is already done, the latest state is
-  // immediately returned. If the timeout specified is greater than the default
-  // HTTP/RPC timeout, the HTTP/RPC timeout is used. The default timeout is 60
-  // minutes.  Note that this method is on a best-effort basis. It may return
-  // the latest state before the specified timeout (including immediately),
-  // meaning even an immediate response is no guarantee that the operation is
-  // done.
+  // Waits until the specified operation is done (SUCCEEDED, FAILED, or
+  // CANCELLED) or reaches at most a specified timeout, returning the latest
+  // state. If the operation is already done, the latest state is immediately
+  // returned. If the timeout specified is greater than the default HTTP/RPC
+  // timeout, the HTTP/RPC timeout is used. The default timeout is 60 minutes.
+  // Note that this method is on a best-effort basis. It may return the latest
+  // state before the specified timeout (including immediately), meaning even an
+  // immediate response is no indicator that the operation is done.
   rpc WaitOperation(google.longrunning.WaitOperationRequest)
       returns (google.longrunning.Operation) {}
 
   // Suspends an operation by waiting for active skills to finish and then
-  // pausing execution of the remainder of the BT.
+  // pausing execution of the remainder of the Behavior Tree. The method will
+  // return immediately and doesn't wait for the tree to be fully suspended
+  // (use GetOperation to see the operation's Behavior Tree state).
   //
-  // Returns an error if the BT is not RUNNING.
+  // Returns an error if the Behavior Tree is not RUNNING.
   rpc SuspendOperation(SuspendOperationRequest)
       returns (google.protobuf.Empty) {}
 
-  // Resumes an operation by resuming its Behavior Tree.
-  // Returns an error if the BT state is not SUSPENDED.
+  // Resumes an operation by resuming its Behavior Tree. Returns an error if
+  // called when the Behavior Tree is not in the SUSPENDED state. This method
+  // returns immediately and does not wait for the tree to be fully resumed
+  // (use GetOperation to see the operation's Behavior Tree state).
   rpc ResumeOperation(ResumeOperationRequest)
       returns (google.longrunning.Operation) {}
 
-  // Resets an operation and its associated BT. This will reset the BT to a
-  // state as if it had just been created.
+  // Resets an operation and its associated Behavior Tree. This resets the
+  // Behavior Tree to a state as if it had just been created.
   //
-  // Returns an error if the BT is not in a WAITING state.
+  // Returns an error if the Behavior Tree is not in a WAITING state.
   rpc ResetOperation(ResetOperationRequest) returns (google.protobuf.Empty) {}
 
   // ========= Methods for breakpoints (on a specific behavior tree) ===========
 
   // Breakpoints are a means to request automatically suspending a tree at
-  // specific points of the BT. They can be embedded directly in BT nodes'
-  // decorators or added at run-time for a particular operation's BT.
+  // specific points of the Behavior Tree. They can be embedded directly in
+  // Behavior Tree's nodes' decorators or added at run-time for a particular
+  // operation's Behavior Tree.
 
   // Creates a new breakpoint on the given operation's loaded Behavior Tree.
   rpc CreateBreakpoint(CreateBreakpointRequest)
@@ -130,13 +157,14 @@ service ExecutiveService {
   rpc DeleteBreakpoint(DeleteBreakpointRequest)
       returns (google.protobuf.Empty) {}
 
-  // Deletes all breakpoints of the currently loaded Behavior Tree.
+  // Deletes all breakpoints of the loaded Behavior Tree.
   rpc DeleteAllBreakpoints(DeleteAllBreakpointsRequest)
       returns (google.protobuf.Empty) {}
 
-  // Get a list of all breakpoints set on the currently loaded Behavior Tree.
-  // The information is the same as presented through decorators in the BT in
-  // the state proto retrieved via GetOperation or GetOperationView.
+  // Get a list of all breakpoints set on the loaded Behavior Tree.
+  // The information is the same as presented through decorators in the
+  // Behavior Tree in the state proto retrieved using GetOperation or
+  // GetOperationView.
   rpc ListBreakpoints(ListBreakpointsRequest)
       returns (ListBreakpointsResponse) {}
 }
@@ -203,7 +231,7 @@ message ResumeOperationRequest {
     STEP = 2;
 
     // Mark sub-trees of node that caused last step-wise suspend to not trigger
-    // a suspend and continue execution. First non-marked node will trigger a
+    // a suspend and continue execution. First non-marked node triggers a
     // suspend again. Only valid in step-wise mode.
     NEXT = 3;
   }
