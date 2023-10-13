@@ -32,8 +32,8 @@ def _unpack_camera_config(
     camera_equipment: equipment_pb2.ResourceHandle,
 ) -> Optional[camera_config_pb2.CameraConfig]:
   """Returns the camera config from a camera resource handle or None if equipment is not a camera."""
-  data: Mapping[str, equipment_pb2.ResourceHandle.EquipmentData] = (
-      camera_equipment.equipment_data
+  data: Mapping[str, equipment_pb2.ResourceHandle.ResourceData] = (
+      camera_equipment.resource_data
   )
   config = None
   if _CONFIG_EQUIPMENT_IDENTIFIER in data:

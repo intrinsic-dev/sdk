@@ -23,17 +23,17 @@ message EquipmentSelector {
 }
 
 message ResourceHandle {
-  message EquipmentData {
-    // Data that can be used to access or interact with the equipment
-    // represented by this equipment data.
+  message ResourceData {
+    // Data that can be used to access or interact with the resource instance
+    // containing a given resource handle type.
     google.protobuf.Any contents = 1;
   }
 
   // The name of the resource instance represented by this handle.
   string name = 1;
 
-  // The equipment types this handle represents and their configuration data.
-  map<string, EquipmentData> equipment_data = 2;
+  // The resource handle types and their configuration data.
+  map<string, ResourceData> resource_data = 2;
 
   // Information on how to connect to the resource instance.
   ResourceConnectionInfo connection_info = 3;

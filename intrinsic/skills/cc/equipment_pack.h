@@ -83,15 +83,15 @@ absl::StatusOr<EquipmentType> EquipmentPack::Unpack(
     return internal::MissingEquipmentError(key);
   }
 
-  const auto& equipment_data = equipment_map_.at(key).equipment_data();
-  if (!equipment_data.contains(std::string(type))) {
+  const auto& resource_data = equipment_map_.at(key).resource_data();
+  if (!resource_data.contains(std::string(type))) {
     return absl::NotFoundError(absl::StrCat("Could not find equipment typed '",
                                             type, "' with slot key '", key,
                                             "'"));
   }
 
   EquipmentType equipment;
-  if (!equipment_data.at(std::string(type)).contents().UnpackTo(&equipment)) {
+  if (!resource_data.at(std::string(type)).contents().UnpackTo(&equipment)) {
     return internal::EquipmentContentsTypeError();
   }
 
