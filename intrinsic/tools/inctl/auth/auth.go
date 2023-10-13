@@ -22,8 +22,8 @@ const (
 	AliasDefaultToken = "default"
 
 	storeDirectory      = "intrinsic/projects"
+	orgStoreDirectory   = "intrinsic/organizations"
 	authConfigExtension = ".user-token"
-	orgStoreDirectory = "intrinsic/organizations"
 
 	directoryMode  os.FileMode = 0700
 	fileMode       os.FileMode = 0600
