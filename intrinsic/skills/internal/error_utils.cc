@@ -12,9 +12,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/cord.h"
 #include "google/protobuf/any.pb.h"
-#include "google/protobuf/descriptor.h"
 #include "grpcpp/support/error_details.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/skills/proto/error.pb.h"
 
 namespace intrinsic {
@@ -52,22 +50,27 @@ absl::Status ToAbslStatus(const ::grpc::Status& grpc_status) {
 ::grpc::Status ToGrpcStatus(
     const absl::Status& absl_status,
     const intrinsic_proto::skills::SkillErrorInfo& error_info) {
-  ::google::rpc::Status my_status = ToGoogleRpcStatus(absl_status, error_info);
-  ::grpc::Status out;
+  ::google::rpc::Status grpc_status =
+      ToGoogleRpcStatus(absl_status, error_info);
+  return ToGrpcStatus(grpc_status);
+}
+
+::grpc::Status ToGrpcStatus(const ::google::rpc::Status& rpc_status) {
+  ::grpc::Status grpc_status;
   // Should only fail if out is nullptr.
-  CHECK_OK(grpc::SetErrorDetails(my_status, &out));
-  return out;
+  CHECK_OK(grpc::SetErrorDetails(rpc_status, &grpc_status));
+  return grpc_status;
 }
 
 ::google::rpc::Status ToGoogleRpcStatus(
     const absl::Status& absl_status,
     const intrinsic_proto::skills::SkillErrorInfo& error_info) {
-  ::google::rpc::Status my_status;
-  my_status.set_code(static_cast<int>(absl_status.code()));
-  my_status.set_message(std::string(absl_status.message()));
-  my_status.add_details()->PackFrom(error_info);
+  ::google::rpc::Status rpc_status;
+  rpc_status.set_code(static_cast<int>(absl_status.code()));
+  rpc_status.set_message(std::string(absl_status.message()));
+  rpc_status.add_details()->PackFrom(error_info);
 
-  return my_status;
+  return rpc_status;
 }
 
 void SetErrorInfo(const intrinsic_proto::skills::SkillErrorInfo& error_info,

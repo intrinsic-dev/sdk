@@ -85,6 +85,50 @@ absl::Status SetDefaultsInRequest(
   return absl::OkStatus();
 }
 
+// Returns an action description for a skill error status.
+std::string ErrorToSkillAction(absl::Status status) {
+  switch (status.code()) {
+    case absl::StatusCode::kCancelled:
+      return "was cancelled during";
+    case absl::StatusCode::kInvalidArgument:
+      return "was passed invalid parameters during";
+    case absl::StatusCode::kUnimplemented:
+      return "has not implemented";
+    case absl::StatusCode::kDeadlineExceeded:
+      return "timed out during";
+    default:
+      return "returned an error during";
+  }
+}
+
+// Handles an error return a skill.
+::google::rpc::Status HandleSkillErrorGoogleRpc(absl::Status status,
+                                                absl::string_view skill_id,
+                                                absl::string_view op_name) {
+  std::string message = absl::StrFormat(
+      "Skill %s %s %s (code: %s). Message: %s", skill_id,
+      ErrorToSkillAction(status), op_name,
+      absl::StatusCodeToString(status.code()), status.message());
+
+  intrinsic_proto::skills::SkillErrorInfo error_info;
+  error_info.set_error_type(
+      intrinsic_proto::skills::SkillErrorInfo::ERROR_TYPE_SKILL);
+  ::google::rpc::Status rpc_status = ToGoogleRpcStatus(status, error_info);
+  rpc_status.set_message(message);
+
+  LOG(ERROR) << message;
+
+  return rpc_status;
+}
+
+::grpc::Status HandleSkillErrorGrpc(absl::Status status,
+                                    absl::string_view skill_id,
+                                    absl::string_view op_name) {
+  ::google::rpc::Status rpc_status =
+      HandleSkillErrorGoogleRpc(status, skill_id, op_name);
+  return ToGrpcStatus(rpc_status);
+}
+
 }  // namespace
 
 namespace internal {
@@ -116,18 +160,8 @@ absl::Status SkillOperation::Start(
             if (result.ok()) {
               operation_.mutable_response()->PackFrom(**result);
             } else {
-              intrinsic_proto::skills::SkillErrorInfo error_info;
-              error_info.set_error_type(
-                  intrinsic_proto::skills::SkillErrorInfo::ERROR_TYPE_SKILL);
-
-              ::google::rpc::Status rpc_status =
-                  ToGoogleRpcStatus(result.status(), error_info);
-              operation_.mutable_error()->MergeFrom(rpc_status);
-
-              LOG(ERROR) << "Skill: " << runtime_data().GetId()
-                         << " returned an error during " << op_name
-                         << ". code: " << rpc_status.code()
-                         << ", message: " << rpc_status.message();
+              operation_.mutable_error()->MergeFrom(HandleSkillErrorGoogleRpc(
+                  result.status(), runtime_data().GetId(), op_name));
             }
 
             operation_.set_done(true);
@@ -402,10 +436,11 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
       skill->GetFootprint(get_footprint_request, footprint_context);
 
   if (!skill_result.ok()) {
-    intrinsic_proto::skills::SkillErrorInfo error_info;
-    error_info.set_error_type(
-        intrinsic_proto::skills::SkillErrorInfo::ERROR_TYPE_SKILL);
-    return ToGrpcStatus(skill_result.status(), error_info);
+    INTRINSIC_ASSIGN_OR_RETURN(
+        const std::string skill_id,
+        RemoveVersionFrom(request->instance().id_version()));
+    return HandleSkillErrorGrpc(skill_result.status(), skill_id,
+                                "GetFootprint");
   }
 
   INTRINSIC_ASSIGN_OR_RETURN(internal::SkillRuntimeData runtime_data,
@@ -498,7 +533,7 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
 
         return std::make_unique<intrinsic_proto::skills::ExecuteResult>(result);
       },
-      /*op_name=*/"execute"));
+      /*op_name=*/"Execute"));
 
   *result = operation->operation();
 
@@ -535,7 +570,7 @@ grpc::Status SkillExecutorServiceImpl::StartPreview(
               std::unique_ptr<intrinsic_proto::skills::PreviewResult>> {
         return absl::UnimplementedError("Preview is not yet supported.");
       },
-      /*op_name=*/"preview"));
+      /*op_name=*/"Preview"));
 
   *result = operation->operation();
 

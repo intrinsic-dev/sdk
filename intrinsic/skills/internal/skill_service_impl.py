@@ -160,15 +160,15 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       skill_footprint = skill_project_instance.get_footprint(
           request, footprint_context
       )
-    except Exception:  # pylint: disable=broad-except
-      msg = traceback.format_exc()
-      logging.error(
-          'Skill returned an error during get_footprint. Exception:\n%s', msg
+    except Exception as err:  # pylint: disable=broad-except
+      error_status = _handle_skill_error(
+          err=err, skill_id=skill_runtime_data.skill_id, op_name='get_footprint'
       )
+
       _abort_with_status(
           context=context,
-          code=status.StatusCode.INTERNAL,
-          message=f'Failure during get footprint of skill. Error: {msg}',
+          code=error_status.code,
+          message=error_status.message,
           skill_error_info=error_pb2.SkillErrorInfo(
               error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
           ),
@@ -827,27 +827,11 @@ class _SkillOperation:
     error_status = None
     try:
       result = op()
-    except skl.SkillCancelledError as err:
-      message = (
-          f'Skill cancelled during {op_name} operation {self.name!r}: {err}'
-      )
-      logging.info(message)
-
-      error_status = status_pb2.Status(
-          code=status.StatusCode.CANCELLED, message=message
-      )
     # Since we are calling user-provided code here, we want to be as broad as
     # possible and catch anything that could occur.
-    except Exception:  # pylint: disable=broad-except
-      logging.exception('Skill returned an error during %s.', op_name)
-
-      error_status = status_pb2.Status(
-          code=status.StatusCode.INTERNAL,
-          message=(
-              f'Failure during {op_name} of skill'
-              f' {self._runtime_data.skill_id}. Error:'
-              f' {traceback.format_exc()}'
-          ),
+    except Exception as err:  # pylint: disable=broad-except
+      error_status = _handle_skill_error(
+          err=err, skill_id=self._runtime_data.skill_id, op_name=op_name
       )
 
     if error_status is not None:
@@ -863,6 +847,38 @@ class _SkillOperation:
     self.operation.done = True
 
     self._finished_event.set()
+
+
+def _skill_error_to_code_and_action(
+    err: Exception,
+) -> tuple[status.StatusCode, str]:
+  """Returns a status code and action description for a skill error."""
+  if isinstance(err, skl.SkillCancelledError):
+    return status.StatusCode.CANCELLED, 'was cancelled during'
+  elif isinstance(err, skl.InvalidSkillParametersError):
+    return (
+        status.StatusCode.INVALID_ARGUMENT,
+        'was passed invalid parameters during',
+    )
+  elif isinstance(err, NotImplementedError):
+    return status.StatusCode.UNIMPLEMENTED, 'has not implemented'
+  elif isinstance(err, TimeoutError):
+    return status.StatusCode.DEADLINE_EXCEEDED, 'timed out during'
+
+  return status.StatusCode.INTERNAL, 'raised an error during'
+
+
+def _handle_skill_error(
+    err: Exception, skill_id: str, op_name: str
+) -> status_pb2.Status:
+  """Handles an error raised by a skill."""
+  code, action = _skill_error_to_code_and_action(err)
+  message = f'Skill {skill_id} {action} {op_name}.'
+  logging.exception(message)
+
+  return status_pb2.Status(
+      code=code, message=f'{message} Error: {traceback.format_exception(err)}'
+  )
 
 
 def _abort_with_status(

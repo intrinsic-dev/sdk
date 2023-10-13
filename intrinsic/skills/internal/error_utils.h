@@ -46,6 +46,7 @@ absl::Status ToAbslStatus(const ::grpc::Status& grpc_status);
 ::grpc::Status ToGrpcStatus(
     const absl::Status& absl_status,
     const intrinsic_proto::skills::SkillErrorInfo& error_info);
+::grpc::Status ToGrpcStatus(const ::google::rpc::Status& rpc_status);
 ::google::rpc::Status ToGoogleRpcStatus(
     const absl::Status& absl_status,
     const intrinsic_proto::skills::SkillErrorInfo& error_info);

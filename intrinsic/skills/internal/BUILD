@@ -70,7 +70,6 @@ cc_library(
     srcs = ["error_utils.cc"],
     hdrs = ["error_utils.h"],
     deps = [
-        "//intrinsic/icon/release:status_helpers",
         "//intrinsic/skills/proto:error_cc_proto",
         "@com_github_grpc_grpc//:grpc++_error_details",
         "@com_github_grpc_grpc//:grpc++_public_hdrs",
