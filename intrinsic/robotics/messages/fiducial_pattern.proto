@@ -103,6 +103,10 @@ message FiducialPatternConfig {
     AprilTagPatternConfig april_tag_pattern_config = 6;
   }
 
+  // Optional in-plane rotation to be applied to the generated 3D pattern points
+  // prior to translation.
+  optional double yaw_degrees = 9;
+
   // Optional translation to be applied to the generated 3D pattern points.
   repeated double new_translation_generated = 8
       [packed = true, (.robotics.messages.array_format) = { shape: [ 3 ] }];
