@@ -6,13 +6,13 @@ syntax = "proto3";
 
 package intrinsic_proto.flowstate_event;
 
-// FlowStateEvent are representation of events to be recorded by flowstate
+// FlowstateEvent are representation of events to be recorded by flowstate
 // workcell applications. These events are piped into a BigQuery table which
 // acts as the base of dashboards and other analysis.
 //
 // See go/intrinsic-event-schema#bookmark=id.u8ad3dvlrnid for examples of how to
 // use the schema
-message FlowStateEvent {
+message FlowstateEvent {
   // event_type is an identifier for an event. (e.g., SOLUTION,
   // HUMAN_USER_ACTION, ROBOT_METADATA)
   string event_type = 1;
