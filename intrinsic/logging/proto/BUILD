@@ -148,6 +148,18 @@ cc_grpc_library(
     deps = [":pubsub_listener_service_cc_proto"],
 )
 
+py_proto_library(
+    name = "pubsub_listener_service_py_pb2",
+    deps = [":pubsub_listener_service"],
+)
+
+py_grpc_library(
+    name = "pubsub_listener_service_py_pb2_grpc",
+    srcs = [":pubsub_listener_service"],
+    grpc_library = requirement("grpcio"),
+    deps = [":pubsub_listener_service_py_pb2"],
+)
+
 proto_library(
     name = "log_dispatcher_service",
     srcs = ["log_dispatcher_service.proto"],
