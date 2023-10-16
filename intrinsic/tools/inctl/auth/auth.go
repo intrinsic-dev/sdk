@@ -25,6 +25,9 @@ const (
 	orgStoreDirectory   = "intrinsic/organizations"
 	authConfigExtension = ".user-token"
 
+	// OrgIDHeader is the header name for providing the org in requests to our services.
+	OrgIDHeader = "org-id"
+
 	directoryMode  os.FileMode = 0700
 	fileMode       os.FileMode = 0600
 	writeFileFlags             = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
