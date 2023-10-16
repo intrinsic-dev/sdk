@@ -19,6 +19,7 @@ import (
 	"golang.org/x/exp/slices"
 	intrinsic "intrinsic/production/intrinsic"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
+	"intrinsic/tools/inctl/util/orgutil"
 	"intrinsic/tools/inctl/util/printer"
 
 	grpccodes "google.golang.org/grpc/codes"
@@ -89,6 +90,13 @@ func (e *executionContext) RewriteError(err error, cmdNames []string) string {
 	if errors.Is(cause, dialerutil.ErrCredentialsRequired) {
 		return fmt.Sprintf("%v\nThe --project flag is required to load the appropriate "+
 			"credentials.", err)
+	}
+
+	// User org not known
+	var orgErr *orgutil.ErrOrgNotFound
+	if errors.As(cause, &orgErr) {
+		return fmt.Sprintf("%v\nCredentials for given organization not found. Run "+
+			"'inctl auth login --org %s'.", err, orgErr.OrgName)
 	}
 
 	// User not logged in.

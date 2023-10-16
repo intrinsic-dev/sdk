@@ -10,3 +10,10 @@ go_library(
     name = "auth",
     srcs = ["auth.go"],
 )
+
+go_library(
+    name = "authtest",
+    testonly = True,
+    srcs = ["authtest.go"],
+    deps = [":auth"],
+)

@@ -21,6 +21,7 @@ import (
 	"intrinsic/frontend/cloud/devicemanager/shared"
 	"intrinsic/tools/inctl/cmd/device/projectclient"
 	"intrinsic/tools/inctl/cmd/root"
+	"intrinsic/tools/inctl/util/orgutil"
 	"intrinsic/tools/inctl/util/printer"
 )
 
@@ -60,8 +61,8 @@ var configGetCmd = &cobra.Command{
 			return err
 		}
 
-		projectName := viperLocal.GetString(keyProject)
-		orgName := viperLocal.GetString(keyOrganization)
+		projectName := viperLocal.GetString(orgutil.KeyProject)
+		orgName := viperLocal.GetString(orgutil.KeyOrganization)
 
 		client, err := projectclient.Client(projectName, orgName)
 		if err != nil {
@@ -209,8 +210,8 @@ var configSetCmd = &cobra.Command{
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		configString := args[0]
-		projectName := viperLocal.GetString(keyProject)
-		orgName := viperLocal.GetString(keyOrganization)
+		projectName := viperLocal.GetString(orgutil.KeyProject)
+		orgName := viperLocal.GetString(orgutil.KeyOrganization)
 		client, err := projectclient.Client(projectName, orgName)
 		if err != nil {
 			return fmt.Errorf("get project client: %w", err)

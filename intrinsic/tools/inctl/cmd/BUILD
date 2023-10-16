@@ -29,6 +29,7 @@ go_library(
     deps = [
         "//intrinsic/production:intrinsic",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
+        "//intrinsic/tools/inctl/util:orgutil",
         "//intrinsic/tools/inctl/util:printer",
         "@com_github_golang_glog//:go_default_library",
         "@com_github_pkg_errors//:go_default_library",

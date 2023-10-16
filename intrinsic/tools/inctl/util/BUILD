@@ -35,3 +35,14 @@ go_library(
         "@com_github_spf13_viper//:go_default_library",
     ],
 )
+
+go_library(
+    name = "orgutil",
+    srcs = ["orgutil.go"],
+    deps = [
+        ":viperutil",
+        "//intrinsic/tools/inctl/auth",
+        "@com_github_spf13_cobra//:go_default_library",
+        "@com_github_spf13_viper//:go_default_library",
+    ],
+)

@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
-	"strings"
 
 	"intrinsic/tools/inctl/auth"
 )
@@ -48,16 +47,6 @@ func (c *AuthedClient) Do(req *http.Request) (*http.Response, error) {
 
 // Client returns a http.Client compatible that injects auth for the project into every request.
 func Client(projectName string, orgName string) (AuthedClient, error) {
-	if projectName == "" {
-		info, err := auth.NewStore().ReadOrgInfo(orgName)
-		if err != nil {
-			return AuthedClient{}, fmt.Errorf("get org info: %w", err)
-		}
-
-		projectName = info.Project
-		orgName = strings.Split(orgName, "@")[0]
-	}
-
 	configuration, err := auth.NewStore().GetConfiguration(projectName)
 	if err != nil {
 		return AuthedClient{}, fmt.Errorf("get credential store: %w", err)

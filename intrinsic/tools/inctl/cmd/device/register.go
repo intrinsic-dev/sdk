@@ -15,8 +15,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"intrinsic/frontend/cloud/devicemanager/shared"
-	"intrinsic/tools/inctl/auth"
 	"intrinsic/tools/inctl/cmd/device/projectclient"
+	"intrinsic/tools/inctl/util/orgutil"
 )
 
 const (
@@ -38,8 +38,8 @@ var registerCmd = &cobra.Command{
 	Use:   "register",
 	Short: "Tool to register hardware in setup flow",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		projectName := viperLocal.GetString(keyProject)
-		orgName := viperLocal.GetString(keyOrganization)
+		projectName := viperLocal.GetString(orgutil.KeyProject)
+		orgName := viperLocal.GetString(orgutil.KeyOrganization)
 		hostname := viperLocal.GetString(keyHostname)
 		if hostname == "" {
 			hostname = deviceID
@@ -57,13 +57,6 @@ var registerCmd = &cobra.Command{
 		client, err := projectclient.Client(projectName, orgName)
 		if err != nil {
 			return fmt.Errorf("get client for project: %w", err)
-		}
-		if projectName == "" {
-			info, err := auth.NewStore().ReadOrgInfo(orgName)
-			if err != nil {
-				return fmt.Errorf("get org info: %w", err)
-			}
-			projectName = info.Project
 		}
 
 		// This map represents a json mapping of the config struct which lives in GoB:
