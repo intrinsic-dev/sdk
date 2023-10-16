@@ -7,6 +7,7 @@
 import abc
 from typing import Dict, List, Optional
 
+from intrinsic.icon.proto import cart_space_pb2
 from intrinsic.kinematics.types import joint_limits_pb2
 from intrinsic.math.python import data_types
 from intrinsic.math.python import proto_conversion as math_proto_conversion
@@ -550,6 +551,7 @@ class KinematicObject(WorldObject):
     joint_system_limits: The joint system limits. The field
       JointLimits.max_effort is currently not supported and will always contain
       zeroes.
+    cartesian_limits: The cartesian limits for this kinematic object.
     iso_flange_frame_ids: Ids of the frames on this kinematic object which mark
       flanges according to the ISO 9787 standard. Not every kinematic object has
       flange frames, but callers can expect this method to return one flange
@@ -601,6 +603,10 @@ class KinematicObject(WorldObject):
   @property
   def joint_system_limits(self) -> joint_limits_pb2.JointLimits:
     return self._proto.kinematic_object_component.joint_system_limits
+
+  @property
+  def cartesian_limits(self) -> cart_space_pb2.CartesianLimits:
+    return self._proto.kinematic_object_component.cartesian_limits
 
   @property
   def iso_flange_frame_ids(

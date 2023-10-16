@@ -10,6 +10,7 @@ import grpc  # pylint: disable=unused-import
 import numpy as np
 from numpy import testing as np_testing
 
+from intrinsic.icon.proto import cart_space_pb2
 from intrinsic.kinematics.types import joint_limits_pb2
 from intrinsic.world.proto import object_world_refs_pb2
 from intrinsic.world.proto import object_world_service_pb2
@@ -30,7 +31,7 @@ class ObjectWorldResourcesTest(absltest.TestCase):
       *,
       name: str = '',
       object_id: str = '',
-      object_type: object_world_service_pb2.ObjectType = object_world_service_pb2.PHYSICAL_OBJECT
+      object_type: object_world_service_pb2.ObjectType = object_world_service_pb2.PHYSICAL_OBJECT,
   ) -> object_world_service_pb2.Object:
     return object_world_service_pb2.Object(
         name=name,
@@ -864,6 +865,56 @@ class KinematicObjectTests(absltest.TestCase):
     self.assertEqual(
         kinematic_object.joint_system_limits,
         text_format.Parse(limits_proto_string, joint_limits_pb2.JointLimits()),
+    )
+
+  def test_cartesian_limits(self):
+    limits_proto_string = """
+      min_translational_velocity: -1
+      min_translational_velocity: -1
+      min_translational_velocity: -1
+      max_translational_velocity: 1
+      max_translational_velocity: 1
+      max_translational_velocity: 1
+      min_translational_acceleration: -10
+      min_translational_acceleration: -10
+      min_translational_acceleration: -10
+      max_translational_acceleration: 10
+      max_translational_acceleration: 10
+      max_translational_acceleration: 10
+      min_translational_jerk: 0
+      min_translational_jerk: 0
+      min_translational_jerk: 0
+      max_translational_jerk: 0
+      max_translational_jerk: 0
+      max_translational_jerk: 0
+      min_translational_position: -100
+      min_translational_position: -100
+      min_translational_position: -100
+      max_translational_position: 100
+      max_translational_position: 100
+      max_translational_position: 100
+    """
+    object_proto_string = """
+      name: 'my_object'
+      object_component: {{}}
+      kinematic_object_component: {{
+        cartesian_limits: {{
+          {limits}
+        }}
+      }}
+    """.format(limits=limits_proto_string)
+    kinematic_object = object_world_resources.KinematicObject(
+        text_format.Parse(
+            object_proto_string, object_world_service_pb2.Object()
+        ),
+        self._stub,
+    )
+
+    self.assertEqual(
+        kinematic_object.cartesian_limits,
+        text_format.Parse(
+            limits_proto_string, cart_space_pb2.CartesianLimits()
+        ),
     )
 
   def test_get_iso_flange_frames(self):

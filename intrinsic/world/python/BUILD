@@ -17,6 +17,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":object_world_ids",
+        "//intrinsic/icon/proto:cart_space_py_pb2",
         "//intrinsic/kinematics/types:joint_limits_py_pb2",
         "//intrinsic/math/python:data_types",
         "//intrinsic/math/python:proto_conversion",
@@ -35,6 +36,7 @@ py_test(
     deps = [
         ":object_world_ids",
         ":object_world_resources",
+        "//intrinsic/icon/proto:cart_space_py_pb2",
         "//intrinsic/kinematics/types:joint_limits_py_pb2",
         "//intrinsic/world/proto:object_world_refs_py_pb2",
         "//intrinsic/world/proto:object_world_service_py_pb2",
