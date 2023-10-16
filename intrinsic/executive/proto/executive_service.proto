@@ -167,6 +167,12 @@ service ExecutiveService {
   // GetOperationView.
   rpc ListBreakpoints(ListBreakpointsRequest)
       returns (ListBreakpointsResponse) {}
+
+  // ========= Methods for Node Execution (on a specific behavior tree) ========
+
+  // Updates the current execution settings for a node.
+  rpc SetNodeExecutionSettings(SetNodeExecutionSettingsRequest)
+      returns (SetNodeExecutionSettingsResponse) {}
 }
 
 message CreateOperationRequest {
@@ -260,3 +266,12 @@ message ListBreakpointsRequest {
 message ListBreakpointsResponse {
   repeated BehaviorTree.Breakpoint breakpoints = 1;
 }
+
+message SetNodeExecutionSettingsRequest {
+  string name = 1;
+
+  string tree_id = 2;
+  uint32 node_id = 3;
+  BehaviorTree.Node.ExecutionSettings execution_settings = 4;
+}
+message SetNodeExecutionSettingsResponse {}
