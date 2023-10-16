@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
+	"intrinsic/tools/inctl/util/orgutil"
 	"intrinsic/tools/inctl/util/viperutil"
 )
 
@@ -30,9 +31,9 @@ var revokeCmd = &cobra.Command{
 
 func revokeCredentialsE(cmd *cobra.Command, _ []string) error {
 	isRevokeAll := revokeParams.GetBool(keyRevokeAll)
-	projectName := revokeParams.GetString(keyProject)
+	projectName := revokeParams.GetString(orgutil.KeyProject)
 	if !isRevokeAll && projectName == "" {
-		return fmt.Errorf("either --%s or --%s needs to be specified", keyProject, keyRevokeAll)
+		return fmt.Errorf("either --%s or --%s needs to be specified", orgutil.KeyProject, keyRevokeAll)
 	}
 
 	isBatch := revokeParams.GetBool(keyBatch)
@@ -82,10 +83,10 @@ func init() {
 
 	flags := revokeCmd.Flags()
 
-	flags.StringP(keyProject, keyProjectShort, "", "Project to revoke credentials for")
+	flags.StringP(orgutil.KeyProject, keyProjectShort, "", "Project to revoke credentials for")
 	flags.Bool(keyRevokeAll, false, "Revokes all credentials for given project. If project is omitted, removes all known credentials")
 	flags.Bool(keyBatch, false, "Suppresses command prompts and assume Yes or default as an answer. Use with shell scripts.")
 
-	revokeParams = viperutil.BindToViper(flags, viperutil.BindToListEnv(keyProject))
+	revokeParams = viperutil.BindToViper(flags, viperutil.BindToListEnv(orgutil.KeyProject))
 
 }

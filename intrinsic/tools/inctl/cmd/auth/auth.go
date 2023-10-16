@@ -16,8 +16,6 @@ import (
 )
 
 const (
-	keyProject      = "project"
-	keyOrganization = "org"
 	keyPortal       = "portal"
 	keyProjectShort = "p"
 	keyAlias        = "alias"

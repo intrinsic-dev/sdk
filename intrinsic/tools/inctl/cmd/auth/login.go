@@ -22,6 +22,7 @@ import (
 	projectdiscoverygrpcpb "intrinsic/frontend/cloud/api/projectdiscovery_grpc_go_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/auth"
+	"intrinsic/tools/inctl/util/orgutil"
 	"intrinsic/tools/inctl/util/viperutil"
 )
 
@@ -52,7 +53,7 @@ var loginCmd = &cobra.Command{
 	RunE:  loginCmdE,
 
 	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
-		if loginParams.GetString(keyProject) == "" && loginParams.GetString(keyOrganization) == "" {
+		if loginParams.GetString(orgutil.KeyProject) == "" && loginParams.GetString(orgutil.KeyOrganization) == "" {
 			return fmt.Errorf("at least one of --project or --org needs to be set")
 		}
 
@@ -130,8 +131,8 @@ func queryProjectForAPIKey(ctx context.Context, apiKey string) (string, error) {
 
 func loginCmdE(cmd *cobra.Command, _ []string) (err error) {
 	writer := cmd.OutOrStdout()
-	projectName := loginParams.GetString(keyProject)
-	orgName := loginParams.GetString(keyOrganization)
+	projectName := loginParams.GetString(orgutil.KeyProject)
+	orgName := loginParams.GetString(orgutil.KeyOrganization)
 	in := bufio.NewReader(cmd.InOrStdin())
 	// In the future multiple aliases should be supported for one project.
 	alias := auth.AliasDefaultToken
@@ -204,12 +205,12 @@ func init() {
 
 	flags := loginCmd.Flags()
 	// we will use viper to fetch data, we do not need local variables
-	flags.StringP(keyProject, keyProjectShort, "", "Name of the Google cloud project to authorize for")
-	flags.StringP(keyOrganization, "", "", "Name of the Intrinsic organization to authorize for")
+	flags.StringP(orgutil.KeyProject, keyProjectShort, "", "Name of the Google cloud project to authorize for")
+	flags.StringP(orgutil.KeyOrganization, "", "", "Name of the Intrinsic organization to authorize for")
 	flags.Bool(keyNoBrowser, false, "Disables attempt to open login URL in browser automatically")
 	flags.Bool(keyBatch, false, "Suppresses command prompts and assume Yes or default as an answer. Use with shell scripts.")
 	flags.StringP(keyPortal, "", "portal.intrinsic.ai", "Hostname of the intrinsic portal to authenticate with.")
 	flags.MarkHidden(keyPortal)
 
-	loginParams = viperutil.BindToViper(flags, viperutil.BindToListEnv(keyProject, keyOrganization))
+	loginParams = viperutil.BindToViper(flags, viperutil.BindToListEnv(orgutil.KeyProject, orgutil.KeyOrganization))
 }

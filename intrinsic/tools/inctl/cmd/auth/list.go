@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"intrinsic/tools/inctl/util/orgutil"
 	"intrinsic/tools/inctl/util/printer"
 	"intrinsic/tools/inctl/util/viperutil"
 )
@@ -36,7 +37,7 @@ func listCredentialsE(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("cannot list configurations: %w", err)
 	}
 
-	projectName := listParams.GetString(keyProject)
+	projectName := listParams.GetString(orgutil.KeyProject)
 
 	result := &ConfigListView{Configurations: make(map[string][]string, len(configurations))}
 	for _, config := range configurations {
@@ -62,9 +63,9 @@ func init() {
 	flags := listCmd.Flags()
 
 	// local user may have multiple accounts for single project
-	flags.StringP(keyProject, keyProjectShort, "", "Show credentials for project starting with this prefix")
+	flags.StringP(orgutil.KeyProject, keyProjectShort, "", "Show credentials for project starting with this prefix")
 
-	listParams = viperutil.BindToViper(flags, viperutil.BindToListEnv(keyProject))
+	listParams = viperutil.BindToViper(flags, viperutil.BindToListEnv(orgutil.KeyProject))
 
 }
 

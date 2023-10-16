@@ -19,6 +19,7 @@ go_library(
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/tools/inctl/auth",
         "//intrinsic/tools/inctl/cmd:root",
+        "//intrinsic/tools/inctl/util:orgutil",
         "//intrinsic/tools/inctl/util:printer",
         "//intrinsic/tools/inctl/util:viperutil",
         "@com_github_spf13_cobra//:go_default_library",
