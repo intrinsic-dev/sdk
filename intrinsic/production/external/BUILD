@@ -36,6 +36,7 @@ exports_files(
         "BUILD.sysroot",
         "BUILD.workspace_root",
         "LICENSE",
+        "README.md",
         "WORKSPACE",
         "copy.bara.sky",
         "go.mod",
