@@ -28,8 +28,8 @@ var (
 var deviceCmd = orgutil.WrapCmd(
 	&cobra.Command{
 		Use:   "device",
-		Short: "Manages user authorization",
-		Long:  "Manages user authorization for accessing solutions in the project.",
+		Short: "Manage device specific settings and registration.",
+		Long:  "This subcommand provides utilities that interact with singular devices.\nThese are generally part of a cluster, or not yet registered to any user.",
 		// Catching common typos and potential alternatives
 		SuggestFor: []string{"devcie", "dve", "deviec"},
 	}, viperLocal)
