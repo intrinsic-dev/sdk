@@ -59,7 +59,10 @@ service ClusterDiscoveryService {
   
   
 
-  // Returns a list of clusters registered to this project.
+  // Returns a list of clusters registered to the org provided via context.
+  // If no org is provided, the defaultorg will be used.
+  // In multi-tenant projects, this is an empty org, and no cluster will be
+  // returned.
   rpc ListClusterDescriptions(ListClusterDescriptionsRequest)
       returns (ListClusterDescriptionsResponse) {}
 }

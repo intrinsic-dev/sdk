@@ -13,6 +13,7 @@ import (
 	clusterdiscoverygrpcpb "intrinsic/frontend/cloud/api/clusterdiscovery_grpc_go_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/cmd/root"
+	"intrinsic/tools/inctl/util/orgutil"
 	"intrinsic/tools/inctl/util/printer"
 )
 
@@ -60,19 +61,7 @@ func (res *ListClusterDescriptionsResponse) String() string {
 	return strings.Join(lines, "\n")
 }
 
-type listClustersParams struct {
-	serverAddr string
-	dialerOpts []grpc.DialOption
-	printer    printer.Printer
-}
-
-func listClusters(ctx context.Context, params *listClustersParams) error {
-	conn, err := grpc.DialContext(ctx, params.serverAddr, params.dialerOpts...)
-	if err != nil {
-		return fmt.Errorf("failed to create client connection: %w", err)
-	}
-	defer conn.Close()
-
+func fetchAndPrintClusters(ctx context.Context, conn *grpc.ClientConn, prtr printer.Printer) error {
 	client := clusterdiscoverygrpcpb.NewClusterDiscoveryServiceClient(conn)
 	resp, err := client.ListClusterDescriptions(
 		ctx, &clusterdiscoverygrpcpb.ListClusterDescriptionsRequest{})
@@ -80,7 +69,8 @@ func listClusters(ctx context.Context, params *listClustersParams) error {
 		return fmt.Errorf("request to list clusters failed: %w", err)
 	}
 
-	params.printer.Print(&ListClusterDescriptionsResponse{m: resp})
+	prtr.Print(&ListClusterDescriptionsResponse{m: resp})
+
 	return nil
 }
 
@@ -95,26 +85,16 @@ var clusterListCmd = &cobra.Command{
 			return err
 		}
 
-		projectName := ClusterCmdViper.GetString(KeyProject)
-		serverAddr := "dns:///www.endpoints." + projectName + ".cloud.goog:443"
-		ctx, dialerOpts, err := dialerutil.DialInfoCtx(cmd.Context(), dialerutil.DialInfoParams{
-			Address:  serverAddr,
-			CredName: projectName,
+		ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
+			CredName: ClusterCmdViper.GetString(orgutil.KeyProject),
+			CredOrg:  ClusterCmdViper.GetString(orgutil.KeyOrganization),
 		})
 		if err != nil {
 			return fmt.Errorf("could not create connection options for the cluster discovery service: %w", err)
 		}
+		defer conn.Close()
 
-		err = listClusters(ctx, &listClustersParams{
-			serverAddr: serverAddr,
-			dialerOpts: *dialerOpts,
-			printer:    prtr,
-		})
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return fetchAndPrintClusters(ctx, conn, prtr)
 	},
 }
 
