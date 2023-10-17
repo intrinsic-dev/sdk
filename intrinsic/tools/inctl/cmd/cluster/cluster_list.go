@@ -9,20 +9,12 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	clusterdiscoverygrpcpb "intrinsic/frontend/cloud/api/clusterdiscovery_grpc_go_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/printer"
 )
-
-const (
-	keyProject   = "project"
-	keyIntrinsic = "intrinsic"
-)
-
-var viperLocal = viper.New()
 
 // ListClusterDescriptionsResponse embeds clusterdiscoverygrpcpb.ListClusterDescriptionsResponse.
 type ListClusterDescriptionsResponse struct {
@@ -103,7 +95,7 @@ var clusterListCmd = &cobra.Command{
 			return err
 		}
 
-		projectName := viperLocal.GetString(keyProject)
+		projectName := ClusterCmdViper.GetString(KeyProject)
 		serverAddr := "dns:///www.endpoints." + projectName + ".cloud.goog:443"
 		ctx, dialerOpts, err := dialerutil.DialInfoCtx(cmd.Context(), dialerutil.DialInfoParams{
 			Address:  serverAddr,
@@ -128,14 +120,4 @@ var clusterListCmd = &cobra.Command{
 
 func init() {
 	ClusterCmd.AddCommand(clusterListCmd)
-	clusterListCmd.PersistentFlags().StringP(keyProject, "p", "", `The Google Cloud Project (GCP) project to use.
-	You can set the environment variable INTRINSIC_PROJECT=project_name to set a default project name.`)
-
-	viperLocal.SetEnvPrefix(keyIntrinsic)
-	viperLocal.BindPFlag(keyProject, clusterListCmd.PersistentFlags().Lookup(keyProject))
-	viperLocal.BindEnv(keyProject)
-
-	if viperLocal.GetString(keyProject) == "" {
-		clusterListCmd.MarkPersistentFlagRequired(keyProject)
-	}
 }
