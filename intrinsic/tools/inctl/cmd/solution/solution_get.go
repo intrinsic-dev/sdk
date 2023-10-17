@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"intrinsic/tools/inctl/util/orgutil"
+
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	clusterdiscoverygrpcpb "intrinsic/frontend/cloud/api/clusterdiscovery_grpc_go_proto"
@@ -105,18 +107,12 @@ var solutionGetCmd = &cobra.Command{
 			return err
 		}
 
-		projectName := viperLocal.GetString(keyProject)
-		serverAddr := "dns:///www.endpoints." + projectName + ".cloud.goog:443"
-		ctx, dialerOpts, err := dialerutil.DialInfoCtx(cmd.Context(), dialerutil.DialInfoParams{
-			Address:  serverAddr,
+		projectName := viperLocal.GetString(orgutil.KeyProject)
+		orgName := viperLocal.GetString(orgutil.KeyOrganization)
+		ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
 			CredName: projectName,
+			CredOrg:  orgName,
 		})
-		if err != nil {
-			return fmt.Errorf(
-				"could not connect to service: %w", err)
-		}
-
-		conn, err := grpc.DialContext(ctx, serverAddr, *dialerOpts...)
 		if err != nil {
 			return fmt.Errorf("failed to create client connection: %w", err)
 		}

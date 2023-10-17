@@ -7,36 +7,24 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"intrinsic/tools/inctl/cmd/root"
+	"intrinsic/tools/inctl/util/orgutil"
 )
 
 const (
-	keyIntrinsic = "intrinsic"
-	keyProject   = "project"
-	keyFilter    = "filter"
+	keyFilter = "filter"
 )
 
 var (
 	viperLocal = viper.New()
 )
 
-var solutionCmd = &cobra.Command{
+var solutionCmd = orgutil.WrapCmd(&cobra.Command{
 	Use:                root.SolutionCmdName,
 	Aliases:            []string{root.SolutionsCmdName},
 	Short:              "Solution interacts with solutions",
 	DisableFlagParsing: true,
-}
+}, viperLocal)
 
 func init() {
 	root.RootCmd.AddCommand(solutionCmd)
-	solutionCmd.PersistentFlags().StringP(keyProject, "p", "",
-		`The Google Cloud Project (GCP) project to use. You can set the environment variable
-		INTRINSIC_PROJECT=project_name to set a default project name.`)
-
-	viperLocal.SetEnvPrefix(keyIntrinsic)
-	viperLocal.BindPFlag(keyProject, solutionCmd.PersistentFlags().Lookup(keyProject))
-	viperLocal.BindEnv(keyProject)
-
-	if viperLocal.GetString(keyProject) == "" {
-		solutionCmd.MarkPersistentFlagRequired(keyProject)
-	}
 }

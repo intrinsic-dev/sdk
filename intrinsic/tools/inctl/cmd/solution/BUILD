@@ -20,6 +20,7 @@ go_library(
         "//intrinsic/frontend/cloud/api:solutiondiscovery_grpc_go_proto",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/tools/inctl/cmd:root",
+        "//intrinsic/tools/inctl/util:orgutil",
         "//intrinsic/tools/inctl/util:printer",
         "@com_github_spf13_cobra//:go_default_library",
         "@com_github_spf13_viper//:go_default_library",

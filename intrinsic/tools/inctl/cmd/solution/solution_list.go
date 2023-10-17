@@ -14,6 +14,7 @@ import (
 	solutiondiscoverygrpcpb "intrinsic/frontend/cloud/api/solutiondiscovery_grpc_go_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/cmd/root"
+	"intrinsic/tools/inctl/util/orgutil"
 	"intrinsic/tools/inctl/util/printer"
 )
 
@@ -128,17 +129,12 @@ var solutionListCmd = &cobra.Command{
 			return err
 		}
 
-		projectName := viperLocal.GetString(keyProject)
-		serverAddr := "dns:///www.endpoints." + projectName + ".cloud.goog:443"
-		ctx, dialerOpts, err := dialerutil.DialInfoCtx(cmd.Context(), dialerutil.DialInfoParams{
-			Address:  serverAddr,
+		projectName := viperLocal.GetString(orgutil.KeyProject)
+		orgName := viperLocal.GetString(orgutil.KeyOrganization)
+		ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
 			CredName: projectName,
+			CredOrg:  orgName,
 		})
-		if err != nil {
-			return fmt.Errorf(
-				"could not create connection options for the solution discovery service: %w", err)
-		}
-		conn, err := grpc.DialContext(ctx, serverAddr, *dialerOpts...)
 		if err != nil {
 			return fmt.Errorf("failed to create client connection: %w", err)
 		}
