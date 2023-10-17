@@ -16,13 +16,13 @@ def intrinsic_sdks_deps_0():
     following in your WORKSPACE:
 
     git_repository(name = "com_googlesource_intrinsic_intrinsic_sdks", remote = "...", ...)
-    load("@com_googlesource_intrinsic_intrinsic_sdks//:intrinsic_sdks_deps_0.bzl", "intrinsic_sdks_deps_0")
+    load("@com_googlesource_intrinsic_intrinsic_sdks//bazel:deps_0.bzl", "intrinsic_sdks_deps_0")
     intrinsic_sdks_deps_0()
-    load("@com_googlesource_intrinsic_intrinsic_sdks//:intrinsic_sdks_deps_1.bzl", "intrinsic_sdks_deps_1")
+    load("@com_googlesource_intrinsic_intrinsic_sdks//bazel:deps_1.bzl", "intrinsic_sdks_deps_1")
     intrinsic_sdks_deps_1()
-    load("@com_googlesource_intrinsic_intrinsic_sdks//:intrinsic_sdks_deps_2.bzl", "intrinsic_sdks_deps_2")
+    load("@com_googlesource_intrinsic_intrinsic_sdks//bazel:deps_2.bzl", "intrinsic_sdks_deps_2")
     intrinsic_sdks_deps_2()
-    load("@com_googlesource_intrinsic_intrinsic_sdks//:intrinsic_sdks_deps_3.bzl", "intrinsic_sdks_deps_3")
+    load("@com_googlesource_intrinsic_intrinsic_sdks//bazel:deps_3.bzl", "intrinsic_sdks_deps_3")
     intrinsic_sdks_deps_3()
 
     The reason why this is split into multiple files and macros is that .bzl-files can only contain
