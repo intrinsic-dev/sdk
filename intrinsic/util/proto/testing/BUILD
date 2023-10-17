@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 # Test libraries and utilities for situations that deal with proto libraries and
 # their generated code.

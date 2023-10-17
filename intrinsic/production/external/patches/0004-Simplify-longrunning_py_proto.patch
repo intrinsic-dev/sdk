@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 --- a/google/longrunning/BUILD.bazel	2022-12-22 12:16:23.490681255 -0800
 +++ b/google/longrunning/BUILD.bazel	2022-12-22 12:17:28.626782188 -0800

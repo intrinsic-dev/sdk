@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 // The `disable_motion` tool attempts to put the ICON Server into the DISABLED
 // operational state.

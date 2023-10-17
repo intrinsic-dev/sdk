@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 // Package start defines the hwmodule start command which installs an ICON hardware module.
 package start

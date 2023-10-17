@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 # This package contains public protos that are exposed to clients of Intrinsic perception.
 

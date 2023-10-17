@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 """Implements a SkillRepository to only serve a single skill."""
 

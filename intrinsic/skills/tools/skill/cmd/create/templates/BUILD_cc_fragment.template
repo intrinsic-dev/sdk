@@ -1,7 +1,5 @@
 {{/*
 Copyright 2023 Intrinsic Innovation LLC
-Intrinsic Proprietary and Confidential
-Provided subject to written agreement between the parties.
 */ -}}
 
 {{/*empty line at top since this template is appended to an existing file*/}}

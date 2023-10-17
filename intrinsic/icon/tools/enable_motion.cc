@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 // The `enable_motion` tool attempts to put the ICON Server into the ENABLED
 // operational state, allowing Sessions to be created and motions to be

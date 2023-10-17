@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 load("//intrinsic/icon/hal/bzl:hardware_module_binary.bzl", "hardware_module_binary")
 load("//intrinsic/icon/hal/bzl:hardware_module_image.bzl", "hardware_module_image")

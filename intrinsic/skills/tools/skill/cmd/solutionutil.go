@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 // Package solutionutil provides helper functions for resolving clusters from solution names
 package solutionutil

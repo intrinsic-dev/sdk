@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 #include "intrinsic/assets/testing/id_test_utils.h"
 

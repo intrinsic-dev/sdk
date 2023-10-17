@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 #ifndef INTRINSIC_UTIL_GRPC_CONNECTION_PARAMS_H_
 #define INTRINSIC_UTIL_GRPC_CONNECTION_PARAMS_H_

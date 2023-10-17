@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 # This directory should contain code that is used internally to our platform.
 # Some files may still be exported as part of the Skills SDK, but they should

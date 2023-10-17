@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 #ifndef INTRINSIC_SKILLS_TESTING_NO_OP_SKILL_H_
 #define INTRINSIC_SKILLS_TESTING_NO_OP_SKILL_H_

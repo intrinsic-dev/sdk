@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 #ifndef INTRINSIC_ICON_CONTROL_C_API_EXTERNAL_ACTION_API_TESTING_LOOPBACK_FAKE_ARM_H_
 #define INTRINSIC_ICON_CONTROL_C_API_EXTERNAL_ACTION_API_TESTING_LOOPBACK_FAKE_ARM_H_

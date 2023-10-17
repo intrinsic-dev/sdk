@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 // File to declare all strings used for state variable paths.
 #ifndef INTRINSIC_ICON_COMMON_STATE_VARIABLE_PATH_CONSTANTS_H_

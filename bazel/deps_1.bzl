@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 """Workspace dependencies needed for the Intrinsic SDKs as a 3rd-party consumer (part 1)."""
 

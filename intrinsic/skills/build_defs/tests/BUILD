@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 load("//intrinsic/skills/build_defs:skill.bzl", "cc_skill", "cc_skill_image", "py_skill", "skill_manifest")
 

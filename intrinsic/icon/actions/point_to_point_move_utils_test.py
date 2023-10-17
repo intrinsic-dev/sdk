@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 from absl.testing import absltest
 from intrinsic.icon.actions import point_to_point_move_pb2

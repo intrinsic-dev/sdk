@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 #ifndef INTRINSIC_LOGGING_DATA_LOGGER_CLIENT_H_
 #define INTRINSIC_LOGGING_DATA_LOGGER_CLIENT_H_

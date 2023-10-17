@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 # Templates used by the external inctl tool.
 package(default_visibility = ["//intrinsic/tools/inctl/cmd/bazel:__subpackages__"])

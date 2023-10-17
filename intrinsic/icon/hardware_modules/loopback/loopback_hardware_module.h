@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 #ifndef INTRINSIC_ICON_HARDWARE_MODULES_LOOPBACK_LOOPBACK_HARDWARE_MODULE_H_
 #define INTRINSIC_ICON_HARDWARE_MODULES_LOOPBACK_LOOPBACK_HARDWARE_MODULE_H_

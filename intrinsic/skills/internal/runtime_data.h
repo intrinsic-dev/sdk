@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 // This file contains data types that are used by the skill service at runtime
 // to provide our internal framework access to metadata about skills. Classes

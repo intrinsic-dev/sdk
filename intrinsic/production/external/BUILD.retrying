@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 # Retrying is an Apache 2.0 licensed general-purpose retrying library, written
 # in Python, to simplify the task of adding retry behavior to just about

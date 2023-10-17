@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 // API for capturing source-code location information.
 // Based on http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4519.pdf.

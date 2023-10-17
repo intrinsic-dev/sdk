@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 // This header brings in Vector, Matrix, Quaternion and Plane types from the
 // blue::eigenmath namespace.

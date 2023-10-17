@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")

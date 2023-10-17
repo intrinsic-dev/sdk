@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 // Package listreleasedversions defines the skill list_released_versions command which lists versions of a skill in a catalog.
 package listreleasedversions

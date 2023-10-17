@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 # Configure Gazelle to get importpath-to-repository mappings from
 # bazel/go_deps.bzl. This file needs to be referenced in our call to

@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 #include "intrinsic/icon/control/c_api/external_action_api/icon_action_factory_context.h"
 

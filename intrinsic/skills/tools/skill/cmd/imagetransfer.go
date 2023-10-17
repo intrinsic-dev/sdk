@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 // Package imagetransfer contains a Transferer interface and implementation
 // that reads and writes images to a container registry.

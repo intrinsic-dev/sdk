@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 #ifndef INTRINSIC_ICON_CONTROL_C_API_WRAPPERS_STRING_WRAPPER_H_
 #define INTRINSIC_ICON_CONTROL_C_API_WRAPPERS_STRING_WRAPPER_H_

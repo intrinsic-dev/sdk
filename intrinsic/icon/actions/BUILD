@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")

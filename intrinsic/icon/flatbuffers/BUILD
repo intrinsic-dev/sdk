@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 load("//intrinsic/platform:cc_fbs_library.bzl", "cc_fbs_library")
 load("//intrinsic/platform:fbs_library.bzl", "fbs_library")

@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 // The `list_parts` binary is a tool that lists available robot parts from an
 // Icon Application Layer Service.

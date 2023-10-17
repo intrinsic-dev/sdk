@@ -1,6 +1,4 @@
 // Copyright 2023 Intrinsic Innovation LLC
-// Intrinsic Proprietary and Confidential
-// Provided subject to written agreement between the parties.
 
 #ifndef INTRINSIC_PLATFORM_COMMON_BUFFERS_INTERNAL_EVENT_FD_H_
 #define INTRINSIC_PLATFORM_COMMON_BUFFERS_INTERNAL_EVENT_FD_H_

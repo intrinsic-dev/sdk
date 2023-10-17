@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 diff --git a/bazel/python_rules.bzl b/bazel/python_rules.bzl
 index 97d9736058..2aff86be44 100644

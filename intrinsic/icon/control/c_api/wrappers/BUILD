@@ -1,6 +1,4 @@
 # Copyright 2023 Intrinsic Innovation LLC
-# Intrinsic Proprietary and Confidential
-# Provided subject to written agreement between the parties.
 
 # This package holds wrappers that make ICON classes available to users of the RTCL C API
 # (see parent directory).
