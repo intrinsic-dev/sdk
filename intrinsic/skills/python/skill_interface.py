@@ -2,7 +2,7 @@
 
 """Skills Python APIs and definitions."""
 import abc
-from typing import List, Mapping, Optional
+from typing import Generic, List, Mapping, Optional, TypeVar, Union
 
 from google.protobuf import descriptor
 from google.protobuf import message
@@ -21,6 +21,9 @@ ExecuteRequest = execute_request.ExecuteRequest
 GetFootprintContext = get_footprint_context.GetFootprintContext
 GetFootprintRequest = get_footprint_request.GetFootprintRequest
 SkillCancelledError = skill_canceller.SkillCancelledError
+
+TParamsType = TypeVar('TParamsType', bound=message.Message)
+TResultType = TypeVar('TResultType', bound=Union[message.Message, None])
 
 
 class InvalidSkillParametersError(ValueError):
@@ -90,7 +93,7 @@ class SkillSignatureInterface(metaclass=abc.ABCMeta):
     return 30.0
 
 
-class SkillExecuteInterface(metaclass=abc.ABCMeta):
+class SkillExecuteInterface(abc.ABC, Generic[TParamsType, TResultType]):
   """Interface for skill executors.
 
   Implementations of the SkillExecuteInterface define how a skill behaves when
@@ -99,8 +102,8 @@ class SkillExecuteInterface(metaclass=abc.ABCMeta):
 
   @abc.abstractmethod
   def execute(
-      self, request: ExecuteRequest, context: ExecuteContext
-  ) -> message.Message | None:
+      self, request: ExecuteRequest[TParamsType], context: ExecuteContext
+  ) -> TResultType:
     """Executes the skill.
 
     Skill authors should override this method with their implementation.
@@ -136,7 +139,7 @@ class SkillExecuteInterface(metaclass=abc.ABCMeta):
     )
 
 
-class SkillProjectInterface(metaclass=abc.ABCMeta):
+class SkillProjectInterface(abc.ABC, Generic[TParamsType, TResultType]):
   """Interface for skill projectors.
 
   Implementations of the SkillProjectInterface define how predictive information
@@ -150,7 +153,9 @@ class SkillProjectInterface(metaclass=abc.ABCMeta):
   """
 
   def get_footprint(
-      self, request: GetFootprintRequest, context: GetFootprintContext
+      self,
+      request: GetFootprintRequest[TParamsType],
+      context: GetFootprintContext,
   ) -> footprint_pb2.Footprint:
     """Returns the required resources for running this skill.
 
@@ -170,7 +175,10 @@ class SkillProjectInterface(metaclass=abc.ABCMeta):
 
 
 class Skill(
-    SkillSignatureInterface, SkillExecuteInterface, SkillProjectInterface
+    SkillSignatureInterface,
+    SkillExecuteInterface[TParamsType, TResultType],
+    SkillProjectInterface[TParamsType, TResultType],
+    Generic[TParamsType, TResultType],
 ):
   """Interface for skills.
 

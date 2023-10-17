@@ -23,6 +23,15 @@ py_library(
 )
 
 py_library(
+    name = "skill_interface_utils",
+    srcs = ["skill_interface_utils.py"],
+    deps = [
+        ":skill_interface",
+        "//intrinsic/skills/internal:execute_context_impl_py",
+    ],
+)
+
+py_library(
     name = "get_footprint_context",
     srcs = ["get_footprint_context.py"],
     deps = [
