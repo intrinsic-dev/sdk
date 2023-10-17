@@ -47,7 +47,7 @@ class SkillSignatureInterface(metaclass=abc.ABCMeta):
     return None
 
   @classmethod
-  def required_equipment(cls) -> Mapping[str, equipment_pb2.EquipmentSelector]:
+  def required_equipment(cls) -> Mapping[str, equipment_pb2.ResourceSelector]:
     """Returns the signature of the skill's required equipment.
 
     The return map includes the name of the equipment as the key and its

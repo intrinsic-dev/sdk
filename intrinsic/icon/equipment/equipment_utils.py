@@ -2,7 +2,7 @@
 
 """Helper functions to interact with ICON equipment in Python.
 
-Instead of directly building ICON equipment selectors and connections, use these
+Instead of directly building ICON resource selectors and connections, use these
 helper functions to avoid depending directly on the underlying proto messages.
 """
 
@@ -21,7 +21,7 @@ ICON2_FORCE_TORQUE_SENSOR_PART_KEY = "Icon2ForceTorqueSensorPart"
 ICON2_RANGEFINDER_PART_KEY = "Icon2RangefinderPart"
 
 
-def make_icon_equipment_selector(
+def make_icon_resource_selector(
     with_position_controlled_part: bool = False,
     with_torque_controlled_part: bool = False,
     with_gripper_part: bool = False,
@@ -29,8 +29,8 @@ def make_icon_equipment_selector(
     with_force_torque_sensor_part: bool = False,
     with_rangefinder_part: bool = False,
     with_observation_stream: bool = False,
-) -> equipment_pb2.EquipmentSelector:
-  """Creates an equipment selector for an ICON resource handle with specific parts.
+) -> equipment_pb2.ResourceSelector:
+  """Creates a resource selector for an ICON resource handle with specific parts.
 
   Args:
     with_position_controlled_part: If true, requires a position-controlled part.
@@ -42,7 +42,7 @@ def make_icon_equipment_selector(
     with_observation_stream: If true, requires an observation stream config.
 
   Returns:
-    A populated equipment selector.
+    A populated resource selector.
   """
 
   equipment_type_names = ["Icon2Connection"]
@@ -61,7 +61,7 @@ def make_icon_equipment_selector(
   if with_observation_stream:
     equipment_type_names.append("IconRobotObservationStreamParams")
 
-  return equipment_pb2.EquipmentSelector(
+  return equipment_pb2.ResourceSelector(
       equipment_type_names=equipment_type_names
   )
 

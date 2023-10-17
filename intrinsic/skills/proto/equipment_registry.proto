@@ -9,7 +9,7 @@ import "intrinsic/skills/proto/equipment.proto";
 
 message EquipmentBySelectorRequest {
   // The selector that must be matched.
-  intrinsic_proto.skills.EquipmentSelector selector = 1;
+  intrinsic_proto.skills.ResourceSelector selector = 1;
 }
 
 message EquipmentBySelectorResponse {

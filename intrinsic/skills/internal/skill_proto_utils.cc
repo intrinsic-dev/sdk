@@ -58,8 +58,8 @@ absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
   }
   skill.set_doc_string(skill_interface.DocString());
   const auto equipment = skill_interface.EquipmentRequired();
-  skill.mutable_equipment_selectors()->insert(equipment.begin(),
-                                              equipment.end());
+  skill.mutable_resource_selectors()->insert(equipment.begin(),
+                                             equipment.end());
   if (const google::protobuf::Descriptor* descriptor =
           skill_interface.GetParameterDescriptor();
       descriptor != nullptr) {
@@ -265,7 +265,7 @@ absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
     skill.set_id_version(skill.id());
   }
   skill.set_doc_string(manifest.documentation().doc_string());
-  *skill.mutable_equipment_selectors() =
+  *skill.mutable_resource_selectors() =
       manifest.dependencies().required_equipment();
 
   skill.mutable_execution_options()->set_supports_cancellation(

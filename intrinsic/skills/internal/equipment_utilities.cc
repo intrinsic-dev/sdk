@@ -20,7 +20,7 @@ absl::StatusOr<google::protobuf::RepeatedPtrField<
     intrinsic_proto::skills::EquipmentResource>>
 ReserveEquipmentRequired(
     const absl::flat_hash_map<std::string,
-                              intrinsic_proto::skills::EquipmentSelector>&
+                              intrinsic_proto::skills::ResourceSelector>&
         equipment_required,
     const google::protobuf::Map<std::string,
                                 intrinsic_proto::skills::ResourceHandle>&

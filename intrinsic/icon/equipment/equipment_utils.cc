@@ -80,9 +80,9 @@ absl::StatusOr<IconEquipment> ConnectToIconEquipment(
   return out;
 }
 
-intrinsic_proto::skills::EquipmentSelector
-Icon2EquipmentSelectorBuilder::Build() const {
-  intrinsic_proto::skills::EquipmentSelector selector;
+intrinsic_proto::skills::ResourceSelector Icon2ResourceSelectorBuilder::Build()
+    const {
+  intrinsic_proto::skills::ResourceSelector selector;
   selector.add_equipment_type_names(kIcon2ConnectionKey);
   if (position_part_) {
     selector.add_equipment_type_names(kIcon2PositionPartKey);
@@ -108,43 +108,42 @@ Icon2EquipmentSelectorBuilder::Build() const {
   return selector;
 }
 
-Icon2EquipmentSelectorBuilder&
-Icon2EquipmentSelectorBuilder::WithPositionControlledPart() {
+Icon2ResourceSelectorBuilder&
+Icon2ResourceSelectorBuilder::WithPositionControlledPart() {
   position_part_ = true;
   return *this;
 }
 
-Icon2EquipmentSelectorBuilder&
-Icon2EquipmentSelectorBuilder::WithTorqueControlledPart() {
+Icon2ResourceSelectorBuilder&
+Icon2ResourceSelectorBuilder::WithTorqueControlledPart() {
   torque_part_ = true;
   return *this;
 }
 
-Icon2EquipmentSelectorBuilder&
-Icon2EquipmentSelectorBuilder::WithGripperPart() {
+Icon2ResourceSelectorBuilder& Icon2ResourceSelectorBuilder::WithGripperPart() {
   gripper_part_ = true;
   return *this;
 }
 
-Icon2EquipmentSelectorBuilder& Icon2EquipmentSelectorBuilder::WithAdioPart() {
+Icon2ResourceSelectorBuilder& Icon2ResourceSelectorBuilder::WithAdioPart() {
   adio_part_ = true;
   return *this;
 }
 
-Icon2EquipmentSelectorBuilder&
-Icon2EquipmentSelectorBuilder::WithForceTorqueSensorPart() {
+Icon2ResourceSelectorBuilder&
+Icon2ResourceSelectorBuilder::WithForceTorqueSensorPart() {
   force_torque_sensor_part_ = true;
   return *this;
 }
 
-Icon2EquipmentSelectorBuilder&
-Icon2EquipmentSelectorBuilder::WithObservationStream() {
+Icon2ResourceSelectorBuilder&
+Icon2ResourceSelectorBuilder::WithObservationStream() {
   observation_stream_ = true;
   return *this;
 }
 
-Icon2EquipmentSelectorBuilder&
-Icon2EquipmentSelectorBuilder::WithRangefinderPart() {
+Icon2ResourceSelectorBuilder&
+Icon2ResourceSelectorBuilder::WithRangefinderPart() {
   rangefinder_part_ = true;
   return *this;
 }

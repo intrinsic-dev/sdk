@@ -63,10 +63,10 @@ class SkillSignatureInterface {
   // This is used to defined the types of equipment supported by the skill.
   //
   // The keys of this map are the name of the 'slot' for the equipment, and the
-  // values are the `EquipmentSelector`s corresponding to each 'slot'. The
-  // `EquipmentSelector`s describe the type of equipment required for the slot.
+  // values are the `ResourceSelector`s corresponding to each 'slot'. The
+  // `ResourceSelector`s describe the type of equipment required for the slot.
   virtual absl::flat_hash_map<std::string,
-                              intrinsic_proto::skills::EquipmentSelector>
+                              intrinsic_proto::skills::ResourceSelector>
   EquipmentRequired() const {
     return {};
   }

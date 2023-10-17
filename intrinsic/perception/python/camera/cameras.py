@@ -49,15 +49,15 @@ def _unpack_camera_config(
   return camera_config
 
 
-def make_camera_equipment_selector() -> equipment_pb2.EquipmentSelector:
-  """Creates the default equipment selector for a camera equipment slot.
+def make_camera_resource_selector() -> equipment_pb2.ResourceSelector:
+  """Creates the default resource selector for a camera equipment slot.
 
   Used in a skill's `required_equipment` implementation.
 
   Returns:
-    An equipment selector that is valid for cameras.
+    A resource selector that is valid for cameras.
   """
-  return equipment_pb2.EquipmentSelector(
+  return equipment_pb2.ResourceSelector(
       equipment_type_names=[
           _CONFIG_EQUIPMENT_IDENTIFIER,
       ]
@@ -77,10 +77,10 @@ class Camera:
     @classmethod
     @overrides(skl.Skill)
     def required_equipment(cls) -> Mapping[str,
-    equipment_pb2.EquipmentSelector]:
+    equipment_pb2.ResourceSelector]:
       # create a camera equipment slot for the skill
       return {
-          camera_slot: cameras.make_camera_equipment_selector()
+          camera_slot: cameras.make_camera_resource_selector()
       }
     ```
   - Create and use a camera in the skill:

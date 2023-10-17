@@ -68,7 +68,7 @@ class ResourceData:
     required_resources: Mapping of resources to run the skill.
   """
 
-  required_resources: Mapping[str, equipment_pb2.EquipmentSelector]
+  required_resources: Mapping[str, equipment_pb2.ResourceSelector]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -132,7 +132,7 @@ def get_runtime_data_from(
     )
 
   resource_data = dict(
-      skill_service_config.skill_description.equipment_selectors
+      skill_service_config.skill_description.resource_selectors
   )
 
   if skill_service_config.skill_description.parameter_description.HasField(

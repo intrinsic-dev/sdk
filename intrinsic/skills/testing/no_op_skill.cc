@@ -22,7 +22,7 @@ std::unique_ptr<SkillInterface> NoOpSkill::CreateSkill() {
 
 std::string NoOpSkill::Name() const { return "no_op"; }
 
-absl::flat_hash_map<std::string, intrinsic_proto::skills::EquipmentSelector>
+absl::flat_hash_map<std::string, intrinsic_proto::skills::ResourceSelector>
 NoOpSkill::EquipmentRequired() const {
   return {};
 }

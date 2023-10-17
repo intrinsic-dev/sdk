@@ -21,7 +21,7 @@ class NoOpSkill : public SkillInterface {
 
   std::string Name() const override;
 
-  absl::flat_hash_map<std::string, intrinsic_proto::skills::EquipmentSelector>
+  absl::flat_hash_map<std::string, intrinsic_proto::skills::ResourceSelector>
   EquipmentRequired() const override;
 
   const google::protobuf::Descriptor* GetParameterDescriptor() const override;

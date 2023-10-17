@@ -53,7 +53,7 @@ def proto_from_skill(
     proto.doc_string = skill.__doc__.rstrip()
 
   for key, val in skill.required_equipment().items():
-    proto.equipment_selectors[key].CopyFrom(val)
+    proto.resource_selectors[key].CopyFrom(val)
 
   proto.parameter_description.parameter_descriptor_fileset.CopyFrom(
       descriptors.gen_file_descriptor_set(skill.get_parameter_descriptor())
@@ -107,7 +107,7 @@ def proto_from_skill_manifest(
   )
 
   for key, val in manifest.dependencies.required_equipment.items():
-    skill.equipment_selectors[key].CopyFrom(val)
+    skill.resource_selectors[key].CopyFrom(val)
 
   add_file_descriptor_set_without_source_code_from_manifest(
       manifest, file_descriptor_set, skill

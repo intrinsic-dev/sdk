@@ -56,23 +56,23 @@ absl::StatusOr<IconEquipment> ConnectToIconEquipment(
     absl::string_view equipment_slot, const ChannelFactory& channel_factory,
     absl::Duration timeout = kGrpcClientConnectDefaultTimeout);
 
-class Icon2EquipmentSelectorBuilder {
+class Icon2ResourceSelectorBuilder {
  public:
-  intrinsic_proto::skills::EquipmentSelector Build() const;
+  intrinsic_proto::skills::ResourceSelector Build() const;
 
-  Icon2EquipmentSelectorBuilder& WithPositionControlledPart();
+  Icon2ResourceSelectorBuilder& WithPositionControlledPart();
 
-  Icon2EquipmentSelectorBuilder& WithTorqueControlledPart();
+  Icon2ResourceSelectorBuilder& WithTorqueControlledPart();
 
-  Icon2EquipmentSelectorBuilder& WithGripperPart();
+  Icon2ResourceSelectorBuilder& WithGripperPart();
 
-  Icon2EquipmentSelectorBuilder& WithAdioPart();
+  Icon2ResourceSelectorBuilder& WithAdioPart();
 
-  Icon2EquipmentSelectorBuilder& WithForceTorqueSensorPart();
+  Icon2ResourceSelectorBuilder& WithForceTorqueSensorPart();
 
-  Icon2EquipmentSelectorBuilder& WithRangefinderPart();
+  Icon2ResourceSelectorBuilder& WithRangefinderPart();
 
-  Icon2EquipmentSelectorBuilder& WithObservationStream();
+  Icon2ResourceSelectorBuilder& WithObservationStream();
 
  private:
   bool position_part_ = false;

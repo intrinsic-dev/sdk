@@ -108,22 +108,21 @@ class ExecutionOptions {
 class ResourceData {
  public:
   ResourceData() = default;
-  explicit ResourceData(
-      const absl::flat_hash_map<std::string,
-                                intrinsic_proto::skills::EquipmentSelector>&
-          resources_required);
+  explicit ResourceData(const absl::flat_hash_map<
+                        std::string, intrinsic_proto::skills::ResourceSelector>&
+                            resources_required);
 
   ResourceData(const ResourceData& other) = default;
   ResourceData& operator=(const ResourceData& other) = default;
 
   const absl::flat_hash_map<std::string,
-                            intrinsic_proto::skills::EquipmentSelector>&
+                            intrinsic_proto::skills::ResourceSelector>&
   GetRequiredResources() const {
     return resources_required_;
   }
 
  private:
-  absl::flat_hash_map<std::string, intrinsic_proto::skills::EquipmentSelector>
+  absl::flat_hash_map<std::string, intrinsic_proto::skills::ResourceSelector>
       resources_required_ = {};
 };
 
