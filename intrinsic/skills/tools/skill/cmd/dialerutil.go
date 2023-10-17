@@ -64,6 +64,7 @@ type DialInfoParams struct {
 	Cluster   string // The name of the server to install to
 	CredName  string // The name of the credentials to load from auth.Store
 	CredAlias string // Optional alias for key to load
+	CredOrg   string // Optional the org-id header to set
 	CredToken string // Optional the credential value itself. This bypasses the store
 }
 
@@ -79,13 +80,6 @@ func insecureOpts(address string) *[]grpc.DialOption {
 	return &[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 }
 
-// DialInfo is now deprecated, please use DialInfoCtx
-//
-// Deprecated: please use DialInfoCtx
-func DialInfo(params DialInfoParams) (context.Context, *[]grpc.DialOption, error) {
-	return DialInfoCtx(context.Background(), params)
-}
-
 // DialInfoCtx returns the metadata for dialing a gRPC connection to a cloud/on-prem cluster.
 //
 // Function uses provided ctx to manage lifecycle of connection created. Ctx may be
@@ -98,7 +92,22 @@ func DialInfo(params DialInfoParams) (context.Context, *[]grpc.DialOption, error
 // Returns insecure connection data if the address is a local network address (such as
 // `localhost:17080`), otherwise retrieves cert from system cert pool, and sets up the metadata for
 // a TLS cert with per-RPC basic auth credentials.
+// Deprecated: please use DialConnectionCtx
 func DialInfoCtx(ctx context.Context, params DialInfoParams) (context.Context, *[]grpc.DialOption, error) {
+	ctx, opts, _, err := dialInfoCtxInt(ctx, params)
+	return ctx, opts, err
+}
+
+// dialInfoCtxInt is DialInfoCtx but allows to default the ServerAddr.
+// This is used by DialConnectionCtx and unifies the www.endpoints... handling
+func dialInfoCtxInt(ctx context.Context, params DialInfoParams) (context.Context, *[]grpc.DialOption, string, error) {
+	if params.Address == "" {
+		if params.CredName == "" {
+			return ctx, nil, "", fmt.Errorf("not enough information to build target address. Provide --org or --project")
+		}
+
+		params.Address = fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", params.CredName)
+	}
 
 	// policy for retrying failed gRPC requests as documented here:
 	// https://pkg.go.dev/google.golang.org/grpc/examples/features/retry
@@ -126,13 +135,17 @@ func DialInfoCtx(ctx context.Context, params DialInfoParams) (context.Context, *
 		),
 	}
 
+	if params.CredOrg != "" {
+		ctx = metadata.AppendToOutgoingContext(ctx, auth.OrgIDHeader, strings.Split(params.CredOrg, "@")[0])
+	}
+
 	if opts := insecureOpts(params.Address); opts != nil {
 		finalOpts := append(baseOpts, *opts...)
-		return ctx, &finalOpts, nil
+		return ctx, &finalOpts, params.Address, nil
 	}
 	pool, err := x509.SystemCertPool()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to retrieve system cert pool: %w", err)
+		return nil, nil, "", fmt.Errorf("failed to retrieve system cert pool: %w", err)
 	}
 
 	if params.Cluster != "" {
@@ -141,7 +154,7 @@ func DialInfoCtx(ctx context.Context, params DialInfoParams) (context.Context, *
 
 	rpcCredentials, err := createCredentials(params)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot retrieve connection credentials: %w", err)
+		return nil, nil, "", fmt.Errorf("cannot retrieve connection credentials: %w", err)
 	}
 
 	finalOpts := append(baseOpts,
@@ -149,7 +162,7 @@ func DialInfoCtx(ctx context.Context, params DialInfoParams) (context.Context, *
 		grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, "")),
 	)
 
-	return ctx, &finalOpts, nil
+	return ctx, &finalOpts, params.Address, nil
 }
 
 func isLocal(address string) bool {
@@ -204,22 +217,18 @@ func createCredentials(params DialInfoParams) (credentials.PerRPCCredentials, er
 	return nil, ErrCredentialsRequired
 }
 
-// DialConnection creates and returns a gRPC connection.
-//
-// Deprecated: please use DialConnectionCtx
-func DialConnection(params DialInfoParams) (context.Context, *grpc.ClientConn, error) {
-	return DialConnectionCtx(context.Background(), params)
-}
-
-// DialConnectionCtx creates and returns a gRPC connection that is created based on the DialInfoParams
+// DialConnectionCtx creates and returns a gRPC connection that is created based on the DialInfoParams.
+// DialConnectionCtx will fill the ServerAddr or Credname if necessary.
+// The CredName is filled from the organization information. It's equal to the project's name.
+// The ServerAddr is defaulted to the endpoints url for compute projects.
 func DialConnectionCtx(ctx context.Context, params DialInfoParams) (context.Context, *grpc.ClientConn, error) {
 
-	ctx, dialerOpts, err := DialInfoCtx(ctx, params)
+	ctx, dialerOpts, addr, err := dialInfoCtxInt(ctx, params)
 	if err != nil {
 		return nil, nil, fmt.Errorf("dial info: %w", err)
 	}
 
-	conn, err := grpc.DialContext(ctx, params.Address, *dialerOpts...)
+	conn, err := grpc.DialContext(ctx, addr, *dialerOpts...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("dialing context: %w", err)
 	}
