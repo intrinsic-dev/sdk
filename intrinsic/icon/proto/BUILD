@@ -339,27 +339,8 @@ py_proto_library(
 )
 
 proto_library(
-    name = "acontis_ecat_device_proto",
-    srcs = ["acontis_ecat_device.proto"],
-    deps = [
-        "@com_google_protobuf//:timestamp_proto",
-    ],
-)
-
-cc_proto_library(
-    name = "acontis_ecat_device_cc_proto",
-    deps = [":acontis_ecat_device_proto"],
-)
-
-py_proto_library(
-    name = "acontis_ecat_device_py_pb2",
-    deps = [":acontis_ecat_device_proto"],
-)
-
-proto_library(
     name = "icon_protos",
     deps = [
-        ":acontis_ecat_device_proto",
         ":blended_cartesian_move_proto",
         ":cart_space_proto",
         ":generic_part_config_proto",

@@ -5,7 +5,6 @@
 from absl.testing import absltest
 
 # pylint: disable=unused-import
-from intrinsic.icon.proto import acontis_ecat_device_pb2
 from intrinsic.icon.proto import cart_space_pb2
 from intrinsic.icon.proto import ik_options_pb2
 from intrinsic.icon.proto import joint_space_pb2
