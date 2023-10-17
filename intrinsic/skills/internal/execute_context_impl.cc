@@ -8,19 +8,12 @@
 #include <string>
 #include <utility>
 
-#include "absl/log/log.h"
-#include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
-#include "absl/time/time.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_canceller.h"
-#include "intrinsic/skills/internal/skill_registry_client_interface.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/footprint.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
@@ -37,14 +30,11 @@ ExecuteContextImpl::ExecuteContextImpl(
     const intrinsic_proto::skills::ExecuteRequest& request,
     std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
     std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service,
-    EquipmentPack equipment,
-    SkillRegistryClientInterface& skill_registry_client,
-    std::shared_ptr<SkillCanceller> skill_canceller)
+    EquipmentPack equipment, std::shared_ptr<SkillCanceller> skill_canceller)
     : world_id_(request.world_id()),
       object_world_service_(std::move(object_world_service)),
       motion_planner_service_(std::move(motion_planner_service)),
       equipment_(std::move(equipment)),
-      skill_registry_client_(skill_registry_client),
       skill_canceller_(skill_canceller),
       log_context_(request.context()) {}
 

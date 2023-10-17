@@ -10,16 +10,12 @@
 
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "absl/time/time.h"
 #include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
-#include "intrinsic/skills/internal/default_parameters.h"
-#include "intrinsic/skills/internal/skill_registry_client_interface.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/footprint.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
@@ -44,13 +40,11 @@ GetFootprintContextImpl::GetFootprintContextImpl(
     std::shared_ptr<
         intrinsic_proto::motion_planning::MotionPlannerService::StubInterface>
         motion_planner_service,
-    EquipmentPack equipment,
-    SkillRegistryClientInterface& skill_registry_client)
+    EquipmentPack equipment)
     : world_id_(std::move(world_id)),
       object_world_service_(std::move(object_world_service)),
       motion_planner_service_(std::move(motion_planner_service)),
       equipment_(std::move(equipment)),
-      skill_registry_client_(skill_registry_client),
       log_context_(log_context) {}
 
 absl::StatusOr<ObjectWorldClient> GetFootprintContextImpl::GetObjectWorld() {

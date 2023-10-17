@@ -100,11 +100,9 @@ absl::Status SkillInit(
       CreateSkillRegistryClient(skill_registry_service_address));
 
   SkillProjectorServiceImpl project_service(
-      skill_repository, object_world_service, motion_planner_service,
-      *skill_registry_client);
+      skill_repository, object_world_service, motion_planner_service);
   SkillExecutorServiceImpl execute_service(
-      skill_repository, object_world_service, motion_planner_service,
-      *skill_registry_client);
+      skill_repository, object_world_service, motion_planner_service);
 
   std::string server_address = absl::StrCat("0.0.0.0:", skill_service_port);
 

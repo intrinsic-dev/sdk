@@ -7,11 +7,8 @@
 #define INTRINSIC_SKILLS_CC_EXECUTE_CONTEXT_H_
 
 #include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
-#include "absl/time/time.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
-#include "intrinsic/skills/cc/client_common.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_canceller.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"

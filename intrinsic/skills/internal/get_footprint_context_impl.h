@@ -6,21 +6,21 @@
 #define INTRINSIC_SKILLS_INTERNAL_GET_FOOTPRINT_CONTEXT_IMPL_H_
 
 #include <memory>
-#include <optional>
 #include <string>
 
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "absl/time/time.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_interface.h"
-#include "intrinsic/skills/internal/skill_registry_client_interface.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/footprint.pb.h"
+#include "intrinsic/world/objects/frame.h"
+#include "intrinsic/world/objects/kinematic_object.h"
 #include "intrinsic/world/objects/object_world_client.h"
+#include "intrinsic/world/objects/world_object.h"
 #include "intrinsic/world/proto/object_world_service.grpc.pb.h"
 
 namespace intrinsic {
@@ -37,8 +37,7 @@ class GetFootprintContextImpl : public GetFootprintContext {
       std::shared_ptr<
           intrinsic_proto::motion_planning::MotionPlannerService::StubInterface>
           motion_planner_service,
-      EquipmentPack equipment,
-      SkillRegistryClientInterface& skill_registry_client);
+      EquipmentPack equipment);
 
   absl::StatusOr<world::ObjectWorldClient> GetObjectWorld() override;
 
@@ -60,7 +59,6 @@ class GetFootprintContextImpl : public GetFootprintContext {
       intrinsic_proto::motion_planning::MotionPlannerService::StubInterface>
       motion_planner_service_;
   EquipmentPack equipment_;
-  SkillRegistryClientInterface& skill_registry_client_ ABSL_ATTRIBUTE_UNUSED;
   intrinsic_proto::data_logger::Context log_context_;
 };
 

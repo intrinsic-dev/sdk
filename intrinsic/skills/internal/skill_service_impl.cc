@@ -38,7 +38,6 @@
 #include "intrinsic/skills/internal/execute_context_impl.h"
 #include "intrinsic/skills/internal/get_footprint_context_impl.h"
 #include "intrinsic/skills/internal/runtime_data.h"
-#include "intrinsic/skills/internal/skill_registry_client_interface.h"
 #include "intrinsic/skills/internal/skill_repository.h"
 #include "intrinsic/skills/proto/error.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
@@ -386,12 +385,10 @@ absl::Status SkillOperations::Clear(bool wait_for_operations) {
 SkillProjectorServiceImpl::SkillProjectorServiceImpl(
     SkillRepository& skill_repository,
     std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
-    std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service,
-    SkillRegistryClientInterface& skill_registry_client)
+    std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service)
     : object_world_service_(std::move(object_world_service)),
       motion_planner_service_(std::move(motion_planner_service)),
       skill_repository_(skill_repository),
-      skill_registry_client_(skill_registry_client),
       message_factory_(google::protobuf::MessageFactory::generated_factory()) {}
 
 absl::StatusOr<GetFootprintRequest>
@@ -431,7 +428,7 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
 
   GetFootprintContextImpl footprint_context(
       request->world_id(), request->context(), object_world_service_,
-      motion_planner_service_, std::move(equipment), skill_registry_client_);
+      motion_planner_service_, std::move(equipment));
   auto skill_result =
       skill->GetFootprint(get_footprint_request, footprint_context);
 
@@ -473,12 +470,10 @@ SkillExecutorServiceImpl::SkillExecutorServiceImpl(
     SkillRepository& skill_repository,
     std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
     std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service,
-    SkillRegistryClientInterface& skill_registry_client,
     RequestWatcher* request_watcher)
     : skill_repository_(skill_repository),
       object_world_service_(std::move(object_world_service)),
       motion_planner_service_(std::move(motion_planner_service)),
-      skill_registry_client_(skill_registry_client),
       request_watcher_(request_watcher),
       message_factory_(google::protobuf::MessageFactory::generated_factory()) {}
 
@@ -520,7 +515,7 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
 
   auto skill_context = std::make_unique<ExecuteContextImpl>(
       *request, object_world_service_, motion_planner_service_,
-      std::move(equipment), skill_registry_client_, operation->canceller());
+      std::move(equipment), operation->canceller());
 
   INTRINSIC_RETURN_IF_ERROR(operation->Start(
       [skill = std::move(skill), skill_request = std::move(skill_request),

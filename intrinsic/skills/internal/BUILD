@@ -114,8 +114,6 @@ cc_library(
     srcs = ["get_footprint_context_impl.cc"],
     hdrs = ["get_footprint_context_impl.h"],
     deps = [
-        ":default_parameters",
-        ":skill_registry_client_interface",
         "//intrinsic/icon/release:status_helpers",
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/motion_planning:motion_planner_client",
@@ -135,8 +133,6 @@ cc_library(
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/time",
-        "@com_google_protobuf//:protobuf",
     ],
 )
 
@@ -159,8 +155,6 @@ cc_library(
     srcs = ["execute_context_impl.cc"],
     hdrs = ["execute_context_impl.h"],
     deps = [
-        ":skill_registry_client_interface",
-        "//intrinsic/icon/release:status_helpers",
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/motion_planning:motion_planner_client",
         "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
@@ -173,12 +167,8 @@ cc_library(
         "//intrinsic/skills/proto:skills_cc_proto",
         "//intrinsic/world/objects:object_world_client",
         "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/time",
     ],
 )
 

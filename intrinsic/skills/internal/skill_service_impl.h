@@ -30,7 +30,6 @@
 #include "intrinsic/skills/cc/skill_canceller.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/internal/runtime_data.h"
-#include "intrinsic/skills/internal/skill_registry_client_interface.h"
 #include "intrinsic/skills/internal/skill_repository.h"
 #include "intrinsic/skills/proto/skill_service.grpc.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
@@ -265,8 +264,7 @@ class SkillProjectorServiceImpl
       SkillRepository& skill_repository,
       std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
       std::shared_ptr<MotionPlannerService::StubInterface>
-          motion_planner_service,
-      SkillRegistryClientInterface& skill_registry_client);
+          motion_planner_service);
 
   grpc::Status GetFootprint(
       grpc::ServerContext* context,
@@ -284,7 +282,6 @@ class SkillProjectorServiceImpl
   std::shared_ptr<ObjectWorldService::StubInterface> object_world_service_;
   std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service_;
   SkillRepository& skill_repository_;
-  SkillRegistryClientInterface& skill_registry_client_;
   absl::Mutex message_mutex_;
   google::protobuf::MessageFactory* message_factory_
       ABSL_GUARDED_BY(message_mutex_);
@@ -309,7 +306,6 @@ class SkillExecutorServiceImpl
       std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
       std::shared_ptr<MotionPlannerService::StubInterface>
           motion_planner_service,
-      SkillRegistryClientInterface& skill_registry_client,
       RequestWatcher* request_watcher = nullptr);
 
   ~SkillExecutorServiceImpl() override;
@@ -351,7 +347,6 @@ class SkillExecutorServiceImpl
   SkillRepository& skill_repository_;
   std::shared_ptr<ObjectWorldService::StubInterface> object_world_service_;
   std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service_;
-  SkillRegistryClientInterface& skill_registry_client_;
   RequestWatcher* request_watcher_;
 
   absl::Mutex message_mutex_;
