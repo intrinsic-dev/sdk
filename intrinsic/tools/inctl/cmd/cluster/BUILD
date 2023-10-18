@@ -8,12 +8,15 @@ go_library(
     name = "cluster",
     srcs = [
         "cluster.go",
+        "cluster_delete.go",
         "cluster_list.go",
     ],
     visibility = [
         "//intrinsic/tools/inctl:__subpackages__",
     ],
     deps = [
+        "//intrinsic/frontend/cloud/api:clusterdeletion_api_go_proto",
+        "//intrinsic/frontend/cloud/api:clusterdeletion_grpc_go_proto",
         "//intrinsic/frontend/cloud/api:clusterdiscovery_api_go_proto",
         "//intrinsic/frontend/cloud/api:clusterdiscovery_grpc_go_proto",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",

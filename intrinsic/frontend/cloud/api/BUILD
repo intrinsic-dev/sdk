@@ -83,3 +83,20 @@ go_grpc_library(
         ":solutiondiscovery_api_go_proto",
     ],
 )
+
+proto_library(
+    name = "clusterdeletion_api_proto",
+    srcs = ["clusterdeletion_api.proto"],
+    deps = ["@com_google_protobuf//:empty_proto"],
+)
+
+go_proto_library(
+    name = "clusterdeletion_api_go_proto",
+    deps = [":clusterdeletion_api_proto"],
+)
+
+go_grpc_library(
+    name = "clusterdeletion_grpc_go_proto",
+    srcs = [":clusterdeletion_api_proto"],
+    deps = [":clusterdeletion_api_go_proto"],
+)
