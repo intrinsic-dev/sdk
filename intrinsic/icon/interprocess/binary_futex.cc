@@ -1,6 +1,6 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-#include "intrinsic/icon/interprocess/remote_trigger/binary_futex.h"
+#include "intrinsic/icon/interprocess/binary_futex.h"
 
 #include <linux/futex.h>
 #include <sys/syscall.h>

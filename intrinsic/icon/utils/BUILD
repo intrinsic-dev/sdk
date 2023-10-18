@@ -103,7 +103,7 @@ cc_library(
     deps = [
         ":log_sink",
         ":realtime_guard",
-        "//intrinsic/icon/interprocess/remote_trigger:binary_futex",
+        "//intrinsic/icon/interprocess:binary_futex",
         "//intrinsic/platform/common/buffers:realtime_write_queue",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",

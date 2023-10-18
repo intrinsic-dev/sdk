@@ -22,7 +22,7 @@
 #include "absl/synchronization/mutex.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
-#include "intrinsic/icon/interprocess/remote_trigger/binary_futex.h"
+#include "intrinsic/icon/interprocess/binary_futex.h"
 #include "intrinsic/icon/utils/log_sink.h"
 #include "intrinsic/icon/utils/realtime_guard.h"
 #include "intrinsic/platform/common/buffers/realtime_write_queue.h"

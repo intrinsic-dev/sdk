@@ -31,7 +31,7 @@ cc_library(
     srcs = ["lockstep.cc"],
     hdrs = ["lockstep.h"],
     deps = [
-        "//intrinsic/icon/interprocess/remote_trigger:binary_futex",
+        "//intrinsic/icon/interprocess:binary_futex",
         "//intrinsic/icon/utils:log",
         "//intrinsic/icon/utils:realtime_status",
         "//intrinsic/icon/utils:realtime_status_macro",

@@ -5,19 +5,6 @@ package(default_visibility = [
 ])
 
 cc_library(
-    name = "binary_futex",
-    srcs = ["binary_futex.cc"],
-    hdrs = [
-        "binary_futex.h",
-    ],
-    deps = [
-        "//intrinsic/icon/testing:realtime_annotations",
-        "//intrinsic/icon/utils:realtime_status",
-        "@com_google_absl//absl/time",
-    ],
-)
-
-cc_library(
     name = "remote_trigger_server",
     srcs = [
         "remote_trigger_server.cc",
@@ -27,7 +14,7 @@ cc_library(
         "remote_trigger_server.h",
     ],
     deps = [
-        ":binary_futex",
+        "//intrinsic/icon/interprocess:binary_futex",
         "//intrinsic/icon/interprocess/shared_memory_manager",
         "//intrinsic/icon/interprocess/shared_memory_manager:memory_segment",
         "//intrinsic/icon/release:status_helpers",
@@ -50,7 +37,7 @@ cc_library(
         "remote_trigger_constants.h",
     ],
     deps = [
-        ":binary_futex",
+        "//intrinsic/icon/interprocess:binary_futex",
         "//intrinsic/icon/interprocess/shared_memory_manager:memory_segment",
         "//intrinsic/icon/release:status_helpers",
         "//intrinsic/icon/utils:realtime_status",

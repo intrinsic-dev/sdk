@@ -5,7 +5,7 @@
 #include <utility>
 
 #include "absl/time/time.h"
-#include "intrinsic/icon/interprocess/remote_trigger/binary_futex.h"
+#include "intrinsic/icon/interprocess/binary_futex.h"
 #include "intrinsic/icon/utils/log.h"
 #include "intrinsic/icon/utils/realtime_status.h"
 #include "intrinsic/icon/utils/realtime_status_macro.h"

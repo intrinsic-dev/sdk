@@ -13,7 +13,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
-#include "intrinsic/icon/interprocess/remote_trigger/binary_futex.h"
+#include "intrinsic/icon/interprocess/binary_futex.h"
 #include "intrinsic/icon/interprocess/remote_trigger/remote_trigger_constants.h"
 #include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/util/thread/thread.h"
