@@ -37,6 +37,10 @@ const (
 	KeyFilter = "filter"
 	// KeyInstallerAddress is the name of the installer address flag.
 	KeyInstallerAddress = "installer_address"
+	// KeyManifestFile is the file path to the manifest binary.
+	KeyManifestFile = "manifest_file"
+	// KeyManifestTarget is the build target to the skill manifest.
+	KeyManifestTarget = "manifest_target"
 	// KeyProject is the name of the project flag.
 	KeyProject = "project"
 	// KeyRegistry is the name of the registry flag.
@@ -145,6 +149,26 @@ func (cf *CmdFlags) GetFlagsListClusterSolution() (string, string, error) {
 	}
 
 	return cluster, solution, nil
+}
+
+// AddFlagManifestFile adds a flag for the manifest file path.
+func (cf *CmdFlags) AddFlagManifestFile() {
+	cf.OptionalString(KeyManifestFile, "", "The path to the manifest binary file.")
+}
+
+// GetFlagManifestFile gets the value of the manifest file flag added by AddFlagManifestFile.
+func (cf *CmdFlags) GetFlagManifestFile() string {
+	return cf.GetString(KeyManifestFile)
+}
+
+// AddFlagManifestTarget adds a flag for the manifest file build target.
+func (cf *CmdFlags) AddFlagManifestTarget() {
+	cf.OptionalString(KeyManifestTarget, "", "The manifest bazel target.")
+}
+
+// GetFlagManifestTarget gets the value of the manifest file flag added by AddFlagManifestTarget.
+func (cf *CmdFlags) GetFlagManifestTarget() string {
+	return cf.GetString(KeyManifestTarget)
 }
 
 // AddFlagProject adds a flag for the GCP project.

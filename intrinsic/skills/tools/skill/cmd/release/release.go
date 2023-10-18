@@ -6,12 +6,13 @@ package release
 import (
 	"fmt"
 
+	skillCmd "intrinsic/skills/tools/skill/cmd"
+	"intrinsic/skills/tools/skill/cmd/cmdutil"
+
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/spf13/cobra"
-	skillCmd "intrinsic/skills/tools/skill/cmd"
-	"intrinsic/skills/tools/skill/cmd/cmdutil"
 )
 
 const (
@@ -20,6 +21,13 @@ const (
 )
 
 var cmdFlags = cmdutil.NewCmdFlags()
+
+var (
+	buildCommand    = "bazel"
+	buildConfigArgs = []string{
+		"-c", "opt",
+	}
+)
 
 func remoteOpt() remote.Option {
 	authUser, authPwd := cmdFlags.GetFlagsRegistryAuthUserPassword()
@@ -63,6 +71,8 @@ func init() {
 	cmdFlags.AddFlagReleaseType()
 	cmdFlags.AddFlagVendor()
 	cmdFlags.AddFlagVersion()
+	cmdFlags.AddFlagManifestFile()
+	cmdFlags.AddFlagManifestTarget()
 
 	cmdFlags.OptionalString(keyDocString, "", "Skill documentation.")
 }
