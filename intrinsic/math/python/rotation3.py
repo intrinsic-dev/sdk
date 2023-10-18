@@ -12,7 +12,7 @@ from typing import Optional, Text, Tuple
 
 from intrinsic.math.python import math_types
 from intrinsic.math.python import quaternion as quaternion_class
-from intrinsic.robotics.pymath import vector_util
+from intrinsic.math.python import vector_util
 import numpy as np
 
 # ----------------------------------------------------------------------------
@@ -229,7 +229,7 @@ class Rotation3(object):
       # real component.
       axis = -axis
       cos_half_angle = -cos_half_angle
-    if sin_half_angle > vector_util.DEFAULT_ZERO_EPSILON:
+    if sin_half_angle > math_types.DEFAULT_ATOL_VALUE_FOR_NP_IS_CLOSE:
       axis = axis / sin_half_angle
     else:
       # Rotation angle is too small to resolve the axis.  Use the default axis
@@ -432,7 +432,7 @@ class Rotation3(object):
 
   def check_valid(
       self,
-      norm_epsilon: float = vector_util.DEFAULT_ZERO_EPSILON,
+      norm_epsilon: float = math_types.DEFAULT_ATOL_VALUE_FOR_NP_IS_CLOSE,
       err_msg: Text = '',
   ) -> None:
     """Checks that the rotation has valid values.
@@ -644,7 +644,7 @@ class Rotation3(object):
     return cls(quat=q, normalize=False)
 
   @classmethod
-  def random(cls, rng: Optional[vector_util.RngType] = None) -> 'Rotation3':
+  def random(cls, rng: Optional[np.random.Generator] = None) -> 'Rotation3':
     """Returns a random rotation generated using a RNG.
 
     Note that these are not uniformly distributed over SO(3).

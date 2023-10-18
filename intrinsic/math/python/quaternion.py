@@ -6,10 +6,11 @@ This library implements a Quaternion class that may or may not represent a
 rotation.
 """
 
+import math
 from typing import Optional, Text, Union
 
 from intrinsic.math.python import math_types
-from intrinsic.robotics.pymath import vector_util
+from intrinsic.math.python import vector_util
 import numpy as np
 
 # ----------------------------------------------------------------------------
@@ -146,7 +147,7 @@ class Quaternion(object):
     return Quaternion(xyzw=self._xyzw * _QUATERNION_CONJUGATE_SCALE_FACTORS)
 
   def is_normalized(
-      self, norm_epsilon: float = vector_util.DEFAULT_NORM_EPSILON
+      self, norm_epsilon: float = math_types.DEFAULT_RTOL_VALUE_FOR_NP_IS_CLOSE
   ) -> bool:
     """Returns True if the quaternion is normalized within norm_epsilon.
 
@@ -217,7 +218,7 @@ class Quaternion(object):
     """
     if isinstance(other, Quaternion):
       return self.multiply(other.inverse())
-    elif other <= vector_util.DEFAULT_ZERO_EPSILON:
+    elif other <= math_types.DEFAULT_ATOL_VALUE_FOR_NP_IS_CLOSE:
       # Calls the quaternion version to get the correct exception message.
       return self.divide(Quaternion(xyzw=[0.0, 0.0, 0.0, other]))
     else:
@@ -240,10 +241,11 @@ class Quaternion(object):
       ValueError: If the quaternion cannot be normalized, i.e. |q| == 0.
     """
     norm = np.linalg.norm(self._xyzw)
-    if norm <= vector_util.DEFAULT_ZERO_EPSILON:
+    if norm <= math_types.DEFAULT_ATOL_VALUE_FOR_NP_IS_CLOSE:
       raise ValueError(
           self._zero_magnitude_message(
-              norm_epsilon=vector_util.DEFAULT_ZERO_EPSILON, err_msg=err_msg
+              norm_epsilon=math_types.DEFAULT_ATOL_VALUE_FOR_NP_IS_CLOSE,
+              err_msg=err_msg,
           )
       )
     return Quaternion(self._xyzw / norm)
@@ -371,7 +373,7 @@ class Quaternion(object):
 
   def check_non_zero(
       self,
-      norm_epsilon: float = vector_util.DEFAULT_ZERO_EPSILON,
+      norm_epsilon: float = math_types.DEFAULT_ATOL_VALUE_FOR_NP_IS_CLOSE,
       err_msg: Text = '',
   ) -> None:
     """Raises a ValueError exception if the quaternion is close to zero.
@@ -383,7 +385,10 @@ class Quaternion(object):
     Raises:
       ValueError: If |q| <= norm_epsilon.
     """
-    if np.linalg.norm(self._xyzw) <= vector_util.DEFAULT_ZERO_EPSILON:
+    if (
+        np.linalg.norm(self._xyzw)
+        <= math_types.DEFAULT_ATOL_VALUE_FOR_NP_IS_CLOSE
+    ):
       raise ValueError(
           self._zero_magnitude_message(
               norm_epsilon=norm_epsilon, err_msg=err_msg
@@ -392,7 +397,7 @@ class Quaternion(object):
 
   def check_normalized(
       self,
-      norm_epsilon: float = vector_util.DEFAULT_NORM_EPSILON,
+      norm_epsilon: float = math_types.DEFAULT_RTOL_VALUE_FOR_NP_IS_CLOSE,
       err_msg: Text = '',
   ) -> None:
     """Raises a ValueError exception if the quaternion is not normalized.
@@ -427,11 +432,12 @@ class Quaternion(object):
 
   @classmethod
   def random_unit(
-      cls, rng: Optional[vector_util.RngType] = None
+      cls, rng: Optional[np.random.Generator] = None
   ) -> 'Quaternion':
-    """Returns a random unit quaternion.
+    """Returns a random unit quaternion uniformly distributed over SO(3).
 
-    Note that these are not uniformly distributed over SO(3).
+    Using Shoemake algorithm on go/graphic-gems-3, page 129 using quaternion
+    definition from go/shoemake-quaternions.
 
     Args:
       rng: A random number generator.
@@ -439,7 +445,25 @@ class Quaternion(object):
     Returns:
       A random Quaternion with magnitude one.
     """
-    return cls(xyzw=vector_util.random_unit_4(rng=rng))
+    if not rng:
+      rng = np.random.default_rng()
+
+    x0 = rng.uniform(low=0.0, high=1.0)
+    x1 = rng.uniform(low=0.0, high=1.0)
+    x2 = rng.uniform(low=0.0, high=1.0)
+    theta1 = 2 * math.pi * x1
+    theta2 = 2 * math.pi * x2
+    s1 = math.sin(theta1)
+    s2 = math.sin(theta2)
+    c1 = math.cos(theta1)
+    c2 = math.cos(theta2)
+    r1 = math.sqrt(1 - x0)
+    r2 = math.sqrt(x0)
+    x = s1 * r1
+    y = c1 * r1
+    z = s2 * r2
+    w = c2 * r2
+    return cls(xyzw=np.array([x, y, z, w]))
 
   # --------------------------------------------------------------------------
   # String representations

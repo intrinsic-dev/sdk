@@ -49,8 +49,8 @@ py_library(
         ":pose3",
         ":quaternion",
         ":rotation3",
+        ":vector_util",
         "//intrinsic/icon/proto:cart_space_py_pb2",
-        "//intrinsic/robotics/pymath:vector_util",
         requirement("numpy"),
     ],
 )
@@ -78,7 +78,7 @@ py_library(
         ":pose3",
         ":quaternion",
         ":rotation3",
-        "//intrinsic/robotics/pymath:vector_util",
+        ":vector_util",
         "@com_google_absl_py//absl/logging",
         "@com_google_absl_py//absl/testing:absltest",
         requirement("numpy"),
@@ -97,7 +97,7 @@ py_test(
         ":math_types",
         ":pose3",
         ":rotation3",
-        "//intrinsic/robotics/pymath:vector_util",
+        ":vector_util",
         "@com_google_absl_py//absl/logging",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
@@ -136,7 +136,7 @@ py_library(
         ":math_types",
         ":quaternion",
         ":rotation3",
-        "//intrinsic/robotics/pymath:vector_util",
+        ":vector_util",
         requirement("numpy"),
     ],
 )
@@ -153,7 +153,7 @@ py_test(
         ":pose3",
         ":quaternion",
         ":rotation3",
-        "//intrinsic/robotics/pymath:vector_util",
+        ":vector_util",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
         requirement("numpy"),
@@ -168,7 +168,7 @@ py_library(
     deps = [
         ":math_types",
         ":quaternion",
-        "//intrinsic/robotics/pymath:vector_util",
+        ":vector_util",
         requirement("numpy"),
     ],
 )
@@ -186,7 +186,7 @@ py_test(
         ":math_types",
         ":quaternion",
         ":rotation3",
-        "//intrinsic/robotics/pymath:vector_util",
+        ":vector_util",
         "@com_google_absl_py//absl/logging",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
@@ -201,7 +201,7 @@ py_library(
     ],
     deps = [
         ":math_types",
-        "//intrinsic/robotics/pymath:vector_util",
+        ":vector_util",
         requirement("numpy"),
     ],
 )
@@ -215,11 +215,23 @@ py_test(
     python_version = "PY3",
     deps = [
         ":math_test",
+        ":math_types",
         ":quaternion",
-        "//intrinsic/robotics/pymath:vector_util",
+        ":vector_util",
         "@com_google_absl_py//absl/logging",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
+        requirement("numpy"),
+    ],
+)
+
+py_library(
+    name = "vector_util",
+    srcs = [
+        "vector_util.py",
+    ],
+    deps = [
+        ":math_types",
         requirement("numpy"),
     ],
 )

@@ -11,7 +11,7 @@ from intrinsic.math.python import math_test
 from intrinsic.math.python import math_types
 from intrinsic.math.python import pose3
 from intrinsic.math.python import rotation3
-from intrinsic.robotics.pymath import vector_util
+from intrinsic.math.python import vector_util
 import numpy as np
 
 _MAKE_TEST_VECTOR_PARAMETERS = (

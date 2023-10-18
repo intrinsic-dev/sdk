@@ -12,7 +12,7 @@ from intrinsic.math.python import math_test
 from intrinsic.math.python import math_types
 from intrinsic.math.python import quaternion
 from intrinsic.math.python import rotation3
-from intrinsic.robotics.pymath import vector_util
+from intrinsic.math.python import vector_util
 import numpy as np
 
 _ARCTAN_HALF = 2 * math.degrees(math.atan(0.5))  # 26.5650512
@@ -694,10 +694,10 @@ class Rotation3Test(parameterized.TestCase, math_test.TestCase):
       self.assertNotEqual(random_rotation, rotation3.Rotation3.identity())
 
   def test_random_seeded(self):
-    rng_a = vector_util.default_rng(seed=1)
-    rng_a2 = vector_util.default_rng(seed=1)
-    rng_b = vector_util.default_rng(seed=2)
-    rng_c = vector_util.default_rng()
+    rng_a = np.random.default_rng(seed=1)
+    rng_a2 = np.random.default_rng(seed=1)
+    rng_b = np.random.default_rng(seed=2)
+    rng_c = np.random.default_rng()
     for _ in range(10):
       rota = rotation3.Rotation3.random(rng=rng_a)
       self.assertEqual(rota, rotation3.Rotation3.random(rng=rng_a2))

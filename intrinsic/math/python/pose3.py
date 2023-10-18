@@ -28,7 +28,7 @@ from typing import Optional, Text
 from intrinsic.math.python import math_types
 from intrinsic.math.python import quaternion as quaternion_class
 from intrinsic.math.python import rotation3
-from intrinsic.robotics.pymath import vector_util
+from intrinsic.math.python import vector_util
 import numpy as np
 
 # ----------------------------------------------------------------------------

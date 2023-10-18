@@ -8,13 +8,14 @@ from absl import logging
 from absl.testing import absltest
 from absl.testing import parameterized
 from intrinsic.math.python import math_test
+from intrinsic.math.python import math_types
 from intrinsic.math.python import quaternion
-from intrinsic.robotics.pymath import vector_util
+from intrinsic.math.python import vector_util
 import numpy as np
 
 # An error of this magnitude should not trigger failures on checks for
 # normalized quaternions.
-_LESS_THAN_NORM_EPSILON = vector_util.DEFAULT_NORM_EPSILON * 0.5
+_LESS_THAN_NORM_EPSILON = math_types.DEFAULT_RTOL_VALUE_FOR_NP_IS_CLOSE * 0.5
 
 _QUAT_0 = quaternion.Quaternion([0, 0, 0, 0])
 _QUAT_1 = quaternion.Quaternion.one()
@@ -99,7 +100,7 @@ class QuaternionTest(parameterized.TestCase, math_test.TestCase):
     """Tests Quaternion.__init__ exceptions."""
     self.assertRaisesRegex(
         ValueError,
-        vector_util.VECTOR_ZERO_MESSAGE,
+        'Vector has nearly zero magnitude.',
         quaternion.Quaternion,
         components,
         True,
@@ -422,14 +423,16 @@ class QuaternionTest(parameterized.TestCase, math_test.TestCase):
         ValueError,
         quaternion.QUATERNION_NOT_NORMALIZED_MESSAGE,
         (
-            quat_normalized * (1 + 2 * vector_util.DEFAULT_NORM_EPSILON)
+            quat_normalized
+            * (1 + 2 * math_types.DEFAULT_RTOL_VALUE_FOR_NP_IS_CLOSE)
         ).check_normalized,
     )
     self.assertRaisesRegex(
         ValueError,
         quaternion.QUATERNION_NOT_NORMALIZED_MESSAGE,
         (
-            quat_normalized * (1 - 2 * vector_util.DEFAULT_NORM_EPSILON)
+            quat_normalized
+            * (1 - 2 * math_types.DEFAULT_RTOL_VALUE_FOR_NP_IS_CLOSE)
         ).check_normalized,
     )
 
@@ -486,10 +489,10 @@ class QuaternionTest(parameterized.TestCase, math_test.TestCase):
     self.assertAlmostEqual(np.linalg.norm(cumulative_quaternion.xyzw), 1.0)
 
   def test_random_seeded(self):
-    rng_a = vector_util.default_rng(seed=1)
-    rng_a2 = vector_util.default_rng(seed=1)
-    rng_b = vector_util.default_rng(seed=2)
-    rng_c = vector_util.default_rng()
+    rng_a = np.random.default_rng(seed=1)
+    rng_a2 = np.random.default_rng(seed=1)
+    rng_b = np.random.default_rng(seed=2)
+    rng_c = np.random.default_rng()
     for _ in range(10):
       qa = quaternion.Quaternion.random_unit(rng=rng_a)
       self.assertEqual(qa, quaternion.Quaternion.random_unit(rng=rng_a2))

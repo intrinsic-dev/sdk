@@ -23,7 +23,7 @@ from intrinsic.math.python import math_types
 from intrinsic.math.python import pose3
 from intrinsic.math.python import quaternion
 from intrinsic.math.python import rotation3
-from intrinsic.robotics.pymath import vector_util
+from intrinsic.math.python import vector_util
 import numpy as np
 
 # ---------------------------------------------------------------------------
@@ -134,7 +134,7 @@ def make_named_unit_vectors() -> List[NamedVectorType]:
   named_vectors = []
   for name, v in make_named_vectors():
     v_norm = np.linalg.norm(v)
-    if v_norm > vector_util.DEFAULT_ZERO_EPSILON:
+    if v_norm > math_types.DEFAULT_ATOL_VALUE_FOR_NP_IS_CLOSE:
       v = v / v_norm
       named_vectors += [(name, v)]
   return named_vectors
@@ -811,7 +811,7 @@ class TestCase(absltest.TestCase):
   def assert_vector_is_normalized(
       self,
       vector: math_types.VectorType,
-      norm_epsilon: float = vector_util.DEFAULT_NORM_EPSILON,
+      norm_epsilon: float = math_types.DEFAULT_RTOL_VALUE_FOR_NP_IS_CLOSE,
       err_msg: Text = '',
   ) -> None:
     """Asserts that |vector| = 1.0 within norm_epsilon.
@@ -836,7 +836,7 @@ class TestCase(absltest.TestCase):
   def assert_quaternion_is_normalized(
       self,
       quat: quaternion.Quaternion,
-      norm_epsilon: float = vector_util.DEFAULT_NORM_EPSILON,
+      norm_epsilon: float = math_types.DEFAULT_RTOL_VALUE_FOR_NP_IS_CLOSE,
       err_msg: Text = '',
   ) -> None:
     """Asserts that |quat| = 1.0 within norm_epsilon.
