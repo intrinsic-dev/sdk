@@ -27,3 +27,7 @@ message SensorConfig {
   // have been applied. TODO: Shall we rename this to SensorSetting?
   repeated CameraSetting settings = 5;
 }
+
+message SensorConfigs {
+  repeated SensorConfig sensor_configs = 1;
+}
