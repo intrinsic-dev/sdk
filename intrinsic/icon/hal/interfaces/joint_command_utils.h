@@ -14,6 +14,8 @@ flatbuffers::DetachedBuffer BuildJointVelocityCommand(uint32_t num_dof);
 
 flatbuffers::DetachedBuffer BuildJointTorqueCommand(uint32_t num_dof);
 
+flatbuffers::DetachedBuffer BuildHandGuidingCommand();
+
 }  // namespace intrinsic_fbs
 
 #endif  // INTRINSIC_ICON_HAL_INTERFACES_JOINT_COMMAND_UTILS_H_

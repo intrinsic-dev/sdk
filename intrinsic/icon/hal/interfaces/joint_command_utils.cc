@@ -2,7 +2,12 @@
 
 #include "intrinsic/icon/hal/interfaces/joint_command_utils.h"
 
+#include <cstdint>
 #include <vector>
+
+#include "flatbuffers/detached_buffer.h"
+#include "flatbuffers/flatbuffer_builder.h"
+#include "intrinsic/icon/hal/interfaces/joint_command_generated.h"
 
 namespace intrinsic_fbs {
 
@@ -41,6 +46,14 @@ flatbuffers::DetachedBuffer BuildJointTorqueCommand(uint32_t num_dof) {
   auto default_torque = builder.CreateVector(zeros);
   auto torque_command = CreateJointTorqueCommand(builder, default_torque);
   builder.Finish(torque_command);
+  return builder.Release();
+}
+
+flatbuffers::DetachedBuffer BuildHandGuidingCommand() {
+  flatbuffers::FlatBufferBuilder builder;
+  builder.ForceDefaults(true);
+
+  builder.Finish(builder.CreateStruct(HandGuidingCommand(/*unused=*/false)));
   return builder.Release();
 }
 }  // namespace intrinsic_fbs

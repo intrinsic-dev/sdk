@@ -16,3 +16,8 @@ table JointVelocityCommand {
 table JointTorqueCommand {
   torque:[double];
 }
+
+struct HandGuidingCommand {
+  // Flatbuffers don't support empty structs.
+  unused:bool;
+}
