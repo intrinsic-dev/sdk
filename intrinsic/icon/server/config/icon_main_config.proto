@@ -29,4 +29,10 @@ message IconMainConfig {
   // Read and Write operations to the hardware modules will error if they take
   // longer than this value.
   double hardware_module_read_write_timeout_seconds = 8;
+
+  // The port to use when communicating with the simulation service.  This must
+  // be unique for each instance and be between 12347 and 12362, inclusive.
+  // The value is not actually used by mainloop ICON, but by the Intrinsic
+  // stack.
+  int32 sim_port = 9;
 }
