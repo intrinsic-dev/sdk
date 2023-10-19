@@ -65,6 +65,7 @@ proto_library(
     deps = [
         "//intrinsic/icon/control/parts:realtime_part_config_proto",
         "//intrinsic/icon/control/parts/hal:hal_part_config_proto",
+        "//intrinsic/icon/control/parts/hal:hal_part_config_types_for_mainloop",  # buildcleaner:keep
     ],
 )
 
