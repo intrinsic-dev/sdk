@@ -49,6 +49,10 @@ class _CannotConstructRequestError(Exception):
   """The service cannot construct a request for a skill."""
 
 
+class _InvalidResultTypeError(TypeError):
+  """A skill returned a result type that does not match expected type."""
+
+
 class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
   """Implementation of the skill Projector servicer."""
 
@@ -291,18 +295,43 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
 
     def execute() -> skill_service_pb2.ExecuteResult:
       result = skill.execute(skill_request, skill_context)
-      if isinstance(result, skill_service_pb2.ExecuteResult):
-        logging.warning(
-            'Execute returned ExecuteResult instead of the message to be'
-            ' wrapped.  Using the returned message directly.'
+      if (
+          result is None
+          and operation.runtime_data.return_type_data.descriptor is None
+      ):
+        return skill_service_pb2.ExecuteResult()
+      if (
+          result is None
+          and operation.runtime_data.return_type_data.descriptor is not None
+      ):
+        raise _InvalidResultTypeError(
+            'Expected return type:'
+            f' {operation.runtime_data.return_type_data.descriptor.full_name};'
+            ' Got return type: None.'
         )
-        return result
 
-      result_any = None
-      if result is not None:
-        result_any = any_pb2.Any()
-        result_any.Pack(result)
+      # linting complains that None.DESCRIPTOR does not exist if we don't have
+      # a case that returns here.
+      if result is None:
+        return skill_service_pb2.ExecuteResult()
 
+      if operation.runtime_data.return_type_data.descriptor is None:
+        raise _InvalidResultTypeError(
+            'Expected return type: None;'
+            f' Got return type: {result.DESCRIPTOR.full_name}.'
+        )
+      if (
+          result.DESCRIPTOR
+          != operation.runtime_data.return_type_data.descriptor
+      ):
+        raise _InvalidResultTypeError(
+            'Expected return type:'
+            f' {operation.runtime_data.return_type_data.descriptor.full_name};'
+            f' Got return type: {result.DESCRIPTOR.full_name}.'
+        )
+
+      result_any = any_pb2.Any()
+      result_any.Pack(result)
       return skill_service_pb2.ExecuteResult(result=result_any)
 
     operation.start(op=execute, op_name='execute')
