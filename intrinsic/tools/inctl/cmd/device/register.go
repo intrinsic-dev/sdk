@@ -26,6 +26,7 @@ var (
 	deviceRole    = ""
 	deviceRegion  = ""
 	privateDevice = false
+	replaceDevice = false
 )
 
 func validHostname(hostname string) bool {
@@ -92,6 +93,7 @@ var registerCmd = &cobra.Command{
 			Cluster:  clusterName,
 			Private:  privateDevice,
 			Region:   deviceRegion,
+			Replace:  replaceDevice,
 		}
 		if testID := os.Getenv("INCTL_CREATED_BY_TEST"); testID != "" {
 			// This is an automated test.
@@ -135,4 +137,5 @@ func init() {
 	registerCmd.Flags().StringVarP(&deviceRole, "device_role", "", "control-plane", "The role the device has in the cluster. Either 'control-plane' or 'worker'")
 	registerCmd.Flags().BoolVarP(&privateDevice, "private", "", false, "If set to 'true', the device will not be visible to other organization members")
 	registerCmd.Flags().StringVarP(&deviceRegion, "region", "", "unspecified", "This can be used for inventory tracking")
+	registerCmd.Flags().BoolVarP(&replaceDevice, "replace", "", false, "If set to 'true', an existing cluster with the same name will be replaced.\nThis is equivalent to calling 'inctl cluster delete' first")
 }
