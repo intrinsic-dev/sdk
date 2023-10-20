@@ -25,30 +25,29 @@ class GetFootprintContext {
   virtual ~GetFootprintContext() = default;
 
   // A client for the motion planning service.
-  virtual absl::StatusOr<motion_planning::MotionPlannerClient>
-  GetMotionPlanner() = 0;
+  virtual motion_planning::MotionPlannerClient& motion_planner() = 0;
 
   // A client for interacting with the object world.
-  virtual absl::StatusOr<world::ObjectWorldClient> GetObjectWorld() = 0;
+  virtual world::ObjectWorldClient& object_world() = 0;
 
   // Returns the frame by name for an object corresponding to some equipment.
   //
   // The frame is sourced from the same world that's available via
-  // GetObjectWorld().
+  // object_world().
   virtual absl::StatusOr<world::Frame> GetFrameForEquipment(
       absl::string_view equipment_name, absl::string_view frame_name) = 0;
 
   // Returns the kinematic object that corresponds to this equipment.
   //
   // The kinematic object is sourced from the same world that's available via
-  // GetObjectWorld().
+  // object_world().
   virtual absl::StatusOr<world::KinematicObject> GetKinematicObjectForEquipment(
       absl::string_view equipment_name) = 0;
 
   // Returns the world object that corresponds to this equipment.
   //
   // The world object is sourced from the same world that's available via
-  // GetObjectWorld().
+  // object_world().
   virtual absl::StatusOr<world::WorldObject> GetObjectForEquipment(
       absl::string_view equipment_name) = 0;
 };

@@ -3,14 +3,12 @@
 #ifndef INTRINSIC_SKILLS_INTERNAL_GET_FOOTPRINT_CONTEXT_IMPL_H_
 #define INTRINSIC_SKILLS_INTERNAL_GET_FOOTPRINT_CONTEXT_IMPL_H_
 
-#include <memory>
-#include <string>
+#include <utility>
 
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
-#include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
@@ -19,7 +17,6 @@
 #include "intrinsic/world/objects/kinematic_object.h"
 #include "intrinsic/world/objects/object_world_client.h"
 #include "intrinsic/world/objects/world_object.h"
-#include "intrinsic/world/proto/object_world_service.grpc.pb.h"
 
 namespace intrinsic {
 namespace skills {
@@ -27,17 +24,18 @@ namespace skills {
 // Implementation of GetFootprintContext as used by the skill service.
 class GetFootprintContextImpl : public GetFootprintContext {
  public:
-  GetFootprintContextImpl(
-      std::string world_id,
-      const intrinsic_proto::data_logger::Context& log_context,
-      std::shared_ptr<intrinsic_proto::world::ObjectWorldService::StubInterface>
-          object_world_service,
-      std::shared_ptr<
-          intrinsic_proto::motion_planning::MotionPlannerService::StubInterface>
-          motion_planner_service,
-      EquipmentPack equipment);
+  GetFootprintContextImpl(EquipmentPack equipment,
+                          motion_planning::MotionPlannerClient motion_planner,
+                          world::ObjectWorldClient object_world)
+      : equipment_(std::move(equipment)),
+        motion_planner_(std::move(motion_planner)),
+        object_world_(std::move(object_world)) {}
 
-  absl::StatusOr<world::ObjectWorldClient> GetObjectWorld() override;
+  motion_planning::MotionPlannerClient& motion_planner() override {
+    return motion_planner_;
+  }
+
+  world::ObjectWorldClient& object_world() override { return object_world_; }
 
   absl::StatusOr<world::KinematicObject> GetKinematicObjectForEquipment(
       absl::string_view equipment_name) override;
@@ -46,18 +44,10 @@ class GetFootprintContextImpl : public GetFootprintContext {
   absl::StatusOr<world::Frame> GetFrameForEquipment(
       absl::string_view equipment_name, absl::string_view frame_name) override;
 
-  absl::StatusOr<motion_planning::MotionPlannerClient> GetMotionPlanner()
-      override;
-
  private:
-  std::string world_id_;
-  std::shared_ptr<intrinsic_proto::world::ObjectWorldService::StubInterface>
-      object_world_service_;
-  std::shared_ptr<
-      intrinsic_proto::motion_planning::MotionPlannerService::StubInterface>
-      motion_planner_service_;
   EquipmentPack equipment_;
-  intrinsic_proto::data_logger::Context log_context_;
+  motion_planning::MotionPlannerClient motion_planner_;
+  world::ObjectWorldClient object_world_;
 };
 
 }  // namespace skills

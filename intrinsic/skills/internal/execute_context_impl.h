@@ -4,7 +4,7 @@
 #define INTRINSIC_SKILLS_INTERNAL_EXECUTE_CONTEXT_IMPL_H_
 
 #include <memory>
-#include <string>
+#include <utility>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -29,36 +29,38 @@ class ExecuteContextImpl : public ExecuteContext {
       ::intrinsic_proto::motion_planning::MotionPlannerService;
 
  public:
-  ExecuteContextImpl(
-      const intrinsic_proto::skills::ExecuteRequest& request,
-      std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
-      std::shared_ptr<MotionPlannerService::StubInterface>
-          motion_planner_service,
-      EquipmentPack equipment, std::shared_ptr<SkillCanceller> skill_canceller);
+  ExecuteContextImpl(std::shared_ptr<SkillCanceller> canceller,
+                     EquipmentPack equipment,
+                     intrinsic_proto::data_logger::Context logging_context,
+                     motion_planning::MotionPlannerClient motion_planner,
+                     world::ObjectWorldClient object_world)
+      : canceller_(canceller),
+        equipment_(std::move(equipment)),
+        logging_context_(logging_context),
+        motion_planner_(std::move(motion_planner)),
+        object_world_(std::move(object_world)) {}
 
-  SkillCanceller& GetCanceller() override { return *skill_canceller_; }
+  SkillCanceller& canceller() const override { return *canceller_; }
 
-  absl::StatusOr<world::ObjectWorldClient> GetObjectWorld() override;
+  const EquipmentPack& equipment() const override { return equipment_; }
 
-  const intrinsic_proto::data_logger::Context& GetLogContext() const override {
-    return log_context_;
-  };
+  const intrinsic_proto::data_logger::Context& logging_context()
+      const override {
+    return logging_context_;
+  }
 
-  absl::StatusOr<motion_planning::MotionPlannerClient> GetMotionPlanner()
-      override;
+  motion_planning::MotionPlannerClient& motion_planner() override {
+    return motion_planner_;
+  }
 
-  const EquipmentPack& GetEquipment() const override { return equipment_; }
+  world::ObjectWorldClient& object_world() override { return object_world_; }
 
  private:
-  std::string world_id_;
-
-  std::shared_ptr<ObjectWorldService::StubInterface> object_world_service_;
-  std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service_;
+  std::shared_ptr<SkillCanceller> canceller_;
   EquipmentPack equipment_;
-
-  std::shared_ptr<SkillCanceller> skill_canceller_;
-
-  intrinsic_proto::data_logger::Context log_context_;
+  intrinsic_proto::data_logger::Context logging_context_;
+  motion_planning::MotionPlannerClient motion_planner_;
+  world::ObjectWorldClient object_world_;
 };
 
 }  // namespace skills

@@ -28,6 +28,7 @@
 #include "grpcpp/support/status.h"
 #include "intrinsic/assets/id_utils.h"
 #include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/motion_planning/motion_planner_client.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_interface.h"
@@ -42,6 +43,7 @@
 #include "intrinsic/skills/proto/skills.pb.h"
 #include "intrinsic/util/proto/merge.h"
 #include "intrinsic/util/thread/thread.h"
+#include "intrinsic/world/objects/object_world_client.h"
 #include "intrinsic/world/proto/object_world_service.grpc.pb.h"
 
 namespace intrinsic {
@@ -425,8 +427,12 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
                              EquipmentPack::GetEquipmentPack(*request));
 
   GetFootprintContextImpl footprint_context(
-      request->world_id(), request->context(), object_world_service_,
-      motion_planner_service_, std::move(equipment));
+      std::move(equipment),
+      /*motion_planner=*/
+      motion_planning::MotionPlannerClient(request->world_id(),
+                                           motion_planner_service_),
+      /*object_world=*/
+      world::ObjectWorldClient(request->world_id(), object_world_service_));
   auto skill_result =
       skill->GetFootprint(get_footprint_request, footprint_context);
 
@@ -512,8 +518,13 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
                              EquipmentPack::GetEquipmentPack(*request));
 
   auto skill_context = std::make_unique<ExecuteContextImpl>(
-      *request, object_world_service_, motion_planner_service_,
-      std::move(equipment), operation->canceller());
+      /*canceller=*/operation->canceller(), std::move(equipment),
+      /*logging_context=*/request->context(),
+      /*motion_planner=*/
+      motion_planning::MotionPlannerClient(request->world_id(),
+                                           motion_planner_service_),
+      /*object_world=*/
+      world::ObjectWorldClient(request->world_id(), object_world_service_));
 
   INTRINSIC_RETURN_IF_ERROR(operation->Start(
       [skill = std::move(skill), skill_request = std::move(skill_request),

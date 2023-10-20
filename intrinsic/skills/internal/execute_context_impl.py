@@ -56,4 +56,3 @@ class ExecuteContextImpl(execute_context.ExecuteContext):
     self._motion_planner = motion_planner
     self._object_world = object_world
     self._resource_handles = resource_handles
-    self._skill_pub_sub_instance = ()

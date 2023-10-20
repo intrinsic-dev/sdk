@@ -30,21 +30,20 @@ class ExecuteContext {
   virtual ~ExecuteContext() = default;
 
   // Supports cooperative cancellation of the skill.
-  virtual SkillCanceller& GetCanceller() = 0;
+  virtual SkillCanceller& canceller() const = 0;
 
   // Equipment mapping associated with this skill instance.
-  virtual const EquipmentPack& GetEquipment() const = 0;
+  virtual const EquipmentPack& equipment() const = 0;
 
   // The logging context of the execution.
-  virtual const intrinsic_proto::data_logger::Context& GetLogContext()
+  virtual const intrinsic_proto::data_logger::Context& logging_context()
       const = 0;
 
   // A client for the motion planning service.
-  virtual absl::StatusOr<motion_planning::MotionPlannerClient>
-  GetMotionPlanner() = 0;
+  virtual motion_planning::MotionPlannerClient& motion_planner() = 0;
 
   // A client for interacting with the object world.
-  virtual absl::StatusOr<world::ObjectWorldClient> GetObjectWorld() = 0;
+  virtual world::ObjectWorldClient& object_world() = 0;
 };
 
 }  // namespace skills
