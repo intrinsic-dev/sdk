@@ -2,15 +2,12 @@
 
 load("//bazel:go_macros.bzl", "go_library")
 
+package(default_visibility = ["//visibility:public"])
+
 go_library(
     name = "imagetags",
     srcs = [
         "imagetags.go",
-    ],
-    visibility = [
-        "//intrinsic/icon/hal/tools:__subpackages__",
-        "//intrinsic/production:__subpackages__",
-        "//intrinsic/skills/tools:__subpackages__",
     ],
     deps = [
         "@com_github_pborman_uuid//:go_default_library",
