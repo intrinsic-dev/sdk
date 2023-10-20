@@ -58,7 +58,7 @@ def make_camera_resource_selector() -> equipment_pb2.ResourceSelector:
     A resource selector that is valid for cameras.
   """
   return equipment_pb2.ResourceSelector(
-      equipment_type_names=[
+      capability_names=[
           _CONFIG_EQUIPMENT_IDENTIFIER,
       ]
   )

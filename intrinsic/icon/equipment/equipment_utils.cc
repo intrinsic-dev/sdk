@@ -83,27 +83,27 @@ absl::StatusOr<IconEquipment> ConnectToIconEquipment(
 intrinsic_proto::skills::ResourceSelector Icon2ResourceSelectorBuilder::Build()
     const {
   intrinsic_proto::skills::ResourceSelector selector;
-  selector.add_equipment_type_names(kIcon2ConnectionKey);
+  selector.add_capability_names(kIcon2ConnectionKey);
   if (position_part_) {
-    selector.add_equipment_type_names(kIcon2PositionPartKey);
+    selector.add_capability_names(kIcon2PositionPartKey);
   }
   if (torque_part_) {
-    selector.add_equipment_type_names(kIcon2TorquePartKey);
+    selector.add_capability_names(kIcon2TorquePartKey);
   }
   if (gripper_part_) {
-    selector.add_equipment_type_names(kIcon2GripperPartKey);
+    selector.add_capability_names(kIcon2GripperPartKey);
   }
   if (adio_part_) {
-    selector.add_equipment_type_names(kIcon2AdioPartKey);
+    selector.add_capability_names(kIcon2AdioPartKey);
   }
   if (force_torque_sensor_part_) {
-    selector.add_equipment_type_names(kIcon2ForceTorqueSensorPartKey);
+    selector.add_capability_names(kIcon2ForceTorqueSensorPartKey);
   }
   if (observation_stream_) {
-    selector.add_equipment_type_names(kIconRobotObservationStreamParamsKey);
+    selector.add_capability_names(kIconRobotObservationStreamParamsKey);
   }
   if (rangefinder_part_) {
-    selector.add_equipment_type_names(kIcon2RangefinderPartKey);
+    selector.add_capability_names(kIcon2RangefinderPartKey);
   }
   return selector;
 }

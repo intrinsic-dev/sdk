@@ -45,25 +45,23 @@ def make_icon_resource_selector(
     A populated resource selector.
   """
 
-  equipment_type_names = ["Icon2Connection"]
+  capability_names = ["Icon2Connection"]
   if with_position_controlled_part:
-    equipment_type_names.append(ICON2_POSITION_PART_KEY)
+    capability_names.append(ICON2_POSITION_PART_KEY)
   if with_torque_controlled_part:
-    equipment_type_names.append(ICON2_TORQUE_PART_KEY)
+    capability_names.append(ICON2_TORQUE_PART_KEY)
   if with_gripper_part:
-    equipment_type_names.append(ICON2_GRIPPER_PART_KEY)
+    capability_names.append(ICON2_GRIPPER_PART_KEY)
   if with_adio_part:
-    equipment_type_names.append(ICON2_ADIO_PART_KEY)
+    capability_names.append(ICON2_ADIO_PART_KEY)
   if with_force_torque_sensor_part:
-    equipment_type_names.append(ICON2_FORCE_TORQUE_SENSOR_PART_KEY)
+    capability_names.append(ICON2_FORCE_TORQUE_SENSOR_PART_KEY)
   if with_rangefinder_part:
-    equipment_type_names.append(ICON2_RANGEFINDER_PART_KEY)
+    capability_names.append(ICON2_RANGEFINDER_PART_KEY)
   if with_observation_stream:
-    equipment_type_names.append("IconRobotObservationStreamParams")
+    capability_names.append("IconRobotObservationStreamParams")
 
-  return equipment_pb2.ResourceSelector(
-      equipment_type_names=equipment_type_names
-  )
+  return equipment_pb2.ResourceSelector(capability_names=capability_names)
 
 
 def _get_params_from_connection_info(
