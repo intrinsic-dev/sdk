@@ -14,19 +14,12 @@ message PatternDetectionConfig {
   // detector-specific configs.
   oneof Type {
     CharucoPatternDetectionConfig charuco_pattern_detection_config = 2;
-    HalconPatternDetectionConfig halcon_pattern_detection_config = 3;
   }
+  reserved 3;
 }
 
 // Config for Charuco pattern detector.
 message CharucoPatternDetectionConfig {
   // Defines the ChArUco pattern outlay.
   CharucoPattern charuco_pattern = 1;
-}
-
-// Config for Halcon pattern detectors. Supports both rectangular and hexagonal
-// Halcon markers.
-message HalconPatternDetectionConfig {
-  // Filepath to pattern descriptor file.
-  string file_path = 1;
 }
