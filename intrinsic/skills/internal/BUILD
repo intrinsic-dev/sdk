@@ -150,14 +150,10 @@ cc_library(
     deps = [
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/motion_planning:motion_planner_client",
-        "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
         "//intrinsic/skills/cc:equipment_pack",
         "//intrinsic/skills/cc:skill_canceller",
         "//intrinsic/skills/cc:skill_interface",
-        "//intrinsic/skills/proto:equipment_cc_proto",
-        "//intrinsic/skills/proto:skill_service_cc_proto",
         "//intrinsic/world/objects:object_world_client",
-        "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],
@@ -174,6 +170,21 @@ py_library(
         "//intrinsic/skills/python:execute_context",
         "//intrinsic/skills/python:skill_canceller",
         "//intrinsic/world/python:object_world_client",
+    ],
+)
+
+cc_library(
+    name = "execute_context_view",
+    hdrs = ["execute_context_view.h"],
+    deps = [
+        "//intrinsic/logging/proto:context_cc_proto",
+        "//intrinsic/motion_planning:motion_planner_client",
+        "//intrinsic/skills/cc:equipment_pack",
+        "//intrinsic/skills/cc:skill_canceller",
+        "//intrinsic/skills/cc:skill_interface",
+        "//intrinsic/world/objects:object_world_client",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

@@ -10,24 +10,16 @@
 #include "absl/status/statusor.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
-#include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_canceller.h"
 #include "intrinsic/skills/cc/skill_interface.h"
-#include "intrinsic/skills/proto/equipment.pb.h"
-#include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/world/objects/object_world_client.h"
-#include "intrinsic/world/proto/object_world_service.grpc.pb.h"
 
 namespace intrinsic {
 namespace skills {
 
-// Implementation of ExecuteContext as used by the skill service.
+// Implementation of ExecuteContext used by the skill service.
 class ExecuteContextImpl : public ExecuteContext {
-  using ObjectWorldService = ::intrinsic_proto::world::ObjectWorldService;
-  using MotionPlannerService =
-      ::intrinsic_proto::motion_planning::MotionPlannerService;
-
  public:
   ExecuteContextImpl(std::shared_ptr<SkillCanceller> canceller,
                      EquipmentPack equipment,
