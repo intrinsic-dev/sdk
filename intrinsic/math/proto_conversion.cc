@@ -79,14 +79,22 @@ absl::StatusOr<intrinsic::Pose> FromProto(const Pose& pose) {
 absl::StatusOr<intrinsic::Pose> FromProtoNormalized(const Pose& pose) {
   intrinsic::eigenmath::Quaterniond quaternion = FromProto(pose.orientation());
   constexpr double kNormalizationError = 1e-3;
+  const double squared_norm = quaternion.squaredNorm();
+  // If we're already normalized to a reasonable degree, then simply don't
+  // renormalize at all. This preserves the property that if we call
+  // FromProtoNormalized(ToProto(pose)) that we get the same result back.
+  if (AlmostEquals(squared_norm, 1.0)) {
+    return intrinsic::Pose(quaternion, FromProto(pose.position()),
+                           intrinsic::eigenmath::kDoNotNormalize);
+  }
+
   const intrinsic::eigenmath::Quaterniond normalized_quat =
       quaternion.normalized();
   // We need to perform a soft-check in here, since otherwise, we might raise an
   // error status due to numeric errors introduced by the squared norm
   // computation or due to rounding. To enforce higher precision checks and not
   // allow normalization of the quaternion, please use FromProto directly.
-  if (const double squared_norm = quaternion.squaredNorm();
-      !AlmostEquals(squared_norm, 1.0, kNormalizationError)) {
+  if (!AlmostEquals(squared_norm, 1.0, kNormalizationError)) {
     return absl::InvalidArgumentError(absl::StrFormat(
         "Failed to create Pose from proto which contains a "
         "non-unit quaternion with norm(quat) == %.6f . The normalized "
