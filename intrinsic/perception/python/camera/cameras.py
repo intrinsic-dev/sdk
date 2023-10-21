@@ -87,7 +87,7 @@ class Camera:
     ```
     def execute(
         self, request: skl.ExecuteRequest, context: skl.ExecuteContext
-    ) -> skill_service_pb2.ExecuteResult:
+    ) -> ...:
     ...
 
     # access the camera equipment slot added in `required_equipment`

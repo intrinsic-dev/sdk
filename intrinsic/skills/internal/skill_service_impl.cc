@@ -532,10 +532,21 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
           -> absl::StatusOr<
               std::unique_ptr<intrinsic_proto::skills::ExecuteResult>> {
         INTRINSIC_ASSIGN_OR_RETURN(
-            intrinsic_proto::skills::ExecuteResult result,
+            std::unique_ptr<::google::protobuf::Message> skill_result,
             skill->Execute(*skill_request, *skill_context));
 
-        return std::make_unique<intrinsic_proto::skills::ExecuteResult>(result);
+        auto result =
+            std::make_unique<intrinsic_proto::skills::ExecuteResult>();
+        if (skill_result != nullptr) {
+          result->mutable_result()->PackFrom(*skill_result);
+          if (result->result().Is<intrinsic_proto::skills::ExecuteResult>()) {
+            return absl::InternalError(
+                "Skill returned an ExecuteResult rather than a skill result "
+                "message.");
+          }
+        }
+
+        return result;
       },
       /*op_name=*/"Execute"));
 

@@ -30,7 +30,6 @@ cc_library(
         "@ai_intrinsic_sdks//intrinsic/skills/cc:skill_registration",
         "@ai_intrinsic_sdks//intrinsic/skills/cc:skill_utils",
         "@ai_intrinsic_sdks//intrinsic/skills/proto:equipment_cc_proto",
-        "@ai_intrinsic_sdks//intrinsic/skills/proto:skill_service_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status:status",

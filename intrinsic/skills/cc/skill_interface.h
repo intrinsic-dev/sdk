@@ -140,9 +140,10 @@ class SkillExecuteInterface {
   // Executes the skill. `context` provides access to the world and other
   // services that a skill may use.
   //
-  // The skill should return an error if execution failed, and otherwise an
-  // ExecuteResult. This result may be populated with arbitrary data in the
-  // `result` field.
+  // If skill execution succeeds, the skill should return either the skill's
+  // result proto message, or nullptr if the skill has no output. If skill
+  // execution fails, the skill should return an appropriate error status, as
+  // described below.
   //
   // If the skill fails for one of the following reasons, it should return the
   // specified error along with a descriptive and, if possible, actionable error
@@ -166,7 +167,7 @@ class SkillExecuteInterface {
   // failures that should lead to fallback handling (e.g., failure to achieve
   // the skill's objective) and other failures that should cause the entire
   // process to abort (e.g., failure to connect to a gRPC service).
-  virtual absl::StatusOr<intrinsic_proto::skills::ExecuteResult> Execute(
+  virtual absl::StatusOr<std::unique_ptr<google::protobuf::Message>> Execute(
       const ExecuteRequest& request, ExecuteContext& context) {
     return absl::UnimplementedError("Skill does not implement `Execute`.");
   }

@@ -8,6 +8,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/statusor.h"
 #include "google/protobuf/descriptor.h"
+#include "google/protobuf/message.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/cc/skill_registration.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
@@ -31,9 +32,9 @@ const google::protobuf::Descriptor* NoOpSkill::GetParameterDescriptor() const {
   return intrinsic_proto::skills::NoOpSkillParams::descriptor();
 }
 
-absl::StatusOr<intrinsic_proto::skills::ExecuteResult> NoOpSkill::Execute(
+absl::StatusOr<std::unique_ptr<google::protobuf::Message>> NoOpSkill::Execute(
     const ExecuteRequest& request, ExecuteContext& context) {
-  return intrinsic_proto::skills::ExecuteResult();
+  return nullptr;
 }
 
 REGISTER_SKILL(NoOpSkill, "no_op", NoOpSkill::CreateSkill);

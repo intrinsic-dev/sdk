@@ -15,7 +15,6 @@ Copyright 2023 Intrinsic Innovation LLC
 #include "google/protobuf/message.h"
 #include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/skills/cc/skill_utils.h"
-#include "intrinsic/skills/proto/skill_service.pb.h"
 
 {{- /* Don't use a namespace when creating a skill adjacent to WORKSPACE because
 it will be an anonymous namespace. It would prevent CreateSkill from being
@@ -25,7 +24,6 @@ namespace {{strJoin .BazelPackage "::"}} {
 {{end}}
 using ::{{strJoin .ProtoPackage "::"}}::{{.SkillNameUpperCamelCase}}Params;
 
-using ::intrinsic_proto::skills::ExecuteResult;
 using ::intrinsic::skills::ExecuteContext;
 using ::intrinsic::skills::ExecuteRequest;
 using ::intrinsic::skills::SkillInterface;
@@ -43,7 +41,7 @@ std::unique_ptr<SkillInterface> {{.SkillNameUpperCamelCase}}::CreateSkill() {
 // Skill execute.
 // -----------------------------------------------------------------------------
 
-absl::StatusOr<ExecuteResult> {{.SkillNameUpperCamelCase}}::Execute(
+absl::StatusOr<std::unique_ptr<google::protobuf::Message>> {{.SkillNameUpperCamelCase}}::Execute(
     const ExecuteRequest& request, ExecuteContext& context) {
   
   // Get parameters.
@@ -53,7 +51,7 @@ absl::StatusOr<ExecuteResult> {{.SkillNameUpperCamelCase}}::Execute(
   // Log the text provided.
   LOG(INFO) << params.text();
 
-  return ExecuteResult();
+  return nullptr;
 }
 {{if .BazelPackage }}
 }  // namespace {{strJoin .BazelPackage "::"}}

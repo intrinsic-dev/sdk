@@ -45,12 +45,12 @@ from pybind11_abseil import status
 MAX_NUM_OPERATIONS = 100
 
 
+class InvalidResultTypeError(TypeError):
+  """A skill returned a result that does not match the expected type."""
+
+
 class _CannotConstructRequestError(Exception):
   """The service cannot construct a request for a skill."""
-
-
-class _InvalidResultTypeError(TypeError):
-  """A skill returned a result type that does not match expected type."""
 
 
 class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
@@ -295,43 +295,23 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
 
     def execute() -> skill_service_pb2.ExecuteResult:
       result = skill.execute(skill_request, skill_context)
-      if (
-          result is None
-          and operation.runtime_data.return_type_data.descriptor is None
-      ):
-        return skill_service_pb2.ExecuteResult()
-      if (
-          result is None
-          and operation.runtime_data.return_type_data.descriptor is not None
-      ):
-        raise _InvalidResultTypeError(
-            'Expected return type:'
-            f' {operation.runtime_data.return_type_data.descriptor.full_name};'
-            ' Got return type: None.'
+
+      # Verify that the skill returned the expected type.
+      got_descriptor = None if result is None else result.DESCRIPTOR
+      want_descriptor = operation.runtime_data.return_type_data.descriptor
+      if got_descriptor != want_descriptor:
+        got = 'None' if got_descriptor is None else got_descriptor.full_name
+        want = 'None' if want_descriptor is None else want_descriptor.full_name
+        raise InvalidResultTypeError(
+            f'Unexpected return type (expected: {want}, got: {got}).'
         )
 
-      # linting complains that None.DESCRIPTOR does not exist if we don't have
-      # a case that returns here.
       if result is None:
-        return skill_service_pb2.ExecuteResult()
+        result_any = None
+      else:
+        result_any = any_pb2.Any()
+        result_any.Pack(result)
 
-      if operation.runtime_data.return_type_data.descriptor is None:
-        raise _InvalidResultTypeError(
-            'Expected return type: None;'
-            f' Got return type: {result.DESCRIPTOR.full_name}.'
-        )
-      if (
-          result.DESCRIPTOR
-          != operation.runtime_data.return_type_data.descriptor
-      ):
-        raise _InvalidResultTypeError(
-            'Expected return type:'
-            f' {operation.runtime_data.return_type_data.descriptor.full_name};'
-            f' Got return type: {result.DESCRIPTOR.full_name}.'
-        )
-
-      result_any = any_pb2.Any()
-      result_any.Pack(result)
       return skill_service_pb2.ExecuteResult(result=result_any)
 
     operation.start(op=execute, op_name='execute')
