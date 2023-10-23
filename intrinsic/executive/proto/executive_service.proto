@@ -254,8 +254,8 @@ message GetOperationViewRequest {
 
   oneof view_type {
     // The following enables to limit the data that is returned in the
-    // operation's metadata field (of type RunMetadata in the Any proto). If
-    // empty returns the full metadata. A typical limited mask could be "paths:
+    // operation's metadata field (of type RunMetadata in the Any proto). If not
+    // set returns the full metadata. A typical limited mask could be "paths:
     // behavior_tree.state" to get only the behavior tree's overall state. If
     // this is set to an empty FieldMask (nothing in FieldMask.paths), the
     // metadata field will not be filled.
