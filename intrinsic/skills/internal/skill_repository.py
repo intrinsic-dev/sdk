@@ -1,6 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 """Provides access to a collection of skills."""
+
 import abc
 from typing import List
 

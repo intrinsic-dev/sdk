@@ -1,6 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 """Skills Python APIs and definitions."""
+
 import abc
 from typing import Generic, List, Mapping, Optional, TypeVar, Union
 

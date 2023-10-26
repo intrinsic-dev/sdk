@@ -1,6 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 """Provides utilities for working with asset ids."""
+
 from __future__ import annotations
 
 import dataclasses

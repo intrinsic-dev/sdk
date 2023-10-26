@@ -97,8 +97,8 @@ class IconLoggingTest(absltest.TestCase):
 
   def test_action_topic_name(self):
     self.assertEqual(
-        icon_logging.action_topic_name(1, 2),
-        'icon_output_streams_session_1_action_2',
+        icon_logging.action_topic_name('robot', 2),
+        '/icon/robot/output_streams/action_2',
     )
 
 

@@ -5,6 +5,7 @@
 This module only should redirect Create functions to other modules to make the
 usage in the external API easier.
 """
+
 from intrinsic.icon.actions import point_to_point_move_utils
 from intrinsic.icon.actions import stop_utils
 from intrinsic.icon.actions import tare_force_torque_sensor_utils

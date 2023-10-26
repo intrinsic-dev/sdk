@@ -1,6 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 """Convenience class for Camera use within skills."""
+
 from __future__ import annotations
 
 import datetime

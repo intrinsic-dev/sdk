@@ -1,6 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 """Miscellaneous image helper methods."""
+
 import io
 from typing import Optional, Tuple, Type, Union
 

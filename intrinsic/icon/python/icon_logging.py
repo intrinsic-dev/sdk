@@ -60,5 +60,5 @@ def unpack_streaming_outputs(
   return (unpacked_items, icon_ts)
 
 
-def action_topic_name(session_id: int, action_id: int) -> str:
-  return f"icon_output_streams_session_{session_id}_action_{action_id}"
+def action_topic_name(robot_name: str, action_id: int) -> str:
+  return f"/icon/{robot_name}/output_streams/action_{action_id}"

@@ -1,6 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 """Base camera class wrapping gRPC connection and calls."""
+
 from __future__ import annotations
 
 import datetime

@@ -1,6 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 """Camera misc helper methods."""
+
 from __future__ import annotations
 
 from typing import Optional, Tuple

@@ -1,6 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 """Utility functions for skills related proto conversions."""
+
 from typing import TypeVar
 
 from google.protobuf import any_pb2

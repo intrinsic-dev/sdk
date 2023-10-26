@@ -8,4 +8,5 @@ main file of this dummy target and doesn't need any content.
 
 See intrinsic/external_docs/tools/generate_python_api_docs.py
 """
+
 from intrinsic.motion_planning import motion_planner_client  # pylint: disable=unused-import

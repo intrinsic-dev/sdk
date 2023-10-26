@@ -22,16 +22,8 @@ class ProtoConversionTest(parameterized.TestCase):
 
   @parameterized.parameters(
       (np.round(_rng.rand(3, 1, 4)).astype(bool),),
-      (
-          _rng.randint(
-              low=-(2**7), high=2**7 - 1, size=(1, 5), dtype=np.int8
-          ),
-      ),
-      (
-          _rng.randint(
-              low=-(2**15), high=2**15 - 1, size=(9,), dtype=np.int16
-          ),
-      ),
+      (_rng.randint(low=-(2**7), high=2**7 - 1, size=(1, 5), dtype=np.int8),),
+      (_rng.randint(low=-(2**15), high=2**15 - 1, size=(9,), dtype=np.int16),),
       (
           _rng.randint(
               low=-(2**31), high=2**31 - 1, size=(2, 6), dtype=np.int32

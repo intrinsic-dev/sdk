@@ -6,6 +6,7 @@ This module provides state variable path builder functions to conveniently
 create the state variable path string for all available part status or safety
 fields that can be used in an ICON reaction.
 """
+
 import enum
 from typing import List, Optional, Tuple
 

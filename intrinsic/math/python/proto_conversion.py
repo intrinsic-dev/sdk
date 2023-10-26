@@ -1,6 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 """Converters from intrinsic math protos to commonly used in-memory representations."""
+
 import sys
 
 from intrinsic.math.proto import array_pb2
