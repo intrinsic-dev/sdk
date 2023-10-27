@@ -29,6 +29,7 @@ go_library(
     name = "projectclient",
     srcs = ["projectclient.go"],
     deps = [
+        "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/tools/inctl/auth",
     ],
 )

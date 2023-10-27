@@ -6,12 +6,15 @@ package projectclient
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 
+	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/auth"
 )
 
@@ -47,7 +50,13 @@ func (c *AuthedClient) Do(req *http.Request) (*http.Response, error) {
 func Client(projectName string, orgName string) (AuthedClient, error) {
 	configuration, err := auth.NewStore().GetConfiguration(projectName)
 	if err != nil {
-		return AuthedClient{}, fmt.Errorf("get credential store: %w", err)
+		if errors.Is(err, os.ErrNotExist) {
+			return AuthedClient{}, &dialerutil.ErrCredentialsNotFound{
+				CredentialName: projectName,
+				Err:            err,
+			}
+		}
+		return AuthedClient{}, fmt.Errorf("get configuration: %w", err)
 	}
 
 	token, err := configuration.GetDefaultCredentials()
