@@ -112,6 +112,7 @@ var registerCmd = &cobra.Command{
 
 		switch resp.StatusCode {
 		case http.StatusOK:
+			fmt.Printf("Sent configuration to server. The device will reboot and apply the configuration within a minute.\n")
 			return nil
 		case http.StatusConflict:
 			return fmt.Errorf("cluster %q already exists. Cannot create it again. Please use a unique value for --hostname", hostname)
