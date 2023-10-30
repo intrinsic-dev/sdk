@@ -1,7 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
-load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+load("@rules_python//python:defs.bzl", "py_library")
 
 package(default_visibility = [
     "//visibility:public",
@@ -64,16 +64,5 @@ cc_library(
         "//intrinsic/icon/proto:joint_space_cc_proto",
         "//intrinsic/util:eigen",
         "@com_google_protobuf//:protobuf_lite",
-    ],
-)
-
-# A dummy binary that is used by the Python API documentation generator
-# (intrinsic/external_docs/tools/generate_python_api_docs.py)
-# This is required because building a library is a no-op if not used by any binary in Bazel.
-py_binary(
-    name = "motion_planner_client_py_doc",
-    srcs = ["motion_planner_client_py_doc.py"],
-    deps = [
-        ":motion_planner_client_py",
     ],
 )
