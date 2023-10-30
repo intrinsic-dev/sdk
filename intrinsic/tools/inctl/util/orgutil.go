@@ -5,8 +5,10 @@ package orgutil
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"intrinsic/tools/inctl/auth"
@@ -29,15 +31,79 @@ var (
 // ErrOrgNotFound indicates that the lookup for a given credential
 // name failed.
 type ErrOrgNotFound struct {
-	Err     error // the underlying error
-	OrgName string
+	err           error
+	CandidateOrgs []string
+	OrgName       string
 }
 
 func (e *ErrOrgNotFound) Error() string {
-	return fmt.Sprintf("credentials not found: %v", e.Err)
+	return fmt.Sprintf("credentials not found: %q", e.OrgName)
 }
 
-func (e *ErrOrgNotFound) Unwrap() error { return e.Err }
+func (e *ErrOrgNotFound) Unwrap() error {
+	return e.err
+}
+
+func editDistance(left, right string) int {
+	length := len([]rune(right))
+	if length == 0 {
+		return len([]rune(left))
+	}
+
+	dist1 := make([]int, length+1)
+	dist2 := make([]int, length+1)
+
+	// initialize dist1 (the previous row of distances)
+	// this row is A[0][i]: edit distance from an empty left to right;
+	// that distance is the number of characters to append to  left to make right.
+	for i := 0; i < length+1; i++ {
+		dist1[i] = i
+		dist2[i] = 0
+	}
+
+	for i, vLeft := range []rune(left) {
+		dist2[0] = i + 1
+
+		for j, vRight := range []rune(right) {
+			deletionCost := dist1[j+1] + 1
+			insertionCost := dist2[j] + 1
+			var substitutionCost int
+			if vLeft == vRight {
+				substitutionCost = dist1[j]
+			} else {
+				substitutionCost = dist1[j] + 1
+			}
+
+			// dist2[j + 1] = min(insertionCost, deletionCost, substitutionCost)
+			if deletionCost <= insertionCost && deletionCost <= substitutionCost {
+				dist2[j+1] = deletionCost
+			} else if insertionCost <= deletionCost && insertionCost <= substitutionCost {
+				dist2[j+1] = insertionCost
+			} else {
+				dist2[j+1] = substitutionCost
+			}
+		}
+
+		copy(dist1, dist2)
+	}
+
+	return dist1[length]
+}
+
+func makeOrgNotFound(inner error, org string) error {
+	candidates := []string{}
+	orgs, err := auth.NewStore().ListOrgs()
+	// We can only do this, if there's NO error!
+	if err == nil {
+		for _, candidate := range orgs {
+			if editDistance(org, candidate) < 3 {
+				candidates = append(candidates, candidate)
+			}
+		}
+	}
+
+	return &ErrOrgNotFound{err: inner, CandidateOrgs: candidates, OrgName: org}
+}
 
 // PreRunOrganization provides the organization/project flag handling as PersistentPreRunE of a cobra command.
 // This is done automatically with the wrap function.
@@ -57,7 +123,11 @@ func PreRunOrganization(cmd *cobra.Command, vipr *viper.Viper) error {
 	if project == "" {
 		info, err := authStore.ReadOrgInfo(org)
 		if err != nil {
-			return &ErrOrgNotFound{Err: err, OrgName: org}
+			if errors.Is(err, os.ErrNotExist) {
+				return makeOrgNotFound(err, org)
+			}
+
+			return err
 		}
 
 		projectFlag.Value.Set(info.Project)

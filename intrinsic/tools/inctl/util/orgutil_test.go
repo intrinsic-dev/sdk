@@ -155,3 +155,63 @@ func TestWrapCmd(t *testing.T) {
 		}
 	})
 }
+
+func TestEditDistance(t *testing.T) {
+	testCases := []struct {
+		name     string
+		left     string
+		right    string
+		expected int
+	}{
+		{
+			name:     "empty",
+			left:     "",
+			right:    "",
+			expected: 0,
+		},
+		{
+			name:     "simple",
+			left:     "simple",
+			right:    "simple",
+			expected: 0,
+		},
+		{
+			name:     "add",
+			left:     "simple",
+			right:    "simpler",
+			expected: 1,
+		},
+		{
+			name:     "subtract",
+			left:     "simple",
+			right:    "simpl",
+			expected: 1,
+		},
+		{
+			name:     "replaced",
+			left:     "simple",
+			right:    "siMple",
+			expected: 1,
+		},
+		{
+			name:     "swap",
+			left:     "simple",
+			right:    "smiple",
+			expected: 2,
+		},
+		{
+			name:     "unicode",
+			left:     "work",
+			right:    "wörk",
+			expected: 1,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := editDistance(tc.left, tc.right); got != tc.expected {
+				t.Errorf("Expected editDistance(%q, %q) = %d, but got %d", tc.left, tc.right, tc.expected, got)
+			}
+		})
+	}
+}

@@ -93,8 +93,20 @@ func (e *executionContext) RewriteError(err error, cmdNames []string) string {
 	// User org not known
 	var orgErr *orgutil.ErrOrgNotFound
 	if errors.As(cause, &orgErr) {
-		return fmt.Sprintf("%v\nCredentials for given organization not found. Run "+
-			"'inctl auth login --org %s'.", err, orgErr.OrgName)
+		base := fmt.Sprintf("Credentials for given organization %q not found.", orgErr.OrgName)
+		additions := []string{}
+		if len(orgErr.CandidateOrgs) > 0 {
+			additions = append(additions, "There's similar organizations in your store:")
+			for _, org := range orgErr.CandidateOrgs {
+				additions = append(additions, fmt.Sprintf(" - %s", org))
+			}
+		}
+
+		if len(additions) > 0 {
+			return fmt.Sprintf("%s\n%s\nTo add %q run 'inctl auth login --org %s'.", base, strings.Join(additions, "\n"), orgErr.OrgName, orgErr.OrgName)
+		}
+
+		return fmt.Sprintf("%s\nRun 'inctl auth login --org %s' to add it.", base, orgErr.OrgName)
 	}
 
 	// User not logged in.

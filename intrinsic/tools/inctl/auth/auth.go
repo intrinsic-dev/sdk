@@ -382,7 +382,7 @@ func (s *Store) ReadOrgInfo(orgName string) (OrgInfo, error) {
 
 	file, err := os.Open(filename)
 	if err != nil {
-		return OrgInfo{}, fmt.Errorf("open configuration file: %w", err)
+		return OrgInfo{}, fmt.Errorf("open configuration: %w", err)
 	}
 	defer file.Close()
 
