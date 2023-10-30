@@ -12,5 +12,5 @@ import (
 // NewStoreForTest creates a new auth.Store for use in tests.
 func NewStoreForTest(t *testing.T) *auth.Store {
 	configDir := t.TempDir()
-	return &auth.Store{func() (string, error) { return configDir, nil }}
+	return &auth.Store{GetConfigDirFx: func() (string, error) { return configDir, nil }}
 }
