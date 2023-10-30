@@ -170,7 +170,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
 
       _abort_with_status(
           context=context,
-          code=error_status.code,
+          code=status.StatusCodeFromInt(error_status.code),
           message=error_status.message,
           skill_error_info=error_pb2.SkillErrorInfo(
               error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
@@ -885,7 +885,8 @@ def _handle_skill_error(
   logging.exception(message)
 
   return status_pb2.Status(
-      code=code, message=f'{message} Error: {traceback.format_exception(err)}'
+      code=status.StatusCodeAsInt(code),
+      message=f'{message} Error: {traceback.format_exception(err)}',
   )
 
 
