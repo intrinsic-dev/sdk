@@ -325,13 +325,22 @@ func (s *Store) RemoveConfiguration(name string) error {
 	return os.RemoveAll(filename)
 }
 
-func (s *Store) orgFilename(name string) (string, error) {
+func (s *Store) orgStoreLocation() (string, error) {
 	configDir, err := s.getConfigDir()
 	if err != nil {
 		return "", fmt.Errorf("get config directory: %w", err)
 	}
 
-	return filepath.Join(configDir, orgStoreDirectory, fmt.Sprintf("%s.json", name)), nil
+	return filepath.Join(configDir, orgStoreDirectory), nil
+}
+
+func (s *Store) orgFilename(name string) (string, error) {
+	orgDir, err := s.orgStoreLocation()
+	if err != nil {
+		return "", fmt.Errorf("get config directory: %w", err)
+	}
+
+	return filepath.Join(orgDir, fmt.Sprintf("%s.json", name)), nil
 }
 
 // WriteOrgInfo writes the information we have about an org to file
@@ -383,4 +392,28 @@ func (s *Store) ReadOrgInfo(orgName string) (OrgInfo, error) {
 	}
 
 	return ret, nil
+}
+
+// ListOrgs gives a list of known organizations. It works on
+// filesystem level and does not attempt to read the content of configuration.
+// Results are not sorted and the order may change at any time.
+func (s *Store) ListOrgs() ([]string, error) {
+	storeLocation, err := s.orgStoreLocation()
+	if err != nil {
+		return nil, fmt.Errorf("cannot find configuration store: %w", err)
+	}
+
+	globPattern := filepath.Join(storeLocation, "*.json")
+	matches, err := filepath.Glob(globPattern)
+	if err != nil {
+		panic(fmt.Errorf("invalid glob pattern, programmer error: %w", err))
+	}
+
+	result := make([]string, 0, len(matches))
+	for _, match := range matches {
+		filename := filepath.Base(match)
+		result = append(result, strings.TrimSuffix(filename, ".json"))
+	}
+
+	return result, nil
 }
