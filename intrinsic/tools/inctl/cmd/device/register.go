@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"intrinsic/frontend/cloud/devicemanager/shared"
@@ -19,7 +20,7 @@ import (
 
 const (
 	// https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names
-	hostnameRegexString = `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`
+	hostnameRegexString = `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?`
 )
 
 var (
@@ -29,8 +30,48 @@ var (
 	replaceDevice = false
 )
 
-func validHostname(hostname string) bool {
-	return regexp.MustCompile(hostnameRegexString).MatchString(hostname)
+func validHostname(hostname string) (int, bool) {
+	match := regexp.MustCompile(hostnameRegexString).FindStringIndex(hostname)
+	if len(match) < 2 {
+		return 0, false
+	}
+
+	// This should be guaranteed by ^, but better save than sorry
+	if match[0] != 0 {
+		return -1, false
+	}
+
+	// Make sure we matched the entire string
+	if match[1] != len(hostname) {
+		return match[1] + 1, false
+	}
+
+	fmt.Printf("Matches: %v\n", match)
+	return 0, true
+}
+
+func makeNameError(hostname string, index int) string {
+	if len(hostname) == 0 {
+		return "hostname cannot be empty"
+	}
+
+	if len(hostname) > 64 {
+		return "hostname cannot exceed 64 characters"
+	}
+
+	if strings.HasSuffix(hostname, "-") {
+		return "hostname cannot end with a dash"
+	}
+
+	if regexp.MustCompile("[A-Z]").MatchString(hostname) {
+		return "hostname cannot contain upper case letters"
+	}
+
+	if index < 1 {
+		index = 1
+	}
+	offender := hostname[index-1]
+	return fmt.Sprintf("Cannot use %q in hostname", offender)
 }
 
 var registerCmd = &cobra.Command{
@@ -48,9 +89,9 @@ var registerCmd = &cobra.Command{
 			return fmt.Errorf("invalid arguments")
 		}
 
-		if !validHostname(hostname) {
+		if offender, ok := validHostname(hostname); !ok {
 			fmt.Printf("%q is not a valid as hostname. Provide a valid hostname.\nSee https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names for more information.\n", hostname)
-			return fmt.Errorf("invalid hostname")
+			return fmt.Errorf(makeNameError(hostname, offender))
 		}
 
 		client, err := projectclient.Client(projectName, orgName)
