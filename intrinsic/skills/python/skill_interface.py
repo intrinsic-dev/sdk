@@ -14,6 +14,8 @@ from intrinsic.skills.python import execute_context
 from intrinsic.skills.python import execute_request
 from intrinsic.skills.python import get_footprint_context
 from intrinsic.skills.python import get_footprint_request
+from intrinsic.skills.python import preview_context
+from intrinsic.skills.python import preview_request
 from intrinsic.skills.python import skill_canceller
 
 # Imported for convenience of skill implementations.
@@ -21,6 +23,8 @@ ExecuteContext = execute_context.ExecuteContext
 ExecuteRequest = execute_request.ExecuteRequest
 GetFootprintContext = get_footprint_context.GetFootprintContext
 GetFootprintRequest = get_footprint_request.GetFootprintRequest
+PreviewContext = preview_context.PreviewContext
+PreviewRequest = preview_request.PreviewRequest
 SkillCancelledError = skill_canceller.SkillCancelledError
 
 TParamsType = TypeVar('TParamsType', bound=message.Message)
@@ -137,6 +141,50 @@ class SkillExecuteInterface(abc.ABC, Generic[TParamsType, TResultType]):
     """
     raise NotImplementedError(
         f'Skill "{type(self).__name__!r} has not implemented `execute`.'
+    )
+
+  def preview(
+      self, request: PreviewRequest[TParamsType], context: PreviewContext
+  ) -> TResultType:
+    """Previews the expected outcome of executing the skill.
+
+    `preview` enables an application developer to perform a "dry run" of skill
+    execution (or execution of a process that includes that skill) in order to
+    preview the effect of executing the skill/process, but without any
+    real-world side-effects that normal execution would entail.
+
+    Skill developers should override this method with their implementation. The
+    implementation will not have access to hardware resources that are provided
+    to `execute`, but will have access to a hypothetical world in which to
+    preview the execution. The implementation should return the expected output
+    of executing the skill in that world.
+
+    NOTE: In preview mode, the object world provided by the PreviewContext
+    is treated as the -actual- state of the physical world, rather than as the
+    belief state that it represents during normal skill execution. Because of
+    this difference, a skill in preview mode cannot introduce or correct
+    discrepancies between the physical and belief world (since they are
+    identical). For example, if a perception skill only updates the belief state
+    when it is executed, then its implementation of `preview` would necessarily
+    be a no-op.
+
+    If executing the skill is expected to affect the physical world, then the
+    implementation should record the timing of its expected effects using
+    `context.record_world_update`. It should NOT make changes to the object
+    world via interaction with `context.object_world`.
+
+    Args:
+      request: The preview request.
+      context: Provides access to services that the skill may use.
+
+    Returns:
+      The skill's expected result message, or None if it does not return a
+      result.
+    """
+    del request  # Unused in this default implementation.
+    del context  # Unused in this default implementation.
+    raise NotImplementedError(
+        f'Skill "{type(self).__name__!r} has not implemented `preview`.'
     )
 
 

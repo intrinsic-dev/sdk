@@ -36,6 +36,7 @@
 #include "intrinsic/skills/internal/error_utils.h"
 #include "intrinsic/skills/internal/execute_context_impl.h"
 #include "intrinsic/skills/internal/get_footprint_context_impl.h"
+#include "intrinsic/skills/internal/preview_context_impl.h"
 #include "intrinsic/skills/internal/runtime_data.h"
 #include "intrinsic/skills/internal/skill_repository.h"
 #include "intrinsic/skills/proto/error.pb.h"
@@ -575,15 +576,45 @@ grpc::Status SkillExecutorServiceImpl::StartPreview(
   INTRINSIC_ASSIGN_OR_RETURN(std::unique_ptr<SkillExecuteInterface> skill,
                              skill_repository_.GetSkillExecute(skill_name));
 
-  auto skill_request = nullptr;
-  auto skill_context = nullptr;
+  auto skill_request = std::make_unique<PreviewRequest>(
+      /*params=*/request->parameters(),
+      /*param_defaults=*/
+      operation->runtime_data().GetParameterData().GetDefault());
+
+  INTRINSIC_ASSIGN_OR_RETURN(EquipmentPack equipment,
+                             EquipmentPack::GetEquipmentPack(*request));
+
+  auto skill_context = std::make_unique<PreviewContextImpl>(
+      /*canceller=*/operation->canceller(),
+      /*equipment=*/std::move(equipment),
+      /*logging_context=*/request->context(),
+      /*motion_planner=*/
+      motion_planning::MotionPlannerClient(request->world_id(),
+                                           motion_planner_service_),
+      /*object_world=*/
+      world::ObjectWorldClient(request->world_id(), object_world_service_)
+
+  );
 
   INTRINSIC_RETURN_IF_ERROR(operation->Start(
       [skill = std::move(skill), skill_request = std::move(skill_request),
        skill_context = std::move(skill_context)]()
           -> absl::StatusOr<
               std::unique_ptr<intrinsic_proto::skills::PreviewResult>> {
-        return absl::UnimplementedError("Preview is not yet supported.");
+        INTRINSIC_ASSIGN_OR_RETURN(
+            std::unique_ptr<::google::protobuf::Message> skill_result,
+            skill->Preview(*skill_request, *skill_context));
+
+        auto result =
+            std::make_unique<intrinsic_proto::skills::PreviewResult>();
+        if (skill_result != nullptr) {
+          result->mutable_result()->PackFrom(*skill_result);
+        }
+        result->mutable_expected_states()->Add(
+            skill_context->GetWorldUpdates().begin(),
+            skill_context->GetWorldUpdates().end());
+
+        return result;
       },
       /*op_name=*/"Preview"));
 

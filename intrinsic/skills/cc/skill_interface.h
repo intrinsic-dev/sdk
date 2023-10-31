@@ -27,6 +27,8 @@
 #include "intrinsic/skills/cc/execute_request.h"
 #include "intrinsic/skills/cc/get_footprint_context.h"
 #include "intrinsic/skills/cc/get_footprint_request.h"
+#include "intrinsic/skills/cc/preview_context.h"
+#include "intrinsic/skills/cc/preview_request.h"
 // IWYU pragma: end_exports
 
 namespace intrinsic {
@@ -170,6 +172,37 @@ class SkillExecuteInterface {
   virtual absl::StatusOr<std::unique_ptr<google::protobuf::Message>> Execute(
       const ExecuteRequest& request, ExecuteContext& context) {
     return absl::UnimplementedError("Skill does not implement `Execute`.");
+  }
+
+  // Previews the expected outcome of executing the skill.
+  //
+  // Preview() enables an application developer to perform a "dry run" of skill
+  // execution (or execution of a process that includes that skill) in order to
+  // preview the effect of executing the skill/process, but without any
+  // real-world side-effects that normal execution would entail.
+  //
+  // Skill developers should override this method with their implementation. The
+  // implementation will not have access to hardware resources that are provided
+  // to Execute(), but will have access to a hypothetical world in which to
+  // preview the execution. The implementation should return the expected output
+  // of executing the skill in that world.
+  //
+  // NOTE: In preview mode, the object world provided by the PreviewContext
+  // is treated as the -actual- state of the physical world, rather than as the
+  // belief state that it represents during normal skill execution. Because of
+  // this difference, a skill in preview mode cannot introduce or correct
+  // discrepancies between the physical and belief world (since they are
+  // identical). For example, if a perception skill only updates the belief
+  // state when it is executed, then its implementation of Preview() would
+  // necessarily be a no-op.
+  //
+  // If executing the skill is expected to affect the physical world, then the
+  // implementation should record the timing of its expected effects using
+  // context.RecordWorldUpdate(). It should NOT make changes to the object
+  // world via interaction with context.object_world().
+  virtual absl::StatusOr<std::unique_ptr<::google::protobuf::Message>> Preview(
+      const PreviewRequest& request, PreviewContext& context) {
+    return absl::UnimplementedError("Skill does not implement `Preview`.");
   }
 
   virtual ~SkillExecuteInterface() = default;

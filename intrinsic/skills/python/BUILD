@@ -14,6 +14,8 @@ py_library(
         ":execute_request",
         ":get_footprint_context",
         ":get_footprint_request",
+        ":preview_context",
+        ":preview_request",
         ":skill_canceller",
         "//intrinsic/skills/proto:equipment_py_pb2",
         "//intrinsic/skills/proto:footprint_py_pb2",
@@ -28,6 +30,7 @@ py_library(
     deps = [
         ":skill_interface",
         "//intrinsic/skills/internal:execute_context_impl_py",
+        "//intrinsic/skills/internal:preview_context_impl_py",
         "//intrinsic/skills/proto:equipment_py_pb2",
     ],
 )
@@ -66,6 +69,27 @@ py_library(
 py_library(
     name = "execute_request",
     srcs = ["execute_request.py"],
+    deps = ["@com_google_protobuf//:protobuf_python"],
+)
+
+py_library(
+    name = "preview_context",
+    srcs = ["preview_context.py"],
+    deps = [
+        ":skill_canceller",
+        "//intrinsic/geometry/service:geometry_service_py_pb2_grpc",
+        "//intrinsic/logging/proto:context_py_pb2",
+        "//intrinsic/motion_planning:motion_planner_client_py",
+        "//intrinsic/world/proto:object_world_updates_py_pb2",
+        "//intrinsic/world/python:object_world_client",
+        "//intrinsic/world/python:object_world_ids",
+        "//intrinsic/world/python:object_world_resources",
+    ],
+)
+
+py_library(
+    name = "preview_request",
+    srcs = ["preview_request.py"],
     deps = ["@com_google_protobuf//:protobuf_python"],
 )
 

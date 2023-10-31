@@ -34,6 +34,8 @@ cc_library(
         ":execute_request",
         ":get_footprint_context",
         ":get_footprint_request",
+        ":preview_context",
+        ":preview_request",
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/skills/proto:equipment_cc_proto",
         "//intrinsic/skills/proto:footprint_cc_proto",
@@ -44,6 +46,20 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
+    name = "skill_interface_utils",
+    srcs = ["skill_interface_utils.cc"],
+    hdrs = ["skill_interface_utils.h"],
+    deps = [
+        ":equipment_pack",
+        ":skill_interface",
+        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/skills/internal:execute_context_view",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_protobuf//:protobuf",
     ],
 )
@@ -94,6 +110,37 @@ cc_library(
 cc_library(
     name = "execute_request",
     hdrs = ["execute_request.h"],
+    deps = [
+        "//intrinsic/util/proto:any",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
+    name = "preview_context",
+    hdrs = ["preview_context.h"],
+    deps = [
+        ":skill_canceller",
+        "//intrinsic/logging/proto:context_cc_proto",
+        "//intrinsic/motion_planning:motion_planner_client",
+        "//intrinsic/world/objects:frame",
+        "//intrinsic/world/objects:kinematic_object",
+        "//intrinsic/world/objects:object_world_client",
+        "//intrinsic/world/objects:world_object",
+        "//intrinsic/world/proto:object_world_updates_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_library(
+    name = "preview_request",
+    hdrs = ["preview_request.h"],
     deps = [
         "//intrinsic/util/proto:any",
         "@com_google_absl//absl/log:check",

@@ -25,6 +25,7 @@ from intrinsic.skills.internal import default_parameters
 from intrinsic.skills.internal import error_utils
 from intrinsic.skills.internal import execute_context_impl
 from intrinsic.skills.internal import get_footprint_context_impl
+from intrinsic.skills.internal import preview_context_impl
 from intrinsic.skills.internal import runtime_data as rd
 from intrinsic.skills.internal import skill_repository as skill_repo
 from intrinsic.skills.proto import error_pb2
@@ -351,8 +352,58 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
 
     skill = self._skill_repository.get_skill_execute(skill_name)
 
+    try:
+      skill_request = skl.PreviewRequest(
+          internal_data=request.internal_data,
+          params=_resolve_params(request.parameters, operation.runtime_data),
+      )
+    except _CannotConstructRequestError as err:
+      _abort_with_status(
+          context=context,
+          code=status.StatusCode.INTERNAL,
+          message=(
+              'Could not construct preview request for skill'
+              f' {operation.runtime_data.skill_id}: {err}'
+          ),
+          skill_error_info=error_pb2.SkillErrorInfo(
+              error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
+          ),
+      )
+
+    skill_context = preview_context_impl.PreviewContextImpl(
+        canceller=operation.canceller,
+        logging_context=request.context,
+        motion_planner=motion_planner_client.MotionPlannerClient(
+            request.world_id, self._motion_planner_service
+        ),
+        object_world=object_world_client.ObjectWorldClient(
+            request.world_id, self._object_world_service
+        ),
+        resource_handles=dict(request.instance.resource_handles),
+    )
+
     def preview() -> skill_service_pb2.PreviewResult:
-      raise NotImplementedError('Preview is not yet supported.')
+      result = skill.preview(skill_request, skill_context)
+
+      # Verify that the skill returned the expected type.
+      got_descriptor = None if result is None else result.DESCRIPTOR
+      want_descriptor = operation.runtime_data.return_type_data.descriptor
+      if got_descriptor != want_descriptor:
+        got = 'None' if got_descriptor is None else got_descriptor.full_name
+        want = 'None' if want_descriptor is None else want_descriptor.full_name
+        raise InvalidResultTypeError(
+            f'Unexpected return type (expected: {want}, got: {got}).'
+        )
+
+      if result is None:
+        result_any = None
+      else:
+        result_any = any_pb2.Any()
+        result_any.Pack(result)
+
+      return skill_service_pb2.PreviewResult(
+          result=result_any, expected_states=skill_context.world_updates
+      )
 
     operation.start(op=preview, op_name='preview')
 

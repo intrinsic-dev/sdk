@@ -188,6 +188,54 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "preview_context_impl",
+    srcs = ["preview_context_impl.cc"],
+    hdrs = ["preview_context_impl.h"],
+    deps = [
+        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/logging/proto:context_cc_proto",
+        "//intrinsic/motion_planning:motion_planner_client",
+        "//intrinsic/skills/cc:equipment_pack",
+        "//intrinsic/skills/cc:preview_context",
+        "//intrinsic/skills/cc:skill_canceller",
+        "//intrinsic/skills/proto:equipment_cc_proto",
+        "//intrinsic/skills/proto:prediction_cc_proto",
+        "//intrinsic/skills/proto:skill_service_cc_proto",
+        "//intrinsic/util:proto_time",
+        "//intrinsic/world/objects:frame",
+        "//intrinsic/world/objects:kinematic_object",
+        "//intrinsic/world/objects:object_world_client",
+        "//intrinsic/world/objects:object_world_ids",
+        "//intrinsic/world/objects:world_object",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/time",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+py_library(
+    name = "preview_context_impl_py",
+    srcs = ["preview_context_impl.py"],
+    deps = [
+        "//intrinsic/geometry/service:geometry_service_py_pb2_grpc",
+        "//intrinsic/logging/proto:context_py_pb2",
+        "//intrinsic/motion_planning:motion_planner_client_py",
+        "//intrinsic/skills/proto:equipment_py_pb2",
+        "//intrinsic/skills/proto:prediction_py_pb2",
+        "//intrinsic/skills/python:preview_context",
+        "//intrinsic/skills/python:skill_canceller",
+        "//intrinsic/world/proto:object_world_updates_py_pb2",
+        "//intrinsic/world/python:object_world_client",
+        "//intrinsic/world/python:object_world_ids",
+        "//intrinsic/world/python:object_world_resources",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
 py_library(
     name = "module_skill_service",
     srcs = ["module_skill_service.py"],
@@ -218,6 +266,7 @@ py_library(
         ":error_utils_py",
         ":execute_context_impl_py",
         ":get_footprint_context_impl_py",
+        ":preview_context_impl_py",
         ":runtime_data_py",
         ":skill_repository_py",
         "//intrinsic/assets:id_utils_py",
@@ -455,6 +504,7 @@ cc_library(
         ":error_utils",
         ":execute_context_impl",
         ":get_footprint_context_impl",
+        ":preview_context_impl",
         ":runtime_data",
         ":skill_registry_client_interface",
         ":skill_repository",

@@ -40,6 +40,9 @@ class EquipmentPack {
   static absl::StatusOr<EquipmentPack> GetEquipmentPack(
       const intrinsic_proto::skills::ExecuteRequest& request);
 
+  static absl::StatusOr<EquipmentPack> GetEquipmentPack(
+      const intrinsic_proto::skills::PreviewRequest& request);
+
   // Unpacks the contents of the equipment at `key`.
   // returns failure if the `key` does not exist or the EquipmentType does not
   //    match the content type at the `key`.

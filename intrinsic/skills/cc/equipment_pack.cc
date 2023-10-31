@@ -51,6 +51,16 @@ absl::StatusOr<EquipmentPack> EquipmentPack::GetEquipmentPack(
   return EquipmentPack(request.instance().resource_handles());
 }
 
+absl::StatusOr<EquipmentPack> EquipmentPack::GetEquipmentPack(
+    const intrinsic_proto::skills::PreviewRequest& request) {
+  if (!request.has_instance()) {
+    return absl::InvalidArgumentError(
+        "In `request`, expected a skill `instance`, but the `instance` is "
+        "missing.");
+  }
+  return EquipmentPack(request.instance().resource_handles());
+}
+
 absl::StatusOr<intrinsic_proto::skills::ResourceHandle>
 EquipmentPack::GetHandle(absl::string_view key) const {
   if (!equipment_map_.contains(key)) {
