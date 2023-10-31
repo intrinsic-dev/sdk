@@ -8,13 +8,17 @@
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "intrinsic/eigenmath/types.h"
 #include "intrinsic/icon/actions/point_to_point_move_info.h"
+#include "intrinsic/icon/cc_client/client.h"
 #include "intrinsic/icon/cc_client/client_utils.h"
 #include "intrinsic/icon/cc_client/condition.h"
 #include "intrinsic/icon/cc_client/session.h"
 #include "intrinsic/icon/common/builtins.h"
 #include "intrinsic/icon/common/id_types.h"
 #include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/kinematics/types/joint_limits.h"
+#include "intrinsic/util/grpc/channel_interface.h"
 
 constexpr int kNDof = 6;
 

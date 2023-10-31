@@ -11,17 +11,22 @@
 
 #include "absl/log/log.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "intrinsic/eigenmath/types.h"
 #include "intrinsic/icon/actions/point_to_point_move_info.h"
+#include "intrinsic/icon/cc_client/client.h"
 #include "intrinsic/icon/cc_client/client_utils.h"
 #include "intrinsic/icon/cc_client/condition.h"
 #include "intrinsic/icon/cc_client/session.h"
 #include "intrinsic/icon/common/id_types.h"
 #include "intrinsic/icon/examples/joint_move_positions.pb.h"
 #include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/kinematics/types/joint_limits.h"
 #include "intrinsic/util/eigen.h"
+#include "intrinsic/util/grpc/channel_interface.h"
 
 namespace intrinsic::icon::examples {
 

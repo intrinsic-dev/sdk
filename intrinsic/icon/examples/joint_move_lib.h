@@ -5,6 +5,8 @@
 
 #include <memory>
 
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "intrinsic/util/grpc/channel_interface.h"
 
 namespace intrinsic::icon::examples {

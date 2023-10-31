@@ -23,6 +23,8 @@
 #include "intrinsic/icon/proto/cart_space.pb.h"
 #include "intrinsic/icon/proto/part_status.pb.h"
 #include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/kinematics/types/joint_limits.h"
+#include "intrinsic/util/grpc/channel_interface.h"
 
 namespace intrinsic::icon::examples {
 
