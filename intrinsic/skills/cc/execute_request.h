@@ -50,6 +50,9 @@ class ExecuteRequest {
     return UnpackAnyAndMerge<TParams>(params_any_, param_defaults_any_);
   }
 
+  // The skill parameters proto as an Any.
+  ::google::protobuf::Any params_any() const { return params_any_; }
+
  private:
   ::google::protobuf::Any params_any_;
   std::optional<::google::protobuf::Any> param_defaults_any_;

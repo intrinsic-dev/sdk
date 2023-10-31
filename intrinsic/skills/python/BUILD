@@ -28,6 +28,7 @@ py_library(
     deps = [
         ":skill_interface",
         "//intrinsic/skills/internal:execute_context_impl_py",
+        "//intrinsic/skills/proto:equipment_py_pb2",
     ],
 )
 
