@@ -33,6 +33,7 @@ py_library(
         ":no_op_skill_py_pb2",
         "//intrinsic/skills/proto:footprint_py_pb2",
         "//intrinsic/skills/python:skill_interface",
+        "//intrinsic/skills/python:skill_interface_utils",
         "//intrinsic/util:decorators",
     ],
 )
