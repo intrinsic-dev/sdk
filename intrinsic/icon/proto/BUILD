@@ -2,6 +2,7 @@
 
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
+load("//bazel:go_macros.bzl", "go_proto_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_proto_library")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
 
@@ -295,6 +296,11 @@ cc_proto_library(
     deps = [":linear_joint_acceleration_filter_config_proto"],
 )
 
+go_proto_library(
+    name = "linear_joint_acceleration_filter_config_go_proto",
+    deps = [":linear_joint_acceleration_filter_config_proto"],
+)
+
 proto_library(
     name = "blended_cartesian_move_proto",
     srcs = ["blended_cartesian_move.proto"],
@@ -311,6 +317,11 @@ proto_library(
     srcs = [
         "joint_position_pid_torque_controller_config.proto",
     ],
+)
+
+go_proto_library(
+    name = "joint_position_pid_torque_controller_config_go_proto",
+    deps = [":joint_position_pid_torque_controller_config_proto"],
 )
 
 proto_library(
