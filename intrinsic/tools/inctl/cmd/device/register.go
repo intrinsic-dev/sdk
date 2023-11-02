@@ -46,7 +46,6 @@ func validHostname(hostname string) (int, bool) {
 		return match[1] + 1, false
 	}
 
-	fmt.Printf("Matches: %v\n", match)
 	return 0, true
 }
 
