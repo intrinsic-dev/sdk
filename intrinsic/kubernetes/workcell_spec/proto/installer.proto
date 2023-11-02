@@ -7,7 +7,6 @@ package intrinsic_proto.workcell_spec.v1;
 import "google/protobuf/any.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-
 import "intrinsic/kubernetes/workcell_spec/proto/image.proto";
 
 message GetInstalledSpecResponse {
@@ -142,9 +141,6 @@ message InstallContainerAddonsRequest {
 }
 
 service InstallerService {
-  // Auth annotations for consumption by the following helm_chart:
-  //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
-  
 
   // Returns information about the currently running (if any) workcell spec.
   // Blocks for up to 1s.

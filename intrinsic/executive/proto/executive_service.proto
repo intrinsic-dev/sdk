@@ -12,7 +12,6 @@ import "intrinsic/executive/proto/behavior_tree.proto";
 import "intrinsic/executive/proto/executive_execution_mode.proto";
 import "intrinsic/executive/proto/run_metadata.proto";
 
-
 // The Executive is responsible for executing and monitoring Behavior Trees.
 //
 // Given the declarative description in the form of a behavior tree, the
@@ -34,9 +33,6 @@ import "intrinsic/executive/proto/run_metadata.proto";
 // must be deleted (and possibly stopped if still active) before creating
 // another one.
 service ExecutiveService {
-  // Auth annotations for consumption by the following helm_chart:
-  //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
-  
 
   // ========= Methods for operations (tied to a Behavior Tree) =============
 

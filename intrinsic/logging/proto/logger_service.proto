@@ -6,7 +6,6 @@ package intrinsic_proto.data_logger;
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-
 import "intrinsic/logging/proto/log_item.proto";
 
 // Note: We have the nesting here to emulate class enum functionality.
@@ -140,10 +139,6 @@ message SyncResponse {
 // Service to persistently store and retrieve structured data on-prem.
 // Data is buffered locally on disk and uploaded to the cloud in the background.
 service DataLogger {
-  // Auth annotations for consumption by the following helm_chart:
-  //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
-  
-  
 
   // Dispatches one log item to the data logger.
   rpc Log(LogRequest) returns (google.protobuf.Empty) {}

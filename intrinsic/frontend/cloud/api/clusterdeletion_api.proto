@@ -6,18 +6,12 @@ package intrinsic_proto.frontend.v1;
 
 import "google/protobuf/empty.proto";
 
-
 message DeleteClusterRequest {
   // The unique name of the cluster within its project.
   string cluster_name = 1;
 }
 
 service ClusterDeletionService {
-  // Auth annotations for consumption by the following helm_chart:
-  //   cs/symbol://intrinsic/frontend/cloud:frontend
-  
-  
-  
 
   // Returns a list of clusters registered to this project.
   rpc DeleteCluster(DeleteClusterRequest) returns (google.protobuf.Empty) {}

@@ -8,7 +8,6 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
-
 // Provides methods to control and query running simulations.
 service SimulationService {
   // Returns a human readable string to identify the simulator being used.
@@ -18,9 +17,6 @@ service SimulationService {
   // Reset the current simulation to its initial state and make sure that all
   // affected components such as ICON are in a working state.
   rpc ResetSimulation(ResetSimulationRequest) returns (google.protobuf.Empty) {
-    // Auth annotations for consumption by the following helm_chart:
-    //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
-    
   }
 
   // Returns the ratio of simulation to real clock time, i.e. the time elapsed

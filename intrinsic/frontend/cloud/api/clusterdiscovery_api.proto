@@ -5,7 +5,6 @@ syntax = "proto3";
 package intrinsic_proto.frontend.v1;
 
 
-
 enum SolutionState {
   SOLUTION_STATE_UNSPECIFIED = 0;
   SOLUTION_STATE_NOT_RUNNING = 1;
@@ -53,11 +52,6 @@ message ListClusterDescriptionsResponse {
 }
 
 service ClusterDiscoveryService {
-  // Auth annotations for consumption by the following helm_chart:
-  //   cs/symbol://intrinsic/frontend/cloud:frontend
-  
-  
-  
 
   // Returns a list of clusters registered to the org provided via context.
   // If no org is provided, the defaultorg will be used.

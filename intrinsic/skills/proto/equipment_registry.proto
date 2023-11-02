@@ -4,7 +4,6 @@ syntax = "proto3";
 
 package intrinsic_proto.skills;
 
-
 import "intrinsic/skills/proto/equipment.proto";
 
 message EquipmentBySelectorRequest {
@@ -57,37 +56,21 @@ service EquipmentRegistry {
   // error if no equipment can be found.
   rpc GetEquipmentBySelector(EquipmentBySelectorRequest)
       returns (EquipmentBySelectorResponse) {
-    // Auth annotations for consumption by the following helm_chart:
-    //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
-    
-    
   }
 
   // Batched version of GetEquipmentBySelector. Returns empty response if no
   // equipment can be found for an individual request.
   rpc BatchGetEquipmentBySelector(EquipmentBySelectorBatchRequest)
       returns (EquipmentBySelectorBatchResponse) {
-    // Auth annotations for consumption by the following helm_chart:
-    //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
-    
-    
   }
 
   // Returns the equipment matching the given request.
   rpc GetEquipmentByName(EquipmentByNameRequest)
       returns (EquipmentByNameResponse) {
-    // Auth annotations for consumption by the following helm_chart:
-    //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
-    
-    
   }
 
   // Returns list of all registered equipment. The ordering of resource handles
   // in the response is unspecified.
   rpc ListEquipment(ListEquipmentRequest) returns (ListEquipmentResponse) {
-    // Auth annotations for consumption by the following helm_chart:
-    //   cs/symbol://intrinsic/kubernetes/api_relay/cloud:api-relay
-    
-    
   }
 }

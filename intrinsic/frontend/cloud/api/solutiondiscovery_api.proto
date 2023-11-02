@@ -6,7 +6,6 @@ package intrinsic_proto.frontend.v1;
 
 import "intrinsic/frontend/cloud/api/clusterdiscovery_api.proto";
 
-
 message SolutionDescription {
   string name = 1;
   string display_name = 2;
@@ -34,11 +33,6 @@ message GetSolutionDescriptionResponse {
 }
 
 service SolutionDiscoveryService {
-  // Auth annotations for consumption by the following helm_chart:
-  //   cs/symbol://intrinsic/frontend/cloud:frontend
-  
-  
-  
 
   // Returns a list of solutions based on the provided filter
   rpc ListSolutionDescriptions(ListSolutionDescriptionsRequest)
