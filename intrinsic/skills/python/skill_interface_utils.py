@@ -63,11 +63,6 @@ def preview_to_execute_context(
     resource_handles: dict[str, equipment_pb2.ResourceHandle],
 ) -> skill_interface.ExecuteContext:
   """Converts a PreviewContext to an ExecuteContext."""
-  if not isinstance(context, preview_context_impl.PreviewContextImpl):
-    raise NotImplementedError(
-        f"Cannot convert {type(context).__name__} to an ExecuteContext."
-    )
-
   return execute_context_impl.ExecuteContextImpl(
       canceller=context.canceller,
       logging_context=context.logging_context,

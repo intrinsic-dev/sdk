@@ -5,11 +5,14 @@
 
 #include <memory>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "google/protobuf/message.h"
+#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/internal/execute_context_view.h"
+#include "intrinsic/util/proto/any.h"
 
 namespace intrinsic {
 namespace skills {

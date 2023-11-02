@@ -20,29 +20,33 @@ namespace intrinsic {
 // Unpacks an Any proto into a specific message type.
 //
 // Returns absl::InvalidArgumentError if the message type of `any` does not
-// match ParamT.
-template <typename ParamT>
-absl::StatusOr<ParamT> UnpackAny(const google::protobuf::Any& any) {
-  static_assert(std::is_base_of<google::protobuf::Message, ParamT>::value,
-                "UnpackAny() template parameter ParamT must be a "
+// match MsgT.
+template <typename MsgT>
+absl::Status UnpackAny(const google::protobuf::Any& any, MsgT& unpacked) {
+  static_assert(std::is_base_of<google::protobuf::Message, MsgT>::value,
+                "UnpackAny() template parameter MsgT must be a "
                 "google::protobuf::Message.");
   if (any.type_url().empty()) {
     return absl::InvalidArgumentError(absl::StrFormat(
-        "Cannot unpack empty Any to %s", ParamT::descriptor()->full_name()));
+        "Cannot unpack empty Any to %s", MsgT::descriptor()->full_name()));
   }
-  if (!any.Is<ParamT>()) {
+  if (!any.Is<MsgT>()) {
     return absl::InvalidArgumentError(
         absl::StrFormat("Cannot unpack Any of type %s to %s.", any.type_url(),
-                        ParamT::descriptor()->full_name()));
+                        MsgT::descriptor()->full_name()));
   }
-
-  ParamT unpacked;
   if (!any.UnpackTo(&unpacked)) {
     return absl::InternalError(
         absl::StrFormat("Failed to unpack Any of type %s to %s.",
-                        any.type_url(), ParamT::descriptor()->full_name()));
+                        any.type_url(), MsgT::descriptor()->full_name()));
   }
 
+  return absl::OkStatus();
+}
+template <typename MsgT>
+absl::StatusOr<MsgT> UnpackAny(const google::protobuf::Any& any) {
+  MsgT unpacked;
+  INTRINSIC_RETURN_IF_ERROR(UnpackAny(any, unpacked));
   return unpacked;
 }
 

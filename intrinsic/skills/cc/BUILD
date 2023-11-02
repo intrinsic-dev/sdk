@@ -59,7 +59,14 @@ cc_library(
         ":skill_interface",
         "//intrinsic/icon/release:status_helpers",
         "//intrinsic/skills/internal:execute_context_view",
+        "//intrinsic/skills/proto:prediction_cc_proto",
+        "//intrinsic/util:proto_time",
+        "//intrinsic/util/proto:any",
+        "//intrinsic/world/proto:object_world_updates_cc_proto",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/time",
         "@com_google_protobuf//:protobuf",
     ],
 )
@@ -123,6 +130,7 @@ cc_library(
     name = "preview_context",
     hdrs = ["preview_context.h"],
     deps = [
+        ":equipment_pack",
         ":skill_canceller",
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/motion_planning:motion_planner_client",

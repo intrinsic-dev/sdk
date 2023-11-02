@@ -2,16 +2,22 @@
 
 #include "intrinsic/skills/cc/skill_interface_utils.h"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <string>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_format.h"
+#include "absl/time/time.h"
 #include "google/protobuf/message.h"
 #include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/internal/execute_context_view.h"
+#include "intrinsic/util/proto_time.h"
+#include "intrinsic/world/proto/object_world_updates.pb.h"
 
 namespace intrinsic {
 namespace skills {

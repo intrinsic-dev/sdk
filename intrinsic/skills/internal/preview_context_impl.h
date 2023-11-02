@@ -77,6 +77,8 @@ class PreviewContextImpl : public PreviewContext {
   world::ObjectWorldClient object_world_;
 
   std::vector<intrinsic_proto::skills::TimedWorldUpdate> world_updates_;
+
+  EquipmentPack& equipment() override { return equipment_; }
 };
 
 }  // namespace skills

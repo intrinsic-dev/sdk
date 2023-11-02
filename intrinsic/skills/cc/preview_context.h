@@ -9,6 +9,7 @@
 #include "absl/time/time.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
+#include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_canceller.h"
 #include "intrinsic/world/objects/frame.h"
 #include "intrinsic/world/objects/kinematic_object.h"
@@ -74,6 +75,9 @@ class PreviewContext {
   virtual absl::Status RecordWorldUpdate(
       const intrinsic_proto::world::ObjectWorldUpdate& update,
       absl::Duration elapsed, absl::Duration duration) = 0;
+
+ private:
+  virtual EquipmentPack& equipment() = 0;
 };
 
 }  // namespace skills
