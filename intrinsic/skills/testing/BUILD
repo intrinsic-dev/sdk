@@ -45,6 +45,7 @@ cc_library(
     deps = [
         ":no_op_skill_cc_proto",
         "//intrinsic/skills/cc:skill_interface",
+        "//intrinsic/skills/cc:skill_interface_utils",
         "//intrinsic/skills/cc:skill_registration",
         "//intrinsic/skills/proto:equipment_cc_proto",
         "//intrinsic/skills/proto:skill_service_cc_proto",

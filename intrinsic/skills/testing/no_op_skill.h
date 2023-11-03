@@ -29,6 +29,9 @@ class NoOpSkill : public SkillInterface {
 
   absl::StatusOr<std::unique_ptr<google::protobuf::Message>> Execute(
       const ExecuteRequest& execute_request, ExecuteContext& context) override;
+
+  absl::StatusOr<std::unique_ptr<::google::protobuf::Message>> Preview(
+      const PreviewRequest& request, PreviewContext& context) override;
 };
 
 }  // namespace intrinsic::skills
