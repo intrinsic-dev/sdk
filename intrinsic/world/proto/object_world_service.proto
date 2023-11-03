@@ -30,96 +30,120 @@ service ObjectWorldService {
   // WorldMetadata methods.
 
   // Returns the metadata about a single world.
-  rpc GetWorld(GetWorldRequest) returns (WorldMetadata) {}
+  rpc GetWorld(GetWorldRequest) returns (WorldMetadata) {
+  }
 
   // Clones a world and creates a new copy.
-  rpc CloneWorld(CloneWorldRequest) returns (WorldMetadata) {}
+  rpc CloneWorld(CloneWorldRequest) returns (WorldMetadata) {
+  }
 
   // Deletes a world from the service.
-  rpc DeleteWorld(DeleteWorldRequest) returns (google.protobuf.Empty) {}
+  rpc DeleteWorld(DeleteWorldRequest) returns (google.protobuf.Empty) {
+  }
 
   // Lists the metadatas of the worlds currently stored in the world service.
-  rpc ListWorlds(ListWorldsRequest) returns (ListWorldsResponse) {}
+  rpc ListWorlds(ListWorldsRequest) returns (ListWorldsResponse) {
+  }
 
   // ---------------------------------------------------------------------------
   // World-level methods.
 
   // Updates the collision settings used for the given world. This will override
   // the previous settings and will not attempt to merge anything.
-  rpc UpdateCollisionSettings(UpdateCollisionSettingsRequest) returns (World) {}
+  rpc UpdateCollisionSettings(UpdateCollisionSettingsRequest) returns (World) {
+  }
 
   // ---------------------------------------------------------------------------
   // Object resource methods.
 
   // Returns a single object.
-  rpc GetObject(GetObjectRequest) returns (Object) {}
+  rpc GetObject(GetObjectRequest) returns (Object) {
+  }
 
   // Lists objects in a world.
-  rpc ListObjects(ListObjectsRequest) returns (ListObjectsResponse) {}
+  rpc ListObjects(ListObjectsRequest) returns (ListObjectsResponse) {
+  }
 
   // Deletes an object in the world.
-  rpc DeleteObject(DeleteObjectRequest) returns (google.protobuf.Empty) {}
+  rpc DeleteObject(DeleteObjectRequest) returns (google.protobuf.Empty) {
+  }
 
   // Updates the name of an object.
-  rpc UpdateObjectName(UpdateObjectNameRequest) returns (Object) {}
+  rpc UpdateObjectName(UpdateObjectNameRequest) returns (Object) {
+  }
 
   // Reparents an object to another parent object.
-  rpc ReparentObject(ReparentObjectRequest) returns (Object) {}
+  rpc ReparentObject(ReparentObjectRequest) returns (Object) {
+  }
 
   // Enables or disables collisions between two objects.
-  rpc ToggleCollisions(ToggleCollisionsRequest) returns (Objects) {}
+  rpc ToggleCollisions(ToggleCollisionsRequest) returns (Objects) {
+  }
 
   // Updates the current joint positions and/or limits of an object with
   // ObjectType==KINEMATIC_OBJECT.
-  rpc UpdateObjectJoints(UpdateObjectJointsRequest) returns (Object) {}
+  rpc UpdateObjectJoints(UpdateObjectJointsRequest) returns (Object) {
+  }
 
   // Updates the properties stored on an object with
   // ObjectType==KINEMATIC_OBJECT.
   rpc UpdateKinematicObjectProperties(UpdateKinematicObjectPropertiesRequest)
-      returns (Object) {}
+      returns (Object) {
+  }
 
   // Updates advanced properties of an object.
-  rpc UpdateObjectProperties(UpdateObjectPropertiesRequest) returns (Object) {}
+  rpc UpdateObjectProperties(UpdateObjectPropertiesRequest) returns (Object) {
+  }
 
   // ---------------------------------------------------------------------------
   // Entity resource methods.
 
   // Updates properties of an entity.
-  rpc UpdateEntityProperties(UpdateEntityPropertiesRequest) returns (Entity) {}
+  rpc UpdateEntityProperties(UpdateEntityPropertiesRequest) returns (Entity) {
+  }
 
   // ---------------------------------------------------------------------------
   // Frame resource methods.
 
   // Returns a single frame.
-  rpc GetFrame(GetFrameRequest) returns (Frame) {}
+  rpc GetFrame(GetFrameRequest) returns (Frame) {
+  }
 
   // Lists frames in a world.
-  rpc ListFrames(ListFramesRequest) returns (ListFramesResponse) {}
+  rpc ListFrames(ListFramesRequest) returns (ListFramesResponse) {
+  }
 
   // Creates a new frame.
-  rpc CreateFrame(CreateFrameRequest) returns (Frame) {}
+  rpc CreateFrame(CreateFrameRequest) returns (Frame) {
+  }
 
   // Deletes a frame.
-  rpc DeleteFrame(DeleteFrameRequest) returns (google.protobuf.Empty) {}
+  rpc DeleteFrame(DeleteFrameRequest) returns (google.protobuf.Empty) {
+  }
 
   // Updates the name of a frame.
-  rpc UpdateFrameName(UpdateFrameNameRequest) returns (Frame) {}
+  rpc UpdateFrameName(UpdateFrameNameRequest) returns (Frame) {
+  }
 
   // Reparents a frame to another parent object or frame.
-  rpc ReparentFrame(ReparentFrameRequest) returns (Frame) {}
+  rpc ReparentFrame(ReparentFrameRequest) returns (Frame) {
+  }
 
   // Updates properties of a frame.
-  rpc UpdateFrameProperties(UpdateFramePropertiesRequest) returns (Frame) {}
+  rpc UpdateFrameProperties(UpdateFramePropertiesRequest) returns (Frame) {
+  }
 
   // ---------------------------------------------------------------------------
   // Mixed-resource methods.
 
   // Returns a transform between objects or frames.
-  rpc GetTransform(GetTransformRequest) returns (GetTransformResponse) {}
+  rpc GetTransform(GetTransformRequest) returns (GetTransformResponse) {
+  }
 
   // Updates a transform between objects or frames.
   rpc UpdateTransform(UpdateTransformRequest)
-      returns (UpdateTransformResponse) {}
+      returns (UpdateTransformResponse) {
+  }
 
   // Performs a sequence of update operations on various resources in a single
   // world.
@@ -127,7 +151,8 @@ service ObjectWorldService {
   // The update is atomic. Either all or, in case of an error, none of the given
   // updates will be applied.
   rpc UpdateWorldResources(UpdateWorldResourcesRequest)
-      returns (UpdateWorldResourcesResponse) {}
+      returns (UpdateWorldResourcesResponse) {
+  }
 
   // ---------------------------------------------------------------------------
   // Footprint methods.
@@ -135,11 +160,13 @@ service ObjectWorldService {
   // Compares footprints against each other to determine if they are compatible
   // with respect to a given world.
   rpc AreFootprintsCompatible(AreFootprintsCompatibleRequest)
-      returns (AreFootprintsCompatibleResponse) {}
+      returns (AreFootprintsCompatibleResponse) {
+  }
 
   // Compares two worlds objectwise.
   // Added, modified and removed objects are returned.
-  rpc CompareWorlds(CompareWorldsRequest) returns (CompareWorldsResponse) {}
+  rpc CompareWorlds(CompareWorldsRequest) returns (CompareWorldsResponse) {
+  }
 
   // Syncs a object state from one world to another.
   // The complete object with all entities is copied from the from_world to the
@@ -151,7 +178,8 @@ service ObjectWorldService {
   // - The ID of this object already is used by another object.
   //
   // If the object already exists in the destination world, it is overwritten.
-  rpc SyncObject(SyncObjectRequest) returns (SyncObjectResponse) {}
+  rpc SyncObject(SyncObjectRequest) returns (SyncObjectResponse) {
+  }
 }
 
 // -----------------------------------------------------------------------------
