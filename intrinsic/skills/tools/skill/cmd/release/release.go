@@ -64,7 +64,7 @@ func init() {
 
 	cmdFlags.AddFlagDefault()
 	cmdFlags.AddFlagDryRun()
-	cmdFlags.AddFlagProject()
+	cmdFlags.AddFlagsProjectOrg()
 	cmdFlags.AddFlagRegistry()
 	cmdFlags.AddFlagsRegistryAuthUserPassword()
 	cmdFlags.AddFlagReleaseNotes()

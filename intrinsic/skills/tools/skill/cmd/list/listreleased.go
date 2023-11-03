@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
 	skillCmd "intrinsic/skills/tools/skill/cmd"
 	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
@@ -21,17 +20,12 @@ var listReleasedCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		project := cmdFlags.GetFlagProject()
-		catalogAddress := fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", project)
+		org := cmdFlags.GetFlagOrganization()
 
-		ctx, dialerOpts, err := dialerutil.DialInfoCtx(cmd.Context(), dialerutil.DialInfoParams{
-			Address:  catalogAddress,
+		_, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
 			CredName: project,
+			CredOrg:  org,
 		})
-		if err != nil {
-			return fmt.Errorf("could not list released skills: %v", err)
-		}
-
-		conn, err := grpc.DialContext(ctx, catalogAddress, *dialerOpts...)
 		if err != nil {
 			return fmt.Errorf("failed to create client connection: %v", err)
 		}
@@ -47,5 +41,5 @@ func init() {
 	skillCmd.SkillCmd.AddCommand(listReleasedCmd)
 	cmdFlags.SetCommand(listReleasedCmd)
 
-	cmdFlags.AddFlagProject()
+	cmdFlags.AddFlagsProjectOrg()
 }

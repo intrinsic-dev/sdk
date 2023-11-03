@@ -18,6 +18,7 @@ go_library(
     srcs = ["cmdutil.go"],
     deps = [
         ":imageutil",
+        "//intrinsic/tools/inctl/util:orgutil",
         "@com_github_pkg_errors//:go_default_library",
         "@com_github_spf13_cobra//:go_default_library",
         "@com_github_spf13_viper//:go_default_library",

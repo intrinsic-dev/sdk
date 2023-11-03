@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"intrinsic/skills/tools/skill/cmd/imageutil"
+	"intrinsic/tools/inctl/util/orgutil"
 )
 
 const (
@@ -41,8 +42,6 @@ const (
 	KeyManifestFile = "manifest_file"
 	// KeyManifestTarget is the build target to the skill manifest.
 	KeyManifestTarget = "manifest_target"
-	// KeyProject is the name of the project flag.
-	KeyProject = "project"
 	// KeyRegistry is the name of the registry flag.
 	KeyRegistry = "registry"
 	// KeyReleaseNotes is the name of the release notes flag.
@@ -171,14 +170,25 @@ func (cf *CmdFlags) GetFlagManifestTarget() string {
 	return cf.GetString(KeyManifestTarget)
 }
 
+// AddFlagsProjectOrg adds both the project and org flag, including the necessary handling.
+func (cf *CmdFlags) AddFlagsProjectOrg() {
+	// While WrapCmd returns the pointer to make it inline, it's modifying, so we can use it here.
+	orgutil.WrapCmd(cf.cmd, cf.viperLocal)
+}
+
 // AddFlagProject adds a flag for the GCP project.
 func (cf *CmdFlags) AddFlagProject() {
-	cf.RequiredEnvString(KeyProject, "", "The Google Cloud Platform (GCP) project to use.")
+	cf.RequiredEnvString(orgutil.KeyProject, "", "The Google Cloud Platform (GCP) project to use.")
 }
 
 // GetFlagProject gets the value of the project flag added by AddFlagProject.
 func (cf *CmdFlags) GetFlagProject() string {
-	return cf.GetString(KeyProject)
+	return cf.GetString(orgutil.KeyProject)
+}
+
+// GetFlagOrganization gets the value of the project flag added by AddFlagProject.
+func (cf *CmdFlags) GetFlagOrganization() string {
+	return cf.GetString(orgutil.KeyOrganization)
 }
 
 // AddFlagRegistry adds a flag for the registry when side-loading an asset.

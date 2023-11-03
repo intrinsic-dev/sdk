@@ -54,6 +54,7 @@ $ inctl skill stop --type=id skill
 		context, solution := cmdFlags.GetFlagsSideloadContextSolution()
 		installerAddress := cmdFlags.GetFlagInstallerAddress()
 		project := cmdFlags.GetFlagProject()
+		org := cmdFlags.GetFlagOrganization()
 
 		skillID, err := imageutil.SkillIDFromTarget(target, imageutil.TargetType(targetType), imagetransfer.RemoteTransferer(remote.WithAuthFromKeychain(google.Keychain)))
 		if err != nil {
@@ -63,6 +64,7 @@ $ inctl skill stop --type=id skill
 		ctx, conn, err := dialerutil.DialConnectionCtx(command.Context(), dialerutil.DialInfoParams{
 			Address:  installerAddress,
 			CredName: project,
+			CredOrg:  org,
 		})
 		if err != nil {
 			return fmt.Errorf("could not create connection: %w", err)
@@ -111,7 +113,7 @@ func init() {
 	cmdFlags.SetCommand(stopCmd)
 
 	cmdFlags.AddFlagInstallerAddress()
-	cmdFlags.AddFlagProject()
+	cmdFlags.AddFlagsProjectOrg()
 	cmdFlags.AddFlagsSideloadContextSolution("skill")
 	cmdFlags.AddFlagSideloadStopType("skill")
 }

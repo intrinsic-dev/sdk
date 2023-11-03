@@ -39,6 +39,7 @@ type listSkillsParams struct {
 	filter      string
 	printer     printer.Printer
 	projectName string
+	orgName     string
 	serverAddr  string
 }
 
@@ -47,6 +48,7 @@ func listSkills(ctx context.Context, params *listSkillsParams) error {
 		Address:  params.serverAddr,
 		Cluster:  params.cluster,
 		CredName: params.projectName,
+		CredOrg:  params.orgName,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create client connection: %v", err)
@@ -78,8 +80,7 @@ $	inctl skill list --project my-project --cluster my-cluster
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		project := cmdFlags.GetFlagProject()
-		serverAddr := fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", project)
-
+		org := cmdFlags.GetFlagOrganization()
 		cluster, solution, err := cmdFlags.GetFlagsListClusterSolution()
 		if err != nil {
 			return err
@@ -87,8 +88,8 @@ $	inctl skill list --project my-project --cluster my-cluster
 
 		if solution != "" {
 			ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
-				Address:  serverAddr,
 				CredName: project,
+				CredOrg:  org,
 			})
 			if err != nil {
 				return errors.Wrapf(err, "could not create connection")
@@ -110,7 +111,7 @@ $	inctl skill list --project my-project --cluster my-cluster
 			filter:      cmdFlags.GetString(keyFilter),
 			printer:     prtr,
 			projectName: project,
-			serverAddr:  serverAddr,
+			orgName:     org,
 		})
 		if err != nil {
 			return err
@@ -125,7 +126,7 @@ func init() {
 	cmdFlags.SetCommand(listCmd)
 
 	cmdFlags.AddFlagsListClusterSolution("skill")
-	cmdFlags.AddFlagProject()
+	cmdFlags.AddFlagsProjectOrg()
 
 	cmdFlags.OptionalString(keyFilter, "", fmt.Sprintf("Filter skills by the way they where loaded into the solution. One of: %s.", strings.Join(filterOptions, ", ")))
 }

@@ -262,9 +262,11 @@ var logsCmd = &cobra.Command{
 
 		context := cmdFlags.GetString(cmdutil.KeyContext)
 		project := cmdFlags.GetFlagProject()
+		org := cmdFlags.GetFlagOrganization()
 		var serverAddr string
-		if project == "" {
+		if context == "minikube" {
 			serverAddr = localhostURL
+			project = ""
 		} else {
 			serverAddr = fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", project)
 		}
@@ -273,6 +275,7 @@ var logsCmd = &cobra.Command{
 		ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
 			Address:  serverAddr,
 			CredName: project,
+			CredOrg:  org,
 		})
 		if err != nil {
 			return fmt.Errorf("could not create connection: %v", err)
@@ -305,7 +308,7 @@ func init() {
 	cmd.SkillCmd.AddCommand(logsCmd)
 	cmdFlags.SetCommand(logsCmd)
 
-	cmdFlags.AddFlagProject()
+	cmdFlags.AddFlagsProjectOrg()
 	cmdFlags.OptionalEnvString(cmdutil.KeyContext, "", "The Kubernetes cluster to use.")
 	cmdFlags.OptionalEnvString(cmdutil.KeySolution, "", "The solution to use.")
 

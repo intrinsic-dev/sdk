@@ -83,10 +83,12 @@ $ inctl skill start --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution
 		k8sContext, solution := cmdFlags.GetFlagsSideloadContextSolution()
 		installerAddress := cmdFlags.GetFlagInstallerAddress()
 		project := cmdFlags.GetFlagProject()
+		org := cmdFlags.GetFlagOrganization()
 
 		ctx, conn, err := dialerutil.DialConnectionCtx(command.Context(), dialerutil.DialInfoParams{
 			Address:  installerAddress,
 			CredName: project,
+			CredOrg:  org,
 		})
 		if err != nil {
 			return fmt.Errorf("could not create connection: %w", err)
@@ -160,7 +162,7 @@ func init() {
 	cmdFlags.SetCommand(startCmd)
 
 	cmdFlags.AddFlagInstallerAddress()
-	cmdFlags.AddFlagProject()
+	cmdFlags.AddFlagsProjectOrg()
 	cmdFlags.AddFlagRegistry()
 	cmdFlags.AddFlagsRegistryAuthUserPassword()
 	cmdFlags.AddFlagsSideloadContextSolution("skill")
