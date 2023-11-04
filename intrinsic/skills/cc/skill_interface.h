@@ -121,11 +121,22 @@ class SkillSignatureInterface {
   virtual ~SkillSignatureInterface() = default;
 };
 
-// Interface definition of Skill projecting.
+// Interface for skill projecting.
+//
+// Implementations of SkillProjectInterface predict how a skill might behave
+// during execution. The methods of this interface should be invokable prior to
+// execution to allow a skill to:
+// * provide an understanding of what the footprint of the skill on the workcell
+//   will be when it is executed.
 class SkillProjectInterface {
  public:
-  // Computes the skill's footprint. `world` contains the world under which the
-  // skill is expected to operate, and this function should not modify it.
+  // Returns the resources required for running this skill.
+  //
+  // Skill developers should override this method with their implementation.
+  //
+  // If a skill does not implement `get_footprint`, the default implementation
+  // specifies that the skill needs exclusive access to everything. The skill
+  // will therefore not be able to execute in parallel with any other skill.
   virtual absl::StatusOr<intrinsic_proto::skills::Footprint> GetFootprint(
       const GetFootprintRequest& request, GetFootprintContext& context) const {
     intrinsic_proto::skills::Footprint result;
@@ -136,16 +147,17 @@ class SkillProjectInterface {
   virtual ~SkillProjectInterface() = default;
 };
 
-// Interface for Skill execution.
+// Interface for skill execution.
 class SkillExecuteInterface {
  public:
-  // Executes the skill. `context` provides access to the world and other
-  // services that a skill may use.
+  // Executes the skill.
   //
-  // If skill execution succeeds, the skill should return either the skill's
-  // result proto message, or nullptr if the skill has no output. If skill
-  // execution fails, the skill should return an appropriate error status, as
-  // described below.
+  // If the skill implementation supports cancellation, it should:
+  // 1) Set `supports_cancellation` to true in its manifest.
+  // 2) Stop as soon as possible and leave resources in a safe and recoverable
+  //    state when a cancellation request is received (via its ExecuteContext).
+  //    Cancelled skill executions should end by returning
+  //    `absl::CancelledError`;
   //
   // If the skill fails for one of the following reasons, it should return the
   // specified error along with a descriptive and, if possible, actionable error
@@ -169,6 +181,15 @@ class SkillExecuteInterface {
   // failures that should lead to fallback handling (e.g., failure to achieve
   // the skill's objective) and other failures that should cause the entire
   // process to abort (e.g., failure to connect to a gRPC service).
+  //
+  // `request` includes parameters for the execution.
+  // `context` provides access to the world and other services that the skill
+  //    may use.
+  //
+  // If skill execution succeeds, the skill should return either the skill's
+  // result proto message, or nullptr if the skill has no output. If skill
+  // execution fails, the skill should return an appropriate error status, as
+  // described above.
   virtual absl::StatusOr<std::unique_ptr<google::protobuf::Message>> Execute(
       const ExecuteRequest& request, ExecuteContext& context) {
     return absl::UnimplementedError("Skill does not implement `Execute`.");
@@ -187,6 +208,9 @@ class SkillExecuteInterface {
   // preview the execution. The implementation should return the expected output
   // of executing the skill in that world.
   //
+  // If a skill does override the default implementation, any process that
+  // includes that skill will not be executable in "preview" mode.
+  //
   // NOTE: In preview mode, the object world provided by the PreviewContext
   // is treated as the -actual- state of the physical world, rather than as the
   // belief state that it represents during normal skill execution. Because of
@@ -200,22 +224,34 @@ class SkillExecuteInterface {
   // implementation should record the timing of its expected effects using
   // context.RecordWorldUpdate(). It should NOT make changes to the object
   // world via interaction with context.object_world().
+  //
+  // skill_interface_utils.h provides convenience utils that can be used to
+  // implement Preview() in common scenarios. E.g.:
+  // - PreviewViaExecute(): If executing the skill does not require resources or
+  //   modify the world.
+  //
+  // `request` includes parameters for the execution to preview.
+  // `context` provides access to the world and other services that the skill
+  //    may use.
+  //
+  // If skill preview succeeds, the skill should return either the skill's
+  // expected result proto message, or nullptr if the skill has no output. If
+  // skill preview fails, the skill should return an appropriate error status,
+  // as described in Execute().
   virtual absl::StatusOr<std::unique_ptr<::google::protobuf::Message>> Preview(
       const PreviewRequest& request, PreviewContext& context) {
-    return absl::UnimplementedError("Skill does not implement `Preview`.");
+    return absl::UnimplementedError("Skill has not implemented `Preview`.");
   }
 
   virtual ~SkillExecuteInterface() = default;
 };
 
-// Interface that combines all constituents of a skill.
-// - SkillSignatureInterface: Name and Input parameters.
-// - SkillExecuteInterface: Skill execution with provided parameters.
+// Interface for skills.
 //
-// If a skill implementation supports cancellation, it should:
-// 1) Stop as soon as possible and leave resources in a safe and recoverable
-//   state when a cancellation request is received (via its ExecuteContext).
-// 2) Override `SupportsCancellation` to return true.
+// This interface combines all skill constituents:
+// - SkillSignatureInterface: Metadata about the skill.
+// - SkillProjectInterface: Skill prediction.
+// - SkillExecuteInterface: Skill execution.
 class SkillInterface : public SkillSignatureInterface,
                        public SkillProjectInterface,
                        public SkillExecuteInterface {

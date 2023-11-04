@@ -1,6 +1,6 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-"""Skills Python APIs and definitions."""
+"""Skill interface."""
 
 import abc
 from typing import Generic, List, Mapping, Optional, TypeVar, Union
@@ -99,7 +99,7 @@ class SkillSignatureInterface(metaclass=abc.ABCMeta):
 
 
 class SkillExecuteInterface(abc.ABC, Generic[TParamsType, TResultType]):
-  """Interface for skill executors.
+  """Interface for skill execution.
 
   Implementations of the SkillExecuteInterface define how a skill behaves when
   it is executed.
@@ -111,7 +111,11 @@ class SkillExecuteInterface(abc.ABC, Generic[TParamsType, TResultType]):
   ) -> TResultType:
     """Executes the skill.
 
-    Skill authors should override this method with their implementation.
+    If the skill implementation supports cancellation, it should:
+    1) Set `supports_cancellation` to true in its manifest.
+    2) Stop as soon as possible and leave resources in a safe and recoverable
+       state when a cancellation request is received (via its ExecuteContext).
+       Cancelled skill executions should end by raising SkillCancelledError.
 
     Any error raised by the skill will be handled by the executive that runs the
     process to which the skill belongs. The effect of the error will depend on
@@ -126,9 +130,9 @@ class SkillExecuteInterface(abc.ABC, Generic[TParamsType, TResultType]):
     to abort (e.g., failure to connect to a gRPC service).
 
     Args:
-      request: The execute request.
-      context: Provides access to the world and other services that a skill may
-        use.
+      request: The execute request, including parameters for the execution.
+      context: Provides access to the world and other services that the skill
+        may use.
 
     Returns:
       The skill's result message, or None if it does not return a result.
@@ -139,9 +143,6 @@ class SkillExecuteInterface(abc.ABC, Generic[TParamsType, TResultType]):
       SkillCancelledError: If the skill is aborted due to a cancellation
         request.
     """
-    raise NotImplementedError(
-        f'Skill "{type(self).__name__!r} has not implemented `execute`.'
-    )
 
   def preview(
       self, request: PreviewRequest[TParamsType], context: PreviewContext
@@ -159,6 +160,9 @@ class SkillExecuteInterface(abc.ABC, Generic[TParamsType, TResultType]):
     preview the execution. The implementation should return the expected output
     of executing the skill in that world.
 
+    If a skill does not override the default implementation, any process that
+    includes that skill will not be executable in "preview" mode.
+
     NOTE: In preview mode, the object world provided by the PreviewContext
     is treated as the -actual- state of the physical world, rather than as the
     belief state that it represents during normal skill execution. Because of
@@ -173,6 +177,11 @@ class SkillExecuteInterface(abc.ABC, Generic[TParamsType, TResultType]):
     `context.record_world_update`. It should NOT make changes to the object
     world via interaction with `context.object_world`.
 
+    The .skill_interface_utils module provides convenience utils that can be
+    used to implement `preview` in common scenarios. E.g.:
+    - `preview_via_execute`: If executing the skill does not require resources
+      or modify the world.
+
     Args:
       request: The preview request.
       context: Provides access to services that the skill may use.
@@ -180,6 +189,12 @@ class SkillExecuteInterface(abc.ABC, Generic[TParamsType, TResultType]):
     Returns:
       The skill's expected result message, or None if it does not return a
       result.
+
+    Raises:
+      InvalidSkillParametersError: If the arguments provided to skill parameters
+        are invalid.
+      SkillCancelledError: If the skill preview is aborted due to a cancellation
+        request.
     """
     del request  # Unused in this default implementation.
     del context  # Unused in this default implementation.
@@ -189,16 +204,13 @@ class SkillExecuteInterface(abc.ABC, Generic[TParamsType, TResultType]):
 
 
 class SkillProjectInterface(abc.ABC, Generic[TParamsType, TResultType]):
-  """Interface for skill projectors.
+  """Interface for skill projecting.
 
-  Implementations of the SkillProjectInterface define how predictive information
-  about how a skill might behave during execution. The methods of this interface
-  should be invokable prior to execution to allow a skill to, eg.:
-  * precompute information that can be passed to the skill at execution time
-  * predict its behavior given the current known information about the world,
-    and any parameters that the skill depends on
+  Implementations of SkillProjectInterface predict how a skill might behave
+  during execution. The methods of this interface should be invokable prior to
+  execution to allow a skill to:
   * provide an understanding of what the footprint of the skill on the workcell
-    will be when it is executed
+    will be when it is executed.
   """
 
   def get_footprint(
@@ -206,9 +218,13 @@ class SkillProjectInterface(abc.ABC, Generic[TParamsType, TResultType]):
       request: GetFootprintRequest[TParamsType],
       context: GetFootprintContext,
   ) -> footprint_pb2.Footprint:
-    """Returns the required resources for running this skill.
+    """Returns the resources required for running this skill.
 
-    Skill authors should override this method with their implementation.
+    Skill developers should override this method with their implementation.
+
+    If a skill does not implement `get_footprint`, the default implementation
+    specifies that the skill needs exclusive access to everything. The skill
+    will therefore not be able to execute in parallel with any other skill.
 
     Args:
       request: The get footprint request.
@@ -225,17 +241,14 @@ class SkillProjectInterface(abc.ABC, Generic[TParamsType, TResultType]):
 
 class Skill(
     SkillSignatureInterface,
-    SkillExecuteInterface[TParamsType, TResultType],
     SkillProjectInterface[TParamsType, TResultType],
+    SkillExecuteInterface[TParamsType, TResultType],
     Generic[TParamsType, TResultType],
 ):
   """Interface for skills.
 
-  Notes on skill implementations:
-
-  If a skill implementation supports cancellation, it should:
-  1) Stop as soon as possible and leave resources in a safe and recoverable
-     state when a cancellation request is received (via its ExecuteContext).
-     Cancelled skill executions should end by raising SkillCancelledError.
-  2) Override `supports_cancellation` to return True.
+  This interface combines all skill constituents:
+  - SkillSignatureInterface: Metadata about the skill.
+  - SkillProjectInterface: Skill prediction.
+  - SkillExecuteInterface: Skill execution.
   """
