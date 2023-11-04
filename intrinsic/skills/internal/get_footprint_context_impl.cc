@@ -19,8 +19,6 @@
 namespace intrinsic {
 namespace skills {
 
-using ::intrinsic::world::ObjectWorldClient;
-
 absl::StatusOr<world::KinematicObject>
 GetFootprintContextImpl::GetKinematicObjectForEquipment(
     absl::string_view equipment_name) {
