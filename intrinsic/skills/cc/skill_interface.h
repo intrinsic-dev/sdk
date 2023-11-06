@@ -191,9 +191,7 @@ class SkillExecuteInterface {
   // execution fails, the skill should return an appropriate error status, as
   // described above.
   virtual absl::StatusOr<std::unique_ptr<google::protobuf::Message>> Execute(
-      const ExecuteRequest& request, ExecuteContext& context) {
-    return absl::UnimplementedError("Skill does not implement `Execute`.");
-  }
+      const ExecuteRequest& request, ExecuteContext& context) = 0;
 
   // Previews the expected outcome of executing the skill.
   //
