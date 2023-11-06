@@ -154,6 +154,39 @@ func TestWrapCmd(t *testing.T) {
 			t.Errorf("Expected error during test-run")
 		}
 	})
+
+	t.Run("subcommand", func(t *testing.T) {
+		t.Parallel()
+
+		called := false
+		vi := viper.New()
+		cmd := WrapCmd(&cobra.Command{}, vi)
+		cmd.AddCommand(&cobra.Command{
+			Use: "subcommand",
+			Run: func(*cobra.Command, []string) {
+				called = true
+				projectName := vi.GetString(KeyProject)
+				orgName := vi.GetString(KeyOrganization)
+
+				if projectName != "example-project" {
+					t.Errorf("Expected project to be example-project. Got: %q", projectName)
+				}
+
+				if orgName != "" {
+					t.Errorf("Expect org to be empty. Instead got: %q", orgName)
+				}
+			},
+		})
+
+		cmd.SetArgs([]string{"--project=example-project", "subcommand"})
+		if err := cmd.Execute(); err != nil {
+			t.Errorf("Unexpected error during test-run: %v", err)
+		}
+
+		if !called {
+			t.Errorf("Expected subcommand to be called")
+		}
+	})
 }
 
 func TestEditDistance(t *testing.T) {

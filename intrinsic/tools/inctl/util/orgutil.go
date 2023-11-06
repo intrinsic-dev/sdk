@@ -163,8 +163,14 @@ func WrapCmd(cmd *cobra.Command, vipr *viper.Viper) *cobra.Command {
 
 	oldPreRunE := cmd.PersistentPreRunE
 	cmd.PersistentPreRunE = func(c *cobra.Command, args []string) error {
-		if err := PreRunOrganization(cmd, vipr); err != nil {
-			return err
+		// This is required to cooperate with cobrautil.
+		// Cobrautil's way to force an error instead of 0 return code when there's no subcommand
+		// causes cobra to run the PersistentPreRunE either way. So we need to short-circuit
+		// the flag handling here.
+		if !cmd.DisableFlagParsing {
+			if err := PreRunOrganization(cmd, vipr); err != nil {
+				return err
+			}
 		}
 
 		if oldPreRunE != nil {
