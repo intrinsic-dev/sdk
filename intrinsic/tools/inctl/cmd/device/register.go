@@ -21,6 +21,7 @@ import (
 const (
 	// https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names
 	hostnameRegexString = `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?`
+	replaceKey          = "replace"
 )
 
 var (
@@ -155,7 +156,7 @@ var registerCmd = &cobra.Command{
 			fmt.Printf("Sent configuration to server. The device will reboot and apply the configuration within a minute.\n")
 			return nil
 		case http.StatusConflict:
-			return fmt.Errorf("cluster %q already exists. Cannot create it again. Please use a unique value for --hostname", hostname)
+			return fmt.Errorf("cluster %q already exists. Please use a unique value for --hostname if this is a new cluster.\nTo replace the old cluster, call with --%s", hostname, replaceKey)
 		case http.StatusPreconditionFailed:
 			return fmt.Errorf("cluster %q does not exist. please make sure that --cluster_name matches the --hostname from a previously registered cluster.\nIf you want to create a new cluster, do not use --device_role", clusterName)
 		case http.StatusNotFound:
@@ -178,5 +179,5 @@ func init() {
 	registerCmd.Flags().StringVarP(&deviceRole, "device_role", "", "control-plane", "The role the device has in the cluster. Either 'control-plane' or 'worker'")
 	registerCmd.Flags().BoolVarP(&privateDevice, "private", "", false, "If set to 'true', the device will not be visible to other organization members")
 	registerCmd.Flags().StringVarP(&deviceRegion, "region", "", "unspecified", "This can be used for inventory tracking")
-	registerCmd.Flags().BoolVarP(&replaceDevice, "replace", "", false, "If set to 'true', an existing cluster with the same name will be replaced.\nThis is equivalent to calling 'inctl cluster delete' first")
+	registerCmd.Flags().BoolVarP(&replaceDevice, replaceKey, "", false, "If set to 'true', an existing cluster with the same name will be replaced.\nThis is equivalent to calling 'inctl cluster delete' first")
 }
