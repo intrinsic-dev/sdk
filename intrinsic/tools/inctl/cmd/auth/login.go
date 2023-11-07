@@ -176,18 +176,6 @@ func loginCmdE(cmd *cobra.Command, _ []string) (err error) {
 		config = auth.NewConfiguration(projectName)
 	}
 
-	if config.HasCredentials(alias) {
-		fmt.Fprintf(writer, "Key for project %s already exists. Do you want to override it? [y/N]: ", projectName)
-		response, err := in.ReadString('\n')
-		if err != nil {
-			return fmt.Errorf("cannot read from input device: %w", err)
-		}
-		response = strings.TrimSpace(response)
-		if len(response) <= 0 || strings.ToLower(response[0:1]) != "y" {
-			return fmt.Errorf("aborting per user request")
-		}
-	}
-
 	config, err = config.SetCredentials(alias, apiKey)
 	if err != nil {
 		return fmt.Errorf("aborting, invalid credentials: %w", err)
