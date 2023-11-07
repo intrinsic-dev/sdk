@@ -35,7 +35,7 @@ message PhysicsComponent {
 }
 
 // Friction parameters.
-// This is based on what is supported by classic Gazebo and Ignition.
+// This is based on what is supported by Gazebo.
 // Next ID: 7
 message Friction {
   // Coefficient of friction in first friction pyramid direction. Unitless.
