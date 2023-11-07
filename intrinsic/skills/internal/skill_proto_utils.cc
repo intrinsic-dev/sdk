@@ -96,21 +96,6 @@ absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
   return skill;
 }
 
-absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
-    const SkillSignatureInterface& skill_interface,
-    const google::protobuf::Message& param_defaults,
-    std::optional<absl::string_view> semver_version) {
-  INTRINSIC_ASSIGN_OR_RETURN(intrinsic_proto::skills::Skill skill,
-                             BuildSkillProto(skill_interface, semver_version));
-  if (!skill.mutable_parameter_description()->mutable_default_value()->PackFrom(
-          param_defaults)) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("Failed to serialize param_defaults. Message type name: ",
-                     param_defaults.GetTypeName()));
-  }
-  return skill;
-}
-
 void StripSourceCodeInfo(
     google::protobuf::FileDescriptorSet& file_descriptor_set) {
   for (google::protobuf::FileDescriptorProto& file :

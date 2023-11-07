@@ -26,15 +26,6 @@ absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
     const SkillSignatureInterface& skill_interface,
     std::optional<absl::string_view> semver_version = std::nullopt);
 
-// Same as above, but populates default parameters with the specified
-// `param_defaults`. Returns an error if serializing `param_defaults` fails.
-// If semver_version is not specified will set id_version = id.
-// Returns an error if `semver_version` is not valid semver.
-absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
-    const SkillSignatureInterface& skill_interface,
-    const google::protobuf::Message& param_defaults,
-    std::optional<absl::string_view> semver_version = std::nullopt);
-
 // Adds (or overwrites) the skill's parameter/return value descriptor fileset.
 // This also populates the parameter and return value field comments. We remove
 // source_code_info as it is no longer needed after the parameter and return

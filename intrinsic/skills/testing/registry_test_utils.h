@@ -16,13 +16,6 @@ namespace intrinsic::skills {
 absl::StatusOr<intrinsic_proto::skills::Skill> BuildTestSkillProto(
     const skills::SkillSignatureInterface& skill_interface);
 
-// Same as above, but populates default parameters with the specified
-// `param_defaults`. Returns an error if serializing `param_defaults` fails.
-//  Specifies `kTestVersion` as the semver version.
-absl::StatusOr<intrinsic_proto::skills::Skill> BuildTestSkillProto(
-    const skills::SkillSignatureInterface& skill_interface,
-    const google::protobuf::Message& param_defaults);
-
 absl::StatusOr<intrinsic_proto::skills::Skill> BuildTestSkillProto(
     const intrinsic_proto::skills::Manifest& manifest,
     const google::protobuf::FileDescriptorSet& param_type_file_descriptor_set,
