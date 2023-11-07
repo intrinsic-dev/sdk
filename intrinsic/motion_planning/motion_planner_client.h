@@ -35,55 +35,6 @@ class MotionPlannerClient {
           intrinsic_proto::motion_planning::MotionPlannerService::StubInterface>
           motion_planner_service);
 
-  // Options for path planning.
-  struct PlanPathOptions {
-    // The starting joint configuration to use. If empty (=default), the current
-    // position of a robot in the world will be used.
-    eigenmath::VectorXd starting_joints;
-
-    // Optional collision settings.
-    std::optional<intrinsic_proto::world::CollisionSettings> collision_settings;
-
-    // Optional same branch IK flag. Defaults to false.
-    bool ensure_same_branch = false;
-
-    // Optional path hint. It can be used as a starting point or if valid could
-    // be used as the result.
-    std::optional<std::vector<eigenmath::VectorXd>> path_hint;
-
-    // Optionally generate and return the swept volume for the computed path.
-    bool compute_swept_volume = false;
-
-    // Returns the default set of options to use with the plan path requests.
-    static const PlanPathOptions& Defaults();
-  };
-
-  // Wrapped result from calling PlanPath. Contains both the path and an
-  // optional set of shapes that correspond to the swept volume of the path.
-  struct PlanPathResult {
-    std::vector<eigenmath::VectorXd> path;
-    std::vector<intrinsic_proto::geometry::ShapeData> swept_volume;
-  };
-
-  // Plans a path for the given robot to the given target joint configuration.
-  absl::StatusOr<PlanPathResult> PlanPath(
-      const world::KinematicObject& robot,
-      const eigenmath::VectorXd& joint_target,
-      const PlanPathOptions& options = PlanPathOptions::Defaults());
-
-  // Plans a path for the given robot to the given Cartesian target.
-  absl::StatusOr<PlanPathResult> PlanPath(
-      const world::KinematicObject& robot,
-      const intrinsic_proto::motion_planning::CartesianMotionTarget&
-          cartesian_target,
-      const PlanPathOptions& options = PlanPathOptions::Defaults());
-
-  // Plans a path for the given robot to the given constrained target.
-  absl::StatusOr<PlanPathResult> PlanPath(
-      const world::KinematicObject& robot,
-      const intrinsic_proto::motion_planning::ConstrainedMotionTarget& target,
-      const PlanPathOptions& options = PlanPathOptions::Defaults());
-
   // Options for motion planning.
   struct MotionPlanningOptions {
     // Timeout for path planning algorithms.
@@ -179,7 +130,7 @@ class MotionPlannerClient {
                   const std::vector<eigenmath::VectorXd>& waypoints,
                   const CheckCollisionsOptions& options = {});
 
-  // Clear the PlanPatha and PlanTrajectory caches.
+  // Clear the PlanTrajectory caches.
   absl::StatusOr<intrinsic_proto::motion_planning::ClearCacheResponse>
   ClearCache();
 

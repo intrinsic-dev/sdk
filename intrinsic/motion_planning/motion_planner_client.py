@@ -61,21 +61,6 @@ class IKOptions:
   ensure_same_branch: bool = False
 
 
-class PlanPathOptions:
-  """Options for path planning.
-
-  starting_joints: The starting joint configuration to use.
-    If not set, the current position of the robot in the world will be used.
-  collision_settings: Collision Settings.
-  ensure_same_branch: Flag to choose IK solution that is on the same kinematic
-    branch as the starting joints of the robot.
-  """
-
-  starting_joint: list[float] = None
-  collision_settings: collision_settings_pb2.CollisionSettings = None
-  ensure_same_branch: bool = False
-
-
 class MotionPlanningOptions:
   """Options for Motion Planning.
 
@@ -100,80 +85,6 @@ class MotionPlannerClient:
   ):
     self._world_id: str = world_id
     self._stub: motion_planner_service_pb2_grpc.MotionPlannerServiceStub = stub
-
-  def plan_path(
-      self,
-      robot_name: object_world_ids.WorldObjectName,
-      joint_target: Optional[List[float]] = None,
-      cartesian_target: Optional[
-          motion_target_pb2.CartesianMotionTarget
-      ] = None,
-      constrained_target: Optional[
-          motion_target_pb2.ConstrainedMotionTarget
-      ] = None,
-      options: Optional[PlanPathOptions] = None,
-  ) -> List[List[float]]:
-    """Calls the PlanPath rpc, doing argument conversion as necessary.
-
-    Exactly one of joint_target and cartesian_target should be provided.
-
-    Args:
-      robot_name: Name of robot, must map to a kinematic object
-      joint_target: a target configuration to move the robot to
-      cartesian_target: a target pose to move the robot to
-      constrained_target: a motion target constraint that defines the pose to
-        which a frame in a kinematic chain is suppose to move. options : Plan
-        path options includes collision settings, flag for same branch IK and an
-        option to provide starting joint positions.
-      options: Options for plan path.
-
-    Returns:
-      A list of joint positions that form a path that takes the robot to the
-      specified target.
-
-    Raises:
-      ValueError: if neither joint_target nor cartesian_target are specified, or
-        they are both specified.
-    """
-    request = motion_planner_service_pb2.PlanPathRequest(
-        world_id=self._world_id
-    )
-    request.robot_reference.object_id.by_name.object_name = robot_name
-    if joint_target is not None and cartesian_target is not None:
-      raise ValueError(
-          "Exactly one of joint_target or cartesian_target must be specified"
-      )
-    elif joint_target is not None and constrained_target is not None:
-      raise ValueError(
-          "Exactly one of joint_target or constrained_target must be specified"
-      )
-    elif constrained_target is not None and cartesian_target is not None:
-      raise ValueError(
-          "Exactly one of cartesian_target or constrained_target must be"
-          " specified"
-      )
-    elif joint_target is not None:
-      request.joint_target.joints.extend(joint_target)
-    elif cartesian_target is not None:
-      request.cartesian_target.CopyFrom(cartesian_target)
-    elif constrained_target is not None:
-      request.constrained_target.CopyFrom(constrained_target)
-    else:
-      raise ValueError(
-          "Exactly one of joint_target or cartesian_target or"
-          "constrained_target must be specified"
-      )
-
-    # Pass in plan options
-    if options is not None:
-      if options.collision_settings:
-        request.collision_settings.CopyFrom(options.collision_settings)
-      if options.ensure_same_branch:
-        request.ensure_same_branch = options.ensure_same_branch
-
-    # Make the rpc.
-    response = self._stub.PlanPath(request)
-    return _repeated_vec_to_list_of_floats(response.path)
 
   def plan_trajectory(
       self,
