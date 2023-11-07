@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package intrinsic_proto.skills;
 
+import "intrinsic/resources/proto/resource_handle.proto";
 import "intrinsic/skills/proto/equipment.proto";
 
 message EquipmentBySelectorRequest {
@@ -12,7 +13,7 @@ message EquipmentBySelectorRequest {
 }
 
 message EquipmentBySelectorResponse {
-  repeated intrinsic_proto.skills.ResourceHandle handles = 2;
+  repeated intrinsic_proto.resources.ResourceHandle handles = 2;
 
   reserved 1;
   reserved "status";
@@ -35,7 +36,7 @@ message EquipmentByNameRequest {
 }
 
 message EquipmentByNameResponse {
-  intrinsic_proto.skills.ResourceHandle handle = 2;
+  intrinsic_proto.resources.ResourceHandle handle = 2;
 
   reserved 1;
   reserved "status";
@@ -44,11 +45,11 @@ message EquipmentByNameResponse {
 message ListEquipmentRequest {}
 
 message ListEquipmentResponse {
-  repeated intrinsic_proto.skills.ResourceHandle handles = 1;
+  repeated intrinsic_proto.resources.ResourceHandle handles = 1;
 }
 
 message ResourceHandles {
-  repeated intrinsic_proto.skills.ResourceHandle handles = 1;
+  repeated intrinsic_proto.resources.ResourceHandle handles = 1;
 }
 
 service EquipmentRegistry {

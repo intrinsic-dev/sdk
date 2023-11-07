@@ -8,7 +8,7 @@ from google.protobuf import duration_pb2
 from google.protobuf import timestamp_pb2
 from intrinsic.logging.proto import context_pb2
 from intrinsic.motion_planning import motion_planner_client
-from intrinsic.skills.proto import equipment_pb2
+from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.skills.proto import prediction_pb2
 from intrinsic.skills.python import preview_context
 from intrinsic.skills.python import skill_canceller
@@ -60,7 +60,7 @@ class PreviewContextImpl(preview_context.PreviewContext):
       logging_context: context_pb2.Context,
       motion_planner: motion_planner_client.MotionPlannerClient,
       object_world: object_world_client.ObjectWorldClient,
-      resource_handles: dict[str, equipment_pb2.ResourceHandle],
+      resource_handles: dict[str, resource_handle_pb2.ResourceHandle],
   ):
     self._canceller = canceller
     self._logging_context = logging_context

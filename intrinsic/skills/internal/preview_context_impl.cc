@@ -11,6 +11,7 @@
 #include "absl/time/time.h"
 #include "google/protobuf/timestamp.pb.h"
 #include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/prediction.pb.h"
 #include "intrinsic/util/proto_time.h"
@@ -26,7 +27,7 @@ namespace skills {
 absl::StatusOr<world::Frame> PreviewContextImpl::GetFrameForEquipment(
     absl::string_view equipment_name, absl::string_view frame_name) {
   INTRINSIC_ASSIGN_OR_RETURN(
-      const intrinsic_proto::skills::ResourceHandle handle,
+      const intrinsic_proto::resources::ResourceHandle handle,
       equipment_.GetHandle(equipment_name));
   return object_world().GetFrame(handle, FrameName(frame_name));
 }
@@ -35,7 +36,7 @@ absl::StatusOr<world::KinematicObject>
 PreviewContextImpl::GetKinematicObjectForEquipment(
     absl::string_view equipment_name) {
   INTRINSIC_ASSIGN_OR_RETURN(
-      const intrinsic_proto::skills::ResourceHandle handle,
+      const intrinsic_proto::resources::ResourceHandle handle,
       equipment_.GetHandle(equipment_name));
   return object_world().GetKinematicObject(handle);
 }
@@ -43,7 +44,7 @@ PreviewContextImpl::GetKinematicObjectForEquipment(
 absl::StatusOr<world::WorldObject> PreviewContextImpl::GetObjectForEquipment(
     absl::string_view equipment_name) {
   INTRINSIC_ASSIGN_OR_RETURN(
-      const intrinsic_proto::skills::ResourceHandle handle,
+      const intrinsic_proto::resources::ResourceHandle handle,
       equipment_.GetHandle(equipment_name));
   return object_world().GetObject(handle);
 }

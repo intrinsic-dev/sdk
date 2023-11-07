@@ -23,6 +23,7 @@
 #include "intrinsic/math/pose3.h"
 #include "intrinsic/math/proto/pose.pb.h"
 #include "intrinsic/math/proto_conversion.h"
+#include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/util/eigen.h"
 #include "intrinsic/world/objects/frame.h"
@@ -239,7 +240,7 @@ absl::StatusOr<WorldObject> ObjectWorldClient::GetObject(
 }
 
 absl::StatusOr<WorldObject> ObjectWorldClient::GetObject(
-    const intrinsic_proto::skills::ResourceHandle& resource_handle) const {
+    const intrinsic_proto::resources::ResourceHandle& resource_handle) const {
   intrinsic_proto::world::GetObjectRequest request;
   request.set_world_id(world_id_);
   request.set_resource_handle_name(resource_handle.name());
@@ -346,7 +347,7 @@ absl::StatusOr<KinematicObject> ObjectWorldClient::GetKinematicObject(
 }
 
 absl::StatusOr<KinematicObject> ObjectWorldClient::GetKinematicObject(
-    const intrinsic_proto::skills::ResourceHandle& resource_handle) const {
+    const intrinsic_proto::resources::ResourceHandle& resource_handle) const {
   intrinsic_proto::world::GetObjectRequest request;
   request.set_world_id(world_id_);
   request.set_resource_handle_name(resource_handle.name());
@@ -399,7 +400,7 @@ absl::StatusOr<Frame> ObjectWorldClient::GetFrame(
 }
 
 absl::StatusOr<Frame> ObjectWorldClient::GetFrame(
-    const intrinsic_proto::skills::ResourceHandle& object_resource_handle,
+    const intrinsic_proto::resources::ResourceHandle& object_resource_handle,
     const FrameName& frame_name) const {
   // This could also be supported directly by the backend so that we would not
   // have to request the entire object with all of its frames.

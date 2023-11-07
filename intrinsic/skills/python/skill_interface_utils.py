@@ -4,9 +4,9 @@
 
 from __future__ import annotations
 
+from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.skills.internal import execute_context_impl
 from intrinsic.skills.internal import preview_context_impl
-from intrinsic.skills.proto import equipment_pb2
 from intrinsic.skills.python import skill_interface
 
 
@@ -60,7 +60,7 @@ def preview_to_execute_request(
 def preview_to_execute_context(
     context: skill_interface.PreviewContext,
     pub_sub_instance: skill_pubsub.SkillPubSubInstance,
-    resource_handles: dict[str, equipment_pb2.ResourceHandle],
+    resource_handles: dict[str, resource_handle_pb2.ResourceHandle],
 ) -> skill_interface.ExecuteContext:
   """Converts a PreviewContext to an ExecuteContext."""
   return execute_context_impl.ExecuteContextImpl(

@@ -7,6 +7,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/statusor.h"
+#include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/footprint.pb.h"
 
@@ -21,7 +22,7 @@ ReserveEquipmentRequired(
                               intrinsic_proto::skills::ResourceSelector>&
         equipment_required,
     const google::protobuf::Map<std::string,
-                                intrinsic_proto::skills::ResourceHandle>&
+                                intrinsic_proto::resources::ResourceHandle>&
         resource_handles);
 
 }  // namespace intrinsic::skills

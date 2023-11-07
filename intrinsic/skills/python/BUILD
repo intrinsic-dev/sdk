@@ -29,9 +29,9 @@ py_library(
     srcs = ["skill_interface_utils.py"],
     deps = [
         ":skill_interface",
+        "//intrinsic/resources/proto:resource_handle_py_pb2",
         "//intrinsic/skills/internal:execute_context_impl_py",
         "//intrinsic/skills/internal:preview_context_impl_py",
-        "//intrinsic/skills/proto:equipment_py_pb2",
     ],
 )
 
@@ -61,7 +61,7 @@ py_library(
         "//intrinsic/geometry/service:geometry_service_py_pb2_grpc",
         "//intrinsic/logging/proto:context_py_pb2",
         "//intrinsic/motion_planning:motion_planner_client_py",
-        "//intrinsic/skills/proto:equipment_py_pb2",
+        "//intrinsic/resources/proto:resource_handle_py_pb2",
         "//intrinsic/world/python:object_world_client",
     ],
 )

@@ -4,7 +4,6 @@ syntax = "proto3";
 
 package intrinsic_proto.skills;
 
-import "google/protobuf/any.proto";
 import "intrinsic/skills/proto/footprint.proto";
 
 message ResourceSelector {
@@ -18,39 +17,4 @@ message ResourceSelector {
   // only one skill may use the equipment at the time. Some skills may use
   // equipment in a way that enables multiple simultaneous access.
   intrinsic_proto.skills.EquipmentResource.SharingType sharing_type = 2;
-}
-
-message ResourceHandle {
-  message ResourceData {
-    // Data that can be used to access or interact with the resource instance
-    // containing a given resource handle type.
-    google.protobuf.Any contents = 1;
-  }
-
-  // The name of the resource instance represented by this handle.
-  string name = 1;
-
-  // A mapping between the resource's capabilities and their configuration data.
-  map<string, ResourceData> resource_data = 2;
-
-  // Information on how to connect to the resource instance.
-  ResourceConnectionInfo connection_info = 3;
-}
-
-// Contains info on how to connect to a resource instance.
-message ResourceConnectionInfo {
-  oneof target {
-    ResourceGrpcConnectionInfo grpc = 1;
-  }
-}
-
-message ResourceGrpcConnectionInfo {
-  // Address of the GRPC service.
-  string address = 1;
-
-  // Routing information attached to the http header.
-  string server_instance = 2;
-
-  // The header to be used with the instance name in the metadata of requests.
-  string header = 3;
 }

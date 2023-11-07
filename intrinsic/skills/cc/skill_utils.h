@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "absl/status/statusor.h"
+#include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/util/grpc/channel.h"
 #include "intrinsic/util/grpc/connection_params.h"
@@ -14,11 +15,11 @@ namespace intrinsic {
 namespace skills {
 
 absl::StatusOr<ConnectionParams> GetConnectionParamsFromHandle(
-    const intrinsic_proto::skills::ResourceHandle& handle);
+    const intrinsic_proto::resources::ResourceHandle& handle);
 
 // Creates client channel for communicating with equipment.
 absl::StatusOr<std::shared_ptr<intrinsic::Channel>> CreateChannelFromHandle(
-    const intrinsic_proto::skills::ResourceHandle& handle);
+    const intrinsic_proto::resources::ResourceHandle& handle);
 
 }  // namespace skills
 }  // namespace intrinsic

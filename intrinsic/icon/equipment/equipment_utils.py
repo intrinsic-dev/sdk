@@ -10,6 +10,7 @@ from typing import Optional
 from absl import logging
 from intrinsic.icon.equipment import icon_equipment_pb2
 from intrinsic.icon.python import icon_api
+from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.skills.proto import equipment_pb2
 from intrinsic.util.grpc import connection
 
@@ -65,7 +66,7 @@ def make_icon_resource_selector(
 
 
 def _get_params_from_connection_info(
-    resource_handle: equipment_pb2.ResourceHandle,
+    resource_handle: resource_handle_pb2.ResourceHandle,
 ) -> Optional[connection.ConnectionParams]:
   """Creates params to start an ICON client from a handle's connection_info.
 
@@ -87,7 +88,7 @@ def _get_params_from_connection_info(
 
 
 def init_icon_client(
-    resource_handle: equipment_pb2.ResourceHandle,
+    resource_handle: resource_handle_pb2.ResourceHandle,
 ) -> icon_api.Client:
   """Creates a client for talking to the icon server.
 
@@ -110,7 +111,7 @@ def init_icon_client(
 
 
 def get_position_part_name(
-    resource_handle: equipment_pb2.ResourceHandle,
+    resource_handle: resource_handle_pb2.ResourceHandle,
 ) -> str:
   """Gets the name of the Icon2PositionPart from the resource data.
 
@@ -136,7 +137,7 @@ def get_position_part_name(
 
 
 def get_torque_part_name(
-    resource_handle: equipment_pb2.ResourceHandle,
+    resource_handle: resource_handle_pb2.ResourceHandle,
 ) -> str:
   """Gets the name of the Icon2TorquePart from the resource data.
 
@@ -162,7 +163,7 @@ def get_torque_part_name(
 
 
 def get_gripper_part_name(
-    resource_handle: equipment_pb2.ResourceHandle,
+    resource_handle: resource_handle_pb2.ResourceHandle,
 ) -> str:
   """Gets the name of the Icon2GripperPart from the resource data.
 
@@ -188,7 +189,7 @@ def get_gripper_part_name(
 
 
 def get_force_torque_sensor_part_name(
-    resource_handle: equipment_pb2.ResourceHandle,
+    resource_handle: resource_handle_pb2.ResourceHandle,
 ) -> str:
   """Gets the name of the Icon2ForceTorqueSensorPart from the resource data.
 
@@ -220,7 +221,9 @@ def get_force_torque_sensor_part_name(
   return icon_force_torque_sensor_part.part_name
 
 
-def get_adio_part_name(resource_handle: equipment_pb2.ResourceHandle) -> str:
+def get_adio_part_name(
+    resource_handle: resource_handle_pb2.ResourceHandle,
+) -> str:
   """Gets the name of the Icon2AdioPart from the resource data.
 
   Args:
@@ -250,7 +253,7 @@ def get_adio_part_name(resource_handle: equipment_pb2.ResourceHandle) -> str:
 
 
 def get_rangefinder_part_name(
-    resource_handle: equipment_pb2.ResourceHandle,
+    resource_handle: resource_handle_pb2.ResourceHandle,
 ) -> str:
   """Gets the name of the Icon2RangefinderPart from the resource data.
 

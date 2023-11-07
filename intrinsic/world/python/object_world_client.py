@@ -13,7 +13,7 @@ import grpc
 from intrinsic.kinematics.types import joint_limits_pb2
 from intrinsic.math.python import data_types
 from intrinsic.math.python import proto_conversion as math_proto_conversion
-from intrinsic.skills.proto import equipment_pb2
+from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.util.grpc import error_handling
 from intrinsic.world.proto import geometry_component_pb2
 from intrinsic.world.proto import object_world_refs_pb2
@@ -181,7 +181,7 @@ class ObjectWorldClient:
       object_reference: Union[
           object_world_ids.WorldObjectName,
           object_world_refs_pb2.ObjectReference,
-          equipment_pb2.ResourceHandle,
+          resource_handle_pb2.ResourceHandle,
       ],
   ) -> object_world_service_pb2.Object:
     """Returns the proto of an object by its unique name."""
@@ -195,7 +195,7 @@ class ObjectWorldClient:
       request.object.by_name.object_name = object_reference
     elif isinstance(object_reference, object_world_refs_pb2.ObjectReference):
       request.object.CopyFrom(object_reference)
-    elif isinstance(object_reference, equipment_pb2.ResourceHandle):
+    elif isinstance(object_reference, resource_handle_pb2.ResourceHandle):
       request.resource_handle_name = object_reference.name
     else:
       raise TypeError(
@@ -293,7 +293,7 @@ class ObjectWorldClient:
       object_reference: Union[
           object_world_ids.WorldObjectName,
           object_world_refs_pb2.ObjectReference,
-          equipment_pb2.ResourceHandle,
+          resource_handle_pb2.ResourceHandle,
       ],
   ) -> object_world_resources.WorldObject:
     """Returns an object by its unique name.
@@ -314,7 +314,7 @@ class ObjectWorldClient:
       object_reference: Union[
           object_world_ids.WorldObjectName,
           object_world_refs_pb2.ObjectReference,
-          equipment_pb2.ResourceHandle,
+          resource_handle_pb2.ResourceHandle,
       ],
   ) -> object_world_resources.KinematicObject:
     """Returns a kinematic object by its unique name.
@@ -341,7 +341,10 @@ class ObjectWorldClient:
           object_world_refs_pb2.FrameReference, object_world_ids.FrameName
       ],
       object_name: Optional[
-          Union[object_world_ids.WorldObjectName, equipment_pb2.ResourceHandle]
+          Union[
+              object_world_ids.WorldObjectName,
+              resource_handle_pb2.ResourceHandle,
+          ]
       ] = None,
   ) -> object_world_resources.Frame:
     """Returns a frame by its reference.
@@ -383,9 +386,9 @@ class ObjectWorldClient:
       # environments like jupyter it checks for type str here.
       request.frame.by_name.object_name = object_name
       request.frame.by_name.frame_name = frame_reference
-    elif isinstance(object_name, equipment_pb2.ResourceHandle) and isinstance(
-        frame_reference, str
-    ):
+    elif isinstance(
+        object_name, resource_handle_pb2.ResourceHandle
+    ) and isinstance(frame_reference, str):
       return self.get_object(object_name).get_frame(frame_reference)
     else:
       raise TypeError('get_frame is called with the wrong arguments.')

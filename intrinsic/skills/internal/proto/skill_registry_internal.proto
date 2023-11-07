@@ -5,7 +5,7 @@ syntax = "proto3";
 package intrinsic_proto.skills;
 
 import "google/protobuf/empty.proto";
-import "intrinsic/skills/proto/equipment.proto";
+import "intrinsic/resources/proto/resource_handle.proto";
 import "intrinsic/skills/proto/skill_registry_config.proto";
 import "intrinsic/skills/proto/skills.proto";
 
@@ -20,7 +20,7 @@ message GetInstanceRequest {
   string instance_id = 3;
 
   // The resource the instance will use.
-  map<string, intrinsic_proto.skills.ResourceHandle> handles = 2;
+  map<string, intrinsic_proto.resources.ResourceHandle> handles = 2;
 
   reserved 1;
 }

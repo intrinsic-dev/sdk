@@ -14,6 +14,7 @@
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/kinematics/types/joint_limits_xd.h"
 #include "intrinsic/math/pose3.h"
+#include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/world/objects/frame.h"
 #include "intrinsic/world/objects/kinematic_object.h"
@@ -67,7 +68,7 @@ class ObjectWorldClient {
   // Returns a local copy of the object associated with the name of the given
   // resource handle.
   absl::StatusOr<WorldObject> GetObject(
-      const intrinsic_proto::skills::ResourceHandle& resource_handle) const;
+      const intrinsic_proto::resources::ResourceHandle& resource_handle) const;
 
   // Returns a fresh local copy of the remote object with the same id as the
   // given local object copy.
@@ -112,7 +113,7 @@ class ObjectWorldClient {
   // the given resource handle. Returns an error if the referenced object is
   // not a robot part.
   absl::StatusOr<KinematicObject> GetKinematicObject(
-      const intrinsic_proto::skills::ResourceHandle& resource_handle) const;
+      const intrinsic_proto::resources::ResourceHandle& resource_handle) const;
 
   // Returns a fresh local copy of the remote kinematic object with the same id
   // as the given local object copy.
@@ -137,7 +138,7 @@ class ObjectWorldClient {
   // Returns a local copy of the frame with the given name under the object
   // associated with the name of the given resource handle.
   absl::StatusOr<Frame> GetFrame(
-      const intrinsic_proto::skills::ResourceHandle& object_resource_handle,
+      const intrinsic_proto::resources::ResourceHandle& object_resource_handle,
       const FrameName& frame_name) const;
 
   // Returns a fresh local copy of the remote frame with the same id as the

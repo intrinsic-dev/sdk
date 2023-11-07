@@ -63,6 +63,7 @@ py_library(
     deps = [
         ":icon_equipment_py_pb2",
         "//intrinsic/icon/python:icon",
+        "//intrinsic/resources/proto:resource_handle_py_pb2",
         "//intrinsic/skills/proto:equipment_py_pb2",
         "//intrinsic/util/grpc:connection",
         "@com_google_absl_py//absl/logging",

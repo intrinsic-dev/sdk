@@ -9,6 +9,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
@@ -17,8 +18,9 @@ namespace intrinsic {
 namespace skills {
 
 EquipmentPack::EquipmentPack(
-    const google::protobuf::Map<
-        std::string, intrinsic_proto::skills::ResourceHandle>& resource_handles)
+    const google::protobuf::Map<std::string,
+                                intrinsic_proto::resources::ResourceHandle>&
+        resource_handles)
     : equipment_map_(resource_handles.begin(), resource_handles.end()) {}
 
 absl::StatusOr<EquipmentPack> EquipmentPack::GetEquipmentPack(
@@ -61,7 +63,7 @@ absl::StatusOr<EquipmentPack> EquipmentPack::GetEquipmentPack(
   return EquipmentPack(request.instance().resource_handles());
 }
 
-absl::StatusOr<intrinsic_proto::skills::ResourceHandle>
+absl::StatusOr<intrinsic_proto::resources::ResourceHandle>
 EquipmentPack::GetHandle(absl::string_view key) const {
   if (!equipment_map_.contains(key)) {
     return internal::MissingEquipmentError(key);
@@ -78,7 +80,7 @@ absl::Status EquipmentPack::Remove(absl::string_view key) {
 }
 
 absl::Status EquipmentPack::Add(
-    absl::string_view key, intrinsic_proto::skills::ResourceHandle handle) {
+    absl::string_view key, intrinsic_proto::resources::ResourceHandle handle) {
   if (equipment_map_.contains(key)) {
     return absl::InvalidArgumentError(
         absl::StrCat("Equipment pack already contains handle for key: ", key));

@@ -71,7 +71,7 @@ py_library(
         "//intrinsic/kinematics/types:joint_limits_py_pb2",
         "//intrinsic/math/python:data_types",
         "//intrinsic/math/python:proto_conversion",
-        "//intrinsic/skills/proto:equipment_py_pb2",
+        "//intrinsic/resources/proto:resource_handle_py_pb2",
         "//intrinsic/util/grpc:error_handling",
         "//intrinsic/world/proto:geometry_component_py_pb2",
         "//intrinsic/world/proto:object_world_refs_py_pb2",

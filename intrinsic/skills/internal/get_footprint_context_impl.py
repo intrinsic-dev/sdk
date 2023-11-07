@@ -3,7 +3,7 @@
 """GetFootprintContext implementation provided by the skill service."""
 
 from intrinsic.motion_planning import motion_planner_client
-from intrinsic.skills.proto import equipment_pb2
+from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.skills.python import get_footprint_context
 from intrinsic.world.python import object_world_client
 from intrinsic.world.python import object_world_ids
@@ -33,7 +33,7 @@ class GetFootprintContextImpl(get_footprint_context.GetFootprintContext):
       self,
       motion_planner: motion_planner_client.MotionPlannerClient,
       object_world: object_world_client.ObjectWorldClient,
-      resource_handles: dict[str, equipment_pb2.ResourceHandle],
+      resource_handles: dict[str, resource_handle_pb2.ResourceHandle],
   ):
     self._motion_planner = motion_planner
     self._object_world = object_world

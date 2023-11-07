@@ -11,6 +11,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "google/protobuf/any.pb.h"
+#include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
 
@@ -22,14 +23,16 @@ namespace skills {
 class EquipmentPack {
  private:
   using EquipmentMap =
-      absl::flat_hash_map<std::string, intrinsic_proto::skills::ResourceHandle>;
+      absl::flat_hash_map<std::string,
+                          intrinsic_proto::resources::ResourceHandle>;
   using EquipmentIterator = EquipmentMap::const_iterator;
 
  public:
   EquipmentPack() = default;
-  explicit EquipmentPack(const google::protobuf::Map<
-                         std::string, intrinsic_proto::skills::ResourceHandle>&
-                             resource_handles);
+  explicit EquipmentPack(
+      const google::protobuf::Map<std::string,
+                                  intrinsic_proto::resources::ResourceHandle>&
+          resource_handles);
 
   static absl::StatusOr<EquipmentPack> GetEquipmentPack(
       const intrinsic_proto::skills::PredictRequest& request);
@@ -52,7 +55,7 @@ class EquipmentPack {
 
   // Returns the resource handle itself for the given key. This is useful if
   // you need something other than the content of the equipment.
-  absl::StatusOr<intrinsic_proto::skills::ResourceHandle> GetHandle(
+  absl::StatusOr<intrinsic_proto::resources::ResourceHandle> GetHandle(
       absl::string_view key) const;
 
   // Removes the resource handle from this equipment pack by key.
@@ -60,7 +63,7 @@ class EquipmentPack {
 
   // Adds the resource handle to this equipment pack.
   absl::Status Add(absl::string_view key,
-                   intrinsic_proto::skills::ResourceHandle handle);
+                   intrinsic_proto::resources::ResourceHandle handle);
 
   // Allow const iteration through the resource handles.
   EquipmentIterator begin() const { return equipment_map_.begin(); }

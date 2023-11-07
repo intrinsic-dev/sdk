@@ -7,6 +7,7 @@
 
 #include "absl/strings/str_format.h"
 #include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
 #include "intrinsic/util/grpc/connection_params.h"
@@ -14,7 +15,7 @@
 namespace intrinsic::skills {
 
 absl::StatusOr<intrinsic::ConnectionParams> GetConnectionParamsFromHandle(
-    const intrinsic_proto::skills::ResourceHandle& handle) {
+    const intrinsic_proto::resources::ResourceHandle& handle) {
   if (!handle.connection_info().has_grpc()) {
     return absl::InvalidArgumentError(absl::StrFormat(
         "Resource handle \"%s\" does not specify grpc connection_info",
@@ -28,7 +29,7 @@ absl::StatusOr<intrinsic::ConnectionParams> GetConnectionParamsFromHandle(
 }
 
 absl::StatusOr<std::shared_ptr<intrinsic::Channel>> CreateChannelFromHandle(
-    const intrinsic_proto::skills::ResourceHandle& handle) {
+    const intrinsic_proto::resources::ResourceHandle& handle) {
   INTRINSIC_ASSIGN_OR_RETURN(
       const intrinsic::ConnectionParams connection_params,
       GetConnectionParamsFromHandle(handle));

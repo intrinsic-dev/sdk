@@ -116,6 +116,7 @@ cc_library(
         "//intrinsic/math:pose3",
         "//intrinsic/math:proto_conversion",
         "//intrinsic/math/proto:pose_cc_proto",
+        "//intrinsic/resources/proto:resource_handle_cc_proto",
         "//intrinsic/skills/proto:equipment_cc_proto",
         "//intrinsic/util:eigen",
         "//intrinsic/world/proto:object_world_refs_cc_proto",

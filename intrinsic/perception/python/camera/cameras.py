@@ -16,6 +16,7 @@ from intrinsic.perception.proto import camera_config_pb2
 from intrinsic.perception.proto import camera_params_pb2
 from intrinsic.perception.python.camera import camera_client
 from intrinsic.perception.python.camera import data_classes
+from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.skills.proto import equipment_pb2
 from intrinsic.skills.python import proto_utils
 from intrinsic.skills.python import skill_interface
@@ -28,10 +29,10 @@ _CONFIG_EQUIPMENT_IDENTIFIER = "CameraConfig"
 
 
 def _unpack_camera_config(
-    camera_equipment: equipment_pb2.ResourceHandle,
+    camera_equipment: resource_handle_pb2.ResourceHandle,
 ) -> Optional[camera_config_pb2.CameraConfig]:
   """Returns the camera config from a camera resource handle or None if equipment is not a camera."""
-  data: Mapping[str, equipment_pb2.ResourceHandle.ResourceData] = (
+  data: Mapping[str, resource_handle_pb2.ResourceHandle.ResourceData] = (
       camera_equipment.resource_data
   )
   config = None
@@ -110,7 +111,7 @@ class Camera:
     ...
   """
 
-  _camera_equipment: equipment_pb2.ResourceHandle
+  _camera_equipment: resource_handle_pb2.ResourceHandle
   _world_client: Optional[object_world_client.ObjectWorldClient]
   _world_object: Optional[object_world_resources.WorldObject]
   _client: camera_client.CameraClient
@@ -146,7 +147,7 @@ class Camera:
 
   @classmethod
   def create_from_resource_handle(
-      cls, resource_handle: equipment_pb2.ResourceHandle
+      cls, resource_handle: resource_handle_pb2.ResourceHandle
   ) -> Camera:
     """Creates a Camera object from the given resource handle.
 
@@ -166,7 +167,7 @@ class Camera:
 
   def __init__(
       self,
-      camera_equipment: equipment_pb2.ResourceHandle,
+      camera_equipment: resource_handle_pb2.ResourceHandle,
       world_client: Optional[object_world_client.ObjectWorldClient] = None,
   ):
     """Creates a Camera object from the given camera equipment and world.

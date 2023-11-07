@@ -67,6 +67,7 @@ py_library(
         "//intrinsic/math/python:pose3",
         "//intrinsic/perception/proto:camera_config_py_pb2",
         "//intrinsic/perception/proto:camera_params_py_pb2",
+        "//intrinsic/resources/proto:resource_handle_py_pb2",
         "//intrinsic/skills/proto:equipment_py_pb2",
         "//intrinsic/skills/python:proto_utils",
         "//intrinsic/skills/python:skill_interface",

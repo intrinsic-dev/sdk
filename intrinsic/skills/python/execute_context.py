@@ -7,7 +7,7 @@ from typing import Mapping
 
 from intrinsic.logging.proto import context_pb2
 from intrinsic.motion_planning import motion_planner_client
-from intrinsic.skills.proto import equipment_pb2
+from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.skills.python import skill_canceller
 from intrinsic.world.python import object_world_client
 
@@ -54,5 +54,7 @@ class ExecuteContext(abc.ABC):
 
   @property
   @abc.abstractmethod
-  def resource_handles(self) -> Mapping[str, equipment_pb2.ResourceHandle]:
+  def resource_handles(
+      self,
+  ) -> Mapping[str, resource_handle_pb2.ResourceHandle]:
     pass

@@ -10,10 +10,7 @@ package(default_visibility = ["//visibility:public"])
 proto_library(
     name = "equipment_proto",
     srcs = ["equipment.proto"],
-    deps = [
-        ":footprint_proto",
-        "@com_google_protobuf//:any_proto",
-    ],
+    deps = [":footprint_proto"],
 )
 
 cc_proto_library(
@@ -35,7 +32,10 @@ go_proto_library(
 proto_library(
     name = "equipment_registry_proto",
     srcs = ["equipment_registry.proto"],
-    deps = [":equipment_proto"],
+    deps = [
+        ":equipment_proto",
+        "//intrinsic/resources/proto:resource_handle_proto",
+    ],
 )
 
 cc_proto_library(
@@ -67,6 +67,7 @@ proto_library(
     srcs = ["skills.proto"],
     deps = [
         ":equipment_proto",
+        "//intrinsic/resources/proto:resource_handle_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:descriptor_proto",
     ],
@@ -84,7 +85,10 @@ py_proto_library(
 
 go_proto_library(
     name = "skills_go_proto",
-    go_deps = [":equipment_go_proto"],
+    go_deps = [
+        ":equipment_go_proto",
+        "//intrinsic/resources/proto:resource_handle_go_proto",
+    ],
     deps = [":skills_proto"],
 )
 
@@ -369,6 +373,7 @@ go_proto_library(
     name = "skill_manifest_go_proto",
     go_deps = [
         ":equipment_go_proto",
+        "//intrinsic/resources/proto:resource_handle_go_proto",
         "//intrinsic/assets/proto:vendor_go_proto",
         "//intrinsic/assets/proto:id_go_proto",
     ],
@@ -393,5 +398,6 @@ proto_library(
         ":skill_service_config_proto",
         ":skill_service_proto",
         ":skills_proto",
+        "//intrinsic/resources/proto:resource_handle_proto",
     ],
 )

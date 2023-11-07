@@ -11,6 +11,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/footprint.pb.h"
 
@@ -23,7 +24,7 @@ ReserveEquipmentRequired(
                               intrinsic_proto::skills::ResourceSelector>&
         equipment_required,
     const google::protobuf::Map<std::string,
-                                intrinsic_proto::skills::ResourceHandle>&
+                                intrinsic_proto::resources::ResourceHandle>&
         resource_handles) {
   google::protobuf::RepeatedPtrField<intrinsic_proto::skills::EquipmentResource>
       resources;
