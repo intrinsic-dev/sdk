@@ -4,8 +4,12 @@
 
 #include <string>
 
+#include "absl/status/status.h"
+#include "absl/strings/cord.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "google/protobuf/any.pb.h"
+#include "google/rpc/status.pb.h"
 
 namespace intrinsic {
 google::rpc::Status SaveStatusAsRpcStatus(const absl::Status& status) {

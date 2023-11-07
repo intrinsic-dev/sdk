@@ -8,9 +8,9 @@
 
 #include "absl/flags/flag.h"
 #include "absl/log/check.h"
-#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/clock.h"
 #include "google/protobuf/empty.pb.h"
 #include "grpcpp/channel.h"
 #include "grpcpp/client_context.h"

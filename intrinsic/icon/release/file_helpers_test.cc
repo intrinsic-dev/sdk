@@ -5,6 +5,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "absl/status/status.h"
 #include "file/base/path.h"
 #include "google/rpc/status.pb.h"
 
