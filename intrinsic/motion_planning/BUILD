@@ -19,6 +19,7 @@ cc_library(
         "//intrinsic/icon/proto:joint_space_cc_proto",
         "//intrinsic/icon/release:status_helpers",
         "//intrinsic/kinematics/types:cartesian_limits",
+        "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/math:pose3",
         "//intrinsic/math:proto_conversion",
         "//intrinsic/motion_planning/proto:motion_planner_config_cc_proto",

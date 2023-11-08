@@ -92,6 +92,7 @@ cc_proto_library(
 
 go_proto_library(
     name = "context_go_proto",
+    visibility = ["//intrinsic:__subpackages__"],
     deps = [":context_proto"],
 )
 

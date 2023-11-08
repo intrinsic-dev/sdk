@@ -15,6 +15,7 @@
 #include "intrinsic/icon/proto/cart_space_conversion.h"
 #include "intrinsic/icon/proto/joint_space.pb.h"
 #include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/math/proto_conversion.h"
 #include "intrinsic/motion_planning/conversions.h"
 #include "intrinsic/motion_planning/proto/motion_planner_config.pb.h"
@@ -51,7 +52,8 @@ MotionPlannerClient::PlanTrajectory(
         robot_specification,
     const intrinsic_proto::motion_planning::MotionSpecification&
         motion_specification,
-    const MotionPlanningOptions& options, const std::string& caller_id) {
+    const MotionPlanningOptions& options, const std::string& caller_id,
+    const intrinsic_proto::data_logger::Context& context) {
   intrinsic_proto::motion_planning::MotionPlanningRequest request;
   *request.mutable_robot_specification() = robot_specification;
   *request.mutable_motion_specification() = motion_specification;
@@ -63,6 +65,7 @@ MotionPlannerClient::PlanTrajectory(
   request.mutable_motion_planner_config()->mutable_timeout_sec()->set_nanos(
       (options.path_planning_time_out - s) * 1e9);
   request.set_caller_id(caller_id);
+  *request.mutable_context() = context;
 
   intrinsic_proto::motion_planning::TrajectoryPlanningResponse response;
   grpc::ClientContext ctx;

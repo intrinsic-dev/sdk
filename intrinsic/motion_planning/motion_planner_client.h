@@ -11,6 +11,7 @@
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/geometry/proto/shape_data.pb.h"
 #include "intrinsic/kinematics/types/cartesian_limits.h"
+#include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/math/pose3.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.pb.h"
@@ -64,7 +65,9 @@ class MotionPlannerClient {
       const intrinsic_proto::motion_planning::MotionSpecification&
           motion_specification,
       const MotionPlanningOptions& options = MotionPlanningOptions::Defaults(),
-      const std::string& caller_id = "Anonymous");
+      const std::string& caller_id = "Anonymous",
+      const intrinsic_proto::data_logger::Context& context =
+          intrinsic_proto::data_logger::Context());
 
   // Options for ik.
   struct IkOptions {

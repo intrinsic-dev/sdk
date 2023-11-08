@@ -8,6 +8,7 @@ import "intrinsic/geometry/proto/shape_data.proto";
 import "intrinsic/icon/proto/cart_space.proto";
 import "intrinsic/icon/proto/joint_space.proto";
 import "intrinsic/kinematics/types/joint_limits.proto";
+import "intrinsic/logging/proto/context.proto";
 import "intrinsic/math/proto/pose.proto";
 import "intrinsic/motion_planning/proto/motion_planner_config.proto";
 import "intrinsic/motion_planning/proto/motion_specification.proto";
@@ -72,6 +73,9 @@ message MotionPlanningRequest {
 
   // An ID for identifying which skill/service sends this request.
   optional string caller_id = 6;
+
+  // The logging context for the skill sending the request
+  optional intrinsic_proto.data_logger.Context context = 7;
 }
 
 // Proto message to hold a `MotionPlanningRequestCacheKey` for logging.

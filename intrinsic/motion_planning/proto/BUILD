@@ -20,6 +20,7 @@ proto_library(
         "//intrinsic/icon/proto:cart_space_proto",
         "//intrinsic/icon/proto:joint_space_proto",
         "//intrinsic/kinematics/types:joint_limits_proto",
+        "//intrinsic/logging/proto:context_proto",
         "//intrinsic/math/proto:point_proto",
         "//intrinsic/math/proto:pose_proto",
         "//intrinsic/world/proto:collision_settings_proto",
