@@ -1,0 +1,68 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.resources;
+
+import "google/protobuf/any.proto";
+import "intrinsic/resources/proto/resource_handle.proto";
+
+service ResourceRegistry {
+  // Lists all resource instances in the currently deployed app.
+  rpc ListResourceInstances(ListResourceInstanceRequest)
+      returns (ListResourceInstanceResponse) {}
+
+  // Gets specific resource instance from the currently deployed app.
+  rpc GetResourceInstance(GetResourceInstanceRequest)
+      returns (ResourceInstance) {}
+}
+
+message ResourceInstance {
+  // The resource instance's unique identifier with the resource set.
+  string id = 1;
+
+  // Resource type identifier. Type information can be requested through the
+  // resource catalog unless this instance was instantiated via sideloading.
+  string type_id = 2;
+
+  // Resource family identifier, useful for grouping and filtering.
+  string resource_family_id = 6;
+
+  // Resource configuration.
+  google.protobuf.Any configuration = 3;
+
+  // The handle containing connection information and resource capabilitiies.
+  ResourceHandle resource_handle = 11;
+}
+
+message ListResourceInstanceRequest {
+  message StrictFilter {
+    // The resource instance must contain all of these capabilities.
+    repeated string capability_names = 1;
+
+    // If set, the resource instance must share this family id.
+    string resource_family_id = 2;
+  }
+
+  // The maximum number of resource instances to return. If unspecified, at most
+  // 50 resource instances will be returned. The maximum value is 200.
+  int32 page_size = 1;
+
+  // A page token from a previous call used to retrieve subsequent resource
+  // instances.
+  string page_token = 2;
+
+  // Apply a filter to the query to retrieve a filtered set of results.
+  optional StrictFilter strict_filter = 3;
+}
+
+message ListResourceInstanceResponse {
+  repeated ResourceInstance instances = 1;
+
+  // This token can be used to retrieve the next results on a future call.
+  string next_page_token = 2;
+}
+
+message GetResourceInstanceRequest {
+  string id = 1;
+}
