@@ -1,0 +1,221 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.hardware.opcua_equipment;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/duration.proto";
+import "intrinsic/hardware/gpio/gpio_service.proto";
+import "intrinsic/hardware/gpio/signal.proto";
+
+message GpioServiceConfig {
+  // Using `oneof` to keep the possibility of connecting to an existing GPIO
+  // service instead of starting one.
+  oneof srv {
+    // Config for the GPIO service that would communicate with the backend
+    // server (e.g. opcua).
+    google.protobuf.Any config = 1;
+  }
+}
+
+// Configuration of an opcua node.
+message NodeConfig {
+  // Describes the name of the node variable.
+  string variable_name = 1;
+}
+
+message OpcuaEquipmentConfig {
+  // Describes the mapping from human readable signal names to input & output
+  // node variables for the opcua server that are relevant for this equipment.
+  message SignalToNodeConfig {
+    // Node variables that can be written to.
+    map<string, NodeConfig> inputs = 1;
+
+    // Node variables that can be read.
+    map<string, NodeConfig> outputs = 2;
+  }
+
+  // Describes a command to write values to opcua server. Both `signal_values`
+  // and `min_wait_duration` are optional and independent, i.e. either can be
+  // set.
+  message WriteCommand {
+    // Mapping from input signal names to their desired values. Desired values
+    // can be left empty if they will be provided as part of `ControlRequest`'s
+    // `user_input` field.
+    map<string, gpio.SignalValue> signal_values = 1;
+
+    // Duration to wait after setting the values (if given). It is allowed to
+    // only set the duration and not the values, which has the effect of adding
+    // a wait duration without any write.
+    optional google.protobuf.Duration min_wait_duration = 2;
+  }
+
+  // Describes a command that writes values to signal names and allows waiting
+  // for the confirmation that the action was successful. Every field is
+  // optional except for `description` to allow the user to build complex
+  // control flows.
+  message ControlCommand {
+    // Human readable description of the control command.
+    string description = 1;
+
+    // Mapping from input signal names to their desired values as written via
+    // opcua server. Values are optional if they are provided as part of
+    // `ControlRequest`'s `user_input` field.
+    reserved 2;
+    reserved "command";
+
+    // Optional sequence of control commands, each of which includes node values
+    // to set along with a duration to wait after write. The commands are
+    // written in the order specified.
+    repeated WriteCommand sequential_commands = 6;
+
+    // Optional condition to check if the control command was successful.
+    // Condition is met when the values for the signals specified here match
+    // with the values read from the opcua server.
+    optional gpio.WaitForValueRequest wait_for_condition = 3;
+
+    // Optional command to execute if `wait_for_condition` is met.
+    // This is not executed if `wait_for_condition` is not specified.
+    map<string, gpio.SignalValue> on_success = 4;
+
+    // Optional command to execute if `wait_for_condition` is not met.
+    // This is not executed if `wait_for_condition` is not specified.
+    map<string, gpio.SignalValue> on_failure = 5;
+  }
+
+  // Describes a command that reads values from the opcua server and matches
+  // them against with given condition.
+  message MatchCommand {
+    // Human readable description of the command.
+    string description = 1;
+
+    // Describes the matching condition for the command. The condition is
+    // considered to be met when the values read from the opcua server match the
+    // values specified based on the matching criteria like any_of or all_of.
+    gpio.WaitForValueRequest condition = 2;
+  }
+
+  // Describes a command to read signal names from the opcua server.
+  message GetStatusCommand {
+    // Human readable description of the command.
+    string description = 1;
+    // Describes which signals to read for each status update.
+    repeated string signal_names = 2;
+  }
+
+  // Mapping from human readable signal names to opcua node variables.
+  SignalToNodeConfig signal_config = 1;
+
+  // Mapping from human readable control commands to the command specification.
+  map<string, ControlCommand> control_commands = 2;
+
+  // Mapping from human readable match commands to the command specification.
+  map<string, MatchCommand> match_commands = 3;
+
+  // Mapping from human readable status commands to the command specification.
+  map<string, GetStatusCommand> status_commands = 4;
+}
+
+message OpcuaEquipmentGpioConfig {
+  GpioServiceConfig gpio_config = 1;
+  OpcuaEquipmentConfig opcua_equipment_config = 2;
+}
+
+message ControlRequest {
+  // Control command to invoke.
+  string command = 1;
+
+  // Contains desired values for signal names corresponding to the sequential
+  // commands. It is mandatory to provide these values for signals that don't
+  // have default values in the configuration of this control command.
+  // Optionally, these can be used to override the default values themselves. If
+  // a signal name appears multiple times in the sequential commands, then all
+  // the values would be overridden (and not just the first match).
+  map<string, gpio.SignalValue> user_input = 2;
+
+  // Timeout for the control command's `wait_for_condition` to be met.
+  optional google.protobuf.Duration timeout = 3;
+}
+
+message ControlResponse {
+  // Whether the control action was successful or not.
+  bool success = 1;
+
+  // Optional message containing the reason for failure (if relevant).
+  optional string failure_message = 2;
+}
+
+message MatchRequest {
+  // Match command to invoke.
+  string command = 1;
+
+  // Timeout to wait till the match condition is met.
+  optional google.protobuf.Duration timeout = 2;
+}
+
+message MatchResponse {
+  // Returns true if the match condition was successful.
+  bool matched = 1;
+}
+
+message GetStatusRequest {
+  // Status command to invoke.
+  string command = 1;
+}
+
+message GetStatusResponse {
+  // Contains values read for the signals corresponding to the status command.
+  map<string, gpio.SignalValue> status = 1;
+}
+
+message ListCommandsRequest {}
+
+message ListCommandsResponse {
+  // Contains the name of the command and its human readable description.
+  message Command {
+    string name = 1;
+    string description = 2;
+  }
+
+  // Describes the control, match and status commands.
+  repeated Command control_commands = 1;
+  repeated Command match_commands = 2;
+  repeated Command status_commands = 3;
+}
+
+message ListSignalsRequest {}
+
+message ListSignalsResponse {
+  // Contains the signals for the equipment.
+  message Signal {
+    // Describes the human readable name for the signal.
+    repeated string names = 1;
+  }
+
+  // Signals corresponding to the opcua input nodes.
+  Signal inputs = 1;
+
+  // Signals corresponding to the opcua output nodes.
+  Signal outputs = 2;
+}
+
+service OpcuaEquipmentService {
+  // Executes the control flow for the control command.
+  rpc Control(ControlRequest) returns (ControlResponse);
+
+  // Checks if the signal values read from the opcua server satisfy the
+  // condition specified in the match command.
+  rpc Match(MatchRequest) returns (MatchResponse);
+
+  // Returns the values for the signal names specified in the status command.
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+
+  // Returns all the commands (control, match & status) specified in the
+  // configuration.
+  rpc ListCommands(ListCommandsRequest) returns (ListCommandsResponse);
+
+  // Returns all the human readable signals for the opcua nodes specified in the
+  // configuration.
+  rpc ListSignals(ListSignalsRequest) returns (ListSignalsResponse);
+}
