@@ -1,0 +1,80 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.gpio;
+
+// 8-bit signed type.
+message Int8 {
+  // Valid values are in the range [-128, 127].
+  int32 value = 1;
+}
+
+// 8-bit unsigned type.
+message Uint8 {
+  // Valid values are in the range [0, 255].
+  uint32 value = 1;
+}
+
+// SignalValue represents the value of a single GPIO signal.
+message SignalValue {
+  // We use a oneof here to allow for the future handling of more value types.
+  oneof value {
+    bool bool_value = 1;
+    uint32 unsigned_int_value = 2;
+    int32 int_value = 3;
+    float float_value = 4;
+    double double_value = 5;
+    Int8 int8_value = 6;
+    Uint8 unsigned_int8_value = 7;
+  }
+}
+
+// SignalValueSet represents the value of a collection of GPIO signals.
+message SignalValueSet {
+  map<string, SignalValue> values = 1;
+}
+
+// SignalType represents the type of a GPIO signal.
+enum SignalType {
+  SIGNAL_TYPE_UNKNOWN = 0;
+  SIGNAL_TYPE_BOOL = 1;
+  SIGNAL_TYPE_UNSIGNED_INT = 2;
+  SIGNAL_TYPE_INT = 3;
+  SIGNAL_TYPE_FLOAT = 4;
+  SIGNAL_TYPE_DOUBLE = 5;
+  SIGNAL_TYPE_INT8 = 6;
+  SIGNAL_TYPE_UNSIGNED_INT8 = 7;
+}
+
+// SignalDescription represents a single signal as known by the server. Callers
+// should expect the values in a SignalDescription to be stable for the lifetime
+// of the server and any underlying services.
+message SignalDescription {
+  // The name to use to refer to this signal using the GPIOService API.
+  //
+  // By convention, IO blocks that contain multiple signals typically use names
+  // like `workcell_outputs.0`, `workcell_outputs.1`, where the number
+  // represents the index of the corresponding bit.
+  string signal_name = 1;
+
+  // If true, then callers can read the value of this signal.
+  bool can_read = 2;
+
+  // If true, then callers can write this signal's value.
+  bool can_write = 3;
+
+  // If true, then callers can force this signal's value.
+  //
+  // Force methods are not yet available, so this value is always false.
+  bool can_force = 4;
+
+  // The type of the signal.
+  SignalType type = 5;
+
+  // The name of the DDS topic this signal's value is published to.
+  string dds_topic_name = 6;
+
+  // Optional human readable description of the signal.
+  string description = 7;
+}

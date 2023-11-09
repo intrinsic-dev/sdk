@@ -1,0 +1,97 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.gpio;
+
+import "google/protobuf/timestamp.proto";
+import "google/rpc/status.proto";
+import "intrinsic/hardware/gpio/signal.proto";
+
+message GetSignalDescriptionsRequest {}
+
+message GetSignalDescriptionsResponse {
+  // The signal descriptions for all signals on the server.
+  repeated SignalDescription signal_descriptions = 1;
+}
+
+message ReadSignalsRequest {
+  // The names of the signals to read.
+  repeated string signal_names = 1;
+}
+
+message ReadSignalsResponse {
+  // The values of the signals that were read.
+  SignalValueSet signal_values = 1;
+}
+
+message WaitForValueRequest {
+  // For floating point types, an internal hard-coded tolerance is used to
+  // compare the measured and desired values.
+  oneof condition {
+    // Wait until all values in this set are matched.
+    SignalValueSet all_of = 1;
+    // Wait until any values in this set are matched.
+    SignalValueSet any_of = 2;
+  }
+}
+
+message WaitForValueResponse {
+  // The values of the signals when the condition was met.
+  SignalValueSet values = 1;
+
+  // When the condition was first met, in server time.
+  google.protobuf.Timestamp event_time = 2;
+}
+
+message WriteSignalsRequest {
+  // The values to write.
+  SignalValueSet signal_values = 1;
+}
+
+message OpenWriteSessionRequest {
+  message InitialSessionData {
+    // The signal names to claim in this session.
+    repeated string signal_names = 1;
+  }
+
+  // Initial data for opening a session that must be sent with the first
+  // OpenWriteSessionRequest. If this field is specified in later requests or
+  // unspecified in the initial request, the session is closed and an error is
+  // returned in the call status.
+  InitialSessionData initial_session_data = 1;
+
+  oneof action_request {
+    // Request a write.
+    WriteSignalsRequest write_signals = 2;
+  }
+}
+
+message OpenWriteSessionResponse {
+  // Returns an aborted error if the session should end. May return other errors
+  // for non-session-ending failures.
+  google.rpc.Status status = 1;
+}
+
+service GPIOService {
+  // Returns metadata about the signals available on this server.
+  rpc GetSignalDescriptions(GetSignalDescriptionsRequest)
+      returns (GetSignalDescriptionsResponse) {}
+
+  // Returns the values of the requested signals.
+  rpc ReadSignals(ReadSignalsRequest) returns (ReadSignalsResponse) {}
+
+  // Blocks until the specified condition is met.
+  // Set the gRPC deadline if you do not want the request to block for too long.
+  // Implementations must monitor the server context for cancellation, and abort
+  // immediately if cancelled.
+  rpc WaitForValue(WaitForValueRequest) returns (WaitForValueResponse) {}
+
+  // Starts a write session. The claimed signals will be exclusively available
+  // for writing by this session for the duration of the stream.
+  //
+  // Every sent message will receive a corresponding response, containing a
+  // status for the message's request.
+  rpc OpenWriteSession(stream OpenWriteSessionRequest)
+      returns (stream OpenWriteSessionResponse) {}
+}
