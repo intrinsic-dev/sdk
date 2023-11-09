@@ -73,6 +73,13 @@ message OpenWriteSessionResponse {
   google.rpc.Status status = 1;
 }
 
+// Exposes GPIO for reading and writing.
+//
+// Please note that we expect to substantially evolve this API *in potentially
+// incompatible ways* in subsequent releases. Since the resource-selection logic
+// in skills does not have the ability to pattern match against available
+// signals, it's very easy to inadvertently bind the wrong GPIO resource ot a
+// skill
 service GPIOService {
   // Returns metadata about the signals available on this server.
   rpc GetSignalDescriptions(GetSignalDescriptionsRequest)

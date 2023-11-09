@@ -7,14 +7,6 @@ package(
     default_visibility = ["//visibility:public"],
 )
 
-exports_files(
-    srcs = [
-        "templates/beckhoff_gpio_server.yaml",
-        "templates/opcua_gpio_server.yaml",
-    ],
-    visibility = ["//intrinsic:__subpackages__"],
-)
-
 proto_library(
     name = "signal_proto",
     srcs = ["signal.proto"],
