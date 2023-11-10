@@ -2,8 +2,10 @@
 
 #include "intrinsic/util/grpc/grpc.h"
 
+#include <atomic>
 #include <chrono>  //NOLINT
 #include <climits>
+#include <csignal>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -13,11 +15,14 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "grpcpp/grpcpp.h"
 #include "intrinsic/icon/release/grpc_time_support.h"
+#include "intrinsic/util/thread/thread.h"
 #include "src/proto/grpc/health/v1/health.grpc.pb.h"
 
 namespace intrinsic {
@@ -206,6 +211,79 @@ absl::StatusOr<std::shared_ptr<::grpc::Channel>> CreateClientChannel(
   }
 
   return status;
+}
+
+ShutdownParams ShutdownParams::Aggressive() {
+  return {.health_grace_duration = absl::ZeroDuration(),
+          .shutdown_timeout = absl::Milliseconds(250)};
+}
+
+absl::Status RegisterSignalHandlerAndWait(
+    grpc::Server* server, const ShutdownParams& params,
+    absl::Notification& handlers_registered) {
+  // User-provided signal handler needs to satisfy some constraints.
+  // Effectively:
+  // - access to atomics should be lock-free (std::atomic_flag is guaranteed to
+  //   be lock-free by the standard).
+  // - objects referred should have the lifetime of the process (hence, the use
+  //   of `static`).
+  //
+  // See cpp reference for more details:
+  // https://en.cppreference.com/w/cpp/utility/program/signal
+  static std::atomic_flag shutdown_requested = ATOMIC_FLAG_INIT;
+
+  auto prev_signal_handler = std::signal(SIGTERM, [](int) {
+    // async-signal-safe implementation
+    // for details, see here:
+    // https://man7.org/linux/man-pages/man7/signal-safety.7.html
+    // Note: To prevent undefined behavior, do not do any logging (unless using
+    //   async-safe write) or else here without making sure that the function is
+    //   async-signal-safe.
+
+    // Ignores the returned value of `test_and_set` method.
+    (void)shutdown_requested.test_and_set();
+    shutdown_requested.notify_all();
+  });
+  if (prev_signal_handler == SIG_ERR) {
+    return absl::InternalError("SIGTERM handler registration failed.");
+  } else if (prev_signal_handler != nullptr) {
+    LOG(WARNING) << absl::StrFormat(
+        "Previously registered SIGTERM handler with address %p was "
+        "overwritten.",
+        prev_signal_handler);
+  }
+
+  handlers_registered.Notify();
+
+  bool stop_shutdown_thread = false;
+  intrinsic::Thread shutdown([&]() {
+    constexpr bool kOldValue = false;
+    shutdown_requested.wait(kOldValue);
+
+    if (stop_shutdown_thread) {
+      return;
+    }
+
+    if (server->GetHealthCheckService()) {
+      server->GetHealthCheckService()->SetServingStatus(false);
+      absl::SleepFor(params.health_grace_duration);
+    }
+    server->Shutdown(absl::Now() + params.shutdown_timeout);
+  });
+
+  server->Wait();
+
+  // Makes the shutdown thread exit if the grpc server shut down due to
+  // something other than SIGTERM.
+  if (!shutdown_requested.test()) {
+    stop_shutdown_thread = true;
+    // Sets the flag to wake up the shutdown thread.
+    (void)shutdown_requested.test_and_set();
+    shutdown_requested.notify_all();
+  }
+
+  shutdown.Join();
+  return absl::OkStatus();
 }
 
 }  // namespace intrinsic

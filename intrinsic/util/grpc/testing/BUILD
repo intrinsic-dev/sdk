@@ -3,6 +3,7 @@
 # Package containing test utilities for gRPC.
 
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
+load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_proto_library")
 
@@ -14,6 +15,19 @@ proto_library(
     deps = [
         "@com_google_protobuf//:empty_proto",
     ],
+)
+
+cc_proto_library(
+    name = "ping_cc_proto",
+    deps = [":ping_proto"],
+)
+
+cc_grpc_library(
+    name = "ping_cc_grpc_proto",
+    srcs = [":ping_proto"],
+    grpc_only = True,
+    visibility = ["//intrinsic/util/grpc:__subpackages__"],
+    deps = [":ping_cc_proto"],
 )
 
 go_proto_library(
