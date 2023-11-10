@@ -117,6 +117,13 @@ def deserialize_image_buffer(
   if not image.data:
     raise ValueError("No image buffer data provided.")
 
+  pixel_type = image.pixel_type
+  num_channels = image.num_channels
+  if pixel_type == image_buffer_pb2.PixelType.PIXEL_POINT:
+    num_channels = 3
+
+  image.num_channels = num_channels
+
   buffer = _image_buffer_decoded(image)
   shape = _image_buffer_shape(image)
   size = _image_buffer_size(image)
