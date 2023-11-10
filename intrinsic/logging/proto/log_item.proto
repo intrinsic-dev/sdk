@@ -55,6 +55,12 @@ message LogItem {
     // Example: log_items/perception/frame/{camera_id}
     string event_source = 7;
 
+    // workcell_name identifies the workcell/VM/dev-machine that log item
+    // belongs to. This can be used to correlate log items that don't have a
+    // corresponding deployment attribute. This field is auto populated or
+    // overridden by the logger.
+    optional string workcell_name = 10;
+
     reserved 3, 4, 5, 6, 8;
   }
 
