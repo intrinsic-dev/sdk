@@ -20,6 +20,22 @@ class ResourceRegistryClientTest(absltest.TestCase):
         self._resource_registry_stub
     )
 
+  def test_get_resource_instance(self):
+    camera_instance = resource_registry_pb2.ResourceInstance(
+        id='my_camera', resource_family_id='camera'
+    )
+    self._resource_registry_stub.GetResourceInstance.return_value = (
+        camera_instance
+    )
+
+    self.assertEqual(
+        self._client.get_resource_instance('my_camera'),
+        camera_instance,
+    )
+    self._resource_registry_stub.GetResourceInstance.assert_called_with(
+        resource_registry_pb2.GetResourceInstanceRequest(id='my_camera')
+    )
+
   def test_list_all_resource_instances(self):
     camera_instance = resource_registry_pb2.ResourceInstance(
         id='my_camera', resource_family_id='camera'
