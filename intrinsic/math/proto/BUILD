@@ -187,11 +187,120 @@ proto_library(
     name = "math_protos",
     deps = [
         ":array_proto",
+        ":header_proto",
         ":matrix_proto",
         ":point_proto",
         ":pose_proto",
         ":quaternion_proto",
+        ":tf_message_proto",
+        ":transform_proto",
+        ":transform_stamped_proto",
         ":vector2_proto",
         ":vector3_proto",
     ],
+)
+
+proto_library(
+    name = "header_proto",
+    srcs = ["header.proto"],
+    deps = [
+        "@com_google_protobuf//:timestamp_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "header_cc_proto",
+    deps = [":header_proto"],
+)
+
+py_proto_library(
+    name = "header_py_pb2",
+    deps = [":header_proto"],
+)
+
+go_proto_library(
+    name = "header_go_proto",
+    deps = [":header_proto"],
+)
+
+proto_library(
+    name = "transform_proto",
+    srcs = ["transform.proto"],
+    deps = [
+        ":quaternion_proto",
+        ":vector3_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "transform_cc_proto",
+    deps = [":transform_proto"],
+)
+
+py_proto_library(
+    name = "transform_py_pb2",
+    deps = [":transform_proto"],
+)
+
+go_proto_library(
+    name = "transform_go_proto",
+    go_deps = [
+        ":vector3_go_proto",
+        ":quaternion_go_proto",
+    ],
+    deps = [":transform_proto"],
+)
+
+proto_library(
+    name = "transform_stamped_proto",
+    srcs = ["transform_stamped.proto"],
+    deps = [
+        ":header_proto",
+        ":transform_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "transform_stamped_cc_proto",
+    deps = [":transform_stamped_proto"],
+)
+
+py_proto_library(
+    name = "transform_stamped_py_pb2",
+    deps = [":transform_stamped_proto"],
+)
+
+go_proto_library(
+    name = "transform_stamped_go_proto",
+    go_deps = [
+        ":header_go_proto",
+        ":transform_go_proto",
+    ],
+    deps = [":transform_stamped_proto"],
+)
+
+proto_library(
+    name = "tf_message_proto",
+    srcs = ["tf_message.proto"],
+    deps = [
+        ":transform_stamped_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "tf_message_cc_proto",
+    deps = [":tf_message_proto"],
+)
+
+py_proto_library(
+    name = "tf_message_py_pb2",
+    deps = [":tf_message_proto"],
+)
+
+go_proto_library(
+    name = "tf_message_go_proto",
+    go_deps = [
+        ":transform_stamped_go_proto",
+    ],
+    deps = [":tf_message_proto"],
 )

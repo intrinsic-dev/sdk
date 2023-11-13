@@ -1,0 +1,15 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+import "intrinsic/math/proto/header.proto";
+import "intrinsic/math/proto/transform.proto";
+
+message TransformStamped {
+  Header header = 1;
+  string child_frame_id = 2;
+  Transform transform = 3;
+}

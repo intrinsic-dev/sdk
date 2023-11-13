@@ -1,0 +1,14 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+import "intrinsic/math/proto/quaternion.proto";
+import "intrinsic/math/proto/vector3.proto";
+
+message Transform {
+  Vector3 translation = 1;
+  intrinsic_proto.Quaternion rotation = 2;
+}

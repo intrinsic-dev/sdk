@@ -1,0 +1,13 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+import "google/protobuf/timestamp.proto";
+
+message Header {
+  google.protobuf.Timestamp stamp = 1;
+  string frame_id = 2;
+}
