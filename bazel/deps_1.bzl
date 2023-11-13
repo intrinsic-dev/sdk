@@ -64,7 +64,7 @@ def intrinsic_sdks_deps_1(register_go_toolchain = True):
     go_rules_dependencies()
 
     if register_go_toolchain:
-        go_register_toolchains(version = "1.19.5")
+        go_register_toolchains(version = "1.21.0")
 
     # CC toolchain
     # How to upgrade:

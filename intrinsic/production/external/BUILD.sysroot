@@ -30,6 +30,7 @@ filegroup(
         "usr/lib/x86_64-linux-gnu/libdl*",
         "usr/lib/x86_64-linux-gnu/libm*",
         "usr/lib/x86_64-linux-gnu/libpthread*",
+        "usr/lib/x86_64-linux-gnu/libresolv.so",
         "usr/lib/x86_64-linux-gnu/librt*",
         "usr/lib/x86_64-linux-gnu/libutil*",
       ],
