@@ -56,22 +56,18 @@ service EquipmentRegistry {
   // Returns the set of equipment matching the given request. Returns NOT_FOUND
   // error if no equipment can be found.
   rpc GetEquipmentBySelector(EquipmentBySelectorRequest)
-      returns (EquipmentBySelectorResponse) {
-  }
+      returns (EquipmentBySelectorResponse) {}
 
   // Batched version of GetEquipmentBySelector. Returns empty response if no
   // equipment can be found for an individual request.
   rpc BatchGetEquipmentBySelector(EquipmentBySelectorBatchRequest)
-      returns (EquipmentBySelectorBatchResponse) {
-  }
+      returns (EquipmentBySelectorBatchResponse) {}
 
   // Returns the equipment matching the given request.
   rpc GetEquipmentByName(EquipmentByNameRequest)
-      returns (EquipmentByNameResponse) {
-  }
+      returns (EquipmentByNameResponse) {}
 
   // Returns list of all registered equipment. The ordering of resource handles
   // in the response is unspecified.
-  rpc ListEquipment(ListEquipmentRequest) returns (ListEquipmentResponse) {
-  }
+  rpc ListEquipment(ListEquipmentRequest) returns (ListEquipmentResponse) {}
 }
