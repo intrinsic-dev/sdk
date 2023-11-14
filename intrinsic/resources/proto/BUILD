@@ -13,16 +13,14 @@ proto_library(
     name = "resource_registry_proto",
     srcs = ["resource_registry.proto"],
     deps = [
-        "//intrinsic/resources/proto:resource_handle_proto",
+        ":resource_handle_proto",
         "@com_google_protobuf//:any_proto",
     ],
 )
 
 go_proto_library(
     name = "resource_registry_go_proto",
-    go_deps = [
-        "//intrinsic/resources/proto:resource_handle_go_proto",
-    ],
+    go_deps = ["//intrinsic/resources/proto:resource_handle_go_proto"],
     deps = [":resource_registry_proto"],
 )
 
