@@ -405,6 +405,16 @@ py_proto_library(
     deps = [":pattern_detection_config"],
 )
 
+cc_proto_library(
+    name = "pose_estimation_result_cc_proto",
+    deps = ["pose_estimation_result"],
+)
+
+py_proto_library(
+    name = "pose_estimation_result_py_pb2",
+    deps = [":pose_estimation_result"],
+)
+
 py_proto_library(
     name = "dimensions_py_pb2",
     deps = [":dimensions_proto"],
