@@ -1,0 +1,31 @@
+{
+  "mode": "peer",
+  "connect": {
+    "endpoints": [
+      "tcp/zenoh-router.app-intrinsic-base:7447"
+    ]
+  },
+  "imw": {
+    "introspection": {
+      "enable": true
+    }
+  },
+  "listen": {
+    "endpoints": [ "tcp/0.0.0.0:0" ]
+  },
+  "scouting": {
+    "multicast": { "enabled": false },
+    "gossip": {
+      "enabled": true,
+      "multihop": true,
+      "autoconnect": { "peer": "peer|router" }
+    }
+  },
+  "plugins": {
+  },
+  "transport": {
+    "shared_memory": {
+      "enabled": false
+    }
+  }
+}

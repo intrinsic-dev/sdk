@@ -1,0 +1,30 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.pubsub;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+message NewPublisher {
+  string topic = 1;
+  string type_name = 2;
+  int64 retention_period_bytes = 3;
+}
+
+message PubSubPacket {
+  // The message that got published.
+  google.protobuf.Any payload = 1;
+
+  // The time at which Publish was called.
+  google.protobuf.Timestamp publish_time = 2;
+
+  // The following two fields represent the OpenCensus trace context that this
+  // message was published from. It is populated automatically in
+  // pubsub::Publish.
+  uint64 trace_id = 4;
+  uint64 span_id = 5;
+
+  reserved 3;
+}

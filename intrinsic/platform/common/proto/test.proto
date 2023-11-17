@@ -1,0 +1,27 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic.proto;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+message TestMessageString {
+  string data = 1;
+}
+
+message TestMessageStock {
+  string symbol = 1;
+  double value = 2;
+}
+
+message TestMessageWithNestedAny {
+  google.protobuf.Any data = 1;
+}
+
+message PingPongMessage {
+  google.protobuf.Timestamp timestamp = 3;
+  int64 iteration_id = 4;
+  bytes payload = 5;
+}
