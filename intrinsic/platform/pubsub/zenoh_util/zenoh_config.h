@@ -28,15 +28,6 @@ inline std::string GetZenohPeerConfig() {
   }
 
   std::ifstream file(runfiles_path + config_path);
-  // Try again since cloud tests (presubmits/postsubmits/etc.) sometimes put
-  // runfiles in "google3" instead.
-  // It's ugly, but there don't appear to be any other simpler alternatives.
-  if (!file.is_open()) {
-    runfiles_path =
-        bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation("google3");
-    file = std::ifstream(runfiles_path + config_path);
-  }
-
   if (file.is_open()) {
     // Read the entire file into a string
     file.seekg(0, std::ios::end);

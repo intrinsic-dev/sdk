@@ -93,20 +93,6 @@ void ZenohHandle::Initialize() {
   handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY | RTLD_DEEPBIND);
 #endif
 
-  // Try again since cloud tests (presubmits/postsubmits/etc.) sometimes put
-  // runfiles in "google3" instead.
-  // It's ugly, but there don't appear to be any other simpler alternatives.
-  if (handle == nullptr) {
-    runfiles_dir =
-        bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation("google3");
-#if defined(MEMORY_SANITIZER) || defined(THREAD_SANITIZER) || \
-    defined(ADDRESS_SANITIZER)
-    handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY);
-#else
-    handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY | RTLD_DEEPBIND);
-#endif
-  }
-
   if (handle == nullptr) {
     LOG(FATAL) << "Cannot open the shared library at: " << runfiles_dir + path;
   }
