@@ -12,6 +12,25 @@ package(default_visibility = [
     "//intrinsic/tools/inctl:__subpackages__",
 ])
 
+go_proto_library(
+    name = "orgdiscovery_api_go_proto",
+    deps = [
+        ":orgdiscovery_api_proto",
+    ],
+)
+
+proto_library(
+    name = "orgdiscovery_api_proto",
+    srcs = ["orgdiscovery_api.proto"],
+    deps = ["@com_google_protobuf//:empty_proto"],
+)
+
+go_grpc_library(
+    name = "orgdiscovery_grpc_go_proto",
+    srcs = [":orgdiscovery_api_proto"],
+    deps = [":orgdiscovery_api_go_proto"],
+)
+
 proto_library(
     name = "clusterdiscovery_api_proto",
     srcs = ["clusterdiscovery_api.proto"],

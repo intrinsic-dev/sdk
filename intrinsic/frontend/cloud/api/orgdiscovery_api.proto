@@ -1,0 +1,26 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.frontend.v1;
+
+import "google/protobuf/empty.proto";
+
+message Organization {
+  string name = 1;          // globally unique identifier
+  string project = 2;       // GCP project of the organization
+  string display_name = 3;  // human readable organization name
+}
+
+message ListOrganizationsResponse {
+  repeated Organization organizations = 2;
+}
+
+// This API is the "organization catalog" for a specific user, i.e., the
+// organizations the user has access to.
+service OrganizationManagerService {
+
+  // Returns a list of organzations the user has access to in this project.
+  rpc ListOrganizations(google.protobuf.Empty)
+      returns (ListOrganizationsResponse) {}
+}

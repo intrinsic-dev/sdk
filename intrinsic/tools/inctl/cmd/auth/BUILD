@@ -11,8 +11,10 @@ go_library(
         "list.go",
         "login.go",
         "revoke.go",
+        "update.go",
     ],
     deps = [
+        "//intrinsic/frontend/cloud/api:orgdiscovery_grpc_go_proto",
         "//intrinsic/frontend/cloud/api:projectdiscovery_grpc_go_proto",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/tools/inctl/auth",
