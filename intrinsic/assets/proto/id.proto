@@ -4,23 +4,15 @@ syntax = "proto3";
 
 package intrinsic_proto.config;
 
-// Ids are commonly used to describe assets uniquely with a human-readable
-// identifier.
+// Id uniquely identifies an asset (e.g., skill, resource) in its respective
+// catalog. If you change an Id's package or name field, the catalog will treat
+// any new releases as a completely different asset.
 //
-// An id is represented as a string in the format: <package>.<name>
-//
-// An id_version is represented as a string in the format:
-// <package>.<name>.<version>
-//
-// A version is formatted as described by semver.org.
-//
-// An Id uniquely identifies an asset (e.g., skill, resource type) in its
-// respective catalog. If you change an Id's package or name field, the catalog
-// will treat any new uploads as a completely different asset.
+// An ID string is formatted as: "<package>.<name>".
 message Id {
-  // The package name for the asset. This is a dot-separated string describing
-  // the package for the asset. We recommend that companies use their reverse
-  // Internet domain name to start the package name.
+  // A dot-separated string describing the name of the asset's parent package.
+  // We recommend that companies use their reverse Internet domain name to start
+  // the package name.
   //
   // A valid package:
   //   - consists only of lower case alphanumeric characters, underscores, and
@@ -51,4 +43,17 @@ message Id {
   // in order to convert asset ids to kubernetes labels without possibility of
   // collisions.
   string name = 2;
+}
+
+// IdVersion uniquely identifies a particular version of an asset in its
+// respective catalog. Each release of an asset to a catalog must have a new
+// version.
+//
+// An IDVersion string is formatted as: "<package>.<name>.<version>".
+message IdVersion {
+  // The asset's ID.
+  Id id = 1;
+
+  // The asset's version, formatted as described by semver.org.
+  string version = 2;
 }

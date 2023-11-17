@@ -14,6 +14,7 @@
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "intrinsic/assets/proto/id.pb.h"
 #include "intrinsic/icon/release/status_helpers.h"
 #include "re2/re2.h"
 #include "re2/stringpiece.h"
@@ -109,16 +110,35 @@ absl::StatusOr<std::string> IdFrom(absl::string_view package,
   return absl::StrFormat("%s.%s", package, name);
 }
 
-absl::StatusOr<std::string> IdVersionFrom(absl::string_view package,
-                                          absl::string_view name,
-                                          absl::string_view version) {
+absl::StatusOr<intrinsic_proto::config::Id> IdProtoFrom(
+    absl::string_view package, absl::string_view name) {
   absl::Status status = ValidatePackage(package);
   if (status.ok()) {
     status = ValidateName(name);
   }
-  if (status.ok()) {
-    status = ValidateVersion(version);
+  if (!status.ok()) {
+    return AnnotateError(
+        status, absl::StrFormat("Cannot create Id from (%s, %s): %s", package,
+                                name, status.message()));
   }
+
+  intrinsic_proto::config::Id id;
+  id.set_package(package);
+  id.set_name(name);
+
+  return id;
+}
+
+absl::StatusOr<std::string> IdFromProto(intrinsic_proto::config::Id id) {
+  return IdFrom(id.package(), id.name());
+}
+
+absl::StatusOr<std::string> IdVersionFrom(absl::string_view package,
+                                          absl::string_view name,
+                                          absl::string_view version) {
+  INTRINSIC_ASSIGN_OR_RETURN(std::string id, IdFrom(package, name));
+
+  absl::Status status = ValidateVersion(version);
   if (!status.ok()) {
     return AnnotateError(
         status,
@@ -126,7 +146,32 @@ absl::StatusOr<std::string> IdVersionFrom(absl::string_view package,
                         package, name, version, status.message()));
   }
 
-  return absl::StrFormat("%s.%s.%s", package, name, version);
+  return absl::StrFormat("%s.%s", id, version);
+}
+
+absl::StatusOr<intrinsic_proto::config::IdVersion> IdVersionProtoFrom(
+    absl::string_view package, absl::string_view name,
+    absl::string_view version) {
+  intrinsic_proto::config::IdVersion id_version;
+
+  INTRINSIC_ASSIGN_OR_RETURN(*id_version.mutable_id(),
+                             IdProtoFrom(package, name));
+
+  absl::Status status = ValidateVersion(version);
+  if (!status.ok()) {
+    return AnnotateError(
+        status, absl::StrFormat("Cannot create IdVersion from (%s, %s, %s): %s",
+                                package, name, version, status.message()));
+  }
+  id_version.set_version(version);
+
+  return id_version;
+}
+
+absl::StatusOr<std::string> IdVersionFromProto(
+    intrinsic_proto::config::IdVersion id_version) {
+  return IdVersionFrom(id_version.id().package(), id_version.id().name(),
+                       id_version.version());
 }
 
 absl::StatusOr<std::string> NameFrom(absl::string_view id) {

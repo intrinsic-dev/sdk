@@ -12,6 +12,7 @@ cc_library(
     srcs = ["id_utils.cc"],
     hdrs = ["id_utils.h"],
     deps = [
+        "//intrinsic/assets/proto:id_cc_proto",
         "//intrinsic/icon/release:status_helpers",
         "@com_github_google_re2//:re2",
         "@com_google_absl//absl/log:check",
@@ -25,6 +26,7 @@ cc_library(
 py_library(
     name = "id_utils_py",
     srcs = ["id_utils.py"],
+    deps = ["//intrinsic/assets/proto:id_py_pb2"],
 )
 
 go_library(

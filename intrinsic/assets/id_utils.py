@@ -7,6 +7,8 @@ from __future__ import annotations
 import dataclasses
 import re
 
+from intrinsic.assets.proto import id_pb2
+
 # These patterns differ from the C++ and Go versions in order to optimize
 # pattern matching in Python. Simple matching on the patterns used in the other
 # languages can be incredibly slow in Python (i.e., on the order of seconds for
@@ -55,7 +57,9 @@ class IdVersionParts:
 
   Attributes:
     id: The id part of the id_version.
+    id_proto: The Id proto form of the id.
     id_version: The input id_version.
+    id_version_proto: The IdVersion proto form of the id_version.
     name: The name part of the id_version.
     package: The package part of the id_version.
     version: The version of the id_version.
@@ -76,6 +80,14 @@ class IdVersionParts:
   version_minor: str
   version_patch: str
   version_pre_release: str
+
+  @property
+  def id_proto(self) -> id_pb2.Id:
+    return id_pb2.Id(package=self.package, name=self.name)
+
+  @property
+  def id_version_proto(self) -> id_pb2.IdVersion:
+    return id_pb2.IdVersion(id=self.id_proto, version=self.version)
 
   @classmethod
   def create(cls, id_version: str) -> IdVersionParts:
@@ -128,10 +140,51 @@ def id_from(package: str, name: str) -> str:
     validate_name(name)
   except IdValidationError as err:
     raise IdValidationError(
-        f"Cannot create id_version from ({package}, {name})"
+        f"Cannot create id from ({package}, {name})"
     ) from err
 
   return f"{package}.{name}"
+
+
+def id_proto_from(package: str, name: str) -> id_pb2.Id:
+  """Creates an Id proto from package and name strings.
+
+  Args:
+    package: The asset package.
+    name: The asset name.
+
+  Returns:
+    The Id proto.
+
+  Raises:
+    IdValidationError: If the specified package or name are not valid.
+  """
+  try:
+    validate_package(package)
+    validate_name(name)
+  except IdValidationError as err:
+    raise IdValidationError(
+        f"Cannot create Id from ({package}, {name})"
+    ) from err
+
+  return id_pb2.Id(package=package, name=name)
+
+
+def id_from_proto(id: id_pb2.Id) -> str:  # pylint: disable=redefined-builtin
+  """Creates an id string from an Id proto message.
+
+  Ids are formatted as in is_id.
+
+  Args:
+    id: The Id proto to convert.
+
+  Returns:
+    The corresponding id string.
+
+  Raises:
+    IdValidationError: If the specified package or name are not valid.
+  """
+  return id_from(id.package, id.name)
 
 
 def id_version_from(package: str, name: str, version: str) -> str:
@@ -151,15 +204,58 @@ def id_version_from(package: str, name: str, version: str) -> str:
     IdValidationError: If the specified package, name, or version are not valid.
   """
   try:
-    validate_package(package)
-    validate_name(name)
     validate_version(version)
   except IdValidationError as err:
     raise IdValidationError(
         f"Cannot create id_version from ({package}, {name}, {version})"
     ) from err
 
-  return f"{package}.{name}.{version}"
+  return f"{id_from(package, name)}.{version}"
+
+
+def id_version_proto_from(
+    package: str, name: str, version: str
+) -> id_pb2.IdVersion:
+  """Creates an IdVersion proto from package, name, and version strings.
+
+  Args:
+    package: The asset package.
+    name: The asset name.
+    version: The asset version.
+
+  Returns:
+    The IdVersion proto.
+
+  Raises:
+    IdValidationError: If the specified package, name, or version are not valid.
+  """
+  try:
+    validate_version(version)
+  except IdValidationError as err:
+    raise IdValidationError(
+        f"Cannot create id_version from ({package}, {name}, {version})"
+    ) from err
+
+  return id_pb2.IdVersion(id=id_proto_from(package, name), version=version)
+
+
+def id_version_from_proto(id_version: id_pb2.IdVersion) -> str:
+  """Creates an id_version string from an IdVersion proto message.
+
+  Id_versions are formatted as in is_id_version.
+
+  Args:
+    id_version: The IdVersion proto to convert.
+
+  Returns:
+    The corresponding id_version string.
+
+  Raises:
+    IdValidationError: If the specified package, name, or version are not valid.
+  """
+  return id_version_from(
+      id_version.id.package, id_version.id.name, id_version.version
+  )
 
 
 def name_from(id: str) -> str:  # pylint: disable=redefined-builtin

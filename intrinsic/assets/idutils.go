@@ -14,7 +14,6 @@ import (
 
 	"golang.org/x/exp/slices"
 	idpb "intrinsic/assets/proto/id_go_proto"
-	spb "intrinsic/assets/proto/id_go_proto"
 )
 
 var (
@@ -70,17 +69,18 @@ func NewIDVersionParts(idVersion string) (*IDVersionParts, error) {
 
 	groups := idVersionRegex.SubexpNames()
 
-	id := submatches[slices.Index(groups, "id")]
-	name := submatches[slices.Index(groups, "name")]
-	pkg := submatches[slices.Index(groups, "package")]
-	version := submatches[slices.Index(groups, "version")]
-	buildMetadata := submatches[slices.Index(groups, "buildmetadata")]
-	major := submatches[slices.Index(groups, "major")]
-	minor := submatches[slices.Index(groups, "minor")]
-	patch := submatches[slices.Index(groups, "patch")]
-	preRelease := submatches[slices.Index(groups, "prerelease")]
-
-	return &IDVersionParts{id: id, idVersion: idVersion, name: name, pkg: pkg, version: version, versionBuildMetadata: buildMetadata, versionMajor: major, versionMinor: minor, versionPatch: patch, versionPreRelease: preRelease}, nil
+	return &IDVersionParts{
+		id:                   submatches[slices.Index(groups, "id")],
+		idVersion:            idVersion,
+		name:                 submatches[slices.Index(groups, "name")],
+		pkg:                  submatches[slices.Index(groups, "package")],
+		version:              submatches[slices.Index(groups, "version")],
+		versionBuildMetadata: submatches[slices.Index(groups, "buildmetadata")],
+		versionMajor:         submatches[slices.Index(groups, "major")],
+		versionMinor:         submatches[slices.Index(groups, "minor")],
+		versionPatch:         submatches[slices.Index(groups, "patch")],
+		versionPreRelease:    submatches[slices.Index(groups, "prerelease")],
+	}, nil
 }
 
 // ID returns the id part of id_version.
@@ -88,9 +88,19 @@ func (p *IDVersionParts) ID() string {
 	return p.id
 }
 
+// IDProto returns the id proto part of id_version.
+func (p *IDVersionParts) IDProto() *idpb.Id {
+	return &idpb.Id{Package: p.pkg, Name: p.name}
+}
+
 // IDVersion returns the id_version.
 func (p *IDVersionParts) IDVersion() string {
 	return p.idVersion
+}
+
+// IDVersionProto returns the id_version proto.
+func (p *IDVersionParts) IDVersionProto() *idpb.IdVersion {
+	return &idpb.IdVersion{Id: p.IDProto(), Version: p.Version()}
 }
 
 // Name returns the name part of id_version.
@@ -150,18 +160,33 @@ func IDFrom(pkg string, name string) (string, error) {
 	return fmt.Sprintf("%s.%s", pkg, name), nil
 }
 
-// IDFromProto creates an id string from an id proto message
+// IDProtoFrom creates an Id proto from package and name strings.
 //
-// IDs are formatted as in IsID.
+// Returns an error if `pkg` or `name` strings not valid.
+func IDProtoFrom(pkg string, name string) (*idpb.Id, error) {
+	err := ValidatePackage(pkg)
+	if err == nil {
+		err = ValidateName(name)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cannot create Id from (%q, %q): %v", pkg, name, err)
+	}
+
+	return &idpb.Id{Name: name, Package: pkg}, nil
+}
+
+// IDFromProto creates an id string from an Id proto message.
+//
+// Ids are formatted as in IsId.
 //
 // Returns an error if `package` or `name` fields are not valid.
 func IDFromProto(id *idpb.Id) (string, error) {
 	return IDFrom(id.GetPackage(), id.GetName())
 }
 
-// IDVersionFrom creates an id from package, name, and version strings.
+// IDVersionFrom creates an id_version from package, name, and version strings.
 //
-// Id_versions are formatted as described in IsIdVersion.
+// Id_versions are formatted as in IsIdVersion.
 //
 // Returns an error if `pkg`, `name`, or `version` strings are not valid.
 func IDVersionFrom(pkg string, name string, version string) (string, error) {
@@ -177,6 +202,30 @@ func IDVersionFrom(pkg string, name string, version string) (string, error) {
 	}
 
 	return fmt.Sprintf("%s.%s.%s", pkg, name, version), nil
+}
+
+// IDVersionProtoFrom creates an IdVersion proto from package, name, and version strings.
+//
+// Returns an error if `pkg`, `name`, or `version` strings are not valid.
+func IDVersionProtoFrom(pkg string, name string, version string) (*idpb.IdVersion, error) {
+	id, err := IDProtoFrom(pkg, name)
+	if err != nil {
+		return nil, err
+	}
+	if err := ValidateVersion(version); err != nil {
+		return nil, fmt.Errorf("cannot create IdVersion from (%q, %q, %q): %v", pkg, name, version, err)
+	}
+
+	return &idpb.IdVersion{Id: id, Version: version}, nil
+}
+
+// IDVersionFromProto creates an id_version string from an IdVersion proto message.
+//
+// Id_versions are formatted as in IsIdVersion.
+//
+// Returns an error if `package`, `name`, or `version` fields are not valid.
+func IDVersionFromProto(idVersion *idpb.IdVersion) (string, error) {
+	return IDVersionFrom(idVersion.GetId().GetPackage(), idVersion.GetId().GetName(), idVersion.GetVersion())
 }
 
 // NameFrom returns the name part of an id or id_version.
@@ -301,7 +350,7 @@ func ValidateID(id string) error {
 // ValidateIDProto validates the parts of an Id proto.
 //
 // Returns an error if `idProto` is not valid.
-func ValidateIDProto(idProto *spb.Id) error {
+func ValidateIDProto(idProto *idpb.Id) error {
 	if err := ValidatePackage(idProto.GetPackage()); err != nil {
 		return err
 	}
