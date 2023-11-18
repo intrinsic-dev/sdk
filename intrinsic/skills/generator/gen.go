@@ -35,6 +35,7 @@ var embeddedTemplate embed.FS
 
 func writeCCTemplateOutput(parameters templateCCParameters, out string) error {
 	template, err := template.New("skill_service_main_tmpl.cc").
+		Funcs(template.FuncMap{"join": strings.Join}).
 		ParseFS(embeddedTemplate, "skill_service_main_tmpl.cc")
 	if err != nil {
 		return fmt.Errorf("cannot parse template: %v", err)
