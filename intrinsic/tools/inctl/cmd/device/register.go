@@ -20,7 +20,7 @@ import (
 
 const (
 	// https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names
-	hostnameRegexString = `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?`
+	hostnameRegexString = `^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?`
 	replaceKey          = "replace"
 )
 
@@ -55,8 +55,8 @@ func makeNameError(hostname string, index int) string {
 		return "hostname cannot be empty"
 	}
 
-	if len(hostname) > 64 {
-		return "hostname cannot exceed 64 characters"
+	if len(hostname) > 40 {
+		return "hostname cannot exceed 40 characters"
 	}
 
 	if strings.HasSuffix(hostname, "-") {

@@ -30,7 +30,7 @@ func TestValidHostname(t *testing.T) {
 			valid:    true,
 		},
 		{
-			name:     "cmplex",
+			name:     "complex",
 			hostname: "host-13245-123413240-998",
 			valid:    true,
 		},
@@ -71,7 +71,7 @@ func TestValidHostname(t *testing.T) {
 			name:     "no-overlength",
 			hostname: "host-123456790-123456790-123456790-123456790-123456790-123456790",
 			valid:    false,
-			index:    64,
+			index:    41,
 		},
 	}
 
