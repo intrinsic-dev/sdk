@@ -83,14 +83,15 @@ func (i Interface) String() string {
 // Status represents the current OS status. It is similar to config.Config but
 // contains the current status instead of the wanted status.
 type Status struct {
-	NodeName   string                     `json:"nodeName"`
-	Hostname   string                     `json:"hostname"`
-	Network    map[string]StatusInterface `json:"network"`
-	BuildID    string                     `json:"buildId"`
-	ImageType  string                     `json:"imageType"`
-	Board      string                     `json:"board"`
-	ActiveCopy string                     `json:"activeCopy"`
-	OEMVars    map[string]string          `json:"oemVars"`
+	NodeName      string                     `json:"nodeName"`
+	Hostname      string                     `json:"hostname"`
+	Network       map[string]StatusInterface `json:"network"`
+	BuildID       string                     `json:"buildId"`
+	ImageType     string                     `json:"imageType"`
+	Board         string                     `json:"board"`
+	ActiveCopy    string                     `json:"activeCopy"`
+	OEMVars       map[string]string          `json:"oemVars"`
+	NetworkIssues []string                   `json:"online"`
 }
 
 // StatusInterface represents a network interface.
