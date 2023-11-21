@@ -277,7 +277,7 @@ def intrinsic_sdks_deps_0():
         commit = "2bf606ceddb0b7d874022defa8ea6d2d3e1605ad",  # May 24, 2023
         remote = "https://github.com/pybind/pybind11_abseil.git",
         repo_mapping = {"@local_config_python": "@local_config_python"},
-        shallow_since = "1647991761 -0700",
+        shallow_since = "1684958620 -0700",
     )
 
     maybe(
@@ -295,7 +295,7 @@ def intrinsic_sdks_deps_0():
         commit = "5baa2dc9d93e3b608cde86dfa4b8c63aeab4ac78",  #  Jun 19, 2023
         remote = "https://github.com/pybind/pybind11_protobuf.git",
         repo_mapping = {"@local_config_python": "@local_config_python"},
-        shallow_since = "1642616122 -0800",
+        shallow_since = "1687199891 -0700",
     )
 
     maybe(
