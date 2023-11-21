@@ -29,6 +29,7 @@ type DeviceInfo struct {
 	Key       string `json:"key"`
 	HasGPU    bool   `json:"has_gpu"`
 	CanDoReal bool   `json:"can_do_real"`
+	LastErr   string `json:"last_error"`
 }
 
 // Nameservers sets DNS servers and search domains.
