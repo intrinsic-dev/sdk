@@ -91,7 +91,7 @@ type Status struct {
 	Board         string                     `json:"board"`
 	ActiveCopy    string                     `json:"activeCopy"`
 	OEMVars       map[string]string          `json:"oemVars"`
-	NetworkIssues []string                   `json:"online"`
+	NetworkIssues []string                   `json:"networkIssues"`
 }
 
 // StatusInterface represents a network interface.
