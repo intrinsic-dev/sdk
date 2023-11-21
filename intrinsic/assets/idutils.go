@@ -257,8 +257,8 @@ func PackageFrom(id string) (string, error) {
 // VersionFrom returns the  version part of an id_version.
 //
 // `id_version` must be formatted as described in IsIdVersion.
-func VersionFrom(id string) (string, error) {
-	return getNamedMatch(id, idVersionRegex, "version")
+func VersionFrom(idVersion string) (string, error) {
+	return getNamedMatch(idVersion, idVersionRegex, "version")
 }
 
 // RemoveVersionFrom strips the version from `id` and returns the id substring.
