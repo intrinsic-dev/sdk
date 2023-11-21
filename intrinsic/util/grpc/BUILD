@@ -14,7 +14,10 @@ cc_library(
     name = "channel_interface",
     srcs = ["channel_interface.cc"],
     hdrs = ["channel_interface.h"],
-    deps = ["@com_github_grpc_grpc//:grpc++"],
+    deps = [
+        ":grpc",
+        "@com_github_grpc_grpc//:grpc++",
+    ],
 )
 
 cc_library(

@@ -32,6 +32,7 @@ std::shared_ptr<grpc::Channel> Channel::GetChannel() const { return channel_; }
 ClientContextFactory Channel::GetClientContextFactory() const {
   return [params = params_]() {
     auto context = std::make_unique<::grpc::ClientContext>();
+    ConfigureClientContext(context.get());
     for (const auto& [header, value] : params.Metadata()) {
       context->AddMetadata(header, value);
     }
