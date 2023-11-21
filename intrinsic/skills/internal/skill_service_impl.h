@@ -242,9 +242,6 @@ class RequestWatcher {
     return requests;
   }
 
-  // Clears any accumulated requests.
-  void Clear() { requests_.clear(); }
-
  private:
   std::vector<::google::protobuf::Any> requests_;
 };
