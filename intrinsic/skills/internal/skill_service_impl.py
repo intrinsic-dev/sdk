@@ -37,6 +37,7 @@ from intrinsic.skills.proto import skills_pb2
 from intrinsic.skills.python import proto_utils
 from intrinsic.skills.python import skill_canceller
 from intrinsic.skills.python import skill_interface as skl
+from intrinsic.skills.python import skill_logging_context
 from intrinsic.world.proto import object_world_service_pb2_grpc
 from intrinsic.world.python import object_world_client
 from pybind11_abseil import status
@@ -283,9 +284,14 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
           ),
       )
 
+    logging_context = skill_logging_context.SkillLoggingContext(
+        data_logger_context=request.context,
+        skill_id=operation.runtime_data.skill_id,
+    )
+
     skill_context = execute_context_impl.ExecuteContextImpl(
         canceller=operation.canceller,
-        logging_context=request.context,
+        logging_context=logging_context,
         motion_planner=motion_planner_client.MotionPlannerClient(
             request.world_id, self._motion_planner_service
         ),
@@ -370,9 +376,14 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
           ),
       )
 
+    logging_context = skill_logging_context.SkillLoggingContext(
+        data_logger_context=request.context,
+        skill_id=operation.runtime_data.skill_id,
+    )
+
     skill_context = preview_context_impl.PreviewContextImpl(
         canceller=operation.canceller,
-        logging_context=request.context,
+        logging_context=logging_context,
         motion_planner=motion_planner_client.MotionPlannerClient(
             request.world_id, self._motion_planner_service
         ),

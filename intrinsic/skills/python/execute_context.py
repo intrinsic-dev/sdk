@@ -5,10 +5,10 @@
 import abc
 from typing import Mapping
 
-from intrinsic.logging.proto import context_pb2
 from intrinsic.motion_planning import motion_planner_client
 from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.skills.python import skill_canceller
+from intrinsic.skills.python import skill_logging_context
 from intrinsic.world.python import object_world_client
 
 
@@ -26,7 +26,7 @@ class ExecuteContext(abc.ABC):
 
   Attributes:
     canceller: Supports cooperative cancellation of the skill.
-    logging_context: The logging context of the execution.
+    logging_context: The skill's logging context.
     motion_planner: A client for the motion planning service.
     object_world: A client for interacting with the object world.
     resource_handles: A map of resource names to handles.
@@ -39,7 +39,7 @@ class ExecuteContext(abc.ABC):
 
   @property
   @abc.abstractmethod
-  def logging_context(self) -> context_pb2.Context:
+  def logging_context(self) -> skill_logging_context.SkillLoggingContext:
     pass
 
   @property

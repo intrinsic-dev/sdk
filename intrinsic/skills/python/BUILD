@@ -58,8 +58,8 @@ py_library(
     srcs = ["execute_context.py"],
     deps = [
         ":skill_canceller",
+        ":skill_logging_context",
         "//intrinsic/geometry/service:geometry_service_py_pb2_grpc",
-        "//intrinsic/logging/proto:context_py_pb2",
         "//intrinsic/motion_planning:motion_planner_client_py",
         "//intrinsic/resources/proto:resource_handle_py_pb2",
         "//intrinsic/world/python:object_world_client",
@@ -77,8 +77,8 @@ py_library(
     srcs = ["preview_context.py"],
     deps = [
         ":skill_canceller",
+        ":skill_logging_context",
         "//intrinsic/geometry/service:geometry_service_py_pb2_grpc",
-        "//intrinsic/logging/proto:context_py_pb2",
         "//intrinsic/motion_planning:motion_planner_client_py",
         "//intrinsic/world/proto:object_world_updates_py_pb2",
         "//intrinsic/world/python:object_world_client",
@@ -103,6 +103,14 @@ py_library(
     srcs = ["proto_utils.py"],
     srcs_version = "PY3",
     deps = ["@com_google_protobuf//:protobuf_python"],
+)
+
+py_library(
+    name = "skill_logging_context",
+    srcs = ["skill_logging_context.py"],
+    deps = [
+        "//intrinsic/logging/proto:context_py_pb2",
+    ],
 )
 
 py_package(

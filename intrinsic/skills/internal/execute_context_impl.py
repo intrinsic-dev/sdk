@@ -4,11 +4,11 @@
 
 from typing import Mapping
 
-from intrinsic.logging.proto import context_pb2
 from intrinsic.motion_planning import motion_planner_client
 from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.skills.python import execute_context
 from intrinsic.skills.python import skill_canceller
+from intrinsic.skills.python import skill_logging_context
 from intrinsic.world.python import object_world_client
 
 
@@ -28,7 +28,7 @@ class ExecuteContextImpl(execute_context.ExecuteContext):
     return self._canceller
 
   @property
-  def logging_context(self) -> context_pb2.Context:
+  def logging_context(self) -> skill_logging_context.SkillLoggingContext:
     return self._logging_context
 
   @property
@@ -48,7 +48,7 @@ class ExecuteContextImpl(execute_context.ExecuteContext):
   def __init__(
       self,
       canceller: skill_canceller.SkillCanceller,
-      logging_context: context_pb2.Context,
+      logging_context: skill_logging_context.SkillLoggingContext,
       motion_planner: motion_planner_client.MotionPlannerClient,
       object_world: object_world_client.ObjectWorldClient,
       resource_handles: dict[str, resource_handle_pb2.ResourceHandle],
