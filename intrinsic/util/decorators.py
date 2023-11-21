@@ -2,6 +2,7 @@
 
 """Helper decorators for Python files."""
 
+
 def overrides(interface):
   """Overrides decorator to annotate method overrides parent's."""
 

@@ -13,6 +13,7 @@ base Error is provided for users to easily handle all ICON related exceptions.
     # Handle specific error.
 """
 
+
 class Error(Exception):
   pass
 

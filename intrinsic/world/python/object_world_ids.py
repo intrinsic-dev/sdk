@@ -14,6 +14,7 @@ signature in Jupyter environments. The class definition shows a better signature
 and only results in small execution overhead.
 """
 
+
 class ObjectWorldResourceId(str):
   """A unique id for a resource in the object-based world view.
 
