@@ -11,7 +11,7 @@ require (
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/bazelbuild/buildtools v0.0.0-20230926111657-7d855c59baeb
 	github.com/bazelbuild/remote-apis-sdks v0.0.0-20230919142202-aa1c266ae342
-	github.com/bazelbuild/rules_go v0.39.1
+	github.com/bazelbuild/rules_go v0.43.0
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/fsouza/fake-gcs-server v1.47.4
 	github.com/golang/glog v1.1.2
@@ -21,7 +21,6 @@ require (
 	github.com/google/subcommands v1.2.0
 	github.com/google/uuid v1.3.1
 	github.com/googlecloudrobotics/core/src v0.0.0-20230426093931-c9725477ada9
-	github.com/imdario/mergo v0.3.13
 	github.com/minio/highwayhash v1.0.2
 	github.com/pborman/uuid v1.2.1
 	github.com/pkg/errors v0.9.1
@@ -36,8 +35,8 @@ require (
 	go.uber.org/multierr v1.11.0
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	golang.org/x/oauth2 v0.12.0
-	golang.org/x/sync v0.3.0
-	golang.org/x/sys v0.12.0
+	golang.org/x/sync v0.5.0
+	golang.org/x/sys v0.14.0
 	golang.org/x/time v0.3.0
 	gonum.org/v1/gonum v0.14.0
 	google.golang.org/api v0.143.0
@@ -82,8 +81,8 @@ require (
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -107,10 +106,11 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/tdewolff/test v1.0.9 // indirect
 	github.com/vbatts/tar-split v0.11.3 // indirect
-	golang.org/x/crypto v0.13.0 // indirect
-	golang.org/x/net v0.15.0 // indirect
-	golang.org/x/term v0.12.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/crypto v0.15.0 // indirect
+	golang.org/x/net v0.18.0 // indirect
+	golang.org/x/term v0.14.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/tools v0.15.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230913181813-007df8e322eb // indirect
