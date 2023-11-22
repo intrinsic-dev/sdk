@@ -10,7 +10,6 @@ load(
 )
 load("//intrinsic/util/proto/build_defs:descriptor_set.bzl", "proto_source_code_info_transitive_descriptor_set")
 load("@io_bazel_rules_docker//container:container.bzl", _container = "container")
-
 load("@io_bazel_rules_docker//python3:image.bzl", "py3_image")
 load("@io_bazel_rules_docker//lang:image.bzl", "app_layer")
 load("@bazel_skylib//lib:dicts.bzl", "dicts")
