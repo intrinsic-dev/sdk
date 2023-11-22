@@ -24,7 +24,7 @@ message SensorConfig {
   // Sensor distortion parameters
   optional DistortionParams distortion_params = 4;
   // A list of camera settings applied to this sensor after the global settings
-  // have been applied. TODO: Shall we rename this to SensorSetting?
+  // have been applied.
   repeated CameraSetting settings = 5;
 }
 
