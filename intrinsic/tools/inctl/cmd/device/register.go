@@ -158,14 +158,13 @@ var registerCmd = &cobra.Command{
 		case http.StatusConflict:
 			return fmt.Errorf("cluster %q already exists. Please use a unique value for --hostname if this is a new cluster.\nTo replace the old cluster, call with --%s", hostname, replaceKey)
 		case http.StatusPreconditionFailed:
-			return fmt.Errorf("cluster %q does not exist. please make sure that --cluster_name matches the --hostname from a previously registered cluster.\nIf you want to create a new cluster, do not use --device_role", clusterName)
+			return fmt.Errorf("cluster %q does not exist. Please make sure that --cluster_name matches the --hostname from a previously registered cluster.\nIf you want to create a new cluster, do not use --device_role", clusterName)
 		case http.StatusNotFound:
-			return fmt.Errorf("device %q does not exist. please make sure you have the exact id from the device you are trying to register", deviceID)
+			return fmt.Errorf("device %q does not exist. Please make sure you have the exact id from the device you are trying to register", deviceID)
+		case http.StatusUnauthorized:
+			return fmt.Errorf("your login key has expired or been replaced.\nRun 'inctl auth login --org %s' to update it", orgutil.QualifiedOrg(projectName, orgName))
 		case http.StatusForbidden:
-			if orgName == "" {
-				orgName = fmt.Sprintf("defaultorg@%s", projectName)
-			}
-			return fmt.Errorf("you do not have the necessary permissions to add a cluster on organization %q.\nOpen a support request to get the 'clusterProvisioner' role", orgName)
+			return fmt.Errorf("you do not have the necessary permissions to add a cluster on organization %q.\nOpen a support request to get the 'clusterProvisioner' role", orgutil.QualifiedOrg(projectName, orgName))
 		default:
 			io.Copy(os.Stderr, resp.Body)
 
