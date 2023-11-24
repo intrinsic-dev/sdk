@@ -47,6 +47,11 @@ service CameraServer {
   rpc GetFrame(GetFrameRequest) returns (GetFrameResponse) {
   }
 
+  // Reads and returns the access mode of a specific setting from a camera.
+  // The function returns an error if the camera is unknown.
+  rpc ReadCameraSettingAccess(ReadCameraSettingAccessRequest)
+      returns (ReadCameraSettingAccessResponse) {}
+
   // Read the properties of the user specified camera and setting.
   // The function returns an error if the camera is unknown or if the setting is
   // not supported. If specific properties of a setting are not supported, they
@@ -177,6 +182,20 @@ message GetFrameRequest {
 
 message GetFrameResponse {
   Frame frame = 1;
+}
+
+message ReadCameraSettingAccessRequest {
+  // The identifier of the camera from which setting access is read.
+  string camera_handle = 1;
+  // The setting name.
+  // The setting name must be defined by the Standard Feature Naming Conventions
+  // (SFNC) which is part of the GenICam standard.
+  string name = 2;
+}
+
+message ReadCameraSettingAccessResponse {
+  // The access mode of a specific setting.
+  CameraSettingAccess access = 1;
 }
 
 message ReadCameraSettingPropertiesRequest {
