@@ -114,6 +114,7 @@ go_library(
     name = "listutil",
     srcs = ["listutil.go"],
     deps = [
+        "//intrinsic/assets:idutils",
         "//intrinsic/skills/proto:skills_go_proto",
     ],
 )

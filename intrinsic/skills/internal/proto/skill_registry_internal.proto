@@ -10,9 +10,7 @@ import "intrinsic/skills/proto/skill_registry_config.proto";
 import "intrinsic/skills/proto/skills.proto";
 
 message GetInstanceRequest {
-  // The identifier for the skill. This can either be the id or the id_version
-  // as described by intrinsic_proto.catalog.SkillMeta.id and
-  // instrinsic_proto.SkillMeta.id_version, respectively.
+  // The skill's id. This can be either the id or the id_version.
   string id = 4;
 
   // An optional instance id for the skill. If empty, a unique id will be
@@ -35,7 +33,7 @@ message GetInstanceResponse {
 }
 
 message RemoveSkillRequest {
-  // For format of id, see intrinsic_proto.catalog.SkillMeta.id
+  // The id of the skill to remove.
   string id = 1;
 }
 

@@ -12,7 +12,7 @@ import (
 	spb "intrinsic/skills/proto/skills_go_proto"
 )
 
-// Custom proto->json conversion to handle fields like the update timestamp.
+// SkillDescription has custom proto->json conversion to handle fields like the update timestamp.
 type SkillDescription struct {
 	Name         string `json:"name,omitempty"`
 	Vendor       string `json:"vendor,omitempty"`

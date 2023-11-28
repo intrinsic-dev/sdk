@@ -77,12 +77,11 @@ message Skill {
   // the package for the skill.
   string package_name = 9;
 
-  // The skill id. See intrinsic_proto.catalog.SkillMeta for the formatting of
-  // this id field.
+  // The skill id, formatted as: <package_name>.<name>
   string id = 10;
 
-  // The fully-qualified globally unique id of the skill.
-  // See: intrinsic_proto.catalog.SkillMeta for the formatting of this id field.
+  // The fully-qualified globally unique id of the skill, formatted as:
+  // <package_name>.<name>.<version>
   string id_version = 11;
 
   // Description information for the parameters of this Skill.
@@ -120,8 +119,8 @@ message SkillInstance {
   // The globally-unique name of this skill instance.
   string instance_name = 1;
 
-  // The fully-qualified globally unique id of the skill
-  // See: intrinsic_proto.catalog.SkillMeta for the formatting of this id field.
+  // The fully-qualified globally unique id of the skill, formatted as:
+  // <package_name>.<name>.<version>
   string id_version = 10;
 
   // Dispatcher handle to project this skill.
