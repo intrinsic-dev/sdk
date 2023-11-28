@@ -199,7 +199,7 @@ cc_library(
 py_library(
     name = "trajectory_tracking_action_utils",
     srcs = ["trajectory_tracking_action_utils.py"],
-    visibility = ["//intrinsic/icon/python:__pkg__"],
+    visibility = ["//intrinsic/icon/python:__subpackages__"],
     deps = [
         ":trajectory_tracking_action_py_pb2",
         "//intrinsic/icon/proto:joint_space_py_pb2",
@@ -210,7 +210,7 @@ py_library(
 py_library(
     name = "tare_force_torque_sensor_utils",
     srcs = ["tare_force_torque_sensor_utils.py"],
-    visibility = ["//intrinsic/icon/python:__pkg__"],
+    visibility = ["//intrinsic/icon/python:__subpackages__"],
     deps = [
         ":tare_force_torque_sensor_py_pb2",
         "//intrinsic/icon/python:icon",
@@ -220,7 +220,7 @@ py_library(
 py_library(
     name = "point_to_point_move_utils",
     srcs = ["point_to_point_move_utils.py"],
-    visibility = ["//intrinsic/icon/python:__pkg__"],
+    visibility = ["//intrinsic/icon/python:__subpackages__"],
     deps = [
         ":point_to_point_move_py_pb2",
         "//intrinsic/icon/proto:joint_space_py_pb2",
@@ -239,7 +239,7 @@ py_library(
 py_library(
     name = "wait_for_settling_utils",
     srcs = ["wait_for_settling_utils.py"],
-    visibility = ["//intrinsic/icon/python:__pkg__"],
+    visibility = ["//intrinsic/icon/python:__subpackages__"],
     deps = [
         ":wait_for_settling_action_py_pb2",
         "//intrinsic/icon/python:icon",
