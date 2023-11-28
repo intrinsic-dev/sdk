@@ -10,7 +10,7 @@ from intrinsic.icon.python import actions
 ACTION_TYPE_NAME = "xfa.tare_force_torque_sensor"
 
 
-def CreateTareForceTorqueSensorAction(
+def create_tare_force_torque_sensor_action(
     action_id: int,
     force_torque_sensor_part_name: str,
     num_taring_cycles: Optional[int] = None,

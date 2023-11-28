@@ -15,7 +15,7 @@ import numpy as np
 class ActionUtilsTest(absltest.TestCase):
 
   def test_create_trajectory_tracking_action(self):
-    action = create_action_utils.CreateTrajectoryTrackingAction(
+    action = create_action_utils.create_trajectory_tracking_action(
         1,
         "my_part",
         joint_space_pb2.JointTrajectoryPVA(
@@ -36,7 +36,9 @@ class ActionUtilsTest(absltest.TestCase):
     )
 
   def test_create_tare_force_torque_sensor_action(self):
-    action = create_action_utils.CreateTareForceTorqueSensorAction(2, "my_part")
+    action = create_action_utils.create_tare_force_torque_sensor_action(
+        2, "my_part"
+    )
 
     self.assertEqual(
         action.proto.action_type_name,
@@ -44,7 +46,7 @@ class ActionUtilsTest(absltest.TestCase):
     )
 
   def test_create_point_to_point_move(self):
-    action = create_action_utils.CreatePointToPointMoveAction(
+    action = create_action_utils.create_point_to_point_move_action(
         5, "my_part", [1.2, 2.3]
     )
 
@@ -54,7 +56,7 @@ class ActionUtilsTest(absltest.TestCase):
     )
 
   def test_create_stop(self):
-    action = create_action_utils.CreateStopAction(4, "my_part")
+    action = create_action_utils.create_stop_action(4, "my_part")
 
     self.assertEqual(
         action.proto.action_type_name,
@@ -62,7 +64,7 @@ class ActionUtilsTest(absltest.TestCase):
     )
 
   def test_create_wait_for_settling(self):
-    action = create_action_utils.CreateWaitForSettlingAction(4, "my_part")
+    action = create_action_utils.create_wait_for_settling_action(4, "my_part")
 
     self.assertEqual(
         action.proto.action_type_name,

@@ -10,7 +10,7 @@ from intrinsic.icon.python import actions
 ACTION_TYPE_NAME = "xfa.wait_for_settling_action"
 
 
-def CreateWaitForSettlingAction(
+def create_wait_for_settling_action(
     action_id: int,
     arm_part_name: str,
     uncertainty_threshold: Optional[float] = None,

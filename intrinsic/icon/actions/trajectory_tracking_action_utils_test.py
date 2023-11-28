@@ -21,7 +21,7 @@ class TrajectoryTrackingActionUtilsTest(absltest.TestCase):
         time_since_start=[duration_pb2.Duration(seconds=2, nanos=14)],
     )
 
-    action = trajectory_tracking_action_utils.CreateTrajectoryTrackingAction(
+    action = trajectory_tracking_action_utils.create_trajectory_tracking_action(
         5,
         'my_arm',
         trajectory,

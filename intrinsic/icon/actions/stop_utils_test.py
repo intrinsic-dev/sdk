@@ -8,7 +8,7 @@ from intrinsic.icon.actions import stop_utils
 class StopUtilsTest(absltest.TestCase):
 
   def test_create_action(self):
-    action = stop_utils.CreateStopAction(
+    action = stop_utils.create_stop_action(
         action_id=17, joint_position_part_name="my_part"
     )
 

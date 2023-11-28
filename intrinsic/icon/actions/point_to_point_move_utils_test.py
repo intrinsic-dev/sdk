@@ -9,7 +9,7 @@ from intrinsic.kinematics.types import joint_limits_pb2
 class PointToPointMoveUtilsTest(absltest.TestCase):
 
   def test_create_action(self):
-    action = point_to_point_move_utils.CreatePointToPointMoveAction(
+    action = point_to_point_move_utils.create_point_to_point_move_action(
         14, "arm_part", [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
     )
 
@@ -29,7 +29,7 @@ class PointToPointMoveUtilsTest(absltest.TestCase):
     self.assertFalse(got_params.HasField("joint_limits"))
 
   def test_create_with_velocity(self):
-    action = point_to_point_move_utils.CreatePointToPointMoveAction(
+    action = point_to_point_move_utils.create_point_to_point_move_action(
         14,
         "arm_part",
         goal_position=[1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
@@ -52,7 +52,7 @@ class PointToPointMoveUtilsTest(absltest.TestCase):
     self.assertFalse(got_params.HasField("joint_limits"))
 
   def test_create_action_with_limits(self):
-    action = point_to_point_move_utils.CreatePointToPointMoveAction(
+    action = point_to_point_move_utils.create_point_to_point_move_action(
         14,
         "arm_part",
         goal_position=[1.0, 2.0, 3.0, 4.0, 5.0, 6.0],

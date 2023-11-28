@@ -8,7 +8,7 @@ from intrinsic.icon.actions import wait_for_settling_utils
 class WaitForSettlingUtilsTest(absltest.TestCase):
 
   def test_create(self):
-    action = wait_for_settling_utils.CreateWaitForSettlingAction(
+    action = wait_for_settling_utils.create_wait_for_settling_action(
         action_id=238, arm_part_name="my_arm_part", uncertainty_threshold=0.3
     )
 
@@ -23,7 +23,7 @@ class WaitForSettlingUtilsTest(absltest.TestCase):
     self.assertEqual(got_params.uncertainty_threshold, 0.3)
 
   def test_create_default(self):
-    action = wait_for_settling_utils.CreateWaitForSettlingAction(
+    action = wait_for_settling_utils.create_wait_for_settling_action(
         action_id=238, arm_part_name="my_arm_part"
     )
 

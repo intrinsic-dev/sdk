@@ -75,13 +75,13 @@ def _example_joint_move(icon_client: icon_api.Client, part_name: str):
   try:
     with icon_client.start_session(parts=parts) as session:
       try:
-        jmove1 = create_action_utils.CreatePointToPointMoveAction(
+        jmove1 = create_action_utils.create_point_to_point_move_action(
             action_id=1, joint_position_part_name=parts[0], goal_position=jpos1
         )
-        jstop = create_action_utils.CreateStopAction(
+        jstop = create_action_utils.create_stop_action(
             action_id=2, joint_position_part_name=parts[0]
         )
-        jmove2 = create_action_utils.CreatePointToPointMoveAction(
+        jmove2 = create_action_utils.create_point_to_point_move_action(
             action_id=3, joint_position_part_name=parts[0], goal_position=jpos2
         )
         done_signal = session.add_action_sequence([jmove1, jstop, jmove2])

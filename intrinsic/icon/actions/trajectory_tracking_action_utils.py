@@ -18,7 +18,7 @@ MAX_INITIAL_JOINT_POSITION_DEVIATION: float = 0.1  # [rad]
 MAX_INITIAL_JOINT_VELOCITY_DEVIATION: float = 0.15  # [rad/sec]
 
 
-def CreateTrajectoryTrackingAction(
+def create_trajectory_tracking_action(
     action_id: int,
     part: str,
     trajectory: joint_space_pb2.JointTrajectoryPVA,

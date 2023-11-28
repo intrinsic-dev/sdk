@@ -11,7 +11,7 @@ from intrinsic.kinematics.types import joint_limits_pb2
 ACTION_TYPE_NAME = "xfa.point_to_point_move"
 
 
-def CreatePointToPointMoveAction(
+def create_point_to_point_move_action(
     action_id: int,
     joint_position_part_name: str,
     goal_position: Sequence[float],

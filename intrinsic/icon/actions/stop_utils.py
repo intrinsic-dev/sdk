@@ -13,7 +13,7 @@ class StateVariables:
   IS_SETTLED = "is_settled"
 
 
-def CreateStopAction(
+def create_stop_action(
     action_id: int, joint_position_part_name: str
 ) -> actions.Action:
   """Creates a Stop action.
