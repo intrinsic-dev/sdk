@@ -78,7 +78,13 @@ message TestMessage {
   map<int64, int32> int64_int32_map = 201;
   map<uint64, int32> uint64_int32_map = 202;
   map<string, int32> string_int32_map = 203;
+  map<string, float> string_float_map = 207;
+  map<string, double> string_double_map = 208;
+  map<int64, TestMessage> int64_message_map = 204;
+  map<uint64, TestMessage> uint64_message_map = 205;
+  map<string, TestMessage> string_message_map = 206;
 
   optional int64 optional_int64_value = 301;
   optional string optional_string_value = 302;
+  optional float optional_float_value = 303;
 }
