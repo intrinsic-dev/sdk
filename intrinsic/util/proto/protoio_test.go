@@ -3,7 +3,6 @@
 package protoio
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -99,7 +98,7 @@ func TestReadTextProto(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			f, err := ioutil.TempFile("", "test_read_text_*")
+			f, err := os.CreateTemp("", "test_read_text_*")
 			if err != nil {
 				t.Fatalf("Create tempfile failed: %v", err)
 			}
@@ -123,7 +122,7 @@ func TestReadTextProto(t *testing.T) {
 }
 
 func TestReadBinaryProto(t *testing.T) {
-	f, err := ioutil.TempFile("", "timestamp_*")
+	f, err := os.CreateTemp("", "timestamp_*")
 	if err != nil {
 		t.Fatalf("create tempfile failed: %v", err)
 	}
@@ -151,7 +150,7 @@ func TestReadBinaryProto(t *testing.T) {
 }
 
 func TestWriteBinaryProto(t *testing.T) {
-	f, err := ioutil.TempFile("", "timestamp_*")
+	f, err := os.CreateTemp("", "timestamp_*")
 	if err != nil {
 		t.Fatalf("create tempfile failed: %v", err)
 	}
@@ -237,7 +236,7 @@ func TestBinaryRoundTrip(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			f, err := ioutil.TempFile("", "test_binary_roundtrip_*")
+			f, err := os.CreateTemp("", "test_binary_roundtrip_*")
 			if err != nil {
 				t.Fatalf("create tempfile failed: %v", err)
 			}
@@ -348,7 +347,7 @@ middle {
 	}
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			f, err := ioutil.TempFile("", "test_stable_textproto_*")
+			f, err := os.CreateTemp("", "test_stable_textproto_*")
 			if err != nil {
 				t.Fatalf("create tempfile failed: %v", err)
 			}
