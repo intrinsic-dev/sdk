@@ -225,11 +225,9 @@ def make_named_pose_inputs() -> List[NamedPoseInputType]:
   named_rotations = make_named_rotations()
   named_vectors = make_named_vectors() * 2
   random.shuffle(named_vectors)
-  named_pose_inputs = [(
-      'identity',
-      rotation3.Rotation3.identity(),
-      np.zeros(3),
-  )]
+  named_pose_inputs = [
+      ('identity', rotation3.Rotation3.identity(), np.zeros(3))
+  ]
   for r, v in zip(named_rotations, named_vectors):
     name = '(%s, %s)' % (r[0], v[0])
     named_pose_inputs.append((name, r[1], v[1]))

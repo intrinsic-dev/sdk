@@ -12,13 +12,11 @@ class ActionsTest(absltest.TestCase):
 
   def test_action_with_single_part_name(self):
     move_params = point_to_point_move_pb2.PointToPointMoveFixedParams()
-    reactions = iter(
-        [
-            icon_api.Reaction(
-                icon_api.Condition.is_done(), icon_api.StartActionInRealTime(1)
-            )
-        ]
-    )
+    reactions = iter([
+        icon_api.Reaction(
+            icon_api.Condition.is_done(), icon_api.StartActionInRealTime(1)
+        )
+    ])
     action = actions.Action(0, 'foo', 'bar', move_params, reactions)
     self.assertEqual(action.id, 0)
     self.assertEqual(action.reactions, reactions)
@@ -31,13 +29,11 @@ class ActionsTest(absltest.TestCase):
 
   def test_action_with_slot_part_map(self):
     move_params = point_to_point_move_pb2.PointToPointMoveFixedParams()
-    reactions = iter(
-        [
-            icon_api.Reaction(
-                icon_api.Condition.is_done(), icon_api.StartActionInRealTime(1)
-            )
-        ]
-    )
+    reactions = iter([
+        icon_api.Reaction(
+            icon_api.Condition.is_done(), icon_api.StartActionInRealTime(1)
+        )
+    ])
     action = actions.Action(
         23, 'foo', {'bar_slot': 'bar'}, move_params, reactions
     )

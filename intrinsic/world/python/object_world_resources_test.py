@@ -1056,13 +1056,11 @@ class JointConfigurationTest(absltest.TestCase):
 class RobotConfigurationsTest(absltest.TestCase):
 
   def test_has_motion_target_attr(self):
-    my_robot_motion_targets = object_world_resources.JointConfigurations(
-        {
-            'my_motion_target': object_world_resources.JointConfiguration(
-                [1.0, 2.0, 3.0]
-            )
-        }
-    )
+    my_robot_motion_targets = object_world_resources.JointConfigurations({
+        'my_motion_target': object_world_resources.JointConfiguration(
+            [1.0, 2.0, 3.0]
+        )
+    })
 
     self.assertIsInstance(
         my_robot_motion_targets.my_motion_target,

@@ -657,12 +657,10 @@ class KinematicObject(WorldObject):
 
   @property
   def joint_configurations(self) -> JointConfigurations:
-    return JointConfigurations(
-        {
-            target.name: JointConfiguration(list(target.joint_positions))
-            for target in self._proto.kinematic_object_component.named_joint_configurations
-        }
-    )
+    return JointConfigurations({
+        target.name: JointConfiguration(list(target.joint_positions))
+        for target in self._proto.kinematic_object_component.named_joint_configurations
+    })
 
 
 def create_object_with_auto_type(
