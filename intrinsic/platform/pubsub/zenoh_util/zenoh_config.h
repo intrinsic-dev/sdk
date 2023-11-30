@@ -8,9 +8,13 @@
 #include <iostream>
 #include <string>
 
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "intrinsic/platform/pubsub/zenoh_util/zenoh_helpers.h"
 #include "tools/cpp/runfiles/runfiles.h"
+
+ABSL_DECLARE_FLAG(std::string, zenoh_router);
 
 namespace intrinsic {
 
@@ -50,6 +54,17 @@ inline std::string GetZenohPeerConfig() {
       std::string listenIp("0.0.0.0");
       size_t pos = config.find(listenIp);
       config.replace(pos, listenIp.length(), std::string(allowed_ip));
+    }
+  }
+
+  // If requested by the zenoh_router flag, try to alter the default router
+  // connection provided in peer_config.json
+  if (!absl::GetFlag(FLAGS_zenoh_router).empty()) {
+    std::string router_endpoint("tcp/zenoh-router.app-intrinsic-base:7447");
+    size_t pos = config.find(router_endpoint);
+    if (pos != std::string::npos) {
+      config.replace(pos, router_endpoint.length(),
+                     absl::GetFlag(FLAGS_zenoh_router));
     }
   }
   return config;

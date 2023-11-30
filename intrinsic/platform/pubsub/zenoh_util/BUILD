@@ -43,6 +43,7 @@ cc_library(
 
 cc_library(
     name = "zenoh_config",
+    srcs = ["zenoh_config.cc"],
     hdrs = ["zenoh_config.h"],
     data = [
         ":peer_config.json",
@@ -53,6 +54,18 @@ cc_library(
     deps = [
         ":zenoh_helpers",
         "@bazel_tools//tools/cpp/runfiles",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
+    ],
+)
+
+cc_test(
+    name = "zenoh_config_test",
+    size = "small",
+    srcs = ["zenoh_config_test.cc"],
+    deps = [
+        ":zenoh_config",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_googletest//:gtest_main",
     ],
 )
