@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -215,9 +216,26 @@ var configSetCmd = &cobra.Command{
 			return fmt.Errorf("get project client: %w", err)
 		}
 
-		if err := json.Unmarshal([]byte(configString), &networkConfigInfo{}); err != nil {
+		var config map[string]shared.Interface
+		if err := json.Unmarshal([]byte(configString), &config); err != nil {
 			fmt.Fprintf(os.Stderr, "Provided configuration is not a valid configuration string.\n")
 			return err
+		}
+
+		for name := range config {
+			// This is a soft error to allow for later changes
+			// The list should cover
+			// * en*: All wired interface names set by udev
+			// * wl*: All wireless interface names set by udev (usually wlp... or wlan#)
+			// * realtime_nic0: For our own naming scheme
+			if !strings.HasPrefix(name, "en") && !strings.HasPrefix(name, "wl") && !strings.HasPrefix(name, "realtime_nic") {
+				fmt.Fprintf(os.Stderr, "WARNING: Interface %q does not look like a valid interface.\n", name)
+			}
+
+			// This is an easy to make mistake in the config building.
+			if net.ParseIP(name) != nil {
+				return fmt.Errorf("%q was used as interface name but is an IP address, please use \"en...\" for example", name)
+			}
 		}
 
 		if err := setConfig(cmd.Context(), &client, clusterName, deviceID, configString); err != nil {
