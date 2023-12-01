@@ -7,7 +7,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -57,7 +56,7 @@ func ExtractFile(r io.Reader, filename string) ([]byte, error) {
 		if h.Typeflag != tar.TypeReg {
 			return nil, fmt.Errorf("%q is not a regular file in the tarball", filename)
 		}
-		return ioutil.ReadAll(tr)
+		return io.ReadAll(tr)
 	}
 
 	return nil, fmt.Errorf("%q not found in the tarball", filename)
