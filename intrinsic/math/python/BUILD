@@ -3,7 +3,9 @@
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = [
+    "//visibility:public",
+])
 
 py_library(
     name = "proto_conversion",
