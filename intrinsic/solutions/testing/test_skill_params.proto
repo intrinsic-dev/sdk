@@ -1,0 +1,99 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.test_data;
+
+import "intrinsic/executive/proto/test_message.proto";
+import "intrinsic/icon/proto/joint_space.proto";
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/motion_planning/proto/motion_target.proto";
+import "intrinsic/world/proto/collision_settings.proto";
+import "intrinsic/world/proto/object_world_refs.proto";
+
+message SubMessage {
+  string name = 1;
+}
+
+message TestMessage {
+  // Your favorite double of all time.
+  optional double my_double = 1;
+  optional float my_float = 2;
+  optional int32 my_int32 = 3;
+  optional int64 my_int64 = 4;
+  optional uint32 my_uint32 = 5;
+  optional uint64 my_uint64 = 6;
+  optional bool my_bool = 7;
+  optional string my_string = 8;
+  SubMessage sub_message = 9;
+  optional SubMessage optional_sub_message = 10;
+
+  repeated double my_repeated_doubles = 11;
+  repeated SubMessage repeated_submessages = 12;
+
+  int32 my_required_int32 = 14;
+
+  oneof my_oneof {
+    double my_oneof_double = 15;
+    SubMessage my_oneof_sub_message = 16;
+  }
+
+  // Special intrinsic-type support
+
+  // Handled differently than a normal protobuf submessage.
+  intrinsic_proto.Pose pose = 24;
+
+  message Foo {
+    message Bar {
+      string test = 1;
+    }
+    Bar bar = 1;
+  }
+  optional Foo foo = 25;
+
+  enum TestEnum {
+    // Explicitly test sparse enum values.
+    UNKNOWN = 0;
+    ONE = 1;
+    THREE = 3;
+    FIVE = 5;
+  }
+
+  optional TestEnum enum_v = 26;
+
+  map<string, int32> string_int32_map = 28;
+  map<int32, string> int32_string_map = 29;
+  map<string, intrinsic_proto.executive.TestMessage> string_message_map = 30;
+
+  intrinsic_proto.executive.TestMessage executive_test_message = 27;
+}
+
+message ResourceConflict {
+  // param a
+  optional string a = 1;
+}
+
+message BytesSkill {
+  optional bytes param_bytes = 1;
+}
+
+message ObjectReferenceSkill {
+  optional intrinsic_proto.world.ObjectReference param_object = 1;
+  optional intrinsic_proto.world.FrameReference param_frame = 2;
+  optional intrinsic_proto.world.TransformNodeReference param_transform_node =
+      3;
+  optional intrinsic_proto.world.ObjectOrEntityReference
+      param_object_or_entity = 4;
+}
+
+message CartesianMotionTargetSkill {
+  optional intrinsic_proto.motion_planning.CartesianMotionTarget target = 1;
+}
+
+message JointMotionTargetSkill {
+  optional intrinsic_proto.icon.JointVec param_joint_motion_target = 1;
+}
+
+message CollisionSettingsSkill {
+  optional intrinsic_proto.world.CollisionSettings param_collision_settings = 1;
+}
