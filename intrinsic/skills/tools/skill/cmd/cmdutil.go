@@ -227,12 +227,14 @@ func (cf *CmdFlags) GetFlagReleaseNotes() string {
 
 // AddFlagReleaseType adds a flag for the type when releasing an asset.
 func (cf *CmdFlags) AddFlagReleaseType() {
-	cf.RequiredString(KeyType, `The target's type {"build", "archive", "image"`+
-		`}:
-	"build" expects a build target that creates an image.
-	"archive" expects a file path pointing to an already-built image.
-	"image" expects a container image name.`+
-		"",
+	targetTypeDescriptions := []string{}
+
+	targetTypeDescriptions = append(targetTypeDescriptions, `"build": a build target that creates a skill image.`)
+	targetTypeDescriptions = append(targetTypeDescriptions, `"archive": a file path to an already-built image.`)
+
+	cf.RequiredString(
+		KeyType,
+		fmt.Sprintf("The target's type. One of the following:\n   %s", strings.Join(targetTypeDescriptions, "\n   ")),
 	)
 }
 
