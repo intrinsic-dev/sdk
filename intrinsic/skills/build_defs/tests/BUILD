@@ -14,7 +14,7 @@ skill_manifest(
 )
 
 cc_skill(
-    name = "no_op_skill_cc_new_image",
+    name = "no_op_skill_cc_image",
     manifest = ":no_op_skill_cc_manifest",
     proto = "//intrinsic/skills/testing:no_op_skill_proto",
     # Allow use of this image in tests of skill tooling.
