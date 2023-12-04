@@ -32,6 +32,7 @@
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_interface.h"
+#include "intrinsic/skills/cc/skill_logging_context.h"
 #include "intrinsic/skills/internal/equipment_utilities.h"
 #include "intrinsic/skills/internal/error_utils.h"
 #include "intrinsic/skills/internal/execute_context_impl.h"
@@ -518,9 +519,14 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
   INTRINSIC_ASSIGN_OR_RETURN(EquipmentPack equipment,
                              EquipmentPack::GetEquipmentPack(*request));
 
+  SkillLoggingContext logging_context = {
+      .data_logger_context = request->context(),
+      .skill_id = operation->runtime_data().GetId(),
+  };
+
   auto skill_context = std::make_unique<ExecuteContextImpl>(
       /*canceller=*/operation->canceller(), std::move(equipment),
-      /*logging_context=*/request->context(),
+      /*logging_context=*/logging_context,
       /*motion_planner=*/
       motion_planning::MotionPlannerClient(request->world_id(),
                                            motion_planner_service_),
@@ -584,10 +590,15 @@ grpc::Status SkillExecutorServiceImpl::StartPreview(
   INTRINSIC_ASSIGN_OR_RETURN(EquipmentPack equipment,
                              EquipmentPack::GetEquipmentPack(*request));
 
+  SkillLoggingContext logging_context = {
+      .data_logger_context = request->context(),
+      .skill_id = operation->runtime_data().GetId(),
+  };
+
   auto skill_context = std::make_unique<PreviewContextImpl>(
       /*canceller=*/operation->canceller(),
       /*equipment=*/std::move(equipment),
-      /*logging_context=*/request->context(),
+      /*logging_context=*/logging_context,
       /*motion_planner=*/
       motion_planning::MotionPlannerClient(request->world_id(),
                                            motion_planner_service_),

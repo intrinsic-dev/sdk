@@ -11,6 +11,7 @@
 #include "intrinsic/motion_planning/motion_planner_client.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_canceller.h"
+#include "intrinsic/skills/cc/skill_logging_context.h"
 #include "intrinsic/world/objects/frame.h"
 #include "intrinsic/world/objects/kinematic_object.h"
 #include "intrinsic/world/objects/object_world_client.h"
@@ -32,8 +33,7 @@ class PreviewContext {
   virtual SkillCanceller& canceller() const = 0;
 
   // The logging context of the execution.
-  virtual const intrinsic_proto::data_logger::Context& logging_context()
-      const = 0;
+  virtual const SkillLoggingContext& logging_context() const = 0;
 
   // A client for the motion planning service.
   virtual motion_planning::MotionPlannerClient& motion_planner() = 0;

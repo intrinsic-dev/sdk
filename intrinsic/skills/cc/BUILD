@@ -106,6 +106,7 @@ cc_library(
     deps = [
         ":equipment_pack",
         ":skill_canceller",
+        ":skill_logging_context",
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/motion_planning:motion_planner_client",
         "//intrinsic/skills/internal:skill_registry_client_interface",
@@ -133,6 +134,7 @@ cc_library(
     deps = [
         ":equipment_pack",
         ":skill_canceller",
+        ":skill_logging_context",
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/motion_planning:motion_planner_client",
         "//intrinsic/world/objects:frame",
@@ -156,6 +158,15 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
+    name = "skill_logging_context",
+    hdrs = ["skill_logging_context.h"],
+    deps = [
+        "//intrinsic/logging/proto:context_cc_proto",
+        "@com_google_absl//absl/strings:string_view",
     ],
 )
 

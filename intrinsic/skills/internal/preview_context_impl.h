@@ -16,6 +16,7 @@
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/preview_context.h"
 #include "intrinsic/skills/cc/skill_canceller.h"
+#include "intrinsic/skills/cc/skill_logging_context.h"
 #include "intrinsic/skills/proto/prediction.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/world/objects/frame.h"
@@ -31,7 +32,7 @@ class PreviewContextImpl : public PreviewContext {
  public:
   PreviewContextImpl(std::shared_ptr<SkillCanceller> canceller,
                      EquipmentPack equipment,
-                     intrinsic_proto::data_logger::Context logging_context,
+                     SkillLoggingContext logging_context,
                      motion_planning::MotionPlannerClient motion_planner,
                      world::ObjectWorldClient object_world)
       : canceller_(canceller),
@@ -42,8 +43,7 @@ class PreviewContextImpl : public PreviewContext {
 
   SkillCanceller& canceller() const override { return *canceller_; }
 
-  const intrinsic_proto::data_logger::Context& logging_context()
-      const override {
+  const SkillLoggingContext& logging_context() const override {
     return logging_context_;
   };
 
@@ -72,7 +72,7 @@ class PreviewContextImpl : public PreviewContext {
  private:
   std::shared_ptr<SkillCanceller> canceller_;
   EquipmentPack equipment_;
-  intrinsic_proto::data_logger::Context logging_context_;
+  SkillLoggingContext logging_context_;
   motion_planning::MotionPlannerClient motion_planner_;
   world::ObjectWorldClient object_world_;
 
