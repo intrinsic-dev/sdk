@@ -6,6 +6,7 @@ from absl.testing import absltest
 from intrinsic.perception.proto import frame_pb2
 from intrinsic.perception.proto import image_buffer_pb2
 from intrinsic.solutions import camera_utils
+from intrinsic.solutions.testing import compare
 import numpy as np
 
 
@@ -41,7 +42,7 @@ class CamerUtilsExternalTest(absltest.TestCase):
   def test_frame_to_proto(self):
     frame = _make_random_rgbd_frame()
     converted_frame = camera_utils.Frame(frame).proto()
-    self.assertEqual(converted_frame, frame)
+    compare.assertProto2Equal(self, converted_frame, frame)
 
 
 if __name__ == '__main__':

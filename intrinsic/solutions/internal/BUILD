@@ -49,6 +49,7 @@ py_test(
         "//intrinsic/skills/proto:skills_py_pb2",
         "//intrinsic/solutions:skills",
         "//intrinsic/solutions:utils",
+        "//intrinsic/solutions/testing:compare",
         "//intrinsic/solutions/testing:test_skill_params_py_pb2",
         "@com_google_absl_py//absl/flags",
         "@com_google_absl_py//absl/testing:absltest",

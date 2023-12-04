@@ -12,6 +12,7 @@ from google.protobuf import text_format
 from intrinsic.kubernetes.workcell_spec.proto import installer_pb2
 from intrinsic.logging.errors.proto import error_report_pb2
 from intrinsic.solutions import error_processing
+from intrinsic.solutions.testing import compare
 
 
 class ErrorProcessingTest(absltest.TestCase):
@@ -61,8 +62,12 @@ class ErrorProcessingTest(absltest.TestCase):
     error_group = self._error_module.extract_error_data(operation)
 
     self.assertLen(error_group.errors, 2)
-    self.assertEqual(error_group.errors[0].error_report_proto, error_report)
-    self.assertEqual(error_group.errors[1].error_report_proto, error_report)
+    compare.assertProto2Equal(
+        self, error_group.errors[0].error_report_proto, error_report
+    )
+    compare.assertProto2Equal(
+        self, error_group.errors[1].error_report_proto, error_report
+    )
 
   def test_extract_errors_with_unhealthy_workcell(self):
     """Tests that unhealthy (pending) workcell is detected."""

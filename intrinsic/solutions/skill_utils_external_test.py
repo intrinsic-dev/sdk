@@ -12,6 +12,7 @@ from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions import skill_utils
 from intrinsic.solutions import utils
 from intrinsic.solutions import worlds
+from intrinsic.solutions.testing import compare
 from intrinsic.solutions.testing import test_skill_params_pb2
 from intrinsic.world.proto import collision_settings_pb2
 from intrinsic.world.proto import object_world_service_pb2
@@ -149,7 +150,8 @@ class SkillUtilsTest(absltest.TestCase):
         },
     )
 
-    self.assertEqual(
+    compare.assertProto2Equal(
+        self,
         skill_proto.param_collision_settings,
         collision_settings_pb2.CollisionSettings(
             disable_collision_checking=True
@@ -170,7 +172,8 @@ class SkillUtilsTest(absltest.TestCase):
         },
     )
 
-    self.assertEqual(
+    compare.assertProto2Equal(
+        self,
         skill_proto.param_joint_motion_target,
         joint_space_pb2.JointVec(joints=[1.0, 2.0, 3.0]),
     )

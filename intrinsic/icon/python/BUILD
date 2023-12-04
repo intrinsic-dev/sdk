@@ -95,6 +95,7 @@ py_test(
         "//intrinsic/logging/proto:log_item_py_pb2",
         "//intrinsic/math/proto:pose_py_pb2",
         "//intrinsic/math/proto:vector3_py_pb2",
+        "//intrinsic/solutions/testing:compare",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_protobuf//:protobuf_python",
     ],

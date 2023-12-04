@@ -7,6 +7,7 @@ from intrinsic.icon.python import icon_logging
 from intrinsic.logging.proto import log_item_pb2
 from intrinsic.math.proto import pose_pb2
 from intrinsic.math.proto import vector3_pb2
+from intrinsic.solutions.testing import compare
 
 
 class IconLoggingTest(absltest.TestCase):
@@ -26,7 +27,7 @@ class IconLoggingTest(absltest.TestCase):
         icon_logging.unpack_streaming_output_logitem(item, vector3_pb2.Vector3)
     )
 
-    self.assertEqual(expected_payload, unpacked_payload)
+    compare.assertProto2Equal(self, expected_payload, unpacked_payload)
     self.assertEqual(timestamp, 1234 * 1e-9)
 
   def test_unpack_streaming_output_fails_for_other_item_payload(self):
@@ -90,8 +91,8 @@ class IconLoggingTest(absltest.TestCase):
         items, vector3_pb2.Vector3
     )
 
-    self.assertEqual(expected_payload_1, vectors[0])
-    self.assertEqual(expected_payload_2, vectors[1])
+    compare.assertProto2Equal(self, expected_payload_1, vectors[0])
+    compare.assertProto2Equal(self, expected_payload_2, vectors[1])
     self.assertEqual(timestamps[0], 1234 * 1e-9)
     self.assertEqual(timestamps[1], 1235 * 1e-9)
 

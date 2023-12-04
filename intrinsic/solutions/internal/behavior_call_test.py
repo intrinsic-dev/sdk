@@ -19,6 +19,7 @@ from intrinsic.solutions import skills as skills_mod
 from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
 from intrinsic.solutions.internal import behavior_call
+from intrinsic.solutions.testing import compare
 from intrinsic.solutions.testing import test_skill_params_pb2
 
 
@@ -46,33 +47,39 @@ class BehaviorCallActionTest(absltest.TestCase):
   def test_init_from_proto(self):
     """Tests if BehaviorCallProto object can be constructed from proto."""
     empty_action = behavior_call.Action()
-    self.assertEqual(empty_action.proto, behavior_call_pb2.BehaviorCall())
+    compare.assertProto2Equal(
+        self, empty_action.proto, behavior_call_pb2.BehaviorCall()
+    )
 
     proto = _create_behavior_call_proto(123)
     action: actions.ActionBase = behavior_call.Action(proto)
-    self.assertEqual(action.proto, proto)
+    compare.assertProto2Equal(self, action.proto, proto)
     proto.skill_id = 'ai.intrinsic.different_name'
-    self.assertEqual(action.proto, _create_behavior_call_proto(123))
+    compare.assertProto2Equal(
+        self, action.proto, _create_behavior_call_proto(123)
+    )
 
   def test_init_from_id(self):
     """Tests if Action object can be constructed from skill ID string."""
     proto = _create_behavior_call_proto(234)
     action = behavior_call.Action(skill_id=proto.skill_id)
-    self.assertEqual(action.proto, proto)
+    compare.assertProto2Equal(self, action.proto, proto)
 
   def test_set_proto(self):
     """Tests if proto can properly be read and set."""
     proto = _create_behavior_call_proto(123)
     action = behavior_call.Action()
-    self.assertEqual(action.proto, behavior_call_pb2.BehaviorCall())
+    compare.assertProto2Equal(
+        self, action.proto, behavior_call_pb2.BehaviorCall()
+    )
     action.proto = proto
-    self.assertEqual(action.proto, proto)
+    compare.assertProto2Equal(self, action.proto, proto)
 
   def test_timeouts(self):
     """Tests if timeouts are transferred to proto."""
     proto = _create_behavior_call_proto(123)
     action = behavior_call.Action(proto)
-    self.assertEqual(action.proto, proto)
+    compare.assertProto2Equal(self, action.proto, proto)
     action.execute_timeout = datetime.timedelta(seconds=5)
     action.project_timeout = datetime.timedelta(seconds=10)
     proto.skill_execution_options.execute_timeout.FromTimedelta(
@@ -81,7 +88,7 @@ class BehaviorCallActionTest(absltest.TestCase):
     proto.skill_execution_options.project_timeout.FromTimedelta(
         datetime.timedelta(seconds=10)
     )
-    self.assertEqual(action.proto, proto)
+    compare.assertProto2Equal(self, action.proto, proto)
 
   def test_str(self):
     """Tests if Action conversion to string works."""
@@ -221,7 +228,7 @@ class BehaviorCallActionTest(absltest.TestCase):
     action = behavior_call.Action(
         skill_id='ai.intrinsic.my_custom_action'
     ).require(robot='my_robot')
-    self.assertEqual(action.proto, proto)
+    compare.assertProto2Equal(self, action.proto, proto)
 
 
 if __name__ == '__main__':

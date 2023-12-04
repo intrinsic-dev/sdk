@@ -18,6 +18,7 @@ from intrinsic.solutions import blackboard_value
 from intrinsic.solutions import errors as solutions_errors
 from intrinsic.solutions import providers
 from intrinsic.solutions.internal import behavior_call
+from intrinsic.solutions.testing import compare
 from intrinsic.world.proto import object_world_refs_pb2
 from intrinsic.world.proto import object_world_service_pb2
 from intrinsic.world.python import object_world_resources
@@ -79,13 +80,13 @@ class BehaviorTreeTest(parameterized.TestCase):
         'ai.intrinsic.skill-2'
     )
 
-    self.assertEqual(bt1.proto, bt_pb1)
+    compare.assertProto2Equal(self, bt1.proto, bt_pb1)
 
     bt2 = bt.BehaviorTree(bt=bt1)
-    self.assertEqual(bt1.proto, bt2.proto)
+    compare.assertProto2Equal(self, bt1.proto, bt2.proto)
 
     bt3 = bt.BehaviorTree(bt=bt1.proto)
-    self.assertEqual(bt1.proto, bt3.proto)
+    compare.assertProto2Equal(self, bt1.proto, bt3.proto)
 
   def test_init_with_action(self):
     """Tests if BehaviorTree is correctly constructed given an action."""
@@ -96,12 +97,12 @@ class BehaviorTreeTest(parameterized.TestCase):
     bt_pb1 = behavior_tree_pb2.BehaviorTree()
     bt_pb1.name = 'my_bt'
     bt_pb1.root.task.call_behavior.skill_id = 'ai.intrinsic.skill-0'
-    self.assertEqual(bt1.proto, bt_pb1)
+    compare.assertProto2Equal(self, bt1.proto, bt_pb1)
 
     bt1.set_root(behavior_call.Action(skill_id='ai.intrinsic.skill-1'))
     bt_pb1.root.task.call_behavior.skill_id = 'ai.intrinsic.skill-1'
 
-    self.assertEqual(bt1.proto, bt_pb1)
+    compare.assertProto2Equal(self, bt1.proto, bt_pb1)
 
   def test_init_both_root_and_proto_arguments_given(self):
     """Tests if BehaviorTree is correctly constructed."""
@@ -132,7 +133,7 @@ class BehaviorTreeTest(parameterized.TestCase):
     bt_proto = behavior_tree_pb2.BehaviorTree()
     bt_proto.name = 'my_bt'
     bt_proto.root.task.call_behavior.skill_id = 'ai.intrinsic.skill-0'
-    self.assertEqual(bt_instance.proto, bt_proto)
+    compare.assertProto2Equal(self, bt_instance.proto, bt_proto)
 
   def test_str_conversion(self):
     """Tests if behavior tree conversion to a string works."""
@@ -159,7 +160,7 @@ class BehaviorTreeTest(parameterized.TestCase):
     )
     my_proto = behavior_tree_pb2.BehaviorTree()
     my_proto.root.task.call_behavior.skill_id = 'ai.intrinsic.skill-0'
-    self.assertEqual(my_bt.proto, my_proto)
+    compare.assertProto2Equal(self, my_bt.proto, my_proto)
 
   def test_to_proto_and_from_proto(self):
     """Tests if behavior tree conversion to/from proto representation works."""
@@ -177,9 +178,9 @@ class BehaviorTreeTest(parameterized.TestCase):
         'ai.intrinsic.skill-0'
     )
 
-    self.assertEqual(my_bt.proto, my_proto)
-    self.assertEqual(
-        bt.BehaviorTree.create_from_proto(my_proto).proto, my_proto
+    compare.assertProto2Equal(self, my_bt.proto, my_proto)
+    compare.assertProto2Equal(
+        self, bt.BehaviorTree.create_from_proto(my_proto).proto, my_proto
     )
 
   def test_dot_graph_empty_instance(self):
@@ -250,7 +251,7 @@ class BehaviorTreeTest(parameterized.TestCase):
         )
     )
 
-    self.assertEqual(my_bt.proto, expected_proto)
+    compare.assertProto2Equal(self, my_bt.proto, expected_proto)
 
   def test_no_default_breakpoint(self):
     my_bt = bt.BehaviorTree('my_bt')
@@ -319,12 +320,12 @@ class BehaviorTreeTest(parameterized.TestCase):
         )
     )
 
-    self.assertEqual(my_bt.proto, expected_proto)
+    compare.assertProto2Equal(self, my_bt.proto, expected_proto)
 
     my_bt.root.children[0].enable_execution()
 
     child.decorators.CopyFrom(behavior_tree_pb2.BehaviorTree.Node.Decorators())
-    self.assertEqual(my_bt.proto, expected_proto)
+    compare.assertProto2Equal(self, my_bt.proto, expected_proto)
 
   def test_no_node_execution_mode(self):
     my_bt = bt.BehaviorTree('my_bt')
@@ -335,7 +336,7 @@ class BehaviorTreeTest(parameterized.TestCase):
     # By default, execution_settings are not set
     expected_proto = behavior_tree_pb2.BehaviorTree.Node()
     expected_proto.task.call_behavior.skill_id = 'ai.intrinsic.skill-1'
-    self.assertEqual(my_bt.root.proto, expected_proto)
+    compare.assertProto2Equal(self, my_bt.root.proto, expected_proto)
 
     self.assertEqual(
         my_bt.root.execution_mode,
@@ -373,7 +374,7 @@ class BehaviorTreeTest(parameterized.TestCase):
         )
     )
 
-    self.assertEqual(my_bt.proto, expected_proto)
+    compare.assertProto2Equal(self, my_bt.proto, expected_proto)
 
   @mock.patch.object(bt, '_generate_unique_identifier', autospec=True)
   def test_print_python_code(self, generate_mock):
@@ -407,7 +408,7 @@ class BehaviorTreeTaskTest(absltest.TestCase):
     )
     node_proto = behavior_tree_pb2.BehaviorTree.Node(name='skill 0')
     node_proto.task.call_behavior.skill_id = 'ai.intrinsic.skill-0'
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -423,8 +424,9 @@ class BehaviorTreeTaskTest(absltest.TestCase):
     node_proto = behavior_tree_pb2.BehaviorTree.Node(name='foo')
     node_proto.task.call_behavior.skill_id = 'ai.intrinsic.skill-0'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -432,8 +434,9 @@ class BehaviorTreeTaskTest(absltest.TestCase):
     node.set_decorators(_create_test_decorator())
     node_proto.decorators.condition.blackboard.cel_expression = 'foo'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -446,7 +449,8 @@ class BehaviorTreeTaskTest(absltest.TestCase):
     node_proto = behavior_tree_pb2.BehaviorTree.Node(name='foo')
     node_proto.task.call_behavior.skill_id = 'ai.intrinsic.skill-0'
 
-    self.assertEqual(
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -483,7 +487,7 @@ class BehaviorTreeSubTreeTest(absltest.TestCase):
     node_proto = behavior_tree_pb2.BehaviorTree.Node()
     node_proto.sub_tree.tree.name = 'some_sub_tree'
     node_proto.sub_tree.tree.root.task.call_behavior.skill_id = 'some_skill'
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -522,8 +526,9 @@ class BehaviorTreeSubTreeTest(absltest.TestCase):
     node_proto.sub_tree.tree.name = 'some_sub_tree'
     node_proto.sub_tree.tree.root.task.call_behavior.skill_id = 'some_skill'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -531,8 +536,9 @@ class BehaviorTreeSubTreeTest(absltest.TestCase):
     node.set_decorators(_create_test_decorator())
     node_proto.decorators.condition.blackboard.cel_expression = 'foo'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -581,7 +587,7 @@ class BehaviorTreeFailTest(absltest.TestCase):
     node = bt.Fail('some_failure_message', name='expected failure')
     node_proto = behavior_tree_pb2.BehaviorTree.Node(name='expected failure')
     node_proto.fail.failure_message = 'some_failure_message'
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -597,8 +603,9 @@ class BehaviorTreeFailTest(absltest.TestCase):
     node_proto = behavior_tree_pb2.BehaviorTree.Node(name='expected failure')
     node_proto.fail.failure_message = 'some_failure_message'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -606,8 +613,9 @@ class BehaviorTreeFailTest(absltest.TestCase):
     node.set_decorators(_create_test_decorator())
     node_proto.decorators.condition.blackboard.cel_expression = 'foo'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -636,7 +644,7 @@ class BehaviorTreeSequenceTest(absltest.TestCase):
     node_proto = behavior_tree_pb2.BehaviorTree.Node(name='foo')
 
     node_proto.sequence.CopyFrom(behavior_tree_pb2.BehaviorTree.SequenceNode())
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
     node.set_children(
         bt.Task(behavior_call.Action(skill_id='skill_0')),
@@ -645,7 +653,7 @@ class BehaviorTreeSequenceTest(absltest.TestCase):
     node_proto.sequence.children.add().task.call_behavior.skill_id = 'skill_0'
     node_proto.sequence.children.add().task.call_behavior.skill_id = 'skill_1'
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_init_with_action(self):
     """Tests if BehaviorTree.Sequence is correctly constructed from actions."""
@@ -655,7 +663,7 @@ class BehaviorTreeSequenceTest(absltest.TestCase):
     node_proto.sequence.CopyFrom(behavior_tree_pb2.BehaviorTree.SequenceNode())
     node_proto.sequence.children.add().task.call_behavior.skill_id = 'skill_0'
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
     node.set_children(
         bt.Task(behavior_call.Action(skill_id='skill_1')),
@@ -666,7 +674,7 @@ class BehaviorTreeSequenceTest(absltest.TestCase):
     node_proto.sequence.children.add().task.call_behavior.skill_id = 'skill_1'
     node_proto.sequence.children.add().task.call_behavior.skill_id = 'skill_2'
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -684,7 +692,7 @@ class BehaviorTreeSequenceTest(absltest.TestCase):
     node_proto = behavior_tree_pb2.BehaviorTree.Node()
     node_proto.sequence.CopyFrom(behavior_tree_pb2.BehaviorTree.SequenceNode())
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_to_proto_and_from_proto(self):
     """Tests if conversion to and from a proto representation works."""
@@ -698,8 +706,9 @@ class BehaviorTreeSequenceTest(absltest.TestCase):
     node_proto.sequence.children.add().task.call_behavior.skill_id = 'skill_0'
     node_proto.sequence.children.add().task.call_behavior.skill_id = 'skill_1'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -707,8 +716,9 @@ class BehaviorTreeSequenceTest(absltest.TestCase):
     node.set_decorators(_create_test_decorator())
     node_proto.decorators.condition.blackboard.cel_expression = 'foo'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -774,7 +784,7 @@ class BehaviorTreeParallelTest(absltest.TestCase):
     node_proto.parallel.failure_behavior = (
         node_proto.parallel.FailureBehavior.WAIT_FOR_REMAINING_CHILDREN
     )
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_init_with_actions(self):
     """Tests if BehaviorTree.Parallel is correctly constructed from actions."""
@@ -782,7 +792,7 @@ class BehaviorTreeParallelTest(absltest.TestCase):
 
     node_proto = behavior_tree_pb2.BehaviorTree.Node()
     node_proto.parallel.children.add().task.call_behavior.skill_id = 'skill_0'
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
     node.set_children(
         behavior_call.Action(skill_id='skill_1'),
@@ -796,7 +806,7 @@ class BehaviorTreeParallelTest(absltest.TestCase):
     node_proto.parallel.failure_behavior = (
         node_proto.parallel.FailureBehavior.DEFAULT
     )
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -813,7 +823,7 @@ class BehaviorTreeParallelTest(absltest.TestCase):
     node = bt.Parallel()
     node_proto = behavior_tree_pb2.BehaviorTree.Node()
     node_proto.parallel.CopyFrom(behavior_tree_pb2.BehaviorTree.ParallelNode())
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_to_proto_and_from_proto(self):
     """Tests if conversion to and from a proto representation works."""
@@ -827,8 +837,9 @@ class BehaviorTreeParallelTest(absltest.TestCase):
     node_proto.parallel.children.add().task.call_behavior.skill_id = 'skill_0'
     node_proto.parallel.children.add().task.call_behavior.skill_id = 'skill_1'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -836,8 +847,9 @@ class BehaviorTreeParallelTest(absltest.TestCase):
     node.set_decorators(_create_test_decorator())
     node_proto.decorators.condition.blackboard.cel_expression = 'foo'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -902,7 +914,7 @@ class BehaviorTreeSelectorTest(absltest.TestCase):
     node_proto = behavior_tree_pb2.BehaviorTree.Node(name='bar')
     node_proto.selector.children.add().task.call_behavior.skill_id = 'skill_0'
     node_proto.selector.children.add().task.call_behavior.skill_id = 'skill_1'
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_init_with_actions(self):
     """Tests if BehaviorTree.Selector is correctly constructed from actions."""
@@ -910,7 +922,7 @@ class BehaviorTreeSelectorTest(absltest.TestCase):
     node_proto = behavior_tree_pb2.BehaviorTree.Node()
     node_proto.selector.children.add().task.call_behavior.skill_id = 'skill_0'
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
     node.set_children(
         behavior_call.Action(skill_id='skill_1'),
@@ -920,7 +932,7 @@ class BehaviorTreeSelectorTest(absltest.TestCase):
     node_proto = behavior_tree_pb2.BehaviorTree.Node()
     node_proto.selector.children.add().task.call_behavior.skill_id = 'skill_1'
     node_proto.selector.children.add().task.call_behavior.skill_id = 'skill_2'
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -937,7 +949,7 @@ class BehaviorTreeSelectorTest(absltest.TestCase):
     node = bt.Selector()
     node_proto = behavior_tree_pb2.BehaviorTree.Node()
     node_proto.selector.CopyFrom(behavior_tree_pb2.BehaviorTree.SelectorNode())
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_to_proto_and_from_proto(self):
     """Tests if conversion to and from a proto representation works."""
@@ -951,8 +963,9 @@ class BehaviorTreeSelectorTest(absltest.TestCase):
     node_proto.selector.children.add().task.call_behavior.skill_id = 'skill_0'
     node_proto.selector.children.add().task.call_behavior.skill_id = 'skill_1'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -960,8 +973,9 @@ class BehaviorTreeSelectorTest(absltest.TestCase):
     node.set_decorators(_create_test_decorator())
     node_proto.decorators.condition.blackboard.cel_expression = 'foo'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -1022,7 +1036,7 @@ class BehaviorTreeRetryTest(absltest.TestCase):
     node_proto.retry.child.task.call_behavior.skill_id = 'skill_0'
     node_proto.retry.retry_counter_blackboard_key = node.retry_counter
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_init_from_action(self):
     """Tests if BehaviorTree.Retry is correctly constructed from actions."""
@@ -1033,12 +1047,12 @@ class BehaviorTreeRetryTest(absltest.TestCase):
     node_proto.retry.child.task.call_behavior.skill_id = 'skill_0'
     node_proto.retry.retry_counter_blackboard_key = node.retry_counter
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
     node.set_child(behavior_call.Action(skill_id='skill_1'))
 
     node_proto.retry.child.task.call_behavior.skill_id = 'skill_1'
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -1072,8 +1086,9 @@ class BehaviorTreeRetryTest(absltest.TestCase):
     node_proto.retry.recovery.task.call_behavior.skill_id = 'skill_1'
     node_proto.retry.retry_counter_blackboard_key = node.retry_counter
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -1081,8 +1096,9 @@ class BehaviorTreeRetryTest(absltest.TestCase):
     node.set_decorators(_create_test_decorator())
     node_proto.decorators.condition.blackboard.cel_expression = 'foo'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -1144,7 +1160,7 @@ class BehaviorTreeFallbackTest(absltest.TestCase):
     node_proto.fallback.CopyFrom(behavior_tree_pb2.BehaviorTree.FallbackNode())
     node_proto.fallback.children.add().task.call_behavior.skill_id = 'skill_0'
     node_proto.fallback.children.add().task.call_behavior.skill_id = 'skill_1'
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_init_with_action(self):
     """Tests if BehaviorTree.Fallback is correctly constructed from actions."""
@@ -1154,7 +1170,7 @@ class BehaviorTreeFallbackTest(absltest.TestCase):
     node_proto.fallback.CopyFrom(behavior_tree_pb2.BehaviorTree.FallbackNode())
     node_proto.fallback.children.add().task.call_behavior.skill_id = 'skill_0'
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
     node.set_children(
         behavior_call.Action(skill_id='skill_1'),
@@ -1164,7 +1180,7 @@ class BehaviorTreeFallbackTest(absltest.TestCase):
     node_proto.fallback.children.add().task.call_behavior.skill_id = 'skill_1'
     node_proto.fallback.children.add().task.call_behavior.skill_id = 'skill_2'
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -1181,7 +1197,7 @@ class BehaviorTreeFallbackTest(absltest.TestCase):
     node = bt.Fallback()
     node_proto = behavior_tree_pb2.BehaviorTree.Node()
     node_proto.fallback.CopyFrom(behavior_tree_pb2.BehaviorTree.FallbackNode())
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_to_proto_and_from_proto(self):
     """Tests if conversion to and from a proto representation works."""
@@ -1195,8 +1211,9 @@ class BehaviorTreeFallbackTest(absltest.TestCase):
     node_proto.fallback.children.add().task.call_behavior.skill_id = 'skill_0'
     node_proto.fallback.children.add().task.call_behavior.skill_id = 'skill_1'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -1204,8 +1221,9 @@ class BehaviorTreeFallbackTest(absltest.TestCase):
     node.set_decorators(_create_test_decorator())
     node_proto.decorators.condition.blackboard.cel_expression = 'foo'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -1266,7 +1284,7 @@ class BehaviorTreeLoopTest(absltest.TestCase):
     node_proto.loop.do.task.call_behavior.skill_id = 'skill_0'
     node_proto.loop.loop_counter_blackboard_key = node.loop_counter
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_init_from_action(self):
     """Tests if BehaviorTree.Loop is correctly constructed from actions."""
@@ -1279,12 +1297,12 @@ class BehaviorTreeLoopTest(absltest.TestCase):
     node_proto.loop.do.task.call_behavior.skill_id = 'skill_0'
     node_proto.loop.loop_counter_blackboard_key = node.loop_counter
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
     node.set_do_child(behavior_call.Action(skill_id='skill_1'))
 
     node_proto.loop.do.task.call_behavior.skill_id = 'skill_1'
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -1377,8 +1395,9 @@ class BehaviorTreeLoopTest(absltest.TestCase):
     node_proto.loop.loop_counter_blackboard_key = node.loop_counter
     node_proto.loop.for_each.value_blackboard_key = node.for_each_value_key
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -1416,8 +1435,9 @@ class BehaviorTreeLoopTest(absltest.TestCase):
     node_proto.loop.loop_counter_blackboard_key = node.loop_counter
     node_proto.loop.for_each.value_blackboard_key = node.for_each_value_key
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -1492,11 +1512,13 @@ class BehaviorTreeLoopTest(absltest.TestCase):
     node_proto.loop.loop_counter_blackboard_key = node.loop_counter
     node_proto.loop.for_each.value_blackboard_key = node.for_each_value_key
 
-    self.assertEqual(
+    compare.assertProto2Equal(
+        self,
         node.proto,
         node_proto,
     )
-    self.assertEqual(
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -1574,7 +1596,7 @@ class BehaviorTreeBranchTest(absltest.TestCase):
     condition = getattr(node_proto.branch, 'if')
     condition.CopyFrom(condition_proto)
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_init_from_action(self):
     """Tests if BehaviorTree.Branch is correctly constructed from actions."""
@@ -1591,7 +1613,7 @@ class BehaviorTreeBranchTest(absltest.TestCase):
     condition = getattr(node_proto.branch, 'if')
     condition.CopyFrom(condition_proto)
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -1636,8 +1658,9 @@ class BehaviorTreeBranchTest(absltest.TestCase):
     condition = getattr(node_proto.branch, 'if')
     condition.CopyFrom(bt.Blackboard('foo').proto)
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -1645,8 +1668,9 @@ class BehaviorTreeBranchTest(absltest.TestCase):
     node.set_decorators(_create_test_decorator())
     node_proto.decorators.condition.blackboard.cel_expression = 'foo'
 
-    self.assertEqual(node.proto, node_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
     )
@@ -1701,7 +1725,7 @@ class BehaviorTreeDataTest(parameterized.TestCase):
     node_proto.data.create_or_update.cel_expression = 'bar'
     node_proto.data.create_or_update.blackboard_key = 'bbfoo'
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   @parameterized.named_parameters(
       dict(
@@ -1753,7 +1777,7 @@ class BehaviorTreeDataTest(parameterized.TestCase):
     node_proto.data.create_or_update.from_world.proto.Pack(world_query_proto)
     node_proto.data.create_or_update.blackboard_key = 'bbfoo'
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   @parameterized.named_parameters(
       dict(
@@ -1816,7 +1840,7 @@ class BehaviorTreeDataTest(parameterized.TestCase):
     )
     node_proto.data.create_or_update.blackboard_key = 'bbfoo'
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   @parameterized.named_parameters(
       dict(
@@ -1848,7 +1872,7 @@ class BehaviorTreeDataTest(parameterized.TestCase):
 
     node = bt.Data.create_from_proto(node_proto)
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_create_from_proto_remove(self):
     """Tests if BehaviorTree.Data is correctly constructed."""
@@ -1857,7 +1881,7 @@ class BehaviorTreeDataTest(parameterized.TestCase):
 
     node = bt.Data.create_from_proto(node_proto)
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_create_from_proto_without_data_node_fails(self):
     """Tests if BehaviorTree.Data is correctly constructed."""
@@ -1885,7 +1909,7 @@ class BehaviorTreeDataTest(parameterized.TestCase):
     node_proto = behavior_tree_pb2.BehaviorTree.Node(name='foo')
     node_proto.data.remove.blackboard_key = 'bbfoo'
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_init_remove_builder(self):
     """Tests if BehaviorTree.Data is correctly for removal."""
@@ -1898,7 +1922,7 @@ class BehaviorTreeDataTest(parameterized.TestCase):
     node_proto = behavior_tree_pb2.BehaviorTree.Node(name='foo')
     node_proto.data.remove.blackboard_key = 'bbfoo'
 
-    self.assertEqual(node.proto, node_proto)
+    compare.assertProto2Equal(self, node.proto, node_proto)
 
   @mock.patch.object(bt, '_generate_unique_identifier', autospec=True)
   def test_print_python_code_remove(self, generate_mock):
@@ -2030,7 +2054,7 @@ class BehaviorTreeSubTreeConditionTest(absltest.TestCase):
     condition_proto.behavior_tree.root.task.call_behavior.skill_id = (
         'ai.intrinsic.skill-0'
     )
-    self.assertEqual(condition.proto, condition_proto)
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
 
   def test_init_from_skill(self):
     """Tests if BehaviorTree.SubTreeCondition is correctly constructed from a skill."""
@@ -2041,7 +2065,7 @@ class BehaviorTreeSubTreeConditionTest(absltest.TestCase):
     condition_proto.behavior_tree.root.task.call_behavior.skill_id = (
         'ai.intrinsic.skill-0'
     )
-    self.assertEqual(condition.proto, condition_proto)
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -2064,8 +2088,9 @@ class BehaviorTreeSubTreeConditionTest(absltest.TestCase):
         'ai.intrinsic.skill-0'
     )
 
-    self.assertEqual(condition.proto, condition_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Condition.create_from_proto(condition_proto).proto,
         condition_proto,
     )
@@ -2083,7 +2108,7 @@ class BehaviorTreeBlackboardConditionTest(absltest.TestCase):
     condition = bt.Blackboard('result.accepted')
     condition_proto = behavior_tree_pb2.BehaviorTree.Condition()
     condition_proto.blackboard.cel_expression = 'result.accepted'
-    self.assertEqual(condition.proto, condition_proto)
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -2097,8 +2122,9 @@ class BehaviorTreeBlackboardConditionTest(absltest.TestCase):
     condition_proto = behavior_tree_pb2.BehaviorTree.Condition()
     condition_proto.blackboard.cel_expression = 'result.accepted'
 
-    self.assertEqual(condition.proto, condition_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Condition.create_from_proto(condition_proto).proto,
         condition_proto,
     )
@@ -2120,12 +2146,12 @@ class BehaviorTreeAllOfConditionTest(absltest.TestCase):
     condition_proto.all_of.CopyFrom(
         behavior_tree_pb2.BehaviorTree.Condition.LogicalCompound()
     )
-    self.assertEqual(condition.proto, condition_proto)
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
 
     condition.set_conditions([bt.Blackboard('foo'), bt.Blackboard('bar')])
     condition_proto.all_of.conditions.add().blackboard.cel_expression = 'foo'
     condition_proto.all_of.conditions.add().blackboard.cel_expression = 'bar'
-    self.assertEqual(condition.proto, condition_proto)
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -2144,8 +2170,9 @@ class BehaviorTreeAllOfConditionTest(absltest.TestCase):
     condition_proto.all_of.conditions.add().blackboard.cel_expression = 'foo'
     condition_proto.all_of.conditions.add().blackboard.cel_expression = 'bar'
 
-    self.assertEqual(condition.proto, condition_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Condition.create_from_proto(condition_proto).proto,
         condition_proto,
     )
@@ -2167,12 +2194,12 @@ class BehaviorTreeAnyOfConditionTest(absltest.TestCase):
     condition_proto.any_of.CopyFrom(
         behavior_tree_pb2.BehaviorTree.Condition.LogicalCompound()
     )
-    self.assertEqual(condition.proto, condition_proto)
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
 
     condition.set_conditions([bt.Blackboard('foo'), bt.Blackboard('bar')])
     condition_proto.any_of.conditions.add().blackboard.cel_expression = 'foo'
     condition_proto.any_of.conditions.add().blackboard.cel_expression = 'bar'
-    self.assertEqual(condition.proto, condition_proto)
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -2191,8 +2218,9 @@ class BehaviorTreeAnyOfConditionTest(absltest.TestCase):
     condition_proto.any_of.conditions.add().blackboard.cel_expression = 'foo'
     condition_proto.any_of.conditions.add().blackboard.cel_expression = 'bar'
 
-    self.assertEqual(condition.proto, condition_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Condition.create_from_proto(condition_proto).proto,
         condition_proto,
     )
@@ -2213,7 +2241,7 @@ class BehaviorTreeNotConditionTest(absltest.TestCase):
     condition_proto = behavior_tree_pb2.BehaviorTree.Condition()
     not_proto = getattr(condition_proto, 'not')
     not_proto.blackboard.cel_expression = 'foo'
-    self.assertEqual(condition.proto, condition_proto)
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -2228,8 +2256,9 @@ class BehaviorTreeNotConditionTest(absltest.TestCase):
     not_proto = getattr(condition_proto, 'not')
     not_proto.blackboard.cel_expression = 'foo'
 
-    self.assertEqual(condition.proto, condition_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Condition.create_from_proto(condition_proto).proto,
         condition_proto,
     )
@@ -2249,11 +2278,11 @@ class DecoratorsTest(absltest.TestCase):
     decorators = bt.Decorators()
 
     decorators_proto = behavior_tree_pb2.BehaviorTree.Node.Decorators()
-    self.assertEqual(decorators.proto, decorators_proto)
+    compare.assertProto2Equal(self, decorators.proto, decorators_proto)
 
     decorators = _create_test_decorator('foo')
     decorators_proto.condition.blackboard.cel_expression = 'foo'
-    self.assertEqual(decorators.proto, decorators_proto)
+    compare.assertProto2Equal(self, decorators.proto, decorators_proto)
 
   def test_to_proto_and_from_proto(self):
     """Tests if conversion to and from a proto representation works."""
@@ -2275,8 +2304,9 @@ class DecoratorsTest(absltest.TestCase):
     )
     decorators_proto.execution_settings.CopyFrom(execution_settings_proto)
 
-    self.assertEqual(decorators.proto, decorators_proto)
-    self.assertEqual(
+    compare.assertProto2Equal(self, decorators.proto, decorators_proto)
+    compare.assertProto2Equal(
+        self,
         bt.Decorators.create_from_proto(decorators_proto).proto,
         decorators_proto,
     )
