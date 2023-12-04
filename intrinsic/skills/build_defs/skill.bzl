@@ -691,6 +691,7 @@ def py_skill(
         **kwargs
     )
 
+# @unused
 def cc_skill_image(
         name,
         skill,

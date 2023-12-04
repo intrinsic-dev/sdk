@@ -1,20 +1,10 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-load("//intrinsic/skills/build_defs:skill.bzl", "cc_skill", "cc_skill_image", "py_skill", "skill_manifest")
+load("//intrinsic/skills/build_defs:skill.bzl", "cc_skill", "py_skill", "skill_manifest")
 
 package(
     default_testonly = True,
     default_visibility = ["//visibility:private"],
-)
-
-cc_skill_image(
-    name = "no_op_skill_image",
-    package_name = "ai.intrinsic",
-    parameter_proto = "//intrinsic/skills/testing:no_op_skill_proto",
-    skill = "//intrinsic/skills/testing:no_op_skill",
-    skill_name = "no_op",
-    # Allow use of this image in lint tests of templates.
-    visibility = ["//intrinsic/skills/templates:__subpackages__"],
 )
 
 skill_manifest(
