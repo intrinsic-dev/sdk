@@ -112,56 +112,15 @@ absl::Status SkillInit(
   builder.RegisterService(&project_service);
   builder.RegisterService(&execute_service);
 
-  // Initialize the skill information service if service_config has a
-  // skill_description or skill_name (which means we're running a modular skill
-  // server).
-  std::unique_ptr<SkillInformationServiceImpl> skill_information_service;
-  if (service_config.has_skill_description() ||
-      !service_config.skill_name().empty()) {
-    google::protobuf::FileDescriptorSet parameter_file_descriptor_set;
-    if (!service_config.parameter_descriptor_filename().empty()) {
-      INTRINSIC_ASSIGN_OR_RETURN(
-          parameter_file_descriptor_set,
-          GetBinaryProto<google::protobuf::FileDescriptorSet>(
-              service_config.parameter_descriptor_filename()));
-    }
-    google::protobuf::FileDescriptorSet return_value_file_descriptor_set;
-    if (!service_config.return_value_descriptor_filename().empty()) {
-      INTRINSIC_ASSIGN_OR_RETURN(
-          return_value_file_descriptor_set,
-          GetBinaryProto<google::protobuf::FileDescriptorSet>(
-              service_config.return_value_descriptor_filename()));
-    }
-
-    intrinsic_proto::skills::Skill skill_description;
-    if (!service_config.has_skill_description()) {
-      absl::StatusOr<std::unique_ptr<SkillInterface>> status_or_skill_object =
-          skill_repository.GetSkill(service_config.skill_name());
-      if (!status_or_skill_object.ok()) {
-        return intrinsic::AnnotateError(
-            status_or_skill_object.status(),
-            absl::StrCat(
-                "available skills are: ",
-                absl::StrJoin(skill_repository.GetSkillAliases(), ", ")));
-      }
-
-      auto skill_object = std::move(*status_or_skill_object);
-      INTRINSIC_ASSIGN_OR_RETURN(skill_description,
-                                 BuildSkillProto(*skill_object));
-      LOG(INFO) << "Adding skill information server with modular skill "
-                << skill_description.skill_name();
-
-      INTRINSIC_RETURN_IF_ERROR(AddFileDescriptorSetWithoutSourceCodeInfo(
-          *skill_object, parameter_file_descriptor_set,
-          return_value_file_descriptor_set, skill_description));
-    } else {
-      skill_description = service_config.skill_description();
-    }
-
-    skill_information_service =
-        std::make_unique<SkillInformationServiceImpl>(skill_description);
-    builder.RegisterService(skill_information_service.get());
+  if (!service_config.has_skill_description()) {
+    LOG(FATAL) << "skill_description was not present in the SkillServiceConfig";
   }
+  intrinsic_proto::skills::Skill skill_description =
+      service_config.skill_description();
+
+  auto skill_information_service =
+      std::make_unique<SkillInformationServiceImpl>(skill_description);
+  builder.RegisterService(skill_information_service.get());
   std::unique_ptr<::grpc::Server> server(builder.BuildAndStart());
   if (server == nullptr) {
     LOG(FATAL) << "Cannot create skill service " << server_address;
