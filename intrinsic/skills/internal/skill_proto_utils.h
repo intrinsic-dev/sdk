@@ -26,16 +26,6 @@ absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
     const SkillSignatureInterface& skill_interface,
     std::optional<absl::string_view> semver_version = std::nullopt);
 
-// Adds (or overwrites) the skill's parameter/return value descriptor fileset.
-// This also populates the parameter and return value field comments. We remove
-// source_code_info as it is no longer needed after the parameter and return
-// value field comments are populated.
-absl::Status AddFileDescriptorSetWithoutSourceCodeInfo(
-    const SkillSignatureInterface& skill_interface,
-    const google::protobuf::FileDescriptorSet& parameter_file_descriptor_set,
-    const google::protobuf::FileDescriptorSet& return_value_file_descriptor_set,
-    intrinsic_proto::skills::Skill& skill_proto);
-
 absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
     const intrinsic_proto::skills::Manifest& manifest,
     const google::protobuf::FileDescriptorSet& parameter_file_descriptor_set,

@@ -209,29 +209,6 @@ absl::Status AddFileDescriptorSetWithoutSourceCodeInfo(
 
 }  // namespace
 
-absl::Status AddFileDescriptorSetWithoutSourceCodeInfo(
-    const SkillSignatureInterface& skill,
-    const google::protobuf::FileDescriptorSet& parameter_file_descriptor_set,
-    const google::protobuf::FileDescriptorSet& return_value_file_descriptor_set,
-    intrinsic_proto::skills::Skill& skill_proto) {
-  return AddFileDescriptorSetWithoutSourceCodeInfo(
-      skill.GetParameterDescriptor() != nullptr
-          ? absl::WrapUnique<MessageData>(new MessageData{
-                .message_full_name =
-                    skill.GetParameterDescriptor()->full_name(),
-                .file_descriptor_set = parameter_file_descriptor_set,
-            })
-          : nullptr,
-      skill.GetReturnValueDescriptor() != nullptr
-          ? absl::WrapUnique<MessageData>(new MessageData{
-                .message_full_name =
-                    skill.GetReturnValueDescriptor()->full_name(),
-                .file_descriptor_set = return_value_file_descriptor_set,
-            })
-          : nullptr,
-      skill.GetDefaultParameters(), skill_proto);
-}
-
 absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
     const intrinsic_proto::skills::Manifest& manifest,
     const google::protobuf::FileDescriptorSet& parameter_file_descriptor_set,
