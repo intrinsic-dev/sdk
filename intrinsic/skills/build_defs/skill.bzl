@@ -19,24 +19,6 @@ load("@io_bazel_rules_docker//container:container.bzl", "container_image")
 
 skill_manifest = _skill_manifest
 
-def _cc_skill_service_multiskill(name, deps, data = None, **kwargs):
-    """Generate a C++ binary that serves skills over gRPC. DEPRECATED: Prefer _cc_skill_service.
-
-    Serves multiple skills.
-
-    Args:
-      name: Name of the target.
-      deps: Skills to be served by the binary. List of `cc_library` targets.
-      data: Any additional data needed by the binary. Optional.
-      **kwargs: Additional arguments to pass to cc_binary().
-    """
-    native.cc_binary(
-        name = name,
-        deps = [Label("//intrinsic/skills/internal:registerer_skill_service_main")] + deps,
-        data = data,
-        **kwargs
-    )
-
 def _gen_cc_skill_service_main_impl(ctx):
     output_file = ctx.actions.declare_file(ctx.label.name + ".cc")
     manifest_pbbin_file = ctx.attr.manifest[SkillManifestInfo].manifest_binary_file
@@ -688,85 +670,6 @@ def py_skill(
         skill_service_config = skill_service_config_name,
         skill_id = skill_id_name,
         data_path = "/",  # NB. We set data_path here because there is no override for the container_image attr.
-        **kwargs
-    )
-
-# @unused
-def cc_skill_image(
-        name,
-        skill,
-        skill_name,
-        parameter_proto,
-        package_name,
-        return_value_proto = None,
-        base_image = Label("@distroless_base_amd64//image"),
-        **kwargs):
-    """Generates a Skill image.
-
-    Args:
-      name: The name of the skill image to build, must end in "_image".
-      skill: The C++ library that defines the skill to generate an image for.
-      skill_name: The name of the skill. This should match the skill name given
-        by the implementation.
-      parameter_proto: The proto_library dep that the Skill uses for its
-        parameters.
-      package_name: The name of the package for the skill
-      base_image: The base image to use for the docker_build 'base'.
-      **kwargs: additional arguments passed to the docker_build target, such
-        as visibility or tags.
-    """
-
-    if not name.endswith("_image"):
-        fail("cc_skill_image name must end in _image")
-
-    # replace 'image' suffix with 'service'
-    skill_service_name = "%sservice" % name[:-5]
-    _cc_skill_service_multiskill(
-        name = skill_service_name,
-        deps = [
-            skill,
-        ],
-    )
-    skill_binary_path = paths.join(native.package_name(), skill_service_name)
-    skill_service = ":%s" % skill_service_name
-    files = [skill_service]
-    symlinks = {"skills/skill_service": "../google3/" + skill_binary_path}
-
-    parameter_path = _add_file_descriptors(name, "parameter", [parameter_proto], files, symlinks)
-    return_value_path = _add_file_descriptors(
-        name,
-        "return",
-        [return_value_proto] if return_value_proto else [],
-        files,
-        symlinks,
-    )
-
-    service_config_name = "%sservice_config" % name[:-5]
-
-    _skill_service_config(
-        name = service_config_name,
-        skill_name = skill_name,
-        parameter_descriptor_filename = parameter_path,
-        return_value_descriptor_filename = return_value_path,
-        skill_module = None,
-        files = files,
-        symlinks = symlinks,
-    )
-
-    container_image(
-        name = name,
-        base = base_image,
-        compression_options = ["--fast"],
-        data_path = "/",
-        directory = "/google3",
-        experimental_tarball_format = "compressed",
-        files = files,
-        symlinks = symlinks,
-        labels = {
-            "ai.intrinsic.skill-name": skill_name,
-            "ai.intrinsic.skill-image-name": name,
-            "ai.intrinsic.package-name": package_name,
-        },
         **kwargs
     )
 
