@@ -80,7 +80,9 @@ class BehaviorTreeTest(parameterized.TestCase):
         'ai.intrinsic.skill-2'
     )
 
-    compare.assertProto2Equal(self, bt1.proto, bt_pb1)
+    compare.assertProto2Equal(
+        self, bt1.proto, bt_pb1, ignored_fields=['tree_id']
+    )
 
     bt2 = bt.BehaviorTree(bt=bt1)
     compare.assertProto2Equal(self, bt1.proto, bt2.proto)
@@ -97,12 +99,16 @@ class BehaviorTreeTest(parameterized.TestCase):
     bt_pb1 = behavior_tree_pb2.BehaviorTree()
     bt_pb1.name = 'my_bt'
     bt_pb1.root.task.call_behavior.skill_id = 'ai.intrinsic.skill-0'
-    compare.assertProto2Equal(self, bt1.proto, bt_pb1)
+    compare.assertProto2Equal(
+        self, bt1.proto, bt_pb1, ignored_fields=['tree_id']
+    )
 
     bt1.set_root(behavior_call.Action(skill_id='ai.intrinsic.skill-1'))
     bt_pb1.root.task.call_behavior.skill_id = 'ai.intrinsic.skill-1'
 
-    compare.assertProto2Equal(self, bt1.proto, bt_pb1)
+    compare.assertProto2Equal(
+        self, bt1.proto, bt_pb1, ignored_fields=['tree_id']
+    )
 
   def test_init_both_root_and_proto_arguments_given(self):
     """Tests if BehaviorTree is correctly constructed."""
@@ -133,7 +139,9 @@ class BehaviorTreeTest(parameterized.TestCase):
     bt_proto = behavior_tree_pb2.BehaviorTree()
     bt_proto.name = 'my_bt'
     bt_proto.root.task.call_behavior.skill_id = 'ai.intrinsic.skill-0'
-    compare.assertProto2Equal(self, bt_instance.proto, bt_proto)
+    compare.assertProto2Equal(
+        self, bt_instance.proto, bt_proto, ignored_fields=['tree_id']
+    )
 
   def test_str_conversion(self):
     """Tests if behavior tree conversion to a string works."""
@@ -160,7 +168,23 @@ class BehaviorTreeTest(parameterized.TestCase):
     )
     my_proto = behavior_tree_pb2.BehaviorTree()
     my_proto.root.task.call_behavior.skill_id = 'ai.intrinsic.skill-0'
-    compare.assertProto2Equal(self, my_bt.proto, my_proto)
+    compare.assertProto2Equal(
+        self, my_bt.proto, my_proto, ignored_fields=['tree_id']
+    )
+
+  def test_generates_tree_id(self):
+    """Tests if behavior tree tree_id attribute generates a tree_id."""
+    my_bt = bt.BehaviorTree('my_bt')
+    my_bt.set_root(
+        bt.Sequence().set_children(
+            bt.Task(behavior_call.Action(skill_id='ai.intrinsic.skill-0'))
+        )
+    )
+    expected_id = my_bt.generate_and_set_unique_id()
+
+    self.assertIsNotNone(my_bt.tree_id)
+    self.assertNotEqual(my_bt.tree_id, '')
+    self.assertEqual(my_bt.tree_id, expected_id)
 
   def test_to_proto_and_from_proto(self):
     """Tests if behavior tree conversion to/from proto representation works."""
@@ -174,6 +198,33 @@ class BehaviorTreeTest(parameterized.TestCase):
 
     my_proto = behavior_tree_pb2.BehaviorTree()
     my_proto.name = 'my_bt'
+    my_proto.root.sequence.children.add().task.call_behavior.skill_id = (
+        'ai.intrinsic.skill-0'
+    )
+
+    compare.assertProto2Equal(
+        self, my_bt.proto, my_proto, ignored_fields=['tree_id']
+    )
+    compare.assertProto2Equal(
+        self,
+        bt.BehaviorTree.create_from_proto(my_proto).proto,
+        my_proto,
+        ignored_fields=['tree_id'],
+    )
+
+  def test_to_proto_and_from_proto_retains_tree_id(self):
+    """Tests if behavior tree conversion to/from proto respects tree_id."""
+    my_bt = bt.BehaviorTree('my_bt')
+    my_bt.tree_id = 'custom_tree_id'
+    my_bt.set_root(
+        bt.Sequence().set_children(
+            bt.Task(behavior_call.Action(skill_id='ai.intrinsic.skill-0'))
+        )
+    )
+
+    my_proto = behavior_tree_pb2.BehaviorTree(
+        name='my_bt', tree_id='custom_tree_id'
+    )
     my_proto.root.sequence.children.add().task.call_behavior.skill_id = (
         'ai.intrinsic.skill-0'
     )
@@ -251,7 +302,9 @@ class BehaviorTreeTest(parameterized.TestCase):
         )
     )
 
-    compare.assertProto2Equal(self, my_bt.proto, expected_proto)
+    compare.assertProto2Equal(
+        self, my_bt.proto, expected_proto, ignored_fields=['tree_id']
+    )
 
   def test_no_default_breakpoint(self):
     my_bt = bt.BehaviorTree('my_bt')
@@ -320,12 +373,16 @@ class BehaviorTreeTest(parameterized.TestCase):
         )
     )
 
-    compare.assertProto2Equal(self, my_bt.proto, expected_proto)
+    compare.assertProto2Equal(
+        self, my_bt.proto, expected_proto, ignored_fields=['tree_id']
+    )
 
     my_bt.root.children[0].enable_execution()
 
     child.decorators.CopyFrom(behavior_tree_pb2.BehaviorTree.Node.Decorators())
-    compare.assertProto2Equal(self, my_bt.proto, expected_proto)
+    compare.assertProto2Equal(
+        self, my_bt.proto, expected_proto, ignored_fields=['tree_id']
+    )
 
   def test_no_node_execution_mode(self):
     my_bt = bt.BehaviorTree('my_bt')
@@ -374,7 +431,9 @@ class BehaviorTreeTest(parameterized.TestCase):
         )
     )
 
-    compare.assertProto2Equal(self, my_bt.proto, expected_proto)
+    compare.assertProto2Equal(
+        self, my_bt.proto, expected_proto, ignored_fields=['tree_id']
+    )
 
   @mock.patch.object(bt, '_generate_unique_identifier', autospec=True)
   def test_print_python_code(self, generate_mock):
@@ -487,7 +546,9 @@ class BehaviorTreeSubTreeTest(absltest.TestCase):
     node_proto = behavior_tree_pb2.BehaviorTree.Node()
     node_proto.sub_tree.tree.name = 'some_sub_tree'
     node_proto.sub_tree.tree.root.task.call_behavior.skill_id = 'some_skill'
-    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self, node.proto, node_proto, ignored_fields=['sub_tree.tree.tree_id']
+    )
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -526,21 +587,27 @@ class BehaviorTreeSubTreeTest(absltest.TestCase):
     node_proto.sub_tree.tree.name = 'some_sub_tree'
     node_proto.sub_tree.tree.root.task.call_behavior.skill_id = 'some_skill'
 
-    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self, node.proto, node_proto, ignored_fields=['sub_tree.tree.tree_id']
+    )
     compare.assertProto2Equal(
         self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
+        ignored_fields=['sub_tree.tree.tree_id'],
     )
 
     node.set_decorators(_create_test_decorator())
     node_proto.decorators.condition.blackboard.cel_expression = 'foo'
 
-    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self, node.proto, node_proto, ignored_fields=['sub_tree.tree.tree_id']
+    )
     compare.assertProto2Equal(
         self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
+        ignored_fields=['sub_tree.tree.tree_id'],
     )
 
   def test_dot_graph_empty_instance(self):
@@ -2054,7 +2121,12 @@ class BehaviorTreeSubTreeConditionTest(absltest.TestCase):
     condition_proto.behavior_tree.root.task.call_behavior.skill_id = (
         'ai.intrinsic.skill-0'
     )
-    compare.assertProto2Equal(self, condition.proto, condition_proto)
+    compare.assertProto2Equal(
+        self,
+        condition.proto,
+        condition_proto,
+        ignored_fields=['behavior_tree.tree_id'],
+    )
 
   def test_init_from_skill(self):
     """Tests if BehaviorTree.SubTreeCondition is correctly constructed from a skill."""
@@ -2065,7 +2137,12 @@ class BehaviorTreeSubTreeConditionTest(absltest.TestCase):
     condition_proto.behavior_tree.root.task.call_behavior.skill_id = (
         'ai.intrinsic.skill-0'
     )
-    compare.assertProto2Equal(self, condition.proto, condition_proto)
+    compare.assertProto2Equal(
+        self,
+        condition.proto,
+        condition_proto,
+        ignored_fields=['behavior_tree.tree_id'],
+    )
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
@@ -2088,11 +2165,17 @@ class BehaviorTreeSubTreeConditionTest(absltest.TestCase):
         'ai.intrinsic.skill-0'
     )
 
-    compare.assertProto2Equal(self, condition.proto, condition_proto)
+    compare.assertProto2Equal(
+        self,
+        condition.proto,
+        condition_proto,
+        ignored_fields=['behavior_tree.tree_id'],
+    )
     compare.assertProto2Equal(
         self,
         bt.Condition.create_from_proto(condition_proto).proto,
         condition_proto,
+        ignored_fields=['behavior_tree.tree_id'],
     )
 
     condition_proto.blackboard.cel_expression = 'ai.intrinsic.skill-0'

@@ -3080,6 +3080,7 @@ class BehaviorTree:
 
   Attributes:
     name: Name of this behavior tree.
+    tree_id: A unique ID for this behavior tree.
     root: The root node of the tree of type Node.
     proto: The proto representation of the BehaviorTree.
     dot_graph: The graphviz dot representation of the BehaviorTree.
@@ -3094,6 +3095,8 @@ class BehaviorTree:
     bt.show()         # calling this in Jupyter would visualize the tree
   """
   # pyformat: enable
+
+  tree_id: Optional[str]
 
   def __init__(
       self,
@@ -3112,6 +3115,7 @@ class BehaviorTree:
         argument overwrites the value from the `bt` proto argument, if set.
     """
     root: Optional['Node'] = _transform_to_optional_node(root)
+    self.tree_id = None
     if bt is not None:
       bt_copy = None
       if isinstance(bt, BehaviorTree):
@@ -3122,6 +3126,7 @@ class BehaviorTree:
         raise TypeError
       name = name or bt_copy.name
       root = root or bt_copy.root
+      self.tree_id = bt_copy.tree_id
 
     self.name: str = name or ''
     self.root: Optional[Node] = root
@@ -3153,6 +3158,8 @@ class BehaviorTree:
       )
     proto_object = behavior_tree_pb2.BehaviorTree(name=self.name)
     proto_object.root.CopyFrom(self.root.proto)
+    if self.tree_id:
+      proto_object.tree_id = self.tree_id
     if self._description is not None:
       proto_object.description.CopyFrom(self._description)
     return proto_object
@@ -3164,8 +3171,20 @@ class BehaviorTree:
     """Instantiates a behavior tree from a proto."""
     bt = cls()
     bt.name = proto_object.name
+    if proto_object.HasField('tree_id'):
+      bt.tree_id = proto_object.tree_id
     bt.root = Node.create_from_proto(proto_object.root)
     return bt
+
+  def generate_and_set_unique_id(self) -> str:
+    """Generates a unique tree id and sets it for this tree."""
+    if self.tree_id is not None:
+      print(
+          'Warning: Creating a new unique id, but this tree already had an id'
+          f' ({self.tree_id})'
+      )
+    self.tree_id = str(uuid.uuid4())
+    return self.tree_id
 
   def dot_graph(self) -> graphviz.Digraph:
     """Converts the given behavior tree into a graphviz dot representation.
