@@ -60,7 +60,7 @@ message CcServiceConfig {
 }
 
 message Documentation {
-  string doc_string = 1;
+  string description = 1;
 }
 
 message ParameterMetadata {
@@ -83,7 +83,7 @@ message PubTopicMetadata {
 
   // Optional documentation that can be shown to users of the skill. It may
   // include information about the data published on this topic.
-  string doc_string = 2;
+  string description = 2;
 
   // The published proto's full message name.
   string message_full_name = 3;

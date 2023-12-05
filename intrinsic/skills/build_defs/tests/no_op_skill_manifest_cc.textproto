@@ -11,7 +11,7 @@ vendor {
   display_name: "Intrinsic"
 }
 documentation {
-  doc_string: "Does nothing, returns an OK status."
+  description: "Does nothing, returns an OK status."
 }
 options {
   supports_cancellation: false

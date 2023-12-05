@@ -22,7 +22,7 @@ type SkillDescription struct {
 	ID           string `json:"id,omitempty"`
 	IDVersion    string `json:"idVersion,omitempty"`
 	ReleaseNotes string `json:"releaseNotes,omitempty"`
-	DocString    string `json:"docString,omitempty"`
+	Description  string `json:"description,omitempty"`
 }
 
 // SkillDescriptions wraps the required data for the output of skill list commands.
@@ -40,7 +40,7 @@ func SkillDescriptionsFromSkills(skills []*spb.Skill) *SkillDescriptions {
 			PackageName: skill.GetPackageName(),
 			ID:          skill.GetId(),
 			IDVersion:   skill.GetIdVersion(),
-			DocString:   skill.GetDocString(),
+			Description: skill.GetDescription(),
 		}
 	}
 

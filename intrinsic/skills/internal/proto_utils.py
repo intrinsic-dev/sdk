@@ -52,7 +52,7 @@ def proto_from_skill(
       proto.id_version += '.' + version
 
   if skill.__doc__ is not None:
-    proto.doc_string = skill.__doc__.rstrip()
+    proto.description = str(skill.__doc__).rstrip()
 
   for key, val in skill.required_equipment().items():
     proto.resource_selectors[key].CopyFrom(val)
@@ -102,7 +102,7 @@ def proto_from_skill_manifest(
       skill_name=manifest.id.name,
       id=id_utils.id_from(manifest.id.package, manifest.id.name),
       package_name=manifest.id.package,
-      doc_string=manifest.documentation.doc_string,
+      description=manifest.documentation.description,
       id_version=id_utils.id_version_from(
           manifest.id.package, manifest.id.name, version
       ),

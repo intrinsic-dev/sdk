@@ -197,7 +197,7 @@ class DeploymentsTest(absltest.TestCase):
 
       def __init__(self, code: grpc.StatusCode):
         self._code = code
-        super(FakeGrpcError, self).__init__("An error occurred")
+        super().__init__("An error occurred")
 
       def code(self) -> grpc.StatusCode:
         return self._code
@@ -314,11 +314,11 @@ class SolutionTest(absltest.TestCase):
       solution.skills_overview()
     self.assertEqual(mock_stdout.getvalue(), "my_skill\n")
 
-    # Add a 'z_move' skill with docstring
+    # Add a 'z_move' skill with description
     skill_registry_response = self._skill_registry_stub.GetSkills.return_value
     z_move = skill_registry_response.skills.add()
     z_move.id = "ai.intrinsic.z_move"
-    z_move.doc_string = r"""DocFor z_move.
+    z_move.description = r"""DocFor z_move.
 
 More z_move Doc."""
     solution = self.init_solution()

@@ -10,7 +10,7 @@ vendor {
   display_name: "Unknown Vendor"
 }
 documentation {
-  doc_string: "TODO: Describe what the skill does here."
+  description: "TODO: Describe what the skill does here."
 }
 options {
   supports_cancellation: false

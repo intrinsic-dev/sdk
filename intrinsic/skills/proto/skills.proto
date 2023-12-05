@@ -95,10 +95,8 @@ message Skill {
   // the implementation's requirements for that slot.
   map<string, intrinsic_proto.skills.ResourceSelector> resource_selectors = 4;
 
-  // General documentation that can be shown to a user/caller of the skill.
-  // You may include usage instructions, assumptions of operating the skill,
-  // intended exhibited behavior when running the skill.
-  string doc_string = 5;
+  // Description of the skill.
+  string description = 5;
 
   // Parameterizable Behavior Tree Description, if set, the executive can
   // retrieve a tree for this skill's ID.

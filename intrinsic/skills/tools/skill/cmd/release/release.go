@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	keyDocString = "doc_string"
+	keyDescription = "description"
 )
 
 var cmdFlags = cmdutil.NewCmdFlags()
@@ -58,5 +58,5 @@ func init() {
 	cmdFlags.AddFlagVendor()
 	cmdFlags.AddFlagVersion()
 
-	cmdFlags.OptionalString(keyDocString, "", "Skill documentation.")
+	cmdFlags.OptionalString(keyDescription, "", "The skill's description.")
 }

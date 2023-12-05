@@ -5,9 +5,11 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -56,7 +58,7 @@ absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
   } else {
     skill.set_id_version(skill.id());
   }
-  skill.set_doc_string(skill_interface.DocString());
+  skill.set_description(skill_interface.DocString());
   const auto equipment = skill_interface.EquipmentRequired();
   skill.mutable_resource_selectors()->insert(equipment.begin(),
                                              equipment.end());
@@ -249,7 +251,7 @@ absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
   } else {
     skill.set_id_version(skill.id());
   }
-  skill.set_doc_string(manifest.documentation().doc_string());
+  skill.set_description(manifest.documentation().description());
   *skill.mutable_resource_selectors() =
       manifest.dependencies().required_equipment();
 

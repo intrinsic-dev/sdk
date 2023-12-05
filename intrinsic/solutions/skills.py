@@ -182,7 +182,9 @@ class SkillInfoImpl(providers.SkillInfo):
   def message_classes(self) -> dict[str, Type[message.Message]]:
     return self._message_classes
 
-  def get_message_class(self, msg_descriptor: descriptor.Descriptor):
+  def get_message_class(
+      self, msg_descriptor: descriptor.Descriptor
+  ) -> Type[message.Message]:
     return self._message_classes[msg_descriptor.full_name]
 
   def get_parameter_field_comments(self, full_field_name: str) -> str:
@@ -253,10 +255,10 @@ def _gen_init_docstring(
   docstring: list[str] = [f"Skill class for {info.skill_proto.id} skill.\n"]
   # Expect 80 chars width
   is_first_line = True
-  for doc_string_line in textwrap.dedent(
-      info.skill_proto.doc_string
+  for description_line in textwrap.dedent(
+      info.skill_proto.description
   ).splitlines():
-    wrapped_lines = textwrap.wrap(doc_string_line, 80)
+    wrapped_lines = textwrap.wrap(description_line, 80)
     # Make sure that an empty line is wrapped to an empty line
     # and not removed. We assume that the skill author intended
     # the extra line break there unless it is the first line.
