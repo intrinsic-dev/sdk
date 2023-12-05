@@ -15,7 +15,6 @@ filegroup(
         "usr/include/*.h",
         "usr/include/arpa/**",
         "usr/include/asm-generic/**",
-        "usr/include/c++/**",
         "usr/include/linux/**",
         "usr/include/net/**",
         "usr/include/netinet/**",
@@ -33,6 +32,14 @@ filegroup(
         "usr/lib/x86_64-linux-gnu/libresolv.so",
         "usr/lib/x86_64-linux-gnu/librt*",
         "usr/lib/x86_64-linux-gnu/libutil*",
+      ],
+      exclude = [
+        # The sysroot contains libstdc++, but we use libc++ from our toolchain
+        # repo. Exclude these files so we don't pull them into the sandbox
+        # unnecessarily.
+        "usr/include/c++/**",
+        "usr/include/x86_64-linux-gnu/c++/**",
+        "usr/lib/gcc/x86_64-linux-gnu/6/libstdc++*",
       ],
     ),
     visibility = ["//visibility:public"],
