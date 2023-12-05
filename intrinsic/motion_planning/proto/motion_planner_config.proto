@@ -11,4 +11,6 @@ message MotionPlannerConfiguration {
   // Maximum time in seconds available for motion planning. Default is 180
   // seconds.
   optional google.protobuf.Duration timeout_sec = 1;
+
+  bool use_projection_onto_constraint_manifold = 2;
 }
