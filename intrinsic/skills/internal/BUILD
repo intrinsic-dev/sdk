@@ -348,30 +348,6 @@ cc_library(
     ],
 )
 
-# Link this library with your chosen skill libraries to create a binary that
-# serves those skills.
-cc_library(
-    name = "registerer_skill_service_main",
-    srcs = ["registerer_skill_service_main.cc"],
-    # This visibility is needed when building a skill service, because
-    # the users will link this target (through the provided BUILD rules)
-    # to provide the main.
-    visibility = [
-        "//visibility:public",
-    ],
-    deps = [
-        ":registerer_skill_repository",
-        ":skill_init",
-        "//intrinsic/icon/release/portable:init_xfa_absl",
-        "//intrinsic/util/grpc",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/time",
-        # This is needed when using grpc_cli.
-        "@com_github_grpc_grpc//:grpc++_reflection",
-    ],
-)
-
 py_library(
     name = "skill_repository_py",
     srcs = ["skill_repository.py"],
