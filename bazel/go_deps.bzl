@@ -1290,9 +1290,9 @@ def go_dependencies():
     )
     go_repository(
         name = "com_github_grpc_ecosystem_grpc_gateway_v2",
+        build_file_name = "BUILD.bazel",  # keep: https://github.com/bazelbuild/bazel-gazelle/issues/890
         importpath = "github.com/grpc-ecosystem/grpc-gateway/v2",
         sum = "h1:lLT7ZLSzGLI08vc9cpd+tYmNWjdKDqyr/2L+f6U12Fk=",
-        build_file_name = "BUILD.bazel",  # keep: https://github.com/bazelbuild/bazel-gazelle/issues/890
         version = "v2.11.3",
     )
 
