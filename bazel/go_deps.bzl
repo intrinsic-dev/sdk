@@ -1292,6 +1292,7 @@ def go_dependencies():
         name = "com_github_grpc_ecosystem_grpc_gateway_v2",
         importpath = "github.com/grpc-ecosystem/grpc-gateway/v2",
         sum = "h1:lLT7ZLSzGLI08vc9cpd+tYmNWjdKDqyr/2L+f6U12Fk=",
+        build_file_name = "BUILD.bazel",  # keep: https://github.com/bazelbuild/bazel-gazelle/issues/890
         version = "v2.11.3",
     )
 
@@ -2376,6 +2377,13 @@ def go_dependencies():
         sum = "h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=",
         version = "v1.8.4",
     )
+    go_repository(
+        name = "com_github_stvp_go_udp_testing",
+        importpath = "github.com/stvp/go-udp-testing",
+        sum = "h1:LUsDduamlucuNnWcaTbXQ6aLILFcLXADpOzeEH3U+OI=",
+        version = "v0.0.0-20201019212854-469649b16807",
+    )
+
     go_repository(
         name = "com_github_subosito_gotenv",
         importpath = "github.com/subosito/gotenv",
@@ -3585,6 +3593,13 @@ def go_dependencies():
         sum = "h1:y73uSU6J157QMP2kn2r30vwW1A2W2WFwSCGnAVxeaD0=",
         version = "v0.24.0",
     )
+    go_repository(
+        name = "io_opencensus_go_contrib_exporter_ocagent",
+        importpath = "contrib.go.opencensus.io/exporter/ocagent",
+        sum = "h1:BEfdCTXfMV30tLZD8c9n64V/tIZX5+9sXiuFLnrr1k8=",
+        version = "v0.7.0",
+    )
+
     go_repository(
         name = "io_opencensus_go_contrib_exporter_prometheus",
         importpath = "contrib.go.opencensus.io/exporter/prometheus",
