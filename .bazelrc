@@ -48,3 +48,6 @@ build:remote --java_runtime_version=rbe_jdk
 build:remote --platforms=//bazel/rbe_config/config:platform
 build:remote --tool_java_runtime_version=rbe_jdk
 build:remote --define=EXECUTOR=remote
+
+# Avoid building grpc with xDS support to reduce build time
+build --define=grpc_no_xds=true
