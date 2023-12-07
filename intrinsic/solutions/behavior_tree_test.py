@@ -790,6 +790,17 @@ class BehaviorTreeSequenceTest(absltest.TestCase):
         node_proto,
     )
 
+  def test_create_from_proto_prevents_accidental_call_from_subclass(self):
+    """create_from_proto should only be called on the base Node."""
+    node = bt.Sequence(name='foo')
+    node.set_children(
+        bt.Task(behavior_call.Action(skill_id='skill_0')),
+        bt.Task(behavior_call.Action(skill_id='skill_1')),
+    )
+    with self.assertRaises(TypeError):
+      bt.Sequence.create_from_proto(node.proto)
+    bt.Node.create_from_proto(node.proto)
+
   def test_dot_graph_empty_node(self):
     """Tests if empty node conversion to a dot representation works."""
     node = bt.Sequence()
@@ -922,7 +933,11 @@ class BehaviorTreeParallelTest(absltest.TestCase):
     )
 
   def test_proto_with_unspecified_failure_behavior_resolves_to_default(self):
-    node = bt.Parallel.create_from_proto(behavior_tree_pb2.BehaviorTree.Node())
+    node: bt.Parallel = bt.Node.create_from_proto(
+        behavior_tree_pb2.BehaviorTree.Node(
+            parallel=behavior_tree_pb2.BehaviorTree.ParallelNode()
+        )
+    )
     self.assertEqual(node.failure_behavior, node.FailureBehavior.DEFAULT)
 
   def test_dot_graph_empty_node(self):
@@ -1937,7 +1952,7 @@ class BehaviorTreeDataTest(parameterized.TestCase):
     node_proto.data.create_or_update.from_world.proto.Pack(world_query_proto)
     node_proto.data.create_or_update.blackboard_key = 'bbfoo'
 
-    node = bt.Data.create_from_proto(node_proto)
+    node = bt.Node.create_from_proto(node_proto)
 
     compare.assertProto2Equal(self, node.proto, node_proto)
 
@@ -1946,7 +1961,7 @@ class BehaviorTreeDataTest(parameterized.TestCase):
     node_proto = behavior_tree_pb2.BehaviorTree.Node(name='foo')
     node_proto.data.remove.blackboard_key = 'bbfoo'
 
-    node = bt.Data.create_from_proto(node_proto)
+    node = bt.Node.create_from_proto(node_proto)
 
     compare.assertProto2Equal(self, node.proto, node_proto)
 
@@ -1954,8 +1969,8 @@ class BehaviorTreeDataTest(parameterized.TestCase):
     """Tests if BehaviorTree.Data is correctly constructed."""
     node_proto = behavior_tree_pb2.BehaviorTree.Node(name='foo')
 
-    with self.assertRaises(solutions_errors.InvalidArgumentError):
-      _ = bt.Data.create_from_proto(node_proto)
+    with self.assertRaises(TypeError):
+      _ = bt.Node.create_from_proto(node_proto)
 
   def test_create_from_proto_without_operation_fails(self):
     """Tests if BehaviorTree.Data is correctly constructed."""
@@ -1963,7 +1978,7 @@ class BehaviorTreeDataTest(parameterized.TestCase):
     node_proto.data.CopyFrom(behavior_tree_pb2.BehaviorTree.DataNode())
 
     with self.assertRaises(solutions_errors.InvalidArgumentError):
-      _ = bt.Data.create_from_proto(node_proto)
+      _ = bt.Node.create_from_proto(node_proto)
 
   def test_init_remove_ctor(self):
     """Tests if BehaviorTree.Data is correctly for removal."""
@@ -2178,10 +2193,6 @@ class BehaviorTreeSubTreeConditionTest(absltest.TestCase):
         ignored_fields=['behavior_tree.tree_id'],
     )
 
-    condition_proto.blackboard.cel_expression = 'ai.intrinsic.skill-0'
-    with self.assertRaises(ValueError):
-      bt.SubTreeCondition.create_from_proto(condition_proto)
-
 
 class BehaviorTreeBlackboardConditionTest(absltest.TestCase):
   """Tests the method functions of BehaviorTree.Blackboard."""
@@ -2211,12 +2222,6 @@ class BehaviorTreeBlackboardConditionTest(absltest.TestCase):
         bt.Condition.create_from_proto(condition_proto).proto,
         condition_proto,
     )
-
-    condition_proto.behavior_tree.root.task.call_behavior.skill_id = (
-        'ai.intrinsic.skill-0'
-    )
-    with self.assertRaises(ValueError):
-      bt.Blackboard.create_from_proto(condition_proto)
 
 
 class BehaviorTreeAllOfConditionTest(absltest.TestCase):
@@ -2260,12 +2265,6 @@ class BehaviorTreeAllOfConditionTest(absltest.TestCase):
         condition_proto,
     )
 
-    condition_proto.behavior_tree.root.task.call_behavior.skill_id = (
-        'ai.intrinsic.skill-0'
-    )
-    with self.assertRaises(ValueError):
-      bt.AllOf.create_from_proto(condition_proto)
-
 
 class BehaviorTreeAnyOfConditionTest(absltest.TestCase):
   """Tests the method functions of BehaviorTree.AnyOf."""
@@ -2308,12 +2307,6 @@ class BehaviorTreeAnyOfConditionTest(absltest.TestCase):
         condition_proto,
     )
 
-    condition_proto.behavior_tree.root.task.call_behavior.skill_id = (
-        'ai.intrinsic.skill-0'
-    )
-    with self.assertRaises(ValueError):
-      bt.AnyOf.create_from_proto(condition_proto)
-
 
 class BehaviorTreeNotConditionTest(absltest.TestCase):
   """Tests the method functions of BehaviorTree.Not."""
@@ -2331,6 +2324,15 @@ class BehaviorTreeNotConditionTest(absltest.TestCase):
     condition = bt.Not(bt.Blackboard('foo'))
     self.assertEqual(str(condition), 'Not(Blackboard(foo))')
 
+  def test_create_from_proto_prevents_accidental_call_from_subclass(self):
+    """create_from_proto should only be called on the base Condition."""
+    condition_proto = behavior_tree_pb2.BehaviorTree.Condition()
+    not_proto = getattr(condition_proto, 'not')
+    not_proto.blackboard.cel_expression = 'foo'
+    with self.assertRaises(TypeError):
+      bt.Not.create_from_proto(condition_proto)
+    bt.Condition.create_from_proto(condition_proto)
+
   def test_to_proto_and_from_proto(self):
     """Tests if conversion to and from a proto representation works."""
     condition = bt.Not(bt.Blackboard('foo'))
@@ -2345,12 +2347,6 @@ class BehaviorTreeNotConditionTest(absltest.TestCase):
         bt.Condition.create_from_proto(condition_proto).proto,
         condition_proto,
     )
-
-    condition_proto.behavior_tree.root.task.call_behavior.skill_id = (
-        'ai.intrinsic.skill-0'
-    )
-    with self.assertRaises(ValueError):
-      bt.Not.create_from_proto(condition_proto)
 
 
 class DecoratorsTest(absltest.TestCase):
