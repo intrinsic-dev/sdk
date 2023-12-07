@@ -17,6 +17,7 @@ require (
 	github.com/bazelbuild/rules_go v0.43.0
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/fsouza/fake-gcs-server v1.47.4
+	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/golang/glog v1.2.0
 	github.com/golang/protobuf v1.5.3
 	github.com/google/go-cmp v0.6.0
