@@ -4,16 +4,14 @@
 package start
 
 import (
-	"encoding/base32"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"github.com/google/uuid"
 	"github.com/spf13/cobra"
+	"intrinsic/assets/idutils"
 	imagepb "intrinsic/kubernetes/workcell_spec/proto/image_go_proto"
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd"
@@ -22,16 +20,12 @@ import (
 	"intrinsic/skills/tools/skill/cmd/imagetransfer"
 	"intrinsic/skills/tools/skill/cmd/imageutil"
 	"intrinsic/skills/tools/skill/cmd/registry"
+	"intrinsic/skills/tools/skill/cmd/skillid"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
 	"intrinsic/skills/tools/skill/cmd/waitforskill"
 )
 
 var cmdFlags = cmdutil.NewCmdFlags()
-
-func createSideloadedSkillIDVersion() string {
-	id := uuid.New()
-	return cmd.SideloadedSkillPrefix + strings.Replace(base32.StdEncoding.EncodeToString(id[:]), "=", "", -1)
-}
 
 func remoteOpt() remote.Option {
 	authUser, authPwd := cmdFlags.GetFlagsRegistryAuthUserPassword()
@@ -115,8 +109,14 @@ $ inctl skill start --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution
 			return fmt.Errorf("could not establish connection: %w", err)
 		}
 
-		skillVersion := "0.0.1+" + createSideloadedSkillIDVersion()
-		skillIDVersion := installerParams.SkillID + "." + skillVersion
+		skillIDVersion, err := skillid.CreateSideloadedIDVersion(installerParams.SkillID)
+		if err != nil {
+			return fmt.Errorf("could not create sideloaded ID version: %w", err)
+		}
+		version, err := idutils.VersionFrom(skillIDVersion)
+		if err != nil {
+			return fmt.Errorf("could not parse version from ID version: %w", err)
+		}
 		log.Printf("Installing skill %q using the installer service at %q", skillIDVersion, installerAddress)
 		err = imageutil.InstallContainer(ctx,
 			&imageutil.InstallContainerParams{
@@ -124,7 +124,7 @@ $ inctl skill start --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution
 				Connection: conn,
 				Request: &installerpb.InstallContainerAddonRequest{
 					Id:      installerParams.SkillID,
-					Version: skillVersion,
+					Version: version,
 					Type:    installerpb.AddonType_ADDON_TYPE_SKILL,
 					Images: []*imagepb.Image{
 						imgpb,

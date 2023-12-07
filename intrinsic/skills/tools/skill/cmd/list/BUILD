@@ -43,6 +43,7 @@ go_library(
         "//intrinsic/skills/tools/skill/cmd:cmdutil",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/skills/tools/skill/cmd:listutil",
+        "//intrinsic/skills/tools/skill/cmd:skillid",
         "//intrinsic/skills/tools/skill/cmd:solutionutil",
         "//intrinsic/tools/inctl/cmd:root",
         "//intrinsic/tools/inctl/util:printer",

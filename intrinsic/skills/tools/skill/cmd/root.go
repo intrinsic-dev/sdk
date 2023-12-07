@@ -8,11 +8,6 @@ import (
 	"intrinsic/tools/inctl/cmd/root"
 )
 
-const (
-	// SideloadedSkillPrefix is the prefix that is added to the id version of a sideloaded skill.
-	SideloadedSkillPrefix = "sideloaded"
-)
-
 // SkillCmd is the super-command for everything skill management.
 var SkillCmd = &cobra.Command{
 	Use:   root.SkillCmdName,
