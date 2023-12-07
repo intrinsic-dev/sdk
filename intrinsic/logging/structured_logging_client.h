@@ -8,9 +8,11 @@
 #include <string>
 #include <vector>
 
+#include "absl/base/attributes.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "grpcpp/channel.h"
 #include "intrinsic/logging/proto/log_item.pb.h"
@@ -109,11 +111,20 @@ class StructuredLoggingClient {
   absl::StatusOr<LogItem> GetMostRecentItem(absl::string_view event_source);
 
   // Writes all log files of the specified 'event_sources' to GCS.
-  absl::StatusOr<std::vector<std::string>> SyncAndRotateLogs(
-      const std::vector<std::string>& event_sources);
+  // Might be throttled per-event-source if called too frequently.
+  //
+  // Returns absl::ResourceExhaustedError if any sync for any event source was
+  // throttled.
+  absl::StatusOr<std::vector<std::string>> ABSL_MUST_USE_RESULT
+  SyncAndRotateLogs(const std::vector<std::string>& event_sources);
 
   // Writes all log files to GCS.
-  absl::StatusOr<std::vector<std::string>> SyncAndRotateLogs();
+  // Might be throttled per-event-source if called too frequently.
+  //
+  // Returns absl::ResourceExhaustedError if any sync for any event source was
+  // throttled.
+  absl::StatusOr<std::vector<std::string>> ABSL_MUST_USE_RESULT
+  SyncAndRotateLogs();
 
   // Set the logging configuration for an event_source
   absl::Status SetLogOptions(

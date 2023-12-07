@@ -134,6 +134,10 @@ message SyncRequest {
 message SyncResponse {
   // The event_sources successfully synced and rotated LogItems for.
   repeated string event_sources = 1;
+
+  // The event_sources that exist but were not synced and rotated due to
+  // throttling.
+  repeated string throttled_event_sources = 2;
 }
 
 // Service to persistently store and retrieve structured data on-prem.
@@ -168,6 +172,8 @@ service DataLogger {
   // have been specified, the call returns NOT_FOUND status.
   rpc GetLogOptions(GetLogOptionsRequest) returns (GetLogOptionsResponse) {}
 
-  // Flushes all remaining LogItems
+  // Flushes all buffered LogItems
+  // This is an expensive operation and should NOT be called after every Log().
+  // Each event source will have a global throttle on user-requested flushes.
   rpc SyncAndRotateLogs(SyncRequest) returns (SyncResponse) {}
 }
