@@ -1153,7 +1153,10 @@ class Task(Node):
 
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
-    return f'{type(self).__name__}({self._behavior_call_proto.skill_id})'
+    name_snippet = ''
+    if self.name is not None:
+      name_snippet = f'name="{self.name}", '
+    return f'{type(self).__name__}({name_snippet}action=behavior_call.Action(skill_id="{self._behavior_call_proto.skill_id}"))'
 
   @property
   def name(self) -> Optional[str]:
@@ -1252,9 +1255,8 @@ class SubTree(Node):
   This node is usually used to group components into a subtree.
 
   Attributes:
-    behavior_tree: The subtree.
-    name: The name of the subtree, required if and only if passing a root node
-      as the behavior tree.
+    behavior_tree: The subtree, a BehaviorTree object.
+    name: The name of the subtree node.
     proto: The proto representation of the node.
     node_type: A string label of the node type.
   """
@@ -1268,22 +1270,22 @@ class SubTree(Node):
       behavior_tree: Optional[Union['Node', 'BehaviorTree']] = None,
       name: Optional[str] = None,
   ):
+    """Creates a SubTree node.
+
+    Args:
+      behavior_tree: behavior tree or root node of a tree for this subtree. If
+        passing a root node you must also provide the name argument.
+      name: name of the behavior tree, if behavior_tree is a node, i.e., a root
+        node of a tree; otherwise, the name of this node.
+    """
     self.behavior_tree: Optional['BehaviorTree'] = None
     self._decorators = None
     self._name = None
     self._node_id = None
     if behavior_tree is not None:
-      if isinstance(behavior_tree, BehaviorTree):
-        self.behavior_tree = behavior_tree
-        self._name = name
-      elif isinstance(behavior_tree, Node):
-        if name is None:
-          raise ValueError(
-              'Requires to set name when setting from a Node ' + '(root node)'
-          )
-        self.behavior_tree = BehaviorTree(name=name, root=behavior_tree)
-      else:
-        raise TypeError('Given behavior_tree is not a BehaviorTree.')
+      self.set_behavior_tree(behavior_tree, name)
+    else:
+      self._name = name
     super().__init__()
 
   def set_behavior_tree(
@@ -1294,10 +1296,10 @@ class SubTree(Node):
     """Sets the subtree's behavior tree.
 
     Args:
-      behavior_tree: behavior tree or root node of tree for this subtree. If
+      behavior_tree: behavior tree or root node of a tree for this subtree. If
         passing a root node you must also provide the name argument.
-      name: name of behavior tree, used if and only if behavior_tree is given a
-        node, i.e., a root node of a tree.
+      name: name of the behavior tree, if behavior_tree is a node, i.e., a root
+        node of a tree; otherwise, the name of this node.
 
     Returns:
       self for chaining.
@@ -1308,7 +1310,7 @@ class SubTree(Node):
     elif isinstance(behavior_tree, Node):
       if name is None:
         raise ValueError(
-            'You must give a name when passing a root node for a tree'
+            'You must give a name when passing a root node for a tree.'
         )
       self.behavior_tree = BehaviorTree(name=name, root=behavior_tree)
     else:
@@ -1541,9 +1543,11 @@ class NodeWithChildren(Node):
 
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
-    representation = f'{type(self).__name__}([ '
-    for child in self.children:
-      representation += f'{str(child)} '
+    name_snippet = ''
+    if self.name is not None:
+      name_snippet = f'name="{self.name}", '
+    representation = f'{type(self).__name__}({name_snippet}children=['
+    representation += ', '.join(map(str, self.children))
     representation += '])'
     return representation
 
@@ -1903,9 +1907,13 @@ class Retry(Node):
 
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
+    name_snippet = ''
+    if self.name is not None:
+      name_snippet = f'name="{self.name}", '
     recovery_str = f', recovery={str(self.recovery)}'
     return (
-        f'{type(self).__name__} {self.max_tries}(child={str(self.child)}{recovery_str})'
+        f'{type(self).__name__}({name_snippet}max_tries={self.max_tries},'
+        f' child={str(self.child)}{recovery_str})'
     )
 
   @property
@@ -2424,17 +2432,18 @@ class Loop(Node):
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
     representation = f'{type(self).__name__}'
-    if self.max_times != 0:
-      representation += f' (iterations <= {self.max_times})'
     if self.while_condition is not None:
-      if self.max_times != 0:
-        representation += ' and'
       representation += f' {str(self.while_condition)}'
     if self._for_each_generator_cel_expression is not None:
       representation += f' over {self._for_each_generator_cel_expression}'
     if self._for_each_protos is not None:
       representation += f' over {len(self._for_each_protos)} protos'
-    representation += f' ({str(self.do_child)})'
+    representation += ' ('
+    if self.name is not None:
+      representation += f'name="{self.name}", '
+    if self.max_times != 0:
+      representation += f'max_times={self.max_times}, '
+    representation += f'{str(self.do_child)})'
     return representation
 
   @property
