@@ -552,6 +552,7 @@ class Node(abc.ABC):
     decorators: A list of decorators for the current node.
     breakpoint: Optional type of breakpoint configured for this node.
     execution_mode: Optional execution mode for this node.
+    node_id: A unique id for this node.
   """
 
   def __repr__(self) -> str:
@@ -601,6 +602,8 @@ class Node(abc.ABC):
       )
     if proto_object.HasField('name'):
       created_node.name = proto_object.name
+    if proto_object.HasField('id') and proto_object.id != 0:
+      created_node.node_id = proto_object.id
     return created_node
 
   @property
@@ -610,10 +613,34 @@ class Node(abc.ABC):
     proto_message = behavior_tree_pb2.BehaviorTree.Node()
     if self.name is not None:
       proto_message.name = self.name
-    if self.decorators:
+    if self.node_id is not None:
+      proto_message.id = self.node_id
+    if self.decorators is not None:
       proto_message.decorators.CopyFrom(self.decorators.proto)
 
     return proto_message
+
+  def generate_and_set_unique_id(self) -> int:
+    """Generates a new random id and sets it for this node."""
+    if self.node_id is not None:
+      print(
+          'Warning: Creating a new unique id, but this node already had an id'
+          f' ({self.node_id})'
+      )
+    uid = uuid.uuid4()
+    uid_128 = uid.int
+    # The proto only specifies uint32, so a 128-bit UUID wouldn't fit. XOR
+    # this together to retain sufficient randomness to prevent collisions.
+    # Node Ids must be unique only within the behavior tree that is being
+    # created.
+    uid_32 = (
+        (uid_128 & 0xFFFFFFFF)
+        ^ (uid_128 & (0xFFFFFFFF << 32)) >> 32
+        ^ (uid_128 & (0xFFFFFFFF << 64)) >> 64
+        ^ (uid_128 & (0xFFFFFFFF << 96)) >> 96
+    )
+    self.node_id = uid_32
+    return self.node_id
 
   @property
   @abc.abstractmethod
@@ -667,6 +694,16 @@ class Node(abc.ABC):
   @name.setter
   @abc.abstractmethod
   def name(self, value: str):
+    ...
+
+  @property
+  @abc.abstractmethod
+  def node_id(self) -> Optional[int]:
+    ...
+
+  @node_id.setter
+  @abc.abstractmethod
+  def node_id(self, value: int):
     ...
 
   @abc.abstractmethod
@@ -1092,6 +1129,7 @@ class Task(Node):
   _behavior_call_proto: Optional[behavior_call_pb2.BehaviorCall]
   _decorators: Optional['Decorators']
   _name: Optional[str]
+  _node_id: Optional[int]
 
   def __init__(
       self,
@@ -1110,6 +1148,7 @@ class Task(Node):
           f'Unknown action specification: {action}'
       )
     self._name = name
+    self._node_id = None
     super().__init__()
 
   def __repr__(self) -> str:
@@ -1123,6 +1162,14 @@ class Task(Node):
   @name.setter
   def name(self, value: str):
     self._name = value
+
+  @property
+  def node_id(self) -> Optional[int]:
+    return self._node_id
+
+  @node_id.setter
+  def node_id(self, value: int):
+    self._node_id = value
 
   @property
   def proto(self) -> behavior_tree_pb2.BehaviorTree.Node:
@@ -1214,6 +1261,7 @@ class SubTree(Node):
 
   _decorators: Optional['Decorators']
   _name: Optional[str]
+  _node_id: Optional[int]
 
   def __init__(
       self,
@@ -1223,6 +1271,7 @@ class SubTree(Node):
     self.behavior_tree: Optional['BehaviorTree'] = None
     self._decorators = None
     self._name = None
+    self._node_id = None
     if behavior_tree is not None:
       if isinstance(behavior_tree, BehaviorTree):
         self.behavior_tree = behavior_tree
@@ -1280,6 +1329,14 @@ class SubTree(Node):
   @name.setter
   def name(self, value: str):
     self._name = value
+
+  @property
+  def node_id(self) -> Optional[int]:
+    return self._node_id
+
+  @node_id.setter
+  def node_id(self, value: int):
+    self._node_id = value
 
   @property
   def proto(self) -> behavior_tree_pb2.BehaviorTree.Node:
@@ -1377,11 +1434,13 @@ class Fail(Node):
 
   _decorators: Optional['Decorators']
   _name: Optional[str]
+  _node_id: Optional[int]
 
   def __init__(self, failure_message: str = '', name: Optional[str] = None):
     self._decorators = None
     self.failure_message: str = failure_message
     self._name = name
+    self._node_id = None
     super().__init__()
 
   def __repr__(self) -> str:
@@ -1401,6 +1460,14 @@ class Fail(Node):
   @name.setter
   def name(self, value: str):
     self._name = value
+
+  @property
+  def node_id(self) -> Optional[int]:
+    return self._node_id
+
+  @node_id.setter
+  def node_id(self, value: int):
+    self._node_id = value
 
   @property
   def node_type(self) -> str:
@@ -1533,6 +1600,7 @@ class Sequence(NodeWithChildren):
 
   _decorators: Optional['Decorators']
   _name: Optional[str]
+  _node_id: Optional[int]
 
   def __init__(
       self,
@@ -1544,6 +1612,7 @@ class Sequence(NodeWithChildren):
     super().__init__(children=children)
     self._decorators = None
     self._name = name
+    self._node_id = None
 
   @property
   def proto(self) -> behavior_tree_pb2.BehaviorTree.Node:
@@ -1568,6 +1637,14 @@ class Sequence(NodeWithChildren):
   @name.setter
   def name(self, value: str):
     self._name = value
+
+  @property
+  def node_id(self) -> Optional[int]:
+    return self._node_id
+
+  @node_id.setter
+  def node_id(self, value: int):
+    self._node_id = value
 
   def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
     self._decorators = decorators
@@ -1604,6 +1681,7 @@ class Parallel(NodeWithChildren):
 
   _decorators: Optional['Decorators']
   _name: Optional[str]
+  _node_id: Optional[int]
 
   class FailureBehavior(enum.IntEnum):
     """Specifies how a parallel node should fail.
@@ -1630,6 +1708,7 @@ class Parallel(NodeWithChildren):
     super().__init__(children)
     self._decorators = None
     self._name = name
+    self._node_id = None
     self.failure_behavior = failure_behavior
 
   @property
@@ -1657,6 +1736,14 @@ class Parallel(NodeWithChildren):
   @name.setter
   def name(self, value: str):
     self._name = value
+
+  @property
+  def node_id(self) -> Optional[int]:
+    return self._node_id
+
+  @node_id.setter
+  def node_id(self, value: int):
+    self._node_id = value
 
   def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
     self._decorators = decorators
@@ -1695,6 +1782,7 @@ class Selector(NodeWithChildren):
 
   _decorators: Optional['Decorators']
   _name: Optional[str]
+  _node_id: Optional[int]
 
   def __init__(
       self,
@@ -1706,6 +1794,7 @@ class Selector(NodeWithChildren):
     super().__init__(children=children)
     self._decorators = None
     self._name = name
+    self._node_id = None
 
   @property
   def proto(self) -> behavior_tree_pb2.BehaviorTree.Node:
@@ -1730,6 +1819,14 @@ class Selector(NodeWithChildren):
   @name.setter
   def name(self, value: str):
     self._name = value
+
+  @property
+  def node_id(self) -> Optional[int]:
+    return self._node_id
+
+  @node_id.setter
+  def node_id(self, value: int):
+    self._node_id = value
 
   def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
     self._decorators = decorators
@@ -1770,6 +1867,7 @@ class Retry(Node):
 
   _decorators: Optional['Decorators']
   _name: Optional[str]
+  _node_id: Optional[int]
   child: Optional['Node']
   recovery: Optional['Node']
   max_tries: int
@@ -1787,6 +1885,7 @@ class Retry(Node):
     self.recovery = _transform_to_optional_node(recovery)
     self.max_tries = max_tries
     self._name = name
+    self._node_id = None
     self._retry_counter_key = retry_counter_key or 'retry_counter_' + str(
         uuid.uuid4()
     ).replace('-', '_')
@@ -1816,6 +1915,14 @@ class Retry(Node):
   @name.setter
   def name(self, value: str):
     self._name = value
+
+  @property
+  def node_id(self) -> Optional[int]:
+    return self._node_id
+
+  @node_id.setter
+  def node_id(self, value: int):
+    self._node_id = value
 
   @property
   def proto(self) -> behavior_tree_pb2.BehaviorTree.Node:
@@ -1926,6 +2033,7 @@ class Fallback(NodeWithChildren):
 
   _decorators: Optional['Decorators']
   _name: Optional[str]
+  _node_id: Optional[int]
 
   def __init__(
       self,
@@ -1937,6 +2045,7 @@ class Fallback(NodeWithChildren):
     super().__init__(children=children)
     self._decorators = None
     self._name = name
+    self._node_id = None
 
   @property
   def proto(self) -> behavior_tree_pb2.BehaviorTree.Node:
@@ -1961,6 +2070,14 @@ class Fallback(NodeWithChildren):
   @name.setter
   def name(self, value: str):
     self._name = value
+
+  @property
+  def node_id(self) -> Optional[int]:
+    return self._node_id
+
+  @node_id.setter
+  def node_id(self, value: int):
+    self._node_id = value
 
   def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
     self._decorators = decorators
@@ -2018,6 +2135,7 @@ class Loop(Node):
 
   _decorators: Optional['Decorators']
   _name: Optional[str]
+  _node_id: Optional[int]
   _for_each_value_key: Optional[str]
   _for_each_value: Optional[blackboard_value.BlackboardValue]
   _for_each_protos: Optional[List[protobuf_message.Message]]
@@ -2046,6 +2164,7 @@ class Loop(Node):
         uuid.uuid4()
     ).replace('-', '_')
     self._name = name
+    self._node_id = None
     self._for_each_value_key = for_each_value_key
     self._for_each_value = None
     self._for_each_protos = Loop._for_each_proto_input_to_protos(
@@ -2327,6 +2446,14 @@ class Loop(Node):
     self._name = value
 
   @property
+  def node_id(self) -> Optional[int]:
+    return self._node_id
+
+  @node_id.setter
+  def node_id(self, value: int):
+    self._node_id = value
+
+  @property
   def proto(self) -> behavior_tree_pb2.BehaviorTree.Node:
     self.validate()
     proto_object = super().proto
@@ -2524,6 +2651,7 @@ class Branch(Node):
 
   _decorators: Optional['Decorators']
   _name: Optional[str]
+  _node_id: Optional[int]
 
   def __init__(
       self,
@@ -2537,6 +2665,7 @@ class Branch(Node):
     self.else_child: Optional['Node'] = _transform_to_optional_node(else_child)
     self.if_condition: Optional['Condition'] = if_condition
     self._name = name
+    self._node_id = None
     super().__init__()
 
   def set_then_child(
@@ -2573,6 +2702,14 @@ class Branch(Node):
   @name.setter
   def name(self, value: str):
     self._name = value
+
+  @property
+  def node_id(self) -> Optional[int]:
+    return self._node_id
+
+  @node_id.setter
+  def node_id(self, value: int):
+    self._node_id = value
 
   @property
   def proto(self) -> behavior_tree_pb2.BehaviorTree.Node:
@@ -2716,6 +2853,7 @@ class Data(Node):
   _proto: Optional[protobuf_message.Message]
   _protos: Optional[List[protobuf_message.Message]]
   _name: Optional[str]
+  _node_id: Optional[int]
   _decorators: Optional['Decorators']
 
   class OperationType(enum.Enum):
@@ -2743,6 +2881,7 @@ class Data(Node):
     self._proto = proto
     self._protos = protos
     self._name = name
+    self._node_id = None
 
     super().__init__()
 
@@ -2757,6 +2896,14 @@ class Data(Node):
   @name.setter
   def name(self, value: str):
     self._name = value
+
+  @property
+  def node_id(self) -> Optional[int]:
+    return self._node_id
+
+  @node_id.setter
+  def node_id(self, value: int):
+    self._node_id = value
 
   @property
   def proto(self) -> behavior_tree_pb2.BehaviorTree.Node:

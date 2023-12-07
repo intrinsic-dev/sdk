@@ -169,11 +169,11 @@ class BehaviorTreeTest(parameterized.TestCase):
     my_proto = behavior_tree_pb2.BehaviorTree()
     my_proto.root.task.call_behavior.skill_id = 'ai.intrinsic.skill-0'
     compare.assertProto2Equal(
-        self, my_bt.proto, my_proto, ignored_fields=['tree_id']
+        self, my_bt.proto, my_proto, ignored_fields=['tree_id', 'root.id']
     )
 
   def test_generates_tree_id(self):
-    """Tests if behavior tree tree_id attribute generates a tree_id."""
+    """Tests if behavior tree generate_and_set_unique_id generates a tree_id."""
     my_bt = bt.BehaviorTree('my_bt')
     my_bt.set_root(
         bt.Sequence().set_children(
@@ -203,17 +203,20 @@ class BehaviorTreeTest(parameterized.TestCase):
     )
 
     compare.assertProto2Equal(
-        self, my_bt.proto, my_proto, ignored_fields=['tree_id']
+        self,
+        my_bt.proto,
+        my_proto,
+        ignored_fields=['tree_id', 'root.id', 'root.sequence.children.id'],
     )
     compare.assertProto2Equal(
         self,
         bt.BehaviorTree.create_from_proto(my_proto).proto,
         my_proto,
-        ignored_fields=['tree_id'],
+        ignored_fields=['tree_id', 'root.id', 'root.sequence.children.id'],
     )
 
-  def test_to_proto_and_from_proto_retains_tree_id(self):
-    """Tests if behavior tree conversion to/from proto respects tree_id."""
+  def test_to_proto_and_from_proto_retains_ids(self):
+    """Tests if behavior tree conversion to/from proto respects ids."""
     my_bt = bt.BehaviorTree('my_bt')
     my_bt.tree_id = 'custom_tree_id'
     my_bt.set_root(
@@ -221,6 +224,8 @@ class BehaviorTreeTest(parameterized.TestCase):
             bt.Task(behavior_call.Action(skill_id='ai.intrinsic.skill-0'))
         )
     )
+    my_bt.root.node_id = 42
+    my_bt.root.children[0].node_id = 43
 
     my_proto = behavior_tree_pb2.BehaviorTree(
         name='my_bt', tree_id='custom_tree_id'
@@ -228,6 +233,8 @@ class BehaviorTreeTest(parameterized.TestCase):
     my_proto.root.sequence.children.add().task.call_behavior.skill_id = (
         'ai.intrinsic.skill-0'
     )
+    my_proto.root.id = 42
+    my_proto.root.sequence.children[0].id = 43
 
     compare.assertProto2Equal(self, my_bt.proto, my_proto)
     compare.assertProto2Equal(
@@ -393,8 +400,9 @@ class BehaviorTreeTest(parameterized.TestCase):
     # By default, execution_settings are not set
     expected_proto = behavior_tree_pb2.BehaviorTree.Node()
     expected_proto.task.call_behavior.skill_id = 'ai.intrinsic.skill-1'
-    compare.assertProto2Equal(self, my_bt.root.proto, expected_proto)
-
+    compare.assertProto2Equal(
+        self, my_bt.root.proto, expected_proto, ignored_fields=['id']
+    )
     self.assertEqual(
         my_bt.root.execution_mode,
         bt.NodeExecutionMode.from_proto(
@@ -514,6 +522,37 @@ class BehaviorTreeTaskTest(absltest.TestCase):
         node_proto,
     )
 
+  def test_attributes(self):
+    """Tests the name and node_id attributes."""
+    my_node = bt.Task(behavior_call.Action(skill_id='ai.intrinsic.skill-0'))
+    self.assertIsNone(my_node.node_id)
+    my_node.name = 'foo'
+    my_node.node_id = 42
+    self.assertEqual(my_node.name, 'foo')
+    self.assertEqual(my_node.node_id, 42)
+
+  def test_generates_node_id(self):
+    """Tests if generate_and_set_unique_id generates a node_id."""
+    my_node = bt.Task(behavior_call.Action(skill_id='ai.intrinsic.skill-0'))
+    expected_id = my_node.generate_and_set_unique_id()
+
+    self.assertIsNotNone(my_node.node_id)
+    self.assertNotEqual(my_node.node_id, '')
+    self.assertEqual(my_node.node_id, expected_id)
+
+  def test_to_proto_and_from_proto_retains_node_id(self):
+    """Tests if node conversion to/from proto respects node_id."""
+    my_node = bt.Task(behavior_call.Action(skill_id='ai.intrinsic.skill-0'))
+    my_node.node_id = 42
+
+    my_proto = behavior_tree_pb2.BehaviorTree.Node(id=42)
+    my_proto.task.call_behavior.skill_id = 'ai.intrinsic.skill-0'
+
+    compare.assertProto2Equal(self, my_node.proto, my_proto)
+    compare.assertProto2Equal(
+        self, bt.Node.create_from_proto(my_proto).proto, my_proto
+    )
+
   def test_dot_graph(self):
     """Tests if node conversion to a dot representation works."""
     node = bt.Task(
@@ -610,6 +649,62 @@ class BehaviorTreeSubTreeTest(absltest.TestCase):
         ignored_fields=['sub_tree.tree.tree_id'],
     )
 
+  def test_attributes(self):
+    """Tests the name and node_id attributes."""
+    my_node = bt.SubTree(
+        behavior_tree=bt.BehaviorTree(
+            name='some_sub_tree',
+            root=behavior_call.Action(skill_id='some_skill'),
+        )
+    )
+    self.assertIsNone(my_node.node_id)
+    my_node.name = 'foo'
+    my_node.node_id = 42
+    self.assertEqual(my_node.name, 'foo')
+    self.assertEqual(my_node.node_id, 42)
+
+  def test_generates_node_id(self):
+    """Tests if generate_and_set_unique_id generates a node_id."""
+    my_node = bt.SubTree(
+        behavior_tree=bt.BehaviorTree(
+            name='some_sub_tree',
+            root=behavior_call.Action(skill_id='some_skill'),
+        )
+    )
+    expected_id = my_node.generate_and_set_unique_id()
+
+    self.assertIsNotNone(my_node.node_id)
+    self.assertNotEqual(my_node.node_id, '')
+    self.assertEqual(my_node.node_id, expected_id)
+
+  def test_to_proto_and_from_proto_retains_node_id(self):
+    """Tests if node conversion to/from proto respects node_id."""
+    my_node = bt.SubTree(
+        behavior_tree=bt.BehaviorTree(
+            name='some_sub_tree',
+            root=behavior_call.Action(skill_id='some_skill'),
+        )
+    )
+    my_node.node_id = 42
+
+    my_proto = behavior_tree_pb2.BehaviorTree.Node(
+        id=42,
+        sub_tree=behavior_tree_pb2.BehaviorTree.SubtreeNode(
+            tree=behavior_tree_pb2.BehaviorTree(
+                name='some_sub_tree',
+                root=behavior_tree_pb2.BehaviorTree.Node(
+                    task=behavior_tree_pb2.BehaviorTree.TaskNode()
+                ),
+            )
+        ),
+    )
+    my_proto.sub_tree.tree.root.task.call_behavior.skill_id = 'some_skill'
+
+    compare.assertProto2Equal(self, my_node.proto, my_proto)
+    compare.assertProto2Equal(
+        self, bt.Node.create_from_proto(my_proto).proto, my_proto
+    )
+
   def test_dot_graph_empty_instance(self):
     """Tests if the conversion of empty node to a dot representation works."""
     node = bt.SubTree()
@@ -685,6 +780,37 @@ class BehaviorTreeFailTest(absltest.TestCase):
         self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
+    )
+
+  def test_attributes(self):
+    """Tests the name and node_id attributes."""
+    my_node = bt.Fail()
+    self.assertIsNone(my_node.node_id)
+    my_node.name = 'foo'
+    my_node.node_id = 42
+    self.assertEqual(my_node.name, 'foo')
+    self.assertEqual(my_node.node_id, 42)
+
+  def test_generates_node_id(self):
+    """Tests if generate_and_set_unique_id generates a node_id."""
+    my_node = bt.Fail()
+    expected_id = my_node.generate_and_set_unique_id()
+
+    self.assertIsNotNone(my_node.node_id)
+    self.assertNotEqual(my_node.node_id, '')
+    self.assertEqual(my_node.node_id, expected_id)
+
+  def test_to_proto_and_from_proto_retains_node_id(self):
+    """Tests if node conversion to/from proto respects node_id."""
+    my_node = bt.Fail('failed')
+    my_node.node_id = 42
+
+    my_proto = behavior_tree_pb2.BehaviorTree.Node(id=42)
+    my_proto.fail.failure_message = 'failed'
+
+    compare.assertProto2Equal(self, my_node.proto, my_proto)
+    compare.assertProto2Equal(
+        self, bt.Node.create_from_proto(my_proto).proto, my_proto
     )
 
   def test_dot_graph(self):
@@ -788,6 +914,50 @@ class BehaviorTreeSequenceTest(absltest.TestCase):
         self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
+    )
+
+  def test_attributes(self):
+    """Tests the name and node_id attributes."""
+    my_node = bt.Sequence(name='foo')
+    my_node.set_children(
+        bt.Task(behavior_call.Action(skill_id='skill_0')),
+        bt.Task(behavior_call.Action(skill_id='skill_1')),
+    )
+    self.assertIsNone(my_node.node_id)
+    my_node.name = 'foo'
+    my_node.node_id = 42
+    self.assertEqual(my_node.name, 'foo')
+    self.assertEqual(my_node.node_id, 42)
+
+  def test_generates_node_id(self):
+    """Tests if generate_and_set_unique_id generates a node_id."""
+    my_node = bt.Sequence(name='foo')
+    my_node.set_children(
+        bt.Task(behavior_call.Action(skill_id='skill_0')),
+        bt.Task(behavior_call.Action(skill_id='skill_1')),
+    )
+    expected_id = my_node.generate_and_set_unique_id()
+
+    self.assertIsNotNone(my_node.node_id)
+    self.assertNotEqual(my_node.node_id, '')
+    self.assertEqual(my_node.node_id, expected_id)
+
+  def test_to_proto_and_from_proto_retains_node_id(self):
+    """Tests if node conversion to/from proto respects node_id."""
+    my_node = bt.Sequence(name='foo')
+    my_node.set_children(
+        bt.Task(behavior_call.Action(skill_id='skill_0')),
+        bt.Task(behavior_call.Action(skill_id='skill_1')),
+    )
+    my_node.node_id = 42
+
+    my_proto = behavior_tree_pb2.BehaviorTree.Node(name='foo', id=42)
+    my_proto.sequence.children.add().task.call_behavior.skill_id = 'skill_0'
+    my_proto.sequence.children.add().task.call_behavior.skill_id = 'skill_1'
+
+    compare.assertProto2Equal(self, my_node.proto, my_proto)
+    compare.assertProto2Equal(
+        self, bt.Node.create_from_proto(my_proto).proto, my_proto
     )
 
   def test_create_from_proto_prevents_accidental_call_from_subclass(self):
@@ -932,6 +1102,42 @@ class BehaviorTreeParallelTest(absltest.TestCase):
         node_proto,
     )
 
+  def test_attributes(self):
+    """Tests the name and node_id attributes."""
+    my_node = bt.Parallel(name='foo')
+    self.assertIsNone(my_node.node_id)
+    my_node.name = 'foo'
+    my_node.node_id = 42
+    self.assertEqual(my_node.name, 'foo')
+    self.assertEqual(my_node.node_id, 42)
+
+  def test_generates_node_id(self):
+    """Tests if generate_and_set_unique_id generates a node_id."""
+    my_node = bt.Parallel(name='foo')
+    expected_id = my_node.generate_and_set_unique_id()
+
+    self.assertIsNotNone(my_node.node_id)
+    self.assertNotEqual(my_node.node_id, '')
+    self.assertEqual(my_node.node_id, expected_id)
+
+  def test_to_proto_and_from_proto_retains_node_id(self):
+    """Tests if node conversion to/from proto respects node_id."""
+    my_node = bt.Parallel(name='foo')
+    my_node.set_children(
+        bt.Task(behavior_call.Action(skill_id='skill_0')),
+        bt.Task(behavior_call.Action(skill_id='skill_1')),
+    )
+    my_node.node_id = 42
+
+    my_proto = behavior_tree_pb2.BehaviorTree.Node(name='foo', id=42)
+    my_proto.parallel.children.add().task.call_behavior.skill_id = 'skill_0'
+    my_proto.parallel.children.add().task.call_behavior.skill_id = 'skill_1'
+
+    compare.assertProto2Equal(self, my_node.proto, my_proto)
+    compare.assertProto2Equal(
+        self, bt.Node.create_from_proto(my_proto).proto, my_proto
+    )
+
   def test_proto_with_unspecified_failure_behavior_resolves_to_default(self):
     node: bt.Parallel = bt.Node.create_from_proto(
         behavior_tree_pb2.BehaviorTree.Node(
@@ -1062,6 +1268,42 @@ class BehaviorTreeSelectorTest(absltest.TestCase):
         node_proto,
     )
 
+  def test_attributes(self):
+    """Tests the name and node_id attributes."""
+    my_node = bt.Selector(name='bar')
+    self.assertIsNone(my_node.node_id)
+    my_node.name = 'foo'
+    my_node.node_id = 42
+    self.assertEqual(my_node.name, 'foo')
+    self.assertEqual(my_node.node_id, 42)
+
+  def test_generates_node_id(self):
+    """Tests if generate_and_set_unique_id generates a node_id."""
+    my_node = bt.Selector(name='bar')
+    expected_id = my_node.generate_and_set_unique_id()
+
+    self.assertIsNotNone(my_node.node_id)
+    self.assertNotEqual(my_node.node_id, '')
+    self.assertEqual(my_node.node_id, expected_id)
+
+  def test_to_proto_and_from_proto_retains_node_id(self):
+    """Tests if node conversion to/from proto respects node_id."""
+    my_node = bt.Selector(name='bar')
+    my_node.set_children(
+        bt.Task(behavior_call.Action(skill_id='skill_0')),
+        bt.Task(behavior_call.Action(skill_id='skill_1')),
+    )
+    my_node.node_id = 42
+
+    my_proto = behavior_tree_pb2.BehaviorTree.Node(name='bar', id=42)
+    my_proto.selector.children.add().task.call_behavior.skill_id = 'skill_0'
+    my_proto.selector.children.add().task.call_behavior.skill_id = 'skill_1'
+
+    compare.assertProto2Equal(self, my_node.proto, my_proto)
+    compare.assertProto2Equal(
+        self, bt.Node.create_from_proto(my_proto).proto, my_proto
+    )
+
   def test_dot_graph_empty_node(self):
     """Tests if empty node conversion to a dot representation works."""
     node = bt.Selector()
@@ -1183,6 +1425,40 @@ class BehaviorTreeRetryTest(absltest.TestCase):
         self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
+    )
+
+  def test_attributes(self):
+    """Tests the name and node_id attributes."""
+    my_node = bt.Retry(2, name='foo')
+    self.assertIsNone(my_node.node_id)
+    my_node.name = 'foo'
+    my_node.node_id = 42
+    self.assertEqual(my_node.name, 'foo')
+    self.assertEqual(my_node.node_id, 42)
+
+  def test_generates_node_id(self):
+    """Tests if generate_and_set_unique_id generates a node_id."""
+    my_node = bt.Retry(2, name='foo')
+    expected_id = my_node.generate_and_set_unique_id()
+
+    self.assertIsNotNone(my_node.node_id)
+    self.assertNotEqual(my_node.node_id, '')
+    self.assertEqual(my_node.node_id, expected_id)
+
+  def test_to_proto_and_from_proto_retains_node_id(self):
+    """Tests if node conversion to/from proto respects node_id."""
+    my_node = bt.Retry(2, name='foo')
+    my_node.set_child(bt.Task(behavior_call.Action(skill_id='skill_0')))
+    my_node.node_id = 42
+
+    my_proto = behavior_tree_pb2.BehaviorTree.Node(name='foo', id=42)
+    my_proto.retry.max_tries = 2
+    my_proto.retry.child.task.call_behavior.skill_id = 'skill_0'
+    my_proto.retry.retry_counter_blackboard_key = my_node.retry_counter
+
+    compare.assertProto2Equal(self, my_node.proto, my_proto)
+    compare.assertProto2Equal(
+        self, bt.Node.create_from_proto(my_proto).proto, my_proto
     )
 
   def test_dot_graph_empty(self):
@@ -1308,6 +1584,42 @@ class BehaviorTreeFallbackTest(absltest.TestCase):
         self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
+    )
+
+  def test_attributes(self):
+    """Tests the name and node_id attributes."""
+    my_node = bt.Fallback(name='foo')
+    self.assertIsNone(my_node.node_id)
+    my_node.name = 'foo'
+    my_node.node_id = 42
+    self.assertEqual(my_node.name, 'foo')
+    self.assertEqual(my_node.node_id, 42)
+
+  def test_generates_node_id(self):
+    """Tests if generate_and_set_unique_id generates a node_id."""
+    my_node = bt.Fallback(name='foo')
+    expected_id = my_node.generate_and_set_unique_id()
+
+    self.assertIsNotNone(my_node.node_id)
+    self.assertNotEqual(my_node.node_id, '')
+    self.assertEqual(my_node.node_id, expected_id)
+
+  def test_to_proto_and_from_proto_retains_node_id(self):
+    """Tests if node conversion to/from proto respects node_id."""
+    my_node = bt.Fallback(name='foo')
+    my_node.set_children(
+        bt.Task(behavior_call.Action(skill_id='skill_0')),
+        bt.Task(behavior_call.Action(skill_id='skill_1')),
+    )
+    my_node.node_id = 42
+
+    my_proto = behavior_tree_pb2.BehaviorTree.Node(name='foo', id=42)
+    my_proto.fallback.children.add().task.call_behavior.skill_id = 'skill_0'
+    my_proto.fallback.children.add().task.call_behavior.skill_id = 'skill_1'
+
+    compare.assertProto2Equal(self, my_node.proto, my_proto)
+    compare.assertProto2Equal(
+        self, bt.Node.create_from_proto(my_proto).proto, my_proto
     )
 
   def test_dot_graph_empty_node(self):
@@ -1452,6 +1764,37 @@ class BehaviorTreeLoopTest(absltest.TestCase):
     node_proto.loop.max_times = 2
     node_proto.loop.do.task.call_behavior.skill_id = 'skill_0'
     node_proto.loop.loop_counter_blackboard_key = node.loop_counter
+
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
+        bt.Node.create_from_proto(node_proto).proto,
+        node_proto,
+        ignored_fields=['loop.loop_counter_blackboard_key'],
+    )
+
+    node.set_while_condition(bt.Blackboard('foo'))
+    condition = getattr(node_proto.loop, 'while')
+    condition.CopyFrom(node.while_condition.proto)
+
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
+        bt.Node.create_from_proto(node_proto).proto,
+        node_proto,
+        ignored_fields=['loop.loop_counter_blackboard_key'],
+    )
+
+    node.set_decorators(_create_test_decorator())
+    node_proto.decorators.condition.blackboard.cel_expression = 'foo'
+
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
+        bt.Node.create_from_proto(node_proto).proto,
+        node_proto,
+        ignored_fields=['loop.loop_counter_blackboard_key'],
+    )
 
   def test_to_proto_and_from_proto_for_each(self):
     """Tests if conversion to and from a proto works for for_each nodes."""
@@ -1605,6 +1948,40 @@ class BehaviorTreeLoopTest(absltest.TestCase):
         node_proto,
     )
 
+  def test_attributes(self):
+    """Tests the name and node_id attributes."""
+    my_node = bt.Loop(max_times=2, name='foo')
+    self.assertIsNone(my_node.node_id)
+    my_node.name = 'foo'
+    my_node.node_id = 42
+    self.assertEqual(my_node.name, 'foo')
+    self.assertEqual(my_node.node_id, 42)
+
+  def test_generates_node_id(self):
+    """Tests if generate_and_set_unique_id generates a node_id."""
+    my_node = bt.Loop(max_times=2, name='foo')
+    expected_id = my_node.generate_and_set_unique_id()
+
+    self.assertIsNotNone(my_node.node_id)
+    self.assertNotEqual(my_node.node_id, '')
+    self.assertEqual(my_node.node_id, expected_id)
+
+  def test_to_proto_and_from_proto_retains_node_id(self):
+    """Tests if node conversion to/from proto respects node_id."""
+    my_node = bt.Loop(max_times=2, name='foo')
+    my_node.set_do_child(behavior_call.Action(skill_id='skill_0'))
+    my_node.node_id = 42
+
+    my_proto = behavior_tree_pb2.BehaviorTree.Node(name='foo', id=42)
+    my_proto.loop.max_times = 2
+    my_proto.loop.do.task.call_behavior.skill_id = 'skill_0'
+    my_proto.loop.loop_counter_blackboard_key = my_node.loop_counter
+
+    compare.assertProto2Equal(self, my_node.proto, my_proto)
+    compare.assertProto2Equal(
+        self, bt.Node.create_from_proto(my_proto).proto, my_proto
+    )
+
   def test_dot_graph_empty_node(self):
     """Tests if empty node conversion to a dot representation works."""
     node = bt.Loop()
@@ -1755,6 +2132,41 @@ class BehaviorTreeBranchTest(absltest.TestCase):
         self,
         bt.Node.create_from_proto(node_proto).proto,
         node_proto,
+    )
+
+  def test_attributes(self):
+    """Tests the name and node_id attributes."""
+    my_node = bt.Branch(name='foo')
+    self.assertIsNone(my_node.node_id)
+    my_node.name = 'foo'
+    my_node.node_id = 42
+    self.assertEqual(my_node.name, 'foo')
+    self.assertEqual(my_node.node_id, 42)
+
+  def test_generates_node_id(self):
+    """Tests if generate_and_set_unique_id generates a node_id."""
+    my_node = bt.Branch(name='foo')
+    expected_id = my_node.generate_and_set_unique_id()
+
+    self.assertIsNotNone(my_node.node_id)
+    self.assertNotEqual(my_node.node_id, '')
+    self.assertEqual(my_node.node_id, expected_id)
+
+  def test_to_proto_and_from_proto_retains_node_id(self):
+    """Tests if node conversion to/from proto respects node_id."""
+    my_node = bt.Branch(name='foo')
+    my_node.set_then_child(behavior_call.Action(skill_id='skill_0'))
+    my_node.set_if_condition(bt.Blackboard('foo'))
+    my_node.node_id = 42
+
+    my_proto = behavior_tree_pb2.BehaviorTree.Node(name='foo', id=42)
+    my_proto.branch.then.task.call_behavior.skill_id = 'skill_0'
+    condition = getattr(my_proto.branch, 'if')
+    condition.CopyFrom(bt.Blackboard('foo').proto)
+
+    compare.assertProto2Equal(self, my_node.proto, my_proto)
+    compare.assertProto2Equal(
+        self, bt.Node.create_from_proto(my_proto).proto, my_proto
     )
 
   def test_dot_graph_empty_node(self):
@@ -1979,6 +2391,49 @@ class BehaviorTreeDataTest(parameterized.TestCase):
 
     with self.assertRaises(solutions_errors.InvalidArgumentError):
       _ = bt.Node.create_from_proto(node_proto)
+
+  def test_attributes(self):
+    """Tests the name and node_id attributes."""
+    my_node = bt.Data(
+        name='foo',
+        operation=bt.Data.OperationType.REMOVE,
+        blackboard_key='bbfoo',
+    )
+    self.assertIsNone(my_node.node_id)
+    my_node.name = 'foo'
+    my_node.node_id = 42
+    self.assertEqual(my_node.name, 'foo')
+    self.assertEqual(my_node.node_id, 42)
+
+  def test_generates_node_id(self):
+    """Tests if generate_and_set_unique_id generates a node_id."""
+    my_node = bt.Data(
+        name='foo',
+        operation=bt.Data.OperationType.REMOVE,
+        blackboard_key='bbfoo',
+    )
+    expected_id = my_node.generate_and_set_unique_id()
+
+    self.assertIsNotNone(my_node.node_id)
+    self.assertNotEqual(my_node.node_id, '')
+    self.assertEqual(my_node.node_id, expected_id)
+
+  def test_to_proto_and_from_proto_retains_node_id(self):
+    """Tests if node conversion to/from proto respects node_id."""
+    my_node = bt.Data(
+        name='foo',
+        operation=bt.Data.OperationType.REMOVE,
+        blackboard_key='bbfoo',
+    )
+    my_node.node_id = 42
+
+    my_proto = behavior_tree_pb2.BehaviorTree.Node(name='foo', id=42)
+    my_proto.data.remove.blackboard_key = 'bbfoo'
+
+    compare.assertProto2Equal(self, my_node.proto, my_proto)
+    compare.assertProto2Equal(
+        self, bt.Node.create_from_proto(my_proto).proto, my_proto
+    )
 
   def test_init_remove_ctor(self):
     """Tests if BehaviorTree.Data is correctly for removal."""

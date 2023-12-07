@@ -489,7 +489,7 @@ message BehaviorTree {
     //      | task b |
     //      | id: 1  |
     //      ----------
-    uint32 id = 17;
+    optional uint32 id = 17;
 
     reserved "import_tree";
     reserved 10;
