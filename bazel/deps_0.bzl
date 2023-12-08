@@ -109,9 +109,9 @@ def intrinsic_sdks_deps_0():
     maybe(
         http_archive,
         name = "aspect_bazel_lib",
-        sha256 = "4d6010ca5e3bb4d7045b071205afa8db06ec11eb24de3f023d74d77cca765f66",
-        strip_prefix = "bazel-lib-1.39.0",
-        url = "https://github.com/aspect-build/bazel-lib/releases/download/v1.39.0/bazel-lib-v1.39.0.tar.gz",
+        sha256 = "4c1de11ebabc23a3c976b73a2b2647596f545beda8a61d2c1c034e07f3f8b976",
+        strip_prefix = "bazel-lib-2.0.2",
+        url = "https://github.com/aspect-build/bazel-lib/releases/download/v2.0.2/bazel-lib-v2.0.2.tar.gz",
     )
 
     maybe(
