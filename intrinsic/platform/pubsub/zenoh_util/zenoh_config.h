@@ -30,7 +30,6 @@ inline std::string GetZenohPeerConfig() {
         bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation(
             "ai_intrinsic_sdks");
   }
-
   std::ifstream file(runfiles_path + config_path);
   if (file.is_open()) {
     // Read the entire file into a string
