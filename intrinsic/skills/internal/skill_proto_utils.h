@@ -11,20 +11,11 @@
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/descriptor.pb.h"
 #include "google/protobuf/message.h"
-#include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/proto/skill_manifest.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
 
 namespace intrinsic {
 namespace skills {
-
-// Gets a Skill proto that's ready for use in, for instance, the SkillRegistry
-// config. Does not populate any default parameters. If semver_version is not
-// specified will set id_version = id.
-// Returns an error if `semver_version` is not valid semver.
-absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
-    const SkillSignatureInterface& skill_interface,
-    std::optional<absl::string_view> semver_version = std::nullopt);
 
 absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
     const intrinsic_proto::skills::Manifest& manifest,
