@@ -80,10 +80,10 @@ class Action(actions.ActionBase):
               v, k, prefix_options, self.proto.skill_id
           )
           param.append(f'{k.name}={python_repr}')
-      for entry in self.proto.equipment:
+      for entry in self.proto.resources:
         equipment_param = (
             f'{prefix_options.equipment_prefix}.'
-            f'{self.proto.equipment[entry].handle.replace(":", "_")}'
+            f'{self.proto.resources[entry].handle.replace(":", "_")}'
         )
         param.append(f'{entry}={equipment_param}')
       if self.proto.return_value_name:
@@ -98,10 +98,10 @@ class Action(actions.ActionBase):
   def __repr__(self) -> str:
     """Converts Action to Python (pseudocode) representation."""
     equipment = ''
-    if self.proto.equipment:
+    if self.proto.resources:
       equipment = ', '.join([
           f'{key}={{{repr(value).strip()}}}'
-          for key, value in sorted(self.proto.equipment.items())
+          for key, value in sorted(self.proto.resources.items())
       ])
       equipment = f'.require({equipment})'
     return f'Action(skill_id={repr(self.proto.skill_id)}){equipment}'
@@ -123,7 +123,7 @@ class Action(actions.ActionBase):
     Returns:
       self
     """
-    self._proto.equipment.clear()
+    self._proto.resources.clear()
     for slot, name in kwargs.items():
-      self._proto.equipment[slot].handle = name
+      self._proto.resources[slot].handle = name
     return self

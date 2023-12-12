@@ -367,7 +367,7 @@ class SkillsTest(parameterized.TestCase):
     expected_proto = behavior_call_pb2.BehaviorCall(
         skill_id=skill_id, return_value_name=skill.proto.return_value_name
     )
-    expected_proto.equipment[resource_slot].handle = resource_name
+    expected_proto.resources[resource_slot].handle = resource_name
     expected_proto.parameters.Pack(parameters)
 
     compare.assertProto2Equal(self, expected_proto, skill.proto)
@@ -420,7 +420,7 @@ class SkillsTest(parameterized.TestCase):
     expected_proto = behavior_call_pb2.BehaviorCall(
         skill_id=skill_id, return_value_name=skill.proto.return_value_name
     )
-    expected_proto.equipment[resource_slot].handle = resource_name
+    expected_proto.resources[resource_slot].handle = resource_name
     expected_proto.parameters.Pack(parameter_defaults)
 
     compare.assertProto2Equal(self, expected_proto, skill.proto)
@@ -482,7 +482,7 @@ class SkillsTest(parameterized.TestCase):
     expected_proto = behavior_call_pb2.BehaviorCall(
         skill_id=skill_id, return_value_name=skill.proto.return_value_name
     )
-    expected_proto.equipment[resource_slot].handle = resource_name
+    expected_proto.resources[resource_slot].handle = resource_name
     expected_proto.parameters.Pack(parameters)
 
     compare.assertProto2Equal(self, expected_proto, skill.proto)
@@ -532,7 +532,7 @@ class SkillsTest(parameterized.TestCase):
     expected_proto = behavior_call_pb2.BehaviorCall(
         skill_id=skill_id, return_value_name=skill.proto.return_value_name
     )
-    expected_proto.equipment[resource_slot].handle = resource_name
+    expected_proto.resources[resource_slot].handle = resource_name
     expected_proto.parameters.Pack(parameter_defaults)
     expected_proto.assignments.append(
         behavior_call_pb2.BehaviorCall.ParameterAssignment(
@@ -676,7 +676,7 @@ class SkillsTest(parameterized.TestCase):
             ),
         ],
     )
-    expected_proto.equipment[resource_slot].handle = resource_name
+    expected_proto.resources[resource_slot].handle = resource_name
 
     expected_parameters = test_skill_params_pb2.TestMessage(
         executive_test_message=test_message_pb2.TestMessage(

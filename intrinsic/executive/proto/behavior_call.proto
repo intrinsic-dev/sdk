@@ -11,7 +11,7 @@ import "intrinsic/skills/proto/skills.proto";
 
 // A BehaviorCall is a reference to a fully configured behavior to execute.
 // It can either be a skill or a parameterizable behavior tree. It references
-// the skill_id and configures parameters, parameter assignments and equipment
+// the skill_id and configures parameters, parameter assignments and resources
 // as well as the key for the return value.
 message BehaviorCall {
   // Catalog id of the behavior to be instantiated.
@@ -38,16 +38,16 @@ message BehaviorCall {
   // the parameter and cel_expression to access the blackboard value.
   repeated ParameterAssignment assignments = 4;
 
-  message EquipmentSpecification {
-    oneof equipment_specification_type {
+  message ResourceSpecification {
+    oneof resource_specification_type {
       string handle = 1;
       string reference = 2;
     }
   }
-  // This is a map from slot to equipment name or reference.
+  // This is a map from slot to resource name or reference.
   // The name can then be used to retrieve a resource handle.
   // The reference will be instantiated from a BehaviorCall.
-  map<string, EquipmentSpecification> equipment = 5;
+  map<string, ResourceSpecification> resources = 5;
 
   // This is the key for accessing the return value of the behavior call on
   // the blackboard.

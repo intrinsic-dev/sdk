@@ -887,7 +887,7 @@ class GeneratedSkill(providers.SkillBase):
       proto.parameters.Pack(self._param_message)
 
     for slot, handle in self._resources.items():
-      proto.equipment[slot].handle = handle.name
+      proto.resources[slot].handle = handle.name
 
     for name, cel_expression in self._blackboard_params.items():
       proto.assignments.append(
@@ -909,8 +909,8 @@ class GeneratedSkill(providers.SkillBase):
           for field, value in self._param_message.ListFields()
       ])
     resource_params = []
-    if self.proto.equipment:
-      for key, value in sorted(self.proto.equipment.items()):
+    if self.proto.resources:
+      for key, value in sorted(self.proto.resources.items()):
         slot_param_name = key
         if key in self._info.field_names:
           slot_param_name = key + skill_utils.RESOURCE_SLOT_DECONFLICT_SUFFIX

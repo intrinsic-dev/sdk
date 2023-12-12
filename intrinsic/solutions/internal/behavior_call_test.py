@@ -98,7 +98,7 @@ class BehaviorCallActionTest(absltest.TestCase):
     proto = text_format.Parse(
         r"""
             skill_id: "ai.intrinsic.my_custom_action"
-            equipment {
+            resources {
               key: "device"
               value {
                 handle: "SomeSpeaker"
@@ -223,7 +223,7 @@ class BehaviorCallActionTest(absltest.TestCase):
     proto = behavior_call_pb2.BehaviorCall(
         skill_id='ai.intrinsic.my_custom_action'
     )
-    proto.equipment['robot'].handle = 'my_robot'
+    proto.resources['robot'].handle = 'my_robot'
 
     action = behavior_call.Action(
         skill_id='ai.intrinsic.my_custom_action'
