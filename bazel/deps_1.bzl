@@ -79,8 +79,8 @@ def intrinsic_sdks_deps_1(register_go_toolchain = True):
     bazel_toolchain_dependencies()
     llvm_toolchain(
         name = "llvm_toolchain",
-        distribution = "clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz",
-        llvm_version = "15.0.6",
+        distribution = "clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz",
+        llvm_version = "14.0.0",
         sysroot = {
             "linux-x86_64": "@com_googleapis_storage_chrome_linux_amd64_sysroot//:all_files",
         },
