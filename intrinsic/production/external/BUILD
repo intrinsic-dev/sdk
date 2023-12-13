@@ -41,6 +41,7 @@ exports_files(
         "go.sum",
         "grpc_synchronized_test.py",
         "intrinsic.bazelrc",
+        "intrinsic.bazelversion",
         "intrinsic.gitignore",
         "requirements.in",
         "requirements.txt",
