@@ -75,13 +75,13 @@ class PrefixOptions:
     xfa_prefix: Prefix for how the xfa module has been imported.
     world_prefix: Prefix for how the world can be accessed.
     skill_prefix: Prefix for how the skills can be accessed.
-    equipment_prefix: Prefix for how equipment can be accessed.
+    resource_prefix: Prefix for how resources can be accessed.
   """
 
   xfa_prefix: str = "xfa"
   world_prefix: str = "world"
   skill_prefix: str = "skills"
-  equipment_prefix: str = "solution.resources"
+  resource_prefix: str = "solution.resources"
 
 
 def protoenum(

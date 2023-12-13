@@ -29,8 +29,8 @@ import numpy as np
 # Since frame grabbing tends to timeout on overloaded guitar clusters we
 # increase this value even further.
 _MAX_FRAME_WAIT_TIME_SECONDS = 120
-_CONFIG_EQUIPMENT_IDENTIFIER_DEPRECATED = 'Config'
-_CONFIG_EQUIPMENT_IDENTIFIER = 'CameraConfig'
+_CONFIG_RESOURCE_IDENTIFIER_DEPRECATED = 'Config'
+_CONFIG_RESOURCE_IDENTIFIER = 'CameraConfig'
 _MIN_DEPTH_METERS = 0.0
 _MAX_DEPTH_METERS = 2.0  # Reasonable assumption for our current depth cameras.
 _PLOT_WIDTH_INCHES = 40
@@ -42,10 +42,10 @@ def _get_camera_config(
 ) -> Optional[camera_config_pb2.CameraConfig]:
   """Returns camera config, or None if resource is not a camera."""
   config = None
-  if _CONFIG_EQUIPMENT_IDENTIFIER in data:
-    config = data[_CONFIG_EQUIPMENT_IDENTIFIER]
-  elif _CONFIG_EQUIPMENT_IDENTIFIER_DEPRECATED in data:
-    config = data[_CONFIG_EQUIPMENT_IDENTIFIER_DEPRECATED]
+  if _CONFIG_RESOURCE_IDENTIFIER in data:
+    config = data[_CONFIG_RESOURCE_IDENTIFIER]
+  elif _CONFIG_RESOURCE_IDENTIFIER_DEPRECATED in data:
+    config = data[_CONFIG_RESOURCE_IDENTIFIER_DEPRECATED]
   if config is None:
     return None
   camera_config = camera_config_pb2.CameraConfig()

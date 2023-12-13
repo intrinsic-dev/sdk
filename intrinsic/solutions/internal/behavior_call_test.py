@@ -134,9 +134,9 @@ class BehaviorCallActionTest(absltest.TestCase):
     skill_registry_response.skills.add().CopyFrom(skill_info)
     skill_registry_stub.GetSkills.return_value = skill_registry_response
 
-    equipment_registry_stub = mock.MagicMock()
+    resource_registry_stub = mock.MagicMock()
 
-    skills = skills_mod.Skills(skill_registry, equipment_registry_stub)
+    skills = skills_mod.Skills(skill_registry, resource_registry_stub)
     skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
     action = behavior_call_pb2.BehaviorCall(skill_id=skill_id)
@@ -186,9 +186,9 @@ class BehaviorCallActionTest(absltest.TestCase):
     skill_registry_response.skills.add().CopyFrom(skill_info)
     skill_registry_stub.GetSkills.return_value = skill_registry_response
 
-    equipment_registry_stub = mock.MagicMock()
+    resource_registry_stub = mock.MagicMock()
 
-    skills = skills_mod.Skills(skill_registry, equipment_registry_stub)
+    skills = skills_mod.Skills(skill_registry, resource_registry_stub)
     skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
     action = behavior_call_pb2.BehaviorCall(skill_id=skill_id)
@@ -219,7 +219,7 @@ class BehaviorCallActionTest(absltest.TestCase):
     with self.assertRaises(TypeError):
       _ = IncompleteAction()
 
-  def test_require_equipment(self):
+  def test_require_resources(self):
     proto = behavior_call_pb2.BehaviorCall(
         skill_id='ai.intrinsic.my_custom_action'
     )

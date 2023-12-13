@@ -81,11 +81,11 @@ class Action(actions.ActionBase):
           )
           param.append(f'{k.name}={python_repr}')
       for entry in self.proto.resources:
-        equipment_param = (
-            f'{prefix_options.equipment_prefix}.'
+        resource_param = (
+            f'{prefix_options.resource_prefix}.'
             f'{self.proto.resources[entry].handle.replace(":", "_")}'
         )
-        param.append(f'{entry}={equipment_param}')
+        param.append(f'{entry}={resource_param}')
       if self.proto.return_value_name:
         param.append(f'return_value_key="{self.proto.return_value_name}"')
       return (
@@ -97,16 +97,16 @@ class Action(actions.ActionBase):
 
   def __repr__(self) -> str:
     """Converts Action to Python (pseudocode) representation."""
-    equipment = ''
+    resources = ''
     if self.proto.resources:
-      equipment = ', '.join([
+      resources = ', '.join([
           f'{key}={{{repr(value).strip()}}}'
           for key, value in sorted(self.proto.resources.items())
       ])
-      equipment = f'.require({equipment})'
-    return f'Action(skill_id={repr(self.proto.skill_id)}){equipment}'
+      resources = f'.require({resources})'
+    return f'Action(skill_id={repr(self.proto.skill_id)}){resources}'
   def require(self, **kwargs) -> 'Action':
-    """Sets (and overwrites) equipment of the action.
+    """Sets (and overwrites) resources of the action.
 
     Example usage:
     ```
@@ -115,10 +115,10 @@ class Action(actions.ActionBase):
     ```
 
     Note that this class does not have a skill info, so the validity of the
-    equipment (slot name) cannot be verified.
+    resource (slot name) cannot be verified.
 
     Args:
-      **kwargs: a map from slot name to equipment name.
+      **kwargs: a map from slot name to resource name.
 
     Returns:
       self
