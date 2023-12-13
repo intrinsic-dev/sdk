@@ -319,6 +319,7 @@ def connect(
     address: Optional[str] = None,
     org: Optional[str] = None,
     solution: Optional[str] = None,
+    cluster: Optional[str] = None,
     options: Optional[Dict[str, Any]] = None,
 ) -> "Solution":
   # pyformat: disable
@@ -330,6 +331,7 @@ def connect(
     address: Connect directly to an address (e.g. localhost). Only one of [project, solution] and address is allowed.
     org: Organization of the solution to connect to.
     solution: Id (not display name!) of the solution to connect to.
+    cluster: Name of cluster to connect to (instead of specifying 'solution').
     options: An optional Dict[str, Any] containing additional options.
   Raises:
     ValueError: if parameter combination is incorrect.
@@ -344,12 +346,14 @@ def connect(
           bool(
               org
               or solution
+              or cluster
           ),
           bool(address),
       ])
       > 1
   ):
     solution_params = ["org", "solution"]
+    solution_params.append("cluster")
     solution_params = ", ".join(solution_params)
     raise ValueError(
         f"Only one of grpc_channel_or_host_port, [{solution_params}],"
@@ -364,6 +368,7 @@ def connect(
         address=address,
         org=org,
         solution=solution,
+        cluster=cluster,
     )
 
   return Solution.for_channel(channel, options=options)
@@ -407,6 +412,7 @@ def create_grpc_channel(
     address: Optional[str] = None,
     org: Optional[str] = None,
     solution: Optional[str] = None,
+    cluster: Optional[str] = None,
 ) -> grpc.Channel:
   # pyformat: disable
   """Creates a gRPC channel to a deployed solution.
@@ -419,6 +425,8 @@ def create_grpc_channel(
       [project, solution] and address is allowed.
     org: Organization of the solution to connect to.
     solution: Id (not display name!) of the solution to connect to.
+    cluster: Name of cluster to connect to (instead of specifying 'solution').
+
   Returns:
     A gRPC channel
   """
@@ -430,6 +438,7 @@ def create_grpc_channel(
       address,
       org,
       solution,
+      cluster,
   ]):
     # Legacy behavior: Use default hostport if called without params.
     default_address = os.environ.get(
@@ -457,6 +466,7 @@ def create_grpc_channel(
   elif (
       (org is not None)
       or (solution is not None)
+      or (cluster is not None)
   ):
     # pyformat: disable
     if not (
@@ -466,10 +476,11 @@ def create_grpc_channel(
         and
         (
             (solution is not None)
+            or (cluster is not None)
         )
     ):
       # pylint: disable-next=unused-variable
-      msg = f"'org' ({org}) and 'solution' ({solution}) are required together!"
+      msg = f"'org' ({org}) and one of 'solution' ({solution}) or 'cluster' ({cluster}) are required together!"
       raise ValueError(msg)
     # pyformat: enable
 
@@ -486,6 +497,8 @@ def create_grpc_channel(
         ) from error
 
     resolved_cluster = None
+    if cluster is not None:
+      resolved_cluster = cluster
     if solution is not None:
       resolved_cluster = _get_cluster_from_solution(resolved_project, solution)
 
