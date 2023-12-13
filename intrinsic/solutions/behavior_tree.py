@@ -557,7 +557,20 @@ class Node(abc.ABC):
 
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
-    return f'{type(self).__name__}()'
+    return f'{type(self).__name__}({self._name_repr()})'
+
+  def _name_repr(self) -> str:
+    """Returns a snippet for the name attribute to be used in __repr__.
+
+    The snippet is a keyword argument of the form 'name="example_name", '. It
+    will be empty, if name is not set. It can be inserted in the output of a
+    constructor call in __repr__ without any logic (e.g., adding commas or not,
+    handling the name not being set).
+    """
+    name_snippet = ''
+    if self.name is not None:
+      name_snippet = f'name="{self.name}", '
+    return name_snippet
 
   @classmethod
   def create_from_proto(
@@ -1206,10 +1219,7 @@ class Task(Node):
 
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
-    name_snippet = ''
-    if self.name is not None:
-      name_snippet = f'name="{self.name}", '
-    return f'{type(self).__name__}({name_snippet}action=behavior_call.Action(skill_id="{self._behavior_call_proto.skill_id}"))'
+    return f'{type(self).__name__}({self._name_repr()}action=behavior_call.Action(skill_id="{self._behavior_call_proto.skill_id}"))'
 
   @property
   def name(self) -> Optional[str]:
@@ -1373,9 +1383,9 @@ class SubTree(Node):
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
     if not self.behavior_tree:
-      return f'{type(self).__name__}()'
+      return f'{type(self).__name__}({self._name_repr()})'
     else:
-      return f'{type(self).__name__}({str(self.behavior_tree)})'
+      return f'{type(self).__name__}({self._name_repr()}behavior_tree={repr(self.behavior_tree)})'
 
   @property
   def name(self) -> Optional[str]:
@@ -1511,7 +1521,11 @@ class Fail(Node):
 
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
-    return f'{type(self).__name__}({self.failure_message})'
+    rep = f'{type(self).__name__}({self._name_repr()}'
+    if self.failure_message:
+      rep += f'failure_message="{self.failure_message}"'
+    rep += ')'
+    return rep
 
   @property
   def proto(self) -> behavior_tree_pb2.BehaviorTree.Node:
@@ -1607,10 +1621,7 @@ class NodeWithChildren(Node):
 
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
-    name_snippet = ''
-    if self.name is not None:
-      name_snippet = f'name="{self.name}", '
-    representation = f'{type(self).__name__}({name_snippet}children=['
+    representation = f'{type(self).__name__}({self._name_repr()}children=['
     representation += ', '.join(map(str, self.children))
     representation += '])'
     return representation
@@ -1982,12 +1993,9 @@ class Retry(Node):
 
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
-    name_snippet = ''
-    if self.name is not None:
-      name_snippet = f'name="{self.name}", '
     recovery_str = f', recovery={str(self.recovery)}'
     return (
-        f'{type(self).__name__}({name_snippet}max_tries={self.max_tries},'
+        f'{type(self).__name__}({self._name_repr()}max_tries={self.max_tries},'
         f' child={str(self.child)}{recovery_str})'
     )
 
@@ -2520,18 +2528,16 @@ class Loop(Node):
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
     representation = f'{type(self).__name__}'
-    if self.while_condition is not None:
-      representation += f' {str(self.while_condition)}'
     if self._for_each_generator_cel_expression is not None:
       representation += f' over {self._for_each_generator_cel_expression}'
     if self._for_each_protos is not None:
       representation += f' over {len(self._for_each_protos)} protos'
-    representation += ' ('
-    if self.name is not None:
-      representation += f'name="{self.name}", '
+    representation += f'({self._name_repr()}'
+    if self.while_condition is not None:
+      representation += f'while_condition={repr(self.while_condition)}, '
     if self.max_times != 0:
       representation += f'max_times={self.max_times}, '
-    representation += f'{str(self.do_child)})'
+    representation += f'do_child={repr(self.do_child)})'
     return representation
 
   @property
@@ -2796,13 +2802,14 @@ class Branch(Node):
 
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
-    representation = f'{type(self).__name__}'
+    representation = f'{type(self).__name__}({self._name_repr()}'
     if self.if_condition is not None:
-      representation += f' {str(self.if_condition)}'
+      representation += f'if_condition={repr(self.if_condition)}, '
     if self.then_child is not None:
-      representation += f' then ({str(self.then_child)})'
+      representation += f'then_child={repr(self.then_child)}, '
     if self.else_child is not None:
-      representation += f' else ({str(self.else_child)})'
+      representation += f'else_child={repr(self.else_child)}'
+    representation += ')'
     return representation
 
   @property
@@ -3012,7 +3019,10 @@ class Data(Node):
 
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
-    return f'{type(self).__name__}'
+    return (
+        f'{type(self).__name__}({self._name_repr()},'
+        f' blackboard_key="{self.blackboard_key}")'
+    )
 
   @property
   def name(self) -> Optional[str]:

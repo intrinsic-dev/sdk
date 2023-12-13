@@ -1002,7 +1002,7 @@ class BehaviorTreeSubTreeTest(absltest.TestCase):
     )
     self.assertEqual(
         str(node),
-        'SubTree(BehaviorTree(name="some_sub_tree",'
+        'SubTree(behavior_tree=BehaviorTree(name="some_sub_tree",'
         ' root=Task(action=behavior_call.Action(skill_id="some_skill"))))',
     )
 
@@ -1155,10 +1155,15 @@ class BehaviorTreeFailTest(absltest.TestCase):
 
   def test_str_conversion(self):
     """Tests if conversion to string works."""
-    node = bt.Fail('')
+    node = bt.Fail()
     self.assertEqual(str(node), 'Fail()')
     node = bt.Fail('some_failure_message')
-    self.assertEqual(str(node), 'Fail(some_failure_message)')
+    self.assertEqual(str(node), 'Fail(failure_message="some_failure_message")')
+    node = bt.Fail(name='my_fail', failure_message='some_failure_message')
+    self.assertEqual(
+        str(node),
+        'Fail(name="my_fail", failure_message="some_failure_message")',
+    )
 
   def test_to_proto_and_from_proto(self):
     """Tests if conversion to and from a proto representation works."""
@@ -2127,14 +2132,14 @@ class BehaviorTreeLoopTest(absltest.TestCase):
   def test_str_conversion(self):
     """Tests if conversion to string works."""
     node = bt.Loop()
-    self.assertEqual(str(node), 'Loop (None)')
+    self.assertEqual(str(node), 'Loop(do_child=None)')
     node.max_times = 2
     node.set_do_child(behavior_call.Action(skill_id='skill_0'))
     node.set_while_condition(bt.Blackboard('foo'))
     self.assertEqual(
         str(node),
-        'Loop Blackboard(foo)'
-        ' (max_times=2, Task(action=behavior_call.Action(skill_id="skill_0")))',
+        'Loop(while_condition=Blackboard(foo), max_times=2, '
+        'do_child=Task(action=behavior_call.Action(skill_id="skill_0")))',
     )
 
   def test_to_proto_empty_child(self):
@@ -2505,21 +2510,21 @@ class BehaviorTreeBranchTest(absltest.TestCase):
   def test_str_conversion(self):
     """Tests if conversion to string works."""
     node = bt.Branch()
-    self.assertEqual(str(node), 'Branch')
+    self.assertEqual(str(node), 'Branch()')
     node.set_then_child(behavior_call.Action(skill_id='skill_0'))
     node.set_if_condition(bt.Blackboard('foo'))
     self.assertEqual(
         str(node),
-        'Branch Blackboard(foo) then'
-        ' (Task(action=behavior_call.Action(skill_id="skill_0")))',
+        'Branch(if_condition=Blackboard(foo), then_child='
+        'Task(action=behavior_call.Action(skill_id="skill_0")), )',
     )
 
     node.set_else_child(behavior_call.Action(skill_id='skill_1'))
     self.assertEqual(
         str(node),
-        'Branch Blackboard(foo) then'
-        ' (Task(action=behavior_call.Action(skill_id="skill_0"))) else'
-        ' (Task(action=behavior_call.Action(skill_id="skill_1")))',
+        'Branch(if_condition=Blackboard(foo), then_child='
+        'Task(action=behavior_call.Action(skill_id="skill_0")), else_child='
+        'Task(action=behavior_call.Action(skill_id="skill_1")))',
     )
 
   def test_to_proto_no_then_or_else(self):
