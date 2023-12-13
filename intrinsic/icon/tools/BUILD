@@ -36,6 +36,24 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "clear_faults",
+    srcs = ["clear_faults.cc"],
+    deps = [
+        "//intrinsic/icon/cc_client:client",
+        "//intrinsic/icon/cc_client:operational_status",
+        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/icon/release/portable:init_xfa_absl",
+        "//intrinsic/util/grpc:channel",
+        "//intrinsic/util/grpc:connection_params",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 cc_library(
     name = "generate_documentation",
     srcs = ["generate_documentation.cc"],
