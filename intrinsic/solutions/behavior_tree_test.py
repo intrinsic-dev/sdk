@@ -2,8 +2,9 @@
 
 """Tests for intrinsic.solutions.behavior_tree."""
 
+import copy
 import io
-from typing import cast
+from typing import Union, cast
 from unittest import mock
 
 from absl.testing import absltest
@@ -470,6 +471,396 @@ bar2 = BT.BehaviorTree(name='my_bt', root=bar1)
       )
 
     self.assertEqual(mock_stdout.getvalue(), expected_str)
+
+
+class BehaviorTreeVisitorTest(absltest.TestCase):
+  """Tests the visitor function for BehaviorTrees."""
+
+  def setUp(self):
+    super().setUp()
+    self.visited_names = []
+    self.visited_trees = []
+
+  def visit_callback(
+      self,
+      containing_tree: bt.BehaviorTree,
+      tree_object: Union[bt.BehaviorTree, bt.Node, bt.Condition],
+  ) -> None:
+    self.visited_trees.append(containing_tree.name)
+    if isinstance(tree_object, bt.BehaviorTree | bt.Node):
+      self.visited_names.append(tree_object.name)
+    elif isinstance(tree_object, bt.Blackboard):
+      self.visited_names.append(tree_object.cel_expression)
+    elif isinstance(tree_object, bt.Condition):
+      self.visited_names.append(tree_object.__class__.__name__)
+    else:
+      raise TypeError(f'Did not expect a {tree_object.__class__.__name__}')
+
+  def test_visits_simple_tree(self):
+    """Tests if a node in a simple tree is visited."""
+    my_bt = bt.BehaviorTree(name='my_bt')
+    my_bt.set_root(
+        bt.Sequence(name='seq').set_children(
+            bt.Task(
+                name='task',
+                action=behavior_call.Action(skill_id='ai.intrinsic.skill-1'),
+            )
+        )
+    )
+
+    my_bt.visit(self.visit_callback)
+    self.assertEqual(self.visited_names, ['my_bt', 'seq', 'task'])
+
+  def test_visits_all_tree(self):
+    """Test if a tree with all node types is visited recursively."""
+    my_bt = bt.BehaviorTree(name='all_tree')
+    my_bt.set_root(
+        bt.Sequence(name='main_sequence').set_children(
+            bt.Task(
+                name='task',
+                action=behavior_call.Action(skill_id='ai.intrinsic.skill-1'),
+            ),
+            bt.SubTree(
+                name='subtree_node',
+                behavior_tree=bt.BehaviorTree(
+                    name='subtree_tree', root=bt.Fail(name='subtree_root')
+                ),
+            ),
+            bt.Fail(name='fail'),
+            bt.Sequence(
+                name='sequence',
+                children=[
+                    bt.Fail(name='sequence_child0'),
+                    bt.Fail(name='sequence_child1'),
+                ],
+            ),
+            bt.Parallel(
+                name='parallel',
+                children=[
+                    bt.Fail(name='parallel_child0'),
+                    bt.Fail(name='parallel_child1'),
+                ],
+            ),
+            bt.Selector(
+                name='selector',
+                children=[
+                    bt.Fail(name='selector_child0'),
+                    bt.Fail(name='selector_child1'),
+                ],
+            ),
+            bt.Retry(
+                name='retry',
+                child=bt.Fail(name='retry_child'),
+                recovery=bt.Fail(name='retry_recovery'),
+            ),
+            bt.Fallback(
+                name='fallback',
+                children=[
+                    bt.Fail(name='fallback_child0'),
+                    bt.Fail(name='fallback_child1'),
+                ],
+            ),
+            bt.Loop(
+                name='loop',
+                while_condition=bt.Blackboard(cel_expression='loop_condition'),
+                do_child=bt.Fail(name='do_child'),
+            ),
+            bt.Branch(
+                name='branch',
+                if_condition=bt.Blackboard(cel_expression='branch_condition'),
+                then_child=bt.Fail(name='branch_then'),
+                else_child=bt.Fail(name='branch_else'),
+            ),
+            bt.Data(name='data'),
+        )
+    )
+
+    my_bt.visit(self.visit_callback)
+    self.assertEqual(
+        self.visited_names,
+        [
+            'all_tree',
+            'main_sequence',
+            'task',
+            'subtree_node',
+            'subtree_tree',
+            'subtree_root',
+            'fail',
+            'sequence',
+            'sequence_child0',
+            'sequence_child1',
+            'parallel',
+            'parallel_child0',
+            'parallel_child1',
+            'selector',
+            'selector_child0',
+            'selector_child1',
+            'retry',
+            'retry_child',
+            'retry_recovery',
+            'fallback',
+            'fallback_child0',
+            'fallback_child1',
+            'loop',
+            'loop_condition',
+            'do_child',
+            'branch',
+            'branch_condition',
+            'branch_then',
+            'branch_else',
+            'data',
+        ],
+    )
+
+  def test_visits_containing_tree(self):
+    """Test if the containing_tree is correctly set."""
+    my_bt = bt.BehaviorTree(name='all_tree')
+    my_bt.set_root(
+        bt.Sequence(name='main_sequence').set_children(
+            bt.SubTree(
+                name='subtree_node',
+                behavior_tree=bt.BehaviorTree(
+                    name='subtree_tree', root=bt.Fail(name='subtree_root')
+                ),
+            ),
+            bt.Loop(
+                name='loop',
+                while_condition=bt.SubTreeCondition(
+                    tree=bt.BehaviorTree(
+                        name='loop_condition_subtree',
+                        root=bt.Fail(name='loop_condition_subtree_root'),
+                    )
+                ),
+                do_child=bt.Fail(name='do_child'),
+            ),
+        )
+    )
+
+    my_bt.visit(self.visit_callback)
+    self.assertEqual(
+        self.visited_names,
+        [
+            'all_tree',
+            'main_sequence',
+            'subtree_node',
+            'subtree_tree',
+            'subtree_root',
+            'loop',
+            'SubTreeCondition',
+            'loop_condition_subtree',
+            'loop_condition_subtree_root',
+            'do_child',
+        ],
+    )
+    self.assertEqual(
+        self.visited_trees,
+        [
+            'all_tree',
+            'all_tree',
+            'all_tree',
+            'subtree_tree',
+            'subtree_tree',
+            'all_tree',
+            'all_tree',
+            'loop_condition_subtree',
+            'loop_condition_subtree',
+            'all_tree',
+        ],
+    )
+
+  def test_visits_all_decorators(self):
+    """Test if all node types visit their decorators."""
+    my_bt = bt.BehaviorTree(name='all_tree')
+    my_bt.set_root(
+        bt.Sequence(name='main_sequence').set_children(
+            bt.Task(
+                name='task',
+                action=behavior_call.Action(skill_id='ai.intrinsic.skill-1'),
+            ),
+            bt.SubTree(name='subtree'),
+            bt.Fail(name='fail'),
+            bt.Sequence(name='sequence'),
+            bt.Parallel(name='parallel'),
+            bt.Selector(name='selector'),
+            bt.Retry(name='retry'),
+            bt.Fallback(name='fallback'),
+            bt.Loop(name='loop'),
+            bt.Branch(name='branch'),
+            bt.Data(name='data'),
+        )
+    )
+    for num, child in enumerate(my_bt.root.children):
+      child.set_decorators(
+          bt.Decorators(
+              condition=bt.Blackboard(cel_expression=f'decorator{num}')
+          )
+      )
+
+    my_bt.visit(self.visit_callback)
+    self.assertEqual(
+        self.visited_names,
+        [
+            'all_tree',
+            'main_sequence',
+            'decorator0',
+            'task',
+            'decorator1',
+            'subtree',
+            'decorator2',
+            'fail',
+            'decorator3',
+            'sequence',
+            'decorator4',
+            'parallel',
+            'decorator5',
+            'selector',
+            'decorator6',
+            'retry',
+            'decorator7',
+            'fallback',
+            'decorator8',
+            'loop',
+            'decorator9',
+            'branch',
+            'decorator10',
+            'data',
+        ],
+    )
+
+  def test_visits_condition_tree(self):
+    """Test if a tree visits conditions recursively."""
+    my_cond = bt.AllOf(
+        conditions=[
+            bt.AnyOf(
+                conditions=[
+                    bt.Blackboard(cel_expression='allof_anyof0'),
+                    bt.Blackboard(cel_expression='allof_anyof1'),
+                ]
+            ),
+            bt.Blackboard(cel_expression='allof_blackboard'),
+            bt.Not(condition=bt.Blackboard(cel_expression='allof_not')),
+            bt.SubTreeCondition(
+                tree=bt.BehaviorTree(
+                    name='allof_subtree',
+                    root=bt.Fail(name='allof_subtree_root'),
+                )
+            ),
+        ]
+    )
+
+    def rename_cond(cond: bt.Condition, prefix: str) -> None:
+      cond.conditions[0].conditions[0].cel_expression = (
+          cond.conditions[0]
+          .conditions[0]
+          .cel_expression.replace('allof', f'{prefix}_allof')
+      )
+      cond.conditions[0].conditions[1].cel_expression = (
+          cond.conditions[0]
+          .conditions[1]
+          .cel_expression.replace('allof', f'{prefix}_allof')
+      )
+      cond.conditions[1].cel_expression = cond.conditions[
+          1
+      ].cel_expression.replace('allof', f'{prefix}_allof')
+      cond.conditions[2].condition.cel_expression = cond.conditions[
+          2
+      ].condition.cel_expression.replace('allof', f'{prefix}_allof')
+      cond.conditions[3].tree.name = cond.conditions[3].tree.name.replace(
+          'allof', f'{prefix}_allof'
+      )
+      cond.conditions[3].tree.root.name = cond.conditions[
+          3
+      ].tree.root.name.replace('allof', f'{prefix}_allof')
+
+    my_while = copy.deepcopy(my_cond)
+    rename_cond(my_while, 'while')
+    my_branch = copy.deepcopy(my_cond)
+    rename_cond(my_branch, 'branch')
+    my_decorator_cond = copy.deepcopy(my_cond)
+    rename_cond(my_decorator_cond, 'decorator')
+    my_nested_decorator_cond = copy.deepcopy(my_cond)
+    rename_cond(my_nested_decorator_cond, 'nested_decorator')
+    # The root node of the subtree condition of my_decorator has another
+    # decorator condition
+    my_decorator_cond.conditions[3].tree.root.set_decorators(
+        bt.Decorators(condition=my_nested_decorator_cond)
+    )
+
+    my_bt = bt.BehaviorTree(name='all_tree')
+    my_bt.set_root(
+        bt.Sequence(name='main_sequence').set_children(
+            bt.Fail(name='fail_with_decorator'),
+            bt.Loop(
+                name='loop',
+                while_condition=my_while,
+                do_child=bt.Fail(name='do_child'),
+            ),
+            bt.Branch(
+                name='branch',
+                if_condition=my_branch,
+                then_child=bt.Fail(name='branch_then'),
+                else_child=bt.Fail(name='branch_else'),
+            ),
+        )
+    )
+    my_bt.root.children[0].set_decorators(
+        bt.Decorators(condition=my_decorator_cond)
+    )
+
+    my_bt.visit(self.visit_callback)
+    self.assertEqual(
+        self.visited_names,
+        [
+            'all_tree',
+            'main_sequence',
+            'AllOf',
+            'AnyOf',
+            'decorator_allof_anyof0',
+            'decorator_allof_anyof1',
+            'decorator_allof_blackboard',
+            'Not',
+            'decorator_allof_not',
+            'SubTreeCondition',
+            'decorator_allof_subtree',
+            'AllOf',
+            'AnyOf',
+            'nested_decorator_allof_anyof0',
+            'nested_decorator_allof_anyof1',
+            'nested_decorator_allof_blackboard',
+            'Not',
+            'nested_decorator_allof_not',
+            'SubTreeCondition',
+            'nested_decorator_allof_subtree',
+            'nested_decorator_allof_subtree_root',
+            'decorator_allof_subtree_root',
+            'fail_with_decorator',
+            'loop',
+            'AllOf',
+            'AnyOf',
+            'while_allof_anyof0',
+            'while_allof_anyof1',
+            'while_allof_blackboard',
+            'Not',
+            'while_allof_not',
+            'SubTreeCondition',
+            'while_allof_subtree',
+            'while_allof_subtree_root',
+            'do_child',
+            'branch',
+            'AllOf',
+            'AnyOf',
+            'branch_allof_anyof0',
+            'branch_allof_anyof1',
+            'branch_allof_blackboard',
+            'Not',
+            'branch_allof_not',
+            'SubTreeCondition',
+            'branch_allof_subtree',
+            'branch_allof_subtree_root',
+            'branch_then',
+            'branch_else',
+        ],
+    )
 
 
 class BehaviorTreeTaskTest(absltest.TestCase):

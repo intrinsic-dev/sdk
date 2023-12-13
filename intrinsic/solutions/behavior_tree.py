@@ -17,7 +17,7 @@ executive.run() method.
 import abc
 import enum
 import sys
-from typing import Any as AnyType, Iterable, List, Optional, Sequence as SequenceType, Tuple, Union
+from typing import Any as AnyType, Callable, Iterable, List, Optional, Sequence as SequenceType, Tuple, Union
 import uuid
 
 from google.protobuf import any_pb2
@@ -721,6 +721,17 @@ class Node(abc.ABC):
   ):
     ...
 
+  def visit(
+      self,
+      containing_tree: 'BehaviorTree',
+      callback: Callable[
+          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+      ],
+  ) -> None:
+    if self.decorators is not None and self.decorators.condition is not None:
+      self.decorators.condition.visit(containing_tree, callback)
+    callback(containing_tree, self)
+
   @property
   def breakpoint(self) -> 'BreakpointType':
     if self.decorators is not None:
@@ -846,6 +857,15 @@ class Condition(abc.ABC):
   ) -> str:
     ...
 
+  def visit(
+      self,
+      containing_tree: 'BehaviorTree',
+      callback: Callable[
+          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+      ],
+  ) -> None:
+    callback(containing_tree, self)
+
 
 class SubTreeCondition(Condition):
   """A BT condition of type SubTree.
@@ -900,6 +920,17 @@ class SubTreeCondition(Condition):
     identifier = _generate_unique_identifier('subtree_condition', identifiers)
     print(f'{identifier} = BT.SubTreeCondition(tree={tree_identifier})')
     return identifier
+
+  def visit(
+      self,
+      containing_tree: 'BehaviorTree',
+      callback: Callable[
+          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+      ],
+  ) -> None:
+    super().visit(containing_tree, callback)
+    if self.tree is not None:
+      self.tree.visit(callback)
 
 
 class Blackboard(Condition):
@@ -988,6 +1019,17 @@ class CompoundCondition(Condition):
         f' BT.{self.condition_type}(conditions=[{", ".join(conditions)}])'
     )
     return identifier
+
+  def visit(
+      self,
+      containing_tree: 'BehaviorTree',
+      callback: Callable[
+          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+      ],
+  ) -> None:
+    super().visit(containing_tree, callback)
+    for condition in self.conditions:
+      condition.visit(containing_tree, callback)
 
 
 class AllOf(CompoundCondition):
@@ -1106,6 +1148,17 @@ class Not(Condition):
     condition = self.condition.print_python_code(identifiers, skills)
     print(f'{identifier} = BT.Not(condition={condition})')
     return identifier
+
+  def visit(
+      self,
+      containing_tree: 'BehaviorTree',
+      callback: Callable[
+          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+      ],
+  ) -> None:
+    super().visit(containing_tree, callback)
+    if self.condition is not None:
+      self.condition.visit(containing_tree, callback)
 
 
 class Task(Node):
@@ -1420,6 +1473,17 @@ class SubTree(Node):
         print(f'{identifier}.set_decorators({decorator_identifier})')
     return identifier
 
+  def visit(
+      self,
+      containing_tree: 'BehaviorTree',
+      callback: Callable[
+          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+      ],
+  ) -> None:
+    super().visit(containing_tree, callback)
+    if self.behavior_tree is not None:
+      self.behavior_tree.visit(callback)
+
 
 class Fail(Node):
   """A BT node of type Fail for behavior_tree_pb2.BehaviorTree.FailNode.
@@ -1585,6 +1649,17 @@ class NodeWithChildren(Node):
       if decorator_identifier:
         print(f'{identifier}.set_decorators({decorator_identifier})')
     return identifier
+
+  def visit(
+      self,
+      containing_tree: 'BehaviorTree',
+      callback: Callable[
+          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+      ],
+  ) -> None:
+    super().visit(containing_tree, callback)
+    for child in self.children:
+      child.visit(containing_tree, callback)
 
 
 class Sequence(NodeWithChildren):
@@ -2024,6 +2099,19 @@ class Retry(Node):
       if decorator_identifier:
         print(f'{identifier}.set_decorators({decorator_identifier})')
     return identifier
+
+  def visit(
+      self,
+      containing_tree: 'BehaviorTree',
+      callback: Callable[
+          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+      ],
+  ) -> None:
+    super().visit(containing_tree, callback)
+    if self.child is not None:
+      self.child.visit(containing_tree, callback)
+    if self.recovery is not None:
+      self.recovery.visit(containing_tree, callback)
 
 
 class Fallback(NodeWithChildren):
@@ -2642,6 +2730,19 @@ class Loop(Node):
         print(f'{identifier}.set_decorators({decorator_identifier})')
     return identifier
 
+  def visit(
+      self,
+      containing_tree: 'BehaviorTree',
+      callback: Callable[
+          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+      ],
+  ) -> None:
+    super().visit(containing_tree, callback)
+    if self.while_condition is not None:
+      self.while_condition.visit(containing_tree, callback)
+    if self.do_child is not None:
+      self.do_child.visit(containing_tree, callback)
+
 
 class Branch(Node):
   """BT node of type Branch for behavior_tree_pb2.BehaviorTree.BranchNode.
@@ -2834,6 +2935,21 @@ class Branch(Node):
       if decorator_identifier:
         print(f'{identifier}.set_decorators({decorator_identifier})')
     return identifier
+
+  def visit(
+      self,
+      containing_tree: 'BehaviorTree',
+      callback: Callable[
+          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+      ],
+  ) -> None:
+    super().visit(containing_tree, callback)
+    if self.if_condition is not None:
+      self.if_condition.visit(containing_tree, callback)
+    if self.then_child is not None:
+      self.then_child.visit(containing_tree, callback)
+    if self.else_child is not None:
+      self.else_child.visit(containing_tree, callback)
 
 
 class Data(Node):
@@ -3395,6 +3511,41 @@ class BehaviorTree:
       )
     self.tree_id = str(uuid.uuid4())
     return self.tree_id
+
+  def visit(
+      self,
+      callback: Callable[
+          ['BehaviorTree', Union['BehaviorTree', Node, Condition]], None
+      ],
+  ) -> None:
+    """Visits this BehaviorTree recursively.
+
+    All objects in the BehaviorTree are visited and the callback is called on
+    every one. Objects can be
+      * BehaviorTree objects, e.g., the tree itself, sub trees, or behavior
+        trees in conditions
+      * Node objects, e.g., Task or Sequence nodes
+      * Condition objects, e.g., AllOf, Not or SubTreeCondition
+
+    The callback is called for every object. For example, when called on a tree
+    the callback is first called with the tree itself, when called on a
+    SubtreeNode it is first called on the SubTreeNode and then on the sub-tree,
+    when called on a SubTreeCondition it is first called on the condition and
+    then on the tree within that condition.
+
+    Callbacks are performed in an natural order for the different objects. For
+    example, for a sequence node, its children are visited as in the node's
+    order; for a loop node first its while condition is visited, then its
+    do_child; a retry node first visits its child and then the recovery.
+
+    Args:
+      callback: Function (or any callable) to be called. This first argument
+        will be the BehaviorTree containing the object in question, the second
+        argument is the object itself, i.e., a BehaviorTree, Node or Condition.
+    """
+    callback(self, self)
+    if self.root is not None:
+      self.root.visit(self, callback)
 
   def dot_graph(self) -> graphviz.Digraph:
     """Converts the given behavior tree into a graphviz dot representation.
