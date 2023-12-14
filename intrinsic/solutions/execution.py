@@ -54,7 +54,7 @@ _CSS_INTERRUPTED_STYLE = (
 )
 _PROCESS_TREE_SCOPE = "PROCESS_TREE"
 
-PlanOrActionType = Union[
+BehaviorTreeOrActionType = Union[
     bt.BehaviorTree,
     bt.Node,
     List[Union[actions.ActionBase, List[actions.ActionBase]]],
@@ -450,7 +450,7 @@ class Executive:
 
   def run_async(
       self,
-      plan_or_action: Optional[PlanOrActionType] = None,
+      plan_or_action: Optional[BehaviorTreeOrActionType] = None,
       *,
       silence_outputs: bool = False,
       step_wise: bool = False,
@@ -496,7 +496,7 @@ class Executive:
 
   def run(
       self,
-      plan_or_action: Optional[PlanOrActionType],
+      plan_or_action: Optional[BehaviorTreeOrActionType],
       *,
       silence_outputs: bool = False,
       step_wise: bool = False,
@@ -554,7 +554,7 @@ class Executive:
 
   def _run(
       self,
-      plan_or_action: Union[PlanOrActionType],
+      plan_or_action: Union[BehaviorTreeOrActionType],
       blocking: bool,
       silence_outputs: bool,
       step_wise: bool,
@@ -615,15 +615,17 @@ class Executive:
         embed_skill_traces=embed_skill_traces,
     )
 
-  def load(self, plan_or_action: Optional[PlanOrActionType]) -> None:
-    """Loads an action or plan into the executive.
+  def load(
+      self, behavior_tree_or_action: Optional[BehaviorTreeOrActionType]
+  ) -> None:
+    """Loads an action or behavior tree into the executive.
 
     Note that an action can be a general action or any skill obtained through
     skills.
 
     Args:
-      plan_or_action: A behavior tree, a list of actions (can be nested one
-        level) or a single action.
+      behavior_tree_or_action: A behavior tree, a list of actions (can be nested
+        one level) or a single action.
 
     Raises:
       solutions_errors.UnavailableError: On executive service not reachable.
@@ -631,47 +633,47 @@ class Executive:
       OperationNotFoundError: if no operation is currently active.
     """
     self._update_operation()
-    plan = None
-    if isinstance(plan_or_action, actions.ActionBase):
-      if utils.is_iterable(plan_or_action):
-        plan = bt.BehaviorTree(
+    behavior_tree = None
+    if isinstance(behavior_tree_or_action, actions.ActionBase):
+      if utils.is_iterable(behavior_tree_or_action):
+        behavior_tree = bt.BehaviorTree(
             root=bt.Sequence(
                 children=[
                     bt.Task(cast(actions.ActionBase, a))
-                    for a in list(plan_or_action)
+                    for a in list(behavior_tree_or_action)
                 ]
             )
         )
       else:
-        plan = bt.BehaviorTree(
-            root=bt.Task(cast(actions.ActionBase, plan_or_action))
+        behavior_tree = bt.BehaviorTree(
+            root=bt.Task(cast(actions.ActionBase, behavior_tree_or_action))
         )
-    elif isinstance(plan_or_action, list):
-      action_list = _flatten_list(plan_or_action)
-      plan = bt.BehaviorTree(
+    elif isinstance(behavior_tree_or_action, list):
+      action_list = _flatten_list(behavior_tree_or_action)
+      behavior_tree = bt.BehaviorTree(
           root=bt.Sequence(
               children=[
                   bt.Task(cast(actions.ActionBase, a)) for a in action_list
               ]
           )
       )
-    elif isinstance(plan_or_action, bt.BehaviorTree):
-      plan = cast(bt.BehaviorTree, plan_or_action)
-    elif isinstance(plan_or_action, bt.Node):
-      implicit_tree_from_node = bt.BehaviorTree(root=plan_or_action)
-      plan = cast(bt.BehaviorTree, implicit_tree_from_node)
+    elif isinstance(behavior_tree_or_action, bt.BehaviorTree):
+      behavior_tree = cast(bt.BehaviorTree, behavior_tree_or_action)
+    elif isinstance(behavior_tree_or_action, bt.Node):
+      implicit_tree_from_node = bt.BehaviorTree(root=behavior_tree_or_action)
+      behavior_tree = cast(bt.BehaviorTree, implicit_tree_from_node)
+
+    request = executive_service_pb2.CreateOperationRequest()
+    if behavior_tree is not None:
+      behavior_tree.validate_id_uniqueness()
+      request.behavior_tree.CopyFrom(behavior_tree.proto)
 
     if self._operation:
       try:
         self._delete_with_retry()
       except OperationNotFoundError:
         pass
-
       self._operation = None
-
-    request = executive_service_pb2.CreateOperationRequest()
-    if plan is not None:
-      request.behavior_tree.CopyFrom(plan.proto)
 
     self._create_with_retry(request)
 

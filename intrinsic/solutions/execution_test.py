@@ -149,7 +149,7 @@ class ExecutiveTest(parameterized.TestCase):
     ]
 
   def test_load_works(self):
-    """Tests if executive.run_async() calls start in the executive service."""
+    """Tests if executive.load() calls CreateOperation in the executive service."""
     list_response = operations_pb2.ListOperationsResponse()
     self._executive_service_stub.ListOperations.return_value = list_response
 
@@ -164,6 +164,21 @@ class ExecutiveTest(parameterized.TestCase):
     self._executive_service_stub.CreateOperation.assert_called_with(
         executive_service_pb2.CreateOperationRequest(behavior_tree=my_bt.proto)
     )
+
+  def test_load_validates_uniqueness(self):
+    """Tests if executive.load() validates uniqueness of ids."""
+    list_response = operations_pb2.ListOperationsResponse()
+    self._executive_service_stub.ListOperations.return_value = list_response
+
+    my_bt = bt.BehaviorTree(root=bt.Sequence(children=[bt.Fail()]))
+    my_bt.root.node_id = 1
+    my_bt.root.children[0].node_id = 1
+
+    with self.assertRaisesRegex(
+        solutions_errors.InvalidArgumentError,
+        '.*violates uniqueness.*',
+    ):
+      self._executive.load(my_bt)
 
   def test_run_async_works(self):
     """Tests if executive.run_async() calls start in the executive service."""
