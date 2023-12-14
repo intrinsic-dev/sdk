@@ -40,7 +40,7 @@ platform(
         "@bazel_tools//tools/cpp:clang",
     ],
     exec_properties = {
-        "container-image": "docker://gcr.io/giza-workcells/bazel-rbe-executor@sha256:6650b807d35da820c154c527932fdb3034acaa20b5cf970251e7ec34c59a9cda",
+        "container-image": "docker://gcr.io/giza-workcells/bazel-rbe-executor@sha256:fffa413a7fb1506c6e78e12fa7506ae92e35840af033c7ce0bb9d8ffbb0163a8",
         "OSFamily": "Linux",
     },
     parents = ["@local_config_platform//:host"],
