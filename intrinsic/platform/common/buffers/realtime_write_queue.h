@@ -10,6 +10,7 @@
 #include <optional>
 
 #include "absl/base/attributes.h"
+#include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/time/time.h"
 #include "absl/types/optional.h"

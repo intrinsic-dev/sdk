@@ -18,7 +18,6 @@ cc_library(
         "//intrinsic/icon/utils:realtime_guard",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/functional:bind_front",
-        "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",

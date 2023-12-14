@@ -25,6 +25,7 @@ cc_library(
         "//intrinsic/platform/common/buffers/internal:event_fd",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:optional",
     ],
