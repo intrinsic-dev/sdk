@@ -27,7 +27,6 @@ cc_library(
         ":{{.SkillNameSnakeCase}}_cc_proto",
         "@ai_intrinsic_sdks//intrinsic/icon/release:status_helpers",
         "@ai_intrinsic_sdks//intrinsic/skills/cc:skill_interface",
-        "@ai_intrinsic_sdks//intrinsic/skills/cc:skill_registration",
         "@ai_intrinsic_sdks//intrinsic/skills/cc:skill_utils",
         "@ai_intrinsic_sdks//intrinsic/skills/proto:equipment_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",

@@ -11,7 +11,6 @@
 #include "google/protobuf/message.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/cc/skill_interface_utils.h"
-#include "intrinsic/skills/cc/skill_registration.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/skills/testing/no_op_skill.pb.h"
@@ -42,7 +41,5 @@ absl::StatusOr<std::unique_ptr<::google::protobuf::Message>> NoOpSkill::Preview(
     const PreviewRequest& request, PreviewContext& context) {
   return PreviewViaExecute(*this, request, context);
 }
-
-REGISTER_SKILL(NoOpSkill, "no_op", NoOpSkill::CreateSkill);
 
 }  // namespace intrinsic::skills

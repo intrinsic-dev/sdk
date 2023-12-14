@@ -185,14 +185,6 @@ cc_library(
 )
 
 cc_library(
-    name = "skill_registration",
-    hdrs = ["skill_registration.h"],
-    deps = [
-        "//intrinsic/skills/internal:registerer_skill_repository",
-    ],
-)
-
-cc_library(
     name = "skill_utils",
     srcs = ["skill_utils.cc"],
     hdrs = ["skill_utils.h"],

@@ -329,25 +329,6 @@ cc_library(
     ],
 )
 
-cc_library(
-    name = "registerer_skill_repository",
-    srcs = ["registerer_skill_repository.cc"],
-    hdrs = ["registerer_skill_repository.h"],
-    deps = [
-        ":runtime_data",
-        ":skill_repository",
-        "//intrinsic/icon/release:status_helpers",
-        "//intrinsic/skills/cc:skill_interface",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/synchronization",
-    ],
-)
-
 py_library(
     name = "skill_repository_py",
     srcs = ["skill_repository.py"],
