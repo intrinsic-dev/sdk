@@ -85,19 +85,6 @@ class ActionBase(abc.ABC):
     """
     raise NotImplementedError
 
-  def __iter__(self):
-    """Iterator for aggregation actions.
-
-    Override in actions which group multiple actions.
-
-    Returns:
-      [Action] sequence of actions
-
-    Raises:
-      TypeError: if the action is not an aggergation action.
-    """
-    raise TypeError
-
   @property
   def execute_timeout(self) -> Optional[datetime.timedelta]:
     """Timeout after which execution should be considered failed."""

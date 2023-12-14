@@ -635,19 +635,9 @@ class Executive:
     self._update_operation()
     behavior_tree = None
     if isinstance(behavior_tree_or_action, actions.ActionBase):
-      if utils.is_iterable(behavior_tree_or_action):
-        behavior_tree = bt.BehaviorTree(
-            root=bt.Sequence(
-                children=[
-                    bt.Task(cast(actions.ActionBase, a))
-                    for a in list(behavior_tree_or_action)
-                ]
-            )
-        )
-      else:
-        behavior_tree = bt.BehaviorTree(
-            root=bt.Task(cast(actions.ActionBase, behavior_tree_or_action))
-        )
+      behavior_tree = bt.BehaviorTree(
+          root=bt.Task(cast(actions.ActionBase, behavior_tree_or_action))
+      )
     elif isinstance(behavior_tree_or_action, list):
       action_list = _flatten_list(behavior_tree_or_action)
       behavior_tree = bt.BehaviorTree(
@@ -660,8 +650,7 @@ class Executive:
     elif isinstance(behavior_tree_or_action, bt.BehaviorTree):
       behavior_tree = cast(bt.BehaviorTree, behavior_tree_or_action)
     elif isinstance(behavior_tree_or_action, bt.Node):
-      implicit_tree_from_node = bt.BehaviorTree(root=behavior_tree_or_action)
-      behavior_tree = cast(bt.BehaviorTree, implicit_tree_from_node)
+      behavior_tree = bt.BehaviorTree(root=behavior_tree_or_action)
 
     request = executive_service_pb2.CreateOperationRequest()
     if behavior_tree is not None:
