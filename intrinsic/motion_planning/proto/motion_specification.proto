@@ -145,13 +145,13 @@ message MotionSpecification {
   // requirement. We also do not currently support different joint limits for
   // different segments.
   repeated MotionSegment motion_segments = 1;
-  // Default collision settings that apply to all motion segments which don't
-  // define them in their path constraints of the individual motion segment.
-  // If not provided, the default is collision checking with zero margin.
-  optional intrinsic_proto.world.CollisionSettings collision_settings = 2;
+
   // The curve waypoint fitting parameters that will be applied during
   // trajectory generation if multiple motion segments have been defined. Use
   // Cartesian blending parameter for linear Cartesian motion requests and joint
   // blending parameter otherwise.
   optional BlendingParameters curve_parameters = 3;
+
+  reserved "collision_settings";
+  reserved 2;
 }
