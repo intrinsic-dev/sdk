@@ -56,9 +56,9 @@ def python_oci_image(
     SITE_PACKAGES_REGEX = "\\.runfiles/.*/site-packages/.*"
 
     native.genrule(
-        name = "packages_tar_manifest",
+        name = name + "_packages_tar_manifest",
         srcs = [":" + name + "_tar_manifest"],
-        outs = ["packages_tar_manifest.spec"],
+        outs = [name + "_packages_tar_manifest.spec"],
         cmd = "grep '{}' $< >$@".format(SITE_PACKAGES_REGEX),
     )
 
@@ -66,7 +66,7 @@ def python_oci_image(
     tar(
         name = name + "_packages_layer",
         srcs = [binary],
-        mtree = ":packages_tar_manifest",
+        mtree = ":" + name + "_packages_tar_manifest",
     )
 
     # Any lines that didn't match one of the two grep above...
