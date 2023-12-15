@@ -101,24 +101,4 @@ absl::StatusOr<SkillRuntimeData> GetRuntimeDataFrom(
       skill_service_config.skill_description().id());
 }
 
-absl::StatusOr<SkillRuntimeData> GetRuntimeDataFrom(
-    const SkillSignatureInterface& skill_signature) {
-  INTRINSIC_ASSIGN_OR_RETURN(std::string id, IdFrom(skill_signature.Package(),
-                                                    skill_signature.Name()));
-  return SkillRuntimeData(
-      skill_signature.GetDefaultParameters() == nullptr
-          ? ParameterData(*skill_signature.GetParameterDescriptor())
-          : ParameterData(*skill_signature.GetParameterDescriptor(),
-                          [&skill_signature]() {
-                            google::protobuf::Any default_value;
-                            default_value.PackFrom(
-                                *skill_signature.GetDefaultParameters());
-                            return default_value;
-                          }()),
-      ReturnTypeData(skill_signature.GetReturnValueDescriptor()),
-      ExecutionOptions(skill_signature.SupportsCancellation(),
-                       skill_signature.GetReadyForCancellationTimeout()),
-      ResourceData(skill_signature.EquipmentRequired()), id);
-}
-
 }  // namespace intrinsic::skills::internal

@@ -172,10 +172,6 @@ absl::StatusOr<SkillRuntimeData> GetRuntimeDataFrom(
     const google::protobuf::Descriptor* parameter_descriptor,
     const google::protobuf::Descriptor* return_type_descriptor);
 
-// Constructs RuntimeData from the given skill_signature.
-absl::StatusOr<SkillRuntimeData> GetRuntimeDataFrom(
-    const SkillSignatureInterface& skill_signature);
-
 }  // namespace intrinsic::skills::internal
 
 #endif  // INTRINSIC_SKILLS_INTERNAL_RUNTIME_DATA_H_
