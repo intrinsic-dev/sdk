@@ -34,93 +34,6 @@
 namespace intrinsic {
 namespace skills {
 
-// Interface definition of Skill signature that includes the name, and
-// input / output parameter types.
-class SkillSignatureInterface {
- public:
-  // Returns the name of the Skill. The name must be unique amongst all Skills.
-  //
-  // This name will be used to invoke the skill in a notebook or behavior tree.
-  virtual std::string Name() const {
-    // Not using QCHECK so that users can see what triggered the error.
-    CHECK(false)
-        << "Name() is not overridden but is invoked. If you're implementing a "
-           "new skill, implement your skill with a manifest.";
-    return "unnamed";
-  }
-
-  // The package name for the skill.
-  virtual std::string Package() const { return ""; }
-
-  // Returns a string that describes the Skill.
-  //
-  // This documentation string is displayed to application authors.
-  //
-  // Note: Documentation for parameters should be provided inline with the
-  // parameter message for the skill.
-  virtual std::string DocString() const { return ""; }
-
-  // Returns a map of required equipment for the Skill.
-  //
-  // This is used to defined the types of equipment supported by the skill.
-  //
-  // The keys of this map are the name of the 'slot' for the equipment, and the
-  // values are the `ResourceSelector`s corresponding to each 'slot'. The
-  // `ResourceSelector`s describe the type of equipment required for the slot.
-  virtual absl::flat_hash_map<std::string,
-                              intrinsic_proto::skills::ResourceSelector>
-  EquipmentRequired() const {
-    return {};
-  }
-
-  // Returns a non-owning pointer to the Descriptor for the parameter message of
-  // this Skill.
-  //
-  // This associates the parameter message defined for the skill with the Skill.
-  // Every Skill must provide a parameter message, even if the message is empty.
-  virtual const google::protobuf::Descriptor* GetParameterDescriptor() const {
-    CHECK(false)
-        << "GetParameterDescriptor() is not overridden but is invoked. "
-           "If you're implementing a new skill, implement your skill with a "
-           "manifest.";
-    return nullptr;
-  }
-
-  // Returns a message containing the default parameters for the Skill. These
-  // will be applied by the Skill server if the parameters are not explicitly
-  // set when the skill is invoked (projected or executed).
-  //
-  // Fields with default parameters must be marked as `optional` in the proto
-  // schema.
-  virtual std::unique_ptr<google::protobuf::Message> GetDefaultParameters()
-      const {
-    return nullptr;
-  }
-
-  // Returns a non-owning pointer to the Descriptor for the return value message
-  // of this Skill.
-  //
-  // This associates the return value message defined for the skill with the
-  // Skill.
-  virtual const google::protobuf::Descriptor* GetReturnValueDescriptor() const {
-    return nullptr;
-  }
-
-  // Returns true if the skill supports cancellation.
-  virtual bool SupportsCancellation() const { return false; }
-
-  // Returns the skill's ready for cancellation timeout.
-  //
-  // If the skill is cancelled, its ExecuteContext waits for at most this
-  // timeout duration for the skill to have called SkillCanceller::Ready()
-  // before raising a timeout error.
-  virtual absl::Duration GetReadyForCancellationTimeout() const {
-    return absl::Seconds(30);
-  }
-
-  virtual ~SkillSignatureInterface() = default;
-};
-
 // Interface for skill projecting.
 //
 // Implementations of SkillProjectInterface predict how a skill might behave
@@ -247,11 +160,9 @@ class SkillExecuteInterface {
 // Interface for skills.
 //
 // This interface combines all skill constituents:
-// - SkillSignatureInterface: Metadata about the skill.
 // - SkillProjectInterface: Skill prediction.
 // - SkillExecuteInterface: Skill execution.
-class SkillInterface : public SkillSignatureInterface,
-                       public SkillProjectInterface,
+class SkillInterface : public SkillProjectInterface,
                        public SkillExecuteInterface {
  public:
   ~SkillInterface() override = default;
