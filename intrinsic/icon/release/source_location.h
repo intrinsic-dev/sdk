@@ -48,7 +48,7 @@ class SourceLocation {
   // if no `SourceLocation::current()` implementation is available.
   // Use INTRINSIC_LOC instead (until std::source_location is available).
   static constexpr SourceLocation current() {
-    return SourceLocation(1, "<no source_location>");
+    return SourceLocation(1, "<source_location>");
   }
 
   // The line number of the captured source location.
