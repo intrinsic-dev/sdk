@@ -10,6 +10,7 @@ import re
 from typing import Dict, List, Optional, Tuple, Union, cast
 
 import grpc
+from intrinsic.icon.proto import cart_space_pb2
 from intrinsic.kinematics.types import joint_limits_pb2
 from intrinsic.math.python import data_types
 from intrinsic.math.python import proto_conversion as math_proto_conversion
@@ -577,6 +578,26 @@ class ObjectWorldClient:
             object=kinematic_object.reference,
             joint_application_limits=joint_limits,
             view=object_world_updates_pb2.ObjectView.BASIC,
+        )
+    )
+
+  @error_handling.retry_on_grpc_unavailable
+  def update_kinematic_object_cartesian_limits(
+      self,
+      kinematic_object: object_world_resources.KinematicObject,
+      limits: cart_space_pb2.CartesianLimits,
+  ) -> None:
+    """Sets the cartesian limits of the kinematic object to the given values.
+
+    Args:
+      kinematic_object: The kinematic object that should be changed.
+      limits: The new cartesian limits.
+    """
+    self._stub.UpdateKinematicObjectProperties(
+        object_world_updates_pb2.UpdateKinematicObjectPropertiesRequest(
+            world_id=self._world_id,
+            object=kinematic_object.reference,
+            cartesian_limits=limits,
         )
     )
 
