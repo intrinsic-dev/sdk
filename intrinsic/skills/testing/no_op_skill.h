@@ -4,9 +4,7 @@
 #define INTRINSIC_SKILLS_TESTING_NO_OP_SKILL_H_
 
 #include <memory>
-#include <string>
 
-#include "absl/container/flat_hash_map.h"
 #include "absl/status/statusor.h"
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/message.h"
@@ -19,13 +17,6 @@ namespace intrinsic::skills {
 class NoOpSkill : public SkillInterface {
  public:
   static std::unique_ptr<SkillInterface> CreateSkill();
-
-  std::string Name() const override;
-
-  absl::flat_hash_map<std::string, intrinsic_proto::skills::ResourceSelector>
-  EquipmentRequired() const override;
-
-  const google::protobuf::Descriptor* GetParameterDescriptor() const override;
 
   absl::StatusOr<std::unique_ptr<google::protobuf::Message>> Execute(
       const ExecuteRequest& execute_request, ExecuteContext& context) override;
