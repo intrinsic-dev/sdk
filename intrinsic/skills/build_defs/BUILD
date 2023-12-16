@@ -1,5 +1,6 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
+load("@io_bazel_rules_go//go:def.bzl", "go_binary")
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 
 package(default_visibility = ["//visibility:public"])
@@ -39,5 +40,20 @@ cc_binary(
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+go_binary(
+    name = "skillmanifestgen",
+    srcs = ["skillmanifestgen.go"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//intrinsic/assets:idutils",
+        "//intrinsic/assets:metadatafieldlimits",
+        "//intrinsic/production:intrinsic",
+        "//intrinsic/skills/proto:skill_manifest_go_proto",
+        "//intrinsic/util/proto:protoio",
+        "//intrinsic/util/proto:registryutil",
+        "@com_github_golang_glog//:go_default_library",
     ],
 )

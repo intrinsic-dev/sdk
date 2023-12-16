@@ -14,7 +14,6 @@ SkillManifestInfo = provider(
 def _skill_manifest_impl(ctx):
     outputfile = ctx.actions.declare_file(ctx.label.name + ".pbbin")
     pbtxt = ctx.file.src
-    executable = ctx.executable._protoc
 
     descriptor_set_set = sets.make()
     deps = ctx.attr.deps + [ctx.attr._skill_manifest_proto]
@@ -24,26 +23,16 @@ def _skill_manifest_impl(ctx):
                 sets.insert(descriptor_set_set, descriptor_set)
     descriptor_sets = sets.to_list(descriptor_set_set)
 
-    descriptor_set_in = ("--descriptor_set_in=%s" %
-                         ":".join([file.path for file in descriptor_sets]))
-
-    protoc_args = [
-        "--encode=intrinsic_proto.skills.Manifest",
-        "--deterministic_output",
-        descriptor_set_in,
-    ]
-    redirect = [
-        "< %s" % pbtxt.path,
-        "> %s" % outputfile.path,
-    ]
-
-    ctx.actions.run_shell(
+    ctx.actions.run(
         outputs = [outputfile],
         inputs = [pbtxt] + descriptor_sets,
-        tools = [executable],
-        command = " ".join([executable.path] + protoc_args + redirect),
-        mnemonic = "ProtoDataCompiler",
-        use_default_shell_env = False,
+        executable = ctx.executable._skillmanifestgen,
+        arguments = [
+            "-manifest=%s" % pbtxt.path,
+            "-output=%s" % outputfile.path,
+            "-file_descriptor_sets=%s" % ",".join([file.path for file in descriptor_sets]),
+        ],
+        mnemonic = "SkillManifest",
     )
 
     return [
@@ -83,8 +72,8 @@ skill_manifest = rule(
                   "type messages.",
             providers = [ProtoInfo],
         ),
-        "_protoc": attr.label(
-            default = Label("@com_google_protobuf//:protoc"),
+        "_skillmanifestgen": attr.label(
+            default = Label("//intrinsic/skills/build_defs:skillmanifestgen"),
             executable = True,
             cfg = "exec",
         ),

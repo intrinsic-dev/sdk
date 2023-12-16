@@ -37,3 +37,8 @@ go_library(
         "@org_golang_x_exp//slices",
     ],
 )
+
+go_library(
+    name = "metadatafieldlimits",
+    srcs = ["metadata_field_limits.go"],
+)
