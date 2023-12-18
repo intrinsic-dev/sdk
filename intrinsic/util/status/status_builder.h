@@ -175,20 +175,21 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   //     return std::move(builder).Log(absl::LogSeverity::kWarning);
   //   }
   //
-  //   INTRINSIC_RETURN_IF_ERROR(foo()).With(TeamPolicy);
+  //   INTR_RETURN_IF_ERROR(foo()).With(TeamPolicy);
   //
   // Because pure policy adaptors return the modified StatusBuilder, they
   // can be chained with further adaptors, e.g.:
   //
-  //   INTRINSIC_RETURN_IF_ERROR(foo()).With(TeamPolicy).With(OtherTeamPolicy);
+  //   INTR_RETURN_IF_ERROR(foo()).With(TeamPolicy).With(OtherTeamPolicy);
   //
   // Terminal adaptors are often used for type conversion. This allows
-  // RETURN_IF_ERROR to be used in functions which do not return Status. For
-  // example, a function might want to return some default value on error:
+  // INTR_RETURN_IF_ERROR to be used in functions which do not return
+  // Status. For example, a function might want to return some default value on
+  // error:
   //
   //   int GetSysCounter() {
   //     int value;
-  //     INTRINSIC_RETURN_IF_ERROR(ReadCounterFile(filename, &value))
+  //     INTR_RETURN_IF_ERROR(ReadCounterFile(filename, &value))
   //         .LogInfo()
   //         .With([](const absl::Status& unused) { return 0; });
   //     return value;
@@ -198,7 +199,7 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   // error, consider `status_macros::Return` or `status_macros::ReturnVoid`:
   //
   //   bool DoMyThing() {
-  //     INTRINSIC_RETURN_IF_ERROR(foo())
+  //     INTR_RETURN_IF_ERROR(foo())
   //         .LogWarning().With(status_macros::Return(false));
   //     ...
   //   }
@@ -237,8 +238,8 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   // the status from an adapter object passed into With().
   //
   // Style guide exception for using Ref qualified methods and for implicit
-  // conversions.  This override allows us to implement RETURN_IF_ERROR with
-  // 2 move operations in the common case.
+  // conversions.  This override allows us to implement INTR_RETURN_IF_ERROR
+  // with 2 move operations in the common case.
   operator absl::Status() const&;  // NOLINT: Builder converts implicitly.
   operator absl::Status() &&;      // NOLINT: Builder converts implicitly.
 
@@ -396,13 +397,13 @@ StatusBuilder UnknownErrorBuilder(
 // This is most useful with adaptors such as util::TaskReturn that otherwise
 // would prevent use of operator<<.  For example:
 //
-//   INTR_INTRINSIC_RETURN_IF_ERROR(foo(val))
+//   INTR_RETURN_IF_ERROR(foo(val))
 //       .With(intrinsic::ExtraMessage("when calling foo()"))
 //       .With([]() { return "bar"; });
 //
 // or
 //
-//   INTR_INTRINSIC_RETURN_IF_ERROR(foo(val))
+//   INTR_RETURN_IF_ERROR(foo(val))
 //       .With(intrinsic::ExtraMessage() << "val: " << val)
 //       .With([]() { return "bar"; });
 //

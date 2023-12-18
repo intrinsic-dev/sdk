@@ -29,6 +29,16 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "status_macros",
+    hdrs = ["status_macros.h"],
+    deps = [
+        ":status_builder",
+        "//intrinsic/icon/release:source_location",
+        "@com_google_absl//absl/base:core_headers",
+    ],
+)
+
 cc_test(
     name = "status_builder_test",
     srcs = ["status_builder_test.cc"],
@@ -43,6 +53,18 @@ cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "status_macros_test",
+    srcs = ["status_macros_test.cc"],
+    deps = [
+        ":status_builder",
+        ":status_macros",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_googletest//:gtest_main",
     ],
 )
