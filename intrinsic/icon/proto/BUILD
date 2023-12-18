@@ -193,6 +193,7 @@ cc_library(
         "//intrinsic/kinematics/types:cartesian_limits",
         "//intrinsic/math:pose3",
         "//intrinsic/math:twist",
+        "//intrinsic/util/status:status_builder",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",

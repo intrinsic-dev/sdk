@@ -15,6 +15,7 @@
 #include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/math/pose3.h"
 #include "intrinsic/math/twist.h"
+#include "intrinsic/util/status/status_builder.h"
 
 namespace intrinsic::icon {
 
