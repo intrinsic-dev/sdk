@@ -11,8 +11,8 @@
 #include "intrinsic/assets/proto/id.pb.h"
 #include "intrinsic/icon/release/file_helpers.h"
 #include "intrinsic/icon/release/portable/init_xfa.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/skills/proto/skill_manifest.pb.h"
+#include "intrinsic/util/status/status_macros.h"
 
 ABSL_FLAG(std::string, manifest_pbbin_filename, "",
           "Path to the manifest binary proto file.");
@@ -23,7 +23,7 @@ namespace {
 
 absl::Status GenSkillIdFile(absl::string_view manifest_pbbin_filename,
                             absl::string_view output_pbbin_filename) {
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       auto manifest,
       intrinsic::GetBinaryProto<intrinsic_proto::skills::Manifest>(
           manifest_pbbin_filename));

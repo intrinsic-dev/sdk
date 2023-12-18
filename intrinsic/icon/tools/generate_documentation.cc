@@ -17,7 +17,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "intrinsic/icon/proto/types.pb.h"
-#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 namespace icon {

@@ -3,7 +3,8 @@
 #ifndef INTRINSIC_ICON_UTILS_LOG_H_
 #define INTRINSIC_ICON_UTILS_LOG_H_
 
-#include "absl/base/log_severity.h"                  // IWYU pragma: export
+#include "absl/base/log_severity.h"  // IWYU pragma: export
+#include "absl/log/log.h"
 #include "intrinsic/icon/release/source_location.h"  // IWYU pragma: export
 #include "intrinsic/icon/utils/log_internal.h"       // IWYU pragma: export
 #include "intrinsic/icon/utils/log_sink.h"           // IWYU pragma: export

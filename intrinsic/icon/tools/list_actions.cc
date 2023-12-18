@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -15,10 +16,10 @@
 #include "intrinsic/icon/cc_client/client.h"
 #include "intrinsic/icon/proto/types.pb.h"
 #include "intrinsic/icon/release/portable/init_xfa.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/icon/tools/generate_documentation.h"
 #include "intrinsic/util/grpc/channel.h"
 #include "intrinsic/util/grpc/connection_params.h"
+#include "intrinsic/util/status/status_macros.h"
 
 ABSL_FLAG(std::string, server, "xfa.lan:17080",
           "Address of the ICON Application Layer Server");
@@ -99,10 +100,9 @@ absl::StatusOr<std::string> Run(
     const intrinsic::icon::ConnectionParams& connection_params,
     bool show_details) {
   // Fetch action signatures.
-  INTRINSIC_ASSIGN_OR_RETURN(auto icon_channel,
-                             Channel::Make(connection_params));
+  INTR_ASSIGN_OR_RETURN(auto icon_channel, Channel::Make(connection_params));
   Client icon_client(icon_channel);
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       std::vector<intrinsic_proto::icon::ActionSignature> signatures,
       icon_client.ListActionSignatures());
   if (signatures.empty()) {

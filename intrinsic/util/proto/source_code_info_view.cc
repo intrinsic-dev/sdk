@@ -15,7 +15,7 @@
 #include "google/protobuf/descriptor.pb.h"
 #include "google/protobuf/descriptor_database.h"
 #include "google/protobuf/repeated_field.h"
-#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 
@@ -117,7 +117,7 @@ SourceCodeInfoView::GetNestedFieldCommentMap(absl::string_view message_name) {
   }
 
   google::protobuf::Map<std::string, std::string> comment_map;
-  INTRINSIC_RETURN_IF_ERROR(GetNestedFieldCommentMap(message, comment_map));
+  INTR_RETURN_IF_ERROR(GetNestedFieldCommentMap(message, comment_map));
   return comment_map;
 }
 
@@ -130,8 +130,8 @@ absl::Status SourceCodeInfoView::GetNestedFieldCommentMap(
         message->field(field_index);
 
     // Add leading comments for this field, i.e., the comments above the field.
-    INTRINSIC_ASSIGN_OR_RETURN(
-        std::string comment, GetLeadingCommentsByFieldName(field->full_name()));
+    INTR_ASSIGN_OR_RETURN(std::string comment,
+                          GetLeadingCommentsByFieldName(field->full_name()));
     comment_map.insert({field->full_name(), comment});
 
     // Recursively process the message type of the field.
@@ -151,11 +151,11 @@ absl::Status SourceCodeInfoView::GetNestedFieldCommentMap(
       auto msg_iter = comment_map.find(msg_descriptor->full_name());
       if (msg_iter == comment_map.end()) {
         // Get top-level message comments
-        INTRINSIC_ASSIGN_OR_RETURN(
+        INTR_ASSIGN_OR_RETURN(
             std::string comment,
             GetLeadingCommentsByMessageType(msg_descriptor->full_name()));
         comment_map.insert({msg_descriptor->full_name(), comment});
-        INTRINSIC_RETURN_IF_ERROR(
+        INTR_RETURN_IF_ERROR(
             GetNestedFieldCommentMap(msg_descriptor, comment_map));
       }
     }

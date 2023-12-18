@@ -43,6 +43,7 @@
 #include "intrinsic/platform/common/buffers/realtime_write_queue.h"
 #include "intrinsic/util/grpc/channel_interface.h"
 #include "intrinsic/util/proto_time.h"
+#include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/thread/thread.h"
 
 namespace intrinsic {
@@ -116,7 +117,7 @@ absl::StatusOr<SessionId> InitializeSessionOrEndCall(
       status_or_response = WriteMessageAndReadResponse(request_message, stream);
 
   if (!status_or_response.ok()) {
-    INTRINSIC_RETURN_IF_ERROR(CleanUpCallAfterClientWritesDone(stream));
+    INTR_RETURN_IF_ERROR(CleanUpCallAfterClientWritesDone(stream));
     return status_or_response.status();
   }
 
@@ -278,9 +279,9 @@ absl::StatusOr<std::unique_ptr<Session>> Session::StartImpl(
       intrinsic_proto::icon::OpenSessionRequest,
       intrinsic_proto::icon::OpenSessionResponse>>
       action_stream = stub->OpenSession(start_session_context.get());
-  INTRINSIC_ASSIGN_OR_RETURN(
-      SessionId session_id, InitializeSessionOrEndCall(
-                                action_stream.get(), parts, context, deadline));
+  INTR_ASSIGN_OR_RETURN(SessionId session_id,
+                        InitializeSessionOrEndCall(action_stream.get(), parts,
+                                                   context, deadline));
 
   // Initialize the watcher stream at session start, so that no reactions can
   // be missed by the client. This allows reactions associated with this
@@ -326,8 +327,8 @@ Session::~Session() {
 
 absl::StatusOr<Action> Session::AddAction(
     const ActionDescriptor& action_descriptor) {
-  INTRINSIC_ASSIGN_OR_RETURN(std::vector<Action> actions,
-                             AddActions({action_descriptor}));
+  INTR_ASSIGN_OR_RETURN(std::vector<Action> actions,
+                        AddActions({action_descriptor}));
   return actions[0];
 }
 
@@ -353,8 +354,7 @@ absl::StatusOr<std::vector<Action>> Session::AddActions(
     absl::c_copy(action_descriptor.reaction_descriptors_,
                  std::back_inserter(new_reaction_descriptors));
   }
-  INTRINSIC_RETURN_IF_ERROR(
-      CheckReactionHandlesUnique(new_reaction_descriptors));
+  INTR_RETURN_IF_ERROR(CheckReactionHandlesUnique(new_reaction_descriptors));
 
   absl::flat_hash_map<ReactionId, ReactionDescriptor>
       reaction_descriptors_by_id;
@@ -387,10 +387,9 @@ absl::StatusOr<std::vector<Action>> Session::AddActions(
                                       action_descriptor.action_id_);
     }
   }
-  INTRINSIC_ASSIGN_OR_RETURN(
-      intrinsic_proto::icon::OpenSessionResponse response,
-      GetResponseOrEnd(request));
-  INTRINSIC_RETURN_IF_ERROR(EndAndLogOnAbort(response.status()));
+  INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::OpenSessionResponse response,
+                        GetResponseOrEnd(request));
+  INTR_RETURN_IF_ERROR(EndAndLogOnAbort(response.status()));
 
   // Save any callbacks and ReactionHandles for the successfully added
   // reactions.
@@ -408,7 +407,7 @@ absl::Status Session::AddFreestandingReactions(
   if (session_ended_) {
     return absl::FailedPreconditionError(kAlreadyEndedErrorMessage);
   }
-  INTRINSIC_RETURN_IF_ERROR(CheckReactionHandlesUnique(reaction_descriptors));
+  INTR_RETURN_IF_ERROR(CheckReactionHandlesUnique(reaction_descriptors));
 
   absl::flat_hash_map<ReactionId, ReactionDescriptor>
       reaction_descriptors_by_id;
@@ -423,10 +422,10 @@ absl::Status Session::AddFreestandingReactions(
         ReactionDescriptor::ToProto(reaction_descriptor, reaction_id,
                                     std::nullopt);
   }
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       const intrinsic_proto::icon::OpenSessionResponse response,
       GetResponseOrEnd(request));
-  INTRINSIC_RETURN_IF_ERROR(EndAndLogOnAbort(response.status()));
+  INTR_RETURN_IF_ERROR(EndAndLogOnAbort(response.status()));
 
   // Save any callbacks and ReactionHandles for the successfully added
   // reactions.
@@ -450,9 +449,8 @@ absl::Status Session::RemoveActions(
         action_id.value());
   }
 
-  INTRINSIC_ASSIGN_OR_RETURN(
-      intrinsic_proto::icon::OpenSessionResponse response,
-      GetResponseOrEnd(request));
+  INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::OpenSessionResponse response,
+                        GetResponseOrEnd(request));
 
   return EndAndLogOnAbort(response.status());
 }
@@ -464,9 +462,8 @@ absl::Status Session::ClearAllActionsAndReactions() {
 
   intrinsic_proto::icon::OpenSessionRequest request;
   request.mutable_clear_all_actions_reactions();
-  INTRINSIC_ASSIGN_OR_RETURN(
-      intrinsic_proto::icon::OpenSessionResponse response,
-      GetResponseOrEnd(request));
+  INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::OpenSessionResponse response,
+                        GetResponseOrEnd(request));
 
   return EndAndLogOnAbort(response.status());
 }
@@ -489,9 +486,8 @@ absl::Status Session::StartActions(absl::Span<const Action> actions,
   }
   intrinsic_proto::icon::OpenSessionRequest request;
   *request.mutable_start_actions_request() = start_actions_request;
-  INTRINSIC_ASSIGN_OR_RETURN(
-      intrinsic_proto::icon::OpenSessionResponse response,
-      GetResponseOrEnd(request));
+  INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::OpenSessionResponse response,
+                        GetResponseOrEnd(request));
   return EndAndLogOnAbort(response.status());
 }
 
@@ -566,7 +562,7 @@ Session::GetLatestOutput(ActionInstanceId id, absl::Time deadline) {
   request.set_session_id(session_id_.value());
   request.set_action_id(id.value());
   ::intrinsic_proto::icon::GetLatestStreamingOutputResponse response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       stub_->GetLatestStreamingOutput(context.get(), request, &response));
   return response.output();
 }
@@ -589,7 +585,7 @@ Session::GetPlannedTrajectory(ActionInstanceId id) {
     planned_trajectory_segments.push_back(
         response.planned_trajectory_segment());
   }
-  INTRINSIC_RETURN_IF_ERROR(stream->Finish());
+  INTR_RETURN_IF_ERROR(stream->Finish());
 
   return ConcatenateTrajectoryProtos(planned_trajectory_segments);
 }

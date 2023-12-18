@@ -7,13 +7,13 @@
 #include "absl/time/time.h"
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/message.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/platform/pubsub/adapters/pubsub.pb.h"
 #include "intrinsic/platform/pubsub/publisher.h"
 #include "intrinsic/platform/pubsub/publisher_stats.h"
 #include "intrinsic/platform/pubsub/zenoh_publisher_data.h"
 #include "intrinsic/platform/pubsub/zenoh_util/zenoh_handle.h"
 #include "intrinsic/util/proto_time.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 
@@ -44,8 +44,7 @@ absl::Status Publisher::Publish(const google::protobuf::Message& message,
   wrapper.mutable_payload()->PackFrom(message);
   // When the pubsub message was sent out.
   absl::Time publish_time = absl::Now();
-  INTRINSIC_ASSIGN_OR_RETURN(*wrapper.mutable_publish_time(),
-                             ToProto(publish_time));
+  INTR_ASSIGN_OR_RETURN(*wrapper.mutable_publish_time(), ToProto(publish_time));
   if (event_time > publish_time) {
     return absl::InvalidArgumentError("event_time should not be in the future");
   }

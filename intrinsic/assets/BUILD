@@ -14,6 +14,7 @@ cc_library(
     deps = [
         "//intrinsic/assets/proto:id_cc_proto",
         "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/util/status:status_macros",
         "@com_github_google_re2//:re2",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",

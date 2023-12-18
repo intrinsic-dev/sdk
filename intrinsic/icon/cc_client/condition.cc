@@ -17,7 +17,7 @@
 #include "google/protobuf/message.h"
 #include "google/protobuf/text_format.h"
 #include "intrinsic/icon/proto/types.pb.h"
-#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 namespace icon {
@@ -331,7 +331,7 @@ absl::StatusOr<ConjunctionCondition> FromProto(
     const intrinsic_proto::icon::ConjunctionCondition& proto) {
   std::vector<Condition> conditions;
   for (const auto& c : proto.conditions()) {
-    INTRINSIC_ASSIGN_OR_RETURN(auto case_value, FromProto(c));
+    INTR_ASSIGN_OR_RETURN(auto case_value, FromProto(c));
     conditions.emplace_back(case_value);
   }
   return ConjunctionCondition(

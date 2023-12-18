@@ -6,8 +6,10 @@
 #include <atomic>
 #include <cstdint>
 
+#include "absl/log/log.h"
 #include "absl/time/time.h"
 #include "intrinsic/icon/utils/realtime_status.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon {
 
@@ -23,10 +25,8 @@ namespace intrinsic::icon {
 //  const std::string response_id = "/test_futex_response";
 //
 //  intrinsic::icon::SharedMemoryManager shm_manager;
-//  INTRINSIC_RETURN_IF_ERROR(shm_manager.AddSegment(request_id,
-//  BinaryFutex()));
-//  INTRINSIC_RETURN_IF_ERROR(shm_manager.AddSegment(response_id,
-//  BinaryFutex()));
+//  INTR_RETURN_IF_ERROR(shm_manager.AddSegment(request_id, BinaryFutex()));
+//  INTR_RETURN_IF_ERROR(shm_manager.AddSegment(response_id, BinaryFutex()));
 //
 //  auto pid = fork();
 //  if (pid == -1) {
@@ -35,31 +35,31 @@ namespace intrinsic::icon {
 //
 //  // Server process
 //  if (pid == 0) {
-//    INTRINSIC_ASSIGN_OR_RETURN(
+//    INTR_ASSIGN_OR_RETURN(
 //        auto f_request,
 //        intrinsic::icon::ReadWriteMemorySegment<BinaryFutex>::Get(request_id));
-//    INTRINSIC_ASSIGN_OR_RETURN(
+//    INTR_ASSIGN_OR_RETURN(
 //        auto f_response,
 //        intrinsic::icon::ReadWriteMemorySegment<BinaryFutex>::Get(response_id));
 //
 //    while (true) {
-//      INTRINSIC_RETURN_IF_ERROR(f_request.GetValue().WaitFor());
+//      INTR_RETURN_IF_ERROR(f_request.GetValue().WaitFor());
 //      LOG(INFO) << "Server received request. Doing some work...";
-//      INTRINSIC_RETURN_IF_ERROR(f_response.GetValue().Post());
+//      INTR_RETURN_IF_ERROR(f_response.GetValue().Post());
 //    }
 //  }
 //
 //  // Client process
-//  INTRINSIC_ASSIGN_OR_RETURN(
+//  INTR_ASSIGN_OR_RETURN(
 //      auto f_request,
 //      intrinsic::icon::ReadWriteMemorySegment<BinaryFutex>::Get(request_id));
-//  INTRINSIC_ASSIGN_OR_RETURN(
+//  INTR_ASSIGN_OR_RETURN(
 //      auto f_response,
 //      intrinsic::icon::ReadWriteMemorySegment<BinaryFutex>::Get(response_id));
 //  for (int j = 0; j < 10; j++) {
-//    INTRINSIC_RETURN_IF_ERROR(f_request.GetValue().Post());
+//    INTR_RETURN_IF_ERROR(f_request.GetValue().Post());
 //    LOG(INFO) << "Waiting on server to finish some work.";
-//    INTRINSIC_RETURN_IF_ERROR(f_response.GetValue().WaitFor());
+//    INTR_RETURN_IF_ERROR(f_response.GetValue().WaitFor());
 //  }
 // ```
 //

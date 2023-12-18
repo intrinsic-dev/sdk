@@ -11,7 +11,7 @@
 #include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
-#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 namespace skills {
@@ -21,7 +21,7 @@ SkillCancellationManager::SkillCancellationManager(
     : ready_timeout_(ready_timeout), operation_name_(operation_name) {}
 
 absl::Status SkillCancellationManager::Cancel() {
-  INTRINSIC_RETURN_IF_ERROR(WaitForReady());
+  INTR_RETURN_IF_ERROR(WaitForReady());
 
   // Calling the user callback with the lock held would lead to a deadlock if
   // the callback never returns, so we only keep the lock for the notification.
@@ -36,7 +36,7 @@ absl::Status SkillCancellationManager::Cancel() {
   }
 
   if (callback_ != nullptr) {
-    INTRINSIC_RETURN_IF_ERROR((*callback_)());
+    INTR_RETURN_IF_ERROR((*callback_)());
   }
 
   return absl::OkStatus();

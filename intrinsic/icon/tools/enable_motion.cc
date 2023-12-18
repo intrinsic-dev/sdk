@@ -18,6 +18,7 @@
 #include "intrinsic/icon/release/portable/init_xfa.h"
 #include "intrinsic/util/grpc/channel.h"
 #include "intrinsic/util/grpc/connection_params.h"
+#include "intrinsic/util/status/status_macros.h"
 
 ABSL_FLAG(std::string, server, "xfa.lan:17080", "Address of the ICON Server");
 ABSL_FLAG(
@@ -53,8 +54,8 @@ namespace {
 
 absl::Status Run(const intrinsic::icon::ConnectionParams& connection_params,
                  bool clear_faults) {
-  INTRINSIC_ASSIGN_OR_RETURN(auto icon_channel,
-                             intrinsic::icon::Channel::Make(connection_params));
+  INTR_ASSIGN_OR_RETURN(auto icon_channel,
+                        intrinsic::icon::Channel::Make(connection_params));
   intrinsic::icon::Client client(icon_channel);
   if (clear_faults) {
     if (absl::Status status = client.ClearFaults(); !status.ok()) {

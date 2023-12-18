@@ -16,6 +16,7 @@
 #include "intrinsic/math/pose3.h"
 #include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
+#include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/world/objects/frame.h"
 #include "intrinsic/world/objects/kinematic_object.h"
 #include "intrinsic/world/objects/object_entity_filter.h"
@@ -74,7 +75,7 @@ class ObjectWorldClient {
   // given local object copy.
   //
   // This provides a quick way to "update" a local copy:
-  //   INTRINSIC_ASSIGN_OR_RETURN(object, world->GetObject(object));
+  //   INTR_ASSIGN_OR_RETURN(object, world->GetObject(object));
   absl::StatusOr<WorldObject> GetObject(const WorldObject& object) const;
 
   // Returns all objects in the world.
@@ -119,7 +120,7 @@ class ObjectWorldClient {
   // as the given local object copy.
   //
   // This provides a quick way to "update" a local copy:
-  //   INTRINSIC_ASSIGN_OR_RETURN(object, world->GetKinematicObject(object));
+  //   INTR_ASSIGN_OR_RETURN(object, world->GetKinematicObject(object));
   absl::StatusOr<KinematicObject> GetKinematicObject(
       const KinematicObject& object) const;
 
@@ -145,7 +146,7 @@ class ObjectWorldClient {
   // given local frame copy.
   //
   // This provides a quick way to "update" a local copy:
-  //   INTRINSIC_ASSIGN_OR_RETURN(frame, world->GetFrame(frame));
+  //   INTR_ASSIGN_OR_RETURN(frame, world->GetFrame(frame));
   absl::StatusOr<Frame> GetFrame(const Frame& frame) const;
 
   // Creates a new frame with the given 'new_frame_name' which is attached to

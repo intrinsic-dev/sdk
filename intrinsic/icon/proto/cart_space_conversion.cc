@@ -12,10 +12,10 @@
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/icon/proto/cart_space.pb.h"
 #include "intrinsic/icon/proto/eigen_conversion.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/math/pose3.h"
 #include "intrinsic/math/twist.h"
 #include "intrinsic/util/status/status_builder.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon {
 
@@ -98,28 +98,28 @@ intrinsic_proto::icon::CartesianLimits ToProto(const CartesianLimits& limits) {
 absl::StatusOr<CartesianLimits> FromProto(
     const intrinsic_proto::icon::CartesianLimits& proto) {
   CartesianLimits out;
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       out.min_translational_position,
       RepeatedDoubleToVector3d(proto.min_translational_position()));
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       out.max_translational_position,
       RepeatedDoubleToVector3d(proto.max_translational_position()));
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       out.min_translational_velocity,
       RepeatedDoubleToVector3d(proto.min_translational_velocity()));
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       out.max_translational_velocity,
       RepeatedDoubleToVector3d(proto.max_translational_velocity()));
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       out.min_translational_acceleration,
       RepeatedDoubleToVector3d(proto.min_translational_acceleration()));
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       out.max_translational_acceleration,
       RepeatedDoubleToVector3d(proto.max_translational_acceleration()));
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       out.min_translational_jerk,
       RepeatedDoubleToVector3d(proto.min_translational_jerk()));
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       out.max_translational_jerk,
       RepeatedDoubleToVector3d(proto.max_translational_jerk()));
   out.max_rotational_velocity = proto.max_rotational_velocity();

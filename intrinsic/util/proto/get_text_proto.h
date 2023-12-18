@@ -10,8 +10,8 @@
 #include "absl/strings/string_view.h"
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/message.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/util/proto/any.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 
@@ -37,7 +37,7 @@ absl::StatusOr<T> GetTextProtoAllowingAny(absl::string_view filename) {
   }
 
   google::protobuf::Any any;
-  INTRINSIC_RETURN_IF_ERROR(GetTextProto(filename, any));
+  INTR_RETURN_IF_ERROR(GetTextProto(filename, any));
   return UnpackAny<T>(any);
 }
 

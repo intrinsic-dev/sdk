@@ -24,8 +24,8 @@
 #include "intrinsic/icon/cc_client/session.h"
 #include "intrinsic/icon/common/id_types.h"
 #include "intrinsic/icon/proto/part_status.pb.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/util/grpc/channel_interface.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon::examples {
 
@@ -34,8 +34,8 @@ using ::xfa::icon::actions::proto::DigitalBlock;
 
 absl::Status PrintADIOStatus(absl::string_view part_name,
                              intrinsic::icon::Client& icon_client) {
-  INTRINSIC_ASSIGN_OR_RETURN(intrinsic_proto::icon::PartStatus status,
-                             icon_client.GetSinglePartStatus(part_name));
+  INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::PartStatus status,
+                        icon_client.GetSinglePartStatus(part_name));
 
   std::cout << "Status for Part '" << part_name << "'" << std::endl
             << absl::StrCat(status) << std::endl;
@@ -60,7 +60,7 @@ absl::Status SendDigitalOutput(
     absl::string_view part_name,
     const ADIOActionInfo::FixedParams& action_parameters,
     std::shared_ptr<intrinsic::icon::ChannelInterface> icon_channel) {
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       std::unique_ptr<intrinsic::icon::Session> session,
       intrinsic::icon::Session::Start(icon_channel, {std::string(part_name)}));
 
@@ -76,12 +76,11 @@ absl::Status SendDigitalOutput(
                                 intrinsic::icon::ADIOActionInfo::kOutputsSet))
                             .WithHandle(kOutputsSetHandle));
 
-  INTRINSIC_ASSIGN_OR_RETURN(intrinsic::icon::Action action,
-                             session->AddAction(adio_action));
+  INTR_ASSIGN_OR_RETURN(intrinsic::icon::Action action,
+                        session->AddAction(adio_action));
   LOG(INFO) << "Sending output command to part: " << part_name;
-  INTRINSIC_RETURN_IF_ERROR(session->StartAction(action));
-  INTRINSIC_RETURN_IF_ERROR(
-      session->RunWatcherLoopUntilReaction(kOutputsSetHandle));
+  INTR_RETURN_IF_ERROR(session->StartAction(action));
+  INTR_RETURN_IF_ERROR(session->RunWatcherLoopUntilReaction(kOutputsSetHandle));
   LOG(INFO) << "Successfully executed output command on part: " << part_name;
   return absl::OkStatus();
 }
@@ -102,14 +101,12 @@ absl::Status ExampleSetDigitalOutput(
   ADIOActionInfo::FixedParams clear_bits = CreateActionParameters(
       /*num_values=*/2, /*value=*/false, output_block_name);
 
-  INTRINSIC_RETURN_IF_ERROR(
-      SendDigitalOutput(part_name, set_bits, icon_channel));
+  INTR_RETURN_IF_ERROR(SendDigitalOutput(part_name, set_bits, icon_channel));
   LOG(INFO) << "The lowest two bits are set.";
-  INTRINSIC_RETURN_IF_ERROR(PrintADIOStatus(part_name, client));
+  INTR_RETURN_IF_ERROR(PrintADIOStatus(part_name, client));
   LOG(INFO) << "Waiting 10s before clearing the lowest two bits.";
   absl::SleepFor(absl::Seconds(10));
-  INTRINSIC_RETURN_IF_ERROR(
-      SendDigitalOutput(part_name, clear_bits, icon_channel));
+  INTR_RETURN_IF_ERROR(SendDigitalOutput(part_name, clear_bits, icon_channel));
   return PrintADIOStatus(part_name, client);
 }
 

@@ -9,7 +9,6 @@
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/platform/pubsub/publisher.h"
 #include "intrinsic/platform/pubsub/pubsub.h"
 #include "intrinsic/platform/pubsub/subscription.h"
@@ -18,6 +17,7 @@
 #include "intrinsic/platform/pubsub/zenoh_subscription_data.h"
 #include "intrinsic/platform/pubsub/zenoh_util/zenoh_config.h"
 #include "intrinsic/platform/pubsub/zenoh_util/zenoh_handle.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 
@@ -164,10 +164,10 @@ bool PubSub::KeyexprIsCanon(absl::string_view keyexpr) const {
 
 absl::StatusOr<bool> PubSub::KeyexprIntersects(absl::string_view left,
                                                absl::string_view right) const {
-  INTRINSIC_ASSIGN_OR_RETURN(const std::string prefixed_left,
-                             ZenohHandle::add_topic_prefix(left));
-  INTRINSIC_ASSIGN_OR_RETURN(const std::string prefixed_right,
-                             ZenohHandle::add_topic_prefix(right));
+  INTR_ASSIGN_OR_RETURN(const std::string prefixed_left,
+                        ZenohHandle::add_topic_prefix(left));
+  INTR_ASSIGN_OR_RETURN(const std::string prefixed_right,
+                        ZenohHandle::add_topic_prefix(right));
   const int result = Zenoh().imw_keyexpr_intersects(prefixed_left.c_str(),
                                                     prefixed_right.c_str());
   switch (result) {
@@ -182,10 +182,10 @@ absl::StatusOr<bool> PubSub::KeyexprIntersects(absl::string_view left,
 
 absl::StatusOr<bool> PubSub::KeyexprIncludes(absl::string_view left,
                                              absl::string_view right) const {
-  INTRINSIC_ASSIGN_OR_RETURN(const std::string prefixed_left,
-                             ZenohHandle::add_topic_prefix(left));
-  INTRINSIC_ASSIGN_OR_RETURN(const std::string prefixed_right,
-                             ZenohHandle::add_topic_prefix(right));
+  INTR_ASSIGN_OR_RETURN(const std::string prefixed_left,
+                        ZenohHandle::add_topic_prefix(left));
+  INTR_ASSIGN_OR_RETURN(const std::string prefixed_right,
+                        ZenohHandle::add_topic_prefix(right));
   const int result = Zenoh().imw_keyexpr_includes(prefixed_left.c_str(),
                                                   prefixed_right.c_str());
   switch (result) {

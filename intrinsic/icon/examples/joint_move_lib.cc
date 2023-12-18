@@ -16,9 +16,9 @@
 #include "intrinsic/icon/cc_client/session.h"
 #include "intrinsic/icon/common/builtins.h"
 #include "intrinsic/icon/common/id_types.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/kinematics/types/joint_limits.h"
 #include "intrinsic/util/grpc/channel_interface.h"
+#include "intrinsic/util/status/status_macros.h"
 
 constexpr int kNDof = 6;
 
@@ -31,10 +31,10 @@ absl::Status RunJointMove(
   eigenmath::VectorNd jpos_1, jpos_2;
   {
     intrinsic::icon::Client client(icon_channel);
-    INTRINSIC_ASSIGN_OR_RETURN(auto robot_config, client.GetConfig());
-    INTRINSIC_ASSIGN_OR_RETURN(auto part_config,
-                               robot_config.GetGenericPartConfig(part_name));
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(auto robot_config, client.GetConfig());
+    INTR_ASSIGN_OR_RETURN(auto part_config,
+                          robot_config.GetGenericPartConfig(part_name));
+    INTR_ASSIGN_OR_RETURN(
         JointLimits joint_limits,
         intrinsic::FromProto(
             part_config.joint_limits_config().application_limits()));
@@ -52,7 +52,7 @@ absl::Status RunJointMove(
 
   std::vector<double> zero_velocity(kNDof, 0.0);
 
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       std::unique_ptr<intrinsic::icon::Session> session,
       intrinsic::icon::Session::Start(icon_channel, {std::string(part_name)}));
 
@@ -84,11 +84,11 @@ absl::Status RunJointMove(
               intrinsic::icon::ReactionDescriptor(intrinsic::icon::IsDone())
                   .WithWatcherOnCondition(
                       [&session]() { session->QuitWatcherLoop(); }));
-  INTRINSIC_ASSIGN_OR_RETURN(auto actions,
-                             session->AddActions({jmove1, jstop, jmove2}));
+  INTR_ASSIGN_OR_RETURN(auto actions,
+                        session->AddActions({jmove1, jstop, jmove2}));
   LOG(INFO) << "Starting motion";
-  INTRINSIC_RETURN_IF_ERROR(session->StartAction(actions.front()));
-  INTRINSIC_RETURN_IF_ERROR(session->RunWatcherLoop());
+  INTR_RETURN_IF_ERROR(session->StartAction(actions.front()));
+  INTR_RETURN_IF_ERROR(session->RunWatcherLoop());
   LOG(INFO) << "Finished motion";
   return absl::OkStatus();
 }

@@ -9,7 +9,7 @@
 #include "intrinsic/icon/cc_client/client.h"
 #include "intrinsic/icon/cc_client/condition.h"
 #include "intrinsic/icon/cc_client/robot_config.h"
-#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 namespace icon {
@@ -24,7 +24,7 @@ namespace icon {
 template <typename ConfigT>
 absl::StatusOr<ConfigT> GetPartConfig(const Client& client,
                                       absl::string_view part_name) {
-  INTRINSIC_ASSIGN_OR_RETURN(RobotConfig robot_config, client.GetConfig());
+  INTR_ASSIGN_OR_RETURN(RobotConfig robot_config, client.GetConfig());
   return robot_config.GetPartConfig<ConfigT>(part_name);
 }
 

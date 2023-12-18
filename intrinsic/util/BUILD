@@ -59,8 +59,8 @@ cc_library(
     deps = [
         "//intrinsic/eigenmath",
         "//intrinsic/eigenmath:rotation_utils",
-        "//intrinsic/icon/release:status_helpers",
         "//intrinsic/math:pose3",
+        "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings:str_format",

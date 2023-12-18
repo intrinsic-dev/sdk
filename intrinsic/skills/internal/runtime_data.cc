@@ -18,12 +18,12 @@
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/repeated_ptr_field.h"
 #include "intrinsic/assets/id_utils.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/skill_service_config.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
 #include "intrinsic/util/proto_time.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::skills::internal {
 namespace {

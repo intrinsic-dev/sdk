@@ -4,8 +4,8 @@
 #define INTRINSIC_KINEMATICS_TYPES_STATE_RN_H_
 
 #include "Eigen/Core"
+#include "absl/log/check.h"
 #include "intrinsic/eigenmath/types.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/icon/utils/realtime_status.h"
 #include "intrinsic/util/aggregate_type.h"
 

@@ -12,7 +12,7 @@
 #include "absl/strings/substitute.h"
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/icon/proto/eigen_conversion.h"
-#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 

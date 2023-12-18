@@ -6,11 +6,11 @@
 #include <vector>
 
 #include "absl/strings/str_format.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
 #include "intrinsic/util/grpc/connection_params.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::skills {
 
@@ -30,9 +30,8 @@ absl::StatusOr<intrinsic::ConnectionParams> GetConnectionParamsFromHandle(
 
 absl::StatusOr<std::shared_ptr<intrinsic::Channel>> CreateChannelFromHandle(
     const intrinsic_proto::resources::ResourceHandle& handle) {
-  INTRINSIC_ASSIGN_OR_RETURN(
-      const intrinsic::ConnectionParams connection_params,
-      GetConnectionParamsFromHandle(handle));
+  INTR_ASSIGN_OR_RETURN(const intrinsic::ConnectionParams connection_params,
+                        GetConnectionParamsFromHandle(handle));
 
   return intrinsic::Channel::Make(connection_params);
 }

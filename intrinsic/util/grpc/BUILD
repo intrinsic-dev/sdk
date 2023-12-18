@@ -28,7 +28,7 @@ cc_library(
         ":channel_interface",
         ":connection_params",
         ":grpc",
-        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/util/status:status_macros",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",

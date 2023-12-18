@@ -16,8 +16,8 @@
 #include "intrinsic/icon/common/id_types.h"
 #include "intrinsic/icon/proto/service.grpc.pb.h"
 #include "intrinsic/icon/proto/service.pb.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/util/grpc/channel_interface.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon {
 
@@ -88,7 +88,7 @@ class StreamWriter : public StreamWriterInterface<T> {
     auto stream_writer =
         std::make_unique<::intrinsic::icon::internal::StreamWriter<T>>(
             std::move(generic_stream_writer));
-    INTRINSIC_RETURN_IF_ERROR(stream_writer->stream_writer_->OpenStreamWriter(
+    INTR_RETURN_IF_ERROR(stream_writer->stream_writer_->OpenStreamWriter(
         session_id, action_instance_id, input_name));
     return stream_writer;
   }

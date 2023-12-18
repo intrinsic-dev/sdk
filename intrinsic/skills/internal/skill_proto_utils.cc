@@ -21,12 +21,12 @@
 #include "google/protobuf/descriptor.pb.h"
 #include "google/protobuf/message.h"
 #include "intrinsic/assets/proto/id.pb.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/skill_manifest.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
 #include "intrinsic/util/proto/descriptors.h"
 #include "intrinsic/util/proto/source_code_info_view.h"
+#include "intrinsic/util/status/status_macros.h"
 #include "re2/re2.h"
 
 namespace intrinsic {
@@ -87,7 +87,7 @@ absl::Status AddParameterDescription(
     }
   }
 
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       *parameter_description.mutable_parameter_field_comments(),
       source_code_info.GetNestedFieldCommentMap(
           parameter_data.message_full_name));
@@ -123,7 +123,7 @@ absl::Status AddReturnValueDescription(
     }
   }
 
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       *return_value_description.mutable_return_value_field_comments(),
       source_code_info.GetNestedFieldCommentMap(
           return_value_data.message_full_name));
@@ -138,12 +138,12 @@ absl::Status AddFileDescriptorSetWithoutSourceCodeInfo(
     std::unique_ptr<google::protobuf::Message> default_parameter_value,
     intrinsic_proto::skills::Skill& skill_proto) {
   if (parameter_data != nullptr) {
-    INTRINSIC_RETURN_IF_ERROR(AddParameterDescription(
+    INTR_RETURN_IF_ERROR(AddParameterDescription(
         *parameter_data, std::move(default_parameter_value), skill_proto));
   }
 
   if (return_value_data != nullptr) {
-    INTRINSIC_RETURN_IF_ERROR(
+    INTR_RETURN_IF_ERROR(
         AddReturnValueDescription(*return_value_data, skill_proto));
   }
 
@@ -178,7 +178,7 @@ absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
   skill.mutable_execution_options()->set_supports_cancellation(
       manifest.options().supports_cancellation());
 
-  INTRINSIC_RETURN_IF_ERROR(AddFileDescriptorSetWithoutSourceCodeInfo(
+  INTR_RETURN_IF_ERROR(AddFileDescriptorSetWithoutSourceCodeInfo(
       manifest.has_parameter()
           ? absl::WrapUnique<MessageData>(new MessageData{
                 .message_full_name = manifest.parameter().message_full_name(),

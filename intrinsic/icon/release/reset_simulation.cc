@@ -15,10 +15,10 @@
 #include "grpcpp/channel.h"
 #include "grpcpp/client_context.h"
 #include "intrinsic/icon/release/portable/init_xfa.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/simulation/service/proto/simulation_service.grpc.pb.h"
 #include "intrinsic/simulation/service/proto/simulation_service.pb.h"
 #include "intrinsic/util/grpc/grpc.h"
+#include "intrinsic/util/status/status_macros.h"
 
 // Default to the ingress service's port.
 ABSL_FLAG(std::string, address, "xfa.lan:17080",
@@ -43,7 +43,7 @@ absl::Status ResetSimulation(absl::string_view address) {
     return absl::FailedPreconditionError("You must provide --address=<addr>.");
   }
 
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       std::shared_ptr<grpc::Channel> channel,
       intrinsic::CreateClientChannel(
           address, absl::Now() + intrinsic::kGrpcClientConnectDefaultTimeout));
@@ -56,7 +56,7 @@ absl::Status ResetSimulation(absl::string_view address) {
   grpc::ClientContext context;
   google::protobuf::Empty empty;
   std::cout << "Starting resetting simulation." << std::endl;
-  INTRINSIC_RETURN_IF_ERROR(stub->ResetSimulation(
+  INTR_RETURN_IF_ERROR(stub->ResetSimulation(
       &context, xfa::simulation::ResetSimulationRequest(), &empty));
   std::cout << "Finished resetting simulation." << std::endl;
   return absl::OkStatus();

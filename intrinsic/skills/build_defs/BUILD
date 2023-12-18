@@ -32,9 +32,9 @@ cc_binary(
     deps = [
         "//intrinsic/assets/proto:id_cc_proto",
         "//intrinsic/icon/release:file_helpers",
-        "//intrinsic/icon/release:status_helpers",
         "//intrinsic/icon/release/portable:init_xfa_absl",
         "//intrinsic/skills/proto:skill_manifest_cc_proto",
+        "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",

@@ -22,6 +22,7 @@
 #include "intrinsic/icon/proto/service.pb.h"
 #include "intrinsic/icon/proto/types.pb.h"
 #include "intrinsic/util/grpc/channel_interface.h"
+#include "intrinsic/util/status/status_macros.h"
 
 // This header defines the ICON Application Layer C++ client library, which is a
 // thin wrapper around the ICON Application Layer GRPC Service.
@@ -70,9 +71,9 @@ class Client {
   //
   // Example:
   //
-  //  INTRINSIC_ASSIGN_OR_RETURN(RobotConfig robot_config,
+  //  INTR_ASSIGN_OR_RETURN(RobotConfig robot_config,
   //                   icon_client.GetConfig());
-  //  INTRINSIC_ASSIGN_OR_RETURN(intrinsic_proto::icon::GenericPartConfig
+  //  INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::GenericPartConfig
   //  part_config,
   //                   robot_config.GetGenericPartConfig("robot_arm"));
   absl::StatusOr<RobotConfig> GetConfig() const;
@@ -88,7 +89,7 @@ class Client {
   //
   // Example:
   //
-  //  INTRINSIC_ASSIGN_OR_RETURN(intrinsic_proto::icon::GetStatusResponse
+  //  INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::GetStatusResponse
   //  robot_status,
   //                   icon_client.GetRobotStatus());
   //  intrinsic_proto::icon::PartStatus my_part_status =

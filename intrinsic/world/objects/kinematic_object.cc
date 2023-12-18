@@ -15,10 +15,10 @@
 #include "absl/strings/substitute.h"
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/icon/proto/cart_space_conversion.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/kinematics/types/cartesian_limits.h"
 #include "intrinsic/kinematics/types/joint_limits_xd.h"
 #include "intrinsic/util/eigen.h"
+#include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/world/objects/frame.h"
 #include "intrinsic/world/objects/object_world_ids.h"
 #include "intrinsic/world/objects/transform_node.h"
@@ -34,19 +34,19 @@ absl::StatusOr<KinematicObject> KinematicObject::Create(
     return absl::InternalError("Missing kinematic_object_component");
   }
 
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       JointLimitsXd joint_system_limits,
       ToJointLimitsXd(
           proto.kinematic_object_component().joint_system_limits()));
 
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       JointLimitsXd joint_application_limits,
       ToJointLimitsXd(
           proto.kinematic_object_component().joint_application_limits()));
 
   CartesianLimits cartesian_limits = CartesianLimits::Unlimited();
   if (proto.kinematic_object_component().has_cartesian_limits()) {
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         cartesian_limits,
         intrinsic::icon::FromProto(
             proto.kinematic_object_component().cartesian_limits()));
@@ -58,8 +58,8 @@ absl::StatusOr<KinematicObject> KinematicObject::Create(
         proto.kinematic_object_component().control_frequency_hz();
   }
 
-  INTRINSIC_ASSIGN_OR_RETURN(std::shared_ptr<const WorldObject::Data> data,
-                             CreateWorldObjectData(std::move(proto)));
+  INTR_ASSIGN_OR_RETURN(std::shared_ptr<const WorldObject::Data> data,
+                        CreateWorldObjectData(std::move(proto)));
 
   return KinematicObject(std::make_shared<const Data>(
       std::move(*data), joint_system_limits, joint_application_limits,

@@ -23,13 +23,13 @@
 #include "intrinsic/icon/proto/blended_cartesian_move.pb.h"
 #include "intrinsic/icon/proto/generic_part_config.pb.h"
 #include "intrinsic/icon/proto/joint_space.pb.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/kinematics/types/joint_state.h"
 #include "intrinsic/math/pose3.h"
 #include "intrinsic/math/proto_conversion.h"
 #include "intrinsic/motion_planning/trajectory_planning/blended_joint_move.pb.h"
 #include "intrinsic/util/grpc/channel_interface.h"
 #include "intrinsic/util/proto_time.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon::examples {
 
@@ -76,16 +76,15 @@ intrinsic_proto::BlendedCartesianMove CreateBlendedCartesianMoveProblem(
 absl::Status RunBlendedCartesianMove(
     absl::string_view part_name,
     std::shared_ptr<intrinsic::icon::ChannelInterface> icon_channel) {
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       std::unique_ptr<intrinsic::icon::Session> session,
       intrinsic::icon::Session::Start(icon_channel, {std::string(part_name)}));
 
   Client icon_client(icon_channel);
-  INTRINSIC_RETURN_IF_ERROR(icon_client.Enable());
-  INTRINSIC_ASSIGN_OR_RETURN(auto robot_config, icon_client.GetConfig());
-  INTRINSIC_ASSIGN_OR_RETURN(
-      ::intrinsic_proto::icon::GenericPartConfig part_config,
-      robot_config.GetGenericPartConfig(part_name));
+  INTR_RETURN_IF_ERROR(icon_client.Enable());
+  INTR_ASSIGN_OR_RETURN(auto robot_config, icon_client.GetConfig());
+  INTR_ASSIGN_OR_RETURN(::intrinsic_proto::icon::GenericPartConfig part_config,
+                        robot_config.GetGenericPartConfig(part_name));
 
   // Forward declare the ActionInstanceIds to simplify reasoning about
   // Reactions.
@@ -94,7 +93,7 @@ absl::Status RunBlendedCartesianMove(
   const intrinsic::icon::ActionInstanceId kStopId(2);
 
   JointStatePVA init_joint_state;
-  INTRINSIC_RETURN_IF_ERROR(init_joint_state.SetSize(kNDof));
+  INTR_RETURN_IF_ERROR(init_joint_state.SetSize(kNDof));
 
   // Hard-coded initial joint configuration.
   init_joint_state.position << -0.5, -0.26, 0.0, 0.0, 1.27, 0.0;
@@ -147,10 +146,10 @@ absl::Status RunBlendedCartesianMove(
                   .WithWatcherOnCondition(
                       [&session]() { session->QuitWatcherLoop(); }));
 
-  INTRINSIC_ASSIGN_OR_RETURN(auto actions,
-                             session->AddActions({move_to_start, move, stop}));
+  INTR_ASSIGN_OR_RETURN(auto actions,
+                        session->AddActions({move_to_start, move, stop}));
   LOG(INFO) << "Retrieving planned trajectory via ICON session";
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       intrinsic_proto::icon::JointTrajectoryPVA planned_trajectory,
       session->GetPlannedTrajectory(kBlendedCartMoveId));
 
@@ -161,8 +160,8 @@ absl::Status RunBlendedCartesianMove(
                    planned_trajectory.time_since_start_size() - 1));
 
   LOG(INFO) << "Starting to execute motion";
-  INTRINSIC_RETURN_IF_ERROR(session->StartAction(actions.front()));
-  INTRINSIC_RETURN_IF_ERROR(session->RunWatcherLoop());
+  INTR_RETURN_IF_ERROR(session->StartAction(actions.front()));
+  INTR_RETURN_IF_ERROR(session->RunWatcherLoop());
   LOG(INFO) << "Finished motion";
 
   return absl::OkStatus();

@@ -9,9 +9,9 @@
 #include <vector>
 
 #include "absl/status/statusor.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/math/pose3.h"
 #include "intrinsic/math/proto_conversion.h"
+#include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/world/objects/object_world_ids.h"
 #include "intrinsic/world/objects/transform_node.h"
 #include "intrinsic/world/proto/object_world_refs.pb.h"
@@ -21,8 +21,8 @@ namespace intrinsic {
 namespace world {
 
 absl::StatusOr<Frame> Frame::Create(intrinsic_proto::world::Frame proto) {
-  INTRINSIC_ASSIGN_OR_RETURN(Pose3d parent_t_this,
-                             intrinsic_proto::FromProto(proto.parent_t_this()));
+  INTR_ASSIGN_OR_RETURN(Pose3d parent_t_this,
+                        intrinsic_proto::FromProto(proto.parent_t_this()));
   return Frame(std::make_shared<const Data>(std::move(proto), parent_t_this));
 }
 

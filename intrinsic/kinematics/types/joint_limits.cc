@@ -10,9 +10,9 @@
 #include "absl/strings/substitute.h"
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/icon/proto/eigen_conversion.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/icon/utils/realtime_status.h"
 #include "intrinsic/icon/utils/realtime_status_macro.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 
@@ -113,7 +113,7 @@ intrinsic_proto::JointLimits ToProto(const JointLimits& limits) {
 
 absl::StatusOr<JointLimits> FromProto(
     const intrinsic_proto::JointLimits& limits_proto) {
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       const eigenmath::VectorNd min_position,
       RepeatedDoubleToVectorNd(limits_proto.min_position().values()));
 
@@ -121,26 +121,26 @@ absl::StatusOr<JointLimits> FromProto(
                                 JointLimits::Unlimited(min_position.size()));
 
   limits.min_position = min_position;
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       limits.max_position,
       RepeatedDoubleToVectorNd(limits_proto.max_position().values()));
   if (limits_proto.has_max_velocity()) {
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         limits.max_velocity,
         RepeatedDoubleToVectorNd(limits_proto.max_velocity().values()));
   }
   if (limits_proto.has_max_acceleration()) {
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         limits.max_acceleration,
         RepeatedDoubleToVectorNd(limits_proto.max_acceleration().values()));
   }
   if (limits_proto.has_max_jerk()) {
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         limits.max_jerk,
         RepeatedDoubleToVectorNd(limits_proto.max_jerk().values()));
   }
   if (limits_proto.has_max_effort()) {
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         limits.max_torque,
         RepeatedDoubleToVectorNd(limits_proto.max_effort().values()));
   }
@@ -195,7 +195,7 @@ absl::StatusOr<JointLimits> UpdateJointLimits(
           "size: $0 Actual size: $1",
           base.min_position.size(), update.min_position().values_size()));
     }
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         out.min_position,
         RepeatedDoubleToVectorNd(update.min_position().values()));
   }
@@ -206,7 +206,7 @@ absl::StatusOr<JointLimits> UpdateJointLimits(
           "size: $0 Actual size: $1",
           base.max_position.size(), update.max_position().values_size()));
     }
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         out.max_position,
         RepeatedDoubleToVectorNd(update.max_position().values()));
   }
@@ -217,7 +217,7 @@ absl::StatusOr<JointLimits> UpdateJointLimits(
           "size: $0 Actual size: $1",
           base.max_velocity.size(), update.max_velocity().values_size()));
     }
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         out.max_velocity,
         RepeatedDoubleToVectorNd(update.max_velocity().values()));
   }
@@ -230,7 +230,7 @@ absl::StatusOr<JointLimits> UpdateJointLimits(
                            base.max_acceleration.size(),
                            update.max_acceleration().values_size()));
     }
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         out.max_acceleration,
         RepeatedDoubleToVectorNd(update.max_acceleration().values()));
   }
@@ -241,8 +241,8 @@ absl::StatusOr<JointLimits> UpdateJointLimits(
           "size: $0 Actual size: $1",
           base.max_jerk.size(), update.max_jerk().values_size()));
     }
-    INTRINSIC_ASSIGN_OR_RETURN(
-        out.max_jerk, RepeatedDoubleToVectorNd(update.max_jerk().values()));
+    INTR_ASSIGN_OR_RETURN(out.max_jerk,
+                          RepeatedDoubleToVectorNd(update.max_jerk().values()));
   }
   if (!update.max_effort().values().empty()) {
     if (update.max_effort().values_size() != base.max_torque.size()) {
@@ -251,7 +251,7 @@ absl::StatusOr<JointLimits> UpdateJointLimits(
           "size: $0 Actual size: $1",
           base.max_torque.size(), update.max_effort().values_size()));
     }
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         out.max_torque, RepeatedDoubleToVectorNd(update.max_effort().values()));
   }
   return out;

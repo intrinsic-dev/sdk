@@ -12,11 +12,11 @@
 #include "absl/strings/str_format.h"
 #include "absl/time/time.h"
 #include "google/protobuf/message.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/internal/execute_context_view.h"
 #include "intrinsic/util/proto_time.h"
+#include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/world/proto/object_world_updates.pb.h"
 
 namespace intrinsic {
@@ -27,10 +27,10 @@ absl::StatusOr<std::unique_ptr<::google::protobuf::Message>> PreviewViaExecute(
     PreviewContext& context) {
   EquipmentPack equipment;
 
-  INTRINSIC_ASSIGN_OR_RETURN(ExecuteRequest execute_request,
-                             PreviewToExecuteRequest(request));
-  INTRINSIC_ASSIGN_OR_RETURN(ExecuteContextView execute_context,
-                             PreviewToExecuteContext(context, equipment));
+  INTR_ASSIGN_OR_RETURN(ExecuteRequest execute_request,
+                        PreviewToExecuteRequest(request));
+  INTR_ASSIGN_OR_RETURN(ExecuteContextView execute_context,
+                        PreviewToExecuteContext(context, equipment));
 
   return skill.Execute(execute_request, execute_context);
 }

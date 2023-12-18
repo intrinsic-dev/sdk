@@ -15,6 +15,7 @@ cc_library(
     srcs = ["status_helpers.cc"],
     hdrs = ["status_helpers.h"],
     deps = [
+        "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/base:log_severity",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
@@ -48,11 +49,11 @@ cc_binary(
     name = "reset_simulation",
     srcs = ["reset_simulation.cc"],
     deps = [
-        "//intrinsic/icon/release:status_helpers",
         "//intrinsic/icon/release/portable:init_xfa_absl",
         "//intrinsic/simulation/service/proto:simulation_service_cc_grpc_proto",
         "//intrinsic/simulation/service/proto:simulation_service_cc_proto",
         "//intrinsic/util/grpc",
+        "//intrinsic/util/status:status_macros",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log:check",

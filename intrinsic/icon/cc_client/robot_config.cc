@@ -14,7 +14,7 @@
 #include "google/protobuf/any.pb.h"
 #include "intrinsic/icon/proto/service.pb.h"
 #include "intrinsic/icon/proto/types.pb.h"
-#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 namespace icon {
@@ -36,22 +36,22 @@ absl::StatusOr<intrinsic_proto::icon::PartConfig> RobotConfig::FindPartConfig(
 
 absl::StatusOr<intrinsic_proto::icon::GenericPartConfig>
 RobotConfig::GetGenericPartConfig(absl::string_view part_name) const {
-  INTRINSIC_ASSIGN_OR_RETURN(intrinsic_proto::icon::PartConfig part_config,
-                             FindPartConfig(part_name));
+  INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::PartConfig part_config,
+                        FindPartConfig(part_name));
   return part_config.generic_config();
 }
 
 absl::StatusOr<google::protobuf::Any> RobotConfig::GetPartConfigAny(
     absl::string_view part_name) const {
-  INTRINSIC_ASSIGN_OR_RETURN(intrinsic_proto::icon::PartConfig part_config,
-                             FindPartConfig(part_name));
+  INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::PartConfig part_config,
+                        FindPartConfig(part_name));
   return part_config.config();
 }
 
 absl::StatusOr<std::vector<intrinsic_proto::icon::FeatureInterfaceTypes>>
 RobotConfig::GetPartFeatureInterfaces(absl::string_view part_name) const {
-  INTRINSIC_ASSIGN_OR_RETURN(intrinsic_proto::icon::PartConfig part_config,
-                             FindPartConfig(part_name));
+  INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::PartConfig part_config,
+                        FindPartConfig(part_name));
   std::vector<intrinsic_proto::icon::FeatureInterfaceTypes> out;
   out.reserve(part_config.feature_interfaces().size());
   for (int fi : part_config.feature_interfaces()) {

@@ -8,7 +8,7 @@
 
 #include "absl/strings/str_format.h"
 #include "intrinsic/eigenmath/types.h"
-#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic_proto {
 namespace {

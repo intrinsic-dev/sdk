@@ -9,9 +9,9 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "grpcpp/channel.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/util/grpc/connection_params.h"
 #include "intrinsic/util/grpc/grpc.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 
@@ -20,7 +20,7 @@ absl::StatusOr<std::shared_ptr<Channel>> Channel::Make(
   // Set the max message size to unlimited to allow longer trajectories.
   // Please check with the motion team before changing the value (see
   // b/275280379).
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       std::shared_ptr<grpc::Channel> channel,
       CreateClientChannel(params.address, absl::Now() + timeout,
                           UnlimitedMessageSizeGrpcChannelArgs()));

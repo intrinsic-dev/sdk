@@ -17,7 +17,6 @@
 #include "grpcpp/support/status.h"
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/icon/proto/cart_space_conversion.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/kinematics/types/joint_limits.pb.h"
 #include "intrinsic/kinematics/types/joint_limits_xd.h"
 #include "intrinsic/math/pose3.h"
@@ -26,6 +25,7 @@
 #include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/util/eigen.h"
+#include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/world/objects/frame.h"
 #include "intrinsic/world/objects/kinematic_object.h"
 #include "intrinsic/world/objects/object_entity_filter.h"
@@ -54,7 +54,7 @@ absl::StatusOr<intrinsic_proto::world::Object> CallGetObjectUsingFullView(
   grpc::ClientContext ctx;
   intrinsic_proto::world::Object response;
   request.set_view(intrinsic_proto::world::ObjectView::FULL);
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       object_world_service.GetObject(&ctx, request, &response));
   return response;
 }
@@ -63,12 +63,12 @@ absl::StatusOr<WorldObject> GetObjectAsWorldObject(
     intrinsic_proto::world::GetObjectRequest request,
     intrinsic_proto::world::ObjectWorldService::StubInterface&
         object_world_service) {
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       intrinsic_proto::world::Object proto,
       CallGetObjectUsingFullView(std::move(request), object_world_service));
   if (proto.type() == intrinsic_proto::world::ObjectType::KINEMATIC_OBJECT) {
-    INTRINSIC_ASSIGN_OR_RETURN(KinematicObject kinematic_object,
-                               KinematicObject::Create(std::move(proto)));
+    INTR_ASSIGN_OR_RETURN(KinematicObject kinematic_object,
+                          KinematicObject::Create(std::move(proto)));
     return kinematic_object.AsWorldObject();
   }
   return WorldObject::Create(std::move(proto));
@@ -80,8 +80,7 @@ absl::StatusOr<Frame> CallGetFrame(
         object_world_service) {
   grpc::ClientContext ctx;
   intrinsic_proto::world::Frame response;
-  INTRINSIC_RETURN_IF_ERROR(
-      object_world_service.GetFrame(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(object_world_service.GetFrame(&ctx, request, &response));
   return Frame::Create(std::move(response));
 }
 
@@ -137,7 +136,7 @@ absl::Status CallCreateFrame(
   *request_with_parent.mutable_parent_t_new_frame() =
       ToProto(parent_t_new_frame);
   intrinsic_proto::world::Frame response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       object_world_service.CreateFrame(&ctx, request_with_parent, &response));
   return absl::OkStatus();
 }
@@ -158,7 +157,7 @@ absl::StatusOr<TransformNode> GetTransformNodeById(
   if (object.ok()) {
     return object->AsTransformNode();
   } else if (absl::IsNotFound(object.status())) {
-    INTRINSIC_ASSIGN_OR_RETURN(Frame frame, client.GetFrame(id));
+    INTR_ASSIGN_OR_RETURN(Frame frame, client.GetFrame(id));
     return frame.AsTransformNode();
   } else {
     return object.status();
@@ -170,13 +169,13 @@ absl::StatusOr<TransformNode> GetTransformNodeByNameReference(
     const ObjectWorldClient& client) {
   switch (reference.transform_node_reference_by_name_case()) {
     case TransformNodeReferenceByName::kObject: {
-      INTRINSIC_ASSIGN_OR_RETURN(
+      INTR_ASSIGN_OR_RETURN(
           WorldObject object,
           client.GetObject(WorldObjectName(reference.object().object_name())));
       return object.AsTransformNode();
     }
     case TransformNodeReferenceByName::kFrame: {
-      INTRINSIC_ASSIGN_OR_RETURN(
+      INTR_ASSIGN_OR_RETURN(
           Frame frame,
           client.GetFrame(WorldObjectName(reference.frame().object_name()),
                           FrameName(reference.frame().frame_name())));
@@ -259,13 +258,13 @@ absl::StatusOr<std::vector<WorldObject>> ObjectWorldClient::ListObjects()
   request.set_view(intrinsic_proto::world::ObjectView::FULL);
   grpc::ClientContext ctx;
   intrinsic_proto::world::ListObjectsResponse response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       object_world_service_->ListObjects(&ctx, request, &response));
   std::vector<WorldObject> objects;
   objects.reserve(response.objects_size());
   for (const auto& object_proto : response.objects()) {
-    INTRINSIC_ASSIGN_OR_RETURN(WorldObject object,
-                               WorldObject::Create(object_proto));
+    INTR_ASSIGN_OR_RETURN(WorldObject object,
+                          WorldObject::Create(object_proto));
     objects.push_back(std::move(object));
   }
   return objects;
@@ -278,7 +277,7 @@ ObjectWorldClient::ListObjectNames() const {
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   grpc::ClientContext ctx;
   intrinsic_proto::world::ListObjectsResponse response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       object_world_service_->ListObjects(&ctx, request, &response));
   std::vector<WorldObjectName> objects;
   objects.reserve(response.objects_size());
@@ -296,7 +295,7 @@ absl::Status ObjectWorldClient::DeleteObject(const WorldObject& object,
   request.set_force(option == ForceDeleteOption::kForce);
   grpc::ClientContext ctx;
   google::protobuf::Empty response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       object_world_service_->DeleteObject(&ctx, request, &response));
   return absl::OkStatus();
 }
@@ -319,7 +318,7 @@ absl::StatusOr<KinematicObject> ObjectWorldClient::GetKinematicObject(
   intrinsic_proto::world::GetObjectRequest request;
   request.set_world_id(world_id_);
   request.mutable_object()->set_id(id.value());
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       intrinsic_proto::world::Object proto,
       CallGetObjectUsingFullView(std::move(request), *object_world_service_));
   if (proto.type() != intrinsic_proto::world::ObjectType::KINEMATIC_OBJECT) {
@@ -335,7 +334,7 @@ absl::StatusOr<KinematicObject> ObjectWorldClient::GetKinematicObject(
   intrinsic_proto::world::GetObjectRequest request;
   request.set_world_id(world_id_);
   request.mutable_object()->mutable_by_name()->set_object_name(name.value());
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       intrinsic_proto::world::Object proto,
       CallGetObjectUsingFullView(std::move(request), *object_world_service_));
   if (proto.type() != intrinsic_proto::world::ObjectType::KINEMATIC_OBJECT) {
@@ -351,7 +350,7 @@ absl::StatusOr<KinematicObject> ObjectWorldClient::GetKinematicObject(
   intrinsic_proto::world::GetObjectRequest request;
   request.set_world_id(world_id_);
   request.set_resource_handle_name(resource_handle.name());
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       intrinsic_proto::world::Object proto,
       CallGetObjectUsingFullView(std::move(request), *object_world_service_));
   if (proto.type() != intrinsic_proto::world::ObjectType::KINEMATIC_OBJECT) {
@@ -404,8 +403,7 @@ absl::StatusOr<Frame> ObjectWorldClient::GetFrame(
     const FrameName& frame_name) const {
   // This could also be supported directly by the backend so that we would not
   // have to request the entire object with all of its frames.
-  INTRINSIC_ASSIGN_OR_RETURN(WorldObject object,
-                             GetObject(object_resource_handle));
+  INTR_ASSIGN_OR_RETURN(WorldObject object, GetObject(object_resource_handle));
   return object.GetFrame(frame_name);
 }
 
@@ -444,7 +442,7 @@ absl::Status ObjectWorldClient::UpdateObjectName(
   request.set_name_is_global_alias(name_type ==
                                    WorldObjectNameType::kNameIsGlobalAlias);
   intrinsic_proto::world::Object response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       object_world_service_->UpdateObjectName(&ctx, request, &response));
   return absl::OkStatus();
 }
@@ -457,7 +455,7 @@ absl::Status ObjectWorldClient::UpdateFrameName(const Frame& frame,
   request.mutable_frame()->set_id(frame.Id().value());
   request.set_name(new_name.value());
   intrinsic_proto::world::Frame response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       object_world_service_->UpdateFrameName(&ctx, request, &response));
   return absl::OkStatus();
 }
@@ -486,7 +484,7 @@ absl::StatusOr<Pose3d> ObjectWorldClient::GetTransform(
   }
 
   intrinsic_proto::world::GetTransformResponse response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       object_world_service_->GetTransform(&ctx, request, &response));
   return intrinsic_proto::FromProto(response.a_t_b());
 }
@@ -529,7 +527,7 @@ absl::Status ObjectWorldClient::UpdateJointPositions(
   // Use minimalistic view since we are ignoring the response.
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   intrinsic_proto::world::Object response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       object_world_service_->UpdateObjectJoints(&ctx, request, &response));
   return absl::OkStatus();
 }
@@ -546,7 +544,7 @@ absl::Status ObjectWorldClient::UpdateJointApplicationLimits(
   // Use minimalistic view since we are ignoring the response.
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   intrinsic_proto::world::Object response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       object_world_service_->UpdateObjectJoints(&ctx, request, &response));
   return absl::OkStatus();
 }
@@ -562,7 +560,7 @@ absl::Status ObjectWorldClient::UpdateJointSystemLimits(
   // Use minimalistic view since we are ignoring the response.
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   intrinsic_proto::world::Object response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       object_world_service_->UpdateObjectJoints(&ctx, request, &response));
   return absl::OkStatus();
 }
@@ -582,7 +580,7 @@ absl::Status ObjectWorldClient::UpdateJointLimits(
   // Use minimalistic view since we are ignoring the response.
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   intrinsic_proto::world::Object response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       object_world_service_->UpdateObjectJoints(&ctx, request, &response));
   return absl::OkStatus();
 }
@@ -599,9 +597,8 @@ absl::Status ObjectWorldClient::UpdateCartesianLimits(
   // Use minimalistic view since we are ignoring the response.
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   intrinsic_proto::world::Object response;
-  INTRINSIC_RETURN_IF_ERROR(
-      object_world_service_->UpdateKinematicObjectProperties(&ctx, request,
-                                                             &response));
+  INTR_RETURN_IF_ERROR(object_world_service_->UpdateKinematicObjectProperties(
+      &ctx, request, &response));
   return absl::OkStatus();
 }
 
@@ -624,7 +621,7 @@ absl::Status CallReparentObject(
   // Use minimalistic view since we are ignoring the response.
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   intrinsic_proto::world::Object response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       object_world_service.ReparentObject(&ctx, request, &response));
   return absl::OkStatus();
 }
@@ -674,7 +671,7 @@ absl::Status CallToggleCollisions(
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
 
   intrinsic_proto::world::Objects response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       object_world_service.ToggleCollisions(&ctx, request, &response));
   return absl::OkStatus();
 }

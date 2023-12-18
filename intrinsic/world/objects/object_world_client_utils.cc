@@ -7,7 +7,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/world/objects/frame.h"
 #include "intrinsic/world/objects/object_world_client.h"
 #include "intrinsic/world/objects/object_world_ids.h"
@@ -31,8 +31,7 @@ absl::StatusOr<bool> IsObjectAncestorOfNode(
     if (std::optional<world::Frame> frame =
             world::Frame::FromTransformNode(node);
         frame) {
-      INTRINSIC_ASSIGN_OR_RETURN(current_obj,
-                                 world.GetObject(frame->ObjectId()));
+      INTR_ASSIGN_OR_RETURN(current_obj, world.GetObject(frame->ObjectId()));
     } else {
       return absl::InvalidArgumentError("Unknown type of TransformNode.");
     }
@@ -43,8 +42,8 @@ absl::StatusOr<bool> IsObjectAncestorOfNode(
     if (current_obj->Id() == object.Id()) {
       return true;
     }
-    INTRINSIC_ASSIGN_OR_RETURN(current_obj,
-                               world.GetObject(current_obj->ParentId()));
+    INTR_ASSIGN_OR_RETURN(current_obj,
+                          world.GetObject(current_obj->ParentId()));
   }
 
   return false;

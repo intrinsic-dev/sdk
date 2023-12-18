@@ -31,6 +31,7 @@
 #include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/icon/utils/log.h"
 #include "intrinsic/icon/utils/realtime_guard.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 
@@ -138,9 +139,9 @@ absl::Status Thread::Setup(const Options& options) {
   // default constructed Options. To achieve this, we use optional parameters in
   // Options, and perform no setup work for each option that is unset. This is
   // checked within each Set*() method.
-  INTRINSIC_RETURN_IF_ERROR(SetName(options));
-  INTRINSIC_RETURN_IF_ERROR(SetSchedule(options));
-  INTRINSIC_RETURN_IF_ERROR(SetAffinity(options));
+  INTR_RETURN_IF_ERROR(SetName(options));
+  INTR_RETURN_IF_ERROR(SetSchedule(options));
+  INTR_RETURN_IF_ERROR(SetAffinity(options));
 
   return absl::OkStatus();
 }

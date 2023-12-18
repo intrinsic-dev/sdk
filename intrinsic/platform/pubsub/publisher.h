@@ -6,7 +6,8 @@
 #include <memory>
 #include <string>
 
-#include "intrinsic/icon/release/status_helpers.h"
+#include "absl/status/status.h"
+#include "google/protobuf/message.h"
 
 namespace intrinsic {
 

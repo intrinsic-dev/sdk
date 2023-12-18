@@ -17,11 +17,11 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "grpcpp/channel.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/logging/proto/log_item.pb.h"
 #include "intrinsic/logging/proto/logger_service.pb.h"
 #include "intrinsic/logging/structured_logging_client.h"
 #include "intrinsic/util/grpc/grpc.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::data_logger {
 namespace {
@@ -128,7 +128,7 @@ absl::Status LogAndAwaitResponse(intrinsic_proto::data_logger::LogItem&& item) {
 
 absl::Status StartUpIntrinsicLoggerViaGrpc(absl::string_view target_address,
                                            absl::Duration timeout) {
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       std::shared_ptr<grpc::Channel> channel,
       CreateClientChannel(target_address, absl::Now() + timeout,
                           UnlimitedMessageSizeGrpcChannelArgs()));

@@ -13,10 +13,10 @@
 #include "absl/time/time.h"
 #include "intrinsic/icon/equipment/channel_factory.h"
 #include "intrinsic/icon/equipment/icon_equipment.pb.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_utils.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 namespace icon {
@@ -27,10 +27,9 @@ absl::StatusOr<IconEquipment> ConnectToIconEquipment(
     absl::Duration timeout) {
   IconEquipment out;
 
-  INTRINSIC_ASSIGN_OR_RETURN(auto handle,
-                             equipment_pack.GetHandle(equipment_slot));
-  INTRINSIC_ASSIGN_OR_RETURN(const auto connection_config,
-                             skills::GetConnectionParamsFromHandle(handle));
+  INTR_ASSIGN_OR_RETURN(auto handle, equipment_pack.GetHandle(equipment_slot));
+  INTR_ASSIGN_OR_RETURN(const auto connection_config,
+                        skills::GetConnectionParamsFromHandle(handle));
   auto maybe_position_part =
       equipment_pack.Unpack<intrinsic_proto::icon::Icon2PositionPart>(
           equipment_slot, kIcon2PositionPartKey);
@@ -74,7 +73,7 @@ absl::StatusOr<IconEquipment> ConnectToIconEquipment(
     out.rangefinder_part_name = maybe_rangefinder_part->part_name();
   }
 
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       out.channel, channel_factory.MakeChannel(connection_config, timeout));
 
   return out;

@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "intrinsic/icon/release/source_location.h"
 #include "intrinsic/icon/utils/log_internal.h"

@@ -12,8 +12,8 @@
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/message.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/util/proto/merge.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 
@@ -46,7 +46,7 @@ absl::Status UnpackAny(const google::protobuf::Any& any, MsgT& unpacked) {
 template <typename MsgT>
 absl::StatusOr<MsgT> UnpackAny(const google::protobuf::Any& any) {
   MsgT unpacked;
-  INTRINSIC_RETURN_IF_ERROR(UnpackAny(any, unpacked));
+  INTR_RETURN_IF_ERROR(UnpackAny(any, unpacked));
   return unpacked;
 }
 
@@ -61,11 +61,10 @@ template <typename ParamT>
 absl::StatusOr<ParamT> UnpackAnyAndMerge(
     const google::protobuf::Any& any,
     const std::optional<::google::protobuf::Any>& defaults_any) {
-  INTRINSIC_ASSIGN_OR_RETURN(ParamT unpacked, UnpackAny<ParamT>(any));
+  INTR_ASSIGN_OR_RETURN(ParamT unpacked, UnpackAny<ParamT>(any));
   if (defaults_any.has_value()) {
-    INTRINSIC_ASSIGN_OR_RETURN(ParamT defaults,
-                               UnpackAny<ParamT>(*defaults_any));
-    INTRINSIC_RETURN_IF_ERROR(MergeUnset(defaults, unpacked));
+    INTR_ASSIGN_OR_RETURN(ParamT defaults, UnpackAny<ParamT>(*defaults_any));
+    INTR_RETURN_IF_ERROR(MergeUnset(defaults, unpacked));
   }
 
   return unpacked;

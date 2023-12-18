@@ -8,12 +8,14 @@
 #include <string>
 #include <utility>
 
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "google/protobuf/any.pb.h"
 #include "intrinsic/platform/pubsub/adapters/pubsub.pb.h"
 #include "intrinsic/platform/pubsub/publisher.h"
 #include "intrinsic/platform/pubsub/subscription.h"
+#include "intrinsic/util/status/status_macros.h"
 
 // The PubSub class implements an interface to a publisher-subscriber
 // system, a one-to-many communication bus that allows sending protocol buffers
@@ -31,17 +33,17 @@
 // Publishing a message (see go/intrinsic-dds-topic-naming-design for naming
 // convention):
 //
-//   INTRINSIC_ASSIGN_OR_RETURN(auto publisher,
+//   INTR_ASSIGN_OR_RETURN(auto publisher,
 //                     pubsub->CreatePublisher(response_topic, TopicConfig()));
 //   TestMessage message;
-//   INTRINSIC_RETURN_IF_ERROR(publisher.Publish("/test/my_topic", message));
+//   INTR_RETURN_IF_ERROR(publisher.Publish("/test/my_topic", message));
 //
 // Note: Be careful to not destroy the PubSub instance after creating a
 // Publisher.
 //
 // Creating a Subscription to a topic:
 //
-//   INTRINSIC_ASSIGN_OR_RETURN(
+//   INTR_ASSIGN_OR_RETURN(
 //      auto sub,
 //      pubsub.CreateSubscription<proto::TestMessage>("/test/my_topic",
 //         [](const TestMessage& message) {
@@ -110,7 +112,7 @@ class PubSub {
   //   be deduced from the lambda.
   //
   // PubSub pubsub;
-  // INTRINSIC_ASSIGN_OR_RETURN(auto subscription,
+  // INTR_ASSIGN_OR_RETURN(auto subscription,
   // pubsub.CreateSubscription<MyProto>(
   //   "some/topic", {}, [](const MyProto& my_proto){}));
   //
@@ -119,7 +121,7 @@ class PubSub {
   //
   // std::function<void(const MyProto&)> callback = [](const MyProto&){};
   // PubSub pubsub;
-  // INTRINSIC_ASSIGN_OR_RETURN(auto subscription, pubsub.CreateSubscription(
+  // INTR_ASSIGN_OR_RETURN(auto subscription, pubsub.CreateSubscription(
   //   "some/topic", {}, callback));
   template <typename T>
   absl::StatusOr<Subscription> CreateSubscription(

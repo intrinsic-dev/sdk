@@ -12,6 +12,7 @@
 #include "intrinsic/icon/common/id_types.h"
 #include "intrinsic/icon/proto/service.pb.h"
 #include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon::internal {
 
@@ -33,13 +34,13 @@ absl::Status GenericStreamWriter::OpenStreamWriter(
   initial_req.mutable_add_write_stream()->set_field_name(
       std::string(input_name));
   if (!grpc_stream_->Write(initial_req)) {
-    INTRINSIC_RETURN_IF_ERROR(FinishIfNeeded());
+    INTR_RETURN_IF_ERROR(FinishIfNeeded());
     return absl::AbortedError(kAbortedErrorMessage);
   }
 
   intrinsic_proto::icon::OpenWriteStreamResponse initial_resp;
   if (!grpc_stream_->Read(&initial_resp)) {
-    INTRINSIC_RETURN_IF_ERROR(FinishIfNeeded());
+    INTR_RETURN_IF_ERROR(FinishIfNeeded());
     return absl::UnknownError(kAbortedErrorMessage);
   }
 
@@ -49,7 +50,7 @@ absl::Status GenericStreamWriter::OpenStreamWriter(
         "Received unexpected response from stream stream.");
   }
 
-  INTRINSIC_RETURN_IF_ERROR(intrinsic::MakeStatusFromRpcStatus(
+  INTR_RETURN_IF_ERROR(intrinsic::MakeStatusFromRpcStatus(
       initial_resp.add_stream_response().status()));
 
   return absl::OkStatus();
@@ -61,18 +62,18 @@ absl::Status GenericStreamWriter::WriteToStream(
   req.mutable_write_value()->mutable_value()->PackFrom(value);
 
   if (!grpc_stream_->Write(req)) {
-    INTRINSIC_RETURN_IF_ERROR(FinishIfNeeded());
+    INTR_RETURN_IF_ERROR(FinishIfNeeded());
     return absl::AbortedError("Failed to write to stream.");
   }
 
   intrinsic_proto::icon::OpenWriteStreamResponse resp;
   if (!grpc_stream_->Read(&resp)) {
-    INTRINSIC_RETURN_IF_ERROR(FinishIfNeeded());
+    INTR_RETURN_IF_ERROR(FinishIfNeeded());
     return absl::AbortedError("Failed to write to stream.");
   }
 
   if (!resp.has_write_value_response()) {
-    INTRINSIC_RETURN_IF_ERROR(FinishIfNeeded());
+    INTR_RETURN_IF_ERROR(FinishIfNeeded());
     return absl::InternalError(
         "Stream write response is missing `write_value_response` field after "
         "writing a value.");

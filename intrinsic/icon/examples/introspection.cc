@@ -23,9 +23,9 @@
 #include "intrinsic/icon/proto/service.pb.h"
 #include "intrinsic/icon/proto/types.pb.h"
 #include "intrinsic/icon/release/portable/init_xfa.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/util/grpc/channel.h"
 #include "intrinsic/util/grpc/connection_params.h"
+#include "intrinsic/util/status/status_macros.h"
 
 ABSL_FLAG(std::string, server, "xfa.lan:17080",
           "Address of the ICON Application Layer Server");
@@ -145,13 +145,12 @@ absl::Status Run(const intrinsic::icon::ConnectionParams& connection_params) {
     return absl::FailedPreconditionError("`--server` must not be empty.");
   }
 
-  INTRINSIC_ASSIGN_OR_RETURN(auto icon_channel,
-                             intrinsic::icon::Channel::Make(connection_params));
+  INTR_ASSIGN_OR_RETURN(auto icon_channel,
+                        intrinsic::icon::Channel::Make(connection_params));
   intrinsic::icon::Client client(icon_channel);
 
-  INTRINSIC_ASSIGN_OR_RETURN(std::vector<std::string> parts,
-                             client.ListParts());
-  INTRINSIC_ASSIGN_OR_RETURN(const auto config, client.GetConfig());
+  INTR_ASSIGN_OR_RETURN(std::vector<std::string> parts, client.ListParts());
+  INTR_ASSIGN_OR_RETURN(const auto config, client.GetConfig());
 
   {
     std::stringstream sstream;
@@ -159,7 +158,7 @@ absl::Status Run(const intrinsic::icon::ConnectionParams& connection_params) {
     for (const auto& part : parts) {
       sstream << "  " << part << "\n";
       sstream << "    Supported feature interfaces:\n";
-      INTRINSIC_ASSIGN_OR_RETURN(
+      INTR_ASSIGN_OR_RETURN(
           std::vector<intrinsic_proto::icon::FeatureInterfaceTypes>
               feature_interfaces,
           config.GetPartFeatureInterfaces(part));
@@ -187,12 +186,12 @@ absl::Status Run(const intrinsic::icon::ConnectionParams& connection_params) {
     std::cout << "\n" << sstream.str() << std::endl;
   }
 
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       std::vector<intrinsic_proto::icon::ActionSignature> action_signatures,
       client.ListActionSignatures());
   std::cout << "Available Actions:";
   for (const auto& signature : action_signatures) {
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         std::vector<std::string> compatible_parts,
         client.ListCompatibleParts({signature.action_type_name()}));
     std::stringstream sstream;
@@ -210,8 +209,8 @@ absl::Status Run(const intrinsic::icon::ConnectionParams& connection_params) {
               << std::endl;
   }
 
-  INTRINSIC_ASSIGN_OR_RETURN(intrinsic_proto::icon::GetStatusResponse status,
-                             client.GetStatus());
+  INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::GetStatusResponse status,
+                        client.GetStatus());
 
   for (const auto& part : parts) {
     auto part_status_it = status.part_status().find(part);

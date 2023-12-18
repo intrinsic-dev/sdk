@@ -22,9 +22,9 @@
 #include "intrinsic/icon/common/id_types.h"
 #include "intrinsic/icon/proto/cart_space.pb.h"
 #include "intrinsic/icon/proto/part_status.pb.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/kinematics/types/joint_limits.h"
 #include "intrinsic/util/grpc/channel_interface.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon::examples {
 
@@ -87,17 +87,17 @@ absl::Status JointThenCartMove(
   }
   intrinsic::icon::Client client(icon_channel);
 
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       std::unique_ptr<intrinsic::icon::Session> session,
       intrinsic::icon::Session::Start(icon_channel, {std::string(part_name)}));
 
   // Compute two feasible joint configurations based on the joint limits.
   eigenmath::VectorNd jpos_1, jpos_2;
   {
-    INTRINSIC_ASSIGN_OR_RETURN(auto robot_config, client.GetConfig());
-    INTRINSIC_ASSIGN_OR_RETURN(auto part_config,
-                               robot_config.GetGenericPartConfig(part_name));
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(auto robot_config, client.GetConfig());
+    INTR_ASSIGN_OR_RETURN(auto part_config,
+                          robot_config.GetGenericPartConfig(part_name));
+    INTR_ASSIGN_OR_RETURN(
         JointLimits joint_limits,
         intrinsic::FromProto(
             part_config.joint_limits_config().application_limits()));
@@ -201,17 +201,17 @@ absl::Status JointThenCartMove(
     // Add the Action. This only validates the command and prepares the realtime
     // system, to actually execute the Action one needs to call StartAction()
     // (see below).
-    INTRINSIC_ASSIGN_OR_RETURN(auto actions,
-                               session->AddActions({move_to_start, stop}));
+    INTR_ASSIGN_OR_RETURN(auto actions,
+                          session->AddActions({move_to_start, stop}));
 
     std::cout << "Moving robot to known Start Position." << std::endl;
     // Actually start the Action.
-    INTRINSIC_RETURN_IF_ERROR(session->StartAction(actions.front()));
+    INTR_RETURN_IF_ERROR(session->StartAction(actions.front()));
 
     // Start handling non-realtime Reaction callbacks. This blocks until
     // QuitWatcherLoop() is called, or until an error occurs in the realtime
     // system.
-    INTRINSIC_RETURN_IF_ERROR(session->RunWatcherLoop());
+    INTR_RETURN_IF_ERROR(session->RunWatcherLoop());
   }
 
   // We're at the starting position, save the Cartesian pose to use as a
@@ -220,8 +220,8 @@ absl::Status JointThenCartMove(
   {
     // Get the current robot status, and extract the status for the Part we are
     // interested in.
-    INTRINSIC_ASSIGN_OR_RETURN(intrinsic_proto::icon::PartStatus part_status,
-                               client.GetSinglePartStatus(part_name));
+    INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::PartStatus part_status,
+                          client.GetSinglePartStatus(part_name));
 
     std::cout << "Initial Joint Position:" << std::endl;
     PrintJointPosition(part_status);
@@ -230,7 +230,7 @@ absl::Status JointThenCartMove(
         part_status.base_t_tip_sensed();
 
     std::cout << "Saved End Effector Goal Pose:" << std::endl;
-    INTRINSIC_RETURN_IF_ERROR(PrintBaseTTipSensed(part_status));
+    INTR_RETURN_IF_ERROR(PrintBaseTTipSensed(part_status));
 
     // Set the current Cartesian pose as the goal for the Cartesian move
     // Action.
@@ -330,13 +330,12 @@ absl::Status JointThenCartMove(
                               session->QuitWatcherLoop();
                             }));
   {
-    INTRINSIC_ASSIGN_OR_RETURN(auto actions,
-                               session->AddActions({jmove, cmove}));
+    INTR_ASSIGN_OR_RETURN(auto actions, session->AddActions({jmove, cmove}));
 
     std::cout << "Starting Joint Position motion." << std::endl;
 
-    INTRINSIC_RETURN_IF_ERROR(session->StartAction(actions.front()));
-    INTRINSIC_RETURN_IF_ERROR(session->RunWatcherLoop());
+    INTR_RETURN_IF_ERROR(session->StartAction(actions.front()));
+    INTR_RETURN_IF_ERROR(session->RunWatcherLoop());
   }
 
   std::cout << "Finished Cartesian Position motion." << std::endl;
@@ -344,14 +343,14 @@ absl::Status JointThenCartMove(
   {
     // Read the final status to verify that the Cartesian motion arrived back at
     // the starting pose.
-    INTRINSIC_ASSIGN_OR_RETURN(intrinsic_proto::icon::PartStatus part_status,
-                               client.GetSinglePartStatus(part_name));
+    INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::PartStatus part_status,
+                          client.GetSinglePartStatus(part_name));
 
     std::cout << "Joint Position after Cartesian move:" << std::endl;
     PrintJointPosition(part_status);
 
     std::cout << "End effector pose after Cartesian move:" << std::endl;
-    INTRINSIC_RETURN_IF_ERROR(PrintBaseTTipSensed(part_status));
+    INTR_RETURN_IF_ERROR(PrintBaseTTipSensed(part_status));
   }
 
   // The Session is automatically closed when the object goes out of scope. ICON

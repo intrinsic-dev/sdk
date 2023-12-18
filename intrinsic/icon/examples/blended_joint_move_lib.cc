@@ -22,11 +22,11 @@
 #include "intrinsic/icon/common/id_types.h"
 #include "intrinsic/icon/proto/generic_part_config.pb.h"
 #include "intrinsic/icon/proto/joint_space.pb.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/kinematics/types/joint_limits.h"
 #include "intrinsic/motion_planning/trajectory_planning/blended_joint_move.pb.h"
 #include "intrinsic/util/grpc/channel_interface.h"
 #include "intrinsic/util/proto_time.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon::examples {
 
@@ -73,7 +73,7 @@ intrinsic_proto::BlendedJointMove CreateBlendedJointMoveProblem(
 absl::Status RunBlendedJointMove(
     absl::string_view part_name,
     std::shared_ptr<intrinsic::icon::ChannelInterface> icon_channel) {
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       std::unique_ptr<intrinsic::icon::Session> session,
       intrinsic::icon::Session::Start(icon_channel, {std::string(part_name)}));
 
@@ -106,14 +106,13 @@ absl::Status RunBlendedJointMove(
   eigenmath::VectorNd target_joint_pos = initial_joint_pos;
 
   Client icon_client(icon_channel);
-  INTRINSIC_RETURN_IF_ERROR(icon_client.Enable());
+  INTR_RETURN_IF_ERROR(icon_client.Enable());
 
   // Extract number of actuated joints.
-  INTRINSIC_ASSIGN_OR_RETURN(auto robot_config, icon_client.GetConfig());
-  INTRINSIC_ASSIGN_OR_RETURN(
-      ::intrinsic_proto::icon::GenericPartConfig part_config,
-      robot_config.GetGenericPartConfig(part_name));
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(auto robot_config, icon_client.GetConfig());
+  INTR_ASSIGN_OR_RETURN(::intrinsic_proto::icon::GenericPartConfig part_config,
+                        robot_config.GetGenericPartConfig(part_name));
+  INTR_ASSIGN_OR_RETURN(
       auto limits, intrinsic::FromProto(
                        part_config.joint_limits_config().application_limits()));
 
@@ -143,10 +142,10 @@ absl::Status RunBlendedJointMove(
                     session->QuitWatcherLoop();
                   }));
 
-  INTRINSIC_ASSIGN_OR_RETURN(auto actions,
-                             session->AddActions({move_to_start, jmove, stop}));
+  INTR_ASSIGN_OR_RETURN(auto actions,
+                        session->AddActions({move_to_start, jmove, stop}));
   LOG(INFO) << "Retrieving planned trajectory via ICON session";
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       intrinsic_proto::icon::JointTrajectoryPVA planned_trajectory,
       session->GetPlannedTrajectory(kBlendedJointMoveId));
 
@@ -157,8 +156,8 @@ absl::Status RunBlendedJointMove(
                    planned_trajectory.time_since_start_size() - 1));
 
   LOG(INFO) << "Starting to execute motion";
-  INTRINSIC_RETURN_IF_ERROR(session->StartAction(actions.front()));
-  INTRINSIC_RETURN_IF_ERROR(session->RunWatcherLoop());
+  INTR_RETURN_IF_ERROR(session->StartAction(actions.front()));
+  INTR_RETURN_IF_ERROR(session->RunWatcherLoop());
   LOG(INFO) << "Finished motion";
 
   return absl::OkStatus();

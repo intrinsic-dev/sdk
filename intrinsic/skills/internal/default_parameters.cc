@@ -8,7 +8,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "google/protobuf/message.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/util/proto/merge.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::skills {}  // namespace intrinsic::skills

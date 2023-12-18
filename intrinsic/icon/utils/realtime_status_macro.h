@@ -21,6 +21,7 @@
 #include "absl/base/optimization.h"
 #include "intrinsic/icon/utils/fixed_str_cat.h"
 #include "intrinsic/icon/utils/realtime_status.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 namespace icon {
@@ -68,8 +69,9 @@ class RealtimeStatusToBool {
     }                                                                  \
   } while (0)
 
-// Generally similar to google3 ASSIGN_OR_RETURN, but with different behavior
-// for >=4 arguments. Leaks a _status_or_value# variable into the scope.
+// Generally similar to google3 INTR_ASSIGN_OR_RETURN, but with different
+// behavior for >=4 arguments. Leaks a _status_or_value# variable into the
+// scope.
 //
 // For >= 4 arguments, concatenation of the status message is performed instead
 // of formatting, as the google3 version does.

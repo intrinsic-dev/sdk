@@ -15,6 +15,7 @@ Copyright 2023 Intrinsic Innovation LLC
 #include "google/protobuf/message.h"
 #include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/skills/cc/skill_utils.h"
+#include "intrinsic/util/status/status_macros.h"
 
 {{- /* Don't use a namespace when creating a skill adjacent to WORKSPACE because
 it will be an anonymous namespace. It would prevent CreateSkill from being
@@ -43,9 +44,9 @@ std::unique_ptr<SkillInterface> {{.SkillNameUpperCamelCase}}::CreateSkill() {
 
 absl::StatusOr<std::unique_ptr<google::protobuf::Message>> {{.SkillNameUpperCamelCase}}::Execute(
     const ExecuteRequest& request, ExecuteContext& context) {
-  
+
   // Get parameters.
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       auto params, request.params<{{.SkillNameUpperCamelCase}}Params>());
 
   // Log the text provided.

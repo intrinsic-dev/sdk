@@ -13,10 +13,10 @@
 #include "intrinsic/icon/examples/joint_move_loop_lib.h"
 #include "intrinsic/icon/examples/joint_move_positions.pb.h"
 #include "intrinsic/icon/release/portable/init_xfa.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/util/grpc/channel.h"
 #include "intrinsic/util/grpc/connection_params.h"
 #include "intrinsic/util/proto/get_text_proto.h"
+#include "intrinsic/util/status/status_macros.h"
 
 ABSL_FLAG(std::string, server, "xfa.lan:17080",
           "Address of the ICON Application Layer Server");
@@ -52,14 +52,14 @@ absl::Status Run(const intrinsic::icon::ConnectionParams& connection_params,
     return absl::FailedPreconditionError("`--part` must not be empty.");
   }
 
-  INTRINSIC_ASSIGN_OR_RETURN(auto icon_channel,
-                             intrinsic::icon::Channel::Make(connection_params));
+  INTR_ASSIGN_OR_RETURN(auto icon_channel,
+                        intrinsic::icon::Channel::Make(connection_params));
 
   std::optional<intrinsic_proto::icon::JointMovePositions>
       joint_move_positions = std::nullopt;
   if (!joint_move_position_config.empty()) {
     intrinsic_proto::icon::JointMovePositions joint_pos;
-    INTRINSIC_RETURN_IF_ERROR(
+    INTR_RETURN_IF_ERROR(
         intrinsic::GetTextProto(joint_move_position_config, joint_pos));
     joint_move_positions.emplace(std::move(joint_pos));
   }

@@ -14,9 +14,9 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/substitute.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/math/pose3.h"
 #include "intrinsic/math/proto_conversion.h"
+#include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/world/objects/frame.h"
 #include "intrinsic/world/objects/object_world_ids.h"
 #include "intrinsic/world/objects/transform_node.h"
@@ -34,14 +34,14 @@ WorldObject::CreateWorldObjectData(intrinsic_proto::world::Object proto) {
       return absl::InternalError("Missing object_component");
     }
 
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         parent_t_this,
         intrinsic_proto::FromProto(proto.object_component().parent_t_this()));
   }
   std::vector<Frame> frames;
   frames.reserve(proto.frames_size());
   for (const intrinsic_proto::world::Frame& frame_proto : proto.frames()) {
-    INTRINSIC_ASSIGN_OR_RETURN(Frame frame, Frame::Create(frame_proto));
+    INTR_ASSIGN_OR_RETURN(Frame frame, Frame::Create(frame_proto));
     frames.push_back(std::move(frame));
   }
   return std::make_shared<const Data>(std::move(proto), parent_t_this,
@@ -50,8 +50,8 @@ WorldObject::CreateWorldObjectData(intrinsic_proto::world::Object proto) {
 
 absl::StatusOr<WorldObject> WorldObject::Create(
     intrinsic_proto::world::Object proto) {
-  INTRINSIC_ASSIGN_OR_RETURN(std::shared_ptr<const Data> data,
-                             CreateWorldObjectData(std::move(proto)));
+  INTR_ASSIGN_OR_RETURN(std::shared_ptr<const Data> data,
+                        CreateWorldObjectData(std::move(proto)));
   return WorldObject(std::move(data));
 }
 

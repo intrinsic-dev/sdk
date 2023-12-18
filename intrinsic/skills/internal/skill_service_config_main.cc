@@ -12,11 +12,11 @@
 #include "intrinsic/assets/proto/id.pb.h"
 #include "intrinsic/icon/release/file_helpers.h"
 #include "intrinsic/icon/release/portable/init_xfa.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/skills/internal/skill_proto_utils.h"
 #include "intrinsic/skills/proto/skill_manifest.pb.h"
 #include "intrinsic/skills/proto/skill_service_config.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
+#include "intrinsic/util/status/status_macros.h"
 
 ABSL_FLAG(std::string, skill_name, "",
           "The name of the skill. The skill must be registered and linked in "
@@ -58,7 +58,7 @@ absl::Status MainImpl() {
           absl::GetFlag(FLAGS_manifest_pbbin_filename);
       !manifest_pbbin_filename.empty()) {
     LOG(INFO) << "Loading Manifest from " << manifest_pbbin_filename;
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         auto manifest,
         intrinsic::GetBinaryProto<intrinsic_proto::skills::Manifest>(
             manifest_pbbin_filename));
@@ -77,13 +77,13 @@ absl::Status MainImpl() {
           "A valid proto_descriptor_filename is required.");
     }
     LOG(INFO) << "Loading FileDescriptorSet from " << proto_descriptor_filename;
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         auto file_descriptor_set,
         intrinsic::GetBinaryProto<google::protobuf::FileDescriptorSet>(
             proto_descriptor_filename));
 
-    INTRINSIC_ASSIGN_OR_RETURN(*service_config.mutable_skill_description(),
-                               BuildSkillProto(manifest, file_descriptor_set));
+    INTR_ASSIGN_OR_RETURN(*service_config.mutable_skill_description(),
+                          BuildSkillProto(manifest, file_descriptor_set));
   } else {
     service_config.set_skill_name(absl::GetFlag(FLAGS_skill_name));
     if (std::vector<std::string> python_modules =

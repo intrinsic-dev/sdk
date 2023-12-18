@@ -23,10 +23,10 @@
 #include "intrinsic/icon/cc_client/session.h"
 #include "intrinsic/icon/common/id_types.h"
 #include "intrinsic/icon/examples/joint_move_positions.pb.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/kinematics/types/joint_limits.h"
 #include "intrinsic/util/eigen.h"
 #include "intrinsic/util/grpc/channel_interface.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon::examples {
 
@@ -36,10 +36,10 @@ absl::Status RunJointMoveLoop(
     std::optional<intrinsic_proto::icon::JointMovePositions>
         joint_move_positions) {
   intrinsic::icon::Client client(icon_channel);
-  INTRINSIC_ASSIGN_OR_RETURN(auto robot_config, client.GetConfig());
-  INTRINSIC_ASSIGN_OR_RETURN(auto part_config,
-                             robot_config.GetGenericPartConfig(part_name));
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(auto robot_config, client.GetConfig());
+  INTR_ASSIGN_OR_RETURN(auto part_config,
+                        robot_config.GetGenericPartConfig(part_name));
+  INTR_ASSIGN_OR_RETURN(
       JointLimits joint_limits,
       intrinsic::FromProto(
           part_config.joint_limits_config().application_limits()));
@@ -80,7 +80,7 @@ absl::Status RunJointMoveLoop(
                             joint_move_positions->joint_positions_2().end());
   }
 
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       std::unique_ptr<intrinsic::icon::Session> session,
       intrinsic::icon::Session::Start(icon_channel, {std::string(part_name)}));
 
@@ -104,10 +104,9 @@ absl::Status RunJointMoveLoop(
               intrinsic::icon::ReactionDescriptor(intrinsic::icon::IsDone())
                   .WithRealtimeActionOnCondition(
                       intrinsic::icon::ActionInstanceId(1)));
-  INTRINSIC_ASSIGN_OR_RETURN(auto actions,
-                             session->AddActions({jmove1, jmove2}));
+  INTR_ASSIGN_OR_RETURN(auto actions, session->AddActions({jmove1, jmove2}));
   LOG(INFO) << "Starting motion";
-  INTRINSIC_RETURN_IF_ERROR(session->StartAction(actions.front()));
+  INTR_RETURN_IF_ERROR(session->StartAction(actions.front()));
 
   // As the actions above form a loop, RunWatcherLoop is started with a
   // deadline. Once the deadline is reached, the session is closed and ICON

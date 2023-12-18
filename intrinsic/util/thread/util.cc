@@ -25,7 +25,7 @@
 #include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
-#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/status_macros.h"
 #include "re2/re2.h"
 
 namespace intrinsic {
@@ -63,8 +63,8 @@ absl::StatusOr<absl::flat_hash_set<int>> ReadCpuAffinitySetFromCommandLine(
   // dm_verity.max_bios=-1 dm_verity.dev_wait=1 root=/dev/dm-0 dm="1 vroot
   // none ro 1,0 4077568 verity payload=PARTLABEL=IROOT-B
   // hashtree=PARTLABEL=IROOT-B hashstart=4077568 alg=sha256
-  INTRINSIC_ASSIGN_OR_RETURN(std::string rcu_nocbs,
-                             ReadFileToString(path_for_testing));
+  INTR_ASSIGN_OR_RETURN(std::string rcu_nocbs,
+                        ReadFileToString(path_for_testing));
 
   // Can be a single entry, a range, or a mix.
   // https://man7.org/linux/man-pages/man7/cpuset.7.html

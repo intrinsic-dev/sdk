@@ -19,9 +19,9 @@
 #include "intrinsic/icon/proto/service.pb.h"
 #include "intrinsic/icon/proto/types.pb.h"
 #include "intrinsic/icon/release/grpc_time_support.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/util/grpc/channel_interface.h"
 #include "intrinsic/util/proto_time.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 namespace icon {
@@ -48,7 +48,7 @@ Client::GetActionSignatureByName(absl::string_view action_type_name) const {
   intrinsic_proto::icon::GetActionSignatureByNameRequest request;
   request.set_name(std::string(action_type_name));
   intrinsic_proto::icon::GetActionSignatureByNameResponse response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       stub_->GetActionSignatureByName(context.get(), request, &response));
   if (!response.has_action_signature()) {
     return absl::NotFoundError(
@@ -63,8 +63,7 @@ absl::StatusOr<RobotConfig> Client::GetConfig() const {
   context->set_deadline(::grpc::DeadlineFromDuration(timeout_));
   intrinsic_proto::icon::GetConfigRequest request;
   intrinsic_proto::icon::GetConfigResponse response;
-  INTRINSIC_RETURN_IF_ERROR(
-      stub_->GetConfig(context.get(), request, &response));
+  INTR_RETURN_IF_ERROR(stub_->GetConfig(context.get(), request, &response));
   return RobotConfig(response);
 }
 
@@ -74,15 +73,14 @@ absl::StatusOr<intrinsic_proto::icon::GetStatusResponse> Client::GetStatus()
   context->set_deadline(::grpc::DeadlineFromDuration(timeout_));
   intrinsic_proto::icon::GetStatusRequest request;
   intrinsic_proto::icon::GetStatusResponse response;
-  INTRINSIC_RETURN_IF_ERROR(
-      stub_->GetStatus(context.get(), request, &response));
+  INTR_RETURN_IF_ERROR(stub_->GetStatus(context.get(), request, &response));
   return response;
 }
 
 absl::StatusOr<intrinsic_proto::icon::PartStatus> Client::GetSinglePartStatus(
     absl::string_view part_name) const {
-  INTRINSIC_ASSIGN_OR_RETURN(
-      intrinsic_proto::icon::GetStatusResponse robot_status, GetStatus());
+  INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::GetStatusResponse robot_status,
+                        GetStatus());
   auto part_status_it = robot_status.part_status().find(std::string(part_name));
   if (part_status_it == robot_status.part_status().end()) {
     return absl::NotFoundError(
@@ -107,7 +105,7 @@ absl::StatusOr<bool> Client::IsActionCompatible(
   request.set_part_name(std::string(part_name));
   request.set_action_type_name(std::string(action_type_name));
   intrinsic_proto::icon::IsActionCompatibleResponse response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       stub_->IsActionCompatible(context.get(), request, &response));
   return response.is_compatible();
 }
@@ -121,7 +119,7 @@ absl::StatusOr<bool> Client::IsActionCompatible(
   *request.mutable_slot_part_map() = ToProto(slot_part_map);
   request.set_action_type_name(std::string(action_type_name));
   intrinsic_proto::icon::IsActionCompatibleResponse response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       stub_->IsActionCompatible(context.get(), request, &response));
   return response.is_compatible();
 }
@@ -132,7 +130,7 @@ Client::ListActionSignatures() const {
   context->set_deadline(::grpc::DeadlineFromDuration(timeout_));
   intrinsic_proto::icon::ListActionSignaturesRequest request;
   intrinsic_proto::icon::ListActionSignaturesResponse response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       stub_->ListActionSignatures(context.get(), request, &response));
   std::vector<intrinsic_proto::icon::ActionSignature> out(
       response.action_signatures().begin(), response.action_signatures().end());
@@ -157,7 +155,7 @@ absl::StatusOr<std::vector<std::string>> Client::ListCompatibleParts(
   *request.mutable_action_type_names() = {action_type_names.begin(),
                                           action_type_names.end()};
   intrinsic_proto::icon::ListCompatiblePartsResponse response;
-  INTRINSIC_RETURN_IF_ERROR(
+  INTR_RETURN_IF_ERROR(
       stub_->ListCompatibleParts(context.get(), request, &response));
   return std::vector<std::string>(response.parts().begin(),
                                   response.parts().end());
@@ -167,7 +165,7 @@ absl::StatusOr<std::vector<std::string>> Client::ListParts() const {
   std::unique_ptr<::grpc::ClientContext> context = client_context_factory_();
   context->set_deadline(::grpc::DeadlineFromDuration(timeout_));
   intrinsic_proto::icon::ListPartsResponse response;
-  INTRINSIC_RETURN_IF_ERROR(stub_->ListParts(
+  INTR_RETURN_IF_ERROR(stub_->ListParts(
       context.get(), intrinsic_proto::icon::ListPartsRequest(), &response));
   return std::vector<std::string>(response.parts().begin(),
                                   response.parts().end());
@@ -202,8 +200,7 @@ absl::StatusOr<OperationalStatus> Client::GetOperationalStatus() const {
   context->set_deadline(::grpc::DeadlineFromDuration(timeout_));
   intrinsic_proto::icon::GetOperationalStatusRequest req;
   intrinsic_proto::icon::GetOperationalStatusResponse resp;
-  INTRINSIC_RETURN_IF_ERROR(
-      stub_->GetOperationalStatus(context.get(), req, &resp));
+  INTR_RETURN_IF_ERROR(stub_->GetOperationalStatus(context.get(), req, &resp));
   return FromProto(resp.operational_status());
 }
 
@@ -220,7 +217,7 @@ absl::StatusOr<double> Client::GetSpeedOverride() const {
   std::unique_ptr<::grpc::ClientContext> context = client_context_factory_();
   context->set_deadline(::grpc::DeadlineFromDuration(timeout_));
   intrinsic_proto::icon::GetSpeedOverrideResponse resp;
-  INTRINSIC_RETURN_IF_ERROR(stub_->GetSpeedOverride(
+  INTR_RETURN_IF_ERROR(stub_->GetSpeedOverride(
       context.get(), intrinsic_proto::icon::GetSpeedOverrideRequest(), &resp));
   return resp.override_factor();
 }
@@ -248,20 +245,18 @@ absl::StatusOr<TimestampedPartProperties> Client::GetPartProperties() const {
   context->set_deadline(::grpc::DeadlineFromDuration(timeout_));
   intrinsic_proto::icon::GetPartPropertiesRequest req;
   intrinsic_proto::icon::GetPartPropertiesResponse resp;
-  INTRINSIC_RETURN_IF_ERROR(
-      stub_->GetPartProperties(context.get(), req, &resp));
+  INTR_RETURN_IF_ERROR(stub_->GetPartProperties(context.get(), req, &resp));
   TimestampedPartProperties properties;
-  INTRINSIC_ASSIGN_OR_RETURN(properties.timestamp_wall,
-                             intrinsic::FromProto(resp.timestamp_wall()));
+  INTR_ASSIGN_OR_RETURN(properties.timestamp_wall,
+                        intrinsic::FromProto(resp.timestamp_wall()));
   properties.timestamp_control = intrinsic::FromProto(resp.timestamp_control());
 
   for (const auto& [part_name, properties_proto] :
        resp.part_properties_by_part_name()) {
     for (const auto& [property_name, property_value_proto] :
          properties_proto.property_values_by_name()) {
-      INTRINSIC_ASSIGN_OR_RETURN(
-          properties.properties[part_name][property_name],
-          FromProto(property_value_proto));
+      INTR_ASSIGN_OR_RETURN(properties.properties[part_name][property_name],
+                            FromProto(property_value_proto));
     }
   }
 

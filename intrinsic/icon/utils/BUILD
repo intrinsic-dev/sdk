@@ -62,6 +62,7 @@ cc_library(
     deps = [
         ":fixed_str_cat",
         ":realtime_status",
+        "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/base:core_headers",
     ],
 )
@@ -141,6 +142,7 @@ cc_library(
         ":realtime_log_sink",
         "//intrinsic/icon/release:source_location",
         "@com_google_absl//absl/base:log_severity",
+        "@com_google_absl//absl/log",
     ],
 )
 
@@ -152,6 +154,7 @@ cc_test(
         ":log_internal",
         "//intrinsic/icon/release:source_location",
         "//intrinsic/util/thread",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
     ],
@@ -201,6 +204,7 @@ cc_test(
         ":log",
         ":log_sink",
         ":realtime_guard",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/types:span",
         "@com_google_googletest//:gtest_main",
     ],

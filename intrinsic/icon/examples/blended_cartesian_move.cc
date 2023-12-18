@@ -8,9 +8,9 @@
 #include "absl/strings/string_view.h"
 #include "intrinsic/icon/examples/blended_cartesian_move_lib.h"
 #include "intrinsic/icon/release/portable/init_xfa.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/util/grpc/channel.h"
 #include "intrinsic/util/grpc/connection_params.h"
+#include "intrinsic/util/status/status_macros.h"
 
 ABSL_FLAG(std::string, server, "xfa.lan:17080",
           "Address of the ICON Application Layer Server");
@@ -40,8 +40,8 @@ absl::Status Run(const intrinsic::icon::ConnectionParams& connection_params,
     return absl::FailedPreconditionError("`--part` must not be empty.");
   }
 
-  INTRINSIC_ASSIGN_OR_RETURN(auto icon_channel,
-                             intrinsic::icon::Channel::Make(connection_params));
+  INTR_ASSIGN_OR_RETURN(auto icon_channel,
+                        intrinsic::icon::Channel::Make(connection_params));
 
   return intrinsic::icon::examples::RunBlendedCartesianMove(part_name,
                                                             icon_channel);

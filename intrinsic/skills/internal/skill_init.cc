@@ -35,6 +35,7 @@
 #include "intrinsic/skills/proto/skill_service_config.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
 #include "intrinsic/util/grpc/grpc.h"
+#include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/world/proto/object_world_service.grpc.pb.h"
 
 namespace intrinsic::skills {
@@ -48,10 +49,9 @@ absl::StatusOr<std::shared_ptr<
     intrinsic_proto::motion_planning::MotionPlannerService::Stub>>
 CreateMotionPlannerServiceStub(absl::string_view motion_planner_service_address,
                                absl::Duration connection_timeout) {
-  INTRINSIC_ASSIGN_OR_RETURN(
-      const std::shared_ptr<grpc::Channel> channel,
-      CreateClientChannel(motion_planner_service_address,
-                          absl::Now() + connection_timeout));
+  INTR_ASSIGN_OR_RETURN(const std::shared_ptr<grpc::Channel> channel,
+                        CreateClientChannel(motion_planner_service_address,
+                                            absl::Now() + connection_timeout));
   return intrinsic_proto::motion_planning::MotionPlannerService::NewStub(
       channel);
 }
@@ -78,7 +78,7 @@ absl::Status SkillInit(
   }
 
   // Set up world service.
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       const std::shared_ptr<grpc::Channel> world_service_channel,
       CreateClientChannel(world_service_address,
                           absl::Now() + connection_timeout));
@@ -86,14 +86,14 @@ absl::Status SkillInit(
   std::shared_ptr<ObjectWorldService::StubInterface> object_world_service =
       ObjectWorldService::NewStub(world_service_channel);
 
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       std::shared_ptr<MotionPlannerService::StubInterface>
           motion_planner_service,
       CreateMotionPlannerServiceStub(motion_planner_service_address,
                                      connection_timeout));
 
   // Set up the skill registry client.
-  INTRINSIC_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN(
       std::unique_ptr<SkillRegistryClient> skill_registry_client,
       CreateSkillRegistryClient(skill_registry_service_address));
 
@@ -148,7 +148,7 @@ GetSkillServiceConfig(absl::string_view skill_service_config_filename) {
   if (!skill_service_config_filename.empty()) {
     LOG(INFO) << "Reading skill configuration proto from "
               << skill_service_config_filename;
-    INTRINSIC_ASSIGN_OR_RETURN(
+    INTR_ASSIGN_OR_RETURN(
         service_config,
         GetBinaryProto<intrinsic_proto::skills::SkillServiceConfig>(
             skill_service_config_filename));

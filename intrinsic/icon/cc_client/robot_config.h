@@ -16,7 +16,7 @@
 #include "intrinsic/icon/proto/generic_part_config.pb.h"
 #include "intrinsic/icon/proto/service.pb.h"
 #include "intrinsic/icon/proto/types.pb.h"
-#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 namespace icon {
@@ -73,8 +73,8 @@ class RobotConfig {
 template <typename ConfigT>
 absl::StatusOr<ConfigT> RobotConfig::GetPartConfig(
     absl::string_view part_name) const {
-  INTRINSIC_ASSIGN_OR_RETURN(google::protobuf::Any part_config_any,
-                             GetPartConfigAny(part_name));
+  INTR_ASSIGN_OR_RETURN(google::protobuf::Any part_config_any,
+                        GetPartConfigAny(part_name));
 
   // Unpack to ConfigT.
   ConfigT out_proto;

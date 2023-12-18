@@ -11,7 +11,7 @@ cc_library(
     hdrs = ["any.h"],
     deps = [
         ":merge",
-        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
@@ -42,7 +42,7 @@ cc_library(
     hdrs = ["get_text_proto.h"],
     deps = [
         ":any",
-        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
@@ -102,7 +102,7 @@ cc_library(
     srcs = ["source_code_info_view.cc"],
     hdrs = ["source_code_info_view.h"],
     deps = [
-        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

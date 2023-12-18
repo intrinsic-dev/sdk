@@ -16,6 +16,7 @@ cc_library(
         "//intrinsic/icon/testing:realtime_annotations",
         "//intrinsic/icon/utils:log",
         "//intrinsic/icon/utils:realtime_guard",
+        "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/functional:bind_front",
         "@com_google_absl//absl/status",
@@ -34,6 +35,7 @@ cc_library(
         "//intrinsic/icon/utils:log",
         "//intrinsic/icon/utils:realtime_status",
         "//intrinsic/icon/utils:realtime_status_macro",
+        "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/time",
     ],
 )
@@ -43,7 +45,7 @@ cc_library(
     srcs = ["util.cc"],
     hdrs = ["util.h"],
     deps = [
-        "//intrinsic/icon/release:status_helpers",
+        "//intrinsic/util/status:status_macros",
         "@com_github_google_re2//:re2",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_set",
