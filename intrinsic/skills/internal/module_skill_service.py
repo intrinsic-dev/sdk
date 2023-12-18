@@ -108,4 +108,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-  app.run(main, change_root_and_user=False)
+  app.run(main)
