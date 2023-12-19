@@ -16,7 +16,7 @@
 #include "absl/types/span.h"
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/descriptor.h"
-#include "google/protobuf/repeated_ptr_field.h"
+#include "google/protobuf/descriptor_database.h"
 #include "intrinsic/assets/id_utils.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
