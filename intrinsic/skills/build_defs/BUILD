@@ -8,7 +8,6 @@ package(default_visibility = ["//visibility:public"])
 bzl_library(
     name = "manifest_bzl",
     srcs = ["manifest.bzl"],
-    deps = ["@bazel_skylib//lib:new_sets"],
 )
 
 bzl_library(

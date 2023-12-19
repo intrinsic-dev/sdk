@@ -2,8 +2,6 @@
 
 """Build rule for creating a Skill Manifest."""
 
-load("@bazel_skylib//lib:new_sets.bzl", "sets")
-
 SkillManifestInfo = provider(
     "Info about a binary skill manifest",
     fields = {
@@ -15,23 +13,30 @@ def _skill_manifest_impl(ctx):
     outputfile = ctx.actions.declare_file(ctx.label.name + ".pbbin")
     pbtxt = ctx.file.src
 
-    descriptor_set_set = sets.make()
-    deps = ctx.attr.deps + [ctx.attr._skill_manifest_proto]
-    for dep in deps:
-        if ProtoInfo in dep:
-            for descriptor_set in dep[ProtoInfo].transitive_descriptor_sets.to_list():
-                sets.insert(descriptor_set_set, descriptor_set)
-    descriptor_sets = sets.to_list(descriptor_set_set)
+    transitive_descriptor_sets = depset(
+        transitive = [
+            dep[ProtoInfo].transitive_descriptor_sets
+            for dep in ctx.attr.deps
+        ],
+    )
+
+    args = ctx.actions.args().add(
+        "--manifest",
+        pbtxt,
+    ).add(
+        "--output",
+        outputfile,
+    ).add_joined(
+        "--file_descriptor_sets",
+        transitive_descriptor_sets,
+        join_with = ",",
+    )
 
     ctx.actions.run(
         outputs = [outputfile],
-        inputs = [pbtxt] + descriptor_sets,
+        inputs = depset([pbtxt], transitive = [transitive_descriptor_sets]),
         executable = ctx.executable._skillmanifestgen,
-        arguments = [
-            "-manifest=%s" % pbtxt.path,
-            "-output=%s" % outputfile.path,
-            "-file_descriptor_sets=%s" % ",".join([file.path for file in descriptor_sets]),
-        ],
+        arguments = [args],
         mnemonic = "SkillManifest",
     )
 
@@ -76,10 +81,6 @@ skill_manifest = rule(
             default = Label("//intrinsic/skills/build_defs:skillmanifestgen"),
             executable = True,
             cfg = "exec",
-        ),
-        "_skill_manifest_proto": attr.label(
-            default = Label("//intrinsic/skills/proto:skill_manifest_proto"),
-            doc = "the skill manifest proto schema",
         ),
     },
 )
