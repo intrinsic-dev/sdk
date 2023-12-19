@@ -51,6 +51,23 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "log_if_error",
+    hdrs = ["log_if_error.h"],
+    deps = [
+        ":status_builder",
+        ":status_macros",
+        "//intrinsic/icon/release:source_location",
+        "@com_google_absl//absl/status",
+    ],
+)
+
+cc_library(
+    name = "return",
+    hdrs = ["return.h"],
+    deps = ["@com_google_absl//absl/status"],
+)
+
 cc_test(
     name = "status_builder_test",
     srcs = ["status_builder_test.cc"],
