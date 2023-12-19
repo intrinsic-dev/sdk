@@ -9,6 +9,7 @@ import (
 
 	"flag"
 	log "github.com/golang/glog"
+	"google.golang.org/protobuf/reflect/protoregistry"
 	"intrinsic/assets/idutils"
 	"intrinsic/assets/metadatafieldlimits"
 	intrinsic "intrinsic/production/intrinsic"
@@ -23,7 +24,7 @@ var (
 	flagFileDescriptorSets = flag.String("file_descriptor_sets", "", "Comma separated paths to binary file descriptor set protos.")
 )
 
-func validateManifest(m *smpb.Manifest) error {
+func validateManifest(m *smpb.Manifest, types *protoregistry.Types) error {
 	if err := idutils.ValidateIDProto(m.GetId()); err != nil {
 		return fmt.Errorf("invalid name or package: %v", err)
 	}
@@ -35,6 +36,16 @@ func validateManifest(m *smpb.Manifest) error {
 	}
 	if m.GetVendor().GetDisplayName() == "" {
 		return fmt.Errorf("missing vendor display name")
+	}
+	if name := m.GetParameter().GetMessageFullName(); name != "" {
+		if _, err := types.FindMessageByURL(name); err != nil {
+			return fmt.Errorf("problem with parameter message name %q: %w", name, err)
+		}
+	}
+	if name := m.GetReturnType().GetMessageFullName(); name != "" {
+		if _, err := types.FindMessageByURL(name); err != nil {
+			return fmt.Errorf("problem with return message name %q: %w", name, err)
+		}
 	}
 	return nil
 }
@@ -58,7 +69,7 @@ func createSkillManifest() error {
 	if err := protoio.ReadTextProto(*flagManifest, m, protoio.WithResolver(types)); err != nil {
 		return fmt.Errorf("failed to read manifest: %v", err)
 	}
-	if err := validateManifest(m); err != nil {
+	if err := validateManifest(m, types); err != nil {
 		return err
 	}
 	if err := protoio.WriteBinaryProto(*flagOutput, m, protoio.WithDeterministic(true)); err != nil {
