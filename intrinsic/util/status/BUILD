@@ -68,6 +68,35 @@ cc_library(
     deps = ["@com_google_absl//absl/status"],
 )
 
+cc_library(
+    name = "ret_check",
+    srcs = ["ret_check.cc"],
+    hdrs = ["ret_check.h"],
+    deps = [
+        ":status_builder",
+        ":status_macros",
+        "//intrinsic/icon/release:source_location",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:log_severity",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+cc_test(
+    name = "ret_check_test",
+    srcs = ["ret_check_test.cc"],
+    deps = [
+        ":ret_check",
+        "@com_google_absl//absl/base:log_severity",
+        "@com_google_absl//absl/log:scoped_mock_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_test(
     name = "status_builder_test",
     srcs = ["status_builder_test.cc"],
