@@ -10,11 +10,12 @@ load(
 )
 load("//intrinsic/util/proto/build_defs:descriptor_set.bzl", "proto_source_code_info_transitive_descriptor_set")
 load("@io_bazel_rules_docker//container:container.bzl", _container = "container")
-load("@io_bazel_rules_docker//python3:image.bzl", "py3_image")
 load("@io_bazel_rules_docker//lang:image.bzl", "app_layer")
 load("@bazel_skylib//lib:dicts.bzl", "dicts")
 load("@bazel_skylib//lib:paths.bzl", "paths")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("//bazel:python_oci_image.bzl", "python_oci_image")
 
 skill_manifest = _skill_manifest
 
@@ -660,27 +661,34 @@ def _py3_skill_binary_image(name, deps, data = None, base = None):
     """
 
     # Copy the service source to a local directory to prevent build warnings.
-    service_filename = name + "_main.py"
-    service_copy_name = paths.join(native.package_name(), service_filename)
-    image_filename = name + ".tar"
+    entrypoint = paths.join(native.package_name(), name + "_main")
+    service_filename = entrypoint + ".py"
     native.genrule(
-        name = name + "_main",
+        name = name + "_gen_main",
         srcs = [Label("//intrinsic/skills/internal:module_skill_service_main.py")],
-        outs = [service_copy_name],
+        outs = [service_filename],
         cmd = "cp $< $@",
     )
 
-    py3_image(
-        name = name,
-        base = base,
-        main = service_copy_name,
-        srcs = [service_copy_name],
+    py_binary(
+        name = name + "_main",
+        srcs = [service_filename],
         srcs_version = "PY3",
         data = data,
         deps = [
             Label("//intrinsic/skills/internal:module_skill_service"),
             "@com_google_absl_py//absl:app",
         ] + deps,
+    )
+
+    if not base:
+        base = "@distroless_python3"
+
+    python_oci_image(
+        name = name,
+        base = base,
+        binary = name + "_main",
+        entrypoint = ["python3", entrypoint],
     )
 
 def py_skill_image(
@@ -709,11 +717,11 @@ def py_skill_image(
      skill_module: The python module containing the skill.
      parameter_proto: The proto_library dep that the Skill uses for its
        parameters.
-      return_value_proto: The proto_library dep that the Skill uses for its
-        return value.
-      base_image: The base image to use for the docker_build 'base'.
-      **kwargs: additional arguments passed to the docker_build target, such
-        as visibility or tags.
+     return_value_proto: The proto_library dep that the Skill uses for its
+       return value.
+     base_image: The base image to use for the oci_image 'base'.
+     **kwargs: additional arguments passed to the oci_image target, such
+       as visibility or tags.
     """
     if not name.endswith("_image"):
         fail("py_skill_image name must end in _image")
@@ -729,10 +737,9 @@ def py_skill_image(
         base = base_image,
     )
 
-    skill_image_path = "%s.tar" % paths.join(native.package_name(), skill_service_name)
     skill_image = ":%s.tar" % skill_service_name
-    files = [skill_image]
-    symlinks = {"skills/skill_service": "../google3/" + skill_image_path}
+    files = []
+    symlinks = {}
 
     parameter_path = _add_file_descriptors(name, "parameter", [parameter_proto], files, symlinks)
     return_value_path = _add_file_descriptors(
@@ -755,19 +762,39 @@ def py_skill_image(
         symlinks = symlinks,
     )
 
-    container_image(
+    pkg_tar(
+        name = name + "_files_layer",
+        srcs = files,
+        package_dir = "/google3",
+        strip_prefix = "/",
+        compressor_args = "--fast",
+    )
+
+    pkg_tar(
+        name = name + "_symlinks_layer",
+        strip_prefix = "/",
+        compressor_args = "--fast",
+        symlinks = symlinks,
+    )
+
+    oci_image(
         name = name,
         base = skill_image,
-        compression_options = ["--fast"],
-        data_path = "/",
-        directory = "/google3",
-        experimental_tarball_format = "compressed",
-        files = files,
-        symlinks = symlinks,
+        tars = [
+            name + "_files_layer",
+            name + "_symlinks_layer",
+        ],
         labels = {
             "ai.intrinsic.skill-name": skill_name,
             "ai.intrinsic.skill-image-name": name,
             "ai.intrinsic.package-name": package_name,
         },
+        **kwargs
+    )
+
+    oci_tarball(
+        name = name + ".tar",
+        image = name,
+        repo_tags = ["%s/%s:latest" % (native.package_name(), name)],
         **kwargs
     )
