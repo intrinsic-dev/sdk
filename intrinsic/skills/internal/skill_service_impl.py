@@ -360,7 +360,6 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
 
     try:
       skill_request = skl.PreviewRequest(
-          internal_data=request.internal_data,
           params=_resolve_params(request.parameters, operation.runtime_data),
       )
     except _CannotConstructRequestError as err:
