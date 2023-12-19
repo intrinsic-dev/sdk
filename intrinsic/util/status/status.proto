@@ -1,0 +1,13 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+message StatusProto {
+  reserved 2, 4, 5;  // For compatibility with the original StatusProto
+  int32 code = 1;
+  string message = 3;
+  // Use large tag number to avoid conflicts with similar pre-existing protos.
+  map<string, bytes> payloads = 297070139;
+}

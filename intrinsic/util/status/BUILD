@@ -39,6 +39,18 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "status_proto_conversion",
+    srcs = ["status_proto_conversion.cc"],
+    hdrs = ["status_proto_conversion.h"],
+    deps = [
+        ":status_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:cord",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
 cc_test(
     name = "status_builder_test",
     srcs = ["status_builder_test.cc"],
@@ -67,4 +79,14 @@ cc_test(
         "@com_google_absl//absl/status:statusor",
         "@com_google_googletest//:gtest_main",
     ],
+)
+
+proto_library(
+    name = "status_proto",
+    srcs = ["status.proto"],
+)
+
+cc_proto_library(
+    name = "status_cc_proto",
+    deps = [":status_proto"],
 )
