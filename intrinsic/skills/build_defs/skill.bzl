@@ -13,7 +13,6 @@ load("@io_bazel_rules_docker//container:container.bzl", _container = "container"
 load("@io_bazel_rules_docker//python3:image.bzl", "py3_image")
 load("@io_bazel_rules_docker//lang:image.bzl", "app_layer")
 load("@bazel_skylib//lib:dicts.bzl", "dicts")
-load("@bazel_skylib//lib:new_sets.bzl", "sets")
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@io_bazel_rules_docker//container:container.bzl", "container_image")
 
@@ -293,66 +292,6 @@ def _skill_service_config(
     files.append(":%s" % name)
     symlink_path = "../google3/" + config_path
     symlinks["skills/skill_service_config.proto.bin"] = symlink_path
-
-def _pbbin_from_pbtxt_impl(ctx):
-    outputfile = ctx.outputs.out
-    pbtxt = ctx.file.src
-    executable = ctx.executable._protoc
-
-    descriptor_set_set = sets.make()
-    for dep in ctx.attr.deps:
-        if ProtoInfo in dep:
-            for descriptor_set in dep[ProtoInfo].transitive_descriptor_sets.to_list():
-                sets.insert(descriptor_set_set, descriptor_set)
-    descriptor_sets = sets.to_list(descriptor_set_set)
-
-    descriptor_set_in = ("--descriptor_set_in=%s" %
-                         ":".join([file.path for file in descriptor_sets]))
-
-    protoc_args = [
-        "--encode=%s" % ctx.attr.proto_name,
-        "--deterministic_output",
-        descriptor_set_in,
-    ]
-    redirect = [
-        "< %s" % pbtxt.path,
-        "> %s" % outputfile.path,
-    ]
-
-    ctx.actions.run_shell(
-        outputs = [outputfile],
-        inputs = [pbtxt] + descriptor_sets,
-        tools = [executable],
-        command = " ".join([executable.path] + protoc_args + redirect),
-        mnemonic = "ProtoDataCompiler",
-        use_default_shell_env = False,
-    )
-
-    return DefaultInfo(
-        files = depset([outputfile]),
-        runfiles = ctx.runfiles([outputfile]),
-    )
-
-_pbbin_from_pbtxt = rule(
-    implementation = _pbbin_from_pbtxt_impl,
-    attrs = {
-        "deps": attr.label_list(
-            mandatory = True,
-            providers = [ProtoInfo],
-        ),
-        "proto_name": attr.string(
-            doc = "The fully qualified name of the proto message",
-            mandatory = True,
-        ),
-        "src": attr.label(allow_single_file = True, mandatory = True),
-        "out": attr.output(mandatory = True),
-        "_protoc": attr.label(
-            default = Label("@com_google_protobuf//:protoc"),
-            executable = True,
-            cfg = "exec",
-        ),
-    },
-)
 
 def _skill_service_config_manifest_impl(ctx):
     manifest_pbbin_file = ctx.attr.manifest[SkillManifestInfo].manifest_binary_file

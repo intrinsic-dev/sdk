@@ -18,7 +18,6 @@ bzl_library(
         ":manifest_bzl",
         "//intrinsic/util/proto/build_defs:descriptor_set",
         "@bazel_skylib//lib:dicts",
-        "@bazel_skylib//lib:new_sets",
         "@bazel_skylib//lib:paths",
         "@io_bazel_rules_docker//container",
         "@io_bazel_rules_docker//lang:image",
