@@ -5,8 +5,8 @@
 # not needed to be included directly when authoring a Skill.
 
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
-load("@io_bazel_rules_docker//python3:image.bzl", "py3_image")
-load("@rules_python//python:defs.bzl", "py_library")
+load("//bazel:python_oci_image.bzl", "python_oci_image")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
 load("@rules_python//python:packaging.bzl", "py_package", "py_wheel")
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 load("//intrinsic/util/proto/build_defs:descriptor_set.bzl", "proto_source_code_info_transitive_descriptor_set")
@@ -644,15 +644,26 @@ proto_source_code_info_transitive_descriptor_set(
     ],
 )
 
-# The default base image used by the skill image builder for python skills.
-py3_image(
-    name = "built_py_skill_base",
-    srcs = ["//intrinsic/skills/internal:module_skill_service_main.py"],
+py_binary(
+    name = "module_skill_service_main",
+    srcs = ["module_skill_service_main.py"],
     data = [
         ":built_skill_proto_descriptors",
     ],
-    main = "//intrinsic/skills/internal:module_skill_service_main.py",
+    srcs_version = "PY3",
     deps = [
-        "//intrinsic/skills/internal:module_skill_service",
+        ":module_skill_service",
     ],
+)
+
+# The default base image used by the skill image builder for python skills.
+python_oci_image(
+    name = "built_py_skill_base",
+    base = "@distroless_python3",
+    binary = ":module_skill_service_main",
+    entrypoint = [
+        "python3",
+        "/google3/intrinsic/skills/internal/module_skill_service_main",
+    ],
+    workdir = "/",
 )
