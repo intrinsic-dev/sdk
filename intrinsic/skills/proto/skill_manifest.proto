@@ -139,4 +139,7 @@ message Manifest {
 
   // A description of the return type for Execution of the skill.
   optional ReturnMetadata return_type = 7;
+
+  // The display name of the skill to be shown in the UI.
+  string display_name = 9;
 }

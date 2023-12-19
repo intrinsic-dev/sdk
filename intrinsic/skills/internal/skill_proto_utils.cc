@@ -172,6 +172,7 @@ absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
     skill.set_id_version(skill.id());
   }
   skill.set_description(manifest.documentation().description());
+  skill.set_display_name(manifest.display_name());
   *skill.mutable_resource_selectors() =
       manifest.dependencies().required_equipment();
 

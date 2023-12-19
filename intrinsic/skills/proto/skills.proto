@@ -105,6 +105,9 @@ message Skill {
   // Information about options supported by this skill during execution.
   ExecutionOptions execution_options = 13;
 
+  // Display name of the skill.
+  string display_name = 14;
+
   reserved 2, 3;
   reserved "params", "results";
 }
