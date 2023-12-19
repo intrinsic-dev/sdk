@@ -108,6 +108,6 @@ def python_oci_image(
     oci_tarball(
         name = name + ".tar",
         image = ":" + name,
-        repo_tags = [""],  # We set target tags at runtime.
+        repo_tags = ["%s/%s:latest" % (native.package_name(), name)],
         visibility = ["//visibility:public"],
     )
