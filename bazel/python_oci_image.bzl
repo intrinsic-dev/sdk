@@ -27,8 +27,17 @@ def python_oci_image(
     # Produce the manifest for a tar file of our py_binary, but don't tar it up yet, so we can split
     # into fine-grained layers for better docker performance.
     mtree_spec(
-        name = name + "_tar_manifest",
+        name = name + "_tar_manifest_raw",
         srcs = [binary],
+    )
+
+    # ADDITION: Handle local_repository sub repos by removing '../' and ' external/' from paths.
+    # Without this the resulting image manifest is malformed and tools like dive cannot open the image.
+    native.genrule(
+        name = name + "_tar_manifest",
+        srcs = [":" + name + "_tar_manifest_raw"],
+        outs = [name + "_tar_manifest.spec"],
+        cmd = "sed -e 's/^..\\///' $< | sed -e 's/ external\\///g' >$@",
     )
 
     # Match *only* external repositories that have the string "python"
