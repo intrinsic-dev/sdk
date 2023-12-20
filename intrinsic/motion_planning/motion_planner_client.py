@@ -8,10 +8,12 @@ This includes:
   * path planning
 """
 
+import dataclasses
 from typing import List, Optional
 # This import is required to use the *_grpc imports.
 # pylint: disable=unused-import
 import grpc
+
 
 from intrinsic.icon.proto import joint_space_pb2
 from intrinsic.math.python import data_types
@@ -30,6 +32,7 @@ def _repeated_vec_to_list_of_floats(
   return [list(vector.joints) for vector in vectors]
 
 
+@dataclasses.dataclass
 class CheckCollisionsOptions:
   """Options for Collision settings.
 
@@ -37,34 +40,36 @@ class CheckCollisionsOptions:
     collision_settings: Settings for collision checking.
   """
 
-  collision_settings: collision_settings_pb2.CollisionSettings = None
+  collision_settings: collision_settings_pb2.CollisionSettings | None = None
 
 
+@dataclasses.dataclass
 class IKOptions:
   """Options for IK.
 
-  max_num_solutions: The maximum number of solutions to be returned from
-    IK computation. If not set (== 0), the
-    underlying implementation has the freedom to choose. Negative values are
-    invalid.
-  starting_joints: The starting joint configuration to use.
-    If not set, the current position of the robot in the world will be used.
-  collision_settings: Collision Settings. If left empty, no collision checking
-    is done.
-  ensure_same_branch: Flag to choose IK solution is on the same kinematic
-    branch as the starting joints of the robot.
+  Attributes:
+    max_num_solutions: The maximum number of solutions to be returned from IK
+      computation. If not set (== 0), the underlying implementation has the
+      freedom to choose. Negative values are invalid.
+    starting_joints: The starting joint configuration to use. If not set, the
+      current position of the robot in the world will be used.
+    collision_settings: Collision Settings. If left empty, no collision checking
+      is done.
+    ensure_same_branch: Flag to choose IK solution is on the same kinematic
+      branch as the starting joints of the robot.
   """
 
   max_num_solutions: int = 0
-  starting_joints: List[float] = None
-  collision_settings: collision_settings_pb2.CollisionSettings = None
+  starting_joints: list[float] | None = None
+  collision_settings: collision_settings_pb2.CollisionSettings | None = None
   ensure_same_branch: bool = False
 
 
+@dataclasses.dataclass
 class MotionPlanningOptions:
   """Options for Motion Planning.
 
-  path_planning_time_out : Timeout for path planning algorithms.
+  Attributes: path_planning_time_out : Timeout for path planning algorithms.
   """
 
   path_planning_time_out: int = 30
