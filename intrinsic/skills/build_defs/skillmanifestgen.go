@@ -25,14 +25,12 @@ var (
 )
 
 func validateManifest(m *smpb.Manifest, types *protoregistry.Types) error {
-	if err := idutils.ValidateIDProto(m.GetId()); err != nil {
+	id, err := idutils.IDFromProto(m.GetId())
+	if err != nil {
 		return fmt.Errorf("invalid name or package: %v", err)
 	}
-	if err := metadatafieldlimits.ValidateNameLength(m.GetId().GetName()); err != nil {
-		return fmt.Errorf("invalid name for skill: %v", err)
-	}
-	if err := metadatafieldlimits.ValidateDescriptionLength(m.GetDocumentation().GetDescription()); err != nil {
-		return fmt.Errorf("invalid description for skill: %v", err)
+	if m.GetDisplayName() == "" {
+		return fmt.Errorf("missing display name for skill %q", id)
 	}
 	if m.GetVendor().GetDisplayName() == "" {
 		return fmt.Errorf("missing vendor display name")
@@ -46,6 +44,15 @@ func validateManifest(m *smpb.Manifest, types *protoregistry.Types) error {
 		if _, err := types.FindMessageByURL(name); err != nil {
 			return fmt.Errorf("problem with return message name %q: %w", name, err)
 		}
+	}
+	if err := metadatafieldlimits.ValidateNameLength(m.GetId().GetName()); err != nil {
+		return fmt.Errorf("invalid name for skill: %v", err)
+	}
+	if err := metadatafieldlimits.ValidateDescriptionLength(m.GetDocumentation().GetDescription()); err != nil {
+		return fmt.Errorf("invalid description for skill: %v", err)
+	}
+	if err := metadatafieldlimits.ValidateDisplayNameLength(m.GetDisplayName()); err != nil {
+		return fmt.Errorf("invalid display name for skill: %v", err)
 	}
 	return nil
 }

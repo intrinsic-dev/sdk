@@ -18,6 +18,8 @@ const (
 	// nested packages. And for the very same reason, we cannot restrict character limits for
 	// packages.
 	NameCharLength = 45
+	// DisplayNameCharLength sets character limits for the asset display name.
+	DisplayNameCharLength = 45
 	// VersionCharLength sets character limits for asset versions.
 	// Semver does not have restrictions on character limits for versions, and leaves it to best
 	// judgement: https://semver.org/#does-semver-have-a-size-limit-on-the-version-string. An
@@ -37,6 +39,14 @@ const (
 func ValidateNameLength(name string) error {
 	if nameLen := len(name); nameLen > NameCharLength {
 		return fmt.Errorf("name %q exceeds character limit: length %d > max %d", name, nameLen, NameCharLength)
+	}
+	return nil
+}
+
+// ValidateDisplayNameLength validates the length of asset display names.
+func ValidateDisplayNameLength(name string) error {
+	if nameLen := len(name); nameLen > DisplayNameCharLength {
+		return fmt.Errorf("display name %q exceeds character limit: length %d > max %d", name, nameLen, DisplayNameCharLength)
 	}
 	return nil
 }
