@@ -8,6 +8,9 @@ package(default_visibility = ["//visibility:public"])
 bzl_library(
     name = "manifest_bzl",
     srcs = ["manifest.bzl"],
+    deps = [
+        "//intrinsic/util/proto/build_defs:descriptor_set",
+    ],
 )
 
 bzl_library(

@@ -2,6 +2,8 @@
 
 """Build rule for creating a Skill Manifest."""
 
+load("//intrinsic/util/proto/build_defs:descriptor_set.bzl", "ProtoSourceCodeInfo", "gen_source_code_info_descriptor_set")
+
 SkillManifestInfo = provider(
     "Info about a binary skill manifest",
     fields = {
@@ -15,7 +17,7 @@ def _skill_manifest_impl(ctx):
 
     transitive_descriptor_sets = depset(
         transitive = [
-            dep[ProtoInfo].transitive_descriptor_sets
+            dep[ProtoSourceCodeInfo].transitive_descriptor_sets
             for dep in ctx.attr.deps
         ],
     )
@@ -76,6 +78,7 @@ skill_manifest = rule(
                   "This is normally the proto message declaring the skill's return type and parameter " +
                   "type messages.",
             providers = [ProtoInfo],
+            aspects = [gen_source_code_info_descriptor_set],
         ),
         "_skillmanifestgen": attr.label(
             default = Label("//intrinsic/skills/build_defs:skillmanifestgen"),

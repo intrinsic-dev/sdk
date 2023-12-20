@@ -88,7 +88,7 @@ def _gen_source_code_info_descriptor_set_aspect_impl(target, ctx):
         ),
     )
 
-_gen_source_code_info_descriptor_set = aspect(
+gen_source_code_info_descriptor_set = aspect(
     implementation = _gen_source_code_info_descriptor_set_aspect_impl,
     required_providers = [ProtoInfo],
     provides = [ProtoSourceCodeInfo],
@@ -155,7 +155,7 @@ proto_source_code_info_transitive_descriptor_set = rule(
     implementation = _proto_source_code_info_transitive_descriptor_set,
     attrs = {
         "deps": attr.label_list(
-            aspects = [_gen_source_code_info_descriptor_set],
+            aspects = [gen_source_code_info_descriptor_set],
         ),
     },
 )
