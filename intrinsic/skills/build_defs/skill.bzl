@@ -19,6 +19,9 @@ load("//bazel:python_oci_image.bzl", "python_oci_image")
 
 skill_manifest = _skill_manifest
 
+# This is the container_pull (rules_docker) base image externally.
+base_image = "@distroless_base_amd64//image"
+
 def _gen_cc_skill_service_main_impl(ctx):
     output_file = ctx.actions.declare_file(ctx.label.name + ".cc")
     manifest_pbbin_file = ctx.attr.manifest[SkillManifestInfo].manifest_binary_file
@@ -510,7 +513,7 @@ def cc_skill(
 
     _skill(
         name = name,
-        base = Label("@distroless_base_amd64//image"),
+        base = Label(base_image),
         skill_service_binary = skill_service_name,
         skill_service_config = skill_service_config_name,
         skill_id = skill_id_name,

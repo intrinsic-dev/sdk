@@ -111,17 +111,16 @@ def intrinsic_sdks_deps_1(register_go_toolchain = True):
     _py_image_repos()
 
     container_pull(
-        name = "ubuntu",
-        digest = "sha256:7c9c7fed23def3653a0da5bc9ecb651efe155ebd5802c7ba5d585edaa6c89496",
-        registry = "index.docker.io",
-        repository = "library/ubuntu:focal-20220113",
-    )
-
-    container_pull(
         name = "distroless_base_amd64",
         digest = "sha256:eaddb8ca70848a43fab351226d9549a571f68d9427c53356114fedd3711b5d73",
         registry = "gcr.io",
         repository = "distroless/base",
+    )
+
+    oci_pull(
+        name = "distroless_base_amd64_oci",
+        digest = "sha256:eaddb8ca70848a43fab351226d9549a571f68d9427c53356114fedd3711b5d73",
+        image = "gcr.io/distroless/base",
     )
 
     oci_pull(
