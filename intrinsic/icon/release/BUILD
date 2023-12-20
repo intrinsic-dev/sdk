@@ -15,9 +15,6 @@ cc_library(
     srcs = ["status_helpers.cc"],
     hdrs = ["status_helpers.h"],
     deps = [
-        "//intrinsic/util/status:status_macros",
-        "@com_google_absl//absl/base:log_severity",
-        "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
