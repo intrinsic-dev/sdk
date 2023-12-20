@@ -9,7 +9,7 @@ defined here should not be used in user-facing contexts.
 
 import dataclasses
 import datetime
-from typing import List, Mapping, Optional, Sequence
+from typing import Mapping, Optional, Sequence
 
 from google.protobuf import any_pb2
 from google.protobuf import descriptor as proto_descriptor
