@@ -14,6 +14,7 @@
 #include "absl/base/log_severity.h"
 #include "absl/log/log_sink.h"
 #include "absl/status/status.h"
+#include "absl/strings/cord.h"
 #include "absl/time/time.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/icon/release/source_location.h"
@@ -129,6 +130,14 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   // StatusBuilder. Returns `*this` to allow method chaining.
   StatusBuilder& SetCode(absl::StatusCode code) &;
   StatusBuilder&& SetCode(absl::StatusCode code) &&;
+
+  // Sets extra payload on the returned Status. Generally this is expected to be
+  // a serialized proto, with type_url denoting the payload's descriptor's full
+  // type name (but it can be any form of data, but non-proto data is
+  // discouraged). Payload is ignored if the builder's status is ok, i.e., if
+  // it does not represent an error.
+  StatusBuilder& SetPayload(std::string_view type_url, absl::Cord payload) &;
+  StatusBuilder&& SetPayload(std::string_view type_url, absl::Cord payload) &&;
 
   ///////////////////////////////// Adaptors /////////////////////////////////
   //
@@ -639,6 +648,19 @@ inline StatusBuilder& StatusBuilder::SetCode(absl::StatusCode code) & {
 
 inline StatusBuilder&& StatusBuilder::SetCode(absl::StatusCode code) && {
   return std::move(SetCode(code));
+}
+
+inline StatusBuilder& StatusBuilder::SetPayload(std::string_view type_url,
+                                                absl::Cord payload) & {
+  if (!status_.ok()) {
+    status_.SetPayload(type_url, payload);
+  }
+  return *this;
+}
+
+inline StatusBuilder&& StatusBuilder::SetPayload(std::string_view type_url,
+                                                 absl::Cord payload) && {
+  return std::move(SetPayload(type_url, payload));
 }
 
 inline bool StatusBuilder::ok() const { return status_.ok(); }
