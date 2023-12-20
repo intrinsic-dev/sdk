@@ -22,8 +22,6 @@ from pybind11_abseil import status
 _SEMVER_REGEX_PATTERN: str = (
     r'^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'
 )
-
-
 def proto_from_skill(
     skill: skl.Skill, version: Optional[str] = None
 ) -> skills_pb2.Skill:
@@ -98,7 +96,7 @@ def proto_from_skill_manifest(
   Raises:
     ValueError if version is not a valid semver version.
   """
-  skill = skills_pb2.Skill(
+  skill_proto = skills_pb2.Skill(
       skill_name=manifest.id.name,
       id=id_utils.id_from(manifest.id.package, manifest.id.name),
       package_name=manifest.id.package,
@@ -109,23 +107,32 @@ def proto_from_skill_manifest(
   )
 
   for key, val in manifest.dependencies.required_equipment.items():
-    skill.resource_selectors[key].CopyFrom(val)
+    skill_proto.resource_selectors[key].CopyFrom(val)
 
-  add_file_descriptor_set_without_source_code_from_manifest(
-      manifest, file_descriptor_set, skill
+  add_param_file_descriptor_set_without_source_code_from_manifest(
+      manifest, file_descriptor_set, skill_proto
   )
 
-  skill.execution_options.supports_cancellation = (
+  _add_pub_topic_description_from_manifest(
+      manifest, file_descriptor_set, skill_proto
+  )
+
+  if manifest.HasField('return_type'):
+    add_return_file_descriptor_set_without_source_code_from_manifest(
+        manifest, file_descriptor_set, skill_proto
+    )
+
+  skill_proto.execution_options.supports_cancellation = (
       manifest.options.supports_cancellation
   )
 
   if manifest.HasField('parameter'):
     if manifest.parameter.HasField('default_value'):
-      skill.parameter_description.default_value.CopyFrom(
+      skill_proto.parameter_description.default_value.CopyFrom(
           manifest.parameter.default_value
       )
 
-  return skill
+  return skill_proto
 
 
 def proto_from_skill_registration(
@@ -181,9 +188,38 @@ def proto_from_skill_registry_config(
         )
     )
   return proto
+def add_return_file_descriptor_set_without_source_code_from_manifest(
+    manifest: skill_manifest_pb2.Manifest,
+    return_file_descriptor_set: descriptor_pb2.FileDescriptorSet,
+    skill_proto: skills_pb2.Skill,
+):
+  """Adds (or overwrites) the skill's return_type descriptor fileset.
 
+  This also populates the return field comments. We remove source_code_info
+  as it is no longer needed after the return value field comments are populated.
 
-def add_file_descriptor_set_without_source_code_from_manifest(
+  Args:
+    manifest: A skill manifest
+    return_file_descriptor_set: A file descriptor set for the skill's
+      return_type.
+    skill_proto: A skill proto to which this function will add file descriptors.
+  """
+  return_description = skill_proto.return_value_description
+  return_description.descriptor_fileset.CopyFrom(return_file_descriptor_set)
+  return_description.return_value_message_full_name = (
+      manifest.return_type.message_full_name
+  )
+  sci_view = source_code_info_view_py.SourceCodeInfoView()
+  sci_view.Init(return_description.descriptor_fileset)
+  return_description.return_value_field_comments.update(
+      sci_view.GetNestedFieldCommentMap(
+          return_description.return_value_message_full_name
+      )
+  )
+
+  for file in return_description.descriptor_fileset.file:
+    file.ClearField('source_code_info')
+def add_param_file_descriptor_set_without_source_code_from_manifest(
     manifest: skill_manifest_pb2.Manifest,
     parameter_file_descriptor_set: descriptor_pb2.FileDescriptorSet,
     skill_proto: skills_pb2.Skill,
@@ -216,12 +252,6 @@ def add_file_descriptor_set_without_source_code_from_manifest(
 
   for file in parameter_description.parameter_descriptor_fileset.file:
     file.ClearField('source_code_info')
-
-  _add_pub_topic_description_from_manifest(
-      manifest, parameter_file_descriptor_set, skill_proto
-  )
-
-
 def add_file_descriptor_set_without_source_code_info(
     skill: skl.Skill,
     parameter_file_descriptor_set: descriptor_pb2.FileDescriptorSet,
