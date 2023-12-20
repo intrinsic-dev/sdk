@@ -15,7 +15,7 @@ def python_oci_image(
 
     Will create both an oci_image ($name) and an oci_tarball ($name.tar) target.
 
-    The setup is taken from https://github.com/aspect-build/bazel-examples/blob/main/oci_python_image/hello_world/BUILD.bazel.
+    The setup is inspired by https://github.com/aspect-build/bazel-examples/blob/main/oci_python_image/hello_world/BUILD.bazel.
 
     Args:
       name: name of the image.
@@ -40,12 +40,8 @@ def python_oci_image(
         cmd = "sed -e 's/^..\\///' $< | sed -e 's/ external\\///g' >$@",
     )
 
-    # Match *only* external repositories that have the string "python"
-    # e.g. this will match
-    #   `/$name/$name.runfiles/rules_python~0.21.0~python~python3_9_aarch64-unknown-linux-gnu/bin/python3`
-    # but not match
-    #   `/$name/$name.runfiles/_main/python_app`.
-    PY_INTERPRETER_REGEX = "\\.runfiles/.*python.*-.*/"
+    # One layer with only the python interpreter.
+    PY_INTERPRETER_REGEX = "\\.runfiles/local_config_python"
 
     native.genrule(
         name = name + "_interpreter_tar_manifest",
@@ -54,24 +50,25 @@ def python_oci_image(
         cmd = "grep '{}' $< >$@".format(PY_INTERPRETER_REGEX),
     )
 
-    # One layer with only the python interpreter.
     tar(
         name = name + "_interpreter_layer",
         srcs = [binary],
         mtree = ":" + name + "_interpreter_tar_manifest",
     )
 
-    # Match *only* external pip like repositories that contain the string "site-packages".
-    SITE_PACKAGES_REGEX = "\\.runfiles/.*/site-packages/.*"
+    # Attempt to match all external (3P) dependencies. Since these can come in as either
+    # `requirement` or native Bazel deps, do our best to guess the runfiles path.
+    PACKAGES_REGEX = "\\S*\\.runfiles/\\S*\\(site-packages\\|com_\\|pip_deps_\\)"
 
+    # One layer with the third-party pip packages.
+    # To make sure some dependencies with surprising paths are not included twice, exclude the interpreter from the site-packages layer.
     native.genrule(
         name = name + "_packages_tar_manifest",
         srcs = [":" + name + "_tar_manifest"],
         outs = [name + "_packages_tar_manifest.spec"],
-        cmd = "grep '{}' $< >$@".format(SITE_PACKAGES_REGEX),
+        cmd = "grep -v '{}' $< | grep '{}' >$@".format(PY_INTERPRETER_REGEX, PACKAGES_REGEX),
     )
 
-    # One layer with the third-party pip packages.
     tar(
         name = name + "_packages_layer",
         srcs = [binary],
@@ -83,7 +80,7 @@ def python_oci_image(
         name = name + "_app_tar_manifest",
         srcs = [":" + name + "_tar_manifest"],
         outs = [name + "_app_tar_manifest.spec"],
-        cmd = "grep -v '{}' $< | grep -v '{}' >$@".format(SITE_PACKAGES_REGEX, PY_INTERPRETER_REGEX),
+        cmd = "grep -v '{}' $< | grep -v '{}' >$@".format(PACKAGES_REGEX, PY_INTERPRETER_REGEX),
     )
 
     # ... go into the third layer which is the application. We assume it changes the most frequently.
