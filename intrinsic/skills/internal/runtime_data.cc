@@ -26,11 +26,7 @@
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::skills::internal {
-namespace {
-
-using ::intrinsic::assets::IdFrom;
-
-}  // namespace
+namespace {}  // namespace
 
 ParameterData::ParameterData(const google::protobuf::Descriptor& descriptor,
                              const google::protobuf::Any& default_value)
