@@ -26,21 +26,15 @@ bzl_library(
     ],
 )
 
-cc_binary(
+go_binary(
     name = "gen_skill_id",
-    srcs = ["gen_skill_id_file.cc"],
+    srcs = ["gen_skill_id.go"],
     visibility = ["//visibility:public"],
     deps = [
-        "//intrinsic/assets/proto:id_cc_proto",
-        "//intrinsic/icon/release:file_helpers",
-        "//intrinsic/icon/release/portable:init_xfa_absl",
-        "//intrinsic/skills/proto:skill_manifest_cc_proto",
-        "//intrinsic/util/status:status_macros",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
+        "//intrinsic/production:intrinsic",
+        "//intrinsic/skills/proto:skill_manifest_go_proto",
+        "//intrinsic/util/proto:protoio",
+        "@com_github_golang_glog//:go_default_library",
     ],
 )
 
