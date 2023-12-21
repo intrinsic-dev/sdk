@@ -37,7 +37,6 @@ py_library(
 py_skill(
     name = "{{.SkillNameSnakeCase}}_image",
     manifest = ":{{.SkillNameSnakeCase}}_py_manifest",
-    proto = ":{{.SkillNameSnakeCase}}_proto",
     deps = [
       ":{{.SkillNameSnakeCase}}",
       ":{{.SkillNameSnakeCase}}_py_pb2",

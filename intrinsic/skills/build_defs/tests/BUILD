@@ -16,7 +16,6 @@ skill_manifest(
 cc_skill(
     name = "no_op_skill_cc_image",
     manifest = ":no_op_skill_cc_manifest",
-    proto = "//intrinsic/skills/testing:no_op_skill_proto",
     # Allow use of this image in tests of skill tooling.
     deps = [
         "//intrinsic/skills/testing:no_op_skill",
@@ -33,7 +32,6 @@ skill_manifest(
 py_skill(
     name = "no_op_skill_py_new_image",
     manifest = ":no_op_skill_py_manifest",
-    proto = "//intrinsic/skills/testing:no_op_skill_proto",
     # Allow use of this image in tests of skill tooling.
     deps = [
         "//intrinsic/skills/testing:no_op_skill_py",
