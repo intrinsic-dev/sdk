@@ -246,6 +246,25 @@ py_library(
     ],
 )
 
+py_library(
+    name = "adio_utils",
+    srcs = ["adio_utils.py"],
+    deps = [
+        ":adio_py_pb2",
+        "//intrinsic/icon/python:icon",
+    ],
+)
+
+py_test(
+    name = "adio_utils_test",
+    srcs = ["adio_utils_test.py"],
+    deps = [
+        ":adio_py_pb2",
+        ":adio_utils",
+        "@com_google_absl_py//absl/testing:absltest",
+    ],
+)
+
 py_test(
     name = "wait_for_settling_utils_test",
     srcs = ["wait_for_settling_utils_test.py"],

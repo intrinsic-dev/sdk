@@ -61,6 +61,7 @@ py_library(
     name = "create_action_utils",
     srcs = ["create_action_utils.py"],
     deps = [
+        "//intrinsic/icon/actions:adio_utils",
         "//intrinsic/icon/actions:point_to_point_move_utils",
         "//intrinsic/icon/actions:stop_utils",
         "//intrinsic/icon/actions:tare_force_torque_sensor_utils",
@@ -74,6 +75,7 @@ py_test(
     srcs = ["create_action_utils_test.py"],
     deps = [
         ":create_action_utils",
+        "//intrinsic/icon/actions:adio_utils",
         "//intrinsic/icon/actions:point_to_point_move_utils",
         "//intrinsic/icon/actions:stop_utils",
         "//intrinsic/icon/actions:tare_force_torque_sensor_utils",

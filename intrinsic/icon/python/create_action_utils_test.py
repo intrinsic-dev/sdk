@@ -2,6 +2,7 @@
 
 from absl.testing import absltest
 from google.protobuf import duration_pb2
+from intrinsic.icon.actions import adio_utils
 from intrinsic.icon.actions import point_to_point_move_utils
 from intrinsic.icon.actions import stop_utils
 from intrinsic.icon.actions import tare_force_torque_sensor_utils
@@ -69,6 +70,14 @@ class ActionUtilsTest(absltest.TestCase):
     self.assertEqual(
         action.proto.action_type_name,
         wait_for_settling_utils.ACTION_TYPE_NAME,
+    )
+
+  def test_create_adio(self):
+    action = create_action_utils.create_digital_output_action(4, "my_part")
+
+    self.assertEqual(
+        action.proto.action_type_name,
+        adio_utils.ACTION_TYPE_NAME,
     )
 
 

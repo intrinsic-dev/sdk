@@ -6,6 +6,7 @@ This module only should redirect Create functions to other modules to make the
 usage in the external API easier.
 """
 
+from intrinsic.icon.actions import adio_utils
 from intrinsic.icon.actions import point_to_point_move_utils
 from intrinsic.icon.actions import stop_utils
 from intrinsic.icon.actions import tare_force_torque_sensor_utils
@@ -29,3 +30,5 @@ create_stop_action = stop_utils.create_stop_action
 create_wait_for_settling_action = (
     wait_for_settling_utils.create_wait_for_settling_action
 )
+
+create_digital_output_action = adio_utils.create_digital_output_action
