@@ -24,7 +24,6 @@
 #include "grpcpp/server.h"
 #include "grpcpp/server_builder.h"
 #include "intrinsic/icon/release/file_helpers.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/logging/data_logger_client.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/cc/skill_interface.h"

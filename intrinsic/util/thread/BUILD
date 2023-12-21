@@ -12,7 +12,6 @@ cc_library(
     ],
     copts = ["-D_GNU_SOURCE"],
     deps = [
-        "//intrinsic/icon/release:status_helpers",
         "//intrinsic/icon/testing:realtime_annotations",
         "//intrinsic/icon/utils:log",
         "//intrinsic/icon/utils:realtime_guard",

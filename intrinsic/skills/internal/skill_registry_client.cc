@@ -18,7 +18,6 @@
 #include "grpcpp/channel.h"
 #include "grpcpp/grpcpp.h"
 #include "grpcpp/support/channel_arguments.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/skills/cc/client_common.h"
 #include "intrinsic/skills/internal/proto/skill_registry_internal.grpc.pb.h"
 #include "intrinsic/skills/internal/proto/skill_registry_internal.pb.h"
@@ -28,6 +27,7 @@
 #include "intrinsic/skills/proto/skill_registry_config.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
 #include "intrinsic/util/grpc/grpc.h"
+#include "intrinsic/util/status/annotate.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {

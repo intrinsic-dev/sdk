@@ -11,7 +11,7 @@
 #include "grpcpp/support/sync_stream.h"
 #include "intrinsic/icon/common/id_types.h"
 #include "intrinsic/icon/proto/service.pb.h"
-#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/rpc_status_conversion.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon::internal {

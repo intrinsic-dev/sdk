@@ -38,11 +38,11 @@
 #include "intrinsic/icon/proto/service.pb.h"
 #include "intrinsic/icon/proto/types.pb.h"
 #include "intrinsic/icon/release/source_location.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/platform/common/buffers/realtime_write_queue.h"
 #include "intrinsic/util/grpc/channel_interface.h"
 #include "intrinsic/util/proto_time.h"
+#include "intrinsic/util/status/rpc_status_conversion.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/thread/thread.h"
 

@@ -1,17 +1,17 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/rpc_status_conversion.h"
 
 #include <string>
 
 #include "absl/status/status.h"
 #include "absl/strings/cord.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "google/protobuf/any.pb.h"
 #include "google/rpc/status.pb.h"
 
 namespace intrinsic {
+
 google::rpc::Status SaveStatusAsRpcStatus(const absl::Status& status) {
   google::rpc::Status ret;
   ret.set_code(static_cast<int>(status.code()));
@@ -35,17 +35,4 @@ absl::Status MakeStatusFromRpcStatus(const google::rpc::Status& status) {
   return ret;
 }
 
-absl::Status AnnotateError(const absl::Status& status,
-                           absl::string_view message) {
-  if (status.ok()) {
-    return status;
-  }
-  auto new_status = absl::Status(status.code(),
-                                 absl::StrCat(status.message(), "; ", message));
-  status.ForEachPayload(
-      [&new_status](absl::string_view type_url, const absl::Cord& payload) {
-        new_status.SetPayload(type_url, payload);
-      });
-  return new_status;
-}
 }  // namespace intrinsic

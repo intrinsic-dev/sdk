@@ -28,7 +28,6 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/icon/utils/log.h"
 #include "intrinsic/icon/utils/realtime_guard.h"
 #include "intrinsic/util/status/status_macros.h"

@@ -420,7 +420,6 @@ cc_library(
         ":skill_repository",
         ":skill_service_impl",
         "//intrinsic/icon/release:file_helpers",
-        "//intrinsic/icon/release:status_helpers",
         "//intrinsic/logging:data_logger_client",
         "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
         "//intrinsic/skills/cc:skill_interface",
@@ -514,7 +513,6 @@ cc_library(
     hdrs = ["skill_registry_client.h"],
     deps = [
         ":skill_registry_client_interface",
-        "//intrinsic/icon/release:status_helpers",
         "//intrinsic/skills/cc:client_common",
         "//intrinsic/skills/cc:equipment_pack",
         "//intrinsic/skills/internal/proto:behavior_tree_registry_internal_cc_grpc_proto",
@@ -527,6 +525,7 @@ cc_library(
         "//intrinsic/skills/proto:skill_registry_config_cc_proto",
         "//intrinsic/skills/proto:skills_cc_proto",
         "//intrinsic/util/grpc",
+        "//intrinsic/util/status:annotate",
         "//intrinsic/util/status:status_macros",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/container:flat_hash_map",

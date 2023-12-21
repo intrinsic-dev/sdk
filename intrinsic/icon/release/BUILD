@@ -11,19 +11,6 @@ cc_library(
 )
 
 cc_library(
-    name = "status_helpers",
-    srcs = ["status_helpers.cc"],
-    hdrs = ["status_helpers.h"],
-    deps = [
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:cord",
-        "@com_google_googleapis//google/rpc:status_cc_proto",
-        "@com_google_protobuf//:protobuf",
-    ],
-)
-
-cc_library(
     name = "file_helpers",
     hdrs = ["file_helpers.h"],
     deps = [

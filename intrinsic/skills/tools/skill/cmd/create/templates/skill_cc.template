@@ -13,7 +13,6 @@ Copyright 2023 Intrinsic Innovation LLC
 #include "absl/status/statusor.h"
 #include "{{strJoin .BazelPackage "/"}}{{if .BazelPackage}}/{{end}}{{.SkillNameSnakeCase}}.pb.h"
 #include "google/protobuf/message.h"
-#include "intrinsic/icon/release/status_helpers.h"
 #include "intrinsic/skills/cc/skill_utils.h"
 #include "intrinsic/util/status/status_macros.h"
 

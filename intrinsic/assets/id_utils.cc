@@ -15,7 +15,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "intrinsic/assets/proto/id.pb.h"
-#include "intrinsic/icon/release/status_helpers.h"
+#include "intrinsic/util/status/annotate.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "re2/re2.h"
 #include "re2/stringpiece.h"

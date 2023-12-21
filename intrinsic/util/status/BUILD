@@ -85,6 +85,56 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "rpc_status_conversion",
+    srcs = ["rpc_status_conversion.cc"],
+    hdrs = ["rpc_status_conversion.h"],
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:cord",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_googleapis//google/rpc:status_cc_proto",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
+    name = "annotate",
+    srcs = ["annotate.cc"],
+    hdrs = ["annotate.h"],
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:cord",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_test(
+    name = "annotate_test",
+    srcs = ["annotate_test.cc"],
+    deps = [
+        ":annotate",
+        ":status_builder",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:cord",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_test(
+    name = "rpc_status_conversion_test",
+    srcs = ["rpc_status_conversion_test.cc"],
+    deps = [
+        ":rpc_status_conversion",
+        "@com_google_absl//absl/status",
+        "@com_google_googleapis//google/rpc:code_cc_proto",
+        "@com_google_googleapis//google/rpc:status_cc_proto",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_test(
     name = "ret_check_test",
     srcs = ["ret_check_test.cc"],
