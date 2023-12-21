@@ -8,11 +8,13 @@ SkillManifestInfo = provider(
     "Info about a binary skill manifest",
     fields = {
         "manifest_binary_file": "The binary manifest File.",
+        "file_descriptor_set": "The file descriptor set with source information",
     },
 )
 
 def _skill_manifest_impl(ctx):
     outputfile = ctx.actions.declare_file(ctx.label.name + ".pbbin")
+    file_descriptor_set_out = ctx.actions.declare_file(ctx.label.name + "_filedescriptor.pbbin")
     pbtxt = ctx.file.src
 
     transitive_descriptor_sets = depset(
@@ -28,14 +30,18 @@ def _skill_manifest_impl(ctx):
     ).add(
         "--output",
         outputfile,
+    ).add(
+        "--file_descriptor_set_out",
+        file_descriptor_set_out,
     ).add_joined(
         "--file_descriptor_sets",
         transitive_descriptor_sets,
         join_with = ",",
     )
 
+    outputs = [outputfile, file_descriptor_set_out]
     ctx.actions.run(
-        outputs = [outputfile],
+        outputs = outputs,
         inputs = depset([pbtxt], transitive = [transitive_descriptor_sets]),
         executable = ctx.executable._skillmanifestgen,
         arguments = [args],
@@ -44,11 +50,12 @@ def _skill_manifest_impl(ctx):
 
     return [
         DefaultInfo(
-            files = depset([outputfile]),
-            runfiles = ctx.runfiles([outputfile]),
+            files = depset(outputs),
+            runfiles = ctx.runfiles(outputs),
         ),
         SkillManifestInfo(
             manifest_binary_file = outputfile,
+            file_descriptor_set = file_descriptor_set_out,
         ),
     ]
 

@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	flagManifest           = flag.String("manifest", "", "Path to a SkillManifest pbtxt file.")
-	flagOutput             = flag.String("output", "", "Output path.")
-	flagFileDescriptorSets = flag.String("file_descriptor_sets", "", "Comma separated paths to binary file descriptor set protos.")
+	flagManifest             = flag.String("manifest", "", "Path to a SkillManifest pbtxt file.")
+	flagOutput               = flag.String("output", "", "Output path.")
+	flagFileDescriptorSetOut = flag.String("file_descriptor_set_out", "", "Output path for the file descriptor set.")
+	flagFileDescriptorSets   = flag.String("file_descriptor_sets", "", "Comma separated paths to binary file descriptor set protos.")
 )
 
 func validateManifest(m *smpb.Manifest, types *protoregistry.Types) error {
@@ -81,6 +82,9 @@ func createSkillManifest() error {
 	}
 	if err := protoio.WriteBinaryProto(*flagOutput, m, protoio.WithDeterministic(true)); err != nil {
 		return fmt.Errorf("could not write skill manifest proto: %v", err)
+	}
+	if err := protoio.WriteBinaryProto(*flagFileDescriptorSetOut, set, protoio.WithDeterministic(true)); err != nil {
+		return fmt.Errorf("could not write file descriptor set proto: %v", err)
 	}
 	return nil
 }
