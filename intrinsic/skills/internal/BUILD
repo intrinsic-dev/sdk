@@ -486,6 +486,7 @@ cc_library(
         "//intrinsic/skills/proto:skills_cc_proto",
         "//intrinsic/util/proto:merge",
         "//intrinsic/util/status:status_macros",
+        "//intrinsic/util/status:status_macros_grpc",
         "//intrinsic/util/thread",
         "//intrinsic/world/objects:object_world_client",
         "//intrinsic/world/proto:object_world_service_cc_grpc_proto",

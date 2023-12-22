@@ -12,7 +12,6 @@ cc_library(
     hdrs = ["status_builder.h"],
     deps = [
         "//intrinsic/icon/release:source_location",
-        "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/base:log_severity",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -107,6 +106,47 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
         "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_library(
+    name = "status_builder_grpc",
+    srcs = ["status_builder_grpc.cc"],
+    hdrs = ["status_builder_grpc.h"],
+    deps = [
+        ":status_builder",
+        "//intrinsic/icon/release:source_location",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_library(
+    name = "status_macros_grpc",
+    hdrs = ["status_macros_grpc.h"],
+    deps = [
+        ":status_builder",
+        ":status_builder_grpc",
+        ":status_macros",
+        "//intrinsic/icon/release:source_location",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/status",
+    ],
+)
+
+cc_library(
+    name = "ret_check_grpc",
+    srcs = ["ret_check_grpc.cc"],
+    hdrs = ["ret_check_grpc.h"],
+    deps = [
+        ":ret_check",
+        ":status_builder_grpc",
+        ":status_macros_grpc",
+        "//intrinsic/icon/release:source_location",
+        "@com_google_absl//absl/base:log_severity",
+        "@com_google_absl//absl/status",
     ],
 )
 

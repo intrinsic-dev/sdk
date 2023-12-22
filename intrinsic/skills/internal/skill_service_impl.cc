@@ -44,6 +44,7 @@
 #include "intrinsic/skills/proto/skills.pb.h"
 #include "intrinsic/util/proto/merge.h"
 #include "intrinsic/util/status/status_macros.h"
+#include "intrinsic/util/status/status_macros_grpc.h"
 #include "intrinsic/util/thread/thread.h"
 #include "intrinsic/world/objects/object_world_client.h"
 #include "intrinsic/world/proto/object_world_service.grpc.pb.h"
@@ -414,19 +415,19 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
             << request->instance().id_version() << "' skill with world id '"
             << request->world_id() << "'";
 
-  INTR_RETURN_IF_ERROR(ValidateRequest(*request));
+  INTR_RETURN_IF_ERROR_GRPC(ValidateRequest(*request));
 
-  INTR_ASSIGN_OR_RETURN(const std::string skill_name,
-                        NameFrom(request->instance().id_version()));
+  INTR_ASSIGN_OR_RETURN_GRPC(const std::string skill_name,
+                             NameFrom(request->instance().id_version()));
   LOG(INFO) << "Calling GetFootprint for skill name: " << skill_name;
-  INTR_ASSIGN_OR_RETURN(std::unique_ptr<SkillProjectInterface> skill,
-                        skill_repository_.GetSkillProject(skill_name));
+  INTR_ASSIGN_OR_RETURN_GRPC(std::unique_ptr<SkillProjectInterface> skill,
+                             skill_repository_.GetSkillProject(skill_name));
 
-  INTR_ASSIGN_OR_RETURN(GetFootprintRequest get_footprint_request,
-                        ProtoToGetFootprintRequest(*request));
+  INTR_ASSIGN_OR_RETURN_GRPC(GetFootprintRequest get_footprint_request,
+                             ProtoToGetFootprintRequest(*request));
 
-  INTR_ASSIGN_OR_RETURN(EquipmentPack equipment,
-                        EquipmentPack::GetEquipmentPack(*request));
+  INTR_ASSIGN_OR_RETURN_GRPC(EquipmentPack equipment,
+                             EquipmentPack::GetEquipmentPack(*request));
 
   GetFootprintContextImpl footprint_context(
       std::move(equipment),
@@ -439,18 +440,19 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
       skill->GetFootprint(get_footprint_request, footprint_context);
 
   if (!skill_result.ok()) {
-    INTR_ASSIGN_OR_RETURN(const std::string skill_id,
-                          RemoveVersionFrom(request->instance().id_version()));
+    INTR_ASSIGN_OR_RETURN_GRPC(
+        const std::string skill_id,
+        RemoveVersionFrom(request->instance().id_version()));
     return HandleSkillErrorGrpc(skill_result.status(), skill_id,
                                 "GetFootprint");
   }
 
-  INTR_ASSIGN_OR_RETURN(internal::SkillRuntimeData runtime_data,
-                        skill_repository_.GetSkillRuntimeData(skill_name));
+  INTR_ASSIGN_OR_RETURN_GRPC(internal::SkillRuntimeData runtime_data,
+                             skill_repository_.GetSkillRuntimeData(skill_name));
 
   // Populate the footprint in the result with equipment reservations.
   *result->mutable_footprint() = std::move(skill_result).value();
-  INTR_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN_GRPC(
       auto equipment_resources,
       ReserveEquipmentRequired(
           runtime_data.GetResourceData().GetRequiredResources(),
@@ -498,25 +500,25 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
     request_watcher_->AddRequest(*request);
   }
 
-  INTR_RETURN_IF_ERROR(ValidateRequest(*request));
+  INTR_RETURN_IF_ERROR_GRPC(ValidateRequest(*request));
 
-  INTR_ASSIGN_OR_RETURN(std::string skill_name,
-                        NameFrom(request->instance().id_version()));
-  INTR_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN_GRPC(std::string skill_name,
+                             NameFrom(request->instance().id_version()));
+  INTR_ASSIGN_OR_RETURN_GRPC(
       std::shared_ptr<internal::SkillOperation> operation,
       MakeOperation(/*name=*/request->instance().instance_name(), skill_name,
                     context));
 
-  INTR_ASSIGN_OR_RETURN(std::unique_ptr<SkillExecuteInterface> skill,
-                        skill_repository_.GetSkillExecute(skill_name));
+  INTR_ASSIGN_OR_RETURN_GRPC(std::unique_ptr<SkillExecuteInterface> skill,
+                             skill_repository_.GetSkillExecute(skill_name));
 
   auto skill_request = std::make_unique<ExecuteRequest>(
       /*params=*/request->parameters(),
       /*param_defaults=*/
       operation->runtime_data().GetParameterData().GetDefault());
 
-  INTR_ASSIGN_OR_RETURN(EquipmentPack equipment,
-                        EquipmentPack::GetEquipmentPack(*request));
+  INTR_ASSIGN_OR_RETURN_GRPC(EquipmentPack equipment,
+                             EquipmentPack::GetEquipmentPack(*request));
 
   SkillLoggingContext logging_context = {
       .data_logger_context = request->context(),
@@ -532,12 +534,12 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
       /*object_world=*/
       world::ObjectWorldClient(request->world_id(), object_world_service_));
 
-  INTR_RETURN_IF_ERROR(operation->Start(
+  INTR_RETURN_IF_ERROR_GRPC(operation->Start(
       [skill = std::move(skill), skill_request = std::move(skill_request),
        skill_context = std::move(skill_context)]()
           -> absl::StatusOr<
               std::unique_ptr<intrinsic_proto::skills::ExecuteResult>> {
-        INTR_ASSIGN_OR_RETURN(
+        INTR_ASSIGN_OR_RETURN_GRPC(
             std::unique_ptr<::google::protobuf::Message> skill_result,
             skill->Execute(*skill_request, *skill_context));
 
@@ -569,25 +571,25 @@ grpc::Status SkillExecutorServiceImpl::StartPreview(
             << request->instance().id_version() << "' skill with world id '"
             << request->world_id() << "'";
 
-  INTR_RETURN_IF_ERROR(ValidateRequest(*request));
+  INTR_RETURN_IF_ERROR_GRPC(ValidateRequest(*request));
 
-  INTR_ASSIGN_OR_RETURN(std::string skill_name,
-                        NameFrom(request->instance().id_version()));
-  INTR_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN_GRPC(std::string skill_name,
+                             NameFrom(request->instance().id_version()));
+  INTR_ASSIGN_OR_RETURN_GRPC(
       std::shared_ptr<internal::SkillOperation> operation,
       MakeOperation(/*name=*/request->instance().instance_name(), skill_name,
                     context));
 
-  INTR_ASSIGN_OR_RETURN(std::unique_ptr<SkillExecuteInterface> skill,
-                        skill_repository_.GetSkillExecute(skill_name));
+  INTR_ASSIGN_OR_RETURN_GRPC(std::unique_ptr<SkillExecuteInterface> skill,
+                             skill_repository_.GetSkillExecute(skill_name));
 
   auto skill_request = std::make_unique<PreviewRequest>(
       /*params=*/request->parameters(),
       /*param_defaults=*/
       operation->runtime_data().GetParameterData().GetDefault());
 
-  INTR_ASSIGN_OR_RETURN(EquipmentPack equipment,
-                        EquipmentPack::GetEquipmentPack(*request));
+  INTR_ASSIGN_OR_RETURN_GRPC(EquipmentPack equipment,
+                             EquipmentPack::GetEquipmentPack(*request));
 
   SkillLoggingContext logging_context = {
       .data_logger_context = request->context(),
@@ -606,12 +608,12 @@ grpc::Status SkillExecutorServiceImpl::StartPreview(
 
   );
 
-  INTR_RETURN_IF_ERROR(operation->Start(
+  INTR_RETURN_IF_ERROR_GRPC(operation->Start(
       [skill = std::move(skill), skill_request = std::move(skill_request),
        skill_context = std::move(skill_context)]()
           -> absl::StatusOr<
               std::unique_ptr<intrinsic_proto::skills::PreviewResult>> {
-        INTR_ASSIGN_OR_RETURN(
+        INTR_ASSIGN_OR_RETURN_GRPC(
             std::unique_ptr<::google::protobuf::Message> skill_result,
             skill->Preview(*skill_request, *skill_context));
 
@@ -637,8 +639,9 @@ grpc::Status SkillExecutorServiceImpl::GetOperation(
     grpc::ServerContext* context,
     const google::longrunning::GetOperationRequest* request,
     google::longrunning::Operation* result) {
-  INTR_ASSIGN_OR_RETURN(std::shared_ptr<internal::SkillOperation> operation,
-                        operations_.Get(request->name()));
+  INTR_ASSIGN_OR_RETURN_GRPC(
+      std::shared_ptr<internal::SkillOperation> operation,
+      operations_.Get(request->name()));
 
   *result = operation->operation();
   return grpc::Status::OK;
@@ -648,10 +651,11 @@ grpc::Status SkillExecutorServiceImpl::CancelOperation(
     grpc::ServerContext* context,
     const google::longrunning::CancelOperationRequest* request,
     google::protobuf::Empty* result) {
-  INTR_ASSIGN_OR_RETURN(std::shared_ptr<internal::SkillOperation> operation,
-                        operations_.Get(request->name()));
+  INTR_ASSIGN_OR_RETURN_GRPC(
+      std::shared_ptr<internal::SkillOperation> operation,
+      operations_.Get(request->name()));
 
-  INTR_RETURN_IF_ERROR(operation->RequestCancellation());
+  INTR_RETURN_IF_ERROR_GRPC(operation->RequestCancellation());
 
   return grpc::Status::OK;
 }
@@ -660,9 +664,10 @@ grpc::Status SkillExecutorServiceImpl::WaitOperation(
     grpc::ServerContext* context,
     const google::longrunning::WaitOperationRequest* request,
     google::longrunning::Operation* result) {
-  INTR_ASSIGN_OR_RETURN(std::shared_ptr<internal::SkillOperation> operation,
-                        operations_.Get(request->name()));
-  INTR_ASSIGN_OR_RETURN(
+  INTR_ASSIGN_OR_RETURN_GRPC(
+      std::shared_ptr<internal::SkillOperation> operation,
+      operations_.Get(request->name()));
+  INTR_ASSIGN_OR_RETURN_GRPC(
       *result, operation->WaitExecution(absl::FromChrono(context->deadline())));
 
   return grpc::Status::OK;

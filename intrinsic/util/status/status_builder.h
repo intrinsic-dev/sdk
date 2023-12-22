@@ -16,7 +16,6 @@
 #include "absl/status/status.h"
 #include "absl/strings/cord.h"
 #include "absl/time/time.h"
-#include "grpcpp/support/status.h"
 #include "intrinsic/icon/release/source_location.h"
 
 namespace intrinsic {
@@ -251,9 +250,6 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   // with 2 move operations in the common case.
   operator absl::Status() const&;  // NOLINT: Builder converts implicitly.
   operator absl::Status() &&;      // NOLINT: Builder converts implicitly.
-
-  operator grpc::Status() const&;  // NOLINT: Builder converts implicitly.
-  operator grpc::Status() &&;      // NOLINT: Builder converts implicitly.
 
   // Returns the source location used to create this builder.
   intrinsic::SourceLocation source_location() const;
@@ -679,20 +675,6 @@ inline StatusBuilder::operator absl::Status() && {
     return std::move(status_);
   }
   return std::move(*this).CreateStatusAndConditionallyLog();
-}
-
-inline StatusBuilder::operator grpc::Status() const& {
-  if (rep_ == nullptr) {
-    return status_;
-  }
-  return grpc::Status(static_cast<absl::Status>(*this));
-}
-
-inline StatusBuilder::operator grpc::Status() && {
-  if (rep_ == nullptr) {
-    return std::move(status_);
-  }
-  return grpc::Status(static_cast<absl::Status>(std::move(*this)));
 }
 
 inline intrinsic::SourceLocation StatusBuilder::source_location() const {
