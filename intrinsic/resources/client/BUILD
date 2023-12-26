@@ -30,3 +30,30 @@ py_test(
         "@com_google_absl_py//absl/testing:absltest",
     ],
 )
+
+cc_library(
+    name = "resource_registry_client_interface",
+    hdrs = ["resource_registry_client_interface.h"],
+    deps = [
+        "//intrinsic/resources/proto:resource_registry_cc_proto",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_library(
+    name = "resource_registry_client_cc",
+    srcs = ["resource_registry_client.cc"],
+    hdrs = ["resource_registry_client.h"],
+    deps = [
+        ":resource_registry_client_interface",
+        "//intrinsic/resources/proto:resource_registry_cc_grpc",
+        "//intrinsic/resources/proto:resource_registry_cc_proto",
+        "//intrinsic/util/grpc",
+        "//intrinsic/util/status:status_macros",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/time",
+    ],
+)
