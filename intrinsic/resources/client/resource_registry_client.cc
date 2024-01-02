@@ -34,12 +34,12 @@ absl::StatusOr<std::vector<intrinsic_proto::resources::ResourceInstance>>
 ResourceRegistryClient::ListResources(
     const intrinsic_proto::resources::ListResourceInstanceRequest::StrictFilter
         &filter) const {
-  ::grpc::ClientContext context;
-  context.set_deadline(absl::ToChronoTime(absl::Now() + timeout_));
-
   std::vector<intrinsic_proto::resources::ResourceInstance> resource_instances;
   std::string page_token;
+  auto deadline = absl::ToChronoTime(absl::Now() + timeout_);
   do {
+    ::grpc::ClientContext context;
+    context.set_deadline(deadline);
     intrinsic_proto::resources::ListResourceInstanceRequest req;
     intrinsic_proto::resources::ListResourceInstanceResponse resp;
     req.set_page_token(page_token);
