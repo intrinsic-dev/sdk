@@ -67,7 +67,8 @@ absl::StatusOr<std::string> GetNamedMatch(absl::string_view str, const RE2 *re,
 }  // namespace
 
 IdVersionParts::IdVersionParts(const std::vector<re2::StringPiece> *matches) {
-  const auto &groups = kIdVersionExpr->NamedCapturingGroups();
+  const std::map<std::string, int> &groups =
+      kIdVersionExpr->NamedCapturingGroups();
 
   id_ = std::string(matches->at(groups.at("id")));
   id_version_ = std::string(matches->at(groups.at("id_version")));
