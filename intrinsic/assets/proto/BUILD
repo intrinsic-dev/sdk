@@ -16,6 +16,16 @@ go_proto_library(
 )
 
 proto_library(
+    name = "view_proto",
+    srcs = ["view.proto"],
+)
+
+go_proto_library(
+    name = "view_go_proto",
+    deps = [":view_proto"],
+)
+
+proto_library(
     name = "id_proto",
     srcs = ["id.proto"],
 )

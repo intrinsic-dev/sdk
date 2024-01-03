@@ -26,6 +26,7 @@ go_library(
         "listreleasedversions.go",
     ],
     deps = [
+        "//intrinsic/assets/proto:view_go_proto",
         "//intrinsic/skills/tools/skill/cmd",
         "//intrinsic/skills/tools/skill/cmd:cmdutil",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
