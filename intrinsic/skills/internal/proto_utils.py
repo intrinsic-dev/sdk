@@ -5,7 +5,6 @@
 import re
 from typing import List, Optional
 
-from absl import logging
 from google.protobuf import descriptor_pb2
 from intrinsic.assets import id_utils
 from intrinsic.skills.proto import skill_manifest_pb2
@@ -14,7 +13,6 @@ from intrinsic.skills.proto import skills_pb2
 import intrinsic.skills.python.skill_interface as skl
 from intrinsic.util.proto import descriptors
 from intrinsic.util.proto import source_code_info_view_py
-from pybind11_abseil import status
 
 
 # This is the recommended regex for semver. It is copied from
@@ -216,7 +214,6 @@ def add_return_file_descriptor_set_without_source_code_from_manifest(
           return_description.return_value_message_full_name
       )
   )
-
   for file in return_description.descriptor_fileset.file:
     file.ClearField('source_code_info')
 def add_param_file_descriptor_set_without_source_code_from_manifest(
@@ -249,7 +246,6 @@ def add_param_file_descriptor_set_without_source_code_from_manifest(
           parameter_description.parameter_message_full_name
       )
   )
-
   for file in parameter_description.parameter_descriptor_fileset.file:
     file.ClearField('source_code_info')
 def add_file_descriptor_set_without_source_code_info(

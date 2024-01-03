@@ -301,10 +301,7 @@ py_library(
 py_library(
     name = "proto_utils",
     srcs = ["proto_utils.py"],
-    data = [
-        "//intrinsic/util/proto:source_code_info_view_py.so",
-        "@pybind11_abseil//pybind11_abseil:status.so",
-    ],
+    data = ["//intrinsic/util/proto:source_code_info_view_py.so"],
     srcs_version = "PY3",
     deps = [
         "//intrinsic/assets:id_utils_py",
@@ -313,7 +310,6 @@ py_library(
         "//intrinsic/skills/proto:skills_py_pb2",
         "//intrinsic/skills/python:skill_interface",
         "//intrinsic/util/proto:descriptors_py",
-        "@com_google_absl_py//absl/logging",
         "@com_google_protobuf//:protobuf_python",
     ],
 )
