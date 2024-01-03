@@ -12,5 +12,6 @@ message MotionPlannerConfiguration {
   // seconds.
   optional google.protobuf.Duration timeout_sec = 1;
 
-  bool use_projection_onto_constraint_manifold = 2;
+  reserved 2;
+  reserved "use_projection_onto_constraint_manifold";
 }
