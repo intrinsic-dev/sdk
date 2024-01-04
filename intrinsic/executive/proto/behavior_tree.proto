@@ -162,7 +162,7 @@ message BehaviorTree {
   message RetryNode {
     Node child = 1;
     uint32 max_tries = 2;
-    optional uint32 num_tries = 3;
+    optional uint32 num_tries = 3 [(output_only) = true];
     string retry_counter_blackboard_key = 4;
     Node recovery = 5;
   }
@@ -253,7 +253,7 @@ message BehaviorTree {
     // Maximum number of iterations to perform. This cannot be set in the case
     // of a for_each loop.
     optional uint32 max_times = 3;
-    optional uint32 num_times = 4;
+    optional uint32 num_times = 4 [(output_only) = true];
     string loop_counter_blackboard_key = 5;
   }
 
@@ -279,7 +279,7 @@ message BehaviorTree {
 
     // This is only set by the executive on retrieval. It is ignored when
     // uploading a tree.
-    optional State state = 1;
+    optional State state = 1 [(output_only) = true];
 
     oneof task_type {
       intrinsic_proto.executive.BehaviorCall call_behavior = 3;
