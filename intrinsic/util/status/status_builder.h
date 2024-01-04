@@ -43,7 +43,7 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   StatusBuilder(const StatusBuilder& sb);
   StatusBuilder& operator=(const StatusBuilder& sb);
   StatusBuilder(StatusBuilder&&) = default;
-  StatusBuilder& operator=(StatusBuilder&&) = default;
+  StatusBuilder& operator=(StatusBuilder&&) noexcept = default;
 
   // Mutates the builder so that the final additional message is prepended to
   // the original error message in the status.  A convenience separator is not
@@ -424,7 +424,8 @@ class ExtraMessage {
   ExtraMessage() = default;
   explicit ExtraMessage(std::string msg) : stream_(std::move(msg)) {}
   ExtraMessage(const ExtraMessage& m) : stream_(m.stream_.str()) {}
-  ExtraMessage(const ExtraMessage&& m) : stream_(std::move(m.stream_).str()) {}
+  ExtraMessage(const ExtraMessage&& m) noexcept
+      : stream_(std::move(m.stream_).str()) {}
 
   // Appends to the extra message that will be added to the original status.  By
   // default, the extra message is added to the original message, which includes
