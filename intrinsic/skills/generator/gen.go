@@ -23,10 +23,9 @@ type templateCCParameters struct {
 }
 
 type templatePyParameters struct {
-	PythonModules        []string
-	ParameterDescriptor  string
-	ReturnTypeDescriptor string
-	CreateSkillMethod    string
+	PythonModules       []string
+	ParameterDescriptor string
+	CreateSkillMethod   string
 }
 
 //go:embed skill_service_main_tmpl.cc
@@ -159,9 +158,6 @@ func WriteSkillServicePy(manifestPath string, out string) error {
 			ParameterDescriptor: pyDescriptorFrom(
 				manifest.GetOptions().GetPythonConfig().GetProtoModule(),
 				manifest.GetParameter().GetMessageFullName()),
-			ReturnTypeDescriptor: pyDescriptorFrom(
-				manifest.GetOptions().GetPythonConfig().GetProtoModule(),
-				manifest.GetReturnType().GetMessageFullName()),
 			CreateSkillMethod: manifest.GetOptions().GetPythonConfig().GetCreateSkill(),
 		},
 		out,

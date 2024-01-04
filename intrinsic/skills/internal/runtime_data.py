@@ -9,7 +9,7 @@ defined here should not be used in user-facing contexts.
 
 import dataclasses
 import datetime
-from typing import Mapping, Optional, Sequence
+from typing import Mapping, Sequence
 
 from google.protobuf import any_pb2
 from google.protobuf import descriptor as proto_descriptor
@@ -38,10 +38,10 @@ class ReturnTypeData:
   """Return type data that are required by the skill service at runtime.
 
   Attributes:
-    descriptor: The return type data descriptor (optional).
+    message_full_name: The return type proto's full message name (optional).
   """
 
-  descriptor: proto_descriptor.Descriptor | None = None
+  message_full_name: str | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -93,7 +93,6 @@ class SkillRuntimeData:
 def get_runtime_data_from(
     skill_service_config: skill_service_config_pb2.SkillServiceConfig,
     parameter_descriptor: proto_descriptor.Descriptor,
-    return_type_descriptor: Optional[proto_descriptor.Descriptor],
 ) -> SkillRuntimeData:
   # pyformat: disable
   """Constructs RuntimeData from the given skill service config & descriptors.
@@ -105,7 +104,6 @@ def get_runtime_data_from(
   Args:
     skill_service_config: The skill service config.
     parameter_descriptor: The parameter descriptor.
-    return_type_descriptor: The return type descriptor (optional).
 
   Returns:
     Constructed SkillRuntimeData from given args.
@@ -144,12 +142,21 @@ def get_runtime_data_from(
   else:
     default_value = None
 
+  if skill_service_config.skill_description.HasField(
+      'return_value_description'
+  ):
+    return_type_data = ReturnTypeData(
+        message_full_name=skill_service_config.skill_description.return_value_description.return_value_message_full_name
+    )
+  else:
+    return_type_data = ReturnTypeData()
+
   return SkillRuntimeData(
       parameter_data=ParameterData(
           descriptor=parameter_descriptor,
           default_value=default_value,
       ),
-      return_type_data=ReturnTypeData(return_type_descriptor),
+      return_type_data=return_type_data,
       execution_options=execute_opts,
       resource_data=ResourceData(resource_data),
       skill_id=skill_service_config.skill_description.id,
@@ -181,9 +188,13 @@ def get_runtime_data_from_signature(
         default_value=default_value,
     )
 
+  return_descriptor = skill_signature.get_return_value_descriptor()
   return_type_data = ReturnTypeData(
-      skill_signature.get_return_value_descriptor()
+      message_full_name=return_descriptor.full_name
+      if return_descriptor
+      else None
   )
+
   execution_opts = ExecutionOptions(
       supports_cancellation=skill_signature.supports_cancellation(),
       cancellation_ready_timeout=datetime.timedelta(

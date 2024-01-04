@@ -305,11 +305,11 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
       result = skill.execute(skill_request, skill_context)
 
       # Verify that the skill returned the expected type.
-      got_descriptor = None if result is None else result.DESCRIPTOR
-      want_descriptor = operation.runtime_data.return_type_data.descriptor
-      if got_descriptor != want_descriptor:
-        got = 'None' if got_descriptor is None else got_descriptor.full_name
-        want = 'None' if want_descriptor is None else want_descriptor.full_name
+      got_name = None if result is None else result.DESCRIPTOR.full_name
+      want_name = operation.runtime_data.return_type_data.message_full_name
+      if got_name != want_name:
+        got = 'None' if got_name is None else got_name
+        want = 'None' if want_name is None else want_name
         raise InvalidResultTypeError(
             f'Unexpected return type (expected: {want}, got: {got}).'
         )
@@ -396,11 +396,11 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
       result = skill.preview(skill_request, skill_context)
 
       # Verify that the skill returned the expected type.
-      got_descriptor = None if result is None else result.DESCRIPTOR
-      want_descriptor = operation.runtime_data.return_type_data.descriptor
-      if got_descriptor != want_descriptor:
-        got = 'None' if got_descriptor is None else got_descriptor.full_name
-        want = 'None' if want_descriptor is None else want_descriptor.full_name
+      got_name = None if result is None else result.DESCRIPTOR.full_name
+      want_name = operation.runtime_data.return_type_data.message_full_name
+      if got_name != want_name:
+        got = 'None' if got_name is None else got_name
+        want = 'None' if want_name is None else want_name
         raise InvalidResultTypeError(
             f'Unexpected return type (expected: {want}, got: {got}).'
         )

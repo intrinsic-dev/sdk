@@ -88,7 +88,7 @@ def main(argv):
   skill_rt_data = runtime_data.get_runtime_data_from(
       skill_service_config = service_config,
       parameter_descriptor = {{.ParameterDescriptor}},
-      return_type_descriptor = {{.ReturnTypeDescriptor}})
+  )
 
   single_skill = skill_factory.SingleSkillFactory(
       skill_runtime_data=skill_rt_data,
