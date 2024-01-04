@@ -326,7 +326,6 @@ proto_library(
     name = "motion_targets_proto",
     srcs = ["motion_targets.proto"],
     deps = [
-        "//intrinsic/math/proto:point_proto",
         "//intrinsic/math/proto:pose_proto",
         "//intrinsic/world/proto:entity_search_proto",
     ],

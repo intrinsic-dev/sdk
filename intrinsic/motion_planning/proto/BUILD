@@ -59,8 +59,6 @@ proto_library(
     srcs = ["motion_target.proto"],
     deps = [
         "//intrinsic/icon/proto:joint_space_proto",
-        "//intrinsic/kinematics/ik/constrained:constrained_ik_proto",
-        "//intrinsic/math/proto:point_proto",
         "//intrinsic/math/proto:pose_proto",
         "//intrinsic/world/proto:object_world_refs_proto",
     ],
