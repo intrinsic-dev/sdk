@@ -160,12 +160,16 @@ class DeploymentsTest(absltest.TestCase):
     )
     self.assertTrue(mock_for_channel.called)
 
-  @mock.patch.object(deployments, "connect")
   @mock.patch.object(userconfig, "read")
+  @mock.patch.object(deployments, "_get_cluster_from_solution")
+  @mock.patch.object(dialerutil, "create_channel")
+  @mock.patch.object(deployments.Solution, "for_channel")
   def test_deployments_connect_with_selected_solution(
       self,
+      mock_for_channel: mock.MagicMock,
+      mock_create_channel: mock.MagicMock,
+      mock_get_cluster_from_solution: mock.MagicMock,
       mock_userconfig_read: mock.MagicMock,
-      mock_deployments_connect: mock.MagicMock,
   ):
     mock_userconfig_read.return_value = {}
     with self.assertRaisesRegex(ValueError, "No project"):
@@ -177,18 +181,24 @@ class DeploymentsTest(absltest.TestCase):
     with self.assertRaisesRegex(ValueError, "No solution"):
       deployments.connect_to_selected_solution()
 
-    mock_deployments_connect.assert_not_called()
-    mock_deployments_connect.return_value = None
-
     mock_userconfig_read.return_value = {
         "selectedProject": "test-project",
         "selectedSolution": "test-solution",
     }
+    mock_get_cluster_from_solution.return_value = "test-cluster"
+    mock_create_channel.return_value = grpc.insecure_channel("localhost:1234")
+    mock_for_channel.return_value = None
+
     deployments.connect_to_selected_solution()
-    mock_deployments_connect.assert_called_with(
-        project="test-project",
-        solution="test-solution",
-        options=None,
+
+    mock_get_cluster_from_solution.assert_called_with(
+        "test-project", "test-solution"
+    )
+    mock_create_channel.assert_called_with(
+        dialerutil.CreateChannelParams(
+            project_name="test-project", cluster="test-cluster"
+        ),
+        grpc_options=deployments._GRPC_OPTIONS,
     )
 
   def test_get_solution_status_with_retry_raises(self):

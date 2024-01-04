@@ -401,9 +401,16 @@ def connect_to_selected_solution(
   if selected_solution is None:
     raise ValueError("No solution selected!")
 
-  return connect(
-      project=selected_project, solution=selected_solution, options=options
+  cluster = _get_cluster_from_solution(selected_project, selected_solution)
+  channel = dialerutil.create_channel(
+      dialerutil.CreateChannelParams(
+          project_name=selected_project,
+          cluster=cluster,
+      ),
+      grpc_options=_GRPC_OPTIONS,
   )
+
+  return connect(grpc_channel=channel, options=options)
 
 
 def create_grpc_channel(
