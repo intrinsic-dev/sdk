@@ -616,39 +616,3 @@ def py_skill(
         data_path = "/",  # NB. We set data_path here because there is no override for the container_image attr.
         **kwargs
     )
-
-def py_skill_service(name, deps, data = None, **kwargs):
-    """Generate a Python binary that serves skills over gRPC.
-
-    Args:
-      name: Name of the target.
-      deps: Skills to be served by the binary. List of `py_library`
-        or `py_library` targets.
-      data: Any additional data needed by the binary. Optional.
-    """
-
-    # Copy the service source to a local directory to prevent build warnings.
-    service_filename = name + "_main.py"
-    service_copy_name = paths.join(native.package_name(), service_filename)
-    native.genrule(
-        name = name + "_main",
-        srcs = [Label("//intrinsic/skills/internal:module_skill_service_main.py")],
-        outs = [service_copy_name],
-        cmd = "cp $< $@",
-        visibility = ["//visibility:private"],
-        tags = ["manual"],
-    )
-
-    py_binary(
-        name = name,
-        main = service_copy_name,
-        srcs = [service_copy_name],
-        python_version = "PY3",
-        srcs_version = "PY3",
-        data = data,
-        deps = [
-            Label("//intrinsic/skills/internal:module_skill_service"),
-            Label("@com_google_absl_py//absl:app"),
-        ] + deps,
-        **kwargs
-    )

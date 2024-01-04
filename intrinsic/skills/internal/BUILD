@@ -246,9 +246,6 @@ py_library(
     name = "module_skill_service",
     srcs = ["module_skill_service.py"],
     srcs_version = "PY3",
-    visibility = [
-        "//visibility:public",
-    ],
     deps = [
         ":module_utils",
         ":runtime_data_py",
