@@ -1,0 +1,147 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.storage.artifacts.v1;
+
+import "google/protobuf/timestamp.proto";
+
+service ArtifactServiceApi {
+
+  // CheckImage validates Image manifest against remote image storage and
+  // returns resulting object describing remote storage status
+  rpc CheckImage(ImageRequest) returns (ArtifactResponse);
+
+  // Write content initializes simple artifact content write for smaller
+  // objects. It can be used to check the status of given object or initialize
+  // write of new object. If WriteContentRequest.update.action == COMMIT
+  // the commit will be performed for the object, making it permanent.
+  rpc WriteContent(UpdateRequest) returns (UpdateResponse);
+
+  // Streaming update of the artifact content. This should be used for objects
+  // which size is larger than max_update_size. While this is streaming
+  // API, caller needs to make sure they coordinate between request and
+  // response as those are linked in the backend via next.next_index.
+  rpc WriteContentStream(stream UpdateRequest) returns (stream UpdateResponse);
+}
+
+// OciDescriptor describes the image content.
+// For details see
+// cs//depot/google3/third_party/golang/opencontainers/image_spec/specs_go/v1/descriptor.go;l=22
+message ImageManifest {
+  // MediaType is the media type of the object this schema refers to.
+  string media_type = 1;
+
+  // Digest is the digest of the targeted content.
+  string digest = 2;
+
+  // Size specifies the size in bytes of the blob.
+  int64 size = 3;
+
+  // URLs specifies a list of URLs from which this object MAY be downloaded
+  repeated string urls = 4;
+
+  // Annotations contains arbitrary metadata relating to the targeted content.
+  map<string, string> annotations = 5;
+
+  // Data is an embedding of the raw manifest content. This is encoded as a
+  // base64 string when marshalled to JSON (automatically, by encoding/json).
+  // User should make any reasonable attempt to provide raw manifest data.
+  optional bytes data = 6;
+
+  // Platform describes the platform which the image in the manifest runs on.
+  //
+  // This should only be used when referring to a manifest.
+  optional string platform = 7;
+
+  // ArtifactType is the IANA media type of this artifact.
+  optional string artifact_type = 8;
+}
+
+message ImageRequest {
+  // Name provides a unique name for the image.
+  //
+  // Containerd treats this as the primary identifier.
+  string name = 1;
+
+  // Target describes the content entry point of the image.
+  ImageManifest manifest = 2;
+}
+
+message ArtifactDescriptor {
+  string media_type = 1;
+  optional string digest = 2;
+  optional int64 size = 3;
+  map<string, string> annotations = 4;
+}
+
+message ArtifactResponse {
+  // artifact reference id
+  string ref = 1;
+  // if available is true, present_refs contains full artifact content needed
+  // and also indicates that artifact is ready to be used.
+  // If artifact does not have parts, this indicate the presence of artifact
+  // itself If true, and digest is present, client shall validate that expected
+  // version of artifact is present upstream, or initialize update operation if
+  // not.
+  bool available = 2;
+
+  // if available == false, missing_refs represent the set of known references
+  // which are missing at the time. It may not be a full list if service is
+  // not aware of full definition of package.
+  repeated string missing_refs = 3;
+
+  // list of references which are currently known to service and are fully
+  // uploaded. if available == true, this list represents full list of known
+  // references which are believed by service to be full set of references
+  // needed.
+  repeated string present_refs = 4;
+
+  // current digest of the artifact referenced by ref if known.
+  optional string digest = 5;
+
+  // maximum size of the data chunk this service is able to consume at once.
+  // client shall not send more data in single chunk that this value.
+  int32 max_update_size = 6;
+}
+
+enum UpdateAction {
+  // UNDEFINED go/proto-best-practices-checkers#enum-default-value
+  // UpdateRequest with update action UNDEFINED will result in Error.
+  UPDATE_ACTION_UNDEFINED = 0;
+  // checks status
+  UPDATE_ACTION_STAT = 1;
+  // initializes or continues update
+  UPDATE_ACTION_UPDATE = 2;
+  // commits pending update action
+  UPDATE_ACTION_COMMIT = 3;
+  // aborts pending update action
+  UPDATE_ACTION_ABORT = 4;
+}
+
+message UpdateRequest {
+  // reference to digest being updated
+  string ref = 1;
+  // Needs to be specified only on first request object
+  string media_type = 2;
+  // Needs to be specified only on first request object
+  optional ArtifactDescriptor content = 3;
+
+  UpdateAction action = 4;
+  int64 chunk_id = 5;
+  int32 length = 6;
+  bytes data = 7;
+
+  optional string expected_digest = 8;
+}
+
+message UpdateResponse {
+  string ref = 1;
+  int64 chunk_id = 2;
+  optional int64 total = 3;
+  optional google.protobuf.Timestamp updated_at = 4;
+  optional UpdateAction action = 5;
+
+  optional string expected_digest = 6;
+  optional int32 max_update_size = 7;
+}

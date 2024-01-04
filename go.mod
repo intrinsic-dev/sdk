@@ -37,6 +37,7 @@ require (
 	go.etcd.io/bbolt v1.3.7
 	go.opencensus.io v0.24.0
 	go.uber.org/multierr v1.11.0
+	go.uber.org/atomic v1.11.0
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	golang.org/x/oauth2 v0.12.0
 	golang.org/x/sync v0.5.0
