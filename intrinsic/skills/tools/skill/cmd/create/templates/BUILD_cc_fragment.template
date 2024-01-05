@@ -40,7 +40,6 @@ cc_library(
 cc_skill(
     name = "{{.SkillNameSnakeCase}}_image",
     manifest = ":{{.SkillNameSnakeCase}}_cc_manifest",
-    proto = ":{{.SkillNameSnakeCase}}_proto",
     deps = [
       ":{{.SkillNameSnakeCase}}",
       ":{{.SkillNameSnakeCase}}_cc_proto",
