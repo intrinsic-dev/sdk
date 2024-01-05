@@ -12,7 +12,6 @@ load("//intrinsic/util/proto/build_defs:descriptor_set.bzl", "proto_source_code_
 load("@io_bazel_rules_docker//container:container.bzl", _container = "container")
 load("@io_bazel_rules_docker//lang:image.bzl", "app_layer")
 load("@bazel_skylib//lib:dicts.bzl", "dicts")
-load("@bazel_skylib//lib:paths.bzl", "paths")
 
 skill_manifest = _skill_manifest
 
@@ -194,105 +193,6 @@ def _py_skill_service(name, deps, manifest, **kwargs):
         ],
         **kwargs
     )
-
-def _add_file_descriptors(name, kind, deps, files, symlinks):
-    proto_descriptor_set_name = "%s_%s_descriptors" % (name, kind)
-    proto_source_code_info_transitive_descriptor_set(
-        name = proto_descriptor_set_name,
-        deps = deps,
-    )
-    descriptors_path = "%s_%s" % (
-        paths.join(native.package_name(), proto_descriptor_set_name),
-        "transitive_set_sci.proto.bin",
-    )
-    files.append(":%s" % proto_descriptor_set_name)
-    actual_path = "../google3/" + descriptors_path
-    symlink_file_location = "/skills/%s_descriptors.proto.bin" % kind
-    symlinks[symlink_file_location] = actual_path
-    return symlink_file_location
-
-def _invoke_config_impl(ctx):
-    config_output_file = ctx.actions.declare_file(ctx.label.name + ".proto.bin")
-
-    arguments = ctx.actions.args()
-    arguments.add(
-        "--skill_name",
-        ctx.attr.skill_name,
-    )
-    arguments.add(
-        "--parameter_descriptor_filename",
-        ctx.attr.parameter_descriptor_filename,
-    )
-    arguments.add(
-        "--return_value_descriptor_filename",
-        ctx.attr.return_value_descriptor_filename,
-    )
-
-    if ctx.attr.skill_module:
-        arguments.add(
-            "--python_skill_modules",
-            ctx.attr.skill_module,
-        )
-    arguments.add(
-        "--output_config_filename",
-        config_output_file.path,
-    )
-    ctx.actions.run(
-        outputs = [config_output_file],
-        executable = ctx.executable.config_binary,
-        arguments = [arguments],
-    )
-
-    return DefaultInfo(
-        files = depset([config_output_file]),
-        runfiles = ctx.runfiles(files = [
-            config_output_file,
-        ]),
-    )
-
-_invoke_config = rule(
-    implementation = _invoke_config_impl,
-    attrs = {
-        "config_binary": attr.label(
-            mandatory = True,
-            executable = True,
-            cfg = "exec",
-        ),
-        "skill_name": attr.string(
-            mandatory = True,
-        ),
-        "parameter_descriptor_filename": attr.string(
-            mandatory = True,
-        ),
-        "return_value_descriptor_filename": attr.string(
-            mandatory = True,
-        ),
-        "skill_module": attr.string(
-            mandatory = False,
-        ),
-    },
-)
-
-def _skill_service_config(
-        name,
-        skill_name,
-        parameter_descriptor_filename,
-        return_value_descriptor_filename,
-        skill_module,
-        files,
-        symlinks):
-    _invoke_config(
-        name = name,
-        skill_name = skill_name,
-        config_binary = Label("//intrinsic/skills/internal:skill_service_config_main"),
-        parameter_descriptor_filename = parameter_descriptor_filename,
-        return_value_descriptor_filename = return_value_descriptor_filename,
-        skill_module = skill_module,
-    )
-    config_path = "%s.proto.bin" % paths.join(native.package_name(), name)
-    files.append(":%s" % name)
-    symlink_path = "../google3/" + config_path
-    symlinks["skills/skill_service_config.proto.bin"] = symlink_path
 
 def _skill_service_config_manifest_impl(ctx):
     manifest_pbbin_file = ctx.attr.manifest[SkillManifestInfo].manifest_binary_file
