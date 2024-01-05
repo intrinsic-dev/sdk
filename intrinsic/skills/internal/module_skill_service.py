@@ -1,12 +1,6 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-"""Library to run Project and Execute skill services.
-
-Initializes a server with SkillProjectorServicer and SkillExecutorServicer
-servicers. Skills provided by these servicers are from a given module.
-"""
-
-from typing import Dict
+"""Library to run skill services from the skill image builder."""
 
 from absl import app
 from absl import flags
@@ -14,9 +8,7 @@ from intrinsic.skills.internal import module_utils
 from intrinsic.skills.internal import runtime_data as rd
 from intrinsic.skills.internal import single_skill_factory
 from intrinsic.skills.internal import skill_init
-from intrinsic.skills.proto import skill_service_config_pb2
 from intrinsic.skills.python import skill_interface as skl
-from intrinsic.skills.testing import map_skill_repository
 
 _THREADS = flags.DEFINE_integer(
     "threads", 8, "Number of server threads to run."
@@ -71,29 +63,31 @@ _ = flags.DEFINE_bool("opencensus_tracing", True, "Dummy flag, do not use")
 def main(argv):
   del argv  # unused
 
-  if _SKILL_SERVICE_CONFIG_FILENAME.value:
-    service_config = skill_init.get_skill_service_config(
-        _SKILL_SERVICE_CONFIG_FILENAME.value
-    )
-  else:
-    service_config = skill_service_config_pb2.SkillServiceConfig(
-        python_config=skill_service_config_pb2.PythonSkillServiceConfig(
-            module_names=_SKILLS_MODULES.value
-        )
-    )
+  if not _SKILL_SERVICE_CONFIG_FILENAME.value:
+    raise SystemExit("--skill_service_config_filename not set")
+
+  service_config = skill_init.get_skill_service_config(
+      _SKILL_SERVICE_CONFIG_FILENAME.value
+  )
 
   skill_class_list = module_utils.get_subclasses_in_modules(
       module_names=service_config.python_config.module_names[:],
       module_baseclass=skl.Skill,
   )
-  map_repo: Dict[str, single_skill_factory.SingleSkillFactory] = {}
-  for skill in skill_class_list:
-    runtime_data = rd.get_runtime_data_from_signature(skill())
-    map_repo[skill.name()] = single_skill_factory.SingleSkillFactory(
-        skill_runtime_data=runtime_data, create_skill=skill
-    )
 
-  skill_repository = map_skill_repository.MapSkillRepository(map_repo)
+  num_skills = len(skill_class_list)
+  if num_skills != 1:
+    raise SystemExit(f"Expected to find only 1 class, found {num_skills}")
+
+  skill = skill_class_list[0]
+  runtime_data = rd.get_runtime_data_from(
+      skill_service_config=service_config,
+      # This is assigned by skill_image_builder when building the skill.
+      parameter_descriptor=skill._parameter_descriptor,  # pylint: disable=protected-access
+  )
+  skill_repository = single_skill_factory.SingleSkillFactory(
+      skill_runtime_data=runtime_data, create_skill=skill
+  )
 
   skill_init.skill_init(
       skill_repository=skill_repository,
