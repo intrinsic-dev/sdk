@@ -27,7 +27,7 @@ class ABSL_MUST_USE_RESULT StatusBuilderGrpc {
       : builder_(std::move(builder)) {}
 
   StatusBuilderGrpc(StatusBuilderGrpc&&) = default;
-  StatusBuilderGrpc& operator=(StatusBuilderGrpc&&) = default;
+  StatusBuilderGrpc& operator=(StatusBuilderGrpc&&) noexcept = default;
 
   StatusBuilderGrpc& SetPrepend() &;
   StatusBuilderGrpc&& SetPrepend() &&;
