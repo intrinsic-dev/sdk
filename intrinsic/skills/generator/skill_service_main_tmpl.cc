@@ -28,7 +28,8 @@ ABSL_FLAG(std::string, data_logger_grpc_service_address, "",
           "(optional) Address of the Intrinsic DataLogger gRPC service.");
 ABSL_FLAG(std::string, world_service_address, "world:8080",
           "gRpc target for the World service");
-ABSL_FLAG(std::string, geometry_service_address, "geomservice:8080",
+ABSL_FLAG(std::string, geometry_service_address,
+          "geomservice.app-intrinsic-base:8080",
           "gRpc target for the geometry service");
 ABSL_FLAG(std::string, motion_planner_service_address,
           "motion-planner-service:8080",
