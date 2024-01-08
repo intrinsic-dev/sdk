@@ -6,10 +6,8 @@ from concurrent import futures
 import time
 
 from absl import logging
-from google.protobuf import descriptor_pb2
 import grpc
 from intrinsic.motion_planning.proto import motion_planner_service_pb2_grpc
-from intrinsic.skills.internal import proto_utils
 from intrinsic.skills.internal import skill_repository as skill_repo
 from intrinsic.skills.internal import skill_service_impl
 from intrinsic.skills.proto import skill_service_config_pb2
@@ -136,40 +134,24 @@ def skill_init(
 
   # Initialize the skill information service if --skill_service_config_filename
   # given (which means we're running a modular skill server).
-  if skill_service_config.skill_name or skill_service_config.HasField(
-      "skill_description"
-  ):
+  if skill_service_config.HasField("skill_description"):
     if (
-        skill_service_config.skill_name
+        skill_service_config.skill_description.skill_name
         not in skill_repository.get_skill_aliases()
     ):
       raise ValueError(
           "Could not find skill {} in skill modules.".format(
-              skill_service_config.skill_name
+              skill_service_config.skill_description.skill_name
           )
       )
     logging.info(
         "Adding skill information server with modular skill %s",
-        skill_service_config.skill_name,
+        skill_service_config.skill_description.skill_name,
     )
 
-    parameter_file_descriptor_set = descriptor_pb2.FileDescriptorSet()
-    if skill_service_config.parameter_descriptor_filename:
-      parameter_file_descriptor_set = descriptor_pb2.FileDescriptorSet()
-      with open(skill_service_config.parameter_descriptor_filename, "rb") as f:
-        parameter_file_descriptor_set.ParseFromString(f.read())
-
-    if not skill_service_config.HasField("skill_description"):
-      skill_object = skill_repository.get_skill(skill_service_config.skill_name)
-      skill = proto_utils.proto_from_skill(skill_object)
-
-      proto_utils.add_file_descriptor_set_without_source_code_info(
-          skill_object, parameter_file_descriptor_set, skill
-      )
-    else:
-      skill = skill_service_config.skill_description
-
-    skill_info_servicer = skill_service_impl.SkillInformationServicer(skill)
+    skill_info_servicer = skill_service_impl.SkillInformationServicer(
+        skill_service_config.skill_description
+    )
     skill_service_pb2_grpc.add_SkillInformationServicer_to_server(
         skill_info_servicer, server
     )

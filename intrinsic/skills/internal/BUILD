@@ -438,7 +438,6 @@ py_library(
     srcs_version = "PY3",
     visibility = ["//visibility:public"],
     deps = [
-        ":proto_utils",
         ":skill_repository_py",
         ":skill_service_impl_py",
         "//intrinsic/motion_planning/proto:motion_planner_service_py_pb2_grpc",
@@ -447,7 +446,6 @@ py_library(
         "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
         requirement("grpcio"),
         "@com_google_absl_py//absl/logging",
-        "@com_google_protobuf//:protobuf_python",
     ],
 )
 
