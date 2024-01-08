@@ -30,9 +30,6 @@ _SKILL_SERVICE_CONFIG_FILENAME = flags.DEFINE_string(
         "queries this server to get information about this skill."
     ),
 )
-_SKILLS_MODULES = flags.DEFINE_list(
-    "skills_modules", "", "Modules with skills to run on the service."
-)
 _WORLD_SERVICE_ADDRESS = flags.DEFINE_string(
     "world_service_address", "world:8080", "gRPC target for the World service"
 )
@@ -74,16 +71,12 @@ _ = flags.DEFINE_bool("opencensus_tracing", True, "Dummy flag, do not use")
 def main(argv):
   del argv  # unused
 
-  if _SKILL_SERVICE_CONFIG_FILENAME.value:
-    service_config = skill_init.get_skill_service_config(
-        _SKILL_SERVICE_CONFIG_FILENAME.value
-    )
-  else:
-    service_config = skill_service_config_pb2.SkillServiceConfig(
-        python_config=skill_service_config_pb2.PythonSkillServiceConfig(
-            module_names=_SKILLS_MODULES.value
-        )
-    )
+  if not _SKILL_SERVICE_CONFIG_FILENAME.value:
+    raise SystemExit("--skill_service_config_filename not set")
+
+  service_config = skill_init.get_skill_service_config(
+      _SKILL_SERVICE_CONFIG_FILENAME.value
+  )
 
   skill_rt_data = runtime_data.get_runtime_data_from(
       skill_service_config = service_config,

@@ -23,9 +23,6 @@ _SKILL_SERVICE_CONFIG_FILENAME = flags.DEFINE_string(
         "queries this server to get information about this skill."
     ),
 )
-_SKILLS_MODULES = flags.DEFINE_list(
-    "skills_modules", "", "Modules with skills to run on the service."
-)
 _WORLD_SERVICE_ADDRESS = flags.DEFINE_string(
     "world_service_address", "world:8080", "gRPC target for the World service"
 )
