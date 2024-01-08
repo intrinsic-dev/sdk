@@ -356,11 +356,9 @@ py_library(
     srcs = ["runtime_data.py"],
     visibility = ["//visibility:public"],
     deps = [
-        "//intrinsic/assets:id_utils_py",
         "//intrinsic/skills/proto:equipment_py_pb2",
         "//intrinsic/skills/proto:skill_service_config_py_pb2",
         "//intrinsic/skills/proto:skills_py_pb2",
-        "//intrinsic/skills/python:skill_interface",
         "@com_google_protobuf//:protobuf_python",
     ],
 )

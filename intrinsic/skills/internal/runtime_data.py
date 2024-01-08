@@ -13,11 +13,9 @@ from typing import Mapping, Sequence
 
 from google.protobuf import any_pb2
 from google.protobuf import descriptor as proto_descriptor
-from intrinsic.assets import id_utils
 from intrinsic.skills.proto import equipment_pb2
 from intrinsic.skills.proto import skill_service_config_pb2
 from intrinsic.skills.proto import skills_pb2
-from intrinsic.skills.python import skill_interface as skl
 
 
 @dataclasses.dataclass(frozen=True)
@@ -160,52 +158,4 @@ def get_runtime_data_from(
       execution_options=execute_opts,
       resource_data=ResourceData(resource_data),
       skill_id=skill_service_config.skill_description.id,
-  )
-
-
-def get_runtime_data_from_signature(
-    skill_signature: skl.Skill,
-) -> SkillRuntimeData:
-  """Constructs SkillRuntimeData from the given skill.
-
-  Args:
-    skill_signature: The skill.
-
-  Returns:
-    The constructed SkillRuntimeData from the given skill.
-  """
-  sig_id = id_utils.id_from(skill_signature.package(), skill_signature.name())
-
-  if skill_signature.default_parameters() is None:
-    param_data = ParameterData(
-        descriptor=skill_signature.get_parameter_descriptor(),
-    )
-  else:
-    default_value = any_pb2.Any()
-    default_value.Pack(skill_signature.default_parameters())
-    param_data = ParameterData(
-        descriptor=skill_signature.get_parameter_descriptor(),
-        default_value=default_value,
-    )
-
-  return_descriptor = skill_signature.get_return_value_descriptor()
-  return_type_data = ReturnTypeData(
-      message_full_name=return_descriptor.full_name
-      if return_descriptor
-      else None
-  )
-
-  execution_opts = ExecutionOptions(
-      supports_cancellation=skill_signature.supports_cancellation(),
-      cancellation_ready_timeout=datetime.timedelta(
-          seconds=skill_signature.get_ready_for_cancellation_timeout()
-      ),
-  )
-
-  return SkillRuntimeData(
-      parameter_data=param_data,
-      return_type_data=return_type_data,
-      execution_options=execution_opts,
-      resource_data=ResourceData(skill_signature.required_equipment()),
-      skill_id=sig_id,
   )
