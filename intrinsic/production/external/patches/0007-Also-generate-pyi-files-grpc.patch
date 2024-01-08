@@ -1,0 +1,87 @@
+# Copyright 2023 Intrinsic Innovation LLC
+
+From e80a0f83bf9181ce78c75f4255b634eb33313656 Mon Sep 17 00:00:00 2001
+From: ferstl
+Date: Tue, 1 Aug 2023 13:59:28 +0200
+Subject: [PATCH 5/5] Generate pyi stubs in py_proto_library (from grpc repo).
+
+---
+ bazel/python_rules.bzl | 18 ++++++++++++++----
+ 1 file changed, 14 insertions(+), 4 deletions(-)
+
+diff --git a/bazel/python_rules.bzl b/bazel/python_rules.bzl
+index 97d9736058..7755e33780 100644
+--- a/bazel/python_rules.bzl
++++ b/bazel/python_rules.bzl
+@@ -28,6 +28,7 @@ load(
+ )
+
+ _GENERATED_PROTO_FORMAT = "{}_pb2.py"
++_GENERATED_PYI_FORMAT = "{}_pb2.pyi"
+ _GENERATED_GRPC_PROTO_FORMAT = "{}_pb2_grpc.py"
+
+ PyProtoInfo = provider(
+@@ -35,6 +36,7 @@ PyProtoInfo = provider(
+     fields = {
+         "py_info": "A PyInfo provider for the generated code.",
+         "generated_py_srcs": "The direct (not transitive) generated Python source files.",
++        "generated_pyi_srcs": "The direct (not transitive) generated Python interface definition files.",
+     },
+ )
+
+@@ -59,8 +61,9 @@ def _gen_py_aspect_impl(target, context):
+         protos.append(get_staged_proto_file(target.label, context, p))
+
+     includes = depset(direct = protos, transitive = [target[ProtoInfo].transitive_imports])
+-    out_files = declare_out_files(protos, context, _GENERATED_PROTO_FORMAT)
+-    generated_py_srcs = out_files
++    generated_py_srcs = declare_out_files(protos, context, _GENERATED_PROTO_FORMAT)
++    generated_pyi_srcs = declare_out_files(protos, context, _GENERATED_PYI_FORMAT)
++    out_files = generated_py_srcs + generated_pyi_srcs
+
+     tools = [context.executable._protoc]
+
+@@ -68,6 +71,7 @@ def _gen_py_aspect_impl(target, context):
+
+     arguments = ([
+         "--python_out={}".format(out_dir.path),
++        "--pyi_out={}".format(out_dir.path),
+     ] + [
+         "--proto_path={}".format(get_include_directory(i))
+         for i in includes.to_list()
+@@ -90,7 +94,7 @@ def _gen_py_aspect_impl(target, context):
+     if out_dir.import_path:
+         imports.append("{}/{}".format(context.workspace_name, out_dir.import_path))
+
+-    py_info = PyInfo(transitive_sources = depset(direct = out_files), imports = depset(direct = imports))
++    py_info = PyInfo(transitive_sources = depset(direct = generated_py_srcs), imports = depset(direct = imports))
+     return PyProtoInfo(
+         py_info = _merge_pyinfos(
+             [
+@@ -99,6 +103,7 @@ def _gen_py_aspect_impl(target, context):
+             ] + [dep[PyProtoInfo].py_info for dep in context.rule.attr.deps],
+         ),
+         generated_py_srcs = generated_py_srcs,
++        generated_pyi_srcs = generated_pyi_srcs,
+     )
+
+ _gen_py_aspect = aspect(
+@@ -145,10 +150,15 @@ def _generate_py_impl(context):
+     py_info = PyInfo(transitive_sources = depset(direct = py_sources), imports = depset(direct = imports))
+     out_pyinfo = _merge_pyinfos([py_info, context.attr.deps[0][PyProtoInfo].py_info])
+
++    # We declare the generated .pyi files as output 'files' but do not include them in the returned
++    # 'runfiles' or 'PyInfo' since they are only there to help with static code analysis and not
++    # needed at runtime.
++    # Also see https://bazel.build/rules/lib/PyInfo#transitive_sources.
+     runfiles = context.runfiles(files = out_pyinfo.transitive_sources.to_list()).merge(context.attr._protobuf_library[DefaultInfo].data_runfiles)
++    files = depset(context.attr.deps[0][PyProtoInfo].generated_pyi_srcs, transitive = [out_pyinfo.transitive_sources])
+     return [
+         DefaultInfo(
+-            files = out_pyinfo.transitive_sources,
++            files = files,
+             runfiles = runfiles,
+         ),
+         out_pyinfo,
+--
+2.41.0.585.gd2178a4bd4-goog

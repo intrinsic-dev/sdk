@@ -197,6 +197,7 @@ def intrinsic_sdks_deps_0():
             Label("//intrinsic/production/external/patches:0002-Add-warning-suppressions-to-cython_library.patch"),
             Label("//intrinsic/production/external/patches:0003-Remove-competing-local_config_python-definition.patch"),
             Label("//intrinsic/production/external/patches:0005-Remove-competing-go-deps.patch"),
+            Label("//intrinsic/production/external/patches:0007-Also-generate-pyi-files-grpc.patch"),
             Label("//intrinsic/production/external/patches:0011-Public-grpc_library-attr.patch"),
         ],
         sha256 = "194dcaae20b7bcd9fc4fc9a1e091215207842ddb9a1df01419c7c55d3077979b",  # v1.56.0
