@@ -335,8 +335,6 @@ cc_library(
     hdrs = ["runtime_data.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//intrinsic/assets:id_utils",
-        "//intrinsic/skills/cc:skill_interface",
         "//intrinsic/skills/proto:equipment_cc_proto",
         "//intrinsic/skills/proto:skill_service_config_cc_proto",
         "//intrinsic/skills/proto:skills_cc_proto",

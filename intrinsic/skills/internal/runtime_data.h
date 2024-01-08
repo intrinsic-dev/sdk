@@ -18,8 +18,6 @@
 #include "absl/types/span.h"
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/descriptor.h"
-#include "google/protobuf/descriptor_database.h"
-#include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/skill_service_config.pb.h"
 
@@ -30,28 +28,16 @@ namespace intrinsic::skills::internal {
 class ParameterData {
  public:
   ParameterData() = default;
-
-  // Constructs ParameterData with the `descriptor` for the parameter. `this`
-  // holds a reference to `descriptor` for the life of `this`.
-  ParameterData(const google::protobuf::Descriptor& descriptor,
-                const google::protobuf::Any& default_value);
-  explicit ParameterData(const google::protobuf::Descriptor& descriptor);
+  explicit ParameterData(const google::protobuf::Any& default_value);
 
   ParameterData(const ParameterData& other) = default;
   ParameterData& operator=(const ParameterData& other) = default;
-
-  // Returns a pointer to the descriptor for this parameter. May be nullptr if
-  // `this` is default constructed.
-  const google::protobuf::Descriptor* GetDescriptor() const {
-    return descriptor_;
-  }
 
   const std::optional<google::protobuf::Any>& GetDefault() const {
     return default_;
   }
 
  private:
-  const google::protobuf::Descriptor* descriptor_;
   std::optional<google::protobuf::Any> default_ = std::nullopt;
 };
 
@@ -61,23 +47,8 @@ class ReturnTypeData {
  public:
   ReturnTypeData() = default;
 
-  // Constructs ReturnTypeData with the `descriptor` for the return type. `this`
-  // holds a pointer to `descriptor` for the life of `this`. `descriptor` may be
-  // a nullptr if there is no return type.
-  explicit ReturnTypeData(const google::protobuf::Descriptor* descriptor);
-
   ReturnTypeData(const ReturnTypeData& other) = default;
   ReturnTypeData& operator=(const ReturnTypeData& other) = default;
-
-  // Returns a pointer to the proto descriptor for the return type.
-  //
-  // Returns nullptr if there is no return type.
-  const google::protobuf::Descriptor* GetDescriptor() const {
-    return descriptor_;
-  }
-
- private:
-  const google::protobuf::Descriptor* descriptor_;
 };
 
 // Contains data about execution options for a skill that are relevant to the
@@ -169,9 +140,7 @@ class SkillRuntimeData {
 // Execution options if no timeout is specified, in order to match the behavior
 // of the skill signature.
 absl::StatusOr<SkillRuntimeData> GetRuntimeDataFrom(
-    const intrinsic_proto::skills::SkillServiceConfig& skill_service_config,
-    const google::protobuf::Descriptor* parameter_descriptor,
-    const google::protobuf::Descriptor* return_type_descriptor);
+    const intrinsic_proto::skills::SkillServiceConfig& skill_service_config);
 
 }  // namespace intrinsic::skills::internal
 
