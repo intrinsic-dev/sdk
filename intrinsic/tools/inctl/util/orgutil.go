@@ -167,7 +167,7 @@ func WrapCmd(cmd *cobra.Command, vipr *viper.Viper) *cobra.Command {
 		// Cobrautil's way to force an error instead of 0 return code when there's no subcommand
 		// causes cobra to run the PersistentPreRunE either way. So we need to short-circuit
 		// the flag handling here.
-		if !cmd.DisableFlagParsing {
+		if !c.DisableFlagParsing {
 			if err := PreRunOrganization(cmd, vipr); err != nil {
 				return err
 			}
