@@ -15,6 +15,13 @@ def go_dependencies():
         version = "v1.0.0",
     )
     go_repository(
+        name = "cc_mvdan_sh_v3",
+        importpath = "mvdan.cc/sh/v3",
+        sum = "h1:hmP3UOw4f+EYexsJjFxvU38+kn+V/s2CclXHanIBkmQ=",
+        version = "v3.5.1",
+    )
+
+    go_repository(
         name = "co_honnef_go_tools",
         importpath = "honnef.co/go/tools",
         sum = "h1:UoveltGrhghAA7ePc+e+QYDHXrBps2PqFZiHkGR/xK8=",
@@ -168,6 +175,13 @@ def go_dependencies():
         sum = "h1:TYi4+3m5t6K48TGI9AUdb+IzbnSxvnvUMfuitfgcfuo=",
         version = "v0.6.0",
     )
+    go_repository(
+        name = "com_github_bazelbuild_bazelisk",
+        importpath = "github.com/bazelbuild/bazelisk",
+        sum = "h1:SpigbUorngcfDULmft0WkdrYVCqqqsFPEW4hm8UA+Gk=",
+        version = "v1.13.2",
+    )
+
     go_repository(
         name = "com_github_bazelbuild_buildtools",
         importpath = "github.com/bazelbuild/buildtools",

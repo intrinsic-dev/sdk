@@ -22,6 +22,7 @@ require (
 	github.com/golang/protobuf v1.5.3
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.16.1
+	github.com/google/safetext v0.0.0-20221026122733-23539d61753f
 	github.com/google/subcommands v1.2.0
 	github.com/google/uuid v1.3.1
 	github.com/googlecloudrobotics/core/src v0.0.0-20230426093931-c9725477ada9
@@ -36,8 +37,8 @@ require (
 	github.com/tdewolff/parse v2.3.4+incompatible
 	go.etcd.io/bbolt v1.3.7
 	go.opencensus.io v0.24.0
-	go.uber.org/multierr v1.11.0
 	go.uber.org/atomic v1.11.0
+	go.uber.org/multierr v1.11.0
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	golang.org/x/oauth2 v0.12.0
 	golang.org/x/sync v0.5.0
