@@ -1,0 +1,54 @@
+{{/*
+Copyright 2023 Intrinsic Innovation LLC
+*/ -}}
+
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from intrinsic.solutions import behavior_tree as bt\n",
+    "from intrinsic.solutions import deployments\n",
+    "\n",
+    "solution = deployments.connect_to_selected_solution()\n",
+    "executive = solution.executive\n",
+    "world = solution.world\n",
+    "skills = solution.skills"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# List skills available in the solution\n",
+    "print(dir(skills))"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.13"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
