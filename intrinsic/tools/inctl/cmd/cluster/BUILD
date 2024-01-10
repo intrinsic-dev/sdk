@@ -10,6 +10,7 @@ go_library(
         "cluster.go",
         "cluster_delete.go",
         "cluster_list.go",
+        "cluster_upgrade.go",
     ],
     visibility = [
         "//intrinsic/tools/inctl:__subpackages__",
@@ -19,7 +20,9 @@ go_library(
         "//intrinsic/frontend/cloud/api:clusterdeletion_grpc_go_proto",
         "//intrinsic/frontend/cloud/api:clusterdiscovery_api_go_proto",
         "//intrinsic/frontend/cloud/api:clusterdiscovery_grpc_go_proto",
+        "//intrinsic/frontend/cloud/updatemanager:info",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
+        "//intrinsic/tools/inctl/auth",
         "//intrinsic/tools/inctl/cmd:root",
         "//intrinsic/tools/inctl/util:cobrautil",
         "//intrinsic/tools/inctl/util:orgutil",
