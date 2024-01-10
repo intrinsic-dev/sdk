@@ -135,7 +135,7 @@ var clusterUpgradeCmd = &cobra.Command{
 		}
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 		fmt.Fprintf(w, "project\tcluster\tstate\tflowstate\tos\tflowstate.next\tos.next\n")
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", projectName, clusterName, ui.State, "", ui.CurrentOS, "", ui.NextOS)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", projectName, clusterName, ui.State, "", ui.CurrentOS, "", ui.TargetOS)
 		w.Flush()
 		return nil
 	},

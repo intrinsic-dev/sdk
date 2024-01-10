@@ -8,5 +8,5 @@ type Info struct {
 	Cluster   string `json:"cluster,omitempty"`
 	State     string `json:"state,omitempty"`
 	CurrentOS string `json:"currentOS,omitempty"`
-	NextOS    string `json:"nextOS,omitempty"`
+	TargetOS  string `json:"targetOS,omitempty"`
 }
