@@ -58,9 +58,7 @@ go_library(
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//credentials:go_default_library",
         "@org_golang_google_grpc//credentials/insecure:go_default_library",
-        "@org_golang_google_grpc//credentials/oauth:go_default_library",
         "@org_golang_google_grpc//metadata:go_default_library",
-        "@org_golang_x_oauth2//google:go_default_library",
     ],
 )
 

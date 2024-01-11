@@ -13,11 +13,9 @@ import (
 	"math"
 	"strings"
 
-	oauth2 "golang.org/x/oauth2/google"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/credentials/oauth"
 	"google.golang.org/grpc/metadata"
 	"intrinsic/tools/inctl/auth"
 )
@@ -232,52 +230,4 @@ func DialConnectionCtx(ctx context.Context, params DialInfoParams) (context.Cont
 	}
 
 	return ctx, conn, nil
-}
-
-// DialInfoOauth2 returns the metadata for dialing a gRPC connection to the cloud cluster.
-//
-// Returns insecure connection data if the address is a local network address (such as
-// `localhost:17080`), otherwise retrieves cert from system cert pool, and sets up the metadata for
-// a TLS cert with per-RPC oauth2 credentials.
-//
-// Deprecated: Use DialInfoOauth2Ctx
-func DialInfoOauth2(address string) (context.Context, *[]grpc.DialOption, error) {
-	return DialInfoOauth2Ctx(context.Background(), address)
-}
-
-// DialInfoOauth2Ctx returns the metadata for dialing a gRPC connection to the cloud cluster.
-//
-// Returns insecure connection data if the address is a local network address (such as
-// `localhost:17080`), otherwise retrieves cert from system cert pool, and sets up the metadata for
-// a TLS cert with per-RPC oauth2 credentials.
-func DialInfoOauth2Ctx(ctx context.Context, address string) (context.Context, *[]grpc.DialOption, error) {
-
-	baseOpts := []grpc.DialOption{
-		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(maxMsgSize),
-			grpc.MaxCallSendMsgSize(maxMsgSize),
-		),
-	}
-
-	if opts := insecureOpts(address); opts != nil {
-		finalOpts := append(baseOpts, *opts...)
-		return ctx, &finalOpts, nil
-	}
-	pool, err := x509.SystemCertPool()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to retrieve system cert pool: %w", err)
-	}
-
-	ts, err := oauth2.DefaultTokenSource(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to retrieve oauth2 token: %w", err)
-	}
-	creds := oauth.TokenSource{TokenSource: ts}
-
-	finalOpts := append(baseOpts,
-		grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, "")),
-		grpc.WithPerRPCCredentials(creds),
-	)
-
-	return ctx, &finalOpts, nil
 }
