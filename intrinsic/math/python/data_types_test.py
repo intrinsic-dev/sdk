@@ -42,7 +42,7 @@ class TypesTest(absltest.TestCase):
 
     # When the shape of matrix6x6 is invalid.
     try:
-      stiffness = data_types.Stiffness(matrix6x6=np.identity(2))
+      data_types.Stiffness(matrix6x6=np.identity(2))
     except ValueError as err:
       self.assertEqual('Invalid matrix6x6 shape: (2, 2)', str(err))
     else:
@@ -126,6 +126,18 @@ class TypesTest(absltest.TestCase):
     returned_pose = data_types.transform_to_pose3(transform)
 
     self.assertEqual(expected_pose, returned_pose)
+
+  def test_wrench_to_proto_returns_valid_proto(self):
+    proto = data_types.wrench_to_proto(
+        data_types.Wrench(force=[1.0, 2.0, 3.0], torque=[4.0, 5.0, 6.0])
+    )
+
+    self.assertEqual(proto.x, 1.0)
+    self.assertEqual(proto.y, 2.0)
+    self.assertEqual(proto.z, 3.0)
+    self.assertEqual(proto.rx, 4.0)
+    self.assertEqual(proto.ry, 5.0)
+    self.assertEqual(proto.rz, 6.0)
 
 
 if __name__ == '__main__':

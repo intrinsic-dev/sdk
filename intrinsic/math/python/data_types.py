@@ -323,3 +323,14 @@ def to_list(data: Any) -> Sequence[float]:
     return data.vec.tolist()
   else:
     raise ValueError('{} is not supported in to_list()'.format(type(data)))
+
+
+def wrench_to_proto(wrench: Wrench) -> cart_space_pb2.Wrench:
+  return cart_space_pb2.Wrench(
+      x=wrench.force[0],
+      y=wrench.force[1],
+      z=wrench.force[2],
+      rx=wrench.torque[0],
+      ry=wrench.torque[1],
+      rz=wrench.torque[2],
+  )
