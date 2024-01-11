@@ -48,14 +48,22 @@ def _get_test_message_file_descriptor_set() -> descriptor_pb2.FileDescriptorSet:
 
   Requires FLAGS to be parsed prior to invocation.
   """
+  # WORKSPACE
   test_data_path = os.path.join(
-      os.environ.get('TEST_WORKSPACE'),
-      'intrinsic/solutions/testing',
-  )
-  file_descriptor_set_pbbin_filename = os.path.join(
       FLAGS.test_srcdir,
+      os.environ.get('TEST_WORKSPACE'),
+      'intrinsic/solutions',
+  )
+  if not os.path.exists(test_data_path):
+    # MODULE.bazel
+    test_data_path = os.path.join(
+        FLAGS.test_srcdir,
+        os.environ.get('TEST_WORKSPACE'),
+        'external/ai_intrinsic_sdks~override/intrinsic/solutions',
+    )
+  file_descriptor_set_pbbin_filename = os.path.join(
       test_data_path,
-      'test_skill_params_proto_descriptors_transitive_set_sci.proto.bin',
+      'testing/test_skill_params_proto_descriptors_transitive_set_sci.proto.bin',
   )
   return _read_message_from_pbbin_file(file_descriptor_set_pbbin_filename)
 

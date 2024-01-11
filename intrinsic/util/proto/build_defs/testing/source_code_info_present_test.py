@@ -68,10 +68,7 @@ class SourceCodeInfoPresentTest(absltest.TestCase):
 
   def setUp(self):
     super().setUp()
-    self._test_data_path = os.path.join(
-        os.environ.get('TEST_WORKSPACE'),
-        'intrinsic/util/proto/build_defs/testing',
-    )
+    self._test_data_path = os.path.normpath(os.path.join(__file__, '..'))
     self._file_descriptor_set_pbbin_filename = os.path.join(
         FLAGS.test_srcdir,
         self._test_data_path,
