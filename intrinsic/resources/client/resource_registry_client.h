@@ -3,6 +3,10 @@
 #ifndef INTRINSIC_RESOURCES_CLIENT_RESOURCE_REGISTRY_CLIENT_H_
 #define INTRINSIC_RESOURCES_CLIENT_RESOURCE_REGISTRY_CLIENT_H_
 
+#include <memory>
+#include <utility>
+#include <vector>
+
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
