@@ -131,70 +131,6 @@ class DataSource:
     return df.sort_values(by=['time'])
 
 
-class JointStateSource(DataSource):
-  """Data source for joint states."""
-
-  def get_joint_states(self, every_n: int = 1) -> pd.DataFrame:
-    """Returns a Pandas Dataframe representing joint states.
-
-    Args:
-      every_n (int): Sample rate, only every nth sample is returned.
-
-    Returns:
-      Pandas Dataframe with two columns; "payload" with JointState protos
-      and "time" as datetime, sorted by "time".
-    """
-
-    def payload_accessor(log_item):
-      return log_item.payload.icon_l1_joint_state
-
-    return self._get_data_frame(payload_accessor, every_n)
-
-  def update_plot(self, widget) -> None:
-    """Updates the data in the widget returned by plot_joint_states."""
-    df = self.get_joint_states()
-    if df['payload'].empty:
-      return
-    num_joints = len(df['payload'][0].position)
-
-    def values_for_joint(i, value_fn):
-      return [value_fn(x)[i] for x in df['payload']]
-
-    with widget.batch_update():
-      for i in range(num_joints):
-        c1 = widget.data[i * 3]
-        c1.x = df.time
-        c1.y = values_for_joint(i, lambda n: n.position)
-
-        c2 = widget.data[i * 3 + 1]
-        c2.x = df.time
-        c2.y = values_for_joint(i, lambda n: n.velocity)
-
-        c3 = widget.data[i * 3 + 2]
-        c3.x = df.time
-        c3.y = values_for_joint(i, lambda n: n.torque)
-
-
-class WrenchSource(DataSource):
-  """Data source for Force-Torque data."""
-
-  def get_wrench(self, every_n: int = 1) -> pd.DataFrame:
-    """Returns a Pandas Dataframe representing wrench.
-
-    Args:
-      every_n (int): Sample rate, only every nth sample is returned.
-
-    Returns:
-      Pandas Dataframe with two columns; "payload" with Wrench protos
-      and "time" as datetime, sorted by "time".
-    """
-
-    def payload_accessor(log_item):
-      return log_item.payload.icon_ft_wrench
-
-    return self._get_data_frame(payload_accessor, every_n)
-
-
 def _get_part_status(log_item: log_item_pb2.LogItem, part_name: str):
   return log_item.payload.icon_robot_status.status_map[part_name]
 
@@ -431,11 +367,7 @@ def _data_source_factory(data: List[log_item_pb2.LogItem]) -> DataSource:
   # payload type. That's why we only check data[0] below.
   # Other payloads.
   payload = data[0].payload
-  if payload.HasField('icon_l1_joint_state'):
-    return JointStateSource(data)
-  elif payload.HasField('icon_ft_wrench'):
-    return WrenchSource(data)
-  elif payload.HasField('icon_robot_status'):
+  if payload.HasField('icon_robot_status'):
     return RobotStatusSource(data)
   elif payload.HasField('any'):
     if payload.any.type_url.endswith(

@@ -76,45 +76,6 @@ blob_payload <
     source = self.mock_read('some.event.source', data)
     self.assertEqual(source.num_events, 2)
 
-  def test_get_joint_states(self):
-    pb1 = text_format.Parse(
-        """
-metadata <
-  event_source: "event_source"
->
-payload <
-  icon_l1_joint_state <
-    velocity: 1.0
-  >
->
-""",
-        log_item_pb2.LogItem(),
-    )
-    pb2 = text_format.Parse(
-        """
-metadata <
-  event_source: "other_event_source"
->
-payload <
-  icon_l1_joint_state <
-    velocity: 3.0
-  >
->
-""",
-        log_item_pb2.LogItem(),
-    )
-    data = [pb1, pb2]
-    expected = {
-        'payload': [pb1.payload.icon_l1_joint_state],
-        'time': [datetime.datetime.utcfromtimestamp(_TIMESTAMP)],
-    }
-
-    source = self.mock_read('event_source', data)
-    self.assertIsInstance(source, structured_logging.JointStateSource)
-    df = source.get_joint_states()
-
-    pd.testing.assert_frame_equal(df, pd.DataFrame(expected))
-
   def test_get_event_sources(self):
     stub = mock.MagicMock()
     response = logger_service_pb2.ListLogSourcesResponse()
@@ -190,8 +151,8 @@ metadata <
   event_source: "event_source"
 >
 payload <
-  icon_l1_joint_state <
-    velocity: 1.0
+  skills_execution_summary <
+    error_code: 1
   >
 >
 """,
@@ -223,8 +184,8 @@ metadata <
   event_source: "mock_event_source"
 >
 payload <
-  icon_l1_joint_state <
-    velocity: 1.0
+  skills_execution_summary <
+    error_code: 1
   >
 >
 """,
@@ -251,9 +212,7 @@ payload <
 
     self.assertLen(items, 1)
     self.assertEqual(items[0].metadata.event_source, 'mock_event_source')
-    self.assertSequenceEqual(
-        items[0].payload.icon_l1_joint_state.velocity, [1.0]
-    )
+    self.assertEqual(items[0].payload.skills_execution_summary.error_code, 1)
 
   def test_truncated_query_warning(self):
     """Tests proper warning sent if response is truncated."""
@@ -263,8 +222,8 @@ metadata <
   event_source: "mock_event_source"
 >
 payload <
-  icon_l1_joint_state <
-    velocity: 1.0
+  skills_execution_summary <
+    error_code: 1
   >
 >
 """,
@@ -290,8 +249,8 @@ metadata <
   event_source: "event_source"
 >
 payload <
-  icon_l1_joint_state <
-    velocity: 1.0
+  skills_execution_summary <
+    error_code: 1
   >
 >
 """,
