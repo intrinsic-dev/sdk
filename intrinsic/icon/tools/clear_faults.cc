@@ -29,8 +29,8 @@ ABSL_FLAG(
 ABSL_FLAG(std::string, header, "x-icon-instance-name",
           "Optional header name to be used to select a specific ICON instance. "
           " Has no effect if --instance is not set");
-ABSL_FLAG(bool, print_fault_message, false,
-          "Prints the fault message, if any, before clearing the fault.");
+ABSL_FLAG(bool, print_fault_reason, false,
+          "Prints the fault reason, if any, before clearing the fault.");
 
 const char* UsageString() {
   return R"(
@@ -46,23 +46,24 @@ Example:
 
 If the ICON Server is not currently FAULTED, this is a no-op.
 
-If you pass --print_fault_message, the tool prints the message for a pre-existing fault, if any.
+If you pass --print_fault_reason, the tool prints the reason for a pre-existing fault, if any.
 )";
 }
 
 namespace {
 
 absl::Status Run(const intrinsic::icon::ConnectionParams& connection_params,
-                 bool print_fault_message) {
+                 bool print_fault_reason) {
   INTR_ASSIGN_OR_RETURN(auto icon_channel,
                         intrinsic::icon::Channel::Make(connection_params));
   intrinsic::icon::Client client(icon_channel);
   INTR_ASSIGN_OR_RETURN(intrinsic::icon::OperationalStatus status,
                         client.GetOperationalStatus());
   if (!intrinsic::icon::IsFaulted(status)) {
+    LOG(INFO) << "ICON is not faulted.";
     return absl::OkStatus();
   }
-  if (print_fault_message) {
+  if (print_fault_reason) {
     LOG(INFO) << "Fault reason: " << status.fault_reason();
   }
   if (absl::Status status = client.ClearFaults(); !status.ok()) {
@@ -82,7 +83,7 @@ int main(int argc, char** argv) {
           .instance_name = absl::GetFlag(FLAGS_instance),
           .header = absl::GetFlag(FLAGS_header),
       },
-      absl::GetFlag(FLAGS_print_fault_message)));
+      absl::GetFlag(FLAGS_print_fault_reason)));
   std::cout << "Cleared Faults." << std::endl;
   return 0;
 }
