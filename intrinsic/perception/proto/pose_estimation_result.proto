@@ -16,6 +16,13 @@ message PoseEstimate {
 
   // Between 0..1. Unused in case of ground truth data.
   double score = 3;
+
+  // Visibility score for the pose. Between 0..1. The visibility score indicates
+  // the proportion of the object that is visible, signifying their
+  // foreground presence. It helps in prioritizing the selection of parts
+  // during, for example, the picking process. It is defined as:
+  // Visible pixels / (Visible pixels + Occluded pixels)
+  optional float visibility_score = 4;
 }
 
 // Contains the results of a perception detector.
