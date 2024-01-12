@@ -301,10 +301,8 @@ py_library(
     deps = [
         "//intrinsic/assets:id_utils_py",
         "//intrinsic/skills/proto:skill_manifest_py_pb2",
-        "//intrinsic/skills/proto:skill_registry_config_py_pb2",
         "//intrinsic/skills/proto:skills_py_pb2",
         "//intrinsic/skills/python:skill_interface",
-        "//intrinsic/util/proto:descriptors_py",
         "@com_google_protobuf//:protobuf_python",
     ],
 )
