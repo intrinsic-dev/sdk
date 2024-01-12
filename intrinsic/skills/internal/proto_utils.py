@@ -6,7 +6,6 @@ from google.protobuf import descriptor_pb2
 from intrinsic.assets import id_utils
 from intrinsic.skills.proto import skill_manifest_pb2
 from intrinsic.skills.proto import skills_pb2
-import intrinsic.skills.python.skill_interface as skl
 from intrinsic.util.proto import source_code_info_view_py
 
 
@@ -119,38 +118,6 @@ def add_param_file_descriptor_set_without_source_code_from_manifest(
   )
   parameter_description.parameter_message_full_name = (
       manifest.parameter.message_full_name
-  )
-  sci_view = source_code_info_view_py.SourceCodeInfoView()
-  sci_view.Init(parameter_description.parameter_descriptor_fileset)
-  parameter_description.parameter_field_comments.update(
-      sci_view.GetNestedFieldCommentMap(
-          parameter_description.parameter_message_full_name
-      )
-  )
-  for file in parameter_description.parameter_descriptor_fileset.file:
-    file.ClearField('source_code_info')
-def add_file_descriptor_set_without_source_code_info(
-    skill: skl.Skill,
-    parameter_file_descriptor_set: descriptor_pb2.FileDescriptorSet,
-    skill_proto: skills_pb2.Skill,
-):
-  """Adds (or overwrites) the skill's parameter descriptor fileset.
-
-  This also populates the parameter field comments. We remove source_code_info
-  as it is no longer needed after the parameter field comments are populated.
-
-  Args:
-    skill: A skill.
-    parameter_file_descriptor_set: A file descriptor set for the skill's
-      parameters.
-    skill_proto: A skill proto.
-
-  Returns:
-    Skill proto with file descriptors.
-  """
-  parameter_description = skill_proto.parameter_description
-  parameter_description.parameter_descriptor_fileset.CopyFrom(
-      parameter_file_descriptor_set
   )
   sci_view = source_code_info_view_py.SourceCodeInfoView()
   sci_view.Init(parameter_description.parameter_descriptor_fileset)
