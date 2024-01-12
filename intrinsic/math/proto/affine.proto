@@ -15,5 +15,5 @@ message Affine3d {
   // transformation.
   Matrixd linear = 1;
   // The translational part of the affine transformation.
-  Point translation = 2;
+  intrinsic_proto.Point translation = 2;
 }

@@ -13,7 +13,7 @@ message Element {
   // The id local to a kinematic skeleton
   uint32 id = 1;
   string name = 2;
-  Pose parent_t_this = 3;
+  intrinsic_proto.Pose parent_t_this = 3;
   uint32 parent = 4;
   repeated uint32 children = 5;
 }
@@ -51,7 +51,7 @@ message Joint {
     }
 
     Type type = 1;
-    Point axis = 2;
+    intrinsic_proto.Point axis = 2;
 
     Limits system_limits = 3;
     Limits soft_limits = 4;
@@ -70,7 +70,7 @@ message Joint {
 message Link {
   message Parameters {
     double mass = 1;
-    Pose center_of_gravity = 2;
+    intrinsic_proto.Pose center_of_gravity = 2;
     Matrixd inertia = 3;
   }
 

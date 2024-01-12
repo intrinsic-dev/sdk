@@ -11,7 +11,7 @@ import "intrinsic/math/proto/pose.proto";
 message Skeleton {
   string name = 1;
 
-  Pose anchor_offset = 2;
+  intrinsic_proto.Pose anchor_offset = 2;
 
   repeated Link links = 3;
   repeated Joint joints = 4;

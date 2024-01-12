@@ -10,7 +10,7 @@
 #include "intrinsic/math/proto/pose.pb.h"
 #include "intrinsic/math/proto/quaternion.pb.h"
 
-// All conversions from INTRINSIC protos to their respective C++ types should be
+// All conversions from Intrinsic protos to their respective C++ types should be
 // declared in namespace intrinsic_proto. This makes it possible to make
 // unqualified calls to FromProto() throughout our code base.
 namespace intrinsic_proto {
@@ -25,7 +25,7 @@ absl::StatusOr<intrinsic::Pose> FromProtoNormalized(const Pose& pose);
 
 }  // namespace intrinsic_proto
 
-// To enable unqualified calls to ToProto() throughout our code base, we delcare
+// To enable unqualified calls to ToProto() throughout our code base, we declare
 // functions which convert C++ types to protos in namespace intrinsic.
 namespace intrinsic {
 

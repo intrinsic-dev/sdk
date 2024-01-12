@@ -45,6 +45,9 @@ static bool AlmostEquals(const double x, const double y,
 }
 
 }  // namespace
+}  // namespace intrinsic_proto
+
+namespace intrinsic_proto {
 
 intrinsic::eigenmath::Vector3d FromProto(const Point& point) {
   return {point.x(), point.y(), point.z()};
