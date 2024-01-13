@@ -3,11 +3,9 @@
 """Skill interface."""
 
 import abc
-from typing import Generic, List, Mapping, Optional, TypeVar, Union
+from typing import Generic, TypeVar, Union
 
-from google.protobuf import descriptor
 from google.protobuf import message
-from intrinsic.skills.proto import equipment_pb2
 from intrinsic.skills.proto import footprint_pb2
 from intrinsic.skills.proto import skill_service_pb2
 from intrinsic.skills.python import execute_context
@@ -33,69 +31,6 @@ TResultType = TypeVar('TResultType', bound=Union[message.Message, None])
 
 class InvalidSkillParametersError(ValueError):
   """Invalid arguments were passed to the skill parameters."""
-
-
-class SkillSignatureInterface(metaclass=abc.ABCMeta):
-  """Signature interface for skills.
-
-  The signature interface presents metadata about skill, which is associated the
-  skill class implementation.
-  """
-
-  @classmethod
-  def default_parameters(cls) -> Optional[message.Message]:
-    """Returns the default parameters for the Skill.
-
-    Returns None if there are no defaults. Fields with default values must be
-    marked as `optional` in the proto schema.
-    """
-    return None
-
-  @classmethod
-  def required_equipment(cls) -> Mapping[str, equipment_pb2.ResourceSelector]:
-    """Returns the signature of the skill's required equipment.
-
-    The return map includes the name of the equipment as the key and its
-    selector type as value.
-    """
-    raise NotImplementedError('Method not implemented!')
-
-  @classmethod
-  def name(cls) -> str:
-    """Returns the name of the skill."""
-    raise NotImplementedError('Method not implemented!')
-
-  @classmethod
-  def package(cls) -> str:
-    """Returns the package of the skill."""
-    raise NotImplementedError('Method not implemented!')
-
-  @classmethod
-  def get_parameter_descriptor(cls) -> descriptor.Descriptor:
-    """Returns the descriptor for the parameter that this skill expects."""
-    raise NotImplementedError('Method not implemented!')
-
-  @classmethod
-  def get_return_value_descriptor(cls) -> Optional[descriptor.Descriptor]:
-    """Returns the descriptor for the value that this skill may output."""
-
-    # By default, assume the skill has no value to return.
-    return None
-
-  @classmethod
-  def supports_cancellation(cls) -> bool:
-    """Returns True if the skill supports cancellation."""
-    return False
-
-  @classmethod
-  def get_ready_for_cancellation_timeout(cls) -> float:
-    """Returns the skill's ready for cancellation timeout, in seconds.
-
-    If the skill is cancelled, its ExecuteContext's SkillCanceller waits for
-    at most this timeout duration for the skill to have called `ready` before
-    raising a timeout error.
-    """
-    return 30.0
 
 
 class SkillExecuteInterface(abc.ABC, Generic[TParamsType, TResultType]):
@@ -240,7 +175,6 @@ class SkillProjectInterface(abc.ABC, Generic[TParamsType, TResultType]):
 
 
 class Skill(
-    SkillSignatureInterface,
     SkillProjectInterface[TParamsType, TResultType],
     SkillExecuteInterface[TParamsType, TResultType],
     Generic[TParamsType, TResultType],

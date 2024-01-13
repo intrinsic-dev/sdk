@@ -17,7 +17,6 @@ py_library(
         ":preview_context",
         ":preview_request",
         ":skill_canceller",
-        "//intrinsic/skills/proto:equipment_py_pb2",
         "//intrinsic/skills/proto:footprint_py_pb2",
         "//intrinsic/skills/proto:skill_service_py_pb2",
         "@com_google_protobuf//:protobuf_python",
