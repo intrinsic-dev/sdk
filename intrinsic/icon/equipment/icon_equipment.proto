@@ -4,6 +4,8 @@ syntax = "proto3";
 
 package intrinsic_proto.icon;
 
+import "intrinsic/icon/equipment/force_control_settings.proto";
+
 message Icon2PositionPart {
   string part_name = 1;
   string world_robot_collection_name = 3;
@@ -43,6 +45,8 @@ message Icon2ForceTorqueSensorPart {
   string world_robot_collection_name = 3;
   reserved 2;
   reserved "connection_config";
+  // Parameters used for all force control skills.
+  ForceControlSettings force_control_settings = 4;
 }
 
 message Icon2RangefinderPart {

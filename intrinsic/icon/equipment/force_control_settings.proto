@@ -1,0 +1,32 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+import "intrinsic/icon/proto/cart_space.proto";
+
+message ForceControlSettings {
+  // Maximum value of the euclidean norm of the measured force (measured at a
+  // tool frame) at which point a stop action should be triggered. Defined in
+  // N.
+  double excessive_force_threshold = 1;
+
+  // Maximum value of the euclidean norm of the measured torque (measured at a
+  // tool frame) at which point a stop action should be triggered. Defined in
+  // N m.
+  double excessive_torque_threshold = 2;
+
+  // The desired virtual cartesian inertia for all translational elements, in
+  // kg.
+  double virtual_translational_inertia = 3;
+
+  // The desired virtual cartesian inertia for all rotational elements, in
+  // kg m².
+  double virtual_rotational_inertia = 4;
+
+  // Deadband to be applied to the sensed wrench. Wrench values below this band
+  // will be truncated. Useful for masking small wrench artifacts such as cable
+  // tugging or sensor drift.
+  intrinsic_proto.icon.Wrench sensed_wrench_deadband = 5;
+}

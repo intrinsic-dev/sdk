@@ -1,5 +1,6 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
+load("//bazel:go_macros.bzl", "go_proto_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 load("@rules_python//python:defs.bzl", "py_library")
 
@@ -44,6 +45,9 @@ proto_library(
     name = "icon_equipment_proto",
     srcs = ["icon_equipment.proto"],
     visibility = ["//visibility:private"],
+    deps = [
+        ":force_control_settings_proto",
+    ],
 )
 
 cc_proto_library(
@@ -55,6 +59,30 @@ cc_proto_library(
 py_proto_library(
     name = "icon_equipment_py_pb2",
     deps = [":icon_equipment_proto"],
+)
+
+proto_library(
+    name = "force_control_settings_proto",
+    srcs = ["force_control_settings.proto"],
+    deps = ["//intrinsic/icon/proto:cart_space_proto"],
+)
+
+go_proto_library(
+    name = "force_control_settings_go_proto",
+    go_deps = [
+        "//intrinsic/icon/proto:cart_space_go_proto",
+    ],
+    deps = [":force_control_settings_proto"],
+)
+
+cc_proto_library(
+    name = "force_control_settings_cc_proto",
+    deps = [":force_control_settings_proto"],
+)
+
+py_proto_library(
+    name = "force_control_settings_py_pb2",
+    deps = [":force_control_settings_proto"],
 )
 
 py_library(
