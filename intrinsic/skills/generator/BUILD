@@ -2,8 +2,8 @@
 
 # Provides generators for creating skill source code.
 
-load("//bazel:go_macros.bzl", "go_library")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
+load("//bazel:go_macros.bzl", "go_library")
 load("@rules_python//python:defs.bzl", "py_library")
 
 package(

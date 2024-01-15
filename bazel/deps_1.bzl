@@ -2,49 +2,50 @@
 
 """Workspace dependencies needed for the Intrinsic SDKs as a 3rd-party consumer (part 1)."""
 
+load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+
+# Bazel skylib
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
+# gRPC
+load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
+
+# Googleapis
+load("@com_google_googleapis//:repository_rules.bzl", "switched_rules_by_language")
+
 # Protobuf
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
-
-# Go rules and toolchain
-load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
-load("//bazel:go_deps.bzl", "go_dependencies")
-load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 
 # CC toolchain
 load("@com_grail_bazel_toolchain//toolchain:deps.bzl", "bazel_toolchain_dependencies")
 load("@com_grail_bazel_toolchain//toolchain:rules.bzl", "llvm_toolchain")
+load(
+    "@io_bazel_rules_docker//cc:image.bzl",
+    _cc_image_repos = "repositories",
+)
+load("@io_bazel_rules_docker//container:container.bzl", "container_pull")
+load(
+    "@io_bazel_rules_docker//python3:image.bzl",
+    _py_image_repos = "repositories",
+)
+load("@io_bazel_rules_docker//repositories:deps.bzl", container_deps = "deps")
+load(
+    "@io_bazel_rules_docker//repositories:repositories.bzl",
+    container_repositories = "repositories",
+)
 
-# Python toolchain
-load("@rules_python//python:repositories.bzl", "python_register_toolchains")
+# Go rules and toolchain
+load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 
 # Docker
 load("@rules_oci//oci:dependencies.bzl", "rules_oci_dependencies")
 load("@rules_oci//oci:pull.bzl", "oci_pull")
 load("@rules_oci//oci:repositories.bzl", "LATEST_CRANE_VERSION", "oci_register_toolchains")
-load(
-    "@io_bazel_rules_docker//repositories:repositories.bzl",
-    container_repositories = "repositories",
-)
-load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
-load("@io_bazel_rules_docker//repositories:deps.bzl", container_deps = "deps")
-load(
-    "@io_bazel_rules_docker//cc:image.bzl",
-    _cc_image_repos = "repositories",
-)
-load(
-    "@io_bazel_rules_docker//python3:image.bzl",
-    _py_image_repos = "repositories",
-)
-load("@io_bazel_rules_docker//container:container.bzl", "container_pull")
 
-# Googleapis
-load("@com_google_googleapis//:repository_rules.bzl", "switched_rules_by_language")
-
-# gRPC
-load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
-
-# Bazel skylib
-load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+# Python toolchain
+load("@rules_python//python:repositories.bzl", "python_register_toolchains")
+load("//bazel:go_deps.bzl", "go_dependencies")
 
 def intrinsic_sdks_deps_1(register_go_toolchain = True):
     """Loads workspace dependencies needed for the Intrinsic SDKs.

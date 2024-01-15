@@ -2,15 +2,15 @@
 
 """Workspace dependencies needed for the Intrinsic SDKs as a 3rd-party consumer (part 2)."""
 
-# CC toolchain
-load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
-
 # gRPC
 load("@com_github_grpc_grpc//bazel:grpc_extra_deps.bzl", "grpc_extra_deps")
 
+# CC toolchain
+load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
+load("@local_config_python//:defs.bzl", "interpreter")
+
 # Python pip dependencies
 load("@rules_python//python:pip.bzl", "pip_parse")
-load("@local_config_python//:defs.bzl", "interpreter")
 
 def intrinsic_sdks_deps_2():
     """Loads workspace dependencies needed for the Intrinsic SDKs.
