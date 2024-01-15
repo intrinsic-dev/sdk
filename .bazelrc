@@ -49,9 +49,7 @@ build:remote_cache --google_default_credentials=true
 # More about platforms: https://docs.bazel.build/versions/master/platforms.html
 build:remote --extra_execution_platforms=//bazel/rbe_config/config:platform
 build:remote --host_platform=//bazel/rbe_config/config:platform
-build:remote --java_runtime_version=remotejdk_11
 build:remote --platforms=//bazel/rbe_config/config:platform
-build:remote --define=EXECUTOR=remote
 
 # Avoid building grpc with xDS support to reduce build time
 build --define=grpc_no_xds=true
