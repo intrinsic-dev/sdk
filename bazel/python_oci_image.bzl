@@ -41,7 +41,9 @@ def python_oci_image(
     )
 
     # One layer with only the python interpreter.
-    PY_INTERPRETER_REGEX = "\\.runfiles/local_config_python"
+    # WORKSPACE: ".runfiles/local_config_python_x86_64-unknown-linux-gnu/"
+    # Bzlmod: "runfiles/rules_python~0.27.1~python~python_3_11_x86_64-unknown-linux-gnu/"
+    PY_INTERPRETER_REGEX = "\\.runfiles/\\S*_python\\S*_x86_64-unknown-linux-gnu/"
 
     native.genrule(
         name = name + "_interpreter_tar_manifest",

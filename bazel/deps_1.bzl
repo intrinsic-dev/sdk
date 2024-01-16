@@ -12,9 +12,6 @@ load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 # gRPC
 load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
 
-# Googleapis
-load("@com_google_googleapis//:repository_rules.bzl", "switched_rules_by_language")
-
 # Protobuf
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
@@ -27,6 +24,9 @@ load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_depe
 
 # Python toolchain
 load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
+
+# Googleapis
+load("//bazel:extension_for_com_google_googleapis.bzl", "extension_for_com_google_googleapis")
 load("//bazel:go_deps.bzl", "go_dependencies")
 
 def intrinsic_sdks_deps_1(register_go_toolchain = True):
@@ -94,13 +94,7 @@ def intrinsic_sdks_deps_1(register_go_toolchain = True):
     gazelle_dependencies(go_repository_default_config = Label("//:gazelle_config.bzl"))
 
     # Googleapis
-    switched_rules_by_language(
-        name = "com_google_googleapis_imports",
-        cc = True,
-        grpc = True,
-        python = True,
-        go = True,
-    )
+    extension_for_com_google_googleapis()
 
     # gRPC
     grpc_deps()
