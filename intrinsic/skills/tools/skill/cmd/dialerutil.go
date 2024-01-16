@@ -64,19 +64,43 @@ type DialInfoParams struct {
 	CredToken string // Optional the credential value itself. This bypasses the store
 }
 
-// insecure returns an insecure dial option when the user has physical access to
-// the server, otherwise it returns nil.
-func insecureOpts(address string) *[]grpc.DialOption {
-	for _, prefix := range []string{"dns:///www.endpoints", "dns:///portal.intrinsic.ai", "dns:///portal-qa.intrinsic.ai"} {
-		if strings.HasPrefix(address, prefix) {
-			return nil
-		}
-	}
+// ErrCredentialsRequired indicates that the credential name is not set in the
+// DialInfoParams for a non-local call.
+var ErrCredentialsRequired = errors.New("credential name required")
 
-	return &[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+// ErrCredentialsNotFound indicates that the lookup for a given credential
+// name failed.
+type ErrCredentialsNotFound struct {
+	Err            error // the underlying error
+	CredentialName string
 }
 
-// DialInfoCtx returns the metadata for dialing a gRPC connection to a cloud/on-prem cluster.
+func (e *ErrCredentialsNotFound) Error() string {
+	return fmt.Sprintf("credentials not found: %v", e.Err)
+}
+
+func (e *ErrCredentialsNotFound) Unwrap() error { return e.Err }
+
+// DialConnectionCtx creates and returns a gRPC connection that is created based on the DialInfoParams.
+// DialConnectionCtx will fill the ServerAddr or Credname if necessary.
+// The CredName is filled from the organization information. It's equal to the project's name.
+// The ServerAddr is defaulted to the endpoints url for compute projects.
+func DialConnectionCtx(ctx context.Context, params DialInfoParams) (context.Context, *grpc.ClientConn, error) {
+
+	ctx, dialerOpts, addr, err := dialInfoCtx(ctx, params)
+	if err != nil {
+		return nil, nil, fmt.Errorf("dial info: %w", err)
+	}
+
+	conn, err := grpc.DialContext(ctx, addr, *dialerOpts...)
+	if err != nil {
+		return nil, nil, fmt.Errorf("dialing context: %w", err)
+	}
+
+	return ctx, conn, nil
+}
+
+// dialInfoCtx returns the metadata for dialing a gRPC connection to a cloud/on-prem cluster.
 //
 // Function uses provided ctx to manage lifecycle of connection created. Ctx may be
 // modified on return, caller is encouraged to switch to returned context if appropriate.
@@ -88,15 +112,7 @@ func insecureOpts(address string) *[]grpc.DialOption {
 // Returns insecure connection data if the address is a local network address (such as
 // `localhost:17080`), otherwise retrieves cert from system cert pool, and sets up the metadata for
 // a TLS cert with per-RPC basic auth credentials.
-// Deprecated: please use DialConnectionCtx
-func DialInfoCtx(ctx context.Context, params DialInfoParams) (context.Context, *[]grpc.DialOption, error) {
-	ctx, opts, _, err := dialInfoCtxInt(ctx, params)
-	return ctx, opts, err
-}
-
-// dialInfoCtxInt is DialInfoCtx but allows to default the ServerAddr.
-// This is used by DialConnectionCtx and unifies the www.endpoints... handling
-func dialInfoCtxInt(ctx context.Context, params DialInfoParams) (context.Context, *[]grpc.DialOption, string, error) {
+func dialInfoCtx(ctx context.Context, params DialInfoParams) (context.Context, *[]grpc.DialOption, string, error) {
 	if params.Address == "" {
 		if params.CredName == "" {
 			return ctx, nil, "", fmt.Errorf("not enough information to build target address. Provide --org or --project")
@@ -161,6 +177,18 @@ func dialInfoCtxInt(ctx context.Context, params DialInfoParams) (context.Context
 	return ctx, &finalOpts, params.Address, nil
 }
 
+// insecure returns an insecure dial option when the user has physical access to
+// the server, otherwise it returns nil.
+func insecureOpts(address string) *[]grpc.DialOption {
+	for _, prefix := range []string{"dns:///www.endpoints", "dns:///portal.intrinsic.ai", "dns:///portal-qa.intrinsic.ai"} {
+		if strings.HasPrefix(address, prefix) {
+			return nil
+		}
+	}
+
+	return &[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+}
+
 func isLocal(address string) bool {
 	for _, localAddress := range []string{"127.0.0.1", "local", "xfa.lan"} {
 		if strings.Contains(address, localAddress) {
@@ -169,23 +197,6 @@ func isLocal(address string) bool {
 	}
 	return false
 }
-
-// ErrCredentialsRequired indicates that the credential name is not set in the
-// DialInfoParams for a non-local call.
-var ErrCredentialsRequired = errors.New("credential name required")
-
-// ErrCredentialsNotFound indicates that the lookup for a given credential
-// name failed.
-type ErrCredentialsNotFound struct {
-	Err            error // the underlying error
-	CredentialName string
-}
-
-func (e *ErrCredentialsNotFound) Error() string {
-	return fmt.Sprintf("credentials not found: %v", e.Err)
-}
-
-func (e *ErrCredentialsNotFound) Unwrap() error { return e.Err }
 
 func createCredentials(params DialInfoParams) (credentials.PerRPCCredentials, error) {
 	if params.CredToken != "" {
@@ -211,23 +222,4 @@ func createCredentials(params DialInfoParams) (credentials.PerRPCCredentials, er
 	// credential name is required for non-local calls to resolve
 	// the corresponding API key.
 	return nil, ErrCredentialsRequired
-}
-
-// DialConnectionCtx creates and returns a gRPC connection that is created based on the DialInfoParams.
-// DialConnectionCtx will fill the ServerAddr or Credname if necessary.
-// The CredName is filled from the organization information. It's equal to the project's name.
-// The ServerAddr is defaulted to the endpoints url for compute projects.
-func DialConnectionCtx(ctx context.Context, params DialInfoParams) (context.Context, *grpc.ClientConn, error) {
-
-	ctx, dialerOpts, addr, err := dialInfoCtxInt(ctx, params)
-	if err != nil {
-		return nil, nil, fmt.Errorf("dial info: %w", err)
-	}
-
-	conn, err := grpc.DialContext(ctx, addr, *dialerOpts...)
-	if err != nil {
-		return nil, nil, fmt.Errorf("dialing context: %w", err)
-	}
-
-	return ctx, conn, nil
 }
