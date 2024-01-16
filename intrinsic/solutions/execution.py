@@ -24,7 +24,6 @@ import time
 from typing import Any, List, Optional, Union, cast
 
 from google.longrunning import operations_pb2
-from google.protobuf import field_mask_pb2
 import grpc
 from intrinsic.executive.proto import behavior_tree_pb2
 from intrinsic.executive.proto import blackboard_service_pb2
@@ -132,9 +131,8 @@ class Operation:
     return self._operation_proto.name
 
   @property
-  @error_handling.retry_on_grpc_unavailable
   def done(self) -> bool:
-    return self._get_view().done
+    return self._operation_proto.done
 
   @property
   def proto(self) -> operations_pb2.Operation:
@@ -143,17 +141,6 @@ class Operation:
   @property
   def metadata(self) -> run_metadata_pb2.RunMetadata:
     return self._metadata
-
-  @error_handling.retry_on_grpc_unavailable
-  def _get_view(
-      self,
-      field_mask: field_mask_pb2.FieldMask = field_mask_pb2.FieldMask(),
-  ) -> operations_pb2.Operation:
-    return self._stub.GetOperationView(
-        executive_service_pb2.GetOperationViewRequest(
-            name=self._operation_proto.name, metadata_fieldmask=field_mask
-        )
-    )
 
   @error_handling.retry_on_grpc_unavailable
   def update(self) -> None:
@@ -305,6 +292,8 @@ class Executive:
 
   @property
   def operation(self) -> Operation:
+    self._update_operation()
+
     # Still no operation, none available in executive
     if self._operation is None:
       raise OperationNotFoundError("No active operation")
@@ -333,7 +322,6 @@ class Executive:
   @property
   def execution_mode(self) -> "Executive.ExecutionMode":
     """Currently set mode of execution (normal or step-wise)."""
-    self._update_operation()
     mode = Executive.ExecutionMode.from_proto(
         self.operation.metadata.execution_mode
     )
@@ -344,7 +332,6 @@ class Executive:
   @property
   def simulation_mode(self) -> "Executive.SimulationMode":
     """Currently set mode of simulation (physics or kinematics)."""
-    self._update_operation()
     mode = Executive.SimulationMode.from_proto(
         self.operation.metadata.simulation_mode
     )
@@ -407,7 +394,6 @@ class Executive:
             state in cancellation_unfinished_states
         ), f"Unexpected state: {state}."
         time.sleep(self._polling_interval_in_seconds)
-        self._update_operation()
         state = self.operation.metadata.behavior_tree_state
 
   def suspend(self) -> None:
@@ -450,7 +436,6 @@ class Executive:
       return
 
     while True:
-      self._update_operation()
       if self.operation.metadata.behavior_tree_state in [
           behavior_tree_pb2.BehaviorTree.SUSPENDED,
           behavior_tree_pb2.BehaviorTree.FAILED,
@@ -480,13 +465,16 @@ class Executive:
     self._resume_with_retry(mode)
 
   def reset(self) -> None:
-    """Restarts the executive, resetting the state to the state from the initial executive startup.
+    """Resets the current operation to the state from when it was loaded.
 
     Raises:
       solutions_errors.UnavailableError: On executive service not reachable.
       grpc.RpcError: On any other gRPC error.
     """
-    self._reset_with_retry()
+    try:
+      self._reset_with_retry()
+    except OperationNotFoundError:
+      pass
 
   def run_async(
       self,
@@ -624,17 +612,21 @@ class Executive:
       grpc.RpcError: On any other gRPC error.
       OperationNotFoundError: if no operation is currently active.
     """
-    # If the behavior tree state is ACCEPTED, this is the first plan/action
-    # being executed after the last executive reset and world edits might have
-    # occurred. Thus we reload the sim world automatically.
-    self._update_operation()
-    if self._simulation is not None and self._operation is None:
-      if not silence_outputs:
-        print(
-            "Triggering simulation.reset() "
-            "since world edits might have occurred."
-        )
-      self._simulation.reset()
+    # Reset the simulation the first time that anything in the executive is run.
+    # This uses the presence of the operation as a heuristic to determine that
+    # this is the case under the assumption that any subsequent runs by this
+    # file or the frontend will always leave an operation behind and only
+    # deleted it before loading a new one.
+    if self._simulation is not None:
+      try:
+        self.operation
+      except OperationNotFoundError:
+        if not silence_outputs:
+          print(
+              "Triggering simulation.reset() "
+              "since world edits might have occurred."
+          )
+        self._simulation.reset()
 
     if plan_or_action is None:
       if self._operation is None:
@@ -670,9 +662,7 @@ class Executive:
     Raises:
       solutions_errors.UnavailableError: On executive service not reachable.
       grpc.RpcError: On any other gRPC error.
-      OperationNotFoundError: if no operation is currently active.
     """
-    self._update_operation()
     behavior_tree = None
     if isinstance(behavior_tree_or_action, actions.ActionBase):
       behavior_tree = bt.BehaviorTree(
@@ -697,12 +687,10 @@ class Executive:
       behavior_tree.validate_id_uniqueness()
       request.behavior_tree.CopyFrom(behavior_tree.proto)
 
-    if self._operation:
-      try:
-        self._delete_with_retry()
-      except OperationNotFoundError:
-        pass
-      self._operation = None
+    try:
+      self._delete_with_retry()
+    except OperationNotFoundError:
+      pass
 
     self._create_with_retry(request)
 
@@ -798,7 +786,6 @@ class Executive:
     }
 
     while True:
-      self._update_operation()
       state = self.operation.metadata.behavior_tree_state
       if state in completed_states:
         break
@@ -921,12 +908,11 @@ class Executive:
 
   @error_handling.retry_on_grpc_unavailable
   def _delete_with_retry(self) -> None:
-    self._update_operation()
-    if self._operation is None:
-      raise OperationNotFoundError("No active operation")
+    operation_name = self.operation.name
     self._stub.DeleteOperation(
-        operations_pb2.DeleteOperationRequest(name=self._operation.name)
+        operations_pb2.DeleteOperationRequest(name=operation_name)
     )
+    self._operation = None
 
   @error_handling.retry_on_grpc_unavailable
   def _start_with_retry(
@@ -960,11 +946,9 @@ class Executive:
 
   @error_handling.retry_on_grpc_unavailable
   def _cancel_with_retry(self) -> None:
-    self._update_operation()
-    if self._operation is None:
-      raise OperationNotFoundError("No active operation")
+    operation_name = self.operation.name
     self._stub.CancelOperation(
-        operations_pb2.CancelOperationRequest(name=self._operation.name)
+        operations_pb2.CancelOperationRequest(name=operation_name)
     )
 
   @error_handling.retry_on_grpc_unavailable
@@ -972,14 +956,11 @@ class Executive:
       self,
       mode: Optional[ResumeMode] = None,
   ) -> None:
-    self._update_operation()
-    if self._operation is None:
-      raise OperationNotFoundError("No active operation")
-
+    operation_name = self.operation.name
     self._operation.update_from_proto(
         self._stub.ResumeOperation(
             executive_service_pb2.ResumeOperationRequest(
-                name=self._operation.name,
+                name=operation_name,
                 mode=None if mode is None else mode.value,
             )
         )
@@ -987,21 +968,16 @@ class Executive:
 
   @error_handling.retry_on_grpc_unavailable
   def _reset_with_retry(self) -> None:
-    self._update_operation()
-    if self._operation is None:
-      return
-
+    operation_name = self.operation.name
     self._stub.ResetOperation(
-        executive_service_pb2.ResetOperationRequest(name=self._operation.name)
+        executive_service_pb2.ResetOperationRequest(name=operation_name)
     )
 
   @error_handling.retry_on_grpc_unavailable
   def _suspend_with_retry(self) -> None:
-    self._update_operation()
-    if self._operation is None:
-      raise OperationNotFoundError("No active operation")
+    operation_name = self.operation.name
     self._stub.SuspendOperation(
-        executive_service_pb2.SuspendOperationRequest(name=self.operation.name)
+        executive_service_pb2.SuspendOperationRequest(name=operation_name)
     )
 
   @error_handling.retry_on_grpc_unavailable
