@@ -4,11 +4,9 @@
 #define INTRINSIC_EIGENMATH_ROTATION_UTILS_H_
 
 #include <cmath>
-#include <complex>
 #include <limits>
 
 #include "Eigen/Core"
-#include "Eigen/Geometry"
 #include "absl/log/check.h"
 #include "intrinsic/eigenmath/types.h"
 
@@ -210,6 +208,31 @@ AngleAxis<T> AngleTimesAxisToAngleAxis(const Vector3<T>& angle_times_axis) {
 template <typename T>
 Vector3<T> AngleAxisToAngleTimesAxis(const AngleAxis<T>& angle_axis) {
   return (angle_axis.angle() * angle_axis.axis());
+}
+
+// Converts a vector of the tangent space of SO(3) at the Identity, i.e., a 3d
+// angular rate vector `angle_times_axis`, in a tangent vector to the 3d-sphere
+// S3, embedded in R4. The resulting 4d vector (x_dot, y_dot, z_dot, w_dot)
+// contains the time derivative of the components of quaternion `q` expressed
+// in the reference frame.
+template <typename T, int Options>
+Vector4<T, Options> AngleTimesAxisToQuaternionDerivative(
+    const Vector3<T>& angle_times_axis, const Quaternion<T, Options>& q) {
+  Quaternion<T, Options> angle_times_axis_as_quaternion{
+      0.0, angle_times_axis.x(), angle_times_axis.y(), angle_times_axis.z()};
+  return T(0.5) * (angle_times_axis_as_quaternion * q).coeffs();
+}
+
+// Converts a tangent vector to the 3d-sphere S3, `q_dot`, into a vector of the
+// tangent space of SO(3) at the Identity, i.e., a 3d angular rate (angle times
+// axis) vector. `q_dot` is a 4d vector (x_dot, y_dot, z_dot, w_dot)
+// representing the time derivative of the components of quaternion `q`
+// expressed in the reference frame.
+template <typename T, int Options>
+Vector3<T> QuaternionDerivativeToAngleTimesAxis(
+    const Vector4<T, Options>& q_dot, const Quaternion<T, Options>& q) {
+  const Quaternion<T, Options> q_dot_as_quaternion{q_dot};
+  return T(2.0) * (q_dot_as_quaternion * q.inverse()).vec();
 }
 
 }  // namespace eigenmath
