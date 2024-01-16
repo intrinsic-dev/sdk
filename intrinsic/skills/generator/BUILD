@@ -3,8 +3,8 @@
 # Provides generators for creating skill source code.
 
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
-load("//bazel:go_macros.bzl", "go_library")
 load("@rules_python//python:defs.bzl", "py_library")
+load("//bazel:go_macros.bzl", "go_library")
 
 package(
     default_visibility = ["//visibility:private"],

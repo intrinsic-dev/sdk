@@ -2,8 +2,8 @@
 
 # Python wrapper for the intrinsic pubsub c++ library.
 
-load("@rules_python//python:defs.bzl", "py_test")
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+load("@rules_python//python:defs.bzl", "py_test")
 
 package(default_visibility = ["//visibility:public"])
 

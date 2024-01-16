@@ -2,6 +2,8 @@
 
 load("//bazel:go_macros.bzl", "go_library")
 
+# This package contains the tools to handle tar archives.
+
 package(default_visibility = ["//visibility:private"])
 
 exports_files(

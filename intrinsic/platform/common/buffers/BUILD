@@ -1,5 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
+# Specialized Buffer Implementations
+
 package(default_visibility = ["//visibility:public"])
 
 cc_library(

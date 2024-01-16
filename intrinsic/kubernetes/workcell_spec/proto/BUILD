@@ -3,8 +3,8 @@
 # gRPC service definition for the workcell-spec-service.
 
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
-load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_proto_library")
+load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 
 package(default_visibility = ["//visibility:public"])
 
