@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	// ErrNotFound will be returned on 404, since it's an error that's expected
-	// and can be printed with better UX than just the number.
-	ErrNotFound = fmt.Errorf("Not found")
+	// These will be returned on corresponding http error codes, since they are errors that are
+	// expected and can be printed with better UX than just the number.
+	ErrNotFound   = fmt.Errorf("Not found")
+	ErrBadGateway = fmt.Errorf("Bad Gateway")
 )
 
 // AuthedClient injects an api key for the project into every request.
@@ -117,6 +118,9 @@ func (c *AuthedClient) GetJSON(ctx context.Context, cluster, deviceID, subPath s
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusNotFound {
 			return ErrNotFound
+		}
+		if resp.StatusCode == http.StatusBadGateway {
+			return ErrBadGateway
 		}
 
 		return fmt.Errorf("get status code: %v", resp.StatusCode)
