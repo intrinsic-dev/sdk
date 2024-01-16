@@ -3,7 +3,6 @@
 #include "intrinsic/icon/examples/joint_then_cart_move_lib.h"
 
 #include <iostream>
-#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -12,11 +11,12 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "intrinsic/eigenmath/types.h"
-#include "intrinsic/icon/actions/cartesian_position_info.h"
+#include "intrinsic/icon/actions/cartesian_jogging_info.h"
 #include "intrinsic/icon/actions/point_to_point_move_info.h"
 #include "intrinsic/icon/cc_client/client.h"
 #include "intrinsic/icon/cc_client/client_utils.h"
 #include "intrinsic/icon/cc_client/condition.h"
+#include "intrinsic/icon/cc_client/robot_config.h"
 #include "intrinsic/icon/cc_client/session.h"
 #include "intrinsic/icon/common/builtins.h"
 #include "intrinsic/icon/common/id_types.h"
@@ -29,7 +29,8 @@
 namespace intrinsic::icon::examples {
 
 constexpr int kNDof = 6;
-
+constexpr double kCartesianVelocityFraction = 0.2;
+constexpr double kExpectedJointDifference = 0.002;
 constexpr double kSettlingTimeoutSeconds = 1;
 
 namespace {
@@ -77,6 +78,16 @@ absl::Status PrintBaseTTipSensed(
   return absl::OkStatus();
 }
 
+eigenmath::VectorXd GetSensedJointPosition(
+    const intrinsic_proto::icon::PartStatus& part_status) {
+  eigenmath::VectorXd result =
+      eigenmath::VectorXd::Zero(part_status.joint_states().size());
+  for (int i = 0; i < result.size(); ++i) {
+    result(i) = part_status.joint_states(i).position_sensed();
+  }
+  return result;
+}
+
 }  // namespace
 
 absl::Status JointThenCartMove(
@@ -91,8 +102,8 @@ absl::Status JointThenCartMove(
       std::unique_ptr<intrinsic::icon::Session> session,
       intrinsic::icon::Session::Start(icon_channel, {std::string(part_name)}));
 
-  // Compute two feasible joint configurations based on the joint limits.
-  eigenmath::VectorNd jpos_1, jpos_2;
+  // Compute a feasible joint configuration based on the joint limits.
+  eigenmath::VectorNd jpos_1;
   {
     INTR_ASSIGN_OR_RETURN(auto robot_config, client.GetConfig());
     INTR_ASSIGN_OR_RETURN(auto part_config,
@@ -112,9 +123,6 @@ absl::Status JointThenCartMove(
     // Cartesian positioning. The offset is proportional to the joint range to
     // avoid going outside the range in case it is very small.
     jpos_1 = center_pos + (joint_range / 10.0).cwiseMin(0.5);
-    // use a larger offset from the center of the joint range, proportional to
-    // the joint range but bounded.
-    jpos_2 = center_pos + (joint_range / 5.0).cwiseMin(0.9);
   }
 
   std::vector<double> zero_velocity(kNDof, 0.0);
@@ -123,8 +131,7 @@ absl::Status JointThenCartMove(
   // Reactions.
   const intrinsic::icon::ActionInstanceId kJointMoveToStartId(0);
   const intrinsic::icon::ActionInstanceId kStopId(1);
-  const intrinsic::icon::ActionInstanceId kJointMoveId(2);
-  const intrinsic::icon::ActionInstanceId kCartesianMoveId(3);
+  const intrinsic::icon::ActionInstanceId kCartesianMoveId(2);
 
   intrinsic::icon::ActionDescriptor move_to_start =
       intrinsic::icon::ActionDescriptor(
@@ -206,7 +213,7 @@ absl::Status JointThenCartMove(
 
     std::cout << "Moving robot to known Start Position." << std::endl;
     // Actually start the Action.
-    INTR_RETURN_IF_ERROR(session->StartAction(actions.front()));
+    INTR_RETURN_IF_ERROR(session->StartActions({actions.front()}));
 
     // Start handling non-realtime Reaction callbacks. This blocks until
     // QuitWatcherLoop() is called, or until an error occurs in the realtime
@@ -214,9 +221,24 @@ absl::Status JointThenCartMove(
     INTR_RETURN_IF_ERROR(session->RunWatcherLoop());
   }
 
-  // We're at the starting position, save the Cartesian pose to use as a
-  // goal later.
-  intrinsic::icon::CartesianPositionInfo::FixedParams cgoal;
+  intrinsic::icon::CartesianJoggingInfo::FixedParams fixed_params;
+  INTR_ASSIGN_OR_RETURN(RobotConfig robot_config, client.GetConfig());
+  INTR_ASSIGN_OR_RETURN(
+      intrinsic_proto::icon::GenericPartConfig generic_part_config,
+      robot_config.GetGenericPartConfig(part_name));
+  if (!generic_part_config.has_cartesian_limits_config() ||
+      !generic_part_config.cartesian_limits_config()
+           .has_default_cartesian_limits()) {
+    return absl::FailedPreconditionError("Cartesian limits config not found.");
+  }
+  *fixed_params.mutable_cartesian_limits() =
+      generic_part_config.cartesian_limits_config().default_cartesian_limits();
+  intrinsic::icon::CartesianJoggingInfo::StreamingParams streaming_params;
+  double velocity_x =
+      kCartesianVelocityFraction *
+      fixed_params.cartesian_limits().max_translational_velocity().at(0);
+  streaming_params.mutable_goal_twist()->set_x(velocity_x);
+  eigenmath::VectorXd joint_position_before, joint_position_after;
   {
     // Get the current robot status, and extract the status for the Part we are
     // interested in.
@@ -225,120 +247,36 @@ absl::Status JointThenCartMove(
 
     std::cout << "Initial Joint Position:" << std::endl;
     PrintJointPosition(part_status);
-
-    const intrinsic_proto::icon::Transform& base_t_tip =
-        part_status.base_t_tip_sensed();
-
-    std::cout << "Saved End Effector Goal Pose:" << std::endl;
     INTR_RETURN_IF_ERROR(PrintBaseTTipSensed(part_status));
-
-    // Set the current Cartesian pose as the goal for the Cartesian move
-    // Action.
-    *cgoal.mutable_goal_pose() = base_t_tip;
+    joint_position_before = GetSensedJointPosition(part_status);
   }
 
-  intrinsic::icon::ActionDescriptor jmove =
+  intrinsic::icon::ActionDescriptor cartesian_move =
       intrinsic::icon::ActionDescriptor(
-          intrinsic::icon::PointToPointMoveInfo::kActionTypeName, kJointMoveId,
-          part_name)
-          .WithFixedParams(intrinsic::icon::CreatePointToPointMoveFixedParams(
-              jpos_2, zero_velocity))
-          .WithReaction(
-              intrinsic::icon::ReactionDescriptor(
-                  intrinsic::icon::AllOf(
-                      {intrinsic::icon::IsDone(),
-                       intrinsic::icon::IsLessThan(
-                           intrinsic::icon::PointToPointMoveInfo::
-                               kDistanceToSensed,
-                           1e-3)}))
-                  // Another non-realtime callback. You will see this print a
-                  // message when the joint motion finishes. This does not call
-                  // 'QuitWatcherLoop()', because we expect more Actions to be
-                  // executed.
-                  .WithWatcherOnCondition([]() {
-                    std::cout << "Reached Joint Goal. Cartesian motion has "
-                                 "already started on the RTPC."
-                              << std::endl;
-                  })
-                  // This instructs ICON to switch to the Action with
-                  // the given ID in the same realtime cycle as the condition
-                  // (kDistanceToSensed < 1e-3 ) above becomes true.
-                  .WithRealtimeActionOnCondition(
-                      // Note that this is a "forward reference" to
-                      // the ID of cmove below.
-                      kCartesianMoveId))
-          .WithReaction(
-              intrinsic::icon::ReactionDescriptor(
-                  intrinsic::icon::AllOf(
-                      {intrinsic::icon::IsDone(),
-                       intrinsic::icon::IsGreaterThanOrEqual(
-                           intrinsic::icon::PointToPointMoveInfo::
-                               kSetpointDoneForSeconds,
-                           kSettlingTimeoutSeconds)}))
-                  // Another non-realtime callback. You will see this print a
-                  // message when the joint motion fails to reach the joint goal
-                  // within 'kSettlingTimeoutSeconds' of the trajectory
-                  // generator reporting 'done'. This does not call
-                  // 'QuitWatcherLoop()', because we expect more Actions to be
-                  // executed.
-                  .WithWatcherOnCondition([]() {
-                    std::cout
-                        << "Failed to reach Joint Goal. Cartesian motion has "
-                           "already started on the RTPC."
-                        << std::endl;
-                  })
-                  // This instructs ICON to switch to the Action with
-                  // the given ID in the same realtime cycle as the condition
-                  // above becomes true.
-                  .WithRealtimeActionOnCondition(
-                      // Note that this is a "forward reference" to
-                      // the ID of cmove below.
-                      kCartesianMoveId));
-
-  intrinsic::icon::ActionDescriptor cmove =
-      intrinsic::icon::ActionDescriptor(
-          intrinsic::icon::CartesianPositionInfo::kActionTypeName,
+          intrinsic::icon::CartesianJoggingInfo::kActionTypeName,
           kCartesianMoveId, part_name)
-          .WithFixedParams(cgoal)
-          .WithReaction(intrinsic::icon::ReactionDescriptor(
-                            intrinsic::icon::AllOf(
-                                {intrinsic::icon::IsDone(),
-                                 intrinsic::icon::IsLessThan(
-                                     intrinsic::icon::CartesianPositionInfo::
-                                         kLinearDistanceToGoal,
-                                     1e-3),
-                                 intrinsic::icon::IsLessThan(
-                                     intrinsic::icon::CartesianPositionInfo::
-                                         kAngularDistanceToGoal,
-                                     1e-2)}))
-                            .WithWatcherOnCondition(
-                                [&session]() { session->QuitWatcherLoop(); }))
-          .WithReaction(intrinsic::icon::ReactionDescriptor(
-                            intrinsic::icon::AllOf(
-                                {intrinsic::icon::IsDone(),
-                                 intrinsic::icon::IsGreaterThanOrEqual(
-                                     intrinsic::icon::CartesianPositionInfo::
-                                         kLinearDistanceToGoal,
-                                     1e-3),
-                                 intrinsic::icon::IsGreaterThanOrEqual(
-                                     intrinsic::icon::CartesianPositionInfo::
-                                         kAngularDistanceToGoal,
-                                     1e-2)}))
-                            .WithWatcherOnCondition([&session]() {
-                              std::cout << "Failed to reach Cartesian goal."
-                                        << std::endl;
-                              session->QuitWatcherLoop();
-                            }));
+          .WithFixedParams(fixed_params)
+          .WithReaction(
+              intrinsic::icon::ReactionDescriptor(
+                  intrinsic::icon::IsTrue(
+                      intrinsic::icon::CartesianJoggingInfo::kTimedOut))
+                  .WithWatcherOnCondition(
+                      [&session]() { session->QuitWatcherLoop(); }));
   {
-    INTR_ASSIGN_OR_RETURN(auto actions, session->AddActions({jmove, cmove}));
-
-    std::cout << "Starting Joint Position motion." << std::endl;
-
-    INTR_RETURN_IF_ERROR(session->StartAction(actions.front()));
+    INTR_ASSIGN_OR_RETURN(auto actions, session->AddActions({cartesian_move}));
+    // Command Cartesian jogging in x direction.
+    INTR_ASSIGN_OR_RETURN(
+        auto writer,
+        session->StreamWriter<CartesianJoggingInfo::StreamingParams>(
+            actions.front(), CartesianJoggingInfo::kStreamingInputName));
+    INTR_RETURN_IF_ERROR(writer->Write(streaming_params));
+    // Start real-time control.
+    INTR_RETURN_IF_ERROR(session->StartActions({actions.front()}));
+    // Wait for jogging to time out.
     INTR_RETURN_IF_ERROR(session->RunWatcherLoop());
   }
 
-  std::cout << "Finished Cartesian Position motion." << std::endl;
+  std::cout << "Finished Cartesian motion." << std::endl;
 
   {
     // Read the final status to verify that the Cartesian motion arrived back at
@@ -351,6 +289,13 @@ absl::Status JointThenCartMove(
 
     std::cout << "End effector pose after Cartesian move:" << std::endl;
     INTR_RETURN_IF_ERROR(PrintBaseTTipSensed(part_status));
+    joint_position_after = GetSensedJointPosition(part_status);
+  }
+
+  double joint_distance = (joint_position_after - joint_position_before).norm();
+  if (joint_distance < kExpectedJointDifference) {
+    return absl::InternalError(
+        "Cartesian move did not result in the robot moving.");
   }
 
   // The Session is automatically closed when the object goes out of scope. ICON

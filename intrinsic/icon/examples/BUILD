@@ -97,11 +97,12 @@ cc_library(
     visibility = ["//visibility:private"],
     deps = [
         "//intrinsic/eigenmath",
-        "//intrinsic/icon/actions:cartesian_position_info",
+        "//intrinsic/icon/actions:cartesian_jogging_info",
         "//intrinsic/icon/actions:point_to_point_move_info",
         "//intrinsic/icon/cc_client:client",
         "//intrinsic/icon/cc_client:client_utils",
         "//intrinsic/icon/cc_client:condition",
+        "//intrinsic/icon/cc_client:robot_config",
         "//intrinsic/icon/cc_client:session",
         "//intrinsic/icon/common:builtins",
         "//intrinsic/icon/common:id_types",

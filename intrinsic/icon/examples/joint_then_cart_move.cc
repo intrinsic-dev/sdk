@@ -1,5 +1,7 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
+#include <string>
+
 #include "absl/flags/flag.h"
 #include "absl/log/check.h"
 #include "absl/status/status.h"
@@ -22,13 +24,11 @@ ABSL_FLAG(std::string, header, "x-icon-instance-name",
 ABSL_FLAG(std::string, part, "arm", "Part to control.");
 
 const char kUsage[] =
-    "Initially moves all joints into to 0.1 rad and stores the end effector "
-    "pose. It then performs a joint move to 0.5 rad using a realtime reaction "
-    "to switch to a Cartesian move back into the stored end effector "
-    "pose.";
+    "Initially moves all joints into to a fixed position near the center of "
+    "the joint position ranges. Then, performs a small Cartesian move in "
+    "positive x direction.";
 
 namespace {
-
 absl::Status Run(const intrinsic::icon::ConnectionParams& connection_params,
                  absl::string_view part_name) {
   if (connection_params.address.empty()) {

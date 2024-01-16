@@ -102,6 +102,35 @@ cc_library(
 )
 
 proto_library(
+    name = "cartesian_jogging_proto",
+    srcs = ["cartesian_jogging.proto"],
+    deps = [
+        "//intrinsic/icon/proto:cart_space_proto",
+        "//intrinsic/kinematics/types:joint_limits_proto",
+        "//intrinsic/math/proto:pose_proto",
+        "//intrinsic/math/proto:quaternion_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "cartesian_jogging_cc_proto",
+    deps = [":cartesian_jogging_proto"],
+)
+
+py_proto_library(
+    name = "cartesian_jogging_py_pb2",
+    deps = [":cartesian_jogging_proto"],
+)
+
+cc_library(
+    name = "cartesian_jogging_info",
+    hdrs = ["cartesian_jogging_info.h"],
+    deps = [
+        ":cartesian_jogging_cc_proto",
+    ],
+)
+
+proto_library(
     name = "adio_proto",
     srcs = ["adio.proto"],
 )

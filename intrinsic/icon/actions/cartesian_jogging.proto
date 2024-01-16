@@ -1,0 +1,88 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package xfa.icon.actions.proto;
+
+import "intrinsic/icon/proto/cart_space.proto";
+import "intrinsic/kinematics/types/joint_limits.proto";
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/math/proto/quaternion.proto";
+
+// Parameters to specify how twist commands for Cartesian jogging should be
+// applied to the robot.
+// Jogging Reference Frame refers to a frame fixed with respect to the base of
+// the robot. When `base_q_jogging_reference_frame` is the identity quaternion,
+// the Jogging Reference Frame is aligned with the robot base frame.
+// Jogging Frame refers to a frame on the robot tip link. When
+// `tip_t_jogging_frame` is the identity pose, the Jogging Frame is the same as
+// the robot tip frame.
+message CartesianJoggingFrames {
+  enum JogInFrame {
+    JOG_IN_FRAME_UNSPECIFIED = 0;
+    JOG_IN_FRAME_BASE = 1;
+    JOG_IN_FRAME_TIP = 2;
+  }
+
+  // Reference frame in which commanded twist vectors are interpreted and in
+  // which the robot tip is jogged.
+  // `JOG_IN_FRAME_BASE`: Twist vector is expressed with respect to the Jogging
+  //   Reference Frame.
+  // `JOG_IN_FRAME_TIP`: Twist vector is expressed with respect to Jogging Frame
+  //   in its current orientation.
+  // Note: For all values of `jog_in_frame`, the commanded twist vector is
+  // applied at the origin of the Jogging Frame. For example, if a twist with
+  // angular velocity about the X axis is commanded, and `jog_in_frame` is
+  // `JOG_IN_FRAME_BASE`, then the tip link will rotate about an axis passing
+  // through the origin of the Jogging Frame such that the axis is parallel to
+  // the X axis of the Jogging Reference Frame. Instead, if `jog_in_frame` is
+  // `JOG_IN_FRAME_TIP`, then the tip link will rotate about the X axis of the
+  // Jogging Frame itself.
+  JogInFrame jog_in_frame = 1;
+
+  // Optional unit quaternion denoting the orientation of the Jogging Reference
+  // Frame relative to the robot base frame. Default value is the identity
+  // quaternion, indicating that the Jogging Reference Frame is aligned with the
+  // robot base frame. Note: If `jog_in_frame` is `JOG_IN_FRAME_TIP`, this value
+  // has no effect on the jogging motion.
+  optional intrinsic_proto.Quaternion base_q_jogging_reference_frame = 2;
+
+  // Optional transform denoting the pose of the Jogging Frame relative to the
+  // robot tip frame. Default value is the identity pose, indicating that the
+  // Jogging Frame is aligned with the robot tip frame.
+  optional intrinsic_proto.Pose tip_t_jogging_frame = 3;
+}
+
+// Fixed parameters for a Cartesian jogging action. These are provided once by
+// the user when the action is created, and remain the same for the lifetime of
+// the action.
+message CartesianJoggingFixedParams {
+  // Cartesian limits to apply to the streaming motion commands.
+  // Need to be appropriate for jogging the specific robot.
+  // Per-axis limits are interpreted to be with respect to `frames.jog_in_frame`
+  // if the `frames` parameter is specified, otherwise they are interpreted to
+  // be with respect to the base. The position limits configured here are
+  // ignored.
+  intrinsic_proto.icon.CartesianLimits cartesian_limits = 1;
+
+  // The joint limits to apply the streaming motion commands.
+  // The limits need to be more conservative than the maximum limits configured
+  // on the ICON server.
+  optional intrinsic_proto.JointLimits joint_limits = 2;
+
+  // User-defined frame parameters. Default is to jog in the robot base frame,
+  // at the tip of the robot.
+  optional CartesianJoggingFrames frames = 3;
+}
+
+// Streaming parameters for a Cartesian jogging action. These are provided with
+// every streaming command.
+message CartesianJoggingStreamingParams {
+  // The desired velocity (X,Y,Z) and angular velocity (RX,RY,RZ) of the
+  // robot tip link. The realized motion of the tip link on applying this twist
+  // will depend on the `frames` parameter of the action. See
+  // `CartesianJoggingFrames` for more details.
+  intrinsic_proto.icon.Twist goal_twist = 1;
+
+  reserved 2;
+}

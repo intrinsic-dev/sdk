@@ -11,11 +11,9 @@
 
 namespace intrinsic::icon::examples {
 
-// 1. Performs a Point to Point Move to a Starting Position,
-// 2. Stops and stores the Cartesian Pose of the End Effector.
-// 3. Performs a Point to Point Move away from the Starting Position.
-// 4. Performs a Cartesian Motion back to the stored Cartesian Pose of the End
-// Effector.
+// 1. Performs a joint move to a constand, valid joint position.
+// 2. Waits until position is settled.
+// 3. Performs a small Cartesian move (Cartesian jogging) in +X direction.
 //
 // The parameter `part_name` defines the part that is controlled using
 // `icon_channel`.
