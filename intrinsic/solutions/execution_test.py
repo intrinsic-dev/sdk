@@ -198,6 +198,21 @@ class ExecutiveTest(parameterized.TestCase):
         )
     )
 
+  def test_operation_find_name(self):
+    """Tests if executive.operation.find_tree_and_node_id works."""
+    my_bt = bt.BehaviorTree(root=bt.Sequence(children=[bt.Fail(name='a_node')]))
+    my_bt.tree_id = 'tree'
+    my_bt.root.node_id = 1
+    my_bt.root.children[0].node_id = 2
+    self._create_operation(my_bt)
+    self._setup_get_operation(
+        behavior_tree_pb2.BehaviorTree.ACCEPTED, bt_proto=my_bt.proto
+    )
+
+    self.assertEqual(
+        self._executive.operation.find_tree_and_node_id('a_node'), ('tree', 2)
+    )
+
   def test_run_async_fails_on_unavailable_error(self):
     """Tests if executive.run_async() translates UNAVAILABLE error correctly."""
     self._create_operation()

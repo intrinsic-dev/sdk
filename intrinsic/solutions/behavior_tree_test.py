@@ -584,6 +584,55 @@ class BehaviorTreeTest(parameterized.TestCase):
     ):
       my_bt.validate_id_uniqueness()
 
+  def test_finds_node(self):
+    my_bt = bt.BehaviorTree('my_bt')
+    my_bt.set_root(
+        bt.Sequence(name='root_node').set_children(
+            bt.Task(
+                name='child_node',
+                action=behavior_call.Action(skill_id='ai.intrinsic.skill-0'),
+            )
+        )
+    )
+    my_bt.tree_id = 'tree'
+    my_bt.root.node_id = 1
+    my_bt.root.children[0].node_id = 2
+
+    self.assertEqual(my_bt.find_tree_and_node_id('root_node'), ('tree', 1))
+    self.assertEqual(my_bt.find_tree_and_node_id('child_node'), ('tree', 2))
+    self.assertEqual(my_bt.find_tree_and_node_ids('root_node'), [('tree', 1)])
+    self.assertEqual(my_bt.find_tree_and_node_ids('child_node'), [('tree', 2)])
+
+  def test_find_node_validates(self):
+    my_bt = bt.BehaviorTree('my_bt')
+    my_bt.set_root(
+        bt.Sequence(name='root_node').set_children(
+            bt.Fail(name='child_node'),
+            bt.Fail(name='duplicate'),
+            bt.Fail(name='duplicate'),
+        )
+    )
+    my_bt.tree_id = 'tree'
+    my_bt.root.node_id = 1
+    my_bt.root.children[1].node_id = 3
+    my_bt.root.children[2].node_id = 4
+
+    with self.assertRaises(solutions_errors.NotFoundError):
+      my_bt.find_tree_and_node_id('unknown')
+    self.assertEqual(my_bt.find_tree_and_node_ids('unknown'), [])
+
+    with self.assertRaises(solutions_errors.InvalidArgumentError):
+      my_bt.find_tree_and_node_id('duplicate')
+    self.assertEqual(
+        my_bt.find_tree_and_node_ids('duplicate'), [('tree', 3), ('tree', 4)]
+    )
+
+    with self.assertRaises(solutions_errors.InvalidArgumentError):
+      my_bt.find_tree_and_node_id('child_node')
+    self.assertEqual(
+        my_bt.find_tree_and_node_ids('child_node'), [('tree', None)]
+    )
+
   def test_dot_graph_empty_instance(self):
     """Tests if an empty behavior tree converts to a dot representation ok."""
     my_bt = bt.BehaviorTree()

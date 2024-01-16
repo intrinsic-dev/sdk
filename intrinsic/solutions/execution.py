@@ -166,6 +166,46 @@ class Operation:
         )
     )
 
+  def find_tree_and_node_id(self, node_name: str) -> bt.NodeIdentifierType:
+    """Searches the tree in this Operation for a node with name node_name.
+
+    Args:
+      node_name: Name of a node to search for in the tree.
+
+    Returns:
+      A NodeIdentifierType referencing the tree id and node id for the node. The
+      result can be passed to calls requiring a NodeIdentifierType.
+
+    Raises:
+      solution_errors.NotFoundError if there is not behavior_tree.
+      solution_errors.NotFoundError if not matching node exists.
+      solution_errors.InvalidArgumentError if there is more than one matching
+        node or if the node or its tree do not have an id defined.
+    """
+    if not self.metadata.HasField("behavior_tree"):
+      raise solutions_errors.NotFoundError("No behavior tree in operation.")
+    tree = bt.BehaviorTree.create_from_proto(self.metadata.behavior_tree)
+    return tree.find_tree_and_node_id(node_name)
+
+  def find_tree_and_node_ids(
+      self, node_name: str
+  ) -> list[bt.NodeIdentifierType]:
+    """Searches the tree in this Operation for all nodes with name node_name.
+
+    Args:
+      node_name: Name of a node to search for in the tree.
+
+    Returns:
+      solution_errors.NotFoundError if there is not behavior_tree.
+      A list of NodeIdentifierType referencing the tree id and node id for the
+      node. The list contains information about all matching nodes, even if the
+      nodes do not have a node or tree id. In that case the values are None.
+    """
+    if not self.metadata.HasField("behavior_tree"):
+      raise solutions_errors.NotFoundError("No behavior tree in operation.")
+    tree = bt.BehaviorTree.create_from_proto(self.metadata.behavior_tree)
+    return tree.find_tree_and_node_ids(node_name)
+
   def update_from_proto(self, proto: operations_pb2.Operation) -> None:
     """Update information from a proto."""
     self._operation_proto = proto

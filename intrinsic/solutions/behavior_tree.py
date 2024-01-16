@@ -58,6 +58,8 @@ _NODE_TYPES_TO_DOT_SHAPES = {
     'data': 'box',
 }
 
+NodeIdentifierType = tuple[str, str]
+
 
 def _generate_unique_identifier(base_name: str, identifiers: List[str]) -> str:
   """Generates a unique identifier using the given base name.
@@ -3589,6 +3591,73 @@ class BehaviorTree:
     callback(self, self)
     if self.root is not None:
       self.root.visit(self, callback)
+
+  def find_tree_and_node_id(self, node_name: str) -> NodeIdentifierType:
+    """Searches the tree recursively for a node with name node_name.
+
+    Args:
+      node_name: Name of a node to search for in the tree.
+
+    Returns:
+      A NodeIdentifierType referencing the tree id and node id for the node. The
+      result can be passed to calls requiring a NodeIdentifierType.
+
+    Raises:
+      solution_errors.NotFoundError if not matching node exists.
+      solution_errors.InvalidArgumentError if there is more than one matching
+        node or if the node or its tree do not have an id defined.
+    """
+    node_identifiers = self.find_tree_and_node_ids(node_name)
+
+    if not node_identifiers:
+      raise solutions_errors.NotFoundError(
+          f'Could not find node with name {node_name}'
+      )
+    if len(node_identifiers) > 1:
+      raise solutions_errors.InvalidArgumentError(
+          f'Could not find unique node for name {node_name}. Found the'
+          f' following entries: {node_identifiers}.'
+      )
+    unique_node = node_identifiers[0]
+    if unique_node[0] is None or unique_node[1] is None:
+      raise solutions_errors.InvalidArgumentError(
+          f'Unique node with name {node_name} did not have tree id and node id'
+          f' set. Got: {unique_node}.'
+      )
+
+    return unique_node
+
+  def find_tree_and_node_ids(self, node_name: str) -> list[NodeIdentifierType]:
+    """Searches the tree recursively for all nodes with name node_name.
+
+    This is usually used, when find_tree_and_node_id cannot find a unique
+    solution, but a user tries to find a node for a loaded operation and does
+    not want to reload the operation to assign a unique name as that would loose
+    the current state.
+
+    Args:
+      node_name: Name of a node to search for in the tree.
+
+    Returns:
+      A list of NodeIdentifierType referencing the tree id and node id for the
+      node. The list contains information about all matching nodes, even if the
+      nodes do not have a node or tree id. In that case the values are None.
+    """
+    node_identifiers = []
+
+    def search_matching_name(
+        containing_tree: BehaviorTree,
+        tree_object: Union['BehaviorTree', Node, Condition],
+    ):
+      if (
+          isinstance(tree_object, Node)
+          and tree_object.name
+          and tree_object.name == node_name
+      ):
+        node_identifiers.append((containing_tree.tree_id, tree_object.node_id))
+
+    self.visit(search_matching_name)
+    return node_identifiers
 
   def validate_id_uniqueness(self) -> None:
     """Validates if all ids in the tree are unique.
