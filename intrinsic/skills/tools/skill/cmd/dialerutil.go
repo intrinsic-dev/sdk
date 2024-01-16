@@ -22,6 +22,33 @@ import (
 
 const (
 	maxMsgSize = math.MaxInt64
+	// policy for retrying failed gRPC requests as documented here:
+	// https://pkg.go.dev/google.golang.org/grpc/examples/features/retry
+	// Note that the Ingress will return UNIMPLEMENTED if the server it wants to forward to
+	// is unavailable, so we also check for UNIMPLEMENTED.
+	retryPolicy = `{
+		"methodConfig": [{
+				"waitForReady": true,
+
+				"retryPolicy": {
+						"MaxAttempts": 4,
+						"InitialBackoff": ".5s",
+						"MaxBackoff": ".5s",
+						"BackoffMultiplier": 1.5,
+						"RetryableStatusCodes": [ "UNAVAILABLE", "RESOURCE_EXHAUSTED", "UNIMPLEMENTED"]
+				}
+		}]
+}`
+)
+
+var (
+	baseDialOptions = []grpc.DialOption{
+		grpc.WithDefaultServiceConfig(retryPolicy),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(maxMsgSize),
+			grpc.MaxCallSendMsgSize(maxMsgSize),
+		),
+	}
 )
 
 // BasicAuth provides the data for perRPC authentication with the relay for the installer.
@@ -113,51 +140,19 @@ func DialConnectionCtx(ctx context.Context, params DialInfoParams) (context.Cont
 // `localhost:17080`), otherwise retrieves cert from system cert pool, and sets up the metadata for
 // a TLS cert with per-RPC basic auth credentials.
 func dialInfoCtx(ctx context.Context, params DialInfoParams) (context.Context, *[]grpc.DialOption, string, error) {
-	if params.Address == "" {
-		if params.CredName == "" {
-			return ctx, nil, "", fmt.Errorf("not enough information to build target address. Provide --org or --project")
-		}
-
-		params.Address = fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", params.CredName)
+	address, err := resolveAddress(params.Address, params.CredName)
+	if err != nil {
+		return ctx, nil, "", err
 	}
-
-	// policy for retrying failed gRPC requests as documented here:
-	// https://pkg.go.dev/google.golang.org/grpc/examples/features/retry
-	// Note that the Ingress will return UNIMPLEMENTED if the server it wants to forward to
-	// is unavailable, so we also check for UNIMPLEMENTED.
-	var retryPolicy = `{
-		"methodConfig": [{
-				"waitForReady": true,
-
-				"retryPolicy": {
-						"MaxAttempts": 4,
-						"InitialBackoff": ".5s",
-						"MaxBackoff": ".5s",
-						"BackoffMultiplier": 1.5,
-						"RetryableStatusCodes": [ "UNAVAILABLE", "RESOURCE_EXHAUSTED", "UNIMPLEMENTED"]
-				}
-		}]
-}`
-
-	baseOpts := []grpc.DialOption{
-		grpc.WithDefaultServiceConfig(retryPolicy),
-		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(maxMsgSize),
-			grpc.MaxCallSendMsgSize(maxMsgSize),
-		),
-	}
+	params.Address = address
 
 	if params.CredOrg != "" {
 		ctx = metadata.AppendToOutgoingContext(ctx, auth.OrgIDHeader, strings.Split(params.CredOrg, "@")[0])
 	}
 
 	if opts := insecureOpts(params.Address); opts != nil {
-		finalOpts := append(baseOpts, *opts...)
+		finalOpts := append(baseDialOptions, *opts...)
 		return ctx, &finalOpts, params.Address, nil
-	}
-	pool, err := x509.SystemCertPool()
-	if err != nil {
-		return nil, nil, "", fmt.Errorf("failed to retrieve system cert pool: %w", err)
 	}
 
 	if params.Cluster != "" {
@@ -168,13 +163,26 @@ func dialInfoCtx(ctx context.Context, params DialInfoParams) (context.Context, *
 	if err != nil {
 		return nil, nil, "", fmt.Errorf("cannot retrieve connection credentials: %w", err)
 	}
+	tcOption, err := getTransportCredentialsDialOption()
+	if err != nil {
+		return nil, nil, "", fmt.Errorf("cannot retrieve transport credentials: %w", err)
+	}
 
-	finalOpts := append(baseOpts,
+	finalOpts := append(baseDialOptions,
 		grpc.WithPerRPCCredentials(rpcCredentials),
-		grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, "")),
+		tcOption,
 	)
 
 	return ctx, &finalOpts, params.Address, nil
+}
+
+func getTransportCredentialsDialOption() (grpc.DialOption, error) {
+	pool, err := x509.SystemCertPool()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve system cert pool: %w", err)
+	}
+
+	return grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, "")), nil
 }
 
 // insecure returns an insecure dial option when the user has physical access to
@@ -222,4 +230,16 @@ func createCredentials(params DialInfoParams) (credentials.PerRPCCredentials, er
 	// credential name is required for non-local calls to resolve
 	// the corresponding API key.
 	return nil, ErrCredentialsRequired
+}
+
+func resolveAddress(address string, project string) (string, error) {
+	if address != "" {
+		return address, nil
+	}
+
+	if project == "" {
+		return "", fmt.Errorf("project is required if no address is specified")
+	}
+
+	return fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", project), nil
 }
