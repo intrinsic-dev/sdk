@@ -23,6 +23,10 @@ message ResourceHandle {
   ResourceConnectionInfo connection_info = 3;
 }
 
+message ResourceHandles {
+  repeated ResourceHandle handles = 1;
+}
+
 // Contains info on how to connect to a resource instance.
 message ResourceConnectionInfo {
   oneof target {

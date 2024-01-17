@@ -48,10 +48,6 @@ message ListEquipmentResponse {
   repeated intrinsic_proto.resources.ResourceHandle handles = 1;
 }
 
-message ResourceHandles {
-  repeated intrinsic_proto.resources.ResourceHandle handles = 1;
-}
-
 service EquipmentRegistry {
   // Returns the set of equipment matching the given request. Returns NOT_FOUND
   // error if no equipment can be found.
