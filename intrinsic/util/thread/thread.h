@@ -3,7 +3,6 @@
 #ifndef INTRINSIC_UTIL_THREAD_THREAD_H_
 #define INTRINSIC_UTIL_THREAD_THREAD_H_
 
-#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -12,6 +11,7 @@
 #include <vector>
 
 #include "absl/base/thread_annotations.h"
+#include "absl/functional/any_invocable.h"
 #include "absl/functional/bind_front.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
@@ -101,10 +101,10 @@ class Thread {
 
   // Starts a thread of execution and executes the function `f` in the created
   // thread of execution with the arguments `args...`. The function 'f' and the
-  // provided `args...` must be bind-able to a std::function<void()>. The thread
-  // is constructed without setting any threading options, using the default
-  // thread creation for the platform. This is equivalent to Start()ing a
-  // default-constructed Thread with default `options`.
+  // provided `args...` must be bind-able to an absl::AnyInvocable<void()>. The
+  // thread is constructed without setting any threading options, using the
+  // default thread creation for the platform. This is equivalent to Start()ing
+  // a default-constructed Thread with default `options`.
   template <typename Function, typename... Args>
   explicit Thread(Function&& f, Args&&... args);
 
@@ -125,8 +125,8 @@ class Thread {
 
   // Starts a thread of execution with the specified `options`. The function `f`
   // is run in the created thread of execution with the arguments `args...`. The
-  // function 'f' and the provided `args...` must be bind-able to a
-  // std::function<void()>.
+  // function 'f' and the provided `args...` must be bind-able to an
+  // absl::AnyInvocable<void()>.
   template <typename Function, typename... Args>
   absl::Status Start(const Options& options, Function&& f, Args&&... args);
 
@@ -153,7 +153,7 @@ class Thread {
   // function `f` in the new thread of execution if setup is successful. If
   // setup is unsuccessful, returns the setup errors on the calling thread.
   absl::Status SetupAndStart(const Options& options,
-                             const std::function<void()>& f);
+                             absl::AnyInvocable<void()> f);
 
   // The following methods setup the `thread_impl_` based on the provided
   // `options`. If default Options are provided, these method are guaranteed to
@@ -167,7 +167,7 @@ class Thread {
   // setup is done, then either proceeds to run the user provided function `f`,
   // or in case of setup failure, join the `thread_impl_` and finish executing
   // the thread without running `f`.
-  static void ThreadBody(const std::function<void()>& f, const Options& options,
+  static void ThreadBody(absl::AnyInvocable<void()> f, const Options& options,
                          std::shared_ptr<const ThreadSetup> thread_setup);
 
   std::thread thread_impl_;  // The new thread of execution

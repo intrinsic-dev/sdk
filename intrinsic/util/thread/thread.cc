@@ -6,6 +6,7 @@
 
 #include <memory>
 
+#include "absl/functional/any_invocable.h"
 #include "absl/log/log.h"
 
 #if defined(__linux__)
@@ -14,9 +15,7 @@
 #include <sched.h>
 #endif
 
-#include <array>
 #include <cstring>
-#include <functional>
 #include <optional>
 #include <string>
 #include <thread>  // NOLINT(build/c++11)
@@ -107,7 +106,7 @@ void Thread::Join() {
 bool Thread::Joinable() const { return thread_impl_.joinable(); }
 
 absl::Status Thread::SetupAndStart(const Options& options,
-                                   const std::function<void()>& f) {
+                                   absl::AnyInvocable<void()> f) {
   INTRINSIC_ASSERT_NON_REALTIME();
 
   if (thread_impl_.joinable()) {
@@ -115,7 +114,8 @@ absl::Status Thread::SetupAndStart(const Options& options,
   }
 
   std::shared_ptr<ThreadSetup> thread_setup = std::make_shared<ThreadSetup>();
-  thread_impl_ = std::thread(&Thread::ThreadBody, f, options, thread_setup);
+  thread_impl_ =
+      std::thread(&Thread::ThreadBody, std::move(f), options, thread_setup);
 
   const absl::Status setup_status = Setup(options);
   {
@@ -248,7 +248,7 @@ absl::Status Thread::SetName(const Options& options) {
   return absl::OkStatus();
 }
 
-void Thread::ThreadBody(const std::function<void()>& f, const Options& options,
+void Thread::ThreadBody(absl::AnyInvocable<void()> f, const Options& options,
                         std::shared_ptr<const ThreadSetup> thread_setup) {
   // Don't do work that can fail here, since we can't return a status from
   // `thread_impl_`'s thread of execution.
