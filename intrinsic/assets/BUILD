@@ -2,8 +2,8 @@
 
 # Common code for assets (e.g., skills, resources).
 
-load("@rules_python//python:defs.bzl", "py_library")
 load("//bazel:go_macros.bzl", "go_library")
+load("@rules_python//python:defs.bzl", "py_library")
 
 package(default_visibility = ["//visibility:public"])
 

@@ -1,7 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 
 package(default_visibility = ["//visibility:public"])
 
