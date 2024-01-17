@@ -283,8 +283,9 @@ def _skill_impl(ctx):
 
     files = [
         skill_service_config_file,
-        skill_service_binary_file,
     ]
+    if ctx.attr.include_binary_in_final_layer:
+        files.append(skill_service_binary_file)
 
     symlinks = {
         "/skills/skill_service_config.proto.bin": skill_service_config_file.short_path,
@@ -327,6 +328,10 @@ _skill = rule(
             mandatory = True,
         ),
         "skill_service_config": attr.label(
+            mandatory = True,
+        ),
+        "include_binary_in_final_layer": attr.bool(
+            doc = "If set to true, will copy the file specified by the 'skill_service_binary' attribute into the final layer. This is a mitigation for b/320446636.",
             mandatory = True,
         ),
     }.items()),
@@ -412,6 +417,7 @@ def cc_skill(
         name = name,
         base = Label(base_image),
         skill_service_binary = skill_service_name,
+        include_binary_in_final_layer = True,
         skill_service_config = skill_service_config_name,
         skill_id = skill_id_name,
         data_path = "/",  # NB. We set data_path here because there is no override for the container_image attr.
@@ -511,6 +517,10 @@ def py_skill(
         name = name,
         base = skill_layer_name,
         skill_service_binary = binary_name,
+        # In contrast to the C++ skill rule, we use the "skill_layer_name" app_layer as a base image
+        # here. To prevent copying a (potentially) large binary twice into a container image, set
+        # this attribute to false. See the detailed analysis in b/320446636.
+        include_binary_in_final_layer = False,
         skill_service_config = skill_service_config_name,
         skill_id = skill_id_name,
         data_path = "/",  # NB. We set data_path here because there is no override for the container_image attr.
