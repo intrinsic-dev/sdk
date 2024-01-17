@@ -42,6 +42,8 @@ const (
 	KeyManifestFile = "manifest_file"
 	// KeyManifestTarget is the build target to the skill manifest.
 	KeyManifestTarget = "manifest_target"
+	// KeyUseFirebaseAuth is the name of the flag to use firebase authentication.
+	KeyUseFirebaseAuth = "use_firebase_auth"
 	// KeyRegistry is the name of the registry flag.
 	KeyRegistry = "registry"
 	// KeyReleaseNotes is the name of the release notes flag.
@@ -189,6 +191,17 @@ func (cf *CmdFlags) GetFlagProject() string {
 // GetFlagOrganization gets the value of the project flag added by AddFlagProject.
 func (cf *CmdFlags) GetFlagOrganization() string {
 	return cf.GetString(orgutil.KeyOrganization)
+}
+
+// AddFlagUseFirebaseAuth adds a flag that, if set, will use firebase rather than api-key
+// authentication (potentially prompting the user to copy/paste it in).
+func (cf *CmdFlags) AddFlagUseFirebaseAuth() {
+	cf.OptionalBool(KeyUseFirebaseAuth, false, "Use Firebase rather than api-key authentication (may require copy/pasting info from a URL).")
+}
+
+// GetFlagUseFirebaseAuth gets the value of the use firebase auth flag added by AddFlagUseFirebaseAuth.
+func (cf *CmdFlags) GetFlagUseFirebaseAuth() bool {
+	return cf.GetBool(KeyUseFirebaseAuth)
 }
 
 // AddFlagRegistry adds a flag for the registry when side-loading an asset.

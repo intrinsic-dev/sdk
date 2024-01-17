@@ -15,11 +15,13 @@ import (
 	"math"
 	"strings"
 
+	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	assetsauth "intrinsic/assets/auth"
+	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/tools/inctl/auth"
 )
 
@@ -121,21 +123,39 @@ type DialCatalogContextOptions struct {
 	UserWriter      io.Writer     // Required if UseFirebaseAuth is true.
 }
 
+// DialCatalogContextFromInctl creates a connection to a catalog service from an inctl command.
+func DialCatalogContextFromInctl(cmd *cobra.Command, flags *cmdutil.CmdFlags) (*grpc.ClientConn, error) {
+	return DialCatalogContext(
+		cmd.Context(), DialCatalogContextOptions{
+			Address:         "",
+			Organization:    flags.GetFlagOrganization(),
+			Project:         flags.GetFlagProject(),
+			UseFirebaseAuth: false,
+			UserReader:      bufio.NewReader(cmd.InOrStdin()),
+			UserWriter:      cmd.OutOrStdout(),
+		},
+	)
+}
+
 // DialCatalogContext creates a connection to a catalog service.
 func DialCatalogContext(ctx context.Context, opts DialCatalogContextOptions) (*grpc.ClientConn, error) {
-	var rpcCreds credentials.PerRPCCredentials
-	var err error
+	options := baseDialOptions
+
+	// Determine credentials to include in requests.
 	if opts.UseFirebaseAuth {
 		return nil, fmt.Errorf("firebase auth unimplemented")
+	} else if isLocal(opts.Address) {
+		options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	} else {
-		rpcCreds, err = assetsauth.GetAPIKeyPerRPCCredentials(opts.Project, opts.Organization)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("cannot retrieve connection credentials: %w", err)
-	}
-	tcOption, err := getTransportCredentialsDialOption()
-	if err != nil {
-		return nil, fmt.Errorf("cannot retrieve transport credentials: %w", err)
+		rpcCreds, err := assetsauth.GetAPIKeyPerRPCCredentials(opts.Project, opts.Organization)
+		if err != nil {
+			return nil, fmt.Errorf("cannot get api key per rpc credentials: %w", err)
+		}
+		tcOption, err := getTransportCredentialsDialOption()
+		if err != nil {
+			return nil, fmt.Errorf("cannot get transport credentials: %w", err)
+		}
+		options = append(options, grpc.WithPerRPCCredentials(rpcCreds), tcOption)
 	}
 
 	address, err := resolveAddress(opts.Address, opts.Project)
@@ -143,7 +163,6 @@ func DialCatalogContext(ctx context.Context, opts DialCatalogContextOptions) (*g
 		return nil, fmt.Errorf("cannot resolve address: %w", err)
 	}
 
-	options := append(baseDialOptions, grpc.WithPerRPCCredentials(rpcCreds), tcOption)
 	conn, err := grpc.DialContext(ctx, address, options...)
 	if err != nil {
 		return nil, fmt.Errorf("dialing context: %w", err)
