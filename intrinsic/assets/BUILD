@@ -7,6 +7,20 @@ load("//bazel:go_macros.bzl", "go_library")
 
 package(default_visibility = ["//visibility:public"])
 
+go_library(
+    name = "auth",
+    srcs = ["auth.go"],
+    visibility = [
+        "//intrinsic/assets:__subpackages__",
+        "//intrinsic/resources:__subpackages__",
+        "//intrinsic/skills:__subpackages__",
+    ],
+    deps = [
+        "//intrinsic/tools/inctl/auth",
+        "@org_golang_google_grpc//credentials:go_default_library",
+    ],
+)
+
 cc_library(
     name = "id_utils",
     srcs = ["id_utils.cc"],
