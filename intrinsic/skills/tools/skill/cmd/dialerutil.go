@@ -4,12 +4,14 @@
 package dialerutil
 
 import (
+	"bufio"
 	"context"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"strings"
 
@@ -17,6 +19,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	assetsauth "intrinsic/assets/auth"
 	"intrinsic/tools/inctl/auth"
 )
 
@@ -107,6 +110,47 @@ func (e *ErrCredentialsNotFound) Error() string {
 }
 
 func (e *ErrCredentialsNotFound) Unwrap() error { return e.Err }
+
+// DialCatalogContextOptions specifies the options DialCatalogContext.
+type DialCatalogContextOptions struct {
+	Address         string
+	Organization    string
+	Project         string
+	UseFirebaseAuth bool
+	UserReader      *bufio.Reader // Required if UseFirebaseAuth is true.
+	UserWriter      io.Writer     // Required if UseFirebaseAuth is true.
+}
+
+// DialCatalogContext creates a connection to a catalog service.
+func DialCatalogContext(ctx context.Context, opts DialCatalogContextOptions) (*grpc.ClientConn, error) {
+	var rpcCreds credentials.PerRPCCredentials
+	var err error
+	if opts.UseFirebaseAuth {
+		return nil, fmt.Errorf("firebase auth unimplemented")
+	} else {
+		rpcCreds, err = assetsauth.GetAPIKeyPerRPCCredentials(opts.Project, opts.Organization)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cannot retrieve connection credentials: %w", err)
+	}
+	tcOption, err := getTransportCredentialsDialOption()
+	if err != nil {
+		return nil, fmt.Errorf("cannot retrieve transport credentials: %w", err)
+	}
+
+	address, err := resolveAddress(opts.Address, opts.Project)
+	if err != nil {
+		return nil, fmt.Errorf("cannot resolve address: %w", err)
+	}
+
+	options := append(baseDialOptions, grpc.WithPerRPCCredentials(rpcCreds), tcOption)
+	conn, err := grpc.DialContext(ctx, address, options...)
+	if err != nil {
+		return nil, fmt.Errorf("dialing context: %w", err)
+	}
+
+	return conn, nil
+}
 
 // DialConnectionCtx creates and returns a gRPC connection that is created based on the DialInfoParams.
 // DialConnectionCtx will fill the ServerAddr or Credname if necessary.

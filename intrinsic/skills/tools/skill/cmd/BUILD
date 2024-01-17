@@ -52,6 +52,7 @@ go_library(
     name = "dialerutil",
     srcs = ["dialerutil.go"],
     deps = [
+        "//intrinsic/assets:auth",
         "//intrinsic/tools/inctl/auth",
         "@io_opencensus_go//plugin/ocgrpc:go_default_library",
         "@io_opencensus_go//trace:go_default_library",
