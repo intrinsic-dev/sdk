@@ -43,3 +43,20 @@ cc_library(
         "@com_google_absl//absl/types:optional",
     ],
 )
+
+cc_library(
+    name = "rt_promise",
+    hdrs = ["rt_promise.h"],
+    deps = [
+        ":rt_queue_buffer",
+        "//intrinsic/icon/interprocess:binary_futex",
+        "//intrinsic/icon/testing:realtime_annotations",
+        "//intrinsic/icon/utils:log",
+        "//intrinsic/icon/utils:realtime_status",
+        "//intrinsic/icon/utils:realtime_status_macro",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
+    ],
+)
