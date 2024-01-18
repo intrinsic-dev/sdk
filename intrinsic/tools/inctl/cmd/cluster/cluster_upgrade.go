@@ -56,9 +56,9 @@ func (c *Client) Req(ctx context.Context, method, subpath string) (*http.Request
 	return req, nil
 }
 
-// Status queries the update status of a cluster
-func (c *Client) Status(ctx context.Context) ([]byte, error) {
-	req, err := c.Req(ctx, http.MethodGet, "/state")
+// runReq runs a |method| request with path and returns the response/error
+func (c *Client) runReq(ctx context.Context, method, subpath string) ([]byte, error) {
+	req, err := c.Req(ctx, method, subpath)
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +77,24 @@ func (c *Client) Status(ctx context.Context) ([]byte, error) {
 		return nil, fmt.Errorf("HTTP %d %q request for %s: %s", resp.StatusCode, req.Method, req.URL.String(), rb)
 	}
 	return rb, nil
+}
+
+// Status queries the update status of a cluster
+func (c *Client) Status(ctx context.Context) (*info.Info, error) {
+	b, err := c.runReq(ctx, http.MethodGet, "/state")
+	if err != nil {
+		return nil, fmt.Errorf("runReq(/state): %w", err)
+	}
+	ui := &info.Info{}
+	if err := json.Unmarshal(b, ui); err != nil {
+		return nil, fmt.Errorf("unmarshal json response for status: %w", err)
+	}
+	return ui, nil
+}
+
+// Run runs an update if one is pending
+func (c *Client) Run(ctx context.Context) ([]byte, error) {
+	return c.runReq(ctx, http.MethodPost, "/run")
 }
 
 func forCluster(project, cluster string) (Client, error) {
@@ -112,26 +130,54 @@ func forCluster(project, cluster string) (Client, error) {
 	}, nil
 }
 
+const runCmdDesc = `
+Run an upgrade of the specified cluster, if new software is available.
+
+This command will execute right away. Please make sure the cluster is safe
+and ready to upgrade. It might reboot in the process.
+`
+
+// runCmd is the command to execute an update if available
+var runCmd = &cobra.Command{
+	Use:   "run",
+	Short: "Run an upgrade if available.",
+	Long:  runCmdDesc,
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
+		c, err := forCluster(projectName, clusterName)
+		if err != nil {
+			return fmt.Errorf("cluster upgrade client: %w", err)
+		}
+		_, err = c.Run(ctx)
+		if err != nil {
+			return fmt.Errorf("cluster upgrade run: %w", err)
+		}
+		fmt.Printf("update for cluster %q in %q kicked off successfully.\n", clusterName, projectName)
+		fmt.Printf("monitor running `inctl cluster upgrade --project %s --cluster %s\n`", projectName, clusterName)
+		return nil
+	},
+}
+
+// clusterUpgradeCmd is the base command to query the upgrade state
 var clusterUpgradeCmd = &cobra.Command{
 	Use:   "upgrade",
 	Short: "Upgrade",
 	Long:  "Upgrade Intrinsic software on target cluster.",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		ctx := context.Background()
+		ctx := cmd.Context()
 
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
 		c, err := forCluster(projectName, clusterName)
 		if err != nil {
-			return fmt.Errorf("cluster upgrade client: %v", err)
+			return fmt.Errorf("cluster upgrade client: %w", err)
 		}
-		o, err := c.Status(ctx)
+		ui, err := c.Status(ctx)
 		if err != nil {
-			return fmt.Errorf("cluster status: %v", err)
-		}
-		ui := info.Info{}
-		if err := json.Unmarshal(o, &ui); err != nil {
-			return fmt.Errorf("unmarshal json response for status: %v", err)
+			return fmt.Errorf("cluster status: %w", err)
 		}
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 		fmt.Fprintf(w, "project\tcluster\tstate\tflowstate\tos\tflowstate.next\tos.next\n")
@@ -143,6 +189,7 @@ var clusterUpgradeCmd = &cobra.Command{
 
 func init() {
 	ClusterCmd.AddCommand(clusterUpgradeCmd)
-	clusterUpgradeCmd.PersistentFlags().StringVar(&clusterName, "cluster", "", "Name of cluster to update.")
+	clusterUpgradeCmd.PersistentFlags().StringVar(&clusterName, "cluster", "", "Name of cluster to upgrade.")
 	clusterUpgradeCmd.MarkPersistentFlagRequired("cluster")
+	clusterUpgradeCmd.AddCommand(runCmd)
 }
