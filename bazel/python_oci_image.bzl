@@ -9,6 +9,7 @@ load("@rules_pkg//:pkg.bzl", "pkg_tar")
 def python_oci_image(
         name,
         binary,
+        extra_tars = [],
         symlinks = None,
         **kwargs):
     """Wrapper for creating a oci_image from a py_binary target.
@@ -20,6 +21,7 @@ def python_oci_image(
     Args:
       name: name of the image.
       binary: the py_binary target.
+      extra_tars: additional layers to add to the image with e.g. supporting files.
       symlinks: if specified, symlinks to add to the final image (analogous to rules_docker container_image#sylinks).
       **kwargs: extra arguments to pass on to the oci_image target.
     """
@@ -108,7 +110,7 @@ def python_oci_image(
             ":" + name + "_packages_layer",
             ":" + name + "_app_layer",
             ":" + name + "_symlink_layer",
-        ],
+        ] + extra_tars,
         visibility = ["//visibility:public"],
         **kwargs
     )
