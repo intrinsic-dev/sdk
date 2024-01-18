@@ -9,8 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ParentOfNestedSubcommands returns the parent command used for nested subcommands.
-func ParentOfNestedSubcommands(use string, short string) *cobra.Command {
+// ParentOfNestedSubcommandsPreRun returns the parent command used for nested subcommands.
+// persistentPreRunE can be passed in to pre-process shared arguments.
+func ParentOfNestedSubcommandsPreRun(use string, short string, persistentPreRunE func(cmd *cobra.Command, args []string) error) *cobra.Command {
 	return &cobra.Command{
 		Use:   use,
 		Short: short,
@@ -23,5 +24,11 @@ func ParentOfNestedSubcommands(use string, short string) *cobra.Command {
 		// Flags are parsed before "RunE" so this should result in a better error if the command is invoked without a subcommand.
 		// This is also used by orgutil to ensure the above RunE can run.
 		DisableFlagParsing: true,
+		PersistentPreRunE:  persistentPreRunE,
 	}
+}
+
+// ParentOfNestedSubcommands returns the parent command used for nested subcommands.
+func ParentOfNestedSubcommands(use string, short string) *cobra.Command {
+	return ParentOfNestedSubcommandsPreRun(use, short, nil)
 }
