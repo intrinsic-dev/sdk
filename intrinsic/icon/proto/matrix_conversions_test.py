@@ -59,6 +59,7 @@ class MatrixConversionsTest(absltest.TestCase):
     self.assertTrue(np.allclose(expected_array, returned_array))
 
   def test_to_ndarray_trows_error_wrong_dim(self):
+
     proto_matrix = matrix_pb2.Matrix6d()
     for _ in range(35):
       proto_matrix.data.append(3)

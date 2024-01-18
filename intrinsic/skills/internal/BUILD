@@ -645,7 +645,12 @@ python_oci_image(
     binary = ":module_skill_service_main",
     entrypoint = [
         "python3",
-        "/google3/intrinsic/skills/internal/module_skill_service_main",
+        "/ai_intrinsic_sdks~override/intrinsic/skills/internal/module_skill_service_main",
     ],
+    # BUG fully-qualified imports on Bzlmod: https://github.com/bazelbuild/rules_python/issues/1679
+    symlinks = {
+        "/ai_intrinsic_sdks~override/intrinsic/skills/internal/module_skill_service_main": "/intrinsic/skills/internal/module_skill_service_main",
+        "/ai_intrinsic_sdks~override/intrinsic/skills/internal/module_skill_service_main.py": "/intrinsic/skills/internal/module_skill_service_main.py",
+    },
     workdir = "/",
 )
