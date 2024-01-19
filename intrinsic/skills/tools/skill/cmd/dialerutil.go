@@ -123,13 +123,18 @@ type DialCatalogContextOptions struct {
 	UserWriter      io.Writer     // Required if UseFirebaseAuth is true.
 }
 
-// DialCatalogContextFromInctl creates a connection to a catalog service from an inctl command.
-func DialCatalogContextFromInctl(cmd *cobra.Command, flags *cmdutil.CmdFlags) (*grpc.ClientConn, error) {
+// DialSkillCatalogContextFromInctl creates a connection to a skill catalog service from an inctl
+// command.
+func DialSkillCatalogContextFromInctl(cmd *cobra.Command, flags *cmdutil.CmdFlags) (*grpc.ClientConn, error) {
+	project := flags.GetFlagProject()
+
+	address := ""
+
 	return DialCatalogContext(
 		cmd.Context(), DialCatalogContextOptions{
-			Address:         "",
+			Address:         address,
 			Organization:    flags.GetFlagOrganization(),
-			Project:         flags.GetFlagProject(),
+			Project:         project,
 			UseFirebaseAuth: false,
 			UserReader:      bufio.NewReader(cmd.InOrStdin()),
 			UserWriter:      cmd.OutOrStdout(),
