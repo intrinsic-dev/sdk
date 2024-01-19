@@ -8,13 +8,8 @@ load("@rules_python//python:defs.bzl", "py_library")
 package(default_visibility = ["//visibility:public"])
 
 go_library(
-    name = "auth",
-    srcs = ["auth.go"],
-    visibility = [
-        "//intrinsic/assets:__subpackages__",
-        "//intrinsic/resources:__subpackages__",
-        "//intrinsic/skills:__subpackages__",
-    ],
+    name = "clientutils",
+    srcs = ["clientutils.go"],
     deps = [
         "//intrinsic/tools/inctl/auth",
         "@org_golang_google_grpc//credentials:go_default_library",

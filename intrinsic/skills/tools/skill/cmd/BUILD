@@ -53,7 +53,7 @@ go_library(
     srcs = ["dialerutil.go"],
     deps = [
         ":cmdutil",
-        "//intrinsic/assets:auth",
+        "//intrinsic/assets:clientutils",
         "//intrinsic/tools/inctl/auth",
         "@com_github_spf13_cobra//:go_default_library",
         "@io_opencensus_go//plugin/ocgrpc:go_default_library",

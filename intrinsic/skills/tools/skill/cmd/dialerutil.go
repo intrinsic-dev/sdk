@@ -20,7 +20,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-	assetsauth "intrinsic/assets/auth"
+	"intrinsic/assets/clientutils"
 	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/tools/inctl/auth"
 )
@@ -147,7 +147,7 @@ func DialCatalogContext(ctx context.Context, opts DialCatalogContextOptions) (*g
 	} else if isLocal(opts.Address) {
 		options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	} else {
-		rpcCreds, err := assetsauth.GetAPIKeyPerRPCCredentials(opts.Project, opts.Organization)
+		rpcCreds, err := clientutils.GetAPIKeyPerRPCCredentials(opts.Project, opts.Organization)
 		if err != nil {
 			return nil, fmt.Errorf("cannot get api key per rpc credentials: %w", err)
 		}
