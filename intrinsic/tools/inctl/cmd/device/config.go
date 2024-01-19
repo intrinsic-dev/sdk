@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	gatewayError = "Cluster is currently not connected to the cloud relay. Make sure it is turned on and connected to the internet.\nIf the device restarted in the last 10 minutes wait a couple of minutes, then try again.\n"
+	gatewayError = "Cluster is currently not connected to the cloud relay. Make sure it is turned on and connected to the internet.\nIf the device restarted in the last 10 minutes, wait a couple of minutes, then try again.\n"
 )
 
 var (
