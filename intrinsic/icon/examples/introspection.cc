@@ -116,8 +116,7 @@ std::string PrettyPrintActionSignature(
        action_signature.part_slot_infos()) {
     sstream << "  " << slot_name << "\n";
     sstream << "    Description: " << slot_info.description() << "\n";
-    sstream << "    Required feature interfaces:"
-            << "\n";
+    sstream << "    Required feature interfaces:" << "\n";
     if (slot_info.required_feature_interfaces().empty()) {
       sstream << "      (none)\n";
     } else {
@@ -128,8 +127,7 @@ std::string PrettyPrintActionSignature(
       }
     }
     if (!slot_info.optional_feature_interfaces().empty()) {
-      sstream << "    Optional feature interfaces:"
-              << "\n";
+      sstream << "    Optional feature interfaces:" << "\n";
       for (int fi : slot_info.optional_feature_interfaces()) {
         sstream << "      "
                 << intrinsic_proto::icon::FeatureInterfaceTypes_Name(fi)

@@ -192,8 +192,8 @@ class StringType {
     return left.value().Compare(right.value());
   }
   template <typename T>
-  static auto DispatchCompare(const T& left, const T& right, Rank0)
-      -> decltype(left.t_.compare(right.t_)) {
+  static auto DispatchCompare(const T& left, const T& right,
+                              Rank0) -> decltype(left.t_.compare(right.t_)) {
     return left.t_.compare(right.t_);
   }
   template <typename T>
@@ -203,8 +203,8 @@ class StringType {
   }
 
   template <typename T>
-  static auto DispatchEquals(const T& left, const T& right, Rank0)
-      -> decltype(left.t_ == right.t_) {
+  static auto DispatchEquals(const T& left, const T& right,
+                             Rank0) -> decltype(left.t_ == right.t_) {
     return left.t_ == right.t_;
   }
   static bool DispatchEquals(const StringType& left, const StringType& right,
@@ -213,8 +213,8 @@ class StringType {
   }
 
   template <typename T>
-  static auto DispatchLessThan(const T& left, const T& right, Rank0)
-      -> decltype(left.t_ < right.t_) {
+  static auto DispatchLessThan(const T& left, const T& right,
+                               Rank0) -> decltype(left.t_ < right.t_) {
     return left.t_ < right.t_;
   }
   static bool DispatchLessThan(const StringType& left, const StringType& right,
@@ -234,8 +234,8 @@ class StringType {
   }
 
   template <typename T>
-  static auto DispatchOstream(std::ostream& os, const T& t, Rank0)
-      -> decltype(os << t) {
+  static auto DispatchOstream(std::ostream& os, const T& t,
+                              Rank0) -> decltype(os << t) {
     return os << t;
   }
   static std::ostream& DispatchOstream(std::ostream& os, const Rep& t, Rank1) {
