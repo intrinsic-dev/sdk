@@ -15,10 +15,10 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"intrinsic/assets/imageutils"
 	"intrinsic/skills/tools/skill/cmd"
 	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
-	"intrinsic/skills/tools/skill/cmd/imageutil"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
 	"intrinsic/tools/inctl/auth"
 )
@@ -67,7 +67,7 @@ func createFrontendURL(projectName string, clusterName string) *url.URL {
 }
 
 type cmdParams struct {
-	targetType  imageutil.TargetType
+	targetType  imageutils.TargetType
 	target      string
 	frontendURL *url.URL
 	follow      bool
@@ -80,18 +80,18 @@ func runLogsCmd(ctx context.Context, params *cmdParams, w io.Writer) error {
 	skillID := ""
 	var err error
 	switch params.targetType {
-	case imageutil.Build:
-		skillID, err = imageutil.ExtractSkillIDFromBuildTargetLabel(params.target)
+	case imageutils.Build:
+		skillID, err = imageutils.ExtractSkillIDFromBuildTargetLabel(params.target)
 		if err != nil {
 			return fmt.Errorf(
 				"could not extract a skill id from the given build target %s: %w",
 				params.target, err)
 		}
-	case imageutil.ID:
+	case imageutils.ID:
 		skillID = params.target
 	default:
 		return fmt.Errorf("unknown or missing target type, select one of: %s, %s",
-			imageutil.ID, imageutil.Build)
+			imageutils.ID, imageutils.Build)
 	}
 
 	verboseOut.Write([]byte(fmt.Sprintf("%s\n", params.frontendURL.Path)))
@@ -293,7 +293,7 @@ var logsCmd = &cobra.Command{
 		}
 
 		return runLogsCmd(ctx, &cmdParams{
-			targetType:  imageutil.TargetType(cmdFlags.GetString(cmdutil.KeyType)),
+			targetType:  imageutils.TargetType(cmdFlags.GetString(cmdutil.KeyType)),
 			target:      target,
 			frontendURL: createFrontendURL(project, cluster),
 			follow:      cmdFlags.GetBool(keyFollow),
@@ -314,7 +314,7 @@ func init() {
 
 	cmdFlags.RequiredString(cmdutil.KeyType, fmt.Sprintf(`The target's type:
 %s	skill id
-%s	build target of the skill image`, imageutil.ID, imageutil.Build))
+%s	build target of the skill image`, imageutils.ID, imageutils.Build))
 	cmdFlags.OptionalBool(keyFollow, false, "Whether to follow the skill logs.")
 	cmdFlags.OptionalBool(keyTimestamps, false, "Whether to include timestamps on each log line.")
 	cmdFlags.OptionalInt(keyTailLines, 10, "The number of recent log lines to display. An input number less than 0 shows all log lines.")

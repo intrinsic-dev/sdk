@@ -11,6 +11,7 @@ go_library(
         "//intrinsic/assets/proto:view_go_proto",
         "//intrinsic/skills/tools/skill/cmd",
         "//intrinsic/skills/tools/skill/cmd:cmdutil",
+        "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "@com_github_spf13_cobra//:go_default_library",
     ],
 )

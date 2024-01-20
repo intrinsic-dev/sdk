@@ -1,7 +1,7 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-// Package imageutil contains docker image utility functions.
-package imageutil
+// Package imageutils contains docker image utility functions.
+package imageutils
 
 import (
 	"context"
@@ -19,11 +19,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"intrinsic/assets/imagetransfer"
 	idpb "intrinsic/assets/proto/id_go_proto"
 	"intrinsic/kubernetes/workcell_spec/imagetags"
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	installerservicegrpcpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
-	"intrinsic/skills/tools/skill/cmd/imagetransfer"
 	"intrinsic/util/proto/protoio"
 )
 

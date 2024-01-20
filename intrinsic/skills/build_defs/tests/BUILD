@@ -16,7 +16,9 @@ skill_manifest(
 cc_skill(
     name = "no_op_skill_cc_image",
     manifest = ":no_op_skill_cc_manifest",
-    # Allow use of this image in tests of skill tooling.
+    # Allow use of this image in tests of asset and skill tooling.
+    visibility = [
+    ],
     deps = [
         "//intrinsic/skills/testing:no_op_skill",
         "//intrinsic/skills/testing:no_op_skill_cc_proto",

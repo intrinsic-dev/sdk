@@ -12,7 +12,7 @@ import (
 	crv1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/pkg/errors"
 	"go.uber.org/atomic"
-	"intrinsic/skills/tools/skill/cmd/imagetransfer"
+	"intrinsic/assets/imagetransfer"
 	"intrinsic/storage/artifacts/client"
 	artifactgrpcpb "intrinsic/storage/artifacts/proto/artifact_go_grpc_proto"
 )

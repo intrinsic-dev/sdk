@@ -12,13 +12,13 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/spf13/cobra"
 	"intrinsic/assets/idutils"
+	"intrinsic/assets/imagetransfer"
+	"intrinsic/assets/imageutils"
 	imagepb "intrinsic/kubernetes/workcell_spec/proto/image_go_proto"
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd"
 	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
-	"intrinsic/skills/tools/skill/cmd/imagetransfer"
-	"intrinsic/skills/tools/skill/cmd/imageutil"
 	"intrinsic/skills/tools/skill/cmd/registry"
 	"intrinsic/skills/tools/skill/cmd/skillid"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
@@ -118,8 +118,8 @@ $ inctl skill start --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution
 			return fmt.Errorf("could not parse version from ID version: %w", err)
 		}
 		log.Printf("Installing skill %q using the installer service at %q", skillIDVersion, installerAddress)
-		err = imageutil.InstallContainer(ctx,
-			&imageutil.InstallContainerParams{
+		err = imageutils.InstallContainer(ctx,
+			&imageutils.InstallContainerParams{
 				Address:    installerAddress,
 				Connection: conn,
 				Request: &installerpb.InstallContainerAddonRequest{

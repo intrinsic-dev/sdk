@@ -12,11 +12,11 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/spf13/cobra"
+	"intrinsic/assets/imagetransfer"
+	"intrinsic/assets/imageutils"
 	"intrinsic/skills/tools/skill/cmd"
 	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
-	"intrinsic/skills/tools/skill/cmd/imagetransfer"
-	"intrinsic/skills/tools/skill/cmd/imageutil"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
 )
 
@@ -46,9 +46,9 @@ $ inctl skill stop --type=id skill
 	Args: cobra.ExactArgs(1),
 	RunE: func(command *cobra.Command, args []string) error {
 		target := args[0]
-		targetType := imageutil.TargetType(cmdFlags.GetFlagSideloadStopType())
-		if targetType != imageutil.Build && targetType != imageutil.Archive && targetType != imageutil.Image && targetType != imageutil.ID && targetType != imageutil.Name {
-			return fmt.Errorf("type must be one of (%s, %s, %s, %s, %s)", imageutil.Build, imageutil.Archive, imageutil.Image, imageutil.ID, imageutil.Name)
+		targetType := imageutils.TargetType(cmdFlags.GetFlagSideloadStopType())
+		if targetType != imageutils.Build && targetType != imageutils.Archive && targetType != imageutils.Image && targetType != imageutils.ID && targetType != imageutils.Name {
+			return fmt.Errorf("type must be one of (%s, %s, %s, %s, %s)", imageutils.Build, imageutils.Archive, imageutils.Image, imageutils.ID, imageutils.Name)
 		}
 
 		context, solution := cmdFlags.GetFlagsSideloadContextSolution()
@@ -56,7 +56,7 @@ $ inctl skill stop --type=id skill
 		project := cmdFlags.GetFlagProject()
 		org := cmdFlags.GetFlagOrganization()
 
-		skillID, err := imageutil.SkillIDFromTarget(target, imageutil.TargetType(targetType), imagetransfer.RemoteTransferer(remote.WithAuthFromKeychain(google.Keychain)))
+		skillID, err := imageutils.SkillIDFromTarget(target, imageutils.TargetType(targetType), imagetransfer.RemoteTransferer(remote.WithAuthFromKeychain(google.Keychain)))
 		if err != nil {
 			return fmt.Errorf("could not get skill ID: %v", err)
 		}
@@ -92,7 +92,7 @@ $ inctl skill stop --type=id skill
 		}
 
 		log.Printf("Removing skill %q using the installer service at %q", skillID, installerAddress)
-		if err := imageutil.RemoveContainer(ctx, &imageutil.RemoveContainerParams{
+		if err := imageutils.RemoveContainer(ctx, &imageutils.RemoveContainerParams{
 			Address:    installerAddress,
 			Connection: conn,
 			Request: &installerpb.RemoveContainerAddonRequest{

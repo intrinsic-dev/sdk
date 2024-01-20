@@ -11,7 +11,7 @@ go_library(
         "transfer.go",
     ],
     deps = [
-        "//intrinsic/skills/tools/skill/cmd:imagetransfer",
+        "//intrinsic/assets:imagetransfer",
         "//intrinsic/storage/artifacts/client",
         "//intrinsic/storage/artifacts/proto:artifact_go_grpc_proto",
         "@com_github_cenkalti_backoff_v4//:go_default_library",

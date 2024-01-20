@@ -52,3 +52,38 @@ go_library(
     name = "metadatafieldlimits",
     srcs = ["metadata_field_limits.go"],
 )
+
+go_library(
+    name = "imagetransfer",
+    srcs = ["imagetransfer.go"],
+    deps = [
+        "@com_github_cenkalti_backoff_v4//:go_default_library",
+        "@com_github_golang_glog//:go_default_library",
+        "@com_github_google_go_containerregistry//pkg/name:go_default_library",
+        "@com_github_google_go_containerregistry//pkg/v1:go_default_library",
+        "@com_github_google_go_containerregistry//pkg/v1/remote:go_default_library",
+        "@com_github_google_go_containerregistry//pkg/v1/remote/transport:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+    ],
+)
+
+go_library(
+    name = "imageutils",
+    srcs = ["imageutils.go"],
+    deps = [
+        ":imagetransfer",
+        "//intrinsic/assets/proto:id_go_proto",
+        "//intrinsic/kubernetes/workcell_spec:imagetags",
+        "//intrinsic/kubernetes/workcell_spec/proto:installer_go_grpc_proto",
+        "//intrinsic/util/proto:protoio",
+        "@com_github_google_go_containerregistry//pkg/name:go_default_library",
+        "@com_github_google_go_containerregistry//pkg/v1:go_default_library",
+        "@com_github_google_go_containerregistry//pkg/v1/tarball:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+        "@io_opencensus_go//trace:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
+        "@org_golang_google_protobuf//proto",
+    ],
+)

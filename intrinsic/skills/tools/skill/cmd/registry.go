@@ -12,9 +12,9 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	containerregistry "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
+	"intrinsic/assets/imagetransfer"
+	"intrinsic/assets/imageutils"
 	imagepb "intrinsic/kubernetes/workcell_spec/proto/image_go_proto"
-	"intrinsic/skills/tools/skill/cmd/imagetransfer"
-	"intrinsic/skills/tools/skill/cmd/imageutil"
 )
 
 // PushOptions is used to configure Push
@@ -51,7 +51,7 @@ func pushBuildOrArchiveTypes(image containerregistry.Image, imageName string, op
 		return nil, fmt.Errorf("registry is empty")
 	}
 
-	if err := imageutil.PushImage(registry, image, imageName, opts.Transferer); err != nil {
+	if err := imageutils.PushImage(registry, image, imageName, opts.Transferer); err != nil {
 		return nil, fmt.Errorf("could not push the image to registry %q: %v", registry, err)
 	}
 	imgpb, err := imageSpec(image, imageName, opts)
@@ -102,11 +102,11 @@ func imagePbFromRef(imageRef string, imageName string, opts PushOptions) (*image
 }
 
 func push(target string, image containerregistry.Image, imageName string, opts PushOptions) (*imagepb.Image, error) {
-	targetType := imageutil.TargetType(opts.Type)
+	targetType := imageutils.TargetType(opts.Type)
 	switch targetType {
-	case imageutil.Build, imageutil.Archive:
+	case imageutils.Build, imageutils.Archive:
 		return pushBuildOrArchiveTypes(image, imageName, opts)
-	case imageutil.Image:
+	case imageutils.Image:
 		return imagePbFromRef(target, imageName, opts)
 	}
 	return nil, fmt.Errorf("unimplemented target type: %v", targetType)
@@ -116,17 +116,17 @@ func push(target string, image containerregistry.Image, imageName string, opts P
 // skill image to the container registry.
 //
 // Returns the image and associated SkillInstallerParams.
-func PushSkill(target string, opts PushOptions) (*imagepb.Image, *imageutil.SkillInstallerParams, error) {
-	targetType := imageutil.TargetType(opts.Type)
-	if targetType != imageutil.Build && targetType != imageutil.Archive && targetType != imageutil.Image {
-		return nil, nil, fmt.Errorf("type must be in {%s,%s,%s}", imageutil.Build, imageutil.Archive, imageutil.Image)
+func PushSkill(target string, opts PushOptions) (*imagepb.Image, *imageutils.SkillInstallerParams, error) {
+	targetType := imageutils.TargetType(opts.Type)
+	if targetType != imageutils.Build && targetType != imageutils.Archive && targetType != imageutils.Image {
+		return nil, nil, fmt.Errorf("type must be in {%s,%s,%s}", imageutils.Build, imageutils.Archive, imageutils.Image)
 	}
 
-	image, err := imageutil.GetImage(target, targetType, opts.Transferer)
+	image, err := imageutils.GetImage(target, targetType, opts.Transferer)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not read image: %v", err)
 	}
-	installerParams, err := imageutil.GetSkillInstallerParams(image)
+	installerParams, err := imageutils.GetSkillInstallerParams(image)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not extract labels from image object: %v", err)
 	}
@@ -142,9 +142,9 @@ func PushSkill(target string, opts PushOptions) (*imagepb.Image, *imageutil.Skil
 //
 // Returns the image.
 func PushSkillFromBytes(archive []byte, opts PushOptions) (*imagepb.Image, error) {
-	targetType := imageutil.TargetType(opts.Type)
-	if targetType != imageutil.Archive {
-		return nil, fmt.Errorf("type must be in {%s}", imageutil.Archive)
+	targetType := imageutils.TargetType(opts.Type)
+	if targetType != imageutils.Archive {
+		return nil, fmt.Errorf("type must be in {%s}", imageutils.Archive)
 	}
 
 	thunk := func() (io.ReadCloser, error) {
@@ -154,7 +154,7 @@ func PushSkillFromBytes(archive []byte, opts PushOptions) (*imagepb.Image, error
 	if err != nil {
 		return nil, fmt.Errorf("could not create tarball image from byte array: %v", err)
 	}
-	installerParams, err := imageutil.GetSkillInstallerParams(image)
+	installerParams, err := imageutils.GetSkillInstallerParams(image)
 	if err != nil {
 		return nil, fmt.Errorf("could not extract labels from image object: %v", err)
 	}
@@ -170,12 +170,12 @@ func PushSkillFromBytes(archive []byte, opts PushOptions) (*imagepb.Image, error
 //
 // Returns the image.
 func PushResource(target string, imageName string, opts PushOptions) (*imagepb.Image, error) {
-	targetType := imageutil.TargetType(opts.Type)
-	if targetType != imageutil.Archive && targetType != imageutil.Image {
-		return nil, fmt.Errorf("type must be in {%s,%s}", imageutil.Archive, imageutil.Image)
+	targetType := imageutils.TargetType(opts.Type)
+	if targetType != imageutils.Archive && targetType != imageutils.Image {
+		return nil, fmt.Errorf("type must be in {%s,%s}", imageutils.Archive, imageutils.Image)
 	}
 
-	image, err := imageutil.GetImage(target, targetType, opts.Transferer)
+	image, err := imageutils.GetImage(target, targetType, opts.Transferer)
 	if err != nil {
 		return nil, fmt.Errorf("could not read image: %v", err)
 	}
@@ -191,9 +191,9 @@ func PushResource(target string, imageName string, opts PushOptions) (*imagepb.I
 //
 // Returns the image.
 func PushResourceFromBytes(archive []byte, imageName string, opts PushOptions) (*imagepb.Image, error) {
-	targetType := imageutil.TargetType(opts.Type)
-	if targetType != imageutil.Archive {
-		return nil, fmt.Errorf("type must be in {%s}", imageutil.Archive)
+	targetType := imageutils.TargetType(opts.Type)
+	if targetType != imageutils.Archive {
+		return nil, fmt.Errorf("type must be in {%s}", imageutils.Archive)
 	}
 
 	thunk := func() (io.ReadCloser, error) {

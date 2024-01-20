@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"intrinsic/skills/tools/skill/cmd/imageutil"
+	"intrinsic/assets/imageutils"
 	"intrinsic/tools/inctl/util/orgutil"
 )
 
@@ -289,9 +289,9 @@ func (cf *CmdFlags) AddFlagSideloadStartType() {
 %s	build target that creates an image
 %s	file path pointing to an already-built image
 %s	container image name`,
-		imageutil.Build,
-		imageutil.Archive,
-		imageutil.Image,
+		imageutils.Build,
+		imageutils.Archive,
+		imageutils.Image,
 	))
 }
 
@@ -309,14 +309,14 @@ func (cf *CmdFlags) AddFlagSideloadStopType(assetType string) {
 %s	container image name
 %s		%s id
 %s		%s name [deprecated: prefer to use %s]`,
-		imageutil.Build,
-		imageutil.Archive,
-		imageutil.Image,
-		imageutil.ID,
+		imageutils.Build,
+		imageutils.Archive,
+		imageutils.Image,
+		imageutils.ID,
 		assetType,
-		imageutil.Name,
+		imageutils.Name,
 		assetType,
-		imageutil.ID,
+		imageutils.ID,
 	))
 }
 

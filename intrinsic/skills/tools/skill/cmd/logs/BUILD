@@ -8,10 +8,10 @@ go_library(
     name = "logs",
     srcs = ["logs.go"],
     deps = [
+        "//intrinsic/assets:imageutils",
         "//intrinsic/skills/tools/skill/cmd",
         "//intrinsic/skills/tools/skill/cmd:cmdutil",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
-        "//intrinsic/skills/tools/skill/cmd:imageutil",
         "//intrinsic/skills/tools/skill/cmd:solutionutil",
         "//intrinsic/tools/inctl/auth",
         "@com_github_spf13_cobra//:go_default_library",
