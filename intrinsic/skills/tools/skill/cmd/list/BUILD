@@ -10,8 +10,8 @@ go_library(
         "listreleased.go",
     ],
     deps = [
+        "//intrinsic/assets:cmdutils",
         "//intrinsic/skills/tools/skill/cmd",
-        "//intrinsic/skills/tools/skill/cmd:cmdutil",
         "@com_github_spf13_cobra//:go_default_library",
     ],
 )
@@ -22,8 +22,8 @@ go_library(
         "listreleasedversions.go",
     ],
     deps = [
+        "//intrinsic/assets:cmdutils",
         "//intrinsic/skills/tools/skill/cmd",
-        "//intrinsic/skills/tools/skill/cmd:cmdutil",
         "@com_github_spf13_cobra//:go_default_library",
     ],
 )
@@ -32,9 +32,9 @@ go_library(
     name = "list",
     srcs = ["list.go"],
     deps = [
+        "//intrinsic/assets:cmdutils",
         "//intrinsic/skills/proto:skill_registry_go_grpc_proto",
         "//intrinsic/skills/tools/skill/cmd",
-        "//intrinsic/skills/tools/skill/cmd:cmdutil",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/skills/tools/skill/cmd:listutil",
         "//intrinsic/skills/tools/skill/cmd:skillid",

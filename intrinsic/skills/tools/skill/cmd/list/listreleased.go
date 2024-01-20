@@ -7,11 +7,11 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"intrinsic/assets/cmdutils"
 	skillCmd "intrinsic/skills/tools/skill/cmd"
-	"intrinsic/skills/tools/skill/cmd/cmdutil"
 )
 
-var cmdFlags = cmdutil.NewCmdFlags()
+var cmdFlags = cmdutils.NewCmdFlags()
 
 var listReleasedCmd = &cobra.Command{
 	Use:   "list_released",

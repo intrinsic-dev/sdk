@@ -16,6 +16,18 @@ go_library(
     ],
 )
 
+go_library(
+    name = "cmdutils",
+    srcs = ["cmdutils.go"],
+    deps = [
+        ":imageutils",
+        "//intrinsic/tools/inctl/util:orgutil",
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_spf13_cobra//:go_default_library",
+        "@com_github_spf13_viper//:go_default_library",
+    ],
+)
+
 cc_library(
     name = "id_utils",
     srcs = ["id_utils.cc"],

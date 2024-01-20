@@ -14,18 +14,6 @@ go_library(
 )
 
 go_library(
-    name = "cmdutil",
-    srcs = ["cmdutil.go"],
-    deps = [
-        "//intrinsic/assets:imageutils",
-        "//intrinsic/tools/inctl/util:orgutil",
-        "@com_github_pkg_errors//:go_default_library",
-        "@com_github_spf13_cobra//:go_default_library",
-        "@com_github_spf13_viper//:go_default_library",
-    ],
-)
-
-go_library(
     name = "solutionutil",
     srcs = ["solutionutil.go"],
     deps = [
@@ -52,12 +40,10 @@ go_library(
     name = "dialerutil",
     srcs = ["dialerutil.go"],
     deps = [
-        ":cmdutil",
         "//intrinsic/assets:clientutils",
+        "//intrinsic/assets:cmdutils",
         "//intrinsic/tools/inctl/auth",
         "@com_github_spf13_cobra//:go_default_library",
-        "@io_opencensus_go//plugin/ocgrpc:go_default_library",
-        "@io_opencensus_go//trace:go_default_library",
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//credentials:go_default_library",
         "@org_golang_google_grpc//credentials/insecure:go_default_library",

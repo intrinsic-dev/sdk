@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"intrinsic/assets/clientutils"
-	"intrinsic/skills/tools/skill/cmd/cmdutil"
+	"intrinsic/assets/cmdutils"
 	"intrinsic/tools/inctl/auth"
 )
 
@@ -125,7 +125,7 @@ type DialCatalogContextOptions struct {
 
 // DialSkillCatalogContextFromInctl creates a connection to a skill catalog service from an inctl
 // command.
-func DialSkillCatalogContextFromInctl(cmd *cobra.Command, flags *cmdutil.CmdFlags) (*grpc.ClientConn, error) {
+func DialSkillCatalogContextFromInctl(cmd *cobra.Command, flags *cmdutils.CmdFlags) (*grpc.ClientConn, error) {
 	project := flags.GetFlagProject()
 
 	address := ""

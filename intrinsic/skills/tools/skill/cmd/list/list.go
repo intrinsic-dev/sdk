@@ -11,9 +11,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	"intrinsic/assets/cmdutils"
 	skillregistrygrpcpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
 	skillCmd "intrinsic/skills/tools/skill/cmd"
-	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/listutil"
 	"intrinsic/skills/tools/skill/cmd/skillid"
@@ -30,7 +30,7 @@ const (
 )
 
 var (
-	cmdFlags = cmdutil.NewCmdFlags()
+	cmdFlags = cmdutils.NewCmdFlags()
 
 	filterOptions = []string{sideloadedFilter, releasedFilter}
 )

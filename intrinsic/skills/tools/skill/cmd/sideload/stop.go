@@ -12,15 +12,15 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/spf13/cobra"
+	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/imagetransfer"
 	"intrinsic/assets/imageutils"
 	"intrinsic/skills/tools/skill/cmd"
-	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
 )
 
-var cmdFlags = cmdutil.NewCmdFlags()
+var cmdFlags = cmdutils.NewCmdFlags()
 
 var stopCmd = &cobra.Command{
 	Use:   "stop --type=TYPE TARGET",

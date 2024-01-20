@@ -11,13 +11,13 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/spf13/cobra"
+	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/idutils"
 	"intrinsic/assets/imagetransfer"
 	"intrinsic/assets/imageutils"
 	imagepb "intrinsic/kubernetes/workcell_spec/proto/image_go_proto"
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd"
-	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/registry"
 	"intrinsic/skills/tools/skill/cmd/skillid"
@@ -25,7 +25,7 @@ import (
 	"intrinsic/skills/tools/skill/cmd/waitforskill"
 )
 
-var cmdFlags = cmdutil.NewCmdFlags()
+var cmdFlags = cmdutils.NewCmdFlags()
 
 func remoteOpt() remote.Option {
 	authUser, authPwd := cmdFlags.GetFlagsRegistryAuthUserPassword()

@@ -15,9 +15,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/imageutils"
 	"intrinsic/skills/tools/skill/cmd"
-	"intrinsic/skills/tools/skill/cmd/cmdutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
 	"intrinsic/tools/inctl/auth"
@@ -48,7 +48,7 @@ var (
 	verboseOut   io.Writer = os.Stderr
 )
 
-var cmdFlags = cmdutil.NewCmdFlags()
+var cmdFlags = cmdutils.NewCmdFlags()
 
 type bodyReader = func(context.Context, io.Reader) (string, error)
 
@@ -260,7 +260,7 @@ var logsCmd = &cobra.Command{
 		_, verboseDebug = os.LookupEnv(verboseDebugEnvName)
 		verboseOut = cmd.OutOrStderr()
 
-		context := cmdFlags.GetString(cmdutil.KeyContext)
+		context := cmdFlags.GetString(cmdutils.KeyContext)
 		project := cmdFlags.GetFlagProject()
 		org := cmdFlags.GetFlagOrganization()
 		var serverAddr string
@@ -270,7 +270,7 @@ var logsCmd = &cobra.Command{
 		} else {
 			serverAddr = fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", project)
 		}
-		solution := cmdFlags.GetString(cmdutil.KeySolution)
+		solution := cmdFlags.GetString(cmdutils.KeySolution)
 
 		ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
 			Address:  serverAddr,
@@ -293,7 +293,7 @@ var logsCmd = &cobra.Command{
 		}
 
 		return runLogsCmd(ctx, &cmdParams{
-			targetType:  imageutils.TargetType(cmdFlags.GetString(cmdutil.KeyType)),
+			targetType:  imageutils.TargetType(cmdFlags.GetString(cmdutils.KeyType)),
 			target:      target,
 			frontendURL: createFrontendURL(project, cluster),
 			follow:      cmdFlags.GetBool(keyFollow),
@@ -309,10 +309,10 @@ func init() {
 	cmdFlags.SetCommand(logsCmd)
 
 	cmdFlags.AddFlagsProjectOrg()
-	cmdFlags.OptionalEnvString(cmdutil.KeyContext, "", "The Kubernetes cluster to use.")
-	cmdFlags.OptionalEnvString(cmdutil.KeySolution, "", "The solution to use.")
+	cmdFlags.OptionalEnvString(cmdutils.KeyContext, "", "The Kubernetes cluster to use.")
+	cmdFlags.OptionalEnvString(cmdutils.KeySolution, "", "The solution to use.")
 
-	cmdFlags.RequiredString(cmdutil.KeyType, fmt.Sprintf(`The target's type:
+	cmdFlags.RequiredString(cmdutils.KeyType, fmt.Sprintf(`The target's type:
 %s	skill id
 %s	build target of the skill image`, imageutils.ID, imageutils.Build))
 	cmdFlags.OptionalBool(keyFollow, false, "Whether to follow the skill logs.")
@@ -320,7 +320,7 @@ func init() {
 	cmdFlags.OptionalInt(keyTailLines, 10, "The number of recent log lines to display. An input number less than 0 shows all log lines.")
 	cmdFlags.OptionalString(keySinceSec, "", "Show logs starting since value. Value is either relative (e.g 10m) or \ndate time in RFC3339 format (e.g: 2006-01-02T15:04:05Z07:00)")
 
-	logsCmd.MarkFlagsMutuallyExclusive(cmdutil.KeyContext, cmdutil.KeySolution)
+	logsCmd.MarkFlagsMutuallyExclusive(cmdutils.KeyContext, cmdutils.KeySolution)
 }
 
 func getAuthToken(project string) (*auth.ProjectToken, error) {

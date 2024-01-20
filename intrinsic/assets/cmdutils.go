@@ -1,7 +1,7 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-// Package cmdutil provides utils for asset inctl commands.
-package cmdutil
+// Package cmdutils provides utils for asset inctl commands.
+package cmdutils
 
 import (
 	"fmt"
