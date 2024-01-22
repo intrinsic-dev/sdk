@@ -11,8 +11,12 @@ go_library(
     name = "clientutils",
     srcs = ["clientutils.go"],
     deps = [
+        ":cmdutils",
         "//intrinsic/tools/inctl/auth",
+        "@com_github_spf13_cobra//:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//credentials:go_default_library",
+        "@org_golang_google_grpc//credentials/insecure:go_default_library",
     ],
 )
 
