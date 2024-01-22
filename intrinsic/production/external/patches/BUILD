@@ -5,7 +5,6 @@ exports_files([
     "0001-Add-absl-Status-conversions-for-grpc-Status.patch",
     "0002-Add-warning-suppressions-to-cython_library.patch",
     "0003-Remove-competing-local_config_python-definition.patch",
-    "0004-Simplify-longrunning_py_proto.patch",
     "0005-Remove-competing-go-deps.patch",
     "0006-Ignore-unused-function-warnings.patch",
     "0007-Also-generate-pyi-files-grpc.patch",

@@ -287,7 +287,7 @@ py_library(
         "//intrinsic/world/python:object_world_client",
         requirement("grpcio"),
         "@com_google_absl_py//absl/logging",
-        "@com_google_googleapis//google/longrunning:longrunning_py_proto",
+        "@com_google_googleapis//google/longrunning:operations_py_proto",
         "@com_google_googleapis//google/rpc:status_py_proto",
         "@com_google_protobuf//:protobuf_python",
     ],

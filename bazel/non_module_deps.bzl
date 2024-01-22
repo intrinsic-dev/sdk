@@ -38,19 +38,14 @@ def non_module_deps():
         sha256 = "f6d71a193ff6df39900417b50e67a5cf0baad2e90f83c8aefe66902acce4c34d",
         strip_prefix = "rules_docker-ca2f3086ead9f751975d77db0255ffe9ee07a781",
     )
+
     http_archive(
         name = "com_google_googleapis",
         urls = [
-            "https://github.com/googleapis/googleapis/archive/f3d6f41ed50ae9271fbf9ce2355d1f1e8afb4d94.zip",
+            "https://github.com/googleapis/googleapis/archive/d9250048e9b9df4d8a0ce67b8ccf84e0aab0d50e.tar.gz",
         ],
-        sha256 = "6c005ec1356d00821c00529b7d1283669633caf7e1e30d06909dda85a351b42f",
-        strip_prefix = "googleapis-f3d6f41ed50ae9271fbf9ce2355d1f1e8afb4d94",
-        patches = [
-            Label("//intrinsic/production/external/patches:0004-Simplify-longrunning_py_proto.patch"),
-        ],
-        patch_args = [
-            "-p1",
-        ],
+        sha256 = "eaef89b65424505b2802ca13b6e0bdc5d302e0c477c78a4e41ecefbebed2c03e",
+        strip_prefix = "googleapis-d9250048e9b9df4d8a0ce67b8ccf84e0aab0d50e",
     )
 
     git_repository(

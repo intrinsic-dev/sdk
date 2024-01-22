@@ -187,7 +187,7 @@ py_library(
         "//intrinsic/logging/errors/proto:error_report_py_pb2",
         "//intrinsic/perception/proto:frame_py_pb2",
         requirement("grpcio"),  # buildcleaner: keep
-        "@com_google_googleapis//google/longrunning:longrunning_py_proto",
+        "@com_google_googleapis//google/longrunning:operations_py_proto",
         "@com_google_googleapis//google/rpc:code_py_proto",
         "@com_google_protobuf//:protobuf_python",
     ],
@@ -204,7 +204,7 @@ py_test(
         "//intrinsic/logging/errors/proto:error_report_py_pb2",
         "//intrinsic/solutions/testing:compare",
         "@com_google_absl_py//absl/testing:absltest",
-        "@com_google_googleapis//google/longrunning:longrunning_py_proto",
+        "@com_google_googleapis//google/longrunning:operations_py_proto",
         "@com_google_protobuf//:protobuf_python",
     ],
 )
@@ -231,7 +231,7 @@ py_library(
         "//intrinsic/solutions/internal:actions",
         "//intrinsic/util/grpc:error_handling",
         requirement("grpcio"),
-        "@com_google_googleapis//google/longrunning:longrunning_py_proto",
+        "@com_google_googleapis//google/longrunning:operations_py_proto",
     ],
 )
 
@@ -263,7 +263,7 @@ py_test(
         requirement("grpcio"),
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
-        "@com_google_googleapis//google/longrunning:longrunning_py_proto",
+        "@com_google_googleapis//google/longrunning:operations_py_proto",
         "@com_google_protobuf//:protobuf_python",
     ],
 )
