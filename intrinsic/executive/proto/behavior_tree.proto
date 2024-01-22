@@ -71,6 +71,7 @@ message BehaviorTree {
       FINISHED = 6;
       ERROR = 7;
       CANCELED = 8;
+      CANCELING = 9;
     }
 
     message BlackboardExpression {
