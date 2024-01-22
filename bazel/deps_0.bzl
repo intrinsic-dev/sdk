@@ -147,7 +147,6 @@ def intrinsic_sdks_deps_0():
             #   - https://github.com/protocolbuffers/protobuf/issues/9876
             #   - https://github.com/microsoft/pylance-release/issues/2562
             Label("//intrinsic/production/external/patches:0008-Remove-python-google-module-file.patch"),
-            Label("//intrinsic/production/external/patches:0009-Also-generate-pyi-files-protobuf.patch"),
             Label("//intrinsic/production/external/patches:0010-Remove-unknown-warning-option.patch"),
         ],
         sha256 = "2dc7254fc975bb40efcab799273c9330d7ed11f4b3263dcbf7328f5c6b067d3e",  # v3.23.1

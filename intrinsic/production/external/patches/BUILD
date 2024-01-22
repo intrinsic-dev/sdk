@@ -10,7 +10,6 @@ exports_files([
     "0006-Ignore-unused-function-warnings.patch",
     "0007-Also-generate-pyi-files-grpc.patch",
     "0008-Remove-python-google-module-file.patch",
-    "0009-Also-generate-pyi-files-protobuf.patch",
     "0010-Remove-unknown-warning-option.patch",
     "0011-Public-grpc_library-attr.patch",
 ])
