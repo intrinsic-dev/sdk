@@ -73,10 +73,13 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List skills that are loaded into a solution.",
 	Example: `List skills of a running solution (solution id, not display name)
-$	inctl skill list --project my-project --solution my-solution-id
+$ inctl skill list --project my-project --solution my-solution-id
+
+	To find a running solution's id, run:
+	$ inctl solution list --project my-project --filter "running_on_hw,running_in_sim" --output json
 
 Set the cluster on which the solution is running
-$	inctl skill list --project my-project --cluster my-cluster
+$ inctl skill list --project my-project --cluster my-cluster
 `,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
