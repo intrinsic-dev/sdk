@@ -82,6 +82,7 @@ py_test(
         "//intrinsic/icon/actions:trajectory_tracking_action_utils",
         "//intrinsic/icon/actions:wait_for_settling_utils",
         "//intrinsic/icon/proto:joint_space_py_pb2",
+        "//intrinsic/math/python:data_types",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_protobuf//:protobuf_python",
         requirement("numpy"),

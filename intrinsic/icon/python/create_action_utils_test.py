@@ -10,6 +10,7 @@ from intrinsic.icon.actions import trajectory_tracking_action_utils
 from intrinsic.icon.actions import wait_for_settling_utils
 from intrinsic.icon.proto import joint_space_pb2
 from intrinsic.icon.python import create_action_utils
+from intrinsic.math.python import data_types
 import numpy as np
 
 
