@@ -138,15 +138,6 @@ def intrinsic_sdks_deps_0():
         patch_args = ["-p1"],
         patches = [
             Label("//intrinsic/production/external/patches:0006-Ignore-unused-function-warnings.patch"),
-            # Use the implicit/native style for the "google" namespace package by removing
-            # python/google/__init__.py. The presence of this file (=legacy namespace package style)
-            # breaks import resolution in VS Code/Pylance in that contents of different paths that
-            # contain content for the same package won't be correctly merged and some imports from
-            # the "google" namespace won't be found.
-            # See:
-            #   - https://github.com/protocolbuffers/protobuf/issues/9876
-            #   - https://github.com/microsoft/pylance-release/issues/2562
-            Label("//intrinsic/production/external/patches:0008-Remove-python-google-module-file.patch"),
             Label("//intrinsic/production/external/patches:0010-Remove-unknown-warning-option.patch"),
         ],
         sha256 = "2dc7254fc975bb40efcab799273c9330d7ed11f4b3263dcbf7328f5c6b067d3e",  # v3.23.1
