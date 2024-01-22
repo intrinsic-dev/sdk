@@ -54,48 +54,53 @@ var (
 	}
 )
 
-// DialCatalogOptions specifies the options DialCatalog.
+// DialCatalogOptions specifies the options for DialSkillCatalog.
 type DialCatalogOptions struct {
-	Address         string
-	Organization    string
-	Project         string
-	UseFirebaseAuth bool
-	UserReader      *bufio.Reader // Required if UseFirebaseAuth is true.
-	UserWriter      io.Writer     // Required if UseFirebaseAuth is true.
+	Address          string
+	APIKey           string
+	Organization     string
+	Project          string
+	UseFirebaseCreds bool
+	UserReader       *bufio.Reader // Required if UseFirebaseAuth is true.
+	UserWriter       io.Writer     // Required if UseFirebaseAuth is true.
 }
 
 // DialSkillCatalogFromInctl creates a connection to a skill catalog service from an inctl command.
 func DialSkillCatalogFromInctl(cmd *cobra.Command, flags *cmdutils.CmdFlags) (*grpc.ClientConn, error) {
+
 	return DialSkillCatalog(
 		cmd.Context(), DialCatalogOptions{
-			Address:         "",
-			Organization:    flags.GetFlagOrganization(),
-			Project:         flags.GetFlagProject(),
-			UseFirebaseAuth: false,
-			UserReader:      bufio.NewReader(cmd.InOrStdin()),
-			UserWriter:      cmd.OutOrStdout(),
+			Address:          "",
+			APIKey:           "",
+			Organization:     flags.GetFlagOrganization(),
+			Project:          flags.GetFlagProject(),
+			UseFirebaseCreds: false,
+			UserReader:       bufio.NewReader(cmd.InOrStdin()),
+			UserWriter:       cmd.OutOrStdout(),
 		},
 	)
 }
 
 // DialSkillCatalog creates a connection to a skill catalog service.
 func DialSkillCatalog(ctx context.Context, opts DialCatalogOptions) (*grpc.ClientConn, error) {
-	options := BaseDialOptions
-
-	address, err := resolveSkillCatalogAddress(opts.Address, opts.Project)
+	// Get the catalog address.
+	addDNS := true
+	address, err := resolveSkillCatalogAddress(opts.Address, opts.Project, addDNS)
 	if err != nil {
 		return nil, fmt.Errorf("cannot resolve address: %w", err)
 	}
 
+	options := BaseDialOptions
+
 	// Determine credentials to include in requests.
-	if opts.UseFirebaseAuth {
+	if opts.UseFirebaseCreds { // Use firebase creds.
 		return nil, fmt.Errorf("firebase auth unimplemented")
-	} else if IsLocalAddress(opts.Address) {
+	} else if IsLocalAddress(opts.Address) { // Use insecure creds.
 		options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	} else {
-		rpcCreds, err := GetAPIKeyPerRPCCredentials(opts.Project, opts.Organization)
+	} else { // Use api-key creds.
+		rpcCreds, err := getAPIKeyPerRPCCredentials(opts.APIKey, opts.Project, opts.Organization)
 		if err != nil {
-			return nil, fmt.Errorf("cannot get api key per rpc credentials: %w", err)
+			return nil, fmt.Errorf("cannot get api-key credentials: %w", err)
 		}
 		tcOption, err := GetTransportCredentialsDialOption()
 		if err != nil {
@@ -104,12 +109,7 @@ func DialSkillCatalog(ctx context.Context, opts DialCatalogOptions) (*grpc.Clien
 		options = append(options, grpc.WithPerRPCCredentials(rpcCreds), tcOption)
 	}
 
-	conn, err := grpc.DialContext(ctx, address, options...)
-	if err != nil {
-		return nil, fmt.Errorf("dialing context: %w", err)
-	}
-
-	return conn, nil
+	return grpc.DialContext(ctx, address, options...)
 }
 
 // GetTransportCredentialsDialOption returns transport credentials from the system certificate pool.
@@ -132,17 +132,25 @@ func IsLocalAddress(address string) bool {
 	return false
 }
 
-func resolveSkillCatalogAddress(address string, project string) (string, error) {
+func resolveSkillCatalogAddress(address string, project string, addDNS bool) (string, error) {
 	// Check for user-provided address.
 	if address != "" {
 		return address, nil
 	}
 
 	// Derive address from project.
-	if project == "" {
-		return "", fmt.Errorf("project is required if no address is specified")
+	if address == "" {
+		if project == "" {
+			return "", fmt.Errorf("project is required if no address is specified")
+		}
+		address = fmt.Sprintf("www.endpoints.%s.cloud.goog:443", project)
 	}
-	return fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", project), nil
+
+	if addDNS && !strings.HasPrefix(address, "dns:///") {
+		address = fmt.Sprintf("dns:///%s", address)
+	}
+
+	return address, nil
 }
 
 // CustomOrganizationCredentials adds a custom organization to credentials provided by a base
@@ -167,24 +175,32 @@ func (c *CustomOrganizationCredentials) RequireTransportSecurity() bool {
 	return true
 }
 
-// GetAPIKeyPerRPCCredentials returns api-key PerRPCCredentials.
-func GetAPIKeyPerRPCCredentials(project string, organization string) (credentials.PerRPCCredentials, error) {
-	configuration, err := auth.NewStore().GetConfiguration(project)
-	if err != nil {
-		return nil, err
-	}
+// getAPIKeyPerRPCCredentials returns api-key PerRPCCredentials.
+func getAPIKeyPerRPCCredentials(apiKey string, project string, organization string) (credentials.PerRPCCredentials, error) {
+	var token *auth.ProjectToken
 
-	creds, err := configuration.GetDefaultCredentials()
-	if err != nil {
-		return nil, err
+	if apiKey != "" {
+		// User-provided api-key.
+		token = &auth.ProjectToken{APIKey: apiKey}
+	} else {
+		// Load api-key from the auth store.
+		configuration, err := auth.NewStore().GetConfiguration(project)
+		if err != nil {
+			return nil, err
+		}
+
+		token, err = configuration.GetDefaultCredentials()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if organization != "" {
 		return &CustomOrganizationCredentials{
-			c:            creds,
+			c:            token,
 			organization: organization,
 		}, nil
 	}
 
-	return creds, nil
+	return token, nil
 }

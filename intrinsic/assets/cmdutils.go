@@ -18,6 +18,8 @@ import (
 const (
 	// KeyAddress is the name of the address flag.
 	KeyAddress = "address"
+	// KeyAPIKey is the name of the arg to specify the api-key to use.
+	KeyAPIKey = "api_key"
 	// KeyAuthUser is the name of the auth user flag.
 	KeyAuthUser = "auth_user"
 	// KeyAuthPassword is the name of the auth password flag.
@@ -42,8 +44,6 @@ const (
 	KeyManifestFile = "manifest_file"
 	// KeyManifestTarget is the build target to the skill manifest.
 	KeyManifestTarget = "manifest_target"
-	// KeyUseFirebaseAuth is the name of the flag to use firebase authentication.
-	KeyUseFirebaseAuth = "use_firebase_auth"
 	// KeyRegistry is the name of the registry flag.
 	KeyRegistry = "registry"
 	// KeyReleaseNotes is the name of the release notes flag.
@@ -54,6 +54,10 @@ const (
 	KeyType = "type"
 	// KeyTimeout is the name of the timeout flag.
 	KeyTimeout = "timeout"
+	// KeyUseBorgCredentials is the name of the flag to use borg credentials.
+	KeyUseBorgCredentials = "use_borg_credentials"
+	// KeyUseFirebaseCredentials is the name of the flag to use firebase credentials.
+	KeyUseFirebaseCredentials = "use_firebase_credentials"
 	// KeyUseInProcCatalog is the name of the flag for using an in-proc catalog.
 	KeyUseInProcCatalog = "use_in_proc_catalog"
 	// KeyVendor is the name of the vendor flag.
@@ -88,8 +92,8 @@ func (cf *CmdFlags) SetCommand(cmd *cobra.Command) {
 // AddFlagsCatalogInProcEnvironment adds flags for using an in-proc catalog and specifying the
 // Firestore environment.
 func (cf *CmdFlags) AddFlagsCatalogInProcEnvironment() {
-	cf.OptionalBool(KeyUseInProcCatalog, false, "Whether to use an in-proc catalog service. This is required when running on borg.")
-	cf.OptionalString(KeyEnvironment, "", "The Firestore DB environment (only used when running on borg).")
+	cf.OptionalBool(KeyUseInProcCatalog, false, "DEPRECATED DO NOT USE. Whether to use an in-proc catalog service.")
+	cf.OptionalString(KeyEnvironment, "", "DEPRECATED DO NOT USE. The Firestore DB environment (only used with the in-proc catalog).")
 	cf.cmd.MarkFlagsRequiredTogether(KeyUseInProcCatalog, KeyEnvironment)
 }
 
@@ -97,6 +101,25 @@ func (cf *CmdFlags) AddFlagsCatalogInProcEnvironment() {
 // added by AddFlagsCatalogInProcEnvironment.
 func (cf *CmdFlags) GetFlagsCatalogInProcEnvironment() (bool, string) {
 	return cf.GetBool(KeyUseInProcCatalog), cf.GetString(KeyEnvironment)
+}
+
+// AddFlagsCredentials adds args for specifying credentials.
+func (cf *CmdFlags) AddFlagsCredentials() {
+	cf.OptionalBool(KeyUseFirebaseCredentials, false, "Use Firebase credentials (may require copy/pasting info from a URL).")
+	cf.OptionalBool(KeyUseBorgCredentials, false, "Use credentials associated with the current borg user, rather than application-default credentials.")
+	cf.OptionalString(KeyAPIKey, "", "The API key to use for authentication.")
+
+	cf.cmd.MarkFlagsMutuallyExclusive(KeyUseFirebaseCredentials, KeyUseBorgCredentials)
+	cf.cmd.MarkFlagsMutuallyExclusive(KeyUseFirebaseCredentials, KeyAPIKey)
+}
+
+// GetFlagsCredentials gets the values of the credential args.
+func (cf *CmdFlags) GetFlagsCredentials() (useFirebase bool, useBorgCredentials bool, apiKey string) {
+	useFirebase = cf.GetBool(KeyUseFirebaseCredentials)
+	useBorgCredentials = cf.GetBool(KeyUseBorgCredentials)
+	apiKey = cf.GetString(KeyAPIKey)
+
+	return useFirebase, useBorgCredentials, apiKey
 }
 
 // AddFlagDefault adds a flag for marking a released asset as default.
@@ -191,17 +214,6 @@ func (cf *CmdFlags) GetFlagProject() string {
 // GetFlagOrganization gets the value of the project flag added by AddFlagProject.
 func (cf *CmdFlags) GetFlagOrganization() string {
 	return cf.GetString(orgutil.KeyOrganization)
-}
-
-// AddFlagUseFirebaseAuth adds a flag that, if set, will use firebase rather than api-key
-// authentication (potentially prompting the user to copy/paste it in).
-func (cf *CmdFlags) AddFlagUseFirebaseAuth() {
-	cf.OptionalBool(KeyUseFirebaseAuth, false, "Use Firebase rather than api-key authentication (may require copy/pasting info from a URL).")
-}
-
-// GetFlagUseFirebaseAuth gets the value of the use firebase auth flag added by AddFlagUseFirebaseAuth.
-func (cf *CmdFlags) GetFlagUseFirebaseAuth() bool {
-	return cf.GetBool(KeyUseFirebaseAuth)
 }
 
 // AddFlagRegistry adds a flag for the registry when side-loading an asset.
