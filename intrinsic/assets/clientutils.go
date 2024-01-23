@@ -21,9 +21,7 @@ import (
 )
 
 const (
-	authProjectKey = "x-intrinsic-auth-project"
-	authProxyKey   = "auth-proxy"
-	maxMsgSize     = math.MaxInt64
+	maxMsgSize = math.MaxInt64
 	// policy for retrying failed gRPC requests as documented here:
 	// https://pkg.go.dev/google.golang.org/grpc/examples/features/retry
 	// Note that the Ingress will return UNIMPLEMENTED if the server it wants to forward to
