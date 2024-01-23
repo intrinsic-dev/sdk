@@ -14,6 +14,7 @@ message BlackboardValue {
 }
 
 service ExecutiveBlackboard {
+
   // Retrieves a specified blackboard value.
   rpc GetBlackboardValue(GetBlackboardValueRequest) returns (BlackboardValue) {}
 
