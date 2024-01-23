@@ -314,6 +314,66 @@ class RobotStatusSource(DataSource):
   def __dir__(self):
     return self._part_names()
 
+  def _get_single_part(
+      self, part_selector: Callable[[part_status_pb2.PartStatus], bool]
+  ) -> PartStatusSource:
+    """Gets the logs for a single part.
+
+    Only works if the logs contain exactly one part matching the part_selector.
+
+    Args:
+      part_selector: A function to select the part.
+
+    Returns:
+      The selected part.
+
+    Raises:
+      ValueError: If no or more than one part matching the part_selector were
+      found.
+    """
+    robot_status_item = self.log_items[0].payload.icon_robot_status
+    selected_parts = [
+        part
+        for part in self._part_names()
+        if part_selector(robot_status_item.status_map[part])
+    ]
+    if len(selected_parts) != 1:
+      raise ValueError(
+          f'Found {len(selected_parts)} parts matching the selector, expected'
+          ' one.'
+      )
+    return self.__getattr__(selected_parts[0])
+
+  def get_single_arm_part(self) -> PartStatusSource:
+    """Gets the logs for the arm part.
+
+    Only works if the logs contain exactly one arm-part, which is usually the
+    case.
+
+    Returns:
+      The arm part logs.
+
+    Raises:
+      ValueError: If no or more than one arm part were found.
+    """
+    return self._get_single_part(lambda part_status: part_status.joint_states)
+
+  def get_single_ft_sensor_part(self) -> PartStatusSource:
+    """Gets the logs for the force-torque sensor part.
+
+    Only works if the logs contain exactly one force-torque sensor part, which
+    is usually the case.
+
+    Returns:
+      The force-torque sensor part logs.
+
+    Raises:
+      ValueError: If no or more than one force-torque sensor part were found.
+    """
+    return self._get_single_part(
+        lambda part_status: part_status.HasField('wrench_at_tip')
+    )
+
 
 class StreamingOutputSource(DataSource):
   """Data source for streamed action outputs."""

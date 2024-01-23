@@ -7,6 +7,7 @@ from typing import Optional
 from unittest import mock
 
 from absl.testing import absltest
+from absl.testing import parameterized
 from google.protobuf import empty_pb2
 from google.protobuf import message as proto_message
 from google.protobuf import text_format
@@ -23,7 +24,7 @@ import pandas as pd
 _TIMESTAMP = 2147483647
 
 
-class StructuredLoggingTest(absltest.TestCase):
+class StructuredLoggingTest(parameterized.TestCase):
 
   def _create_mock_stub(
       self, event_source: str, data: list[log_item_pb2.LogItem]
@@ -495,6 +496,7 @@ payload:<
 
     items = logs.robot_status.read(seconds_to_read=10)
     joint_states = items.my_robot.get_joint_states()
+    joint_state_from_part = items.get_single_arm_part().get_joint_states()
 
     pd.testing.assert_frame_equal(
         joint_states['position_sensed'],
@@ -529,6 +531,8 @@ payload:<
             index=pd.Index([1.2, 1.3], name='time_s'),
         ),
     )
+
+    pd.testing.assert_frame_equal(joint_states, joint_state_from_part)
 
   def test_get_event_source(self):
     data = [
@@ -767,7 +771,7 @@ context <
 payload:<
   icon_robot_status: <
     status_map: <
-        key: 'my_robot'
+        key: 'ft_sensor'
         value: <
             timestamp_ns: 1200000000
             wrench_at_tip: <
@@ -797,7 +801,7 @@ context <
 payload:<
   icon_robot_status: <
     status_map: <
-        key: 'my_robot'
+        key: 'ft_sensor'
         value: <
             timestamp_ns: 1300000000
             wrench_at_tip: <
@@ -820,7 +824,10 @@ payload:<
     logs = structured_logging.StructuredLogs(stub)
 
     items = logs.robot_status.read(seconds_to_read=10)
-    wrench = items.my_robot.get_wrench_at_tip()
+    wrench = items.ft_sensor.get_wrench_at_tip()
+    wrench_from_part_helper = (
+        items.get_single_ft_sensor_part().get_wrench_at_tip()
+    )
 
     pd.testing.assert_frame_equal(
         wrench,
@@ -842,6 +849,8 @@ payload:<
             index=pd.Index([1.2, 1.3], name='time_s'),
         ),
     )
+
+    pd.testing.assert_frame_equal(wrench, wrench_from_part_helper)
 
   def make_base_t_tip_sensed_item(
       self,
@@ -1040,6 +1049,197 @@ payload:<
     )
 
     self.assertEqual(formatted, 'icon_robot_sim_robot_status')
+
+  @parameterized.named_parameters(
+      dict(
+          testcase_name='empty_robot_status',
+          item=text_format.Parse(
+              """
+metadata <
+  event_source: "robot_status"
+>
+payload:<
+  icon_robot_status: <
+    status_map: <
+        key: 'my_robot'
+        value: <
+        >
+    >
+  >
+>
+""",
+              log_item_pb2.LogItem(),
+          ),
+          expected_error='Found 0 parts matching the selector, expected one.',
+      ),
+      dict(
+          testcase_name='only_ft_sensor_part',
+          item=text_format.Parse(
+              """
+metadata <
+  event_source: "robot_status"
+>
+payload:<
+  icon_robot_status: <
+    status_map: <
+      key: 'ft_sensor'
+      value: <
+          timestamp_ns: 1200000000
+          wrench_at_tip: <
+            x: 1.0
+          >
+      >
+    >
+  >
+>
+""",
+              log_item_pb2.LogItem(),
+          ),
+          expected_error='Found 0 parts matching the selector, expected one.',
+      ),
+      dict(
+          testcase_name='twi_arm_parts',
+          item=text_format.Parse(
+              """
+metadata <
+  event_source: "robot_status"
+>
+payload:<
+  icon_robot_status: <
+    status_map: <
+        key: 'my_robot'
+        value: <
+            timestamp_ns: 1200000000
+            joint_states: <
+              position_commanded_last_cycle: 1.0
+              position_sensed: 1.1
+            >
+        >
+    >
+    status_map: <
+        key: 'my_other_robot'
+        value: <
+            timestamp_ns: 1200000000
+            joint_states: <
+              position_commanded_last_cycle: 1.0
+              position_sensed: 1.1
+            >
+        >
+    >
+  >
+>
+""",
+              log_item_pb2.LogItem(),
+          ),
+          expected_error='Found 2 parts matching the selector, expected one.',
+      ),
+  )
+  def test_get_single_arm_part_fails_for_invalid_items(
+      self, item: log_item_pb2.LogItem, expected_error: str
+  ):
+
+    stub = self._create_mock_stub('robot_status', [item])
+    logs = structured_logging.StructuredLogs(stub)
+
+    robot_status_logs = logs.robot_status.read(seconds_to_read=10)
+
+    with self.assertRaisesRegex(ValueError, expected_error):
+      robot_status_logs.get_single_arm_part()
+
+  @parameterized.named_parameters(
+      dict(
+          testcase_name='empty_robot_status',
+          item=text_format.Parse(
+              """
+metadata <
+  event_source: "robot_status"
+>
+payload:<
+  icon_robot_status: <
+    status_map: <
+        key: 'my_robot'
+        value: <
+        >
+    >
+  >
+>
+""",
+              log_item_pb2.LogItem(),
+          ),
+          expected_error='Found 0 parts matching the selector, expected one.',
+      ),
+      dict(
+          testcase_name='only_arm_part',
+          item=text_format.Parse(
+              """
+metadata <
+  event_source: "robot_status"
+>
+payload:<
+  icon_robot_status: <
+    status_map: <
+      key: 'my_other_robot'
+      value: <
+          timestamp_ns: 1200000000
+          joint_states: <
+            position_commanded_last_cycle: 1.0
+            position_sensed: 1.1
+          >
+      >
+    >
+  >
+>
+""",
+              log_item_pb2.LogItem(),
+          ),
+          expected_error='Found 0 parts matching the selector, expected one.',
+      ),
+      dict(
+          testcase_name='tw0_arm_parts',
+          item=text_format.Parse(
+              """
+metadata <
+  event_source: "robot_status"
+>
+payload:<
+  icon_robot_status: <
+    status_map: <
+      key: 'ft_sensor'
+      value: <
+          timestamp_ns: 1200000000
+          wrench_at_tip: <
+            x: 1.0
+          >
+      >
+    >
+    status_map: <
+      key: 'other_ft_sensor'
+      value: <
+          timestamp_ns: 1200000000
+          wrench_at_tip: <
+            x: 1.0
+          >
+      >
+    >
+  >
+>
+""",
+              log_item_pb2.LogItem(),
+          ),
+          expected_error='Found 2 parts matching the selector, expected one.',
+      ),
+  )
+  def test_get_single_ft_sensor_part_fails_for_invalid_items(
+      self, item: log_item_pb2.LogItem, expected_error: str
+  ):
+
+    stub = self._create_mock_stub('robot_status', [item])
+    logs = structured_logging.StructuredLogs(stub)
+
+    robot_status_logs = logs.robot_status.read(seconds_to_read=10)
+
+    with self.assertRaisesRegex(ValueError, expected_error):
+      robot_status_logs.get_single_ft_sensor_part()
 
 
 if __name__ == '__main__':
