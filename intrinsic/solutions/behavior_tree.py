@@ -1370,9 +1370,9 @@ class SubTree(Node):
     Returns:
       self for chaining.
     """
+    self._name = name
     if isinstance(behavior_tree, BehaviorTree):
       self.behavior_tree = behavior_tree
-      self._name = name
     elif isinstance(behavior_tree, Node):
       if name is None:
         raise ValueError(

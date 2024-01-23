@@ -1374,6 +1374,23 @@ class BehaviorTreeSubTreeTest(absltest.TestCase):
         self, node.proto, node_proto, ignored_fields=['sub_tree.tree.tree_id']
     )
 
+  def test_init_name(self):
+    """Tests if name is correctly set during construction."""
+    subtree_from_behavior_tree = bt.SubTree(
+        bt.BehaviorTree(
+            'some_sub_tree',
+            bt.Task(behavior_call.Action(skill_id='some_skill')),
+        ),
+        'some name',
+    )
+    subtree_from_node = bt.SubTree(
+        bt.Task(behavior_call.Action(skill_id='some_skill')),
+        'some name',
+    )
+
+    self.assertEqual(subtree_from_behavior_tree.name, 'some name')
+    self.assertEqual(subtree_from_node.name, 'some name')
+
   def test_str_conversion(self):
     """Tests if conversion to string works."""
     node = bt.SubTree()
