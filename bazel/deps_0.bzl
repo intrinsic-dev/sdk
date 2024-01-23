@@ -135,11 +135,6 @@ def intrinsic_sdks_deps_0():
     maybe(
         http_archive,
         name = "com_google_protobuf",
-        patch_args = ["-p1"],
-        patches = [
-            Label("//intrinsic/production/external/patches:0006-Ignore-unused-function-warnings.patch"),
-            Label("//intrinsic/production/external/patches:0010-Remove-unknown-warning-option.patch"),
-        ],
         sha256 = "2dc7254fc975bb40efcab799273c9330d7ed11f4b3263dcbf7328f5c6b067d3e",  # v3.23.1
         strip_prefix = "protobuf-2dca62f7296e5b49d729f7384f975cecb38382a0",  # v3.23.1
         urls = ["https://github.com/protocolbuffers/protobuf/archive/2dca62f7296e5b49d729f7384f975cecb38382a0.zip"],  # v3.23.1
@@ -152,7 +147,6 @@ def intrinsic_sdks_deps_0():
         patch_args = ["-p1"],
         patches = [
             Label("//intrinsic/production/external/patches:0001-Add-absl-Status-conversions-for-grpc-Status.patch"),
-            Label("//intrinsic/production/external/patches:0002-Add-warning-suppressions-to-cython_library.patch"),
             Label("//intrinsic/production/external/patches:0003-Remove-competing-local_config_python-definition.patch"),
             Label("//intrinsic/production/external/patches:0005-Remove-competing-go-deps.patch"),
             Label("//intrinsic/production/external/patches:0007-Also-generate-pyi-files-grpc.patch"),
