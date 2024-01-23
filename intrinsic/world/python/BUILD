@@ -69,6 +69,7 @@ py_library(
     deps = [
         ":object_world_ids",
         ":object_world_resources",
+        "//intrinsic/icon/equipment:icon_equipment_py_pb2",
         "//intrinsic/icon/proto:cart_space_py_pb2",
         "//intrinsic/kinematics/types:joint_limits_py_pb2",
         "//intrinsic/math/python:data_types",

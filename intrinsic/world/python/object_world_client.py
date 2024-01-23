@@ -10,6 +10,7 @@ import re
 from typing import Dict, List, Optional, Tuple, Union, cast
 
 import grpc
+from intrinsic.icon.equipment import icon_equipment_pb2
 from intrinsic.icon.proto import cart_space_pb2
 from intrinsic.kinematics.types import joint_limits_pb2
 from intrinsic.math.python import data_types
@@ -40,6 +41,8 @@ INCLUDE_FINAL_ENTITY = object_world_refs_pb2.ObjectEntityFilter(
 INCLUDE_ALL_ENTITIES = object_world_refs_pb2.ObjectEntityFilter(
     include_all_entities=True
 )
+
+ICON2_POSITION_PART_KEY = 'Icon2PositionPart'
 
 
 class ProductPartDoesNotExistError(ValueError):
@@ -331,6 +334,20 @@ class ObjectWorldClient:
       ValueError: The requested object has no kinematic component and cannot be
       used as kinematic object.
     """
+    if (
+        isinstance(object_reference, resource_handle_pb2.ResourceHandle)
+        and ICON2_POSITION_PART_KEY in object_reference.resource_data
+    ):
+      icon_position_part = icon_equipment_pb2.Icon2PositionPart()
+      object_reference.resource_data[ICON2_POSITION_PART_KEY].contents.Unpack(
+          icon_position_part
+      )
+      if icon_position_part.world_robot_collection_name:
+        return self.get_kinematic_object(
+            object_world_ids.WorldObjectName(
+                icon_position_part.world_robot_collection_name
+            )
+        )
     return object_world_resources.KinematicObject(
         self._get_object_proto(object_reference), self._stub
     )
