@@ -16,6 +16,8 @@
 #include "grpcpp/client_context.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/eigenmath/types.h"
+#include "intrinsic/icon/equipment/equipment_utils.h"
+#include "intrinsic/icon/equipment/icon_equipment.pb.h"
 #include "intrinsic/icon/proto/cart_space_conversion.h"
 #include "intrinsic/kinematics/types/joint_limits.pb.h"
 #include "intrinsic/kinematics/types/joint_limits_xd.h"
@@ -349,7 +351,24 @@ absl::StatusOr<KinematicObject> ObjectWorldClient::GetKinematicObject(
     const intrinsic_proto::resources::ResourceHandle& resource_handle) const {
   intrinsic_proto::world::GetObjectRequest request;
   request.set_world_id(world_id_);
+  auto icon_pos_part_it =
+      resource_handle.resource_data().find(icon::kIcon2PositionPartKey);
+
   request.set_resource_handle_name(resource_handle.name());
+  if (icon_pos_part_it != resource_handle.resource_data().end()) {
+    intrinsic_proto::icon::Icon2PositionPart icon_position_part;
+    if (!icon_pos_part_it->second.contents().UnpackTo(&icon_position_part)) {
+      return absl::NotFoundError(
+          absl::StrCat("Resource handle ", resource_handle.name(),
+                       " does not have any Icon2PositionPart information."));
+    }
+    if (!icon_position_part.world_robot_collection_name().empty()) {
+      LOG(INFO) << "Using kinematic object from world robot collection: "
+                << icon_position_part.world_robot_collection_name();
+      request.set_resource_handle_name(
+          icon_position_part.world_robot_collection_name());
+    }
+  }
   INTR_ASSIGN_OR_RETURN(
       intrinsic_proto::world::Object proto,
       CallGetObjectUsingFullView(std::move(request), *object_world_service_));

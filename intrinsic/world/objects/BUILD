@@ -111,6 +111,8 @@ cc_library(
         ":transform_node",
         ":world_object",
         "//intrinsic/eigenmath",
+        "//intrinsic/icon/equipment:equipment_utils",
+        "//intrinsic/icon/equipment:icon_equipment_cc_proto",
         "//intrinsic/icon/proto:cart_space_conversion",
         "//intrinsic/kinematics/types:joint_limits_cc_proto",
         "//intrinsic/kinematics/types:joint_limits_xd",

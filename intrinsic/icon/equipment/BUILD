@@ -44,7 +44,6 @@ cc_library(
 proto_library(
     name = "icon_equipment_proto",
     srcs = ["icon_equipment.proto"],
-    visibility = ["//visibility:private"],
     deps = [
         ":force_control_settings_proto",
     ],
@@ -52,7 +51,6 @@ proto_library(
 
 cc_proto_library(
     name = "icon_equipment_cc_proto",
-    visibility = ["//visibility:private"],
     deps = [":icon_equipment_proto"],
 )
 
