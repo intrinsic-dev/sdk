@@ -1,0 +1,217 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.world;
+
+// Component indicating the owning Entity is a sensor (e.g. camera).
+//
+// Next tag: 11
+message SensorComponent {
+  message Image {
+    enum Format {
+      FORMAT_UNSPECIFIED = 0;
+      FORMAT_R8G8B8 = 1;
+      FORMAT_L8 = 2;
+      FORMAT_B8G8R8 = 3;
+      // Formats below use https://en.wikipedia.org/wiki/Bayer_filter
+      FORMAT_BAYER_RGGB8 = 4;
+      FORMAT_BAYER_BGGR8 = 5;
+      FORMAT_BAYER_GBRG8 = 6;
+      FORMAT_BAYER_GRBG8 = 7;
+    }
+
+    int64 width = 1;
+
+    int64 height = 2;
+
+    // The pixel format.
+    Format format = 3;
+  }
+
+  message Clip {
+    // The near clipping plane in meters.
+    double near = 1;
+
+    // The far clipping plane in meters.
+    double far = 2;
+  }
+
+  message Noise {
+    enum Type {
+      TYPE_UNSPECIFIED = 0;
+      TYPE_GAUSSIAN = 1;
+    }
+
+    // The type of noise.
+    Type type = 1;
+
+    // The mean of the noise model distribution.
+    double mean = 2;
+
+    // The standard deviation of the noise model distribution.
+    double stddev = 3;
+  }
+
+  message Intrinsics {
+    // X focal length (in pixels)
+    double fx = 1;
+
+    // Y focal length (in pixels)
+    double fy = 2;
+
+    // X principal point (in pixels)
+    double cx = 3;
+
+    // Y principal point (in pixels)
+    double cy = 4;
+  }
+
+  message Distortion {
+    // 1st radial distortion coefficient
+    double k1 = 1;
+
+    // 2nd radial distortion coefficient
+    double k2 = 2;
+
+    // 3rd radial distortion coefficient
+    double k3 = 3;
+
+    // 1st tangential distortion coefficient
+    double p1 = 4;
+
+    // 2nd tangential distortion coefficient
+    double p2 = 5;
+  }
+
+  message CommonCameraProperties {
+    // Horizontal field of view in radians.
+    double horizontal_fov = 1;
+
+    // The image size and pixel format.
+    Image image = 2;
+
+    // The near and far clip planes.
+    Clip clip = 3;
+
+    // The noise model applied to generated images.
+    Noise noise = 4;
+
+    Intrinsics intrinsics = 5;
+
+    Distortion distortion = 6;
+
+    // Visibility mask bits. For simulation use only.
+    uint32 visibility_mask = 7;
+  }
+
+  message RgbCameraPluginSpec {
+    // Empty
+  }
+
+  message CameraPluginSpec {
+    // Empty
+  }
+
+  // Cameras use the following convention: z forward, x right, y down (in the
+  // frame of the owning entity).
+  message Camera {
+    CommonCameraProperties properties = 1;
+    // If present the RgbCameraPlugin is enabled.
+    RgbCameraPluginSpec rgb_camera_plugin = 2 [deprecated = true];
+
+    // If present the CameraPlugin is enabled.
+    CameraPluginSpec camera_plugin = 3;
+  }
+
+  message RgbdCameraPluginSpec {
+    // Empty
+  }
+
+  // Cameras use the following convention: z forward, x right, y down (in the
+  // frame of the owning entity).
+  message DepthCamera {
+    CommonCameraProperties properties = 1;
+    RgbdCameraPluginSpec rgbd_camera_plugin = 2 [deprecated = true];
+
+    // If present the CameraPlugin is enabled.
+    CameraPluginSpec camera_plugin = 3;
+  }
+
+  message ForceTorqueDevicePluginSpec {
+    optional Noise force_noise = 1;
+    optional Noise torque_noise = 2;
+
+    optional double filter_cutoff_freq = 3;
+    optional double max_force_per_axis = 4;
+    optional double max_torque_per_axis = 5;
+  }
+
+  // See: http://sdformat.org/spec?ver=1.7&elem=sensor#sensor_force_torque
+  message ForceTorque {
+    enum Frame {
+      FRAME_UNSPECIFIED = 0;
+      FRAME_CHILD = 1;
+      FRAME_PARENT = 2;
+      FRAME_SENSOR = 3;
+    }
+
+    enum MeasureDirection {
+      MEASURE_DIRECTION_UNSPECIFIED = 0;
+      MEASURE_DIRECTION_CHILD_TO_PARENT = 1;
+      MEASURE_DIRECTION_PARENT_TO_CHILD = 2;
+    }
+
+    // Frame in which to report the wrench values.
+    Frame frame = 1;
+
+    // Direction of the wrench measured by the sensor.
+    MeasureDirection measure_direction = 2;
+
+    // If present, the ForceTorqueDevicePlugin is enabled.
+    ForceTorqueDevicePluginSpec force_torque_device_plugin = 3;
+  }
+
+  message Scan {
+    // The number of simulated lidar rays to generate per complete laser sweep
+    // cycle.
+    uint32 samples = 1;
+    // This number is multiplied by samples to determine the number of range
+    // data points returned. If resolution is less than one, range data is
+    // interpolated. If resolution is greater than one, range data is averaged.
+    double resolution = 2;
+
+    double min_angle = 3;
+    double max_angle = 4;
+  }
+
+  message RangeFinderDevicePluginSpec {
+    // Empty
+  }
+
+  message Range {
+    // The minimum distance for each lidar ray.
+    double min_distance = 1;
+    // The maximum distance for each lidar ray.
+    double max_distance = 2;
+    // Linear resolution of each lidar ray.
+    double resolution = 3;
+  }
+
+  // See: http://sdformat.org/spec?ver=1.7&elem=sensor#sensor_lidar
+  message Lidar {
+    Scan horizontal = 1;
+    Scan vertical = 2;
+    Range range = 3;
+    Noise noise = 4;
+
+    RangeFinderDevicePluginSpec range_finder_device_plugin = 5;
+  }
+
+  oneof type_oneof {
+    Camera camera = 4;
+    DepthCamera depth_camera = 5;
+    ForceTorque force_torque = 6;
+    Lidar lidar = 9;
+  }
+}

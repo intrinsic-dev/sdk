@@ -278,6 +278,36 @@ go_proto_library(
 )
 
 proto_library(
+    name = "sensor_component_proto",
+    srcs = ["sensor_component.proto"],
+)
+
+cc_proto_library(
+    name = "sensor_component_cc_proto",
+    deps = [":sensor_component_proto"],
+)
+
+go_proto_library(
+    name = "sensor_component_go_proto",
+    deps = ["sensor_component_proto"],
+)
+
+proto_library(
+    name = "gripper_component_proto",
+    srcs = ["gripper_component.proto"],
+)
+
+cc_proto_library(
+    name = "gripper_component_cc_proto",
+    deps = [":gripper_component_proto"],
+)
+
+go_proto_library(
+    name = "gripper_component_go_proto",
+    deps = ["gripper_component_proto"],
+)
+
+proto_library(
     name = "geometric_constraints_proto",
     srcs = ["geometric_constraints.proto"],
     deps = [
