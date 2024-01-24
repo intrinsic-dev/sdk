@@ -14,6 +14,7 @@ import "intrinsic/skills/proto/footprint.proto";
 import "intrinsic/world/proto/collision_action.proto";
 import "intrinsic/world/proto/collision_settings.proto";
 import "intrinsic/world/proto/geometry_component.proto";
+import "intrinsic/world/proto/gripper_component.proto";
 import "intrinsic/world/proto/kinematics_component.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 import "intrinsic/world/proto/object_world_updates.proto";
@@ -240,6 +241,10 @@ message ObjectComponent {
   // Properties for how this object spawns objects in simulation. Will not be
   // set if this object is not a spawner resource.
   intrinsic_proto.world.SpawnerComponent spawner_component = 6;
+
+  // Configuration properties for this object if it is a gripper. Will not be
+  // set if the object is not a gripper resource.
+  intrinsic_proto.world.GripperComponent gripper_component = 7;
 }
 
 // A reference to a world resource that includes both its resource id as well as
