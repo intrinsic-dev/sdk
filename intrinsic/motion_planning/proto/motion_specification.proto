@@ -104,10 +104,8 @@ message JointBlendingParameters {
   optional double desired_tightness_rad = 1;
 }
 message BlendingParameters {
-  oneof parameter_kind {
-    CartesianBlendingParameters cartesian_blending = 1;
-    JointBlendingParameters joint_blending = 2;
-  }
+  optional CartesianBlendingParameters cartesian_blending = 1;
+  optional JointBlendingParameters joint_blending = 2;
 }
 
 message MotionTarget {
