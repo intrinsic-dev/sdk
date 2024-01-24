@@ -30,39 +30,6 @@ go_proto_library(
 )
 
 proto_library(
-    name = "equipment_registry_proto",
-    srcs = ["equipment_registry.proto"],
-    deps = [
-        ":equipment_proto",
-        "//intrinsic/resources/proto:resource_handle_proto",
-    ],
-)
-
-cc_proto_library(
-    name = "equipment_registry_cc_proto",
-    deps = [":equipment_registry_proto"],
-)
-
-cc_grpc_library(
-    name = "equipment_registry_cc_grpc_proto",
-    srcs = [":equipment_registry_proto"],
-    grpc_only = True,
-    deps = [":equipment_registry_cc_proto"],
-)
-
-py_proto_library(
-    name = "equipment_registry_py_pb2",
-    deps = [":equipment_registry_proto"],
-)
-
-py_grpc_library(
-    name = "equipment_registry_py_pb2_grpc",
-    srcs = [":equipment_registry_proto"],
-    grpc_library = requirement("grpcio"),
-    deps = [":equipment_registry_py_pb2"],
-)
-
-proto_library(
     name = "skills_proto",
     srcs = ["skills.proto"],
     deps = [
@@ -388,7 +355,6 @@ proto_library(
     name = "skills_all_protos",
     deps = [
         ":equipment_proto",
-        ":equipment_registry_proto",
         ":error_proto",
         ":footprint_proto",
         ":motion_targets_proto",
