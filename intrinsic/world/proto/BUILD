@@ -140,6 +140,7 @@ proto_library(
         ":object_world_refs_proto",
         ":object_world_updates_proto",
         ":physics_component_proto",
+        ":sensor_component_proto",
         ":simulation_component_proto",
         ":spawner_component_proto",
         "//intrinsic/icon/proto:cart_space_proto",

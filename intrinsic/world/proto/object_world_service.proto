@@ -19,6 +19,7 @@ import "intrinsic/world/proto/kinematics_component.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 import "intrinsic/world/proto/object_world_updates.proto";
 import "intrinsic/world/proto/physics_component.proto";
+import "intrinsic/world/proto/sensor_component.proto";
 import "intrinsic/world/proto/simulation_component.proto";
 import "intrinsic/world/proto/spawner_component.proto";
 
@@ -373,7 +374,7 @@ message Objects {
 // and each object consists of one or more entities that are connected to each
 // other. I.e., each object corresponds to a subtree of the world's entities.
 // The root object consists of exactly one entity - the root entity.
-// Next tag: 11
+// Next tag: 12
 message Entity {
   // Id of the world which the entity is part of.
   string world_id = 1;
@@ -422,6 +423,10 @@ message Entity {
   // Kinematics properties of this entity. Only set if this entity models the
   // joint of a kinematic object.
   intrinsic_proto.world.KinematicsComponent kinematics_component = 9;
+
+  // Sensor properties of this entity. Only set if this entity models the
+  // sensor of an object.
+  intrinsic_proto.world.SensorComponent sensor_component = 11;
 }
 
 // -----------------------------------------------------------------------------
