@@ -42,7 +42,8 @@
 #include "intrinsic/platform/common/buffers/realtime_write_queue.h"
 #include "intrinsic/util/grpc/channel_interface.h"
 #include "intrinsic/util/proto_time.h"
-#include "intrinsic/util/status/rpc_status_conversion.h"
+#include "intrinsic/util/status/status_conversion_grpc.h"
+#include "intrinsic/util/status/status_conversion_rpc.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/thread/thread.h"
 
@@ -69,7 +70,7 @@ absl::Status CleanUpCallAfterClientWritesDone(
     LOG(ERROR) << "Received unexpected response from the server:"
                << response_message;
   }
-  return absl::Status(stream->Finish());
+  return ToAbslStatus(stream->Finish());
 }
 
 // Writes a message to the server and reads the response. Returns an error if
@@ -298,7 +299,7 @@ absl::StatusOr<std::unique_ptr<Session>> Session::StartImpl(
 
   intrinsic_proto::icon::WatchReactionsResponse response;
   if (!watcher_stream->Read(&response)) {
-    return watcher_stream->Finish();
+    return ToAbslStatus(watcher_stream->Finish());
   }
 
   if (response.has_reaction_event()) {
@@ -562,8 +563,8 @@ Session::GetLatestOutput(ActionInstanceId id, absl::Time deadline) {
   request.set_session_id(session_id_.value());
   request.set_action_id(id.value());
   ::intrinsic_proto::icon::GetLatestStreamingOutputResponse response;
-  INTR_RETURN_IF_ERROR(
-      stub_->GetLatestStreamingOutput(context.get(), request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      stub_->GetLatestStreamingOutput(context.get(), request, &response)));
   return response.output();
 }
 
@@ -585,7 +586,7 @@ Session::GetPlannedTrajectory(ActionInstanceId id) {
     planned_trajectory_segments.push_back(
         response.planned_trajectory_segment());
   }
-  INTR_RETURN_IF_ERROR(stream->Finish());
+  INTR_RETURN_IF_ERROR(ToAbslStatus(stream->Finish()));
 
   return ConcatenateTrajectoryProtos(planned_trajectory_segments);
 }
@@ -789,7 +790,7 @@ void Session::WatchReactionsThreadBody() {
   grpc::Status grpc_status = watcher_stream_->Finish();
   absl::MutexLock l(&reactions_queue_writer_mutex_);
   if (!grpc_status.ok()) {
-    absl::Status error(grpc_status);  // Only allowed for errors.
+    absl::Status error = ToAbslStatus(grpc_status);  // Only allowed for errors.
     while (!reactions_queue_.Writer().Write(error)) {
     }
   }

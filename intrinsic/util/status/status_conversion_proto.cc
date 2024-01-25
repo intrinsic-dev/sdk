@@ -1,6 +1,6 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-#include "intrinsic/util/status/status_proto_conversion.h"
+#include "intrinsic/util/status/status_conversion_proto.h"
 
 #include <string>
 

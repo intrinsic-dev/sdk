@@ -27,6 +27,7 @@ cc_library(
         "//intrinsic/motion_planning/proto:motion_specification_cc_proto",
         "//intrinsic/motion_planning/proto:motion_target_cc_proto",
         "//intrinsic/util:eigen",
+        "//intrinsic/util/status:status_conversion_grpc",
         "//intrinsic/util/status:status_macros",
         "//intrinsic/world/objects:kinematic_object",
         "//intrinsic/world/objects:transform_node",

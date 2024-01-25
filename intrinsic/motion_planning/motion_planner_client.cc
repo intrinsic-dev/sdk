@@ -22,6 +22,7 @@
 #include "intrinsic/motion_planning/proto/motion_planner_service.pb.h"
 #include "intrinsic/motion_planning/proto/motion_target.pb.h"
 #include "intrinsic/util/eigen.h"
+#include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/world/objects/kinematic_object.h"
 
@@ -69,8 +70,8 @@ MotionPlannerClient::PlanTrajectory(
 
   intrinsic_proto::motion_planning::TrajectoryPlanningResponse response;
   grpc::ClientContext ctx;
-  INTR_RETURN_IF_ERROR(
-      motion_planner_service_->PlanTrajectory(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      motion_planner_service_->PlanTrajectory(&ctx, request, &response)));
 
   MotionPlannerClient::PlanTrajectoryResult result;
   result.trajectory = response.discretized();
@@ -110,8 +111,8 @@ absl::StatusOr<std::vector<eigenmath::VectorXd>> MotionPlannerClient::ComputeIk(
 
   intrinsic_proto::motion_planning::IkResponse response;
   grpc::ClientContext ctx;
-  INTR_RETURN_IF_ERROR(
-      motion_planner_service_->ComputeIk(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      motion_planner_service_->ComputeIk(&ctx, request, &response)));
 
   return ToVectorXds(response.solutions());
 }
@@ -140,7 +141,7 @@ absl::StatusOr<Pose3d> ComputeFkInternal(
   intrinsic_proto::motion_planning::FkResponse response;
   grpc::ClientContext ctx;
   INTR_RETURN_IF_ERROR(
-      motion_planner_service.ComputeFk(&ctx, request, &response));
+      ToAbslStatus(motion_planner_service.ComputeFk(&ctx, request, &response)));
 
   return FromProto(response.reference_t_target());
 }
@@ -189,8 +190,8 @@ MotionPlannerClient::CheckCollisions(
 
   intrinsic_proto::motion_planning::CheckCollisionsResponse response;
   grpc::ClientContext ctx;
-  INTR_RETURN_IF_ERROR(
-      motion_planner_service_->CheckCollisions(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      motion_planner_service_->CheckCollisions(&ctx, request, &response)));
   return response;
 }
 
@@ -198,8 +199,8 @@ absl::StatusOr<intrinsic_proto::motion_planning::ClearCacheResponse>
 MotionPlannerClient::ClearCache() {
   intrinsic_proto::motion_planning::ClearCacheResponse response;
   grpc::ClientContext ctx;
-  INTR_RETURN_IF_ERROR(motion_planner_service_->ClearCache(
-      &ctx, intrinsic_proto::motion_planning::ClearCacheRequest(), &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(motion_planner_service_->ClearCache(
+      &ctx, intrinsic_proto::motion_planning::ClearCacheRequest(), &response)));
   return response;
 }
 

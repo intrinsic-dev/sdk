@@ -18,6 +18,7 @@
 #include "intrinsic/simulation/service/proto/simulation_service.grpc.pb.h"
 #include "intrinsic/simulation/service/proto/simulation_service.pb.h"
 #include "intrinsic/util/grpc/grpc.h"
+#include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_macros.h"
 
 // Default to the ingress service's port.
@@ -56,8 +57,8 @@ absl::Status ResetSimulation(absl::string_view address) {
   grpc::ClientContext context;
   google::protobuf::Empty empty;
   std::cout << "Starting resetting simulation." << std::endl;
-  INTR_RETURN_IF_ERROR(stub->ResetSimulation(
-      &context, xfa::simulation::ResetSimulationRequest(), &empty));
+  INTR_RETURN_IF_ERROR(intrinsic::ToAbslStatus(stub->ResetSimulation(
+      &context, xfa::simulation::ResetSimulationRequest(), &empty)));
   std::cout << "Finished resetting simulation." << std::endl;
   return absl::OkStatus();
 }

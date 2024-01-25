@@ -14,6 +14,7 @@
 #include "grpcpp/client_context.h"
 #include "intrinsic/resources/proto/resource_registry.grpc.pb.h"
 #include "intrinsic/util/grpc/grpc.h"
+#include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
@@ -44,7 +45,8 @@ ResourceRegistryClient::ListResources(
     intrinsic_proto::resources::ListResourceInstanceResponse resp;
     req.set_page_token(page_token);
     *req.mutable_strict_filter() = filter;
-    INTR_RETURN_IF_ERROR(stub_->ListResourceInstances(&context, req, &resp));
+    INTR_RETURN_IF_ERROR(
+        ToAbslStatus(stub_->ListResourceInstances(&context, req, &resp)));
     resource_instances.insert(resource_instances.end(),
                               std::make_move_iterator(resp.instances().begin()),
                               std::make_move_iterator(resp.instances().end()));
@@ -62,7 +64,8 @@ ResourceRegistryClient::GetResource(absl::string_view id) const {
   intrinsic_proto::resources::GetResourceInstanceRequest req;
   intrinsic_proto::resources::ResourceInstance instance;
   req.set_id(id);
-  INTR_RETURN_IF_ERROR(stub_->GetResourceInstance(&context, req, &instance));
+  INTR_RETURN_IF_ERROR(
+      ToAbslStatus(stub_->GetResourceInstance(&context, req, &instance)));
   return instance;
 }
 

@@ -12,6 +12,7 @@
 #include "grpcpp/support/status.h"
 #include "intrinsic/icon/release/source_location.h"
 #include "intrinsic/util/status/status_builder.h"
+#include "intrinsic/util/status/status_conversion_grpc.h"
 
 namespace intrinsic {
 
@@ -26,6 +27,14 @@ class ABSL_MUST_USE_RESULT StatusBuilderGrpc {
   explicit StatusBuilderGrpc(StatusBuilder&& builder)
       : builder_(std::move(builder)) {}
 
+  explicit StatusBuilderGrpc(const absl::Status& status)
+      : builder_(StatusBuilder(status)) {}
+
+  explicit StatusBuilderGrpc(const grpc::Status& status)
+      : builder_(StatusBuilder(ToAbslStatus(status))) {}
+
+  StatusBuilderGrpc(const StatusBuilderGrpc&) = default;
+  StatusBuilderGrpc& operator=(const StatusBuilderGrpc&) = default;
   StatusBuilderGrpc(StatusBuilderGrpc&&) = default;
   StatusBuilderGrpc& operator=(StatusBuilderGrpc&&) noexcept = default;
 
@@ -264,11 +273,12 @@ inline StatusBuilderGrpc::operator absl::Status() && {
 }
 
 inline StatusBuilderGrpc::operator grpc::Status() const& {
-  return grpc::Status(static_cast<absl::Status>(builder_));
+  return intrinsic::ToGrpcStatus(static_cast<absl::Status>(builder_));
 }
 
 inline StatusBuilderGrpc::operator grpc::Status() && {
-  return grpc::Status(static_cast<absl::Status>(std::move(builder_)));
+  return intrinsic::ToGrpcStatus(
+      static_cast<absl::Status>(std::move(builder_)));
 }
 
 inline intrinsic::SourceLocation StatusBuilderGrpc::source_location() const {

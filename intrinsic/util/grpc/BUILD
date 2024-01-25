@@ -59,6 +59,7 @@ cc_library(
     hdrs = ["grpc.h"],
     deps = [
         "//intrinsic/icon/release:grpc_time_support",
+        "//intrinsic/util/status:status_conversion_grpc",
         "//intrinsic/util/thread",
         "@com_github_grpc_grpc//:grpc++",
         "@com_github_grpc_grpc//src/proto/grpc/health/v1:health_proto",

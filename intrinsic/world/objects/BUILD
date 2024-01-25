@@ -122,6 +122,7 @@ cc_library(
         "//intrinsic/resources/proto:resource_handle_cc_proto",
         "//intrinsic/skills/proto:equipment_cc_proto",
         "//intrinsic/util:eigen",
+        "//intrinsic/util/status:status_conversion_grpc",
         "//intrinsic/util/status:status_macros",
         "//intrinsic/world/proto:object_world_refs_cc_proto",
         "//intrinsic/world/proto:object_world_service_cc_grpc_proto",

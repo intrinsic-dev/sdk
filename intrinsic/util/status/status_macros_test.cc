@@ -66,8 +66,8 @@ TEST(AssignOrReturn, Works) {
     EXPECT_EQ(2, value2);
     INTR_ASSIGN_OR_RETURN(const int& value3, ReturnStatusOrValue(3));
     EXPECT_EQ(3, value3);
-    INTR_ASSIGN_OR_RETURN(int value4, ReturnStatusOrError("EXPECTED"));
-    value4 = 0;  // fix unused error
+    INTR_ASSIGN_OR_RETURN([[maybe_unused]] int value4,
+                          ReturnStatusOrError("EXPECTED"));
     return ReturnError("ERROR");
   };
 
@@ -85,9 +85,8 @@ TEST(AssignOrReturn, WorksWithCommasInType) {
                           ReturnStatusOrTupleValue(1, std::tuple{1, 1}, 1));
     EXPECT_EQ((std::tuple{1, std::tuple{1, 1}, 1}), t2);
     INTR_ASSIGN_OR_RETURN(
-        (std::tuple<int, std::tuple<int, int>, int> t3),
+        ([[maybe_unused]] std::tuple<int, std::tuple<int, int>, int> t3),
         (ReturnStatusOrTupleError<int, std::tuple<int, int>, int>("EXPECTED")));
-    t3 = {};  // fix unused error
     return ReturnError("ERROR");
   };
 
@@ -104,8 +103,8 @@ TEST(AssignOrReturn, WorksWithStructureBindings) {
     EXPECT_EQ(2, t3);
     EXPECT_EQ(3, t4);
     EXPECT_EQ(4, t5);
-    INTR_ASSIGN_OR_RETURN(int t6, ReturnStatusOrError("EXPECTED"));
-    t6 = 0;
+    INTR_ASSIGN_OR_RETURN([[maybe_unused]] int t6,
+                          ReturnStatusOrError("EXPECTED"));
     return ReturnError("ERROR");
   };
 
@@ -321,92 +320,6 @@ TEST(ReturnIfError, WorksWithVoidReturnAdaptor) {
   EXPECT_EQ(phase, 2);
   EXPECT_EQ(code, 2);
 }
-
-// Basis for INTR_RETURN_IF_ERROR and INTR_ASSIGN_OR_RETURN benchmarks.  Derived
-// classes override LoopAgain() with the macro invocation(s).
-template <class T>
-class ReturnLoop {
- public:
-  using ReturnType = T;
-
-  explicit ReturnLoop(ReturnType return_value)
-      : value_(std::move(return_value)) {}
-  virtual ~ReturnLoop() = default;
-
-  ReturnType Loop(size_t* ops) {
-    if (*ops == 0) {
-      return value_;
-    }
-    // LoopAgain is virtual, with the intent that this defeats tail
-    // recursion optimization.
-    return LoopAgain(ops);
-  }
-
-  ReturnType return_value() { return value_; }
-
- private:
-  virtual ReturnType LoopAgain(size_t* ops) = 0;
-
-  const ReturnType value_;
-};
-
-class ReturnIfErrorLoop : public ReturnLoop<absl::Status> {
- public:
-  explicit ReturnIfErrorLoop(absl::Status return_value)
-      : ReturnLoop(std::move(return_value)) {}
-
- private:
-  absl::Status LoopAgain(size_t* ops) override {
-    --*ops;
-    INTR_RETURN_IF_ERROR(Loop(ops));
-    return absl::OkStatus();
-  }
-};
-
-class ReturnIfErrorWithAnnotateLoop : public ReturnLoop<absl::Status> {
- public:
-  explicit ReturnIfErrorWithAnnotateLoop(absl::Status return_value)
-      : ReturnLoop(std::move(return_value)) {}
-
- private:
-  absl::Status LoopAgain(size_t* ops) override {
-    --*ops;
-    INTR_RETURN_IF_ERROR(Loop(ops))
-        << "The quick brown fox jumped over the lazy dog.";
-    return absl::OkStatus();
-  }
-};
-
-class AssignOrReturnLoop : public ReturnLoop<absl::StatusOr<int>> {
- public:
-  explicit AssignOrReturnLoop(ReturnType return_value)
-      : ReturnLoop(std::move(return_value)) {}
-
- private:
-  ReturnType LoopAgain(size_t* ops) override {
-    --*ops;
-    INTR_ASSIGN_OR_RETURN(int result, Loop(ops));
-    return result;
-  }
-
-  ReturnType result_;
-};
-
-class AssignOrReturnAnnotateLoop : public ReturnLoop<absl::StatusOr<int>> {
- public:
-  explicit AssignOrReturnAnnotateLoop(ReturnType return_value)
-      : ReturnLoop(std::move(return_value)) {}
-
- private:
-  ReturnType LoopAgain(size_t* ops) override {
-    --*ops;
-    INTR_ASSIGN_OR_RETURN(int result, Loop(ops),
-                          _ << "The quick brown fox jumped over the lazy dog.");
-    return result;
-  }
-
-  ReturnType result_;
-};
 
 }  // namespace
 }  // namespace intrinsic

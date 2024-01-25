@@ -22,6 +22,7 @@
 #include "absl/time/time.h"
 #include "grpcpp/grpcpp.h"
 #include "intrinsic/icon/release/grpc_time_support.h"
+#include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/thread/thread.h"
 #include "src/proto/grpc/health/v1/health.grpc.pb.h"
 
@@ -64,7 +65,7 @@ absl::Status CheckChannelHealth(std::shared_ptr<::grpc::Channel> channel,
   }
 
   if (!status.ok() && status.error_code() != grpc::StatusCode::UNIMPLEMENTED) {
-    return status;
+    return ToAbslStatus(status);
   }
   return absl::OkStatus();
 }

@@ -28,6 +28,7 @@
 #include "intrinsic/skills/proto/skills.pb.h"
 #include "intrinsic/util/grpc/grpc.h"
 #include "intrinsic/util/status/annotate.h"
+#include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
@@ -86,7 +87,7 @@ SkillRegistryClient::GetSkills(absl::Duration timeout) const {
   ::grpc::Status status = stub_->GetSkills(&context, request, &response);
   if (!status.ok()) {
     return AnnotateError(
-        status,
+        ToAbslStatus(status),
         absl::StrCat(
             "SkillRegistryClient::GetSkills gRPC call failed; (",
             absl::StatusCodeToString(absl::StatusCode(status.error_code())),
@@ -104,7 +105,7 @@ SkillRegistryClient::GetSkillById(absl::string_view skill_id) const {
   intrinsic_proto::skills::GetSkillRequest req;
   req.set_id(std::string(skill_id));
   intrinsic_proto::skills::GetSkillResponse resp;
-  INTR_RETURN_IF_ERROR(stub_->GetSkill(&context, req, &resp));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(stub_->GetSkill(&context, req, &resp)));
   return resp.skill();
 }
 
@@ -142,7 +143,7 @@ SkillRegistryClient::GetInstance(absl::string_view id,
   ::grpc::Status status =
       stub_internal_->GetInstance(&context, request, &response);
   if (!status.ok()) {
-    return AnnotateError(status,
+    return AnnotateError(ToAbslStatus(status),
                          absl::StrCat("SkillRegistryClient::GetInstance(", id,
                                       ") gRPC call failed"));
   }
@@ -169,9 +170,9 @@ SkillRegistryClient::GetInstanceWithId(absl::string_view id,
   ::grpc::Status status =
       stub_internal_->GetInstance(&context, request, &response);
   if (!status.ok()) {
-    return AnnotateError(
-        status, absl::StrCat("SkillRegistryClient::GetInstanceWithId(", id,
-                             ") gRPC call failed"));
+    return AnnotateError(ToAbslStatus(status),
+                         absl::StrCat("SkillRegistryClient::GetInstanceWithId(",
+                                      id, ") gRPC call failed"));
   }
   return response.instance();
 }
@@ -194,7 +195,7 @@ SkillRegistryClient::GetBehaviorTree(absl::string_view skill_id,
       bt_stub_internal_->GetBehaviorTree(&context, req, &resp);
   if (!status.ok()) {
     return AnnotateError(
-        status,
+        ToAbslStatus(status),
         absl::StrCat(
             "SkillRegistryClient::GetBehaviorTree gRPC call failed; (",
             absl::StatusCodeToString(absl::StatusCode(status.error_code())),
@@ -219,7 +220,8 @@ absl::Status SkillRegistryClient::RegisterOrUpdateSkill(
   *request.mutable_skill_registration() = skill_registration;
 
   google::protobuf::Empty response;
-  return stub_internal_->RegisterOrUpdateSkill(&context, request, &response);
+  return ToAbslStatus(
+      stub_internal_->RegisterOrUpdateSkill(&context, request, &response));
 }
 
 absl::Status SkillRegistryClient::RegisterOrUpdateBehaviorTree(
@@ -240,7 +242,8 @@ absl::Status SkillRegistryClient::RegisterOrUpdateBehaviorTree(
   *request.mutable_registration() = behavior_tree_registration;
 
   intrinsic_proto::skills::RegisterOrUpdateBehaviorTreeResponse response;
-  return bt_stub_->RegisterOrUpdateBehaviorTree(&context, request, &response);
+  return ToAbslStatus(
+      bt_stub_->RegisterOrUpdateBehaviorTree(&context, request, &response));
 }
 
 absl::Status SkillRegistryClient::ResetInstanceIds() const {
@@ -253,8 +256,8 @@ absl::Status SkillRegistryClient::ResetInstanceIds(
   context.set_deadline(absl::ToChronoTime(absl::Now() + timeout));
 
   google::protobuf::Empty response;
-  return stub_internal_->ResetInstanceIDs(
-      &context, google::protobuf::Empty::default_instance(), &response);
+  return ToAbslStatus(stub_internal_->ResetInstanceIDs(
+      &context, google::protobuf::Empty::default_instance(), &response));
 }
 
 }  // namespace skills

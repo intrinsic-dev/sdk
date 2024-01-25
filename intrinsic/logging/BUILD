@@ -34,6 +34,7 @@ cc_library(
         "//intrinsic/logging/proto:logger_service_cc_proto",
         "//intrinsic/util:proto_time",
         "//intrinsic/util/grpc",
+        "//intrinsic/util/status:status_conversion_grpc",
         "//intrinsic/util/status:status_macros",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/base:core_headers",

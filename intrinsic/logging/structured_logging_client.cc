@@ -14,10 +14,12 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/time/time.h"
+#include "grpcpp/support/status.h"
 #include "intrinsic/logging/proto/logger_service.grpc.pb.h"
 #include "intrinsic/logging/proto/logger_service.pb.h"
 #include "intrinsic/util/grpc/grpc.h"
 #include "intrinsic/util/proto_time.h"
+#include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
@@ -75,7 +77,7 @@ absl::Status StructuredLoggingClient::Log(LogItem&& item) {
   intrinsic_proto::data_logger::LogRequest request;
   *request.mutable_item() = std::move(item);
   google::protobuf::Empty response;
-  return impl_->stub->Log(&context, request, &response);
+  return ToAbslStatus(impl_->stub->Log(&context, request, &response));
 }
 
 absl::Status StructuredLoggingClient::Log(const LogItem& item) {
@@ -112,8 +114,9 @@ void StructuredLoggingClient::LogAsync(
   // this is not the case if we used a unique_ptr.
   auto args = std::make_shared<LogArgs>();
   args->callback = std::move(callback);
-  impl_->stub->async()->Log(&args->context, &request, &args->response,
-                            [args](grpc::Status s) { args->callback(s); });
+  impl_->stub->async()->Log(
+      &args->context, &request, &args->response,
+      [args](grpc::Status s) { args->callback(ToAbslStatus(s)); });
 }
 
 void StructuredLoggingClient::LogAsync(const LogItem& item) {
@@ -134,7 +137,7 @@ StructuredLoggingClient::ListLogSources() {
   google::protobuf::Empty request;
   intrinsic_proto::data_logger::ListLogSourcesResponse response;
   INTR_RETURN_IF_ERROR(
-      impl_->stub->ListLogSources(&context, request, &response));
+      ToAbslStatus(impl_->stub->ListLogSources(&context, request, &response)));
   std::vector<std::string> log_sources(response.event_sources().begin(),
                                        response.event_sources().end());
   return log_sources;
@@ -163,7 +166,8 @@ StructuredLoggingClient::GetLogItems(absl::string_view event_source,
   if (!page_token.empty()) {
     request.set_cursor(std::string{page_token});
   }
-  INTR_RETURN_IF_ERROR(impl_->stub->GetLogItems(&context, request, &response));
+  INTR_RETURN_IF_ERROR(
+      ToAbslStatus(impl_->stub->GetLogItems(&context, request, &response)));
   std::vector<intrinsic_proto::data_logger::LogItem> log_items(
       std::make_move_iterator(response.log_items().begin()),
       std::make_move_iterator(response.log_items().end()));
@@ -180,8 +184,8 @@ StructuredLoggingClient::GetMostRecentItem(absl::string_view event_source) {
   intrinsic_proto::data_logger::GetMostRecentItemRequest request;
   request.set_event_source(std::string{event_source});
   intrinsic_proto::data_logger::GetMostRecentItemResponse response;
-  INTR_RETURN_IF_ERROR(
-      impl_->stub->GetMostRecentItem(&context, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      impl_->stub->GetMostRecentItem(&context, request, &response)));
   return std::move(response.item());
 }
 
@@ -195,8 +199,8 @@ StructuredLoggingClient::SyncAndRotateLogs(
                                       event_sources.end()};
   request.set_sync_all(false);
   intrinsic_proto::data_logger::SyncResponse response;
-  INTR_RETURN_IF_ERROR(
-      impl_->stub->SyncAndRotateLogs(&context, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      impl_->stub->SyncAndRotateLogs(&context, request, &response)));
   std::vector<std::string> synced_event_sources{
       std::make_move_iterator(response.event_sources().begin()),
       std::make_move_iterator(response.event_sources().end())};
@@ -209,8 +213,8 @@ StructuredLoggingClient::SyncAndRotateLogs() {
   intrinsic_proto::data_logger::SyncRequest request;
   request.set_sync_all(true);
   intrinsic_proto::data_logger::SyncResponse response;
-  INTR_RETURN_IF_ERROR(
-      impl_->stub->SyncAndRotateLogs(&context, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      impl_->stub->SyncAndRotateLogs(&context, request, &response)));
   std::vector<std::string> synced_event_sources{
       std::make_move_iterator(response.event_sources().begin()),
       std::make_move_iterator(response.event_sources().end())};
@@ -226,7 +230,7 @@ absl::Status StructuredLoggingClient::SetLogOptions(
   *request.mutable_log_options() = options;
   intrinsic_proto::data_logger::SetLogOptionsResponse response;
   INTR_RETURN_IF_ERROR(
-      impl_->stub->SetLogOptions(&context, request, &response));
+      ToAbslStatus(impl_->stub->SetLogOptions(&context, request, &response)));
   return absl::OkStatus();
 }
 
@@ -237,7 +241,7 @@ absl::StatusOr<LogOptions> StructuredLoggingClient::GetLogOptions(
   request.set_event_source(std::string{event_source});
   intrinsic_proto::data_logger::GetLogOptionsResponse response;
   INTR_RETURN_IF_ERROR(
-      impl_->stub->GetLogOptions(&context, request, &response));
+      ToAbslStatus(impl_->stub->GetLogOptions(&context, request, &response)));
   return response.log_options();
 }
 

@@ -40,14 +40,67 @@ cc_library(
 )
 
 cc_library(
-    name = "status_proto_conversion",
-    srcs = ["status_proto_conversion.cc"],
-    hdrs = ["status_proto_conversion.h"],
+    name = "status_conversion_proto",
+    srcs = ["status_conversion_proto.cc"],
+    hdrs = ["status_conversion_proto.h"],
     deps = [
         ":status_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:cord",
         "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+cc_library(
+    name = "status_conversion_rpc",
+    srcs = ["status_conversion_rpc.cc"],
+    hdrs = ["status_conversion_rpc.h"],
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:cord",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_googleapis//google/rpc:status_cc_proto",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
+    name = "status_conversion_grpc",
+    srcs = ["status_conversion_grpc.cc"],
+    hdrs = ["status_conversion_grpc.h"],
+    deps = [
+        ":status_conversion_rpc",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status",
+        "@com_google_googleapis//google/rpc:code_cc_proto",
+        "@com_google_googleapis//google/rpc:status_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "status_conversion_grpc_test",
+    srcs = ["status_conversion_grpc_test.cc"],
+    deps = [
+        ":status_conversion_grpc",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:cord",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_test(
+    name = "status_conversion_rpc_test",
+    srcs = ["status_conversion_rpc_test.cc"],
+    deps = [
+        ":status_conversion_rpc",
+        "@com_google_absl//absl/status",
+        "@com_google_googleapis//google/rpc:code_cc_proto",
+        "@com_google_googleapis//google/rpc:status_cc_proto",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -85,19 +138,6 @@ cc_library(
 )
 
 cc_library(
-    name = "rpc_status_conversion",
-    srcs = ["rpc_status_conversion.cc"],
-    hdrs = ["rpc_status_conversion.h"],
-    deps = [
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings:cord",
-        "@com_google_absl//absl/strings:string_view",
-        "@com_google_googleapis//google/rpc:status_cc_proto",
-        "@com_google_protobuf//:protobuf",
-    ],
-)
-
-cc_library(
     name = "annotate",
     srcs = ["annotate.cc"],
     hdrs = ["annotate.h"],
@@ -115,6 +155,7 @@ cc_library(
     hdrs = ["status_builder_grpc.h"],
     deps = [
         ":status_builder",
+        ":status_conversion_grpc",
         "//intrinsic/icon/release:source_location",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/status",
@@ -128,6 +169,7 @@ cc_library(
     deps = [
         ":status_builder",
         ":status_builder_grpc",
+        ":status_conversion_grpc",
         ":status_macros",
         "//intrinsic/icon/release:source_location",
         "@com_github_grpc_grpc//:grpc++",
@@ -160,18 +202,6 @@ cc_test(
         "@com_google_absl//absl/strings:cord",
         "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
-    ],
-)
-
-cc_test(
-    name = "rpc_status_conversion_test",
-    srcs = ["rpc_status_conversion_test.cc"],
-    deps = [
-        ":rpc_status_conversion",
-        "@com_google_absl//absl/status",
-        "@com_google_googleapis//google/rpc:code_cc_proto",
-        "@com_google_googleapis//google/rpc:status_cc_proto",
-        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -214,6 +244,20 @@ cc_test(
     deps = [
         ":status_builder",
         ":status_macros",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "status_macros_grpc_test",
+    srcs = ["status_macros_grpc_test.cc"],
+    deps = [
+        ":status_builder",
+        ":status_builder_grpc",
+        ":status_conversion_grpc",
+        ":status_macros_grpc",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_googletest//:gtest_main",

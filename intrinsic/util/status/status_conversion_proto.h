@@ -1,7 +1,7 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-#ifndef INTRINSIC_UTIL_STATUS_STATUS_PROTO_CONVERSION_H_
-#define INTRINSIC_UTIL_STATUS_STATUS_PROTO_CONVERSION_H_
+#ifndef INTRINSIC_UTIL_STATUS_STATUS_CONVERSION_PROTO_H_
+#define INTRINSIC_UTIL_STATUS_STATUS_CONVERSION_PROTO_H_
 
 #include "absl/status/status.h"
 #include "intrinsic/util/status/status.pb.h"
@@ -22,4 +22,4 @@ absl::Status MakeStatusFromProto(const intrinsic_proto::StatusProto& proto);
 
 }  // namespace intrinsic
 
-#endif  // INTRINSIC_UTIL_STATUS_STATUS_PROTO_CONVERSION_H_
+#endif  // INTRINSIC_UTIL_STATUS_STATUS_CONVERSION_PROTO_H_

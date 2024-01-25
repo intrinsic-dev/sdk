@@ -11,7 +11,8 @@
 #include "grpcpp/support/sync_stream.h"
 #include "intrinsic/icon/common/id_types.h"
 #include "intrinsic/icon/proto/service.pb.h"
-#include "intrinsic/util/status/rpc_status_conversion.h"
+#include "intrinsic/util/status/status_conversion_grpc.h"
+#include "intrinsic/util/status/status_conversion_rpc.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon::internal {
@@ -93,7 +94,7 @@ absl::Status GenericStreamWriter::FinishIfNeeded() {
       LOG(ERROR) << "Received unexpected response from the server:" << resp;
     }
   }
-  finish_status_ = grpc_stream_->Finish();
+  finish_status_ = ToAbslStatus(grpc_stream_->Finish());
   return *finish_status_;
 }
 

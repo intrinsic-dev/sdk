@@ -37,6 +37,7 @@ cc_binary(
         "//intrinsic/simulation/service/proto:simulation_service_cc_grpc_proto",
         "//intrinsic/simulation/service/proto:simulation_service_cc_proto",
         "//intrinsic/util/grpc",
+        "//intrinsic/util/status:status_conversion_grpc",
         "//intrinsic/util/status:status_macros",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/flags:flag",

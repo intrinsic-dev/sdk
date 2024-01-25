@@ -27,6 +27,7 @@
 #include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/util/eigen.h"
+#include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/world/objects/frame.h"
 #include "intrinsic/world/objects/kinematic_object.h"
@@ -57,7 +58,7 @@ absl::StatusOr<intrinsic_proto::world::Object> CallGetObjectUsingFullView(
   intrinsic_proto::world::Object response;
   request.set_view(intrinsic_proto::world::ObjectView::FULL);
   INTR_RETURN_IF_ERROR(
-      object_world_service.GetObject(&ctx, request, &response));
+      ToAbslStatus(object_world_service.GetObject(&ctx, request, &response)));
   return response;
 }
 
@@ -82,7 +83,8 @@ absl::StatusOr<Frame> CallGetFrame(
         object_world_service) {
   grpc::ClientContext ctx;
   intrinsic_proto::world::Frame response;
-  INTR_RETURN_IF_ERROR(object_world_service.GetFrame(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(
+      ToAbslStatus(object_world_service.GetFrame(&ctx, request, &response)));
   return Frame::Create(std::move(response));
 }
 
@@ -123,7 +125,8 @@ absl::Status CallUpdateTransform(
   // Use minimalistic view since we are ignoring the response.
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   intrinsic_proto::world::UpdateTransformResponse response;
-  return object_world_service.UpdateTransform(&ctx, request, &response);
+  return ToAbslStatus(
+      object_world_service.UpdateTransform(&ctx, request, &response));
 }
 
 absl::Status CallCreateFrame(
@@ -138,8 +141,8 @@ absl::Status CallCreateFrame(
   *request_with_parent.mutable_parent_t_new_frame() =
       ToProto(parent_t_new_frame);
   intrinsic_proto::world::Frame response;
-  INTR_RETURN_IF_ERROR(
-      object_world_service.CreateFrame(&ctx, request_with_parent, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service.CreateFrame(&ctx, request_with_parent, &response)));
   return absl::OkStatus();
 }
 
@@ -260,8 +263,8 @@ absl::StatusOr<std::vector<WorldObject>> ObjectWorldClient::ListObjects()
   request.set_view(intrinsic_proto::world::ObjectView::FULL);
   grpc::ClientContext ctx;
   intrinsic_proto::world::ListObjectsResponse response;
-  INTR_RETURN_IF_ERROR(
-      object_world_service_->ListObjects(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service_->ListObjects(&ctx, request, &response)));
   std::vector<WorldObject> objects;
   objects.reserve(response.objects_size());
   for (const auto& object_proto : response.objects()) {
@@ -279,8 +282,8 @@ ObjectWorldClient::ListObjectNames() const {
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   grpc::ClientContext ctx;
   intrinsic_proto::world::ListObjectsResponse response;
-  INTR_RETURN_IF_ERROR(
-      object_world_service_->ListObjects(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service_->ListObjects(&ctx, request, &response)));
   std::vector<WorldObjectName> objects;
   objects.reserve(response.objects_size());
   for (const auto& object_proto : response.objects()) {
@@ -297,8 +300,8 @@ absl::Status ObjectWorldClient::DeleteObject(const WorldObject& object,
   request.set_force(option == ForceDeleteOption::kForce);
   grpc::ClientContext ctx;
   google::protobuf::Empty response;
-  INTR_RETURN_IF_ERROR(
-      object_world_service_->DeleteObject(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service_->DeleteObject(&ctx, request, &response)));
   return absl::OkStatus();
 }
 
@@ -461,8 +464,8 @@ absl::Status ObjectWorldClient::UpdateObjectName(
   request.set_name_is_global_alias(name_type ==
                                    WorldObjectNameType::kNameIsGlobalAlias);
   intrinsic_proto::world::Object response;
-  INTR_RETURN_IF_ERROR(
-      object_world_service_->UpdateObjectName(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service_->UpdateObjectName(&ctx, request, &response)));
   return absl::OkStatus();
 }
 
@@ -474,8 +477,8 @@ absl::Status ObjectWorldClient::UpdateFrameName(const Frame& frame,
   request.mutable_frame()->set_id(frame.Id().value());
   request.set_name(new_name.value());
   intrinsic_proto::world::Frame response;
-  INTR_RETURN_IF_ERROR(
-      object_world_service_->UpdateFrameName(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service_->UpdateFrameName(&ctx, request, &response)));
   return absl::OkStatus();
 }
 
@@ -503,8 +506,8 @@ absl::StatusOr<Pose3d> ObjectWorldClient::GetTransform(
   }
 
   intrinsic_proto::world::GetTransformResponse response;
-  INTR_RETURN_IF_ERROR(
-      object_world_service_->GetTransform(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service_->GetTransform(&ctx, request, &response)));
   return intrinsic_proto::FromProto(response.a_t_b());
 }
 
@@ -546,8 +549,8 @@ absl::Status ObjectWorldClient::UpdateJointPositions(
   // Use minimalistic view since we are ignoring the response.
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   intrinsic_proto::world::Object response;
-  INTR_RETURN_IF_ERROR(
-      object_world_service_->UpdateObjectJoints(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service_->UpdateObjectJoints(&ctx, request, &response)));
   return absl::OkStatus();
 }
 
@@ -563,8 +566,8 @@ absl::Status ObjectWorldClient::UpdateJointApplicationLimits(
   // Use minimalistic view since we are ignoring the response.
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   intrinsic_proto::world::Object response;
-  INTR_RETURN_IF_ERROR(
-      object_world_service_->UpdateObjectJoints(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service_->UpdateObjectJoints(&ctx, request, &response)));
   return absl::OkStatus();
 }
 
@@ -579,8 +582,8 @@ absl::Status ObjectWorldClient::UpdateJointSystemLimits(
   // Use minimalistic view since we are ignoring the response.
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   intrinsic_proto::world::Object response;
-  INTR_RETURN_IF_ERROR(
-      object_world_service_->UpdateObjectJoints(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service_->UpdateObjectJoints(&ctx, request, &response)));
   return absl::OkStatus();
 }
 
@@ -599,8 +602,8 @@ absl::Status ObjectWorldClient::UpdateJointLimits(
   // Use minimalistic view since we are ignoring the response.
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   intrinsic_proto::world::Object response;
-  INTR_RETURN_IF_ERROR(
-      object_world_service_->UpdateObjectJoints(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service_->UpdateObjectJoints(&ctx, request, &response)));
   return absl::OkStatus();
 }
 
@@ -616,8 +619,9 @@ absl::Status ObjectWorldClient::UpdateCartesianLimits(
   // Use minimalistic view since we are ignoring the response.
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   intrinsic_proto::world::Object response;
-  INTR_RETURN_IF_ERROR(object_world_service_->UpdateKinematicObjectProperties(
-      &ctx, request, &response));
+  INTR_RETURN_IF_ERROR(
+      ToAbslStatus(object_world_service_->UpdateKinematicObjectProperties(
+          &ctx, request, &response)));
   return absl::OkStatus();
 }
 
@@ -640,8 +644,8 @@ absl::Status CallReparentObject(
   // Use minimalistic view since we are ignoring the response.
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   intrinsic_proto::world::Object response;
-  INTR_RETURN_IF_ERROR(
-      object_world_service.ReparentObject(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service.ReparentObject(&ctx, request, &response)));
   return absl::OkStatus();
 }
 
@@ -690,8 +694,8 @@ absl::Status CallToggleCollisions(
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
 
   intrinsic_proto::world::Objects response;
-  INTR_RETURN_IF_ERROR(
-      object_world_service.ToggleCollisions(&ctx, request, &response));
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service.ToggleCollisions(&ctx, request, &response)));
   return absl::OkStatus();
 }
 

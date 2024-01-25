@@ -43,6 +43,7 @@
 #include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
 #include "intrinsic/util/proto/merge.h"
+#include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/status/status_macros_grpc.h"
 #include "intrinsic/util/thread/thread.h"
@@ -539,7 +540,7 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
        skill_context = std::move(skill_context)]()
           -> absl::StatusOr<
               std::unique_ptr<intrinsic_proto::skills::ExecuteResult>> {
-        INTR_ASSIGN_OR_RETURN_GRPC(
+        INTR_ASSIGN_OR_RETURN(
             std::unique_ptr<::google::protobuf::Message> skill_result,
             skill->Execute(*skill_request, *skill_context));
 
@@ -613,7 +614,7 @@ grpc::Status SkillExecutorServiceImpl::StartPreview(
        skill_context = std::move(skill_context)]()
           -> absl::StatusOr<
               std::unique_ptr<intrinsic_proto::skills::PreviewResult>> {
-        INTR_ASSIGN_OR_RETURN_GRPC(
+        INTR_ASSIGN_OR_RETURN(
             std::unique_ptr<::google::protobuf::Message> skill_result,
             skill->Preview(*skill_request, *skill_context));
 
@@ -676,7 +677,7 @@ grpc::Status SkillExecutorServiceImpl::WaitOperation(
 grpc::Status SkillExecutorServiceImpl::ClearOperations(
     grpc::ServerContext* context, const google::protobuf::Empty* request,
     google::protobuf::Empty* result) {
-  return operations_.Clear(false);
+  return ToGrpcStatus(operations_.Clear(false));
 }
 
 absl::StatusOr<std::shared_ptr<internal::SkillOperation>>

@@ -11,12 +11,13 @@
 #include "absl/strings/cord.h"
 #include "google/protobuf/any.pb.h"
 #include "grpcpp/support/error_details.h"
+#include "grpcpp/support/status.h"
 #include "intrinsic/skills/proto/error.pb.h"
 
 namespace intrinsic {
 namespace skills {
 
-absl::Status ToAbslStatus(const ::grpc::Status& grpc_status) {
+absl::Status ToAbslStatusWithErrorInfo(const ::grpc::Status& grpc_status) {
   // Note: doing the absl_status = grpc_status assignment attempts to interpret
   // the error_details in a certain way, so we bypass the assignment in favor
   // of our own translation for clarity and to avoid sneaky bugs.
@@ -43,21 +44,6 @@ absl::Status ToAbslStatus(const ::grpc::Status& grpc_status) {
   SetErrorInfo(error_info, out);
 
   return out;
-}
-
-::grpc::Status ToGrpcStatus(
-    const absl::Status& absl_status,
-    const intrinsic_proto::skills::SkillErrorInfo& error_info) {
-  ::google::rpc::Status grpc_status =
-      ToGoogleRpcStatus(absl_status, error_info);
-  return ToGrpcStatus(grpc_status);
-}
-
-::grpc::Status ToGrpcStatus(const ::google::rpc::Status& rpc_status) {
-  ::grpc::Status grpc_status;
-  // Should only fail if out is nullptr.
-  CHECK_OK(grpc::SetErrorDetails(rpc_status, &grpc_status));
-  return grpc_status;
 }
 
 ::google::rpc::Status ToGoogleRpcStatus(

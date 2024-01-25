@@ -11,6 +11,7 @@
 #include "intrinsic/icon/release/source_location.h"
 #include "intrinsic/util/status/status_builder.h"
 #include "intrinsic/util/status/status_builder_grpc.h"
+#include "intrinsic/util/status/status_conversion_grpc.h"  // IWYU pragma: export
 #include "intrinsic/util/status/status_macros.h"
 
 // This provides INTR_RETURN_IF_ERROR_GRPC and INTR_ASSIGN_OR_RETURN_GRPC.
@@ -36,7 +37,7 @@
 #define INTR_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_GRPC_2_(lhs, rexpr)           \
   INTR_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_GRPC_(                              \
       INTR_STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__), lhs, rexpr, \
-      grpc::Status(static_cast<absl::Status>(_)))
+      static_cast<grpc::Status>(_))
 
 #define INTR_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_GRPC_3_(lhs, rexpr,           \
                                                          error_expression)     \
@@ -48,8 +49,8 @@
                                                        error_expression)     \
   auto statusor = (rexpr);                                                   \
   if (ABSL_PREDICT_FALSE(!statusor.ok())) {                                  \
-    ::intrinsic::StatusBuilderGrpc _(                                        \
-        StatusBuilder(std::move(statusor).status(), INTRINSIC_LOC));         \
+    ::intrinsic::StatusBuilderGrpc _(::intrinsic::StatusBuilder(             \
+        std::move(statusor).status(), INTRINSIC_LOC));                       \
     (void)_; /* error_expression is allowed to not use this variable */      \
     return (error_expression);                                               \
   }                                                                          \

@@ -40,11 +40,7 @@ namespace skills {
 // in the details field of the grpc.Status in both the c++ and python servers.
 
 // Note, the returned absl_status will contain the SkillErrorInfo as a payload.
-absl::Status ToAbslStatus(const ::grpc::Status& grpc_status);
-::grpc::Status ToGrpcStatus(
-    const absl::Status& absl_status,
-    const intrinsic_proto::skills::SkillErrorInfo& error_info);
-::grpc::Status ToGrpcStatus(const ::google::rpc::Status& rpc_status);
+absl::Status ToAbslStatusWithErrorInfo(const ::grpc::Status& grpc_status);
 ::google::rpc::Status ToGoogleRpcStatus(
     const absl::Status& absl_status,
     const intrinsic_proto::skills::SkillErrorInfo& error_info);

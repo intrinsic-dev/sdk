@@ -1,6 +1,6 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-#include "intrinsic/util/status/rpc_status_conversion.h"
+#include "intrinsic/util/status/status_conversion_rpc.h"
 
 #include <gtest/gtest.h>
 
