@@ -4,12 +4,16 @@ syntax = "proto3";
 
 package intrinsic_proto.geometry;
 
+import "intrinsic/geometry/service/geometry_storage_refs.proto";
 import "intrinsic/math/proto/matrix.proto";
 
 // A proto holding the shape data wrapping a single shape.
 message ShapeData {
   // The geometry id for an instance of Geometry.
-  string geometry_id = 2;
+  string geometry_id = 2 [deprecated = true];
+
+  // The references to the stored geometry.
+  GeometryStorageRefs geometry_storage_refs = 5;
 
   // This is a 4x4 affine transform from the reference frame to this shape.
   intrinsic_proto.Matrixd ref_t_shape_aff = 4;

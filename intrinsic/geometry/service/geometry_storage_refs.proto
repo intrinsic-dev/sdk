@@ -1,0 +1,16 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.geometry;
+
+// GeometryStorageRefs is intended to be an (mostly) opaque container of
+// references to storage objects e.g. CAS URIs. The constituent fields provide
+// no guarantees of uniqueness.
+message GeometryStorageRefs {
+  string fingerprint = 1;
+  // A reference to the stored geometry proto e.g. a CAS URI.
+  string geometry_ref = 2;
+  // A reference to the stored renderable proto e.g. a CAS URI.
+  string renderable_ref = 3;
+}

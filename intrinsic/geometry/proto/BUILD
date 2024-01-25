@@ -151,7 +151,10 @@ py_proto_library(
 proto_library(
     name = "shape_data_proto",
     srcs = ["shape_data.proto"],
-    deps = ["//intrinsic/math/proto:matrix_proto"],
+    deps = [
+        "//intrinsic/geometry/service:geometry_storage_refs_proto",
+        "//intrinsic/math/proto:matrix_proto",
+    ],
 )
 
 cc_proto_library(
@@ -167,6 +170,7 @@ py_proto_library(
 go_proto_library(
     name = "shape_data_go_proto",
     go_deps = [
+        "//intrinsic/geometry/service:geometry_storage_refs_go_proto",
         "//intrinsic/math/proto:matrix_go_proto",
     ],
     deps = [":shape_data_proto"],

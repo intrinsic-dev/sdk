@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package intrinsic_proto.world;
 
+import "intrinsic/geometry/service/geometry_storage_refs.proto";
 import "intrinsic/math/proto/matrix.proto";
 import "intrinsic/math/proto/point.proto";
 
@@ -17,7 +18,12 @@ message GeometryComponent {
     // those entities all reference the same piece of geometry. The id is
     // not guaranteed to be globaly unique and the same id in different
     // world protos may point to different pieces of geometry.
-    string geometry_id = 1;
+    string geometry_id = 1 [deprecated = true];
+
+    // Geometry storage refs is intended to be an (mostly) opaque container of
+    // references to storage objects e.g. CAS URIs. The constituent fields
+    // provide no guarantees of uniqueness.
+    intrinsic_proto.geometry.GeometryStorageRefs geometry_storage_refs = 6;
 
     // A 4x4 affine transform matrix from reference frame to shape
     intrinsic_proto.Matrixd ref_t_shape_aff = 4;

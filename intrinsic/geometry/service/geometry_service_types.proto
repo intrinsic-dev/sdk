@@ -7,13 +7,17 @@ package intrinsic_proto.geometry;
 import "intrinsic/geometry/proto/geometry.proto";
 import "intrinsic/geometry/proto/lazy_exact_geometry.proto";
 import "intrinsic/geometry/proto/renderable.proto";
+import "intrinsic/geometry/service/geometry_storage_refs.proto";
 import "intrinsic/math/proto/matrix.proto";
 import "intrinsic/math/proto/point.proto";
 
 // Response message for getting geometry from the geometry service.
 message GeometryWithMetadata {
   // The id of the held geometry.
-  string geometry_id = 1;
+  string geometry_id = 1 [deprecated = true];
+
+  // The references to the stored geometry artifacts.
+  GeometryStorageRefs geometry_storage_refs = 3;
 
   // The geometry data for the requested geometry object.
   Geometry geometry = 2;
@@ -22,7 +26,7 @@ message GeometryWithMetadata {
 // Response message for getting renderable data from the geometry service.
 message RenderableWithMetadata {
   // The id of the held geometry.
-  string geometry_id = 1;
+  string geometry_id = 1 [deprecated = true];
 
   // The LOD level used when fetching the renderable data. 0 means the original
   // quality and any number above that will simplify the geometry. The higher
@@ -55,6 +59,9 @@ message PosedGeometryData {
 
     // Geometry id already present in geometry storage.
     string geometry_id = 2;
+
+    // The references to the stored geometry artifacts.
+    GeometryStorageRefs geometry_storage_refs = 6;
   }
 
   // A 4x4 affine transform from entity frame to this shape.
