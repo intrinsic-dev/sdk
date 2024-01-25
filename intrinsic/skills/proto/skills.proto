@@ -91,7 +91,7 @@ message Skill {
   // This is only present if a Skill utilizes return values.
   ReturnValueDescription return_value_description = 7;
 
-  // Maps equipment slot name to a selector describing handles that can satisfy
+  // Maps resource slot name to a selector describing handles that can satisfy
   // the implementation's requirements for that slot.
   map<string, intrinsic_proto.skills.ResourceSelector> resource_selectors = 4;
 
@@ -130,7 +130,7 @@ message SkillInstance {
   // Dispatcher handle to execute this skill.
   SkillHandle execute_handle = 5;
 
-  // Maps equipment slot name to a handle satisfying the slot's selector. This
+  // Maps resource slot name to a handle satisfying the slot's selector. This
   // map must contain an entry for each slot in the implementation's
   // resource_selectors map.
   map<string, intrinsic_proto.resources.ResourceHandle> resource_handles = 6;
