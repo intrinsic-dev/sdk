@@ -93,6 +93,17 @@ def non_module_deps():
         sha256 = "e589e0690cf53fc9dde92a4b6a6309147d1fecdc0c72285ac09806739d3dded3",
     )
 
+    # OpenCV
+    http_archive(
+        name = "opencv",
+        build_file = Label("//intrinsic/production/external:BUILD.opencv"),
+        sha256 = "9b5b64d50bf4a3ddeab430a9b13c5f9e023c9e67639ab50a74d0c298b5a61b74",
+        strip_prefix = "opencv-4.9.0",
+        urls = [
+            "https://github.com/opencv/opencv/archive/4.9.0.zip",
+        ],
+    )
+
 def _non_module_deps_impl(ctx):  # @unused
     non_module_deps()
 

@@ -32,6 +32,9 @@ load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
 # Bazel skylib
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 
+# Rules Foreign CC
+load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
+
 def intrinsic_sdks_deps_1(register_go_toolchain = True):
     """Loads workspace dependencies needed for the Intrinsic SDKs.
 
@@ -107,3 +110,6 @@ def intrinsic_sdks_deps_1(register_go_toolchain = True):
 
     # Google Cloud Platform C++ Client Libraries
     google_cloud_cpp_deps()
+
+    # Rules Foreign CC
+    rules_foreign_cc_dependencies()
