@@ -68,6 +68,31 @@ def non_module_deps():
         urls = ["https://storage.googleapis.com/firebase-preview-drop/emulator/cloud-firestore-emulator-v1.18.2.jar"],
     )
 
+    http_archive(
+        name = "io_opentelemetry_cpp",
+        urls = [
+            "https://storage.googleapis.com/cloud-cpp-community-archive/io_opentelemetry_cpp/v1.13.0.tar.gz",
+            "https://github.com/open-telemetry/opentelemetry-cpp/archive/v1.13.0.tar.gz",
+        ],
+        sha256 = "7735cc56507149686e6019e06f588317099d4522480be5f38a2a09ec69af1706",
+        strip_prefix = "opentelemetry-cpp-1.13.0",
+    )
+
+    # Google Cloud Platform C++ Client Libraries
+    http_archive(
+        name = "google_cloud_cpp",
+        strip_prefix = "google-cloud-cpp-2.20.0",
+        sha256 = "9b2ad4500f911cfb159546becba303ce12073ab3975eb639f1101fc7ac2e5b08",
+        urls = ["https://github.com/googleapis/google-cloud-cpp/archive/refs/tags/v2.20.0.zip"],
+    )
+
+    http_archive(
+        name = "com_google_nisaba",
+        url = "https://github.com/google-research/nisaba/archive/0dea3665cb64a3c66c080700ee5f1748900971fb.tar.gz",  # 2024-01-25
+        strip_prefix = "nisaba-0dea3665cb64a3c66c080700ee5f1748900971fb",
+        sha256 = "e589e0690cf53fc9dde92a4b6a6309147d1fecdc0c72285ac09806739d3dded3",
+    )
+
 def _non_module_deps_impl(ctx):  # @unused
     non_module_deps()
 
