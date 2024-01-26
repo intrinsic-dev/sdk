@@ -146,7 +146,6 @@ def intrinsic_sdks_deps_0():
         name = "com_github_grpc_grpc",
         patch_args = ["-p1"],
         patches = [
-            Label("//intrinsic/production/external/patches:0001-Add-absl-Status-conversions-for-grpc-Status.patch"),
             Label("//intrinsic/production/external/patches:0003-Remove-competing-local_config_python-definition.patch"),
             Label("//intrinsic/production/external/patches:0005-Remove-competing-go-deps.patch"),
             Label("//intrinsic/production/external/patches:0007-Also-generate-pyi-files-grpc.patch"),
