@@ -1186,6 +1186,43 @@ class ObjectWorldClient:
 
       raise
 
+  def create_geometry_object(
+      self,
+      *,
+      object_name: object_world_ids.WorldObjectName,
+      geometry_component: geometry_component_pb2.GeometryComponent,
+      parent: Optional[object_world_resources.WorldObject] = None,
+      parent_object_t_created_object: data_types.Pose3 = data_types.Pose3(),
+  ) -> None:
+    """Adds a geometry object to the world.
+
+    Arguments:
+      object_name: The name of the newly created object.
+      geometry_component: Geometry information for the object to be added.
+      parent: The parent object the new object will be attached to.
+      parent_object_t_created_object: The transform between the parent object
+        and the new object.
+    """
+    req = object_world_updates_pb2.CreateObjectRequest(
+        world_id=self._world_id,
+        name=object_name,
+        name_is_global_alias=True,
+        parent_object_t_created_object=math_proto_conversion.pose_to_proto(
+            parent_object_t_created_object
+        ),
+        create_single_entity_object=object_world_updates_pb2.ObjectSpecForSingleEntityObject(
+            geometry_component=geometry_component
+        ),
+    )
+
+    if parent is not None:
+      req.parent_object.reference.CopyFrom(parent.reference)
+    else:
+      req.parent_object.reference.id = object_world_ids.ROOT_OBJECT_ID
+    req.parent_object.entity_filter.CopyFrom(INCLUDE_FINAL_ENTITY)
+
+    self._call_create_object(request=req)
+
   @error_handling.retry_on_grpc_unavailable
   def reset(self) -> None:
     """Restores the initial world from the world service.
