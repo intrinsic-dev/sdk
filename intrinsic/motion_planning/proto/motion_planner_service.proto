@@ -36,11 +36,8 @@ message RobotSpecification {
   // Default cartesian robot limits to apply to the motion.
   intrinsic_proto.icon.CartesianLimits default_cartesian_limits = 3;
 
-  // Joint hardware (l1) limits of the robot. We can not exceed these limits.
-  // Note that the field JointLimits.max_effort is not supported and will
-  // always be filled with zeroes. If not specified, the default limits from
-  // the world are used as the hardware limits.
-  optional intrinsic_proto.JointLimits l1_joint_limits = 4;
+  reserved 4;
+  reserved "l1_joint_limits";
 }
 
 message MotionPlanningRequest {
