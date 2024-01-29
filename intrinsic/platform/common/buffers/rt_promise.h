@@ -61,8 +61,28 @@ class RealtimePromise {
   RealtimePromise() = default;
   RealtimePromise(const RealtimePromise<T>&) = delete;
   RealtimePromise<T>& operator=(const RealtimePromise<T>&) = delete;
-  RealtimePromise(RealtimePromise<T>&& promise) = default;
-  RealtimePromise<T>& operator=(RealtimePromise<T>&& promise) = default;
+  RealtimePromise(RealtimePromise<T>&& promise)
+      : buffer_(promise.buffer_),
+        is_ready_(promise.is_ready_),
+        is_cancel_acknowledged_(promise.is_cancel_acknowledged_),
+        is_destroyed_(promise.is_destroyed_),
+        is_cancelled_(promise.is_cancelled_) {
+    // We need to set is_ready_ to a nullptr on a moved from object to ensure
+    // that the destructor is still fully functional on moved from objects.
+    promise.is_ready_ = nullptr;
+  };
+  RealtimePromise<T>& operator=(RealtimePromise<T>&& promise) {
+    buffer_ = promise.buffer_;
+    is_ready_ = promise.is_ready_;
+    is_cancel_acknowledged_ = promise.is_cancel_acknowledged_;
+    is_destroyed_ = promise.is_destroyed_;
+    is_cancelled_ = promise.is_cancelled_;
+
+    // We need to set is_ready_ to a nullptr on a moved from object to ensure
+    // that the destructor is still fully functional on moved from objects.
+    promise.is_ready_ = nullptr;
+    return *this;
+  };
   ~RealtimePromise<T>() {
     if (is_ready_ == nullptr) {
       // Destructing uninitialized promise.
