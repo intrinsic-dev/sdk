@@ -352,6 +352,17 @@ py_proto_library(
 )
 
 proto_library(
+    name = "skill_parameter_metadata_proto",
+    srcs = ["skill_parameter_metadata.proto"],
+    deps = ["@com_google_protobuf//:descriptor_proto"],
+)
+
+go_proto_library(
+    name = "skill_parameter_metadata_go_proto",
+    deps = [":skill_parameter_metadata_proto"],
+)
+
+proto_library(
     name = "skills_all_protos",
     deps = [
         ":equipment_proto",

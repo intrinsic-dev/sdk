@@ -1,0 +1,37 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.skills;
+
+import "google/protobuf/descriptor.proto";
+
+// Metadata that further describes a field in a skill's parameter proto. This
+// metadata can be added using a proto option. Parameter metadata is optional
+// and may be omitted in parts or entirely.
+//
+// Example:
+//
+//     message MySkill {
+//       string distance_to_edge_m = 1
+//           [(intrinsic_proto.skills.skill_parameter_metadata).unit = "m"];
+//     }
+//
+// Tools (e.g., the frontend) may use the information provided in field metadata
+// to show additional guidance or expose targeted functionality during
+// parameterization.
+message SkillParameterMetadata {
+  // Unit of the parameter. This should be the symbol for the unit rather than
+  // the full name (e.g., "m" for meters or "rad" for radian). If empty, the
+  // parameter is treated as unitless.
+  //
+  // When possiblem, field names should contain their unit as a suffix. This
+  // ensures that people working with generated code for the parameter proto
+  // always have access to unit information.
+  string unit = 1;
+}
+
+extend google.protobuf.FieldOptions {
+  // Supplementary information about a skill parameter.
+  optional SkillParameterMetadata skill_parameter_metadata = 91335;
+}
