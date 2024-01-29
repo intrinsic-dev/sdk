@@ -25,10 +25,9 @@ def create_trajectory_tracking_action(
 ) -> actions.Action:
   """Creates a TrajectoryTrackingAction.
 
-  Follows a given JointTrajectoryPVA and uses quintic splining to interpolate
-  between the discretized states. The previously commanded robot
-  position/velocity setpoint must be within
-  `MAX_INITIAL_JOINT_POSITION_DEVIATION` and
+  Follows a given JointTrajectoryPVA and interpolates between the discretized
+  states. The previously commanded robot position/velocity setpoint must be
+  within `MAX_INITIAL_JOINT_POSITION_DEVIATION` and
   `MAX_INITIAL_JOINT_VELOCITY_DEVIATION` of the first joint state of the
   command. A residual controller is applied to compensate for initial state
   deviations smaller than above thresholds.
