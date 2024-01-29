@@ -22,6 +22,7 @@ from typing import Any as AnyType, Callable, Iterable, List, Mapping, Optional, 
 import uuid
 
 from google.protobuf import any_pb2
+from google.protobuf import descriptor
 from google.protobuf import descriptor_pb2
 from google.protobuf import message as protobuf_message
 import graphviz
@@ -3751,3 +3752,23 @@ class BehaviorTree:
         f"{identifier} = BT.BehaviorTree(name='{self.name}',"
         f' root={child_identifier})'
     )
+
+
+def _merge_file_descriptor_set(
+    msg_descriptor: descriptor.Descriptor,
+    file_descriptors: list[descriptor.FileDescriptor] | None = None,
+) -> descriptor_pb2.FileDescriptorSet:
+  """Merges file descriptors from various given descriptors."""
+  fds = descriptor_pb2.FileDescriptorSet()
+
+  fd = descriptor_pb2.FileDescriptorProto()
+  msg_descriptor.file.CopyToProto(fd)
+  fds.file.append(fd)
+
+  if file_descriptors:
+    for file_descriptor in file_descriptors:
+      fd = descriptor_pb2.FileDescriptorProto()
+      file_descriptor.CopyToProto(fd)
+      fds.file.append(fd)
+
+  return fds
