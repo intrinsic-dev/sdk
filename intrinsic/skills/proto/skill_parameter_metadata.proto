@@ -25,7 +25,7 @@ message SkillParameterMetadata {
   // the full name (e.g., "m" for meters or "rad" for radian). If empty, the
   // parameter is treated as unitless.
   //
-  // When possiblem, field names should contain their unit as a suffix. This
+  // When possible, field names should contain their unit as a suffix. This
   // ensures that people working with generated code for the parameter proto
   // always have access to unit information.
   string unit = 1;
