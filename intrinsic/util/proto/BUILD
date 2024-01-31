@@ -129,3 +129,22 @@ pybind_extension(
         "@pybind11_protobuf//pybind11_protobuf:wrapped_proto_caster",
     ],
 )
+
+cc_library(
+    name = "type_url",
+    hdrs = ["type_url.h"],
+    deps = [
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "type_url_test",
+    srcs = ["type_url_test.cc"],
+    deps = [
+        ":type_url",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+    ],
+)

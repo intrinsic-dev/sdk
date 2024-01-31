@@ -56,6 +56,8 @@ cc_library(
     srcs = ["status_conversion_rpc.cc"],
     hdrs = ["status_conversion_rpc.h"],
     deps = [
+        "//intrinsic/util/proto:type_url",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:cord",
         "@com_google_absl//absl/strings:string_view",
@@ -84,6 +86,7 @@ cc_test(
     srcs = ["status_conversion_grpc_test.cc"],
     deps = [
         ":status_conversion_grpc",
+        "//intrinsic/util/proto:type_url",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:cord",
@@ -97,10 +100,12 @@ cc_test(
     srcs = ["status_conversion_rpc_test.cc"],
     deps = [
         ":status_conversion_rpc",
+        "//intrinsic/util/proto:type_url",
         "@com_google_absl//absl/status",
         "@com_google_googleapis//google/rpc:code_cc_proto",
         "@com_google_googleapis//google/rpc:status_cc_proto",
         "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 

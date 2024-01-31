@@ -4,23 +4,31 @@
 
 #include <string>
 
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/cord.h"
 #include "absl/strings/string_view.h"
 #include "google/protobuf/any.pb.h"
 #include "google/rpc/status.pb.h"
+#include "intrinsic/util/proto/type_url.h"
 
 namespace intrinsic {
 
 google::rpc::Status SaveStatusAsRpcStatus(const absl::Status& status) {
   google::rpc::Status ret;
   ret.set_code(static_cast<int>(status.code()));
-  ret.set_message(std::string(status.message()));
+  ret.set_message(status.message());
   status.ForEachPayload(
       [&](absl::string_view type_url, const absl::Cord& payload) {
-        google::protobuf::Any* any = ret.add_details();
-        any->set_type_url(std::string(type_url));
-        any->set_value(std::string(payload));
+        if (!type_url.starts_with(kTypeUrlPrefix)) {
+          LOG(WARNING)
+              << "Status payload " << type_url
+              << " is not a proper type URL, not serializing into RPC status";
+        } else {
+          google::protobuf::Any* any = ret.add_details();
+          any->set_type_url(type_url);
+          any->set_value(std::string(payload));
+        }
       });
   return ret;
 }

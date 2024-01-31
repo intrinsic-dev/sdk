@@ -11,6 +11,7 @@
 #include "absl/strings/cord.h"
 #include "google/protobuf/wrappers.pb.h"
 #include "grpcpp/support/status.h"
+#include "intrinsic/util/proto/type_url.h"
 
 namespace intrinsic {
 namespace {
@@ -19,7 +20,7 @@ TEST(StatusConversionGrpcTest, AbslStatusToGrpcStatusRoundTrip) {
   absl::Status absl_status = absl::InternalError("A terrible thing happened!");
   google::protobuf::StringValue value;
   value.set_value("Foo");
-  absl_status.SetPayload(value.GetDescriptor()->full_name(),
+  absl_status.SetPayload(AddTypeUrlPrefix(value.GetDescriptor()->full_name()),
                          value.SerializeAsCord());
 
   // Round trip through grpc status.
@@ -31,8 +32,8 @@ TEST(StatusConversionGrpcTest, AbslStatusToGrpcStatusRoundTrip) {
 
   google::protobuf::StringValue read_value;
 
-  std::optional<absl::Cord> read_payload =
-      returned_status.GetPayload(value.GetDescriptor()->full_name());
+  std::optional<absl::Cord> read_payload = returned_status.GetPayload(
+      AddTypeUrlPrefix(value.GetDescriptor()->full_name()));
   ASSERT_TRUE(read_payload.has_value());
   ASSERT_TRUE(read_value.ParseFromCord(*read_payload));
   EXPECT_THAT(read_value.value(), testing::Eq(value.value()));
