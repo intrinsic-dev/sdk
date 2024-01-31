@@ -11,9 +11,9 @@ message CharucoPattern {
   // Number of squares of the ChArUco board in y direction.
   int32 squares_y = 2;
   // Length (width and height) of each square of the chessboard of the ChArUco
-  // board.
+  // board in m.
   double square_length = 3;
-  // Length (width and height) of each ArUco marker on the ChArUco board.
+  // Length (width and height) of each ArUco marker on the ChArUco board in m.
   double marker_length = 4;
   // Dictionary for the ArUco markers that are being used.
   ArucoDictionary dictionary = 5;
