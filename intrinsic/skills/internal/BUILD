@@ -543,6 +543,7 @@ cc_library(
     srcs = ["skill_proto_utils.cc"],
     hdrs = ["skill_proto_utils.h"],
     deps = [
+        "//intrinsic/assets/proto:documentation_cc_proto",
         "//intrinsic/assets/proto:id_cc_proto",
         "//intrinsic/skills/proto:equipment_cc_proto",
         "//intrinsic/skills/proto:skill_manifest_cc_proto",

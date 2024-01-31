@@ -20,6 +20,7 @@
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/descriptor.pb.h"
 #include "google/protobuf/message.h"
+#include "intrinsic/assets/proto/documentation.pb.h"
 #include "intrinsic/assets/proto/id.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/skill_manifest.pb.h"

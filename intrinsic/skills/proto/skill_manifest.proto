@@ -6,6 +6,7 @@ package intrinsic_proto.skills;
 
 import "google/protobuf/any.proto";
 import "google/protobuf/duration.proto";
+import "intrinsic/assets/proto/documentation.proto";
 import "intrinsic/assets/proto/id.proto";
 import "intrinsic/assets/proto/vendor.proto";
 import "intrinsic/skills/proto/equipment.proto";
@@ -57,10 +58,6 @@ message CcServiceConfig {
   //
   // The generated skill service will create skills by invoking this method.
   string create_skill = 1;
-}
-
-message Documentation {
-  string description = 1;
 }
 
 message ParameterMetadata {
@@ -125,7 +122,7 @@ message Manifest {
   assets.Vendor vendor = 2;
 
   // Documentation about the skill which will be shown to users.
-  Documentation documentation = 3;
+  assets.Documentation documentation = 3;
 
   // Contains user-set options about what skill features are supported by
   // this skill.

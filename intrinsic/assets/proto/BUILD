@@ -64,3 +64,23 @@ go_proto_library(
     name = "vendor_go_proto",
     deps = [":vendor_proto"],
 )
+
+proto_library(
+    name = "documentation_proto",
+    srcs = ["documentation.proto"],
+)
+
+cc_proto_library(
+    name = "documentation_cc_proto",
+    deps = [":documentation_proto"],
+)
+
+py_proto_library(
+    name = "documentation_py_pb2",
+    deps = [":documentation_proto"],
+)
+
+go_proto_library(
+    name = "documentation_go_proto",
+    deps = [":documentation_proto"],
+)
