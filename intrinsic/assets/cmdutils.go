@@ -38,6 +38,8 @@ const (
 	KeyDryRun = "dry_run"
 	// KeyFilter is the name of the filter flag.
 	KeyFilter = "filter"
+	// KeyIgnoreExisting is the name of the flag to ignore AlreadyExists errors.
+	KeyIgnoreExisting = "ignore_existing"
 	// KeyInstallerAddress is the name of the installer address flag.
 	KeyInstallerAddress = "installer_address"
 	// KeyManifestFile is the file path to the manifest binary.
@@ -140,6 +142,16 @@ func (cf *CmdFlags) AddFlagDryRun() {
 // GetFlagDryRun gets the value of the dry run flag added by AddFlagDryRun.
 func (cf *CmdFlags) GetFlagDryRun() bool {
 	return cf.GetBool(KeyDryRun)
+}
+
+// AddFlagIgnoreExisting adds a flag to ignore AlreadyExists errors.
+func (cf *CmdFlags) AddFlagIgnoreExisting(assetType string) {
+	cf.OptionalBool(KeyIgnoreExisting, false, fmt.Sprintf("Ignore errors if the specified %s version already exists in the catalog.", assetType))
+}
+
+// GetFlagIgnoreExisting gets the value of the flag added by AddFlagIgnoreExisting.
+func (cf *CmdFlags) GetFlagIgnoreExisting() bool {
+	return cf.GetBool(KeyIgnoreExisting)
 }
 
 // AddFlagInstallerAddress adds a flag for the installer service address.

@@ -10,7 +10,6 @@ go_library(
     deps = [
         "//intrinsic/assets:clientutils",
         "//intrinsic/assets:cmdutils",
-        "//intrinsic/assets/proto:view_go_proto",
         "//intrinsic/skills/tools/skill/cmd",
         "@com_github_spf13_cobra//:go_default_library",
     ],
