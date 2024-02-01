@@ -5,6 +5,7 @@
 #include <functional>
 #include <iterator>
 #include <limits>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -222,12 +223,13 @@ StructuredLoggingClient::SyncAndRotateLogs() {
 }
 
 absl::Status StructuredLoggingClient::SetLogOptions(
-    absl::string_view event_source,
-    const intrinsic_proto::data_logger::LogOptions& options) {
+    const std::map<std::string, intrinsic_proto::data_logger::LogOptions>&
+        options) {
   grpc::ClientContext context;
   intrinsic_proto::data_logger::SetLogOptionsRequest request;
-  request.set_event_source(std::string{event_source});
-  *request.mutable_log_options() = options;
+  for (const auto& [event_source, log_options] : options) {
+    request.mutable_log_options()->insert({event_source, log_options});
+  }
   intrinsic_proto::data_logger::SetLogOptionsResponse response;
   INTR_RETURN_IF_ERROR(
       ToAbslStatus(impl_->stub->SetLogOptions(&context, request, &response)));

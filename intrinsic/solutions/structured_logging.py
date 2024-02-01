@@ -30,7 +30,7 @@ import dataclasses
 import datetime
 import logging
 import re
-from typing import Any, Callable, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from google.protobuf import empty_pb2
 from google.protobuf import json_format
@@ -629,6 +629,41 @@ class StructuredLogs:
   protos.
   """
 
+  class LogOptions:
+    """Wrapper for LogOptions proto."""
+
+    def __init__(self):
+      self._log_options = logger_service_pb2.LogOptions()
+
+    def set_event_source(
+        self, event_source: str
+    ) -> 'StructuredLogs.LogOptions':
+      self._log_options.event_source = event_source
+      return self
+
+    def set_sync_active(self, sync_active: bool) -> 'StructuredLogs.LogOptions':
+      self._log_options.sync_active = sync_active
+      return self
+
+    def set_max_buffer_size(
+        self, max_buffer_size: int
+    ) -> 'StructuredLogs.LogOptions':
+      self._log_options.max_buffer_size = max_buffer_size
+      return self
+
+    def set_token_bucket_options(
+        self, refresh: int, burst: int
+    ) -> 'StructuredLogs.LogOptions':
+      param = logger_service_pb2.TokenBucketOptions(
+          refresh=refresh, burst=burst
+      )
+      self._log_options.logging_budget.CopyFrom(param)
+      return self
+
+    @property
+    def log_options(self) -> logger_service_pb2.LogOptions:
+      return self._log_options
+
   def __init__(self, stub: logger_service_pb2_grpc.DataLoggerStub):
     self._stub: logger_service_pb2_grpc.DataLoggerStub = stub
 
@@ -684,12 +719,11 @@ class StructuredLogs:
   @error_handling.retry_on_grpc_unavailable
   def set_log_options(
       self,
-      event_source: str,
-      log_options: logger_service_pb2.LogOptions,
+      log_options: Dict[str, LogOptions],
   ) -> None:
     """Configures log options for an event_source."""
     log_options_request = logger_service_pb2.SetLogOptionsRequest(
-        event_source=event_source, log_options=log_options
+        log_options={e: i.log_options for e, i in log_options.items()}
     )
     self._stub.SetLogOptions(log_options_request)
 
@@ -697,14 +731,25 @@ class StructuredLogs:
   def get_log_options(
       self,
       event_source: str,
-  ) -> logger_service_pb2.LogOptions:
+  ) -> LogOptions:
     """Returns the log options for an event source."""
     log_options_request: logger_service_pb2.GetLogOptionsRequest = (
         logger_service_pb2.GetLogOptionsRequest(
             event_source=event_source,
         )
     )
-    return self._stub.GetLogOptions(log_options_request).log_options
+
+    ret = self._stub.GetLogOptions(log_options_request).log_options
+    return (
+        self.LogOptions()
+        .set_event_source(ret.event_source)
+        .set_sync_active(ret.sync_active)
+        .set_max_buffer_size(ret.max_buffer_size)
+        .set_token_bucket_options(
+            ret.logging_budget.refresh,
+            ret.logging_budget.burst,
+        )
+    )
 
   @error_handling.retry_on_grpc_unavailable
   def query(

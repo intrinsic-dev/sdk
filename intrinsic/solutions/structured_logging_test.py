@@ -93,10 +93,14 @@ blob_payload <
     stub = mock.MagicMock()
     stub.SetLogOptions.return_value = logger_service_pb2.SetLogOptionsResponse()
     event_source = 'ev1'
-    log_options = logger_service_pb2.LogOptions(max_buffer_size=10)
+    log_options = (
+        structured_logging.StructuredLogs.LogOptions()
+        .set_event_source(event_source)
+        .set_max_buffer_size(10)
+    )
     logs = structured_logging.StructuredLogs(stub)
 
-    result = logs.set_log_options(event_source, log_options)
+    result = logs.set_log_options({event_source: log_options})
 
     # At least sends the expected argument type
     self.assertEqual(
@@ -105,7 +109,9 @@ blob_payload <
     )
     # Sends the expected buffer size
     self.assertEqual(
-        stub.SetLogOptions.call_args.args[0].log_options.max_buffer_size,
+        stub.SetLogOptions.call_args.args[0]
+        .log_options[event_source]
+        .max_buffer_size,
         10,
     )
     # Receives the expected return value
@@ -127,9 +133,9 @@ blob_payload <
         logger_service_pb2.GetLogOptionsRequest,
     )
     # At least receives expected response type
-    self.assertEqual(type(result), logger_service_pb2.LogOptions)
+    self.assertEqual(type(result), structured_logging.StructuredLogs.LogOptions)
     # Receives the expected buffer size
-    self.assertEqual(result.max_buffer_size, 10)
+    self.assertEqual(result.log_options.max_buffer_size, 10)
 
   def test_peek(self):
     stub = mock.MagicMock()
@@ -280,6 +286,7 @@ payload <
     self.assertCountEqual(
         logs.__dir__(),
         [
+            'LogOptions',
             'connect',
             'for_solution',
             'ev1',

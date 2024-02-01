@@ -27,12 +27,29 @@ message LogRequest {
   intrinsic_proto.data_logger.LogItem item = 1;
 }
 
-message LogOptions {
-  // If set to 'true', logs are synched to the cloud.
-  optional bool sync_active = 1;
+// TokenBucketOptions are the options for rate limiting for the logger. See
+// go/intrinsic-logging-budgets for more details. To understand the settings
+// better see https://en.wikipedia.org/wiki/Token_bucket
+message TokenBucketOptions {
+  // In bytes per second, this represents the refill rate for the token bucket.
+  int32 refresh = 1;
+  // In bytes, this represents the maximum capacity of the token bucket.
+  int32 burst = 2;
+}
 
-  // The size of the on_prem buffer for LogItems
-  optional int32 max_buffer_size = 2;
+message LogOptions {
+  // The event_source to set the log options for.
+  string event_source = 1;
+
+  // If set to 'true', logs are synched to the cloud.
+  optional bool sync_active = 2;
+
+  // The size of the on_prem buffer for LogItems.
+  optional int32 max_buffer_size = 3;
+
+  // The token bucket options for rate limiting on the Log() rpc of the data
+  // logger.
+  optional TokenBucketOptions logging_budget = 4;
 }
 
 message ListLogSourcesResponse {
@@ -104,11 +121,11 @@ message GetMostRecentItemResponse {
 }
 
 message SetLogOptionsRequest {
-  // The even source for which the synchronization options are set.
-  string event_source = 1;
-
-  // The actual log options which are being set.
-  LogOptions log_options = 2;
+  // The actual log options which are being set. Each log option corresponds to
+  // a single event_source. It is not expected that a single event_source has
+  // multiple log options, so overwriting of the earlier log options will occur
+  // in these scenarios.
+  map<string, LogOptions> log_options = 1;
 }
 
 message SetLogOptionsResponse {}

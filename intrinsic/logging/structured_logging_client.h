@@ -4,6 +4,7 @@
 #define INTRINSIC_LOGGING_STRUCTURED_LOGGING_CLIENT_H_
 
 #include <functional>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -128,8 +129,8 @@ class StructuredLoggingClient {
 
   // Set the logging configuration for an event_source
   absl::Status SetLogOptions(
-      absl::string_view event_source,
-      const intrinsic_proto::data_logger::LogOptions& options);
+      const std::map<std::string, intrinsic_proto::data_logger::LogOptions>&
+          options);
 
   // Get the logging configuration for an event_source
   absl::StatusOr<LogOptions> GetLogOptions(absl::string_view event_source);
