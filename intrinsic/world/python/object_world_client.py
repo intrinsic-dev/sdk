@@ -10,6 +10,8 @@ import re
 from typing import Dict, List, Optional, Tuple, Union, cast
 
 import grpc
+from intrinsic.geometry.service import geometry_service_pb2
+from intrinsic.geometry.service import geometry_service_pb2_grpc
 from intrinsic.icon.equipment import icon_equipment_pb2
 from intrinsic.icon.proto import cart_space_pb2
 from intrinsic.kinematics.types import joint_limits_pb2
@@ -124,8 +126,19 @@ class ObjectWorldClient:
       self,
       world_id: str,
       stub: object_world_service_pb2_grpc.ObjectWorldServiceStub,
+      geometry_service_stub: Optional[
+          geometry_service_pb2_grpc.GeometryServiceStub
+      ] = None,
   ):
     self._stub: object_world_service_pb2_grpc.ObjectWorldServiceStub = stub
+
+    if geometry_service_stub is not None:
+      self._geometry_service_stub: (
+          geometry_service_pb2_grpc.GeometryServiceStub
+      ) = geometry_service_stub
+    else:
+      self._geometry_service_stub = None
+
     self._world_id: str = world_id
 
   def list_object_names(self) -> List[object_world_ids.WorldObjectName]:
@@ -1185,6 +1198,31 @@ class ObjectWorldClient:
         raise ProductPartDoesNotExistError(err) from err
 
       raise
+
+  def register_geometry(
+      self,
+      *,
+      geometry: geometry_service_pb2.CreateGeometryRequest,
+  ) -> str:
+    """Registers geometry so that it can be referenced to create an object.
+
+    Arguments:
+      geometry: Geometry data to be registered.
+
+    Raises:
+      RuntimeError: if ObjectWorldClient was not configured with the geometry
+      service client.
+
+    Returns:
+      Geometry id corresponding to the registered geometry.
+    """
+
+    if self._geometry_service_stub is None:
+      raise RuntimeError(
+          'ObjectWorldClient has not been configured to register geometry data.'
+      )
+
+    return self._geometry_service_stub.CreateGeometry(geometry).geometry_id
 
   def create_geometry_object(
       self,

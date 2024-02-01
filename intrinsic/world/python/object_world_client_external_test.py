@@ -15,6 +15,7 @@ class ObjectWorldClientTest(absltest.TestCase):
   def setUp(self):
     super().setUp()
     self._stub = mock.MagicMock()
+    self._geometry_service_stub = mock.MagicMock()
 
   def _create_object_proto(
       self, *, name: str = '', object_id: str = '', world_id: str = ''
@@ -31,7 +32,9 @@ class ObjectWorldClientTest(absltest.TestCase):
     self._stub.GetObject.return_value = self._create_object_proto(
         name='my_object', object_id='15', world_id='world'
     )
-    world_client = object_world_client.ObjectWorldClient('world', self._stub)
+    world_client = object_world_client.ObjectWorldClient(
+        'world', self._stub, self._geometry_service_stub
+    )
 
     self.assertEqual(
         world_client.get_object(
@@ -54,7 +57,9 @@ class ObjectWorldClientTest(absltest.TestCase):
     self._stub.ListObjects.return_value = (
         object_world_service_pb2.ListObjectsResponse(objects=[my_object])
     )
-    world_client = object_world_client.ObjectWorldClient('world', self._stub)
+    world_client = object_world_client.ObjectWorldClient(
+        'world', self._stub, self._geometry_service_stub
+    )
 
     self.assertEqual(world_client.my_object.name, 'my_object')
     self.assertEqual(world_client.my_object.id, '15')
