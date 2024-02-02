@@ -19,6 +19,7 @@ from google.protobuf import message_factory
 from google.rpc import status_pb2
 import grpc
 from intrinsic.assets import id_utils
+from intrinsic.geometry.service import geometry_service_pb2_grpc
 from intrinsic.motion_planning import motion_planner_client
 from intrinsic.motion_planning.proto import motion_planner_service_pb2_grpc
 from intrinsic.skills.internal import default_parameters
@@ -64,10 +65,12 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       skill_repository: skill_repo.SkillRepository,
       object_world_service: object_world_service_pb2_grpc.ObjectWorldServiceStub,
       motion_planner_service: motion_planner_service_pb2_grpc.MotionPlannerServiceStub,
+      geometry_service: geometry_service_pb2_grpc.GeometryServiceStub,
   ):
     self._skill_repository = skill_repository
     self._object_world_service = object_world_service
     self._motion_planner_service = motion_planner_service
+    self._geometry_service = geometry_service
 
   def GetFootprint(
       self,
@@ -149,7 +152,9 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       )
 
     object_world = object_world_client.ObjectWorldClient(
-        footprint_request.world_id, self._object_world_service
+        footprint_request.world_id,
+        self._object_world_service,
+        self._geometry_service,
     )
     motion_planner = motion_planner_client.MotionPlannerClient(
         footprint_request.world_id, self._motion_planner_service
@@ -228,10 +233,12 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
       motion_planner_service: (
           motion_planner_service_pb2_grpc.MotionPlannerServiceStub
       ),
+      geometry_service: geometry_service_pb2_grpc.GeometryServiceStub,
   ):
     self._skill_repository = skill_repository
     self._object_world_service = object_world_service
     self._motion_planner_service = motion_planner_service
+    self._geometry_service = geometry_service
 
     self._operations = _SkillOperations()
 
@@ -296,7 +303,7 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
             request.world_id, self._motion_planner_service
         ),
         object_world=object_world_client.ObjectWorldClient(
-            request.world_id, self._object_world_service
+            request.world_id, self._object_world_service, self._geometry_service
         ),
         resource_handles=dict(request.instance.resource_handles),
     )
@@ -387,7 +394,7 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
             request.world_id, self._motion_planner_service
         ),
         object_world=object_world_client.ObjectWorldClient(
-            request.world_id, self._object_world_service
+            request.world_id, self._object_world_service, self._geometry_service
         ),
         resource_handles=dict(request.instance.resource_handles),
     )

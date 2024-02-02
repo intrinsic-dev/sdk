@@ -7,6 +7,7 @@ import time
 
 from absl import logging
 import grpc
+from intrinsic.geometry.service import geometry_service_pb2_grpc
 from intrinsic.motion_planning.proto import motion_planner_service_pb2_grpc
 from intrinsic.skills.internal import skill_repository as skill_repo
 from intrinsic.skills.internal import skill_service_impl
@@ -31,6 +32,15 @@ def _create_motion_planner_service_stub(
   # Blocks for the duration of the timeout until the channel is ready.
   grpc.channel_ready_future(channel).result(timeout=connection_timeout)
   return motion_planner_service_pb2_grpc.MotionPlannerServiceStub(channel)
+
+
+def _create_geometry_service_stub(
+    address: str, connection_timeout: int
+) -> geometry_service_pb2_grpc.GeometryServiceStub:
+  channel = grpc.insecure_channel(address)
+  # Blocks for the duration of the timeout until the channel is ready.
+  grpc.channel_ready_future(channel).result(timeout=connection_timeout)
+  return geometry_service_pb2_grpc.GeometryServiceStub(channel)
 
 
 def get_skill_service_config(
@@ -111,12 +121,16 @@ def skill_init(
   motion_planner_service = _create_motion_planner_service_stub(
       motion_planner_service_address, connection_timeout
   )
+  geometry_service = _create_geometry_service_stub(
+      geometry_service_address, connection_timeout
+  )
 
   # Initialize the projector service.
   projector_servicer = skill_service_impl.SkillProjectorServicer(
       skill_repository=skill_repository,
       object_world_service=object_world_service,
       motion_planner_service=motion_planner_service,
+      geometry_service=geometry_service,
   )
   skill_service_pb2_grpc.add_ProjectorServicer_to_server(
       projector_servicer, server
@@ -127,6 +141,7 @@ def skill_init(
       skill_repository=skill_repository,
       object_world_service=object_world_service,
       motion_planner_service=motion_planner_service,
+      geometry_service=geometry_service,
   )
   skill_service_pb2_grpc.add_ExecutorServicer_to_server(
       executor_servicer, server
