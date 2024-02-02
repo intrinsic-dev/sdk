@@ -45,7 +45,7 @@ message GeometryComponent {
     }
 
     oneof type_oneof {
-      // Model representing the Geometry as definted by the Geometry API.
+      // Model representing the Geometry as defined by the Geometry API.
       GeometryModel geometry_model = 2;
     }
   }
