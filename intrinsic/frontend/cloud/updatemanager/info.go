@@ -7,6 +7,7 @@ package info
 type Info struct {
 	Cluster     string `json:"cluster,omitempty"`
 	State       string `json:"state,omitempty"`
+	Mode        string `json:"mode,omitempty"`
 	TargetBase  string `json:"targetBase,omitempty"`
 	CurrentBase string `json:"currentBase,omitempty"`
 	CurrentOS   string `json:"currentOS,omitempty"`
