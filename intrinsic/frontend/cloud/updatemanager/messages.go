@@ -7,3 +7,9 @@ package messages
 type ModeRequest struct {
 	Mode string `json:"mode"`
 }
+
+// ClusterProjectTargetResponse is the response to the cluster project target request
+type ClusterProjectTargetResponse struct {
+	OS   string `json:"os"`
+	Base string `json:"base"`
+}

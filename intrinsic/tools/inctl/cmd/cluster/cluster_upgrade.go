@@ -118,6 +118,19 @@ func (c *Client) GetMode(ctx context.Context) (string, error) {
 	return ui.Mode, nil
 }
 
+// ClusterProjectTarget queries the update target for a cluster in a project
+func (c *Client) ClusterProjectTarget(ctx context.Context) (*messages.ClusterProjectTargetResponse, error) {
+	b, err := c.runReq(ctx, http.MethodGet, "/projecttarget", nil)
+	if err != nil {
+		return nil, fmt.Errorf("runReq(/state): %w", err)
+	}
+	r := &messages.ClusterProjectTargetResponse{}
+	if err := json.Unmarshal(b, r); err != nil {
+		return nil, fmt.Errorf("unmarshal json response for status: %w", err)
+	}
+	return r, nil
+}
+
 // Run runs an update if one is pending
 func (c *Client) Run(ctx context.Context) ([]byte, error) {
 	return c.runReq(ctx, http.MethodPost, "/run", nil)
@@ -197,6 +210,43 @@ var modeCmd = &cobra.Command{
 	},
 }
 
+const showTargetCmdDesc = `
+Show the upgrade target version.
+
+This command indicates for this cluster, what version it should be running to be considered up to
+date for its environment.
+Please use
+- 'cluster upgrade' to inspect whether it is at the target and
+- 'cluster upgrade run' to execute a pending update if there is one.
+`
+
+// showTargetCmd is the command to execute an update if available
+var showTargetCmd = &cobra.Command{
+	Use: "show-target",
+
+	Short: "Show the upgrade target version.",
+	Long:  showTargetCmdDesc,
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
+		c, err := forCluster(projectName, clusterName)
+		if err != nil {
+			return fmt.Errorf("cluster upgrade client: %w", err)
+		}
+		r, err := c.ClusterProjectTarget(ctx)
+		if err != nil {
+			return fmt.Errorf("cluster status: %w", err)
+		}
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		fmt.Fprintf(w, "flowstate\tos\n")
+		fmt.Fprintf(w, "%s\t%s\n", r.Base, r.OS)
+		w.Flush()
+		return nil
+	},
+}
+
 const runCmdDesc = `
 Run an upgrade of the specified cluster, if new software is available.
 
@@ -260,4 +310,5 @@ func init() {
 	clusterUpgradeCmd.MarkPersistentFlagRequired("cluster")
 	clusterUpgradeCmd.AddCommand(runCmd)
 	clusterUpgradeCmd.AddCommand(modeCmd)
+	clusterUpgradeCmd.AddCommand(showTargetCmd)
 }
