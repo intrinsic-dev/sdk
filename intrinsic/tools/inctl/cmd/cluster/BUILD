@@ -21,6 +21,7 @@ go_library(
         "//intrinsic/frontend/cloud/api:clusterdiscovery_api_go_proto",
         "//intrinsic/frontend/cloud/api:clusterdiscovery_grpc_go_proto",
         "//intrinsic/frontend/cloud/updatemanager:info",
+        "//intrinsic/frontend/cloud/updatemanager:messages",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/tools/inctl/auth",
         "//intrinsic/tools/inctl/cmd:root",

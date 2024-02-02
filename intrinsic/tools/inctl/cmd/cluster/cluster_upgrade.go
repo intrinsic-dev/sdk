@@ -3,6 +3,7 @@
 package cluster
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -17,6 +18,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"intrinsic/frontend/cloud/updatemanager/info"
+	"intrinsic/frontend/cloud/updatemanager/messages"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/auth"
 	"intrinsic/tools/inctl/util/orgutil"
@@ -46,10 +48,10 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 // Req returns an http request for subpath
 //
 // Note: empty subpath just queries the root path
-func (c *Client) Req(ctx context.Context, method, subpath string) (*http.Request, error) {
+func (c *Client) Req(ctx context.Context, method, subpath string, body io.Reader) (*http.Request, error) {
 	url := c.url
 	url.Path = filepath.Join(url.Path, subpath)
-	req, err := http.NewRequestWithContext(ctx, method, url.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, method, url.String(), body)
 	if err != nil {
 		return nil, fmt.Errorf("create %q request for %s: %w", method, url.String(), err)
 	}
@@ -57,8 +59,8 @@ func (c *Client) Req(ctx context.Context, method, subpath string) (*http.Request
 }
 
 // runReq runs a |method| request with path and returns the response/error
-func (c *Client) runReq(ctx context.Context, method, subpath string) ([]byte, error) {
-	req, err := c.Req(ctx, method, subpath)
+func (c *Client) runReq(ctx context.Context, method, subpath string, body io.Reader) ([]byte, error) {
+	req, err := c.Req(ctx, method, subpath, body)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +83,7 @@ func (c *Client) runReq(ctx context.Context, method, subpath string) ([]byte, er
 
 // Status queries the update status of a cluster
 func (c *Client) Status(ctx context.Context) (*info.Info, error) {
-	b, err := c.runReq(ctx, http.MethodGet, "/state")
+	b, err := c.runReq(ctx, http.MethodGet, "/state", nil)
 	if err != nil {
 		return nil, fmt.Errorf("runReq(/state): %w", err)
 	}
@@ -92,9 +94,33 @@ func (c *Client) Status(ctx context.Context) (*info.Info, error) {
 	return ui, nil
 }
 
+// SetMode runs a request to set the update mode
+func (c *Client) SetMode(ctx context.Context, mode string) error {
+	bs := &messages.ModeRequest{
+		Mode: mode,
+	}
+	body, err := json.Marshal(bs)
+	if err != nil {
+		return fmt.Errorf("marshal mode request: %w", err)
+	}
+	if _, err := c.runReq(ctx, http.MethodPost, "/setmode", bytes.NewReader(body)); err != nil {
+		return fmt.Errorf("setmode request: %w", err)
+	}
+	return nil
+}
+
+// GetMode runs a request to read the update mode
+func (c *Client) GetMode(ctx context.Context) (string, error) {
+	ui, err := c.Status(ctx)
+	if err != nil {
+		return "", fmt.Errorf("cluster status: %w", err)
+	}
+	return ui.Mode, nil
+}
+
 // Run runs an update if one is pending
 func (c *Client) Run(ctx context.Context) ([]byte, error) {
-	return c.runReq(ctx, http.MethodPost, "/run")
+	return c.runReq(ctx, http.MethodPost, "/run", nil)
 }
 
 func forCluster(project, cluster string) (Client, error) {
@@ -128,6 +154,47 @@ func forCluster(project, cluster string) (Client, error) {
 		},
 		tokenSource: token,
 	}, nil
+}
+
+const modeCmdDesc = `
+Read/Write the current update mechanism mode
+
+There are 3 modes on the system
+- 'off': no updates can run
+- 'on': updates run on demand, when triggered by the user
+- 'automatic': updates run as soon as they are available
+`
+
+var modeCmd = &cobra.Command{
+	Use:   "mode",
+	Short: "Read/Write the current update mechanism mode",
+	Long:  modeCmdDesc,
+	// at most one arg, the mode
+	Args: cobra.MaximumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
+		c, err := forCluster(projectName, clusterName)
+		if err != nil {
+			return fmt.Errorf("cluster upgrade client: %w", err)
+		}
+		switch len(args) {
+		case 0:
+			mode, err := c.GetMode(ctx)
+			if err != nil {
+				return fmt.Errorf("get cluster upgrade mode: %w", err)
+			}
+			fmt.Printf("update mechanism mode: %s\n", mode)
+			return nil
+		case 1:
+			if err := c.SetMode(ctx, args[0]); err != nil {
+				return fmt.Errorf("set cluster upgrade mode: %w", err)
+			}
+			return nil
+		default:
+			return fmt.Errorf("invalid number of arguments. At most 1: %d", len(args))
+		}
+	},
 }
 
 const runCmdDesc = `
@@ -192,4 +259,5 @@ func init() {
 	clusterUpgradeCmd.PersistentFlags().StringVar(&clusterName, "cluster", "", "Name of cluster to upgrade.")
 	clusterUpgradeCmd.MarkPersistentFlagRequired("cluster")
 	clusterUpgradeCmd.AddCommand(runCmd)
+	clusterUpgradeCmd.AddCommand(modeCmd)
 }

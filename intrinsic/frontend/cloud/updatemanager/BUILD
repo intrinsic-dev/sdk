@@ -13,3 +13,8 @@ go_library(
     name = "info",
     srcs = ["info.go"],
 )
+
+go_library(
+    name = "messages",
+    srcs = ["messages.go"],
+)
