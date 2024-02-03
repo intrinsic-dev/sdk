@@ -15,7 +15,6 @@ proto_library(
     deps = [
         ":motion_planner_config_proto",
         ":motion_specification_proto",
-        ":motion_target_proto",
         "//intrinsic/geometry/proto:shape_data_proto",
         "//intrinsic/icon/proto:cart_space_proto",
         "//intrinsic/icon/proto:joint_space_proto",

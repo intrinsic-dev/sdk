@@ -87,11 +87,30 @@ absl::StatusOr<std::vector<eigenmath::VectorXd>> MotionPlannerClient::ComputeIk(
     const intrinsic_proto::motion_planning::CartesianMotionTarget&
         cartesian_target,
     const IkOptions& options) {
+  // Convert CartesianMotionTarget to GeometricConstraint::PoseEquality.
+  intrinsic_proto::world::geometric_constraints::GeometricConstraint
+      geometric_target;
+  *geometric_target.mutable_pose_equality()->mutable_target_frame() =
+      cartesian_target.frame();
+  *geometric_target.mutable_pose_equality()->mutable_moving_frame() =
+      cartesian_target.tool();
+  *geometric_target.mutable_pose_equality()->mutable_target_frame_offset() =
+      cartesian_target.offset();
+
+  return ComputeIk(robot, geometric_target, options);
+}
+
+absl::StatusOr<std::vector<eigenmath::VectorXd>> MotionPlannerClient::ComputeIk(
+    const world::KinematicObject& robot,
+    const intrinsic_proto::world::geometric_constraints::GeometricConstraint&
+        geometric_target,
+    const IkOptions& options) {
   intrinsic_proto::motion_planning::IkRequest request;
   request.set_world_id(world_id_);
   request.mutable_robot_reference()->mutable_object_id()->set_id(
       robot.Id().value());
-  *request.mutable_target() = cartesian_target;
+
+  *request.mutable_target() = geometric_target;
 
   if (options.starting_joints.size() > 0) {
     VectorXdToRepeatedDouble(

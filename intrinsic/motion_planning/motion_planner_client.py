@@ -10,10 +10,10 @@ This includes:
 
 import dataclasses
 from typing import List, Optional
+
 # This import is required to use the *_grpc imports.
 # pylint: disable=unused-import
 import grpc
-
 
 from intrinsic.icon.proto import joint_space_pb2
 from intrinsic.math.python import data_types
@@ -23,6 +23,7 @@ from intrinsic.motion_planning.proto import motion_planner_service_pb2_grpc
 from intrinsic.motion_planning.proto import motion_specification_pb2
 from intrinsic.motion_planning.proto import motion_target_pb2
 from intrinsic.world.proto import collision_settings_pb2
+from intrinsic.world.proto import geometric_constraints_pb2
 from intrinsic.world.python import object_world_ids
 
 
@@ -128,7 +129,10 @@ class MotionPlannerClient:
   def compute_ik(
       self,
       robot_name: object_world_ids.WorldObjectName,
-      target: motion_target_pb2.CartesianMotionTarget,
+      target: (
+          motion_target_pb2.CartesianMotionTarget
+          | geometric_constraints_pb2.GeometricConstraint
+      ),
       starting_joints: Optional[List[float]] = None,
       options: Optional[IKOptions] = None,
   ) -> List[List[float]]:
@@ -145,7 +149,15 @@ class MotionPlannerClient:
     """
     request = motion_planner_service_pb2.IkRequest(world_id=self._world_id)
     request.robot_reference.object_id.by_name.object_name = robot_name
-    request.target.CopyFrom(target)
+
+    # Convert CartesianMotionTarget to GeometricConstraint::PoseEquality.
+    if isinstance(target, motion_target_pb2.CartesianMotionTarget):
+      request.target.pose_equality.moving_frame.CopyFrom(target.tool)
+      request.target.pose_equality.target_frame.CopyFrom(target.frame)
+      request.target.pose_equality.target_frame_offset.CopyFrom(target.offset)
+    else:
+      request.target.CopyFrom(target)
+
     if starting_joints is not None:
       request.starting_joints.joints.extend(starting_joints)
     if options is not None:

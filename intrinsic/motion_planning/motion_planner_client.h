@@ -99,12 +99,20 @@ class MotionPlannerClient {
           cartesian_target,
       const IkOptions& options = {.ensure_same_branch = false});
 
+  // Computes inverse kinematics. max_num_solutions = 0 allows the server to
+  // pick the number of solutions.
+  absl::StatusOr<std::vector<eigenmath::VectorXd>> ComputeIk(
+      const world::KinematicObject& robot,
+      const intrinsic_proto::world::geometric_constraints::GeometricConstraint&
+          geometric_target,
+      const IkOptions& options = {.ensure_same_branch = false});
+
   // Computes forward kinematics.
   //
   // The returned transform is reference_t_target, i.e. the frame of "target" in
   // the frame of "reference".
   //
-  // Typically, some of the joints of the robot should lie inbetween the these
+  // Typically, some of the joints of the robot should lie in between these
   // two frames, otherwise you wouldn't see any changes to the returned
   // transform.
   //

@@ -12,8 +12,8 @@ import "intrinsic/logging/proto/context.proto";
 import "intrinsic/math/proto/pose.proto";
 import "intrinsic/motion_planning/proto/motion_planner_config.proto";
 import "intrinsic/motion_planning/proto/motion_specification.proto";
-import "intrinsic/motion_planning/proto/motion_target.proto";
 import "intrinsic/world/proto/collision_settings.proto";
+import "intrinsic/world/proto/geometric_constraints.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 
 // Different ways to specify a robot.
@@ -105,7 +105,7 @@ message TrajectoryPlanningResponse {
 message IkRequest {
   string world_id = 1;
 
-  CartesianMotionTarget target = 2;
+  intrinsic_proto.world.geometric_constraints.GeometricConstraint target = 2;
 
   // [Optional] Starting joint configuration, used to seed the Ik. If not set,
   // the current position in the world will be used.
