@@ -130,6 +130,11 @@ message IkRequest {
   // branch as the current state of the robot in the world or as the starting
   // joints, if specified. Defaults to false.
   optional bool ensure_same_branch = 7;
+
+  // Optional same branch Ik flag that will prefer solutions on the same
+  // kinematic branch over those close to the starting_joint configuration.
+  // Defaults to false.
+  optional bool prefer_same_branch = 9;
 }
 
 message IkResponse {

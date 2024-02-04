@@ -128,6 +128,8 @@ absl::StatusOr<std::vector<eigenmath::VectorXd>> MotionPlannerClient::ComputeIk(
 
   request.set_ensure_same_branch(options.ensure_same_branch);
 
+  request.set_prefer_same_branch(options.prefer_same_branch);
+
   intrinsic_proto::motion_planning::IkResponse response;
   grpc::ClientContext ctx;
   INTR_RETURN_IF_ERROR(ToAbslStatus(

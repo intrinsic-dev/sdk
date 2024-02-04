@@ -89,6 +89,11 @@ class MotionPlannerClient {
 
     // Optional same branch IK flag. Defaults to false.
     bool ensure_same_branch = false;
+
+    // Optional same branch Ik flag that will prefer solutions on the same
+    // kinematic branch over those close to the starting_joint configuration.
+    // Defaults to false.
+    bool prefer_same_branch = false;
   };
 
   // Computes inverse kinematics. max_num_solutions = 0 allows the server to
@@ -97,7 +102,8 @@ class MotionPlannerClient {
       const world::KinematicObject& robot,
       const intrinsic_proto::motion_planning::CartesianMotionTarget&
           cartesian_target,
-      const IkOptions& options = {.ensure_same_branch = false});
+      const IkOptions& options = {.ensure_same_branch = false,
+                                  .prefer_same_branch = false});
 
   // Computes inverse kinematics. max_num_solutions = 0 allows the server to
   // pick the number of solutions.
@@ -105,7 +111,8 @@ class MotionPlannerClient {
       const world::KinematicObject& robot,
       const intrinsic_proto::world::geometric_constraints::GeometricConstraint&
           geometric_target,
-      const IkOptions& options = {.ensure_same_branch = false});
+      const IkOptions& options = {.ensure_same_branch = false,
+                                  .prefer_same_branch = false});
 
   // Computes forward kinematics.
   //

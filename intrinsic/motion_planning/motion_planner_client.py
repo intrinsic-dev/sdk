@@ -58,12 +58,15 @@ class IKOptions:
       is done.
     ensure_same_branch: Flag to choose IK solution is on the same kinematic
       branch as the starting joints of the robot.
+    prefer_same_branch:  Flag that will prefer solutions on the same kinematic
+      branch over those close to the starting_joints configuration.
   """
 
   max_num_solutions: int = 0
   starting_joints: list[float] | None = None
   collision_settings: collision_settings_pb2.CollisionSettings | None = None
   ensure_same_branch: bool = False
+  prefer_same_branch: bool = False
 
 
 @dataclasses.dataclass
@@ -165,6 +168,8 @@ class MotionPlannerClient:
         request.collision_settings.CopyFrom(options.collision_settings)
       if options.ensure_same_branch:
         request.ensure_same_branch = options.ensure_same_branch
+      if options.prefer_same_branch:
+        request.prefer_same_branch = options.prefer_same_branch
       if options.max_num_solutions:
         request.max_num_solutions = options.max_num_solutions
 
