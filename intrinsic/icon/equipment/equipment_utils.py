@@ -46,7 +46,7 @@ def make_icon_resource_selector(
     A populated resource selector.
   """
 
-  capability_names = ["Icon2Connection"]
+  capability_names = ["intrinsic_proto.icon.IconApi"]
   if with_position_controlled_part:
     capability_names.append(ICON2_POSITION_PART_KEY)
   if with_torque_controlled_part:

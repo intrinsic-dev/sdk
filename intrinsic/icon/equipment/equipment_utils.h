@@ -22,7 +22,7 @@ namespace icon {
 
 // Keys that identify ICON2 equipment in
 // intrinsic/skills/proto/equipment.proto
-constexpr char kIcon2ConnectionKey[] = "Icon2Connection";
+constexpr char kIcon2ConnectionKey[] = "intrinsic_proto.icon.IconApi";
 constexpr char kIcon2PositionPartKey[] = "Icon2PositionPart";
 constexpr char kIcon2TorquePartKey[] = "Icon2TorquePart";
 constexpr char kIcon2GripperPartKey[] = "Icon2GripperPart";
