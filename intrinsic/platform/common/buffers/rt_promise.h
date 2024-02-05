@@ -15,6 +15,7 @@
 #include "intrinsic/icon/utils/log.h"
 #include "intrinsic/icon/utils/realtime_status.h"
 #include "intrinsic/icon/utils/realtime_status_macro.h"
+#include "intrinsic/icon/utils/realtime_status_or.h"
 #include "intrinsic/platform/common/buffers/rt_queue_buffer.h"
 
 namespace intrinsic {
@@ -148,6 +149,16 @@ class RealtimePromise {
     }
     is_cancelled_->store(true, std::memory_order_relaxed);
     return is_cancel_acknowledged_->Post();
+  }
+
+  // Returns true if the promise or the corresponding future have been
+  // cancelled or error, if the promise is uninitialized.
+  icon::RealtimeStatusOr<bool> IsCancelled() const {
+    if (buffer_ == nullptr) {
+      return icon::InvalidArgumentError(
+          "IsCancelled called on uninitialized promise.");
+    }
+    return is_cancelled_->load(std::memory_order_relaxed);
   }
 
  private:

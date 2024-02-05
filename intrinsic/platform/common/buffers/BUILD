@@ -54,6 +54,7 @@ cc_library(
         "//intrinsic/icon/utils:log",
         "//intrinsic/icon/utils:realtime_status",
         "//intrinsic/icon/utils:realtime_status_macro",
+        "//intrinsic/icon/utils:realtime_status_or",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
