@@ -28,6 +28,9 @@ message RenderableWithMetadata {
   // The id of the held geometry.
   string geometry_id = 1 [deprecated = true];
 
+  // The references to the stored geometry artifacts.
+  GeometryStorageRefs geometry_storage_refs = 4;
+
   // The LOD level used when fetching the renderable data. 0 means the original
   // quality and any number above that will simplify the geometry. The higher
   // the number the more simplified it will be.

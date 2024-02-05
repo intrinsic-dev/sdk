@@ -5,6 +5,7 @@ syntax = "proto3";
 package intrinsic_proto.geometry;
 
 import "intrinsic/geometry/service/geometry_service_types.proto";
+import "intrinsic/geometry/service/geometry_storage_refs.proto";
 
 // Geometry service is a mechanism for storing and retrieving geometry.
 service GeometryService {
@@ -22,14 +23,20 @@ service GeometryService {
 
 // Request message for getting geometry from the geometry service.
 message GetGeometryRequest {
-  // The geometry id being requested.
-  string geometry_id = 1;
+  // The geometry id being requested. Deprecated: Use geometry_storage_refs.
+  string geometry_id = 1 [deprecated = true];
+
+  // The references to the stored geometry being requested.
+  GeometryStorageRefs geometry_storage_refs = 2;
 }
 
 // Request message for getting renderable data from the geometry service.
 message GetRenderableRequest {
   // The geometry id being requested.
-  string geometry_id = 1;
+  string geometry_id = 1 [deprecated = true];
+
+  // The references to the stored geometry being requested.
+  GeometryStorageRefs geometry_storage_refs = 3;
 
   // The LOD level to use when fetching the renderable data. 0 means the
   // original quality and any number above that will simplify the geometry. The

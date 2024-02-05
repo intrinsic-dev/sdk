@@ -16,6 +16,12 @@ proto_library(
     srcs = ["geometry_storage_refs.proto"],
 )
 
+py_proto_library(
+    name = "geometry_storage_refs_py_pb2",
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":geometry_storage_refs_proto"],
+)
+
 cc_proto_library(
     name = "geometry_storage_refs_cc_proto",
     deps = [":geometry_storage_refs_proto"],
@@ -31,6 +37,7 @@ proto_library(
     srcs = ["geometry_service.proto"],
     deps = [
         ":geometry_service_types_proto",
+        ":geometry_storage_refs_proto",
     ],
 )
 
