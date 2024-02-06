@@ -14,10 +14,10 @@ go_library(
         "//intrinsic/skills/tools/skill/cmd/list",
         "//intrinsic/skills/tools/skill/cmd/list:listreleased",
         "//intrinsic/skills/tools/skill/cmd/list:listreleasedversions",
+        "//intrinsic/skills/tools/skill/cmd/load",
+        "//intrinsic/skills/tools/skill/cmd/load:unload",
         "//intrinsic/skills/tools/skill/cmd/logs",
         "//intrinsic/skills/tools/skill/cmd/release",
-        "//intrinsic/skills/tools/skill/cmd/sideload:start",
-        "//intrinsic/skills/tools/skill/cmd/sideload:stop",
     ],
 )
 

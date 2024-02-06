@@ -5,8 +5,8 @@ load("//bazel:go_macros.bzl", "go_library")
 package(default_visibility = ["//visibility:public"])
 
 go_library(
-    name = "start",
-    srcs = ["start.go"],
+    name = "load",
+    srcs = ["load.go"],
     deps = [
         "//intrinsic/assets:cmdutils",
         "//intrinsic/assets:idutils",
@@ -28,8 +28,8 @@ go_library(
 )
 
 go_library(
-    name = "stop",
-    srcs = ["stop.go"],
+    name = "unload",
+    srcs = ["unload.go"],
     deps = [
         "//intrinsic/assets:cmdutils",
         "//intrinsic/assets:imagetransfer",

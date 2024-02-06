@@ -1,7 +1,7 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-// Package start defines the skill start command which installs a skill.
-package start
+// Package load defines the skill load command which installs a skill.
+package load
 
 import (
 	"fmt"
@@ -38,22 +38,23 @@ func remoteOpt() remote.Option {
 	return remote.WithAuthFromKeychain(google.Keychain)
 }
 
-var startCmd = &cobra.Command{
-	Use:   "start --type=TYPE TARGET",
+var loadCmd = &cobra.Command{
+	Use:   "load --type=TYPE TARGET",
 	Short: "Install a skill",
 	Example: `Build a skill, upload it to a container registry, and install the skill
-$ inctl skill start --type=build //abc:skill.tar --registry=gcr.io/my-registry --context=minikube
+$ inctl skill load --type=build //abc:skill.tar --registry=gcr.io/my-registry --context=minikube
 
 Upload skill image to a container registry, and install the skill
-$ inctl skill start --type=archive abc/skill.tar --registry=gcr.io/my-registry --context=minikube
+$ inctl skill load --type=archive abc/skill.tar --registry=gcr.io/my-registry --context=minikube
 
 Install skill using an image that has already been pushed to the container registry
-$ inctl skill start --type=image gcr.io/my-workcell/abc@sha256:20ab4f --context=minikube
+$ inctl skill load --type=image gcr.io/my-workcell/abc@sha256:20ab4f --context=minikube
 
 Use the solution flag to automatically resolve the context (requires the solution to run)
-$ inctl skill start --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution=my-solution
+$ inctl skill load --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution=my-solution
 `,
-	Args: cobra.ExactArgs(1),
+	Args:    cobra.ExactArgs(1),
+	Aliases: []string{"start"},
 	RunE: func(command *cobra.Command, args []string) error {
 		target := args[0]
 
@@ -158,8 +159,8 @@ $ inctl skill start --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution
 }
 
 func init() {
-	cmd.SkillCmd.AddCommand(startCmd)
-	cmdFlags.SetCommand(startCmd)
+	cmd.SkillCmd.AddCommand(loadCmd)
+	cmdFlags.SetCommand(loadCmd)
 
 	cmdFlags.AddFlagInstallerAddress()
 	cmdFlags.AddFlagsProjectOrg()

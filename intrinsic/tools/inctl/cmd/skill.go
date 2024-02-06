@@ -15,14 +15,14 @@ import (
 	_ "intrinsic/skills/tools/skill/cmd/list/listreleased"
 	// Add subcommand "skill listreleasedversions".
 	_ "intrinsic/skills/tools/skill/cmd/list/listreleasedversions"
+	// Add subcommand "skill load".
+	_ "intrinsic/skills/tools/skill/cmd/load"
+	// Add subcommand "skill unload".
+	_ "intrinsic/skills/tools/skill/cmd/load/unload"
 	// Add subcommand "skill logs".
 	_ "intrinsic/skills/tools/skill/cmd/logs"
 	// Add subcommand "skill release".
 	_ "intrinsic/skills/tools/skill/cmd/release"
-	// Add subcommand "skill start".
-	_ "intrinsic/skills/tools/skill/cmd/sideload/start"
-	// Add subcommand "skill stop".
-	_ "intrinsic/skills/tools/skill/cmd/sideload/stop"
 )
 
 func init() {
