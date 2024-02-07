@@ -3,6 +3,8 @@
 # C++ toolchain
 # Recommended by https://github.com/grailbio/bazel-toolchain/blob/0.7.2/README.md
 build --incompatible_enable_cc_toolchain_resolution
+# Strict header dependency check. See https://github.com/grailbio/bazel-toolchain/blob/05f0bc1f4b1b12ad7ce0ad5ef9235a94ff39ff54/README.md#strict-header-deps-linux-only
+build --features=layering_check
 
 # Java toolchain
 build --java_runtime_version=remotejdk_11
