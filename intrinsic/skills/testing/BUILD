@@ -65,3 +65,17 @@ py_library(
         "//intrinsic/util:decorators",
     ],
 )
+
+cc_library(
+    name = "skill_test_utils_cc",
+    srcs = ["skill_test_utils.cc"],
+    hdrs = ["skill_test_utils.h"],
+    deps = [
+        "//intrinsic/skills/cc:skill_interface",
+        "//intrinsic/skills/proto:skill_manifest_cc_proto",
+        "//intrinsic/util/status:status_macros",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
