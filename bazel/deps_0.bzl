@@ -191,6 +191,28 @@ def intrinsic_sdks_deps_0():
         urls = ["https://github.com/google/benchmark/archive/16703ff83c1ae6d53e5155df3bb3ab0bc96083be.zip"],
     )
 
+    # Google Commandline Flags.
+    maybe(
+        http_archive,
+        name = "com_github_gflags_gflags",
+        sha256 = "19713a36c9f32b33df59d1c79b4958434cb005b5b47dc5400a7a4b078111d9b5",
+        strip_prefix = "gflags-2.2.2",
+        urls = [
+            "https://github.com/gflags/gflags/archive/refs/tags/v2.2.2.zip",
+        ],
+    )
+
+    # Google Logging Library.
+    maybe(
+        http_archive,
+        name = "com_github_google_glog",
+        sha256 = "122fb6b712808ef43fbf80f75c52a21c9760683dae470154f02bddfc61135022",
+        strip_prefix = "glog-0.6.0",
+        urls = [
+            "https://github.com/google/glog/archive/refs/tags/v0.6.0.zip",
+        ],
+    )
+
     # C++ rules for Bazel.
     maybe(
         http_archive,
@@ -203,36 +225,37 @@ def intrinsic_sdks_deps_0():
     )
 
     # Eigen math library.
+    # Repository name should be com_gitlab_libeigen_eigen to serve
+    # as transitive dependency for com_google_ceres_solver
     maybe(
         http_archive,
-        name = "eigen",
+        name = "com_gitlab_libeigen_eigen",
         build_file = Label("//intrinsic/production/external:BUILD.eigen"),
-        sha256 = "be47d7280bdb186b8c4109c7323ca3f216e3d911dbae883383c2e970c189ed5a",
-        strip_prefix = "eigen-f0f1d7938b7083800ff75fe88e15092f08a4e67e",
+        sha256 = "1ccaabbfe870f60af3d6a519c53e09f3dcf630207321dffa553564a8e75c4fc8",
+        strip_prefix = "eigen-3.4.0",
         urls = [
-            "https://storage.googleapis.com/mirror.tensorflow.org/gitlab.com/libeigen/eigen/-/archive/f0f1d7938b7083800ff75fe88e15092f08a4e67e/eigen-f0f1d7938b7083800ff75fe88e15092f08a4e67e.tar.gz",
-            "https://gitlab.com/libeigen/eigen/-/archive/f0f1d7938b7083800ff75fe88e15092f08a4e67e/eigen-f0f1d7938b7083800ff75fe88e15092f08a4e67e.tar.gz",
+            "https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip",
         ],
     )
 
     maybe(
         http_archive,
         name = "com_google_absl_py",
-        sha256 = "47059bfaef938dfe3818c8efdc14fafc8dfcf057aed93b0e8362eec2de9f4497",
-        strip_prefix = "abseil-py-1.1.0",
+        sha256 = "d82bb99b96efc726e5d516f6811045097666ea369bbe74f687f71bd3b9390a12",
+        strip_prefix = "abseil-py-2.0.0",
         urls = [
-            "https://github.com/abseil/abseil-py/archive/refs/tags/v1.1.0.zip",
+            "https://github.com/abseil/abseil-py/archive/refs/tags/v2.0.0.zip",
         ],
     )
 
     maybe(
         http_archive,
         name = "com_google_absl",
-        sha256 = "affadb4979b75e541551c1382996c135f7d7c4841a619fc35c6170a54e8dbcb0",
-        # HEAD as of 2023-08-16
-        strip_prefix = "abseil-cpp-9a6d9c6eae90f4a5ddb162b8ef49af1e321c9769",
+        sha256 = "aa768256d0567f626334fcbe722f564c40b281518fc8423e2708a308e5f983ea",
+        # Abseil LTS branch, Aug 2023, Patch 1
+        strip_prefix = "abseil-cpp-fb3621f4f897824c0dbe0615fa94543df6192f30",
         urls = [
-            "https://github.com/abseil/abseil-cpp/archive/9a6d9c6eae90f4a5ddb162b8ef49af1e321c9769.zip",
+            "https://github.com/abseil/abseil-cpp/archive/fb3621f4f897824c0dbe0615fa94543df6192f30.zip",
         ],
     )
 

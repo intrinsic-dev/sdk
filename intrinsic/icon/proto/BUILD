@@ -199,10 +199,10 @@ cc_library(
         "//intrinsic/math:twist",
         "//intrinsic/util/status:status_builder",
         "//intrinsic/util/status:status_macros",
+        "@com_gitlab_libeigen_eigen//:eigen",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@eigen",
     ],
 )
 

@@ -12,8 +12,8 @@ cc_library(
         "//intrinsic/eigenmath",
         "//intrinsic/icon/utils:realtime_status",
         "//intrinsic/util:aggregate_type",
+        "@com_gitlab_libeigen_eigen//:eigen",
         "@com_google_absl//absl/log:check",
-        "@eigen",
     ],
 )
 

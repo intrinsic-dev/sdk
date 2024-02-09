@@ -27,6 +27,6 @@ cc_library(
         ":transform_types_fbs_cc",
         "//intrinsic/eigenmath",
         "@com_github_google_flatbuffers//:flatbuffers",
-        "@eigen",
+        "@com_gitlab_libeigen_eigen//:eigen",
     ],
 )

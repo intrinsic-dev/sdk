@@ -10,8 +10,8 @@ cc_library(
     deps = [
         "//intrinsic/eigenmath",
         "//intrinsic/eigenmath:so3",
+        "@com_gitlab_libeigen_eigen//:eigen",
         "@com_google_absl//absl/base:core_headers",
-        "@eigen",
     ],
 )
 

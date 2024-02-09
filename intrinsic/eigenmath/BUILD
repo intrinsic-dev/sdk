@@ -7,7 +7,7 @@ cc_library(
     hdrs = [
         "types.h",
     ],
-    deps = ["@eigen"],
+    deps = ["@com_gitlab_libeigen_eigen//:eigen"],
 )
 
 cc_library(
@@ -15,8 +15,8 @@ cc_library(
     hdrs = ["rotation_utils.h"],
     deps = [
         ":eigenmath",
+        "@com_gitlab_libeigen_eigen//:eigen",
         "@com_google_absl//absl/log:check",
-        "@eigen",
     ],
 )
 
@@ -26,7 +26,7 @@ cc_library(
     deps = [
         ":eigenmath",
         ":rotation_utils",
+        "@com_gitlab_libeigen_eigen//:eigen",
         "@com_google_absl//absl/log:check",
-        "@eigen",
     ],
 )
