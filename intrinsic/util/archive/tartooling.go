@@ -137,3 +137,17 @@ func Copy(tr *tar.Reader, tw *tar.Writer) error {
 		}
 	}
 }
+
+// SeekTo advances a tar reader to the start of the specified file.
+func SeekTo(r *tar.Reader, name string) error {
+	for {
+		h, err := r.Next()
+		if err != nil {
+			// This will return io.EOF if the desired name is not found.
+			return err
+		}
+		if h.Name == name {
+			return nil
+		}
+	}
+}

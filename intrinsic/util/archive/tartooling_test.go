@@ -3,12 +3,12 @@
 package tartooling
 
 import (
-	"archive/tar"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"archive/tar"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -189,6 +189,31 @@ func TestFilesContent(t *testing.T) {
 		if string(gotContent) != string(wantContent) {
 			t.Fatalf("tar content [%d], got %v, want %v,", i, gotContent, wantContent)
 		}
+	}
+	mustHaveNoMoreEntries(t, r)
+}
+
+func TestSeekTo(t *testing.T) {
+	test := &AddFileTest{
+		Content:        [][]byte{[]byte("content-a"), []byte("content-b")},
+		Filenames:      []string{"secret-a.txt", "secret-b.txt"},
+		OverwriteNames: []string{"", ""},
+	}
+	mustPrepareTest(t, test)
+	b := mustPrepareTar(t, prepareForFiles(test))
+	defer b.Close()
+	// check content
+	r := tar.NewReader(b)
+	if err := SeekTo(r, "secret-b.txt"); err != nil {
+		t.Fatalf("SeekTo returned unexpected error: %v", err)
+	}
+	got, err := io.ReadAll(r)
+	if err != nil {
+		t.Fatalf("ReadAll returned unexpected error: %v", err)
+	}
+	want := "content-b"
+	if string(got) != want {
+		t.Fatalf("ReadAll returned unexpected contents, got %q, want %q", got, want)
 	}
 	mustHaveNoMoreEntries(t, r)
 }
