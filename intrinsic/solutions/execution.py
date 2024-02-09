@@ -374,6 +374,7 @@ class Executive:
       grpc.RpcError: On any other gRPC error.
     """
     cancellation_finished_states = {
+        behavior_tree_pb2.BehaviorTree.CANCELED,
         behavior_tree_pb2.BehaviorTree.FAILED,
         behavior_tree_pb2.BehaviorTree.SUCCEEDED,
     }

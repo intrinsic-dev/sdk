@@ -704,8 +704,10 @@ class ExecutiveTest(parameterized.TestCase):
           behavior_tree_pb2.BehaviorTree.RUNNING,
           behavior_tree_pb2.BehaviorTree.SUSPENDING,
           behavior_tree_pb2.BehaviorTree.SUSPENDED,
+          behavior_tree_pb2.BehaviorTree.CANCELING,
       ],
       end_state=[
+          behavior_tree_pb2.BehaviorTree.CANCELED,
           behavior_tree_pb2.BehaviorTree.FAILED,
           behavior_tree_pb2.BehaviorTree.SUCCEEDED,
       ],
