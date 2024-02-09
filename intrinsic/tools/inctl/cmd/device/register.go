@@ -4,13 +4,16 @@ package device
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"intrinsic/frontend/cloud/devicemanager/shared"
@@ -29,6 +32,7 @@ var (
 	deviceRegion  = ""
 	privateDevice = false
 	replaceDevice = false
+	noWait        = false
 )
 
 func validHostname(hostname string) (int, bool) {
@@ -72,6 +76,78 @@ func makeNameError(hostname string, index int) string {
 	}
 	offender := hostname[index-1]
 	return fmt.Sprintf("Cannot use %q in hostname", offender)
+}
+
+func waitForConfigDownload(ctx context.Context, client projectclient.AuthedClient, clusterName, deviceID string) error {
+	// This should usually only take 1-2 min.
+	// If it takes longer than 5 minutes, there' something wrong.
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*5)
+	defer cancel()
+
+	fmt.Printf("Waiting for IPC to download config.")
+	defer fmt.Printf("\n")
+	for {
+		status := map[string]any{}
+		if err := client.GetJSON(ctx, clusterName, deviceID, "configure:status", &status); err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				return fmt.Errorf("the IPC did not reach cloud infrastructure.\nPlease make sure the IPC has a stable internet connection and retry")
+			}
+
+			return fmt.Errorf("get config status: %w", err)
+		}
+		if downloaded, ok := status["downloaded"]; ok {
+			if downloaded.(bool) {
+				return nil
+			}
+		}
+		fmt.Printf(".")
+		time.Sleep(time.Second * 30)
+	}
+}
+
+func waitForStatusAvailable(ctx context.Context, client projectclient.AuthedClient, clusterName, deviceID string) error {
+	fmt.Printf("Waiting for IPC to offer status")
+	for {
+		resp, err := client.GetDevice(ctx, clusterName, deviceID, "relay/v1alpha1/status")
+		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				return fmt.Errorf("the IPC failed to initialize.\nPlease make sure the IPC has as stable internet connection")
+			}
+
+			return fmt.Errorf("get status: %w", err)
+		}
+		resp.Body.Close()
+
+		if resp.StatusCode == http.StatusOK {
+			fmt.Printf("\n")
+			return nil
+		}
+
+		// StatusBadGateway is expected when the control plane isn't up yet.
+		if resp.StatusCode != http.StatusBadGateway {
+			return fmt.Errorf("IPC did not offer status. http code: %v", resp.StatusCode)
+		}
+
+		fmt.Printf(".")
+		time.Sleep(time.Second * 30)
+	}
+}
+
+func waitForCluster(ctx context.Context, client projectclient.AuthedClient, clusterName, deviceID, hostname string) error {
+	// Set a total timeout of 15min
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*15)
+	defer cancel()
+
+	if err := waitForConfigDownload(ctx, client, clusterName, deviceID); err != nil {
+		return fmt.Errorf("wait for config download: %w", err)
+	}
+	if err := waitForStatusAvailable(ctx, client, clusterName, hostname); err != nil {
+		return fmt.Errorf("wait for status: %w", err)
+	}
+
+	fmt.Printf("Device finished initialization.\n")
+
+	return nil
 }
 
 var registerCmd = &cobra.Command{
@@ -154,7 +230,6 @@ var registerCmd = &cobra.Command{
 		switch resp.StatusCode {
 		case http.StatusOK:
 			fmt.Printf("Sent configuration to server. The device will reboot and apply the configuration within a minute.\n")
-			return nil
 		case http.StatusConflict:
 			return fmt.Errorf("cluster %q already exists. Please use a unique value for --hostname if this is a new cluster.\nTo replace the old cluster, call with --%s", hostname, replaceKey)
 		case http.StatusPreconditionFailed:
@@ -170,6 +245,13 @@ var registerCmd = &cobra.Command{
 
 			return fmt.Errorf("request failed. http code: %v", resp.StatusCode)
 		}
+		if !noWait {
+			if err := waitForCluster(cmd.Context(), client, clusterName, deviceID, hostname); err != nil {
+				return fmt.Errorf("failed to wait for config download: %w", err)
+			}
+		}
+
+		return nil
 	}}
 
 func init() {
@@ -179,4 +261,5 @@ func init() {
 	registerCmd.Flags().BoolVarP(&privateDevice, "private", "", false, "If set to 'true', the device will not be visible to other organization members")
 	registerCmd.Flags().StringVarP(&deviceRegion, "region", "", "unspecified", "This can be used for inventory tracking")
 	registerCmd.Flags().BoolVarP(&replaceDevice, replaceKey, "", false, "If set to 'true', an existing cluster with the same name will be replaced.\nThis is equivalent to calling 'inctl cluster delete' first")
+	registerCmd.Flags().BoolVarP(&noWait, "no-wait", "", false, "Set to true to avoid waiting for the cluster initialization.")
 }

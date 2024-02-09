@@ -107,7 +107,7 @@ func (c *AuthedClient) GetDevice(ctx context.Context, cluster, deviceID, subPath
 	return c.Do(req)
 }
 
-// GetDevice acts similar to [GetDevice] but also does [json.Decode] and enforces [http.StatusOK].
+// GetJSON acts similar to [GetDevice] but also does [json.Decode] and enforces [http.StatusOK].
 func (c *AuthedClient) GetJSON(ctx context.Context, cluster, deviceID, subPath string, value any) error {
 	resp, err := c.GetDevice(ctx, cluster, deviceID, subPath)
 	if err != nil {
