@@ -28,7 +28,7 @@ message Metadata {
   string release_notes = 5;
 
   // Release tag for this version of the asset.
-  intrinsic_proto.catalog.Tag tag = 6;
+  Tag tag = 6;
 
   // The time at which this version of the asset became available.
   google.protobuf.Timestamp update_time = 7;

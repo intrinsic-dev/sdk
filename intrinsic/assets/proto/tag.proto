@@ -2,9 +2,9 @@
 
 syntax = "proto3";
 
-package intrinsic_proto.catalog;
+package intrinsic_proto.assets;
 
-// Tag for providing additional info about the asset.
+// Tag for providing additional info about an asset.
 enum Tag {
   TAG_UNSPECIFIED = 0;
 
