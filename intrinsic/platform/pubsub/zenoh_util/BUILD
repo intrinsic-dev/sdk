@@ -14,8 +14,8 @@ cc_library(
     ],
     linkopts = ["-ldl"],  # for dlfcn.h, dlsym in zenoh_handle.cc
     visibility = [
-        "//intrinsic/platform/inros:__subpackages__",
         "//intrinsic/platform/pubsub:__subpackages__",
+        "//intrinsic/platform/ros:__subpackages__",
     ],
     deps = [
         ":zenoh_helpers",
@@ -50,8 +50,8 @@ cc_library(
         ":peer_config.json",
     ],
     visibility = [
-        "//intrinsic/platform/inros:__subpackages__",
         "//intrinsic/platform/pubsub:__subpackages__",
+        "//intrinsic/platform/ros:__subpackages__",
     ],
     deps = [
         ":zenoh_helpers",
