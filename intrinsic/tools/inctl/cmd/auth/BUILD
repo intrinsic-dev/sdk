@@ -10,6 +10,7 @@ go_library(
         "auth.go",
         "list.go",
         "login.go",
+        "print.go",
         "revoke.go",
         "update.go",
     ],
