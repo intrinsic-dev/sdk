@@ -18,7 +18,7 @@ enum AssetViewType {
   // Provides detailed information.
   //
   // Includes the following fields:
-  // * description
+  // * documentation
   // * display_name
   // * id_version
   // * vendor

@@ -1,0 +1,35 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.assets;
+
+import "google/protobuf/timestamp.proto";
+import "intrinsic/assets/proto/documentation.proto";
+import "intrinsic/assets/proto/id.proto";
+import "intrinsic/assets/proto/tag.proto";
+import "intrinsic/assets/proto/vendor.proto";
+
+// General metadata for a specific version of an asset.
+message Metadata {
+  // The asset's id and version.
+  intrinsic_proto.config.IdVersion id_version = 1;
+
+  // The display name of the asset to be shown in UIs.
+  string display_name = 2;
+
+  // The asset's vendor.
+  Vendor vendor = 3;
+
+  // Documentation for the asset.
+  Documentation documentation = 4;
+
+  // Release notes for this version of the asset.
+  string release_notes = 5;
+
+  // Release tag for this version of the asset.
+  intrinsic_proto.catalog.Tag tag = 6;
+
+  // The time at which this version of the asset became available.
+  google.protobuf.Timestamp update_time = 7;
+}
