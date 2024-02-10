@@ -13,7 +13,7 @@ import "intrinsic/assets/proto/vendor.proto";
 // General metadata for a specific version of an asset.
 message Metadata {
   // The asset's id and version.
-  intrinsic_proto.config.IdVersion id_version = 1;
+  IdVersion id_version = 1;
 
   // The display name of the asset to be shown in UIs.
   string display_name = 2;

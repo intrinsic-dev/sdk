@@ -116,13 +116,13 @@ message Dependencies {
 
 message Manifest {
   // The skill's id.
-  config.Id id = 1;
+  intrinsic_proto.assets.Id id = 1;
 
   // The skill's vendor.
-  assets.Vendor vendor = 2;
+  intrinsic_proto.assets.Vendor vendor = 2;
 
   // Documentation about the skill which will be shown to users.
-  assets.Documentation documentation = 3;
+  intrinsic_proto.assets.Documentation documentation = 3;
 
   // Contains user-set options about what skill features are supported by
   // this skill.

@@ -24,8 +24,8 @@ class IdVersionParts {
 
   absl::string_view Id() const { return id_; }
 
-  intrinsic_proto::config::Id IdProto() const {
-    intrinsic_proto::config::Id id_proto;
+  intrinsic_proto::assets::Id IdProto() const {
+    intrinsic_proto::assets::Id id_proto;
     id_proto.set_package(package_);
     id_proto.set_name(name_);
     return id_proto;
@@ -33,8 +33,8 @@ class IdVersionParts {
 
   absl::string_view IdVersion() const { return id_version_; }
 
-  intrinsic_proto::config::IdVersion IdVersionProto() const {
-    intrinsic_proto::config::IdVersion id_version_proto;
+  intrinsic_proto::assets::IdVersion IdVersionProto() const {
+    intrinsic_proto::assets::IdVersion id_version_proto;
     *id_version_proto.mutable_id() = IdProto();
     id_version_proto.set_version(version_);
     return id_version_proto;
@@ -84,7 +84,7 @@ absl::StatusOr<std::string> IdFrom(absl::string_view package,
 // Creates an Id proto from package and name strings.
 //
 // Returns an error if `package` or `name` strings not valid.
-absl::StatusOr<intrinsic_proto::config::Id> IdProtoFrom(
+absl::StatusOr<intrinsic_proto::assets::Id> IdProtoFrom(
     absl::string_view package, absl::string_view name);
 
 // Creates an id string from an Id proto message.
@@ -92,7 +92,7 @@ absl::StatusOr<intrinsic_proto::config::Id> IdProtoFrom(
 // Ids are formatted as in IsId.
 //
 // Returns an error if `package` or `name` fields are not valid.
-absl::StatusOr<std::string> IdFromProto(intrinsic_proto::config::Id id);
+absl::StatusOr<std::string> IdFromProto(intrinsic_proto::assets::Id id);
 
 // Creates an id_version from package, name, and version strings.
 //
@@ -106,7 +106,7 @@ absl::StatusOr<std::string> IdVersionFrom(absl::string_view package,
 // Creates an IdVersion proto from package, name, and version strings.
 //
 // Returns an error if `package`, `name`, or `version` strings are not valid.
-absl::StatusOr<intrinsic_proto::config::IdVersion> IdVersionProtoFrom(
+absl::StatusOr<intrinsic_proto::assets::IdVersion> IdVersionProtoFrom(
     absl::string_view package, absl::string_view name,
     absl::string_view version);
 
@@ -116,7 +116,7 @@ absl::StatusOr<intrinsic_proto::config::IdVersion> IdVersionProtoFrom(
 //
 // Returns an error if `package`, `name`, or `version` fields are not valid.
 absl::StatusOr<std::string> IdVersionFromProto(
-    intrinsic_proto::config::IdVersion id_version);
+    intrinsic_proto::assets::IdVersion id_version);
 
 // Returns the name part of an id or id_version.
 //

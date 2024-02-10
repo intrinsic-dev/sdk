@@ -112,7 +112,7 @@ absl::StatusOr<std::string> IdFrom(absl::string_view package,
   return absl::StrFormat("%s.%s", package, name);
 }
 
-absl::StatusOr<intrinsic_proto::config::Id> IdProtoFrom(
+absl::StatusOr<intrinsic_proto::assets::Id> IdProtoFrom(
     absl::string_view package, absl::string_view name) {
   absl::Status status = ValidatePackage(package);
   if (status.ok()) {
@@ -124,14 +124,14 @@ absl::StatusOr<intrinsic_proto::config::Id> IdProtoFrom(
                                 name, status.message()));
   }
 
-  intrinsic_proto::config::Id id;
+  intrinsic_proto::assets::Id id;
   id.set_package(package);
   id.set_name(name);
 
   return id;
 }
 
-absl::StatusOr<std::string> IdFromProto(intrinsic_proto::config::Id id) {
+absl::StatusOr<std::string> IdFromProto(intrinsic_proto::assets::Id id) {
   return IdFrom(id.package(), id.name());
 }
 
@@ -151,10 +151,10 @@ absl::StatusOr<std::string> IdVersionFrom(absl::string_view package,
   return absl::StrFormat("%s.%s", id, version);
 }
 
-absl::StatusOr<intrinsic_proto::config::IdVersion> IdVersionProtoFrom(
+absl::StatusOr<intrinsic_proto::assets::IdVersion> IdVersionProtoFrom(
     absl::string_view package, absl::string_view name,
     absl::string_view version) {
-  intrinsic_proto::config::IdVersion id_version;
+  intrinsic_proto::assets::IdVersion id_version;
 
   INTR_ASSIGN_OR_RETURN(*id_version.mutable_id(), IdProtoFrom(package, name));
 
@@ -170,7 +170,7 @@ absl::StatusOr<intrinsic_proto::config::IdVersion> IdVersionProtoFrom(
 }
 
 absl::StatusOr<std::string> IdVersionFromProto(
-    intrinsic_proto::config::IdVersion id_version) {
+    intrinsic_proto::assets::IdVersion id_version) {
   return IdVersionFrom(id_version.id().package(), id_version.id().name(),
                        id_version.version());
 }

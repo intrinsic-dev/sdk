@@ -2,7 +2,7 @@
 
 syntax = "proto3";
 
-package intrinsic_proto.config;
+package intrinsic_proto.assets;
 
 // Id uniquely identifies an asset (e.g., skill, resource) in its respective
 // catalog. If you change an Id's package or name field, the catalog will treat
