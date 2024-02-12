@@ -78,8 +78,10 @@ func runVersionCmd(params *cmdParams, stdout io.Writer) error {
 		devContainerVersion = "cannot determine"
 	}
 
+	inctlSDKVersion := SDKVersion
+
 	prtr.Print(&versionInfo{
-		InctlSDKVersion:     SDKVersion,
+		InctlSDKVersion:     inctlSDKVersion,
 		DevContainerVersion: devContainerVersion,
 	})
 
