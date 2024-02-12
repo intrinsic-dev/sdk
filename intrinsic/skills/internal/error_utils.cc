@@ -10,9 +10,10 @@
 #include "absl/status/status.h"
 #include "absl/strings/cord.h"
 #include "google/protobuf/any.pb.h"
-#include "grpcpp/support/error_details.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/skills/proto/error.pb.h"
+#include "intrinsic/util/proto/type_url.h"
+#include "intrinsic/util/status/status_conversion_rpc.h"
 
 namespace intrinsic {
 namespace skills {
@@ -49,26 +50,23 @@ absl::Status ToAbslStatusWithErrorInfo(const ::grpc::Status& grpc_status) {
 ::google::rpc::Status ToGoogleRpcStatus(
     const absl::Status& absl_status,
     const intrinsic_proto::skills::SkillErrorInfo& error_info) {
-  ::google::rpc::Status rpc_status;
-  rpc_status.set_code(static_cast<int>(absl_status.code()));
-  rpc_status.set_message(std::string(absl_status.message()));
+  ::google::rpc::Status rpc_status = SaveStatusAsRpcStatus(absl_status);
   rpc_status.add_details()->PackFrom(error_info);
-
   return rpc_status;
 }
 
 void SetErrorInfo(const intrinsic_proto::skills::SkillErrorInfo& error_info,
                   absl::Status& status) {
-  status.SetPayload("type.googleapis.com/" + error_info.GetTypeName(),
+  status.SetPayload(AddTypeUrlPrefix(error_info.GetTypeName()),
                     absl::Cord(error_info.SerializeAsString()));
 }
 
 intrinsic_proto::skills::SkillErrorInfo GetErrorInfo(
     const absl::Status& status) {
   intrinsic_proto::skills::SkillErrorInfo error_info;
-  std::optional<absl::Cord> error_info_cord = status.GetPayload(
-      "type.googleapis.com/" +
-      intrinsic_proto::skills::SkillErrorInfo::descriptor()->full_name());
+  std::optional<absl::Cord> error_info_cord =
+      status.GetPayload(AddTypeUrlPrefix(
+          intrinsic_proto::skills::SkillErrorInfo::descriptor()->full_name()));
   if (error_info_cord) {
     error_info.ParseFromString(std::string(error_info_cord.value()));  // NOLINT
   }

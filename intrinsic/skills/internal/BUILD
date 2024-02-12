@@ -70,7 +70,8 @@ cc_library(
     hdrs = ["error_utils.h"],
     deps = [
         "//intrinsic/skills/proto:error_cc_proto",
-        "@com_github_grpc_grpc//:grpc++_error_details",
+        "//intrinsic/util/proto:type_url",
+        "//intrinsic/util/status:status_conversion_rpc",
         "@com_github_grpc_grpc//:grpc++_public_hdrs",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
