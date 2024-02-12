@@ -10,6 +10,8 @@ namespace intrinsic {
 
 google::rpc::Status SaveStatusAsRpcStatus(const absl::Status& status);
 absl::Status MakeStatusFromRpcStatus(const google::rpc::Status& status);
+absl::Status MakeStatusFromRpcStatusWithPayloads(
+    const google::rpc::Status& status, const absl::Status& copy_payloads_from);
 
 }  // namespace intrinsic
 

@@ -159,10 +159,13 @@ absl::Status ToAbslStatus(const grpc::Status& status) {
     return absl::OkStatus();
   }
 
+  absl::Status status_with_payloads;
+
   if (!status.error_details().empty()) {
     google::rpc::Status status_proto;
     if (status_proto.ParseFromString(status.error_details())) {
-      return MakeStatusFromRpcStatus(status_proto);
+      return MakeStatusFromRpcStatusWithPayloads(
+          status_proto, /*copy_payloads_from=*/status_with_payloads);
     } else {
       LOG(ERROR) << "Failed to parse error_details to google::rpc::Status";
     }

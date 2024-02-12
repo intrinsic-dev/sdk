@@ -59,6 +59,7 @@ cc_library(
         "//intrinsic/util/proto:type_url",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
         "@com_google_absl//absl/strings:string_view",
         "@com_google_googleapis//google/rpc:status_cc_proto",
