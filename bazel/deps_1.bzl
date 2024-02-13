@@ -11,8 +11,8 @@ load("//bazel:go_deps.bzl", "go_dependencies")
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 
 # CC toolchain
-load("@com_grail_bazel_toolchain//toolchain:deps.bzl", "bazel_toolchain_dependencies")
-load("@com_grail_bazel_toolchain//toolchain:rules.bzl", "llvm_toolchain")
+load("@toolchains_llvm//toolchain:deps.bzl", "bazel_toolchain_dependencies")
+load("@toolchains_llvm//toolchain:rules.bzl", "llvm_toolchain")
 
 # Python toolchain
 load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
