@@ -91,7 +91,7 @@ def _cc_skill_service(name, deps, manifest, **kwargs):
         manifest = manifest,
         deps = deps,
         visibility = ["//visibility:private"],
-        tags = ["manual"],
+        tags = ["manual", "avoid_dep"],
     )
 
     native.cc_binary(
@@ -176,7 +176,7 @@ def _py_skill_service(name, deps, manifest, **kwargs):
         manifest = manifest,
         deps = deps,
         visibility = ["//visibility:private"],
-        tags = ["manual"],
+        tags = ["manual", "avoid_dep"],
     )
 
     py_binary(
@@ -393,7 +393,7 @@ def cc_skill(
         name = skill_service_config_name,
         manifest = manifest,
         visibility = ["//visibility:private"],
-        tags = ["manual"],
+        tags = ["manual", "avoid_dep"],
     )
 
     skill_id_name = "_%s_id" % name
@@ -401,7 +401,7 @@ def cc_skill(
         name = skill_id_name,
         manifest = manifest,
         visibility = ["//visibility:private"],
-        tags = ["manual"],
+        tags = ["manual", "avoid_dep"],
     )
 
     skill_service_name = "_%s_service" % name
@@ -410,7 +410,7 @@ def cc_skill(
         deps = deps,
         manifest = manifest,
         visibility = ["//visibility:private"],
-        tags = ["manual"],
+        tags = ["manual", "avoid_dep"],
     )
 
     _skill(
@@ -474,7 +474,7 @@ def py_skill(
         name = skill_service_config_name,
         manifest = manifest,
         visibility = ["//visibility:private"],
-        tags = ["manual"],
+        tags = ["manual", "avoid_dep"],
     )
 
     skill_id_name = "_%s_id" % name
@@ -482,7 +482,7 @@ def py_skill(
         name = skill_id_name,
         manifest = manifest,
         visibility = ["//visibility:private"],
-        tags = ["manual"],
+        tags = ["manual", "avoid_dep"],
     )
 
     binary_name = "_%s_binary" % name
@@ -493,7 +493,7 @@ def py_skill(
         python_version = "PY3",
         exec_compatible_with = ["@io_bazel_rules_docker//platforms:run_in_container"],
         visibility = ["//visibility:private"],
-        tags = ["manual"],
+        tags = ["manual", "avoid_dep"],
     )
 
     skill_layer_name = "_%s_intrinsic_skill_layer" % name
@@ -510,7 +510,7 @@ def py_skill(
         # https://github.com/bazelbuild/rules_docker/issues/161 for details.
         create_empty_workspace_dir = True,
         visibility = ["//visibility:private"],
-        tags = ["manual"],
+        tags = ["manual", "avoid_dep"],
     )
 
     _skill(
