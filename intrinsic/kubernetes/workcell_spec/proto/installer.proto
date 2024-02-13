@@ -139,7 +139,6 @@ message RemoveContainerAddonRequest {
 message InstallContainerAddonsRequest {
   repeated InstallContainerAddonRequest requests = 1;
 }
-
 service InstallerService {
 
   // Returns information about the currently running (if any) workcell spec.
