@@ -350,6 +350,40 @@ class ExecutiveTest(parameterized.TestCase):
         operations_pb2.GetOperationRequest(name=_OPERATION_NAME)
     )
 
+  def test_run_start_node_works(self):
+    """Tests if executive.run(start_node) executes the start node."""
+    self._setup_create_operation()
+    self._setup_start_operation()
+    self._setup_get_operation_sequence([
+        behavior_tree_pb2.BehaviorTree.RUNNING,
+        behavior_tree_pb2.BehaviorTree.RUNNING,
+        behavior_tree_pb2.BehaviorTree.SUCCEEDED,
+        behavior_tree_pb2.BehaviorTree.SUCCEEDED,
+    ])
+
+    tree = bt.BehaviorTree()
+    tree_id = tree.generate_and_set_unique_id()
+    n2 = bt.Sequence()
+    n2_id = n2.generate_and_set_unique_id()
+
+    tree.set_root(bt.Sequence(children=[bt.Sequence(), n2, bt.Sequence()]))
+
+    self._executive.run(
+        tree, start_node=bt.NodeIdentifierType(tree_id=tree_id, node_id=n2_id)
+    )
+
+    start_request = executive_service_pb2.StartOperationRequest(
+        name=_OPERATION_NAME
+    )
+    start_request.skill_trace_handling = (
+        run_metadata_pb2.RunMetadata.TracingInfo.SKILL_TRACES_LINK
+    )
+    start_request.start_tree_id = tree_id
+    start_request.start_node_id = n2_id
+    self._executive_service_stub.StartOperation.assert_called_once_with(
+        start_request
+    )
+
   def test_operation_done(self):
     """Tests if executive.operation.done works."""
     self._setup_create_operation()

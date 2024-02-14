@@ -483,6 +483,7 @@ class Executive:
       *,
       silence_outputs: bool = False,
       step_wise: bool = False,
+      start_node: Optional[bt.NodeIdentifierType] = None,
       simulation_mode: Optional["Executive.SimulationMode"] = None,
       embed_skill_traces: bool = False,
   ):
@@ -504,6 +505,8 @@ class Executive:
       silence_outputs: If true, do not show success or error outputs of the
         execution in Jupyter.
       step_wise: Execute step-wise, i.e., suspend after each node of the tree.
+      start_node: Run the specified node as if it were the root node of a tree
+        instead of the complete tree.
       simulation_mode: Set the simulation mode on the start request. If None
         will execute in whatever mode is currently set in the executive.
       embed_skill_traces: If true, execution traces in Google Cloud will
@@ -519,6 +522,7 @@ class Executive:
         blocking=False,
         silence_outputs=silence_outputs,
         step_wise=step_wise,
+        start_node=start_node,
         simulation_mode=simulation_mode,
         embed_skill_traces=embed_skill_traces,
     )
@@ -529,6 +533,7 @@ class Executive:
       *,
       silence_outputs: bool = False,
       step_wise: bool = False,
+      start_node: Optional[bt.NodeIdentifierType] = None,
       simulation_mode: Optional["Executive.SimulationMode"] = None,
       embed_skill_traces: bool = False,
   ):
@@ -552,6 +557,8 @@ class Executive:
       silence_outputs: If true, do not show success or error outputs of the
         execution in Jupyter.
       step_wise: Execute step-wise, i.e., suspend after each node of the tree.
+      start_node: Run the specified node as if it were the root node of a tree
+        instead of the complete tree.
       simulation_mode: Set the simulation mode on the start request. If None
         will execute in whatever mode is currently set in the executive.
       embed_skill_traces: If true, execution traces in Google Cloud will
@@ -572,6 +579,7 @@ class Executive:
         blocking=True,
         silence_outputs=silence_outputs,
         step_wise=step_wise,
+        start_node=start_node,
         simulation_mode=simulation_mode,
         embed_skill_traces=embed_skill_traces,
     )
@@ -589,6 +597,7 @@ class Executive:
       step_wise: bool,
       simulation_mode: "Executive.SimulationMode",
       embed_skill_traces: bool,
+      start_node: Optional[bt.NodeIdentifierType],
   ) -> None:
     """Implementation of run and run_async.
 
@@ -605,6 +614,8 @@ class Executive:
       embed_skill_traces: If true, execution traces in Google Cloud will
         incorporate all information from skill traces, otherwise execution
         traces contain links to individual skill traces.
+      start_node: Run the specified node as if it were the root node of a tree
+        instead of the complete tree.
 
     Raises:
       ExecutionFailedError: On unexpected state of the executive during plan
@@ -636,7 +647,9 @@ class Executive:
         )
 
       self._start_with_retry(
-          step_wise=step_wise, embed_skill_traces=embed_skill_traces
+          step_wise=step_wise,
+          start_node=start_node,
+          embed_skill_traces=embed_skill_traces,
       )
       return
 
@@ -644,6 +657,7 @@ class Executive:
     self.start(
         blocking,
         step_wise=step_wise,
+        start_node=start_node,
         simulation_mode=simulation_mode,
         embed_skill_traces=embed_skill_traces,
     )
@@ -701,6 +715,7 @@ class Executive:
       silence_outputs: bool = False,
       *,
       step_wise: bool = False,
+      start_node: Optional[bt.NodeIdentifierType] = None,
       simulation_mode: Optional["Executive.SimulationMode"] = None,
       embed_skill_traces: bool = False,
   ) -> None:
@@ -712,6 +727,7 @@ class Executive:
       silence_outputs: If true, do not show success or error outputs of the
         execution in Jupyter.
       step_wise: Execute step-wise, i.e., suspend after each node of the tree.
+      start_node: Start only the specified node instead of the complete tree.
       simulation_mode: Set the simulation mode on the start request. If None
         will execute in whatever mode is currently set in the executive.
       embed_skill_traces: If true, execution traces in Google Cloud will
@@ -725,6 +741,7 @@ class Executive:
 
     self._start_with_retry(
         step_wise=step_wise,
+        start_node=start_node,
         simulation_mode=simulation_mode,
         embed_skill_traces=embed_skill_traces,
     )
@@ -920,6 +937,7 @@ class Executive:
       self,
       *,
       step_wise: bool = False,
+      start_node: Optional[bt.NodeIdentifierType] = None,
       simulation_mode: Optional["Executive.SimulationMode"] = None,
       embed_skill_traces: bool = False,
   ) -> None:
@@ -943,6 +961,9 @@ class Executive:
       request.skill_trace_handling = (
           run_metadata_pb2.RunMetadata.TracingInfo.SKILL_TRACES_LINK
       )
+    if start_node is not None:
+      request.start_tree_id = start_node.tree_id
+      request.start_node_id = start_node.node_id
     self._operation.update_from_proto(self._stub.StartOperation(request))
 
   @error_handling.retry_on_grpc_unavailable

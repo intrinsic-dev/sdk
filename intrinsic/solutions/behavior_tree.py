@@ -59,7 +59,9 @@ _NODE_TYPES_TO_DOT_SHAPES = {
     'data': 'box',
 }
 
-NodeIdentifierType = tuple[str, str]
+NodeIdentifierType = collections.namedtuple(
+    'NodeIdentifierType', ['tree_id', 'node_id']
+)
 
 
 def _generate_unique_identifier(base_name: str, identifiers: List[str]) -> str:
@@ -3620,7 +3622,7 @@ class BehaviorTree:
           f' following entries: {node_identifiers}.'
       )
     unique_node = node_identifiers[0]
-    if unique_node[0] is None or unique_node[1] is None:
+    if unique_node.tree_id is None or unique_node.node_id is None:
       raise solutions_errors.InvalidArgumentError(
           f'Unique node with name {node_name} did not have tree id and node id'
           f' set. Got: {unique_node}.'
@@ -3655,7 +3657,11 @@ class BehaviorTree:
           and tree_object.name
           and tree_object.name == node_name
       ):
-        node_identifiers.append((containing_tree.tree_id, tree_object.node_id))
+        node_identifiers.append(
+            NodeIdentifierType(
+                tree_id=containing_tree.tree_id, node_id=tree_object.node_id
+            )
+        )
 
     self.visit(search_matching_name)
     return node_identifiers
