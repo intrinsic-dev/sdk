@@ -272,6 +272,15 @@ message StartOperationRequest {
   SimulationMode simulation_mode = 3;
 
   RunMetadata.TracingInfo.SkillTraceHandling skill_trace_handling = 4;
+
+  // Optionally select a specific node in the operation to be executed
+  // instead of the full tree.
+  // start_node_id must be in start_tree_id and start_tree_id must be part of
+  // the named operation. start_node_id will be executed as if it were the root
+  // of start_tree_id and as if start_tree_id were the process tree of the
+  // operation. No other parts of the tree will be executed.
+  optional string start_tree_id = 5;
+  optional uint32 start_node_id = 6;
 }
 
 message SuspendOperationRequest {

@@ -47,6 +47,11 @@ message RunMetadata {
   // when creating it).
   TracingInfo tracing_info = 22;
 
+  // These fields are set, if the operation is configured to execute only a
+  // specific node of a sub-behavior tree of the loaded behavior tree.
+  optional string start_tree_id = 24;
+  optional uint32 start_node_id = 25;
+
   // This context is set when getting the operation info via the service.  It
   // contains the session ID and possibly the ID of the current runnable. It
   // will *not* contain an action ID. The field is *not* set for logged
