@@ -460,6 +460,10 @@ message BehaviorTree {
     // An optional (display) name for the node.
     optional string name = 15;
 
+    // An optional description for a node. This can be used, for example, to
+    // provide documentation for a particular node.
+    optional string description = 20;
+
     // An identifier for the node. The identifier must be unique for the
     // behavior tree containing the node.
     // Given a subtree (TREE-A), which gets used in another tree (TREE-B),
