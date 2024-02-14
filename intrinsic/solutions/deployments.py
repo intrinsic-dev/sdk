@@ -393,6 +393,16 @@ def connect_to_selected_solution(
   """
   config = userconfig.read()
 
+  if (
+      config.get(userconfig.SELECTED_SOLUTION_TYPE, None)
+      == userconfig.SELECTED_SOLUTION_TYPE_LOCAL
+  ):
+    return connect(options=options)
+
+  # If we reach this point, config.get(userconfig.SELECTED_SOLUTION_TYPE) is
+  # either None or userconfig.SELECTED_SOLUTION_TYPE_REMOTE. For backward
+  # compatibility we treat both cases equally.
+
   selected_project = config.get(userconfig.SELECTED_PROJECT, None)
   if selected_project is None:
     raise ValueError("No project selected!")

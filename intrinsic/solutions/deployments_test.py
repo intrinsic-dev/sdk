@@ -161,14 +161,8 @@ class DeploymentsTest(absltest.TestCase):
     self.assertTrue(mock_for_channel.called)
 
   @mock.patch.object(userconfig, "read")
-  @mock.patch.object(deployments, "_get_cluster_from_solution")
-  @mock.patch.object(dialerutil, "create_channel")
-  @mock.patch.object(deployments.Solution, "for_channel")
-  def test_deployments_connect_with_selected_solution(
+  def test_deployments_connect_to_selected_solution_fails(
       self,
-      mock_for_channel: mock.MagicMock,
-      mock_create_channel: mock.MagicMock,
-      mock_get_cluster_from_solution: mock.MagicMock,
       mock_userconfig_read: mock.MagicMock,
   ):
     mock_userconfig_read.return_value = {}
@@ -176,11 +170,56 @@ class DeploymentsTest(absltest.TestCase):
       deployments.connect_to_selected_solution()
 
     mock_userconfig_read.return_value = {
+        userconfig.SELECTED_SOLUTION_TYPE: (
+            userconfig.SELECTED_SOLUTION_TYPE_REMOTE
+        )
+    }
+    with self.assertRaisesRegex(ValueError, "No project"):
+      deployments.connect_to_selected_solution()
+
+    mock_userconfig_read.return_value = {
+        userconfig.SELECTED_SOLUTION_TYPE: (
+            userconfig.SELECTED_SOLUTION_TYPE_REMOTE
+        ),
         "selectedProject": "test-project",
     }
     with self.assertRaisesRegex(ValueError, "No solution"):
       deployments.connect_to_selected_solution()
 
+  @mock.patch.object(userconfig, "read")
+  @mock.patch.object(dialerutil, "create_channel")
+  @mock.patch.object(deployments.Solution, "for_channel")
+  def test_deployments_connect_to_selected_solution_local_case(
+      self,
+      mock_for_channel: mock.MagicMock,
+      mock_create_channel: mock.MagicMock,
+      mock_userconfig_read: mock.MagicMock,
+  ):
+    mock_userconfig_read.return_value = {
+        userconfig.SELECTED_SOLUTION_TYPE: (
+            userconfig.SELECTED_SOLUTION_TYPE_LOCAL
+        )
+    }
+    mock_for_channel.return_value = None
+
+    deployments.connect_to_selected_solution()
+
+    mock_create_channel.assert_called_with(
+        dialerutil.CreateChannelParams(address=deployments._DEFAULT_HOSTPORT),
+        grpc_options=deployments._GRPC_OPTIONS,
+    )
+
+  @mock.patch.object(userconfig, "read")
+  @mock.patch.object(deployments, "_get_cluster_from_solution")
+  @mock.patch.object(dialerutil, "create_channel")
+  @mock.patch.object(deployments.Solution, "for_channel")
+  def test_deployments_connect_to_selected_solution_remote_case(
+      self,
+      mock_for_channel: mock.MagicMock,
+      mock_create_channel: mock.MagicMock,
+      mock_get_cluster_from_solution: mock.MagicMock,
+      mock_userconfig_read: mock.MagicMock,
+  ):
     mock_userconfig_read.return_value = {
         "selectedProject": "test-project",
         "selectedSolution": "test-solution",
