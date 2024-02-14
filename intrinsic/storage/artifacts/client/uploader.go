@@ -117,14 +117,14 @@ func (h *defaultHelper) UploadImage(ctx context.Context, imageName string, image
 
 func (h *defaultHelper) uploadImageParts(ctx context.Context, image crv1.Image, response *artifactpb.ArtifactResponse) error {
 	if response.Available {
-		log.Infof("image %s is already available upstream, skipping", response.Ref)
+		log.InfoContextf(ctx, "image %s is already available upstream, skipping", response.Ref)
 		return nil
 	}
 
 	taskGroup, _ := errgroup.WithContext(ctx)
 	taskGroup.SetLimit(h.maxNumberOfUploads)
 
-	log.Infof("uploading image %s to upstream...", response.Ref)
+	log.InfoContextf(ctx, "uploading image %s to upstream...", response.Ref)
 	missingRefs := asRefMap(response.MissingRefs...)
 	maxUpdateSize := response.MaxUpdateSize
 	if len(missingRefs) > 0 {
@@ -151,7 +151,7 @@ func (h *defaultHelper) uploadImageParts(ctx context.Context, image crv1.Image, 
 
 			if _, missing := missingRefs[digest.String()]; missing || fullUpload {
 				mediaType, _ := layer.MediaType()
-				log.Infof("uploading layer %s (%s) ", digest, mediaType)
+				log.InfoContextf(ctx, "uploading layer %s (%s) ", digest, mediaType)
 				delete(missingRefs, digest.String())
 				task, err := newTask(ctx, h.client, maxUpdateSize, asDigestNamed(layer), layer.Compressed)
 				if err != nil {
@@ -168,7 +168,7 @@ func (h *defaultHelper) uploadImageParts(ctx context.Context, image crv1.Image, 
 		}
 		configRef := manifest.Config.Digest.String()
 		if _, missing := missingRefs[configRef]; missing || fullUpload {
-			log.Infof("uploading config for %s: ", response.Ref)
+			log.InfoContextf(ctx, "uploading config for %s: ", response.Ref)
 			delete(missingRefs, configRef)
 			task, err := newTask(ctx, h.client, maxUpdateSize, asDigestNamed(descWrap{value: manifest.Config}), bytesReader(image.RawConfigFile))
 			if err != nil {
@@ -183,7 +183,7 @@ func (h *defaultHelper) uploadImageParts(ctx context.Context, image crv1.Image, 
 	}
 
 	// this needs to be last step to tie together all previously uploaded blobs under image name
-	log.Infof("uploading manifest for %s", response.Ref)
+	log.InfoContextf(ctx, "uploading manifest for %s", response.Ref)
 	task, err := newTask(ctx, h.client, maxUpdateSize, asSimplyNamed(response.Ref, image), bytesReader(image.RawManifest))
 	if err != nil {
 		return err

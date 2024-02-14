@@ -75,7 +75,7 @@ func (t *uploaderTask) run() error {
 }
 
 func (t *uploaderTask) runWithCtx(ctx context.Context) error {
-	log.Infof("starting upload: %s", t.getShortName())
+	log.InfoContextf(ctx, "starting upload: %s", t.getShortName())
 	t.updateMonitor(ProgressUpdate{
 		Status:  StatusUndetermined,
 		Current: 0,
@@ -88,7 +88,7 @@ func (t *uploaderTask) runWithCtx(ctx context.Context) error {
 		return fmt.Errorf("cannot contact upstream: %s", err)
 	}
 	defer func() {
-		log.Infof("closing client connection: %s", t.getShortName())
+		log.InfoContextf(ctx, "closing client connection: %s", t.getShortName())
 		stream.CloseSend()
 	}() // in any case we are done here.
 
@@ -101,7 +101,7 @@ func (t *uploaderTask) runWithCtx(ctx context.Context) error {
 	var totalSize int64 = 0
 	var ctxErr error = nil
 	for ctxErr = ctx.Err(); ctxErr == nil; ctxErr = ctx.Err() {
-		log.Infof("%s: sending chunk %5d: (%d/%d) in %d increment", t.getShortName(), idTracker.Load(), totalSize, t.descriptor.Size, t.updateSize)
+		log.InfoContextf(ctx, "%s: sending chunk %5d: (%d/%d) in %d increment", t.getShortName(), idTracker.Load(), totalSize, t.descriptor.Size, t.updateSize)
 		action := artifactpb.UpdateAction_UPDATE_ACTION_UPDATE
 		length, err := t.reader.Read(contentBuffer)
 		if err != nil {
@@ -126,7 +126,7 @@ func (t *uploaderTask) runWithCtx(ctx context.Context) error {
 			Length:  int32(length),
 			Data:    dataSlice,
 		}
-		log.Infof("chunk id: %d", updateRequest.ChunkId)
+		log.InfoContextf(ctx, "chunk id: %d", updateRequest.ChunkId)
 
 		if firstChunk {
 			digest := t.descriptor.Digest.String()
@@ -190,7 +190,7 @@ func (t *uploaderTask) goProcessInbound(ctx context.Context, stream artifactgrpc
 	defer close(t.terminalChan)
 	for ctx.Err() == nil {
 		msg, err := stream.Recv()
-		log.Infof("err: %v, msg %v", err, msg)
+		log.InfoContextf(ctx, "err: %v, msg %v", err, msg)
 		if err != nil {
 			if err != io.EOF {
 				t.updateMonitor(ProgressUpdate{
