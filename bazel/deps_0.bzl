@@ -54,7 +54,6 @@ def intrinsic_sdks_deps_0():
     )
 
     # CC toolchain
-    BAZEL_TOOLCHAIN_TAG = "0.8.1"
     maybe(
         http_archive,
         name = "toolchains_llvm",
