@@ -454,12 +454,13 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
   // Populate the footprint in the result with equipment reservations.
   *result->mutable_footprint() = std::move(skill_result).value();
   INTR_ASSIGN_OR_RETURN_GRPC(
-      auto equipment_resources,
+      auto resource_reservations,
       ReserveEquipmentRequired(
           runtime_data.GetResourceData().GetRequiredResources(),
           request->instance().resource_handles()));
-  for (const auto& equipment_resource : equipment_resources) {
-    *result->mutable_footprint()->add_equipment_resource() = equipment_resource;
+  for (const auto& resource_reservation : resource_reservations) {
+    *result->mutable_footprint()->add_resource_reservation() =
+        resource_reservation;
   }
 
   return ::grpc::Status::OK;

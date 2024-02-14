@@ -16,5 +16,5 @@ message ResourceSelector {
   // By default, the sharing type defaults to exclusive access, meaning that
   // only one skill may use the equipment at the time. Some skills may use
   // equipment in a way that enables multiple simultaneous access.
-  intrinsic_proto.skills.EquipmentResource.SharingType sharing_type = 2;
+  intrinsic_proto.skills.ResourceReservation.SharingType sharing_type = 2;
 }

@@ -189,8 +189,8 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
     for name, selector in required_equipment.items():
       if name in footprint_request.instance.resource_handles:
         handle = footprint_request.instance.resource_handles[name]
-        skill_footprint.equipment_resource.append(
-            footprint_pb2.EquipmentResource(
+        skill_footprint.resource_reservation.append(
+            footprint_pb2.ResourceReservation(
                 type=selector.sharing_type, name=handle.name
             )
         )

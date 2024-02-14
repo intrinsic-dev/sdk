@@ -16,7 +16,7 @@ namespace intrinsic::skills {
 // Specifies equipment reservations from a Skill's EquipmentRequired
 // implementation.
 absl::StatusOr<google::protobuf::RepeatedPtrField<
-    intrinsic_proto::skills::EquipmentResource>>
+    intrinsic_proto::skills::ResourceReservation>>
 ReserveEquipmentRequired(
     const absl::flat_hash_map<std::string,
                               intrinsic_proto::skills::ResourceSelector>&

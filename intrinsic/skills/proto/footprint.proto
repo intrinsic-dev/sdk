@@ -7,20 +7,21 @@ package intrinsic_proto.skills;
 import "intrinsic/geometry/proto/shape_data.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 
-// A footprint contains zero or more resources that are required to execute a
-// skill. Each resource has a sharing type which determines how the resource can
-// be shared with other skills. In some cases the resource type also restricts
-// how the resource can be used (e.g., an empty-volume resource prevents any
-// skill from operating in the reserved space).
+// A footprint contains zero or more reservations that must be held when
+// executing a skill. Each reservation has a sharing type which is used to
+// determine when two skills can be scheduled concurrently. Note that volume
+// reservations can also generate conflicts with the geometrical state of the
+// world. E.g., a volume reservation that intersects static geometry would not
+// be schedulable even when the skill is executing by itself.
 message Footprint {
-  // One or more volume resources.
-  repeated VolumeResource volume = 1;
+  // One or more volume reservations.
+  repeated VolumeReservation volume = 1;
 
-  // One or more resources in the world (objects or frames).
-  repeated ObjectWorldResource object_resource = 4;
+  // One or more reservations in the world (objects or frames).
+  repeated ObjectWorldReservation object_resource = 4;
 
-  // One or more pieces of equipment.
-  repeated EquipmentResource equipment_resource = 6;
+  // One or more resources.
+  repeated ResourceReservation resource_reservation = 6;
 
   // A special value - true indicates that all entities in the entire universe
   // are held, implying that this holder of this footprint cannot execute at
@@ -39,22 +40,22 @@ message Footprint {
   bool skip_missing_permissions = 5;
 }
 
-message ObjectWorldResource {
+message ObjectWorldReservation {
   enum SharingType {
-    // The holder has an exclusive lock on this resource and is free to change
+    // The holder has an exclusive lock on this object and is free to change
     // its state. For example, a writer lock must be held to control a robot.
     WRITE = 0;
 
-    // The holder has a shared lock on this resource and its state must not
+    // The holder has a shared lock on this object and its state must not
     // change until all reader locks are released.
     READ = 1;
   }
 
-  // The type of resource lock.
+  // The type of reservation lock.
   SharingType type = 1;
 
-  // The object world resource to which to apply the specified sharing type.
-  oneof resource {
+  // The object world item to which to apply the specified sharing type.
+  oneof object_type {
     // Name of an object.
     intrinsic_proto.world.ObjectReferenceByName object = 2;
 
@@ -63,7 +64,7 @@ message ObjectWorldResource {
   }
 }
 
-message VolumeResource {
+message VolumeReservation {
   enum SharingType {
     // The holder is allowed to change the contents of the volume. This is an
     // exclusive lock. For example, a robot moving through a swept volume would
@@ -80,7 +81,7 @@ message VolumeResource {
   }
 }
 
-message EquipmentResource {
+message ResourceReservation {
   enum SharingType {
     UNSPECIFIED = 0;
     // The holder is allowed to change the state of this equipment.

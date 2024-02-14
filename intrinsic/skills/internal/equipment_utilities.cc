@@ -11,6 +11,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "google/protobuf/repeated_ptr_field.h"
 #include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/footprint.pb.h"
@@ -18,7 +19,7 @@
 namespace intrinsic::skills {
 
 absl::StatusOr<google::protobuf::RepeatedPtrField<
-    intrinsic_proto::skills::EquipmentResource>>
+    intrinsic_proto::skills::ResourceReservation>>
 ReserveEquipmentRequired(
     const absl::flat_hash_map<std::string,
                               intrinsic_proto::skills::ResourceSelector>&
@@ -26,7 +27,8 @@ ReserveEquipmentRequired(
     const google::protobuf::Map<std::string,
                                 intrinsic_proto::resources::ResourceHandle>&
         resource_handles) {
-  google::protobuf::RepeatedPtrField<intrinsic_proto::skills::EquipmentResource>
+  google::protobuf::RepeatedPtrField<
+      intrinsic_proto::skills::ResourceReservation>
       resources;
   std::vector<std::string> missing_handles;
   for (const auto& [name, selector] : equipment_required) {
@@ -36,7 +38,7 @@ ReserveEquipmentRequired(
       continue;
     }
     // Handle is present so create a Resource.
-    intrinsic_proto::skills::EquipmentResource resource;
+    intrinsic_proto::skills::ResourceReservation resource;
     resource.set_type(selector.sharing_type());
     // `name` would be the skill internal name, but we need to reserve the
     // "external" name of the equiment.
