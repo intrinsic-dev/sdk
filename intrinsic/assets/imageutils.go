@@ -22,6 +22,7 @@ import (
 	"intrinsic/assets/imagetransfer"
 	idpb "intrinsic/assets/proto/id_go_proto"
 	"intrinsic/kubernetes/workcell_spec/imagetags"
+	ipb "intrinsic/kubernetes/workcell_spec/proto/image_go_proto"
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	installerservicegrpcpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/util/proto/protoio"
@@ -140,6 +141,80 @@ func PushImage(registry string, image containerregistry.Image, imageName string,
 	}
 	log.Printf("Finished pushing image")
 	return nil
+}
+
+// ImageOptions is used to configure Push of a specific image.
+type ImageOptions struct {
+	// The name to be given to the image.
+	Name string
+	// The tag to be given to the image.
+	Tag string
+}
+
+// BasicAuth provides the necessary fields to perform basic authentication with
+// a resource registry.
+type BasicAuth struct {
+	// User is the username used to access the registry.
+	User string
+	// Pwd is the password used to authenticate registry access.
+	Pwd string
+}
+
+// RegistryOptions is used to configure Push to a specific registry
+type RegistryOptions struct {
+	// URI of the container registry
+	URI string
+	// The transferer performs the work to send the container to the registry.
+	imagetransfer.Transferer
+	// The optional parameters required to perform basic authentication with
+	// the registry.
+	BasicAuth
+}
+
+// Push takes an image archive provided by opener pushes it to the specified
+// registry.
+func Push(opener tarball.Opener, img ImageOptions, reg RegistryOptions) (*ipb.Image, error) {
+	registry := strings.TrimSuffix(reg.URI, "/")
+	if len(registry) == 0 {
+		return nil, fmt.Errorf("registry is empty")
+	}
+
+	// A tag is required for retention.  Infra uses an image being untagged as
+	// a signal it can be removed.
+	dst := fmt.Sprintf("%s/%s:%s", registry, img.Name, img.Tag)
+	ref, err := name.NewTag(dst)
+	if err != nil {
+		return nil, errors.Wrapf(err, "name.NewReference(%q)", dst)
+	}
+
+	// tarball.Image optionally takes a name.Tag as the second parameter.
+	// That's only needed if there are multiple images in the provided tarball,
+	// since it then uses the reference to find it.  This is different than how
+	// we use the reference constructed above, which is to specify where we'll
+	// push the image we're reading.  We're basically giving ourselves license
+	// to rename whatever the image is in the tarball during the push.
+	image, err := tarball.Image(opener, nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not create tarball image: %v", err)
+	}
+	digest, err := image.Digest()
+	if err != nil {
+		return nil, fmt.Errorf("could not get the sha256 of the image: %v", err)
+	}
+
+	if err := reg.Transferer.Write(ref, image); err != nil {
+		return nil, fmt.Errorf("could not write image %q: %v", dst, err)
+	}
+
+	// Always provide a spec in terms of the digest, since that is
+	// reproducible, while a tag may not be.
+	return &ipb.Image{
+		Registry:     reg.URI,
+		Name:         img.Name,
+		Tag:          "@" + digest.String(),
+		AuthUser:     reg.User,
+		AuthPassword: reg.Pwd,
+	}, nil
 }
 
 // GetImagePath returns the image path.
