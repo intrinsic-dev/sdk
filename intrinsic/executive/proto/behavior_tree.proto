@@ -355,6 +355,20 @@ message BehaviorTree {
     }
   }
 
+  message DebugNode {
+    message Suspend {
+      // By default the DebugNode will transition to SUCCEEDED on resume. In
+      // some situations, like in the context of a fallback node, it may be
+      // desirable to enter the FAILED state on resume. This is done if set to
+      // true.
+      bool fail_on_resume = 1;
+    }
+
+    // If set, the enclosing operation will be suspended when this node is
+    // selected for execution.
+    optional Suspend suspend = 1;
+  }
+
   message Breakpoint {
     enum Type {
       TYPE_UNSPECIFIED = 0;
@@ -448,6 +462,7 @@ message BehaviorTree {
       SubtreeNode sub_tree = 11;
       ProcessControlNode control_process = 16;
       DataNode data = 18;
+      DebugNode debug = 19;
     }
 
     Decorators decorators = 12;
