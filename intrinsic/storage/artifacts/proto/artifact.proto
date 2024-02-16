@@ -23,6 +23,11 @@ service ArtifactServiceApi {
   // API, caller needs to make sure they coordinate between request and
   // response as those are linked in the backend via next.next_index.
   rpc WriteContentStream(stream UpdateRequest) returns (stream UpdateResponse);
+
+  // Streaming upload of the artifact content. While this is streaming
+  // API, caller needs to make sure UpdateRequest.ChunkId is increasing sequence
+  // of numbers.
+  rpc UploadContent(stream UpdateRequest) returns (UpdateResponse);
 }
 
 // OciDescriptor describes the image content.
