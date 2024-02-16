@@ -119,6 +119,27 @@ func AddBinaryProto(p proto.Message, w *tar.Writer, path string) error {
 	return nil
 }
 
+// AddBytes writes a slice of bytes as a binary file in the tar writer.
+// A nil slice create an empty file.
+func AddBytes(b []byte, w *tar.Writer, path string) error {
+	contents := bytes.NewBuffer(b)
+
+	h := &tar.Header{
+		Name:     path,
+		Mode:     defaultMode,
+		Size:     int64(contents.Len()),
+		Typeflag: tar.TypeReg,
+	}
+	if err := w.WriteHeader(h); err != nil {
+		return errors.Wrapf(err, "failed to write header %+v for %q", h, path)
+	}
+	if _, err := io.Copy(w, contents); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Copy copies from a tar reader to a tar writer.
 func Copy(tr *tar.Reader, tw *tar.Writer) error {
 	for {
