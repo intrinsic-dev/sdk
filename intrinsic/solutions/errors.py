@@ -1,28 +1,28 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-"""Common workcell API errors."""
+"""Common errors in the solution building library."""
 
 import retrying
 
 
 class Error(Exception):
-  """Top-level module error for the workcell API."""
+  """Top-level module error for the solution building library."""
 
 
 class InvalidArgumentError(Error):
-  """Thrown when invalid arguments are passed to the workcell API."""
+  """Thrown when invalid arguments are passed to the solution building library."""
 
 
 class NotFoundError(Error):
-  """Thrown when an element cannot be found in the workcell API."""
+  """Thrown when an element cannot be found in the solution building library."""
 
 
 class UnavailableError(Error):
-  """Thrown when a backend of the workcell API cannot be reached."""
+  """Thrown when a backend of the solution building library cannot be reached."""
 
 
 class FailedPreconditionError(Error):
-  """Thrown when a precondition about the state of the workcell is broken."""
+  """Thrown when a precondition about the state of the solution is broken."""
 
 
 class BackendPendingError(Error):

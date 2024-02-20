@@ -166,7 +166,9 @@ class DeploymentsTest(absltest.TestCase):
       mock_userconfig_read: mock.MagicMock,
   ):
     mock_userconfig_read.return_value = {}
-    with self.assertRaisesRegex(ValueError, "No project"):
+    with self.assertRaisesRegex(
+        solutions_errors.NotFoundError, "solution selection"
+    ):
       deployments.connect_to_selected_solution()
 
     mock_userconfig_read.return_value = {
@@ -174,16 +176,20 @@ class DeploymentsTest(absltest.TestCase):
             userconfig.SELECTED_SOLUTION_TYPE_REMOTE
         )
     }
-    with self.assertRaisesRegex(ValueError, "No project"):
+    with self.assertRaisesRegex(
+        solutions_errors.NotFoundError, "solution selection.*No project"
+    ):
       deployments.connect_to_selected_solution()
 
     mock_userconfig_read.return_value = {
         userconfig.SELECTED_SOLUTION_TYPE: (
             userconfig.SELECTED_SOLUTION_TYPE_REMOTE
         ),
-        "selectedProject": "test-project",
+        userconfig.SELECTED_PROJECT: "test-project",
     }
-    with self.assertRaisesRegex(ValueError, "No solution"):
+    with self.assertRaisesRegex(
+        solutions_errors.NotFoundError, "solution selection.*No solution"
+    ):
       deployments.connect_to_selected_solution()
 
   @mock.patch.object(userconfig, "read")

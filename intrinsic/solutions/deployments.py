@@ -374,24 +374,37 @@ def connect(
   return Solution.for_channel(channel, options=options)
 
 
+_NO_SOLUTION_SELECTED_ERROR = (
+    "No solution selection can be found in the current environment! E.g., in VS"
+    " Code you can use the Intrinsic extension to select a deployed solution."
+)
+
+
 def connect_to_selected_solution(
     *,
     options: Optional[Dict[str, Any]] = None,
 ) -> "Solution":
-  """Connects to a deployed solution.
+  """Connects to the deployed solution that is currently selected.
 
-  Use project and solution that are set in the user config.
+  Connects to the deployed solution that is selected in the current environment.
+  E.g., in VS Code you can use the Intrinsic extension to select a deployed
+  solution from a list of available solutions and then use this method to
+  connect to this solution.
 
   Args:
     options: Same as for connect().
 
   Raises:
-    ValueError: if config, project or solution could not be retrieved.
+    NotFoundError: If no solution selection can be found in the current
+    environment.
 
   Returns:
     A fully initialized Solution object that represents the deployed solution.
   """
-  config = userconfig.read()
+  try:
+    config = userconfig.read()
+  except userconfig.NotFoundError as e:
+    raise solution_errors.NotFoundError(_NO_SOLUTION_SELECTED_ERROR) from e
 
   if (
       config.get(userconfig.SELECTED_SOLUTION_TYPE, None)
@@ -405,11 +418,15 @@ def connect_to_selected_solution(
 
   selected_project = config.get(userconfig.SELECTED_PROJECT, None)
   if selected_project is None:
-    raise ValueError("No project selected!")
+    raise solution_errors.NotFoundError(
+        _NO_SOLUTION_SELECTED_ERROR + " No project selected."
+    )
 
   selected_solution = config.get(userconfig.SELECTED_SOLUTION, None)
   if selected_solution is None:
-    raise ValueError("No solution selected!")
+    raise solution_errors.NotFoundError(
+        _NO_SOLUTION_SELECTED_ERROR + " No solution selected."
+    )
 
   cluster = _get_cluster_from_solution(selected_project, selected_solution)
   channel = dialerutil.create_channel(

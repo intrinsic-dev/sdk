@@ -32,7 +32,7 @@ class UserConfigTest(absltest.TestCase):
     """Tests that the `get_config` function raises a `ValueError` if the config file is not found."""
     testdir = self.create_tempdir().full_path
     mock_get_user_config_dir.return_value = testdir + "/.config"
-    with self.assertRaises(ValueError):
+    with self.assertRaises(userconfig.NotFoundError):
       userconfig.read()
 
   @mock.patch.object(userconfig, "get_user_config_dir")

@@ -19,6 +19,10 @@ SELECTED_SOLUTION_TYPE_LOCAL = "local"
 SELECTED_SOLUTION_TYPE_REMOTE = "remote"
 
 
+class NotFoundError(Exception):
+  """Thrown when the user config cannot be found."""
+
+
 def get_user_config_dir() -> str:
   """Returns the users config directory.
 
@@ -53,4 +57,4 @@ def read() -> Dict[str, str]:
     with open(env_path, "r") as env_file:
       return json.load(env_file)
   except FileNotFoundError as e:
-    raise ValueError(f"User config file ({env_path}) not found!") from e
+    raise NotFoundError(f"User config file ({env_path}) not found!") from e
