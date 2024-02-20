@@ -25,7 +25,8 @@ import (
 )
 
 var (
-	clusterName string
+	clusterName  string
+	rollbackFlag bool
 )
 
 // Client helps run auth'ed requests for a specific cluster
@@ -134,7 +135,7 @@ func (c *Client) Run(ctx context.Context) ([]byte, error) {
 	return c.runReq(ctx, http.MethodPost, "/run", nil)
 }
 
-func forCluster(project, cluster string) (Client, error) {
+func forCluster(project, cluster string, rollback bool) (Client, error) {
 	configuration, err := auth.NewStore().GetConfiguration(project)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -154,6 +155,9 @@ func forCluster(project, cluster string) (Client, error) {
 	// cluster is a query parameter for clusterupdate
 	v := url.Values{}
 	v.Set("cluster", cluster)
+	if rollback {
+		v.Set("rollback", "y")
+	}
 
 	return Client{
 		client: http.DefaultClient,
@@ -185,7 +189,7 @@ var modeCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
-		c, err := forCluster(projectName, clusterName)
+		c, err := forCluster(projectName, clusterName, false)
 		if err != nil {
 			return fmt.Errorf("cluster upgrade client: %w", err)
 		}
@@ -229,7 +233,7 @@ var showTargetCmd = &cobra.Command{
 		ctx := cmd.Context()
 
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
-		c, err := forCluster(projectName, clusterName)
+		c, err := forCluster(projectName, clusterName, false)
 		if err != nil {
 			return fmt.Errorf("cluster upgrade client:\n%w", err)
 		}
@@ -262,7 +266,7 @@ var runCmd = &cobra.Command{
 		ctx := cmd.Context()
 
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
-		c, err := forCluster(projectName, clusterName)
+		c, err := forCluster(projectName, clusterName, rollbackFlag)
 		if err != nil {
 			return fmt.Errorf("cluster upgrade client:\n%w", err)
 		}
@@ -286,7 +290,7 @@ var clusterUpgradeCmd = &cobra.Command{
 		ctx := cmd.Context()
 
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
-		c, err := forCluster(projectName, clusterName)
+		c, err := forCluster(projectName, clusterName, false)
 		if err != nil {
 			return fmt.Errorf("cluster upgrade client:\n%w", err)
 		}
@@ -308,6 +312,7 @@ func init() {
 	clusterUpgradeCmd.PersistentFlags().StringVar(&clusterName, "cluster", "", "Name of cluster to upgrade.")
 	clusterUpgradeCmd.MarkPersistentFlagRequired("cluster")
 	clusterUpgradeCmd.AddCommand(runCmd)
+	runCmd.PersistentFlags().BoolVar(&rollbackFlag, "rollback", false, "Whether to trigger a rollback update instead")
 	clusterUpgradeCmd.AddCommand(modeCmd)
 	clusterUpgradeCmd.AddCommand(showTargetCmd)
 }
