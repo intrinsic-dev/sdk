@@ -18,9 +18,9 @@ message Footprint {
   repeated VolumeReservation volume = 1;
 
   // One or more reservations in the world (objects or frames).
-  repeated ObjectWorldReservation object_resource = 4;
+  repeated ObjectWorldReservation object_reservation = 4;
 
-  // One or more resources.
+  // One or more resource reservations.
   repeated ResourceReservation resource_reservation = 6;
 
   // A special value - true indicates that all entities in the entire universe
