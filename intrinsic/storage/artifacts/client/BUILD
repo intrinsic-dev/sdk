@@ -9,6 +9,7 @@ go_library(
     name = "client",
     srcs = [
         "monitor.go",
+        "nstask.go",
         "task.go",
         "uploader.go",
     ],
@@ -16,6 +17,7 @@ go_library(
         "//intrinsic/storage/artifacts/proto:artifact_go_grpc_proto",
         "//intrinsic/storage/artifacts/proto:artifact_go_proto",
         "@com_github_golang_glog//:go_default_library",
+        "@com_github_google_go_containerregistry//pkg/name:go_default_library",
         "@com_github_google_go_containerregistry//pkg/v1:go_default_library",
         "@com_github_google_go_containerregistry//pkg/v1/partial:go_default_library",
         "@com_github_google_go_containerregistry//pkg/v1/tarball:go_default_library",

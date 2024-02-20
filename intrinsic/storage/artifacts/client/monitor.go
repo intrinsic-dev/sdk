@@ -21,7 +21,7 @@ const (
 	StatusFailure
 )
 
-var names = []string{"Undetermined", "errContinue", "Success", "Failure"}
+var names = []string{"Undetermined", "Continue", "Success", "Failure"}
 
 func (s StatusState) String() string {
 	return names[s]
