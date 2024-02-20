@@ -76,7 +76,7 @@ func (c *Client) runReq(ctx context.Context, method, subpath string, body io.Rea
 	switch resp.StatusCode {
 	case http.StatusOK:
 	default:
-		return nil, fmt.Errorf("HTTP %d %q request for %s: %s", resp.StatusCode, req.Method, req.URL.String(), rb)
+		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, rb)
 	}
 	return rb, nil
 }
@@ -85,7 +85,7 @@ func (c *Client) runReq(ctx context.Context, method, subpath string, body io.Rea
 func (c *Client) Status(ctx context.Context) (*info.Info, error) {
 	b, err := c.runReq(ctx, http.MethodGet, "/state", nil)
 	if err != nil {
-		return nil, fmt.Errorf("runReq(/state): %w", err)
+		return nil, err
 	}
 	ui := &info.Info{}
 	if err := json.Unmarshal(b, ui); err != nil {
@@ -103,10 +103,8 @@ func (c *Client) SetMode(ctx context.Context, mode string) error {
 	if err != nil {
 		return fmt.Errorf("marshal mode request: %w", err)
 	}
-	if _, err := c.runReq(ctx, http.MethodPost, "/setmode", bytes.NewReader(body)); err != nil {
-		return fmt.Errorf("setmode request: %w", err)
-	}
-	return nil
+	_, err = c.runReq(ctx, http.MethodPost, "/setmode", bytes.NewReader(body))
+	return err
 }
 
 // GetMode runs a request to read the update mode
@@ -122,7 +120,7 @@ func (c *Client) GetMode(ctx context.Context) (string, error) {
 func (c *Client) ClusterProjectTarget(ctx context.Context) (*messages.ClusterProjectTargetResponse, error) {
 	b, err := c.runReq(ctx, http.MethodGet, "/projecttarget", nil)
 	if err != nil {
-		return nil, fmt.Errorf("runReq(/state): %w", err)
+		return nil, err
 	}
 	r := &messages.ClusterProjectTargetResponse{}
 	if err := json.Unmarshal(b, r); err != nil {
@@ -195,13 +193,13 @@ var modeCmd = &cobra.Command{
 		case 0:
 			mode, err := c.GetMode(ctx)
 			if err != nil {
-				return fmt.Errorf("get cluster upgrade mode: %w", err)
+				return fmt.Errorf("get cluster upgrade mode:\n%w", err)
 			}
 			fmt.Printf("update mechanism mode: %s\n", mode)
 			return nil
 		case 1:
 			if err := c.SetMode(ctx, args[0]); err != nil {
-				return fmt.Errorf("set cluster upgrade mode: %w", err)
+				return fmt.Errorf("set cluster upgrade mode:\n%w", err)
 			}
 			return nil
 		default:
@@ -233,11 +231,11 @@ var showTargetCmd = &cobra.Command{
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
 		c, err := forCluster(projectName, clusterName)
 		if err != nil {
-			return fmt.Errorf("cluster upgrade client: %w", err)
+			return fmt.Errorf("cluster upgrade client:\n%w", err)
 		}
 		r, err := c.ClusterProjectTarget(ctx)
 		if err != nil {
-			return fmt.Errorf("cluster status: %w", err)
+			return fmt.Errorf("cluster status:\n%w", err)
 		}
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 		fmt.Fprintf(w, "flowstate\tos\n")
@@ -266,11 +264,11 @@ var runCmd = &cobra.Command{
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
 		c, err := forCluster(projectName, clusterName)
 		if err != nil {
-			return fmt.Errorf("cluster upgrade client: %w", err)
+			return fmt.Errorf("cluster upgrade client:\n%w", err)
 		}
 		_, err = c.Run(ctx)
 		if err != nil {
-			return fmt.Errorf("cluster upgrade run: %w", err)
+			return fmt.Errorf("cluster upgrade run:\n%w", err)
 		}
 		fmt.Printf("update for cluster %q in %q kicked off successfully.\n", clusterName, projectName)
 		fmt.Printf("monitor running `inctl cluster upgrade --project %s --cluster %s\n`", projectName, clusterName)
@@ -290,11 +288,11 @@ var clusterUpgradeCmd = &cobra.Command{
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
 		c, err := forCluster(projectName, clusterName)
 		if err != nil {
-			return fmt.Errorf("cluster upgrade client: %w", err)
+			return fmt.Errorf("cluster upgrade client:\n%w", err)
 		}
 		ui, err := c.Status(ctx)
 		if err != nil {
-			return fmt.Errorf("cluster status: %w", err)
+			return fmt.Errorf("cluster status:\n%w", err)
 		}
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 		rollback := ui.RollbackOS != "" && ui.RollbackBase != ""
