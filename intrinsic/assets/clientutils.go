@@ -12,6 +12,7 @@ import (
 	"math"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -83,9 +84,9 @@ func DialSkillCatalogFromInctl(cmd *cobra.Command, flags *cmdutils.CmdFlags) (*g
 func DialSkillCatalog(ctx context.Context, opts DialCatalogOptions) (*grpc.ClientConn, error) {
 	// Get the catalog address.
 	addDNS := true
-	address, err := resolveSkillCatalogAddress(opts.Address, opts.Project, addDNS)
+	address, err := resolveSkillCatalogAddress(ctx, opts.Address, opts.Project, addDNS)
 	if err != nil {
-		return nil, fmt.Errorf("cannot resolve address: %w", err)
+		return nil, errors.Wrap(err, "cannot resolve address")
 	}
 
 	options := BaseDialOptions
@@ -98,11 +99,11 @@ func DialSkillCatalog(ctx context.Context, opts DialCatalogOptions) (*grpc.Clien
 	} else { // Use api-key creds.
 		rpcCreds, err := getAPIKeyPerRPCCredentials(opts.APIKey, opts.Project, opts.Organization)
 		if err != nil {
-			return nil, fmt.Errorf("cannot get api-key credentials: %w", err)
+			return nil, errors.Wrap(err, "cannot get api-key credentials")
 		}
 		tcOption, err := GetTransportCredentialsDialOption()
 		if err != nil {
-			return nil, fmt.Errorf("cannot get transport credentials: %w", err)
+			return nil, errors.Wrap(err, "cannot get transport credentials")
 		}
 		options = append(options, grpc.WithPerRPCCredentials(rpcCreds), tcOption)
 	}
@@ -114,7 +115,7 @@ func DialSkillCatalog(ctx context.Context, opts DialCatalogOptions) (*grpc.Clien
 func GetTransportCredentialsDialOption() (grpc.DialOption, error) {
 	pool, err := x509.SystemCertPool()
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve system cert pool: %w", err)
+		return nil, errors.Wrap(err, "failed to retrieve system cert pool")
 	}
 
 	return grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, "")), nil
@@ -130,7 +131,7 @@ func IsLocalAddress(address string) bool {
 	return false
 }
 
-func resolveSkillCatalogAddress(address string, project string, addDNS bool) (string, error) {
+func resolveSkillCatalogAddress(ctx context.Context, address string, project string, addDNS bool) (string, error) {
 	// Check for user-provided address.
 	if address != "" {
 		return address, nil
@@ -141,6 +142,7 @@ func resolveSkillCatalogAddress(address string, project string, addDNS bool) (st
 		if project == "" {
 			return "", fmt.Errorf("project is required if no address is specified")
 		}
+
 		address = fmt.Sprintf("www.endpoints.%s.cloud.goog:443", project)
 	}
 
