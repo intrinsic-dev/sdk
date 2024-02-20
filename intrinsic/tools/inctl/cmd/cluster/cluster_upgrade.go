@@ -297,8 +297,9 @@ var clusterUpgradeCmd = &cobra.Command{
 			return fmt.Errorf("cluster status: %w", err)
 		}
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-		fmt.Fprintf(w, "project\tcluster\tmode\tstate\tflowstate\tos\n")
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", projectName, clusterName, ui.Mode, ui.State, ui.CurrentBase, ui.CurrentOS)
+		rollback := ui.RollbackOS != "" && ui.RollbackBase != ""
+		fmt.Fprintf(w, "project\tcluster\tmode\tstate\trollback available\tflowstate\tos\n")
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%v\t%s\t%s\n", projectName, clusterName, ui.Mode, ui.State, rollback, ui.CurrentBase, ui.CurrentOS)
 		w.Flush()
 		return nil
 	},
