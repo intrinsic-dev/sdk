@@ -31,34 +31,21 @@ type PushOptions struct {
 	Transferer imagetransfer.Transferer
 }
 
-func imageSpec(image containerregistry.Image, imageName string, opts PushOptions) (*imagepb.Image, error) {
-	digest, err := image.Digest()
-	if err != nil {
-		return nil, fmt.Errorf("could not get the sha256 of the image: %v", err)
-	}
-	return &imagepb.Image{
-		Registry:     strings.TrimSuffix(opts.Registry, "/"),
-		Name:         imageName,
-		Tag:          "@" + digest.String(),
-		AuthUser:     opts.AuthUser,
-		AuthPassword: opts.AuthPwd,
-	}, nil
-}
-
 func pushBuildOrArchiveTypes(image containerregistry.Image, imageName string, opts PushOptions) (*imagepb.Image, error) {
-	registry := strings.TrimSuffix(opts.Registry, "/")
-	if len(registry) == 0 {
-		return nil, fmt.Errorf("registry is empty")
+	reg := imageutils.RegistryOptions{
+		URI:        opts.Registry,
+		Transferer: opts.Transferer,
+		BasicAuth: imageutils.BasicAuth{
+			User: opts.AuthUser,
+			Pwd:  opts.AuthPwd,
+		},
+	}
+	imgOpts, err := imageutils.WithDefaultTag(imageName)
+	if err != nil {
+		return nil, fmt.Errorf("could not create a tag for the image %q: %v", imageName, err)
 	}
 
-	if err := imageutils.PushImage(registry, image, imageName, opts.Transferer); err != nil {
-		return nil, fmt.Errorf("could not push the image to registry %q: %v", registry, err)
-	}
-	imgpb, err := imageSpec(image, imageName, opts)
-	if err != nil {
-		return nil, fmt.Errorf("could not create image spec: %v", err)
-	}
-	return imgpb, nil
+	return imageutils.PushImage(image, imgOpts, reg)
 }
 
 // imagePbFromRef returns an Image proto constructed from the target and

@@ -111,36 +111,19 @@ func buildImage(target string) (string, error) {
 	return string(tarFile), nil
 }
 
-// PushImage pushes the tarball container image with the given name and path to
-// the given container registry.
-func PushImage(registry string, image containerregistry.Image, imageName string, t imagetransfer.Transferer) error {
+// WithDefaultTag creates ImageOptions with a specific name and a default tag.
+func WithDefaultTag(name string) (ImageOptions, error) {
 	// Use the rapid candidate name if provided or a placeholder tag otherwise.
-	// For Rapid workflows, the deployed chart references the image by candidate name.
-	// For dev workflows, we reference by digest.
+	// For Rapid workflows, the deployed chart references the image by
+	// candidate name. For dev workflows, we reference by digest.
 	tag, err := imagetags.DefaultTag()
 	if err != nil {
-		return errors.Wrap(err, "generating tag")
+		return ImageOptions{}, errors.Wrap(err, "generating tag")
 	}
-
-	dst := fmt.Sprintf("%s/%s:%s", registry, imageName, tag)
-	dstTag, err := name.NewTag(dst, name.WeakValidation)
-	if err != nil {
-		return errors.Wrapf(err, "name.NewTag(%q)", dst)
-	}
-
-	// Get the sha256 hash string from the digest
-	digest, err := image.Digest()
-	if err != nil {
-		return fmt.Errorf("could not get the sha256 of the image: %v", err)
-	}
-	rep := dstTag.Context().Name() + "@" + digest.String()
-	log.Printf("Writing image to %q with tag %q", rep, tag)
-
-	if err := t.Write(dstTag, image); err != nil {
-		return fmt.Errorf("could not write image with tag %q: %v", rep, err)
-	}
-	log.Printf("Finished pushing image")
-	return nil
+	return ImageOptions{
+		Name: name,
+		Tag:  tag,
+	}, nil
 }
 
 // ImageOptions is used to configure Push of a specific image.
@@ -171,50 +154,56 @@ type RegistryOptions struct {
 	BasicAuth
 }
 
-// Push takes an image archive provided by opener pushes it to the specified
-// registry.
-func Push(opener tarball.Opener, img ImageOptions, reg RegistryOptions) (*ipb.Image, error) {
+// PushImage takes an image and pushes it to the specified registry with the
+// given options.
+func PushImage(img containerregistry.Image, opts ImageOptions, reg RegistryOptions) (*ipb.Image, error) {
 	registry := strings.TrimSuffix(reg.URI, "/")
 	if len(registry) == 0 {
 		return nil, fmt.Errorf("registry is empty")
 	}
 
-	// A tag is required for retention.  Infra uses an image being untagged as
+	// A tag is required for retention.  Infra uses an img being untagged as
 	// a signal it can be removed.
-	dst := fmt.Sprintf("%s/%s:%s", registry, img.Name, img.Tag)
+	dst := fmt.Sprintf("%s/%s:%s", registry, opts.Name, opts.Tag)
 	ref, err := name.NewTag(dst)
 	if err != nil {
 		return nil, errors.Wrapf(err, "name.NewReference(%q)", dst)
 	}
 
-	// tarball.Image optionally takes a name.Tag as the second parameter.
-	// That's only needed if there are multiple images in the provided tarball,
-	// since it then uses the reference to find it.  This is different than how
-	// we use the reference constructed above, which is to specify where we'll
-	// push the image we're reading.  We're basically giving ourselves license
-	// to rename whatever the image is in the tarball during the push.
-	image, err := tarball.Image(opener, nil)
-	if err != nil {
-		return nil, fmt.Errorf("could not create tarball image: %v", err)
-	}
-	digest, err := image.Digest()
+	digest, err := img.Digest()
 	if err != nil {
 		return nil, fmt.Errorf("could not get the sha256 of the image: %v", err)
 	}
 
-	if err := reg.Transferer.Write(ref, image); err != nil {
+	if err := reg.Transferer.Write(ref, img); err != nil {
 		return nil, fmt.Errorf("could not write image %q: %v", dst, err)
 	}
 
 	// Always provide a spec in terms of the digest, since that is
 	// reproducible, while a tag may not be.
 	return &ipb.Image{
-		Registry:     reg.URI,
-		Name:         img.Name,
+		Registry:     registry,
+		Name:         opts.Name,
 		Tag:          "@" + digest.String(),
 		AuthUser:     reg.User,
 		AuthPassword: reg.Pwd,
 	}, nil
+}
+
+// PushArchive takes an image archive provided by opener pushes it to the
+// specified registry.
+func PushArchive(opener tarball.Opener, opts ImageOptions, reg RegistryOptions) (*ipb.Image, error) {
+	// tarball.Image optionally takes a name.Tag as the second parameter.
+	// That's only needed if there are multiple images in the provided tarball,
+	// since it then uses the reference to find it.  This is different than how
+	// we use the reference constructed above, which is to specify where we'll
+	// push the image we're reading.  We're basically giving ourselves license
+	// to rename whatever the image is in the tarball during the push.
+	img, err := tarball.Image(opener, nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not create tarball image: %v", err)
+	}
+	return PushImage(img, opts, reg)
 }
 
 // GetImagePath returns the image path.
