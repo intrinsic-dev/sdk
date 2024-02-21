@@ -21,12 +21,11 @@ message LinearJointAccelerationFilterConfig {
   double joint_position_measurement_noise = 5;
   double joint_velocity_measurement_noise = 6;
 
-  // The update frequency of the recursive filter update.
-  double control_frequency_hz = 7;
-
   // Configuration parameters for solving the Discrete Algebraic Ricatti
   // Equation iteratively during the linear filter initialization.
   DiscreteAlgebraicRicattiEquationSolutionConfig dare_settings = 8;
+
+  reserved 7;
 }
 
 message DiscreteAlgebraicRicattiEquationSolutionConfig {
