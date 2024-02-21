@@ -117,10 +117,10 @@ std::optional<LogThrottler::Result> LogThrottler::Tick(
   result.period_nanoseconds = result.robot_timestamp_ns - first_log_time;
   result.num_calls_merged = num_calls_merged;
   int64_t delta = result.robot_timestamp_ns - last_log_time;
-  last_log_time = result.robot_timestamp_ns;
   if (num_calls_merged >= kMaxDeduplicationCount ||
       delta >= kSpamPeriodNanoseconds) {
     // Log and reset.
+    last_log_time = result.robot_timestamp_ns;
     num_calls_merged = 0;
     return result;
   }

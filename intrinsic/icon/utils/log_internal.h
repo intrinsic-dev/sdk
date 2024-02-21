@@ -47,7 +47,7 @@ struct LogThrottler {
   // Log calls within this time period are throttled by the
   // INTRINSIC_RT_LOG_THROTTLED macros. INTRINSIC_RT_LOG_THROTTLED macros count
   // repetitions and report the number of duplicates.
-  static constexpr int64_t kSpamPeriodNanoseconds = 750000000;
+  static constexpr int64_t kSpamPeriodNanoseconds = 2.0e9;
   // Maximum number of duplicates to drop before logging again.
   static constexpr int kMaxDeduplicationCount = 1000;
 
