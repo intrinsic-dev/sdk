@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"regexp"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -51,6 +52,9 @@ var (
 			grpc.MaxCallSendMsgSize(maxMsgSize),
 		),
 	}
+
+	catalogEndpointAddressRegex = regexp.MustCompile(`(^|/)www\.endpoints\.([^\.]+).cloud.goog`)
+	catalogAssetAddressRegex    = regexp.MustCompile(`(^|/)assets[-]?([^\.]*)\.intrinsic\.ai`)
 )
 
 // DialCatalogOptions specifies the options for DialSkillCatalog.
@@ -131,24 +135,76 @@ func IsLocalAddress(address string) bool {
 	return false
 }
 
+// GetSkillCatalogProject returns the SkillCatalog project that the specified project uses.
+func GetSkillCatalogProject(project string) (string, error) {
+	address, err := getCustomSkillCatalogAddressForProject(project)
+	if err != nil {
+		return "", err
+	}
+
+	// No custom address, so the project is running its own catalog.
+	if address == "" {
+		return project, nil
+	}
+
+	// Try to derive the project from an endpoint-style catalog address.
+	submatches := catalogEndpointAddressRegex.FindStringSubmatch(address)
+	if submatches != nil {
+		return submatches[2], nil
+	}
+
+	// Try to derive the project from an asset-style catalog address.
+	submatches = catalogAssetAddressRegex.FindStringSubmatch(address)
+	if submatches != nil {
+		addressSuffix := submatches[2]
+		projectSuffix := "prod"
+		if len(addressSuffix) > 0 {
+			projectSuffix = addressSuffix
+		}
+		return fmt.Sprintf("intrinsic-assets-%s", projectSuffix), nil
+	}
+
+	return "", fmt.Errorf("cannot infer project from address: %s", address)
+}
+
 func resolveSkillCatalogAddress(ctx context.Context, address string, project string, addDNS bool) (string, error) {
 	// Check for user-provided address.
 	if address != "" {
 		return address, nil
 	}
 
-	// Derive address from project.
-	if address == "" {
-		if project == "" {
-			return "", fmt.Errorf("project is required if no address is specified")
-		}
-
-		address = fmt.Sprintf("www.endpoints.%s.cloud.goog:443", project)
+	// Derive the address from the project.
+	if project == "" {
+		return "", fmt.Errorf("project is required if no address is specified")
+	}
+	address, err := getSkillCatalogAddressForProject(ctx, project)
+	if err != nil {
+		return "", err
 	}
 
 	if addDNS && !strings.HasPrefix(address, "dns:///") {
 		address = fmt.Sprintf("dns:///%s", address)
 	}
+
+	return address, nil
+}
+
+func defaultGetSkillCatalogAddressForProject(ctx context.Context, project string) (string, error) {
+	// Check for a custom address for this project.
+	if address, err := getCustomSkillCatalogAddressForProject(project); err != nil {
+		return "", err
+	} else if address != "" {
+		return address, nil
+	}
+
+	// Otherwise derive address from project.
+	address := fmt.Sprintf("www.endpoints.%s.cloud.goog:443", project)
+
+	return address, nil
+}
+
+func defaultGetCustomSkillCatalogAddressForProject(project string) (string, error) {
+	address := ""
 
 	return address, nil
 }
@@ -160,6 +216,7 @@ type CustomOrganizationCredentials struct {
 	organization string
 }
 
+// GetRequestMetadata returns a map of request metadata.
 func (c *CustomOrganizationCredentials) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
 	md, err := c.c.GetRequestMetadata(ctx, uri...)
 	if err != nil {
@@ -204,3 +261,9 @@ func getAPIKeyPerRPCCredentials(apiKey string, project string, organization stri
 
 	return token, nil
 }
+
+// Overridable for testing.
+var (
+	getSkillCatalogAddressForProject       = defaultGetSkillCatalogAddressForProject
+	getCustomSkillCatalogAddressForProject = defaultGetCustomSkillCatalogAddressForProject
+)
