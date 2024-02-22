@@ -13,3 +13,15 @@ go_library(
         "@org_golang_google_protobuf//proto",
     ],
 )
+
+cc_library(
+    name = "gtest_wrapper",
+    testonly = 1,
+    hdrs = ["gtest_wrapper.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_google_cel_cpp//internal:testing",
+        "@com_google_fhir//cc/google/fhir/testutil:proto_matchers",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

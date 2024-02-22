@@ -14,6 +14,7 @@
 #include "absl/types/span.h"
 #include "intrinsic/icon/utils/log.h"
 #include "intrinsic/icon/utils/log_sink.h"
+#include "intrinsic/util/testing/gtest_wrapper.h"
 
 namespace intrinsic::icon {
 namespace {

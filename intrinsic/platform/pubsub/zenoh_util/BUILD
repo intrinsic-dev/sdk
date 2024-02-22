@@ -32,7 +32,7 @@ cc_test(
     srcs = ["zenoh_handle_test.cc"],
     deps = [
         ":zenoh_handle",
-        "@com_google_googletest//:gtest_main",
+        "//intrinsic/util/testing:gtest_wrapper",
     ],
 )
 
@@ -67,7 +67,7 @@ cc_test(
     srcs = ["zenoh_config_test.cc"],
     deps = [
         ":zenoh_config",
+        "//intrinsic/util/testing:gtest_wrapper",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_googletest//:gtest_main",
     ],
 )

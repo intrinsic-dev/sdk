@@ -14,6 +14,7 @@
 #include "intrinsic/eigenmath/rotation_utils.h"
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/math/pose3.h"
+#include "intrinsic/util/testing/gtest_wrapper.h"
 
 namespace intrinsic {
 

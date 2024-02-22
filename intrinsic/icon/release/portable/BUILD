@@ -18,8 +18,8 @@ cc_test(
     srcs = ["init_xfa_test.cc"],
     deps = [
         ":init_xfa_absl",
+        "//intrinsic/util/testing:gtest_wrapper",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest_main",
     ],
 )

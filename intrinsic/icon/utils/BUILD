@@ -153,10 +153,10 @@ cc_test(
         ":log",
         ":log_internal",
         "//intrinsic/icon/release:source_location",
+        "//intrinsic/util/testing:gtest_wrapper",
         "//intrinsic/util/thread",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
-        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -204,8 +204,8 @@ cc_test(
         ":log",
         ":log_sink",
         ":realtime_guard",
+        "//intrinsic/util/testing:gtest_wrapper",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/types:span",
-        "@com_google_googletest//:gtest_main",
     ],
 )

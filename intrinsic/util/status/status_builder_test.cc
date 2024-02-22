@@ -25,6 +25,7 @@
 #include "absl/time/time.h"
 #include "google/protobuf/wrappers.pb.h"
 #include "intrinsic/icon/release/source_location.h"
+#include "intrinsic/util/testing/gtest_wrapper.h"
 
 namespace intrinsic {
 namespace {
@@ -315,7 +316,7 @@ TEST(StatusBuilderTest, LogEveryFirstLogs) {
 TEST(StatusBuilderTest, LogEveryLvalue) {
   ScopedMockLog log;
   EXPECT_CALL(log, Log(absl::LogSeverity::kWarning, _, HasSubstr("no!")))
-      .Times(testing::AtMost(3));
+      .Times(::testing::AtMost(3));
   log.StartCapturingLogs();
 
   StatusBuilder builder(absl::CancelledError(), Locs::kSecret);
@@ -329,7 +330,7 @@ TEST(StatusBuilderTest, LogEveryLvalue) {
 TEST(StatusBuilderTest, LogEveryRvalue) {
   ScopedMockLog log;
   EXPECT_CALL(log, Log(absl::LogSeverity::kWarning, _, HasSubstr("no!")))
-      .Times(testing::AtMost(3));
+      .Times(::testing::AtMost(3));
   log.StartCapturingLogs();
 
   for (int i = 0; i < 4; ++i) {
@@ -344,7 +345,7 @@ TEST(StatusBuilderTest, LogEveryRvalue) {
 TEST(StatusBuilderTest, LogEveryZeroDuration) {
   ScopedMockLog log;
   EXPECT_CALL(log, Log(absl::LogSeverity::kWarning, _, HasSubstr("no!")))
-      .Times(testing::Exactly(4));
+      .Times(::testing::Exactly(4));
   log.StartCapturingLogs();
 
   StatusBuilder builder(absl::CancelledError(), Locs::kSecret);

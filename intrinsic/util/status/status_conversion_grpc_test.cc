@@ -12,6 +12,7 @@
 #include "google/protobuf/wrappers.pb.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/util/proto/type_url.h"
+#include "intrinsic/util/testing/gtest_wrapper.h"
 
 namespace intrinsic {
 namespace {
@@ -36,7 +37,7 @@ TEST(StatusConversionGrpcTest, AbslStatusToGrpcStatusRoundTrip) {
       AddTypeUrlPrefix(value.GetDescriptor()->full_name()));
   ASSERT_TRUE(read_payload.has_value());
   ASSERT_TRUE(read_value.ParseFromCord(*read_payload));
-  EXPECT_THAT(read_value.value(), testing::Eq(value.value()));
+  EXPECT_THAT(read_value.value(), ::testing::Eq(value.value()));
 }
 
 }  // namespace

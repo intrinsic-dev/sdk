@@ -14,6 +14,7 @@
 #include "absl/strings/str_cat.h"
 #include "intrinsic/icon/release/source_location.h"
 #include "intrinsic/icon/utils/log_internal.h"
+#include "intrinsic/util/testing/gtest_wrapper.h"
 #include "intrinsic/util/thread/thread.h"
 
 namespace intrinsic::icon {

@@ -8,6 +8,7 @@
 #include <string>
 
 #include "absl/flags/flag.h"
+#include "intrinsic/util/testing/gtest_wrapper.h"
 
 using ::testing::HasSubstr;
 

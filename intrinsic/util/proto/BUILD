@@ -144,7 +144,7 @@ cc_test(
     srcs = ["type_url_test.cc"],
     deps = [
         ":type_url",
-        "@com_google_googletest//:gtest_main",
+        "//intrinsic/util/testing:gtest_wrapper",
         "@com_google_protobuf//:protobuf",
     ],
 )

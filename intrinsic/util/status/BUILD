@@ -88,10 +88,10 @@ cc_test(
     deps = [
         ":status_conversion_grpc",
         "//intrinsic/util/proto:type_url",
+        "//intrinsic/util/testing:gtest_wrapper",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:cord",
-        "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
     ],
 )
@@ -102,10 +102,10 @@ cc_test(
     deps = [
         ":status_conversion_rpc",
         "//intrinsic/util/proto:type_url",
+        "//intrinsic/util/testing:gtest_wrapper",
         "@com_google_absl//absl/status",
         "@com_google_googleapis//google/rpc:code_cc_proto",
         "@com_google_googleapis//google/rpc:status_cc_proto",
-        "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
     ],
 )
@@ -204,9 +204,9 @@ cc_test(
     deps = [
         ":annotate",
         ":status_builder",
+        "//intrinsic/util/testing:gtest_wrapper",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:cord",
-        "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
     ],
 )
@@ -216,11 +216,11 @@ cc_test(
     srcs = ["ret_check_test.cc"],
     deps = [
         ":ret_check",
+        "//intrinsic/util/testing:gtest_wrapper",
         "@com_google_absl//absl/base:log_severity",
         "@com_google_absl//absl/log:scoped_mock_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -230,6 +230,7 @@ cc_test(
     deps = [
         ":status_builder",
         "//intrinsic/icon/release:source_location",
+        "//intrinsic/util/testing:gtest_wrapper",
         "@com_google_absl//absl/base:log_severity",
         "@com_google_absl//absl/log:log_entry",
         "@com_google_absl//absl/log:log_sink",
@@ -239,7 +240,6 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
         "@com_google_absl//absl/time",
-        "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
     ],
 )
@@ -250,9 +250,9 @@ cc_test(
     deps = [
         ":status_builder",
         ":status_macros",
+        "//intrinsic/util/testing:gtest_wrapper",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -264,9 +264,9 @@ cc_test(
         ":status_builder_grpc",
         ":status_conversion_grpc",
         ":status_macros_grpc",
+        "//intrinsic/util/testing:gtest_wrapper",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@com_google_googletest//:gtest_main",
     ],
 )
 

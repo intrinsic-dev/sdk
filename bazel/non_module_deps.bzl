@@ -78,6 +78,20 @@ def non_module_deps():
         strip_prefix = "opentelemetry-cpp-1.13.0",
     )
 
+    http_archive(
+        name = "com_google_fhir",
+        url = "https://github.com/google/fhir/archive/f3128b9832ae0a8408587262226e870416f76faf.tar.gz",  # 2024-01-29
+        strip_prefix = "fhir-f3128b9832ae0a8408587262226e870416f76faf",
+        sha256 = "cbb2162ad280c558ca70c878aceb356e69024c5198a4020c0b4e8e4371619fb9",
+    )
+
+    http_archive(
+        name = "com_google_cel_cpp",
+        url = "https://github.com/google/cel-cpp/archive/037873163975964a80a188ad7f936cb4f37f0684.tar.gz",  # 2024-01-29
+        strip_prefix = "cel-cpp-037873163975964a80a188ad7f936cb4f37f0684",
+        sha256 = "d56e8c15b55240c92143ee3ed717956c67961a24f97711ca410030de92633288",
+    )
+
 def _non_module_deps_impl(ctx):  # @unused
     non_module_deps()
 

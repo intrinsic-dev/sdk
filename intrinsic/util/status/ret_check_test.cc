@@ -11,6 +11,7 @@
 #include "absl/log/scoped_mock_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "intrinsic/util/testing/gtest_wrapper.h"
 
 namespace not_intrinsic {
 

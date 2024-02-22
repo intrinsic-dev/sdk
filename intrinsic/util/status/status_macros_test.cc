@@ -15,6 +15,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "intrinsic/util/status/status_builder.h"
+#include "intrinsic/util/testing/gtest_wrapper.h"
 
 namespace intrinsic {
 namespace {
