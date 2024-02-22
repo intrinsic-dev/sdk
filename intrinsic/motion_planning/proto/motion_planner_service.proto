@@ -77,14 +77,29 @@ message MotionPlanningRequest {
 
 // Proto message to hold a `MotionPlanningRequestCacheKey` for logging.
 message MotionPlanningRequestCacheKey {
-  repeated string object_and_frame_names = 1;
-  repeated intrinsic_proto.Pose object_and_frame_poses = 2;
-  RobotSpecification robot_specification = 3;
-  MotionSpecification motion_specification = 4;
-  optional MotionPlannerConfiguration motion_planner_config = 5;
-  intrinsic_proto.icon.JointVec starting_robot_configuration = 6;
-  // Currently RuleSet message is not externalized. Skip it for now.
-  string uuid = 8;
+  // The MotionSpecification from the planning request but without the collision
+  // settings in each segment or in the high-level.
+  intrinsic_proto.motion_planning.MotionSpecification motion_specification = 1;
+  // The RobotSpecification from the planning request but without the
+  // `start_configuration`.
+  intrinsic_proto.motion_planning.RobotSpecification robot_specification = 2;
+  // References and poses of all frames referred in the MotionSpecification.
+  map<string, Pose> poses_of_all_related_frames = 3;
+  // References and poses of all objects in the world.
+  map<string, Pose> poses_of_all_objects = 4;
+  // The starting robot configuration in the request.
+  intrinsic_proto.icon.JointVec starting_robot_configuration = 5;
+  // Collision settings of the world.
+  intrinsic_proto.world.CollisionSettings world_collision_settings = 6;
+  // Collision settings for each motion segment.
+  repeated intrinsic_proto.world.CollisionSettings
+      motion_segment_collision_settings = 7;
+  // All parent ids in attachment components in the world.
+  repeated uint32 attachment_parent_ids = 8;
+  // All geometry ids in geometry components in the world.
+  repeated string geometry_ids = 9;
+  // UUID used for logging only.
+  string uuid = 10;
 }
 
 message CacheKeyMatchInfo {
