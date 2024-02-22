@@ -67,6 +67,9 @@ const (
 	// KeyVersion is the name of the version flag.
 	KeyVersion = "version"
 
+	// KeySkipDirectUpload is boolean flag controlling direct upload behavior
+	KeySkipDirectUpload = "skip_direct_upload"
+
 	envPrefix = "intrinsic"
 )
 
@@ -385,6 +388,21 @@ func (cf *CmdFlags) AddFlagVersion(assetType string) {
 // GetFlagVersion gets the value of the version flag added by AddFlagVersion.
 func (cf *CmdFlags) GetFlagVersion() string {
 	return cf.GetString(KeyVersion)
+}
+
+// AddFlagSkipDirectUpload adds a flag for disabling direct upload to workcells
+func (cf *CmdFlags) AddFlagSkipDirectUpload(assetType string) {
+	usage := fmt.Sprintf("Skips direct upload of %s to workcell. Requires "+
+		"external repository. (default false)\nCan be defined via the %s_%s "+
+		"environment variable.", assetType, envPrefix, strings.ToUpper(KeySkipDirectUpload))
+	cf.OptionalBool(KeySkipDirectUpload, false, usage)
+	cf.cmd.PersistentFlags().Lookup(KeySkipDirectUpload).Hidden = true
+	cf.viperLocal.BindEnv(KeySkipDirectUpload)
+}
+
+// GetFlagSkipDirectUpload gets the value of the flag added by AddFlagSkipDirectUpload
+func (cf *CmdFlags) GetFlagSkipDirectUpload() bool {
+	return cf.GetBool(KeySkipDirectUpload)
 }
 
 // String adds a new string flag.

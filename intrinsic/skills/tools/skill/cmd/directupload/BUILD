@@ -8,6 +8,7 @@ go_library(
     name = "directupload",
     srcs = [
         "discovery.go",
+        "monitor.go",
         "transfer.go",
     ],
     deps = [

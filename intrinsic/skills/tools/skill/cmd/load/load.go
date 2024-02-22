@@ -4,6 +4,7 @@
 package load
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -19,6 +20,7 @@ import (
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
+	"intrinsic/skills/tools/skill/cmd/directupload"
 	"intrinsic/skills/tools/skill/cmd/registry"
 	"intrinsic/skills/tools/skill/cmd/skillid"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
@@ -63,51 +65,65 @@ $ inctl skill load --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution=
 			return err
 		}
 
-		authUser, authPwd := cmdFlags.GetFlagsRegistryAuthUserPassword()
-		imgpb, installerParams, err := registry.PushSkill(target, registry.PushOptions{
-			AuthUser:   authUser,
-			AuthPwd:    authPwd,
-			Registry:   cmdFlags.GetFlagRegistry(),
-			Type:       cmdFlags.GetFlagSideloadStartType(),
-			Transferer: imagetransfer.RemoteTransferer(remoteOpt()),
-		})
-		if err != nil {
-			return fmt.Errorf("could not push target %q to the container registry: %v", target, err)
-		}
-
-		k8sContext, solution := cmdFlags.GetFlagsSideloadContextSolution()
 		installerAddress := cmdFlags.GetFlagInstallerAddress()
 		project := cmdFlags.GetFlagProject()
-		org := cmdFlags.GetFlagOrganization()
 
-		ctx, conn, err := dialerutil.DialConnectionCtx(command.Context(), dialerutil.DialInfoParams{
-			Address:  installerAddress,
-			CredName: project,
-			CredOrg:  org,
-		})
+		cluster, err := discoverClusterFromSolution(command.Context(), installerAddress, project)
 		if err != nil {
-			return fmt.Errorf("could not create connection: %w", err)
-		}
-		defer conn.Close()
-
-		cluster, err := solutionutil.GetClusterNameFromSolutionOrDefault(
-			ctx,
-			conn,
-			solution,
-			k8sContext,
-		)
-		if err != nil {
-			return fmt.Errorf("could not resolve solution to cluster: %w", err)
+			return fmt.Errorf("cannot resolve target context: %w", err)
 		}
 
 		// Install the skill to the registry
-		ctx, conn, err = dialerutil.DialConnectionCtx(command.Context(), dialerutil.DialInfoParams{
+		ctx, conn, err := dialerutil.DialConnectionCtx(command.Context(), dialerutil.DialInfoParams{
 			Address:  installerAddress,
 			Cluster:  cluster,
 			CredName: project,
 		})
 		if err != nil {
 			return fmt.Errorf("could not establish connection: %w", err)
+		}
+		// long living connection to workcell
+		defer conn.Close()
+
+		flagRegistry := cmdFlags.GetFlagRegistry()
+
+		// Upload skill, directly, to workcell, with fail-over legacy transfer if possible
+		transfer := imagetransfer.RemoteTransferer(remoteOpt())
+		// if --type=image we are going to skip direct injection as image is already
+		// available in the repository and as such push is essentially no-op. Given
+		// than underlying code requires image inspection, command have to have
+		// access to given image and thus there should not be an issue to get
+		// image during installation. The main reason we are skipping here
+		// is that direct injection does not allow to read image from workcell
+		// thus making request of --type=image invalid from DI perspective.
+		if imageutils.TargetType(cmdFlags.GetFlagSideloadStartType()) != imageutils.Image &&
+			!cmdFlags.GetFlagSkipDirectUpload() {
+			opts := []directupload.Option{
+				directupload.WithDiscovery(directupload.NewFromConnection(conn)),
+				directupload.WithOutput(command.OutOrStdout()),
+			}
+			if flagRegistry != "" {
+				// user set external registry, we can use it as fail-over
+				opts = append(opts, directupload.WithFailOver(imagetransfer.RemoteTransferer(remoteOpt())))
+			} else {
+				// we are going to fabricate a name which ends in .local in order to
+				// indicate that this is local, directly injected, image.
+				flagRegistry = fmt.Sprintf("%s.local", cluster)
+			}
+			transfer = directupload.NewTransferer(ctx, opts...)
+		}
+
+		authUser, authPwd := cmdFlags.GetFlagsRegistryAuthUserPassword()
+		log.Printf("Publishing skill image as %q", target)
+		imgpb, installerParams, err := registry.PushSkill(target, registry.PushOptions{
+			AuthUser:   authUser,
+			AuthPwd:    authPwd,
+			Registry:   flagRegistry,
+			Type:       cmdFlags.GetFlagSideloadStartType(),
+			Transferer: transfer,
+		})
+		if err != nil {
+			return fmt.Errorf("could not push target %q to the container registry: %v", target, err)
 		}
 
 		skillIDVersion, err := skillid.CreateSideloadedIDVersion(installerParams.SkillID)
@@ -156,6 +172,33 @@ $ inctl skill load --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution=
 		log.Printf("The skill is now available.")
 		return nil
 	},
+}
+
+func discoverClusterFromSolution(ctx context.Context, addr, project string) (string, error) {
+	org := cmdFlags.GetFlagOrganization()
+	k8sContext, solution := cmdFlags.GetFlagsSideloadContextSolution()
+	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
+		Address:  addr,
+		CredName: project,
+		CredOrg:  org,
+	})
+	if err != nil {
+		return "", fmt.Errorf("could not create connection: %w", err)
+	}
+
+	defer conn.Close()
+
+	cluster, err := solutionutil.GetClusterNameFromSolutionOrDefault(
+		ctx,
+		conn,
+		solution,
+		k8sContext,
+	)
+	if err != nil {
+		return "", fmt.Errorf("could not resolve solution to cluster: %w", err)
+	}
+
+	return cluster, nil
 }
 
 func init() {

@@ -5,6 +5,7 @@ package directupload
 import (
 	"context"
 	"fmt"
+	"io"
 
 	backoff "github.com/cenkalti/backoff/v4"
 	log "github.com/golang/glog"
@@ -24,13 +25,6 @@ var ErrUnsupported = errors.New("unsupported operation")
 // Option allows setting direct upload transferer options.
 type Option func(transfer *directTransfer)
 
-// WithContext allows setting alternative context to the transferer
-func WithContext(ctx context.Context) Option {
-	return func(transfer *directTransfer) {
-		transfer.ctx = ctx
-	}
-}
-
 // WithMaxRetries allows setting max retries for the upload
 func WithMaxRetries(maxRetries int) Option {
 	return func(transfer *directTransfer) {
@@ -44,6 +38,13 @@ func WithMaxRetries(maxRetries int) Option {
 func WithClient(client artifactgrpcpb.ArtifactServiceApiClient) Option {
 	return func(transfer *directTransfer) {
 		transfer.client = client
+	}
+}
+
+// WithOutput allows adding simple progress monitor with w as its output.
+func WithOutput(w io.Writer) Option {
+	return func(transfer *directTransfer) {
+		transfer.ctx = client.SetProgressMonitor(transfer.ctx, newMonitor(w))
 	}
 }
 
@@ -66,10 +67,10 @@ func WithFailOver(failOver imagetransfer.Transferer) Option {
 
 // NewTransferer create a new instance of direct upload Transferer implementation
 // and applies options if specified.
-func NewTransferer(opts ...Option) imagetransfer.Transferer {
+func NewTransferer(ctx context.Context, opts ...Option) imagetransfer.Transferer {
 	transfer := &directTransfer{
 		maxRetries: 5,
-		ctx:        context.Background(),
+		ctx:        ctx,
 	}
 
 	for _, opt := range opts {
@@ -102,7 +103,7 @@ func (dt *directTransfer) Write(ref name.Reference, img crv1.Image) error {
 		if err != nil {
 			return fmt.Errorf("cannot connect: %w", err)
 		}
-		dt.uploader, err = client.NewUploader(apiClient)
+		dt.uploader, err = client.NewUploader(apiClient, client.WithSequentialUpload())
 		if err != nil {
 			return fmt.Errorf("cannot create uploader: %w", err)
 		}
@@ -124,14 +125,17 @@ func (dt *directTransfer) Write(ref name.Reference, img crv1.Image) error {
 		}
 		return err
 	}, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), uint64(dt.maxRetries)))
-	if err != nil && dt.failOver != nil {
-		if foErr := dt.failOver.Write(ref, img); foErr != nil {
-			return fmt.Errorf("image write failed (direct: %s): %w", err, foErr)
+	if err != nil {
+		if dt.failOver != nil {
+			if foErr := dt.failOver.Write(ref, img); foErr != nil {
+				return fmt.Errorf("image write failed (direct: %s): %w", err, foErr)
+			}
+			log.Warningf("fail over succeeded with prior direct upload failure: %s", err)
+			return nil
 		}
-		log.Warningf("fail over succeeded with prior direct upload failure: %s", err)
-		return nil
+		return fmt.Errorf("image write failed: %w", err)
 	}
-	return fmt.Errorf("image write failed: %w", err)
+	return nil
 }
 
 func (dt *directTransfer) Read(ref name.Reference) (crv1.Image, error) {
