@@ -149,7 +149,7 @@ _MESSAGE_NAME_TO_PYTHONIC_TYPE = {
 
 def repeated_pythonic_field_type(
     field_descriptor: descriptor.FieldDescriptor,
-    field_name_to_type_name: Dict[str, Any],
+    message_classes: Dict[str, Type[message.Message]],
 ) -> Type[Sequence[Any]]:
   """Returns a 'pythonic' type based on the field_descriptor.
 
@@ -157,8 +157,7 @@ def repeated_pythonic_field_type(
 
   Args:
     field_descriptor: The Protobuf descriptor for the field
-    field_name_to_type_name: Map from field name to attribute containing nested
-      type.
+    message_classes: Map from proto type names to corresponding message classes.
 
   Returns:
     The Python type of the field.
@@ -175,14 +174,14 @@ def repeated_pythonic_field_type(
               field_descriptor.message_type.full_name
           ]
       ]
-    return Sequence[field_name_to_type_name[field_descriptor.name]]
+    return Sequence[message_classes[field_descriptor.message_type.full_name]]
 
   return Sequence[_PYTHONIC_SCALAR_FIELD_TYPE[field_descriptor.type]]
 
 
 def pythonic_field_type(
     field_descriptor: descriptor.FieldDescriptor,
-    field_name_to_type_name: Dict[str, Any],
+    message_classes: Dict[str, Type[message.Message]],
 ) -> Type[Any]:
   """Returns a 'pythonic' type based on the field_descriptor.
 
@@ -190,8 +189,7 @@ def pythonic_field_type(
 
   Args:
     field_descriptor: The Protobuf descriptor for the field
-    field_name_to_type_name: Map from field name to attribute containing nested
-      type.
+    message_classes: Map from proto type names to corresponding message classes.
 
   Returns:
     The Python type of the field.
@@ -200,7 +198,7 @@ def pythonic_field_type(
     message_full_name = field_descriptor.message_type.full_name
     if message_full_name in _MESSAGE_NAME_TO_PYTHONIC_TYPE:
       return _MESSAGE_NAME_TO_PYTHONIC_TYPE[message_full_name]
-    return field_name_to_type_name[field_descriptor.name]
+    return message_classes[field_descriptor.message_type.full_name]
 
   return _PYTHONIC_SCALAR_FIELD_TYPE[field_descriptor.type]
 
@@ -1215,7 +1213,7 @@ class MessageWrapper:
 def _gen_wrapper_class(
     wrapped_type: Type[message.Message],
     type_name: str,
-    field_name_to_type_name: Dict[str, Type[message.Message]],
+    message_classes: Dict[str, Type[message.Message]],
     field_doc_strings: Dict[str, str],
 ) -> Type[Any]:
   """Generates a new message wrapper class type.
@@ -1229,7 +1227,7 @@ def _gen_wrapper_class(
   Args:
     wrapped_type: Message to wrap.
     type_name: Type name of the object to wrap.
-    field_name_to_type_name: Mapping from field name to message type.
+    message_classes: Map from proto type names to corresponding message classes.
     field_doc_strings: Dict mapping from field name to doc string comment.
 
   Returns:
@@ -1246,7 +1244,7 @@ def _gen_wrapper_class(
       },
   )
   init_fun = _gen_init_fun(
-      wrapped_type, type_name, field_name_to_type_name, field_doc_strings
+      wrapped_type, type_name, message_classes, field_doc_strings
   )
   type_class.__init__ = init_fun
 
@@ -1261,7 +1259,7 @@ def _gen_wrapper_class(
 def _gen_init_fun(
     wrapped_type: Type[message.Message],
     type_name: str,
-    field_name_to_type_name: Dict[str, Type[message.Message]],
+    message_classes: Dict[str, Type[message.Message]],
     field_doc_strings: Dict[str, str],
 ) -> Callable[[Any, Any], None]:
   """Generates custom __init__ class method with proper auto-completion info.
@@ -1269,7 +1267,7 @@ def _gen_init_fun(
   Args:
     wrapped_type: Message to wrap.
     type_name: Type name of the object to wrap.
-    field_name_to_type_name: Mapping from field name to message type.
+    message_classes: Map from proto type names to corresponding message classes.
     field_doc_strings: dict mapping from field name to doc string comment.
 
   Returns:
@@ -1292,7 +1290,7 @@ def _gen_init_fun(
           inspect.Parameter.POSITIONAL_OR_KEYWORD,
           annotation="MessageWrapper_" + type_name,
       )
-  ] + _gen_init_params(wrapped_type, field_name_to_type_name)
+  ] + _gen_init_params(wrapped_type, message_classes)
   new_init_fun.__signature__ = inspect.Signature(params)
   new_init_fun.__annotations__ = collections.OrderedDict(
       [(p.name, p.annotation) for p in params]
@@ -1359,20 +1357,20 @@ def _gen_init_docstring(
 
 def _gen_init_params(
     wrapped_type: Type[message.Message],
-    field_name_to_type_name: Dict[str, Type[message.Message]],
+    message_classes: Dict[str, Type[message.Message]],
 ) -> List[inspect.Parameter]:
   """Create argument typing information for a given message.
 
   Args:
     wrapped_type: Message to be wrapped.
-    field_name_to_type_name: Mapping from field name to message type.
+    message_classes: Map from proto type names to corresponding message classes.
 
   Returns:
     List of extracted parameters with typing information.
   """
   defaults = wrapped_type()
   param_info = extract_parameter_information_from_message(
-      defaults, None, field_name_to_type_name
+      defaults, None, message_classes
   )
   params = [p for p, _ in param_info]
 
@@ -1390,6 +1388,7 @@ def update_message_class_modules(
     nested_classes: List[
         Tuple[str, Type[message.Message], descriptor.FieldDescriptor]
     ],
+    message_classes: Dict[str, Type[message.Message]],
     field_doc_strings: Dict[str, str],
 ) -> None:
   """Updates given class with type aliases.
@@ -1403,12 +1402,9 @@ def update_message_class_modules(
     enum_types: Top-level enum classes whose values should be aliased to
       attributes of the message class.
     nested_classes: classes to be aliased
+    message_classes: Map from proto type names to corresponding message classes.
     field_doc_strings: dict mapping from field name to doc string comment.
   """
-  field_name_to_type_name = {
-      field.name: message_type for _, message_type, field in nested_classes
-  }
-
   for enum_type in enum_types:
     for enum_value in enum_type.values:
       value_name = enum_value.name
@@ -1448,7 +1444,7 @@ def update_message_class_modules(
           _gen_wrapper_class(
               message_type,
               nested_class_attr_name,
-              field_name_to_type_name,
+              message_classes,
               field_doc_strings,
           ),
       )
@@ -1499,14 +1495,14 @@ def deconflict_param_and_resources(
 def extract_parameter_information_from_message(
     param_defaults: message.Message,
     skill_params: Optional[skill_parameters.SkillParameters],
-    field_name_to_type_name: Dict[str, Type[message.Message]],
+    message_classes: Dict[str, Type[message.Message]],
 ) -> List[Tuple[inspect.Parameter, str]]:
   """Extracts signature information from message and SkillParameters.
 
   Args:
     param_defaults: The message filled with default parameters.
     skill_params: Utility class to inspect the skill's parameters.
-    field_name_to_type_name: Mapping from field name to message type.
+    message_classes: Map from proto type names to corresponding message classes.
 
   Returns:
     List of extracted parameters together with the corresponding field name.
@@ -1531,16 +1527,14 @@ def extract_parameter_information_from_message(
         else:
           default_value = map_field_default
       else:
-        field_type = repeated_pythonic_field_type(
-            field, field_name_to_type_name
-        )
+        field_type = repeated_pythonic_field_type(field, message_classes)
         repeated_field_default = getattr(param_defaults, field.name)
         default_value = [
             pythonic_field_default_value(value, field)
             for value in repeated_field_default
         ]
     else:
-      field_type = pythonic_field_type(field, field_name_to_type_name)
+      field_type = pythonic_field_type(field, message_classes)
       if skill_params and skill_params.has_default_value(field.name):
         default_value = pythonic_field_default_value(
             getattr(param_defaults, field.name), field

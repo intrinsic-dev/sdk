@@ -16,7 +16,7 @@ import collections
 import inspect
 import re
 import textwrap
-from typing import Any, Callable, Set, Tuple, Type
+from typing import Any, Callable, Set, Type
 import uuid
 
 from google.protobuf import descriptor
@@ -371,9 +371,7 @@ def _gen_init_docstring(
 def _gen_init_params(
     info: providers.SkillInfo,
     compatible_resources: dict[str, providers.ResourceList],
-    nested_classes: list[
-        Tuple[str, Type[message.Message], descriptor.FieldDescriptor]
-    ],
+    message_classes: dict[str, Type[message.Message]],
 ) -> list[inspect.Parameter]:
   """Create argument typing information for a given skill info.
 
@@ -386,7 +384,7 @@ def _gen_init_params(
     compatible_resources: Map from resource slot names to resources suitable for
       that slot. It is used to determine whether a default value can be assigned
       for resource parameters.
-    nested_classes: Classes nested in the skill's class
+    message_classes: Map from proto type names to corresponding message classes.
 
   Returns:
     A dict mapping from field name to pythonic type.
@@ -397,10 +395,6 @@ def _gen_init_params(
   """
   params: list[inspect.Parameter] = []
   param_names: list[str] = []
-
-  field_name_to_type_name = {
-      field.name: message_type for _, message_type, field in nested_classes
-  }
 
   if info.skill_proto.HasField("parameter_description"):
     param_defaults = info.create_param_message()
@@ -416,7 +410,7 @@ def _gen_init_params(
         param_defaults, _get_descriptor(info.skill_proto.parameter_description)
     )
     param_info = skill_utils.extract_parameter_information_from_message(
-        param_defaults, skill_params, field_name_to_type_name
+        param_defaults, skill_params, message_classes
     )
     if param_info:
       params, param_names = map(list, zip(*param_info))
@@ -461,9 +455,7 @@ def _gen_init_params(
 def _gen_init_fun(
     info: providers.SkillInfo,
     compatible_resources: dict[str, providers.ResourceList],
-    nested_classes: list[
-        Tuple[str, Type[message.Message], descriptor.FieldDescriptor]
-    ],
+    message_classes: dict[str, Type[message.Message]],
 ) -> Callable[[Any, Any], "GeneratedSkill"]:
   """Generate custom __init__ class method with proper auto-completion info.
 
@@ -472,7 +464,7 @@ def _gen_init_fun(
     compatible_resources: Map from resource slot names to resources suitable for
       that slot. It is used to determine whether a default value can be assigned
       for resource parameters.
-    nested_classes: Classes nested in the skill's class
+    message_classes: Map from proto type names to corresponding message classes.
 
   Returns:
     A function suitable to be used as __init__ function for a GeneratedSkill
@@ -501,7 +493,7 @@ def _gen_init_fun(
           inspect.Parameter.POSITIONAL_OR_KEYWORD,
           annotation="Skill_" + _skill_name_from_id(info.skill_proto.id),
       )
-  ] + _gen_init_params(info, compatible_resources, nested_classes)
+  ] + _gen_init_params(info, compatible_resources, message_classes)
   new_init_fun.__signature__ = inspect.Signature(params)
   new_init_fun.__annotations__ = collections.OrderedDict(
       [(p.name, p.annotation) for p in params]
@@ -532,11 +524,13 @@ def _gen_skill_class(
     A new type for a GeneratedSkill sub-class.
   """
   nested_classes = []
+  message_classes: dict[str, Type[message.Message]] = {}
   enum_types = []
   if info.skill_proto.HasField("parameter_description"):
     skill_utils.get_field_classes_to_alias(
         info.parameter_descriptor(), info.message_classes, nested_classes
     )
+    message_classes = info.message_classes
     enum_types = info.parameter_descriptor().enum_types
 
   skill_methods = {
@@ -559,10 +553,11 @@ def _gen_skill_class(
       __name__,
       enum_types,
       nested_classes,
+      message_classes,
       dict(info.skill_proto.parameter_description.parameter_field_comments),
   )
 
-  init_fun = _gen_init_fun(info, compatible_resources, nested_classes)
+  init_fun = _gen_init_fun(info, compatible_resources, message_classes)
   type_class.__init__ = init_fun
 
   return type_class
