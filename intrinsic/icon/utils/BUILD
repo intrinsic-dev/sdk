@@ -209,3 +209,9 @@ cc_test(
         "@com_google_absl//absl/types:span",
     ],
 )
+
+cc_library(
+    name = "current_cycle",
+    hdrs = ["current_cycle.h"],
+    visibility = ["//visibility:private"],
+)
