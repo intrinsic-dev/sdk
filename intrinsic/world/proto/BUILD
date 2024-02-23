@@ -325,6 +325,34 @@ proto_library(
     ],
 )
 
+proto_library(
+    name = "robot_payload_proto",
+    srcs = ["robot_payload.proto"],
+    deps = [
+        "//intrinsic/math/proto:matrix_proto",
+        "//intrinsic/math/proto:pose_proto",
+    ],
+)
+
+py_proto_library(
+    name = "robot_payload_py_pb2",
+    deps = [":robot_payload_proto"],
+)
+
+go_proto_library(
+    name = "robot_payload_go_proto",
+    go_deps = [
+        "//intrinsic/math/proto:matrix_go_proto",
+        "//intrinsic/math/proto:pose_go_proto",
+    ],
+    deps = [":robot_payload_proto"],
+)
+
+cc_proto_library(
+    name = "robot_payload_cc_proto",
+    deps = [":robot_payload_proto"],
+)
+
 cc_proto_library(
     name = "geometric_constraints_cc_proto",
     deps = [":geometric_constraints_proto"],

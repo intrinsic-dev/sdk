@@ -1,0 +1,22 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.world;
+
+import "intrinsic/math/proto/matrix.proto";
+import "intrinsic/math/proto/pose.proto";
+
+// Payload of a robot.
+message RobotPayload {
+  // Mass of the robot payload. Unit is kg.
+  double mass_kg = 1;
+
+  // Center of gravity of the robot payload relative to the robot flange/tip
+  // frame.
+  intrinsic_proto.Pose tip_t_cog = 2;
+
+  // 3x3 symmetric inertia matrix of the robot payload expressed about the link
+  // center of mass. Unit is kg*m^2.
+  intrinsic_proto.Matrixd inertia = 3;
+}
