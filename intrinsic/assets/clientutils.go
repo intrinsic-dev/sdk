@@ -87,8 +87,7 @@ func DialSkillCatalogFromInctl(cmd *cobra.Command, flags *cmdutils.CmdFlags) (*g
 // DialSkillCatalog creates a connection to a skill catalog service.
 func DialSkillCatalog(ctx context.Context, opts DialCatalogOptions) (*grpc.ClientConn, error) {
 	// Get the catalog address.
-	addDNS := true
-	address, err := resolveSkillCatalogAddress(ctx, opts.Address, opts.Project, addDNS)
+	address, err := resolveSkillCatalogAddress(ctx, opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot resolve address")
 	}
@@ -167,21 +166,22 @@ func GetSkillCatalogProject(project string) (string, error) {
 	return "", fmt.Errorf("cannot infer project from address: %s", address)
 }
 
-func resolveSkillCatalogAddress(ctx context.Context, address string, project string, addDNS bool) (string, error) {
+func resolveSkillCatalogAddress(ctx context.Context, opts DialCatalogOptions) (string, error) {
 	// Check for user-provided address.
-	if address != "" {
-		return address, nil
+	if opts.Address != "" {
+		return opts.Address, nil
 	}
 
 	// Derive the address from the project.
-	if project == "" {
+	if opts.Project == "" {
 		return "", fmt.Errorf("project is required if no address is specified")
 	}
-	address, err := getSkillCatalogAddressForProject(ctx, project)
+	address, err := getSkillCatalogAddressForProject(ctx, opts)
 	if err != nil {
 		return "", err
 	}
 
+	addDNS := true
 	if addDNS && !strings.HasPrefix(address, "dns:///") {
 		address = fmt.Sprintf("dns:///%s", address)
 	}
@@ -189,16 +189,16 @@ func resolveSkillCatalogAddress(ctx context.Context, address string, project str
 	return address, nil
 }
 
-func defaultGetSkillCatalogAddressForProject(ctx context.Context, project string) (string, error) {
+func defaultGetSkillCatalogAddressForProject(ctx context.Context, opts DialCatalogOptions) (string, error) {
 	// Check for a custom address for this project.
-	if address, err := getCustomSkillCatalogAddressForProject(project); err != nil {
+	if address, err := getCustomSkillCatalogAddressForProject(opts.Project); err != nil {
 		return "", err
 	} else if address != "" {
 		return address, nil
 	}
 
 	// Otherwise derive address from project.
-	address := fmt.Sprintf("www.endpoints.%s.cloud.goog:443", project)
+	address := fmt.Sprintf("www.endpoints.%s.cloud.goog:443", opts.Project)
 
 	return address, nil
 }
