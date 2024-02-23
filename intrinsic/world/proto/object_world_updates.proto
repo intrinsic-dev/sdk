@@ -14,6 +14,7 @@ import "intrinsic/world/proto/geometry_component.proto";
 import "intrinsic/world/proto/gripper_component.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 import "intrinsic/world/proto/physics_component.proto";
+import "intrinsic/world/proto/robot_payload.proto";
 import "intrinsic/world/proto/simulation_component.proto";
 import "intrinsic/world/proto/spawner_component.proto";
 
@@ -293,6 +294,9 @@ message UpdateKinematicObjectPropertiesRequest {
 
   // If set this will be the updated control frequency to use
   optional double control_frequency_hz = 6;
+
+  // The payload attached to the robot flange.
+  optional RobotPayload mounted_payload = 8;
 
   // Requested object view for the returned, updated kinematic object.
   ObjectView view = 7;

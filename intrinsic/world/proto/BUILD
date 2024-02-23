@@ -32,7 +32,7 @@ proto_library(
     srcs = ["collision_settings.proto"],
     deps = [
         ":collision_action_proto",
-        "//intrinsic/world/proto:object_world_refs_proto",
+        ":object_world_refs_proto",
     ],
 )
 
@@ -140,6 +140,7 @@ proto_library(
         ":object_world_refs_proto",
         ":object_world_updates_proto",
         ":physics_component_proto",
+        ":robot_payload_proto",
         ":sensor_component_proto",
         ":simulation_component_proto",
         ":spawner_component_proto",
@@ -187,6 +188,7 @@ proto_library(
         ":gripper_component_proto",
         ":object_world_refs_proto",
         ":physics_component_proto",
+        ":robot_payload_proto",
         ":simulation_component_proto",
         ":spawner_component_proto",
         "//intrinsic/icon/proto:cart_space_proto",
