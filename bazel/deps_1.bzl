@@ -2,35 +2,35 @@
 
 """Workspace dependencies needed for the Intrinsic SDKs as a 3rd-party consumer (part 1)."""
 
+# bazel-lib
+load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+
+# Bazel skylib
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
+# gRPC
+load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
+
 # Protobuf
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 # Go rules and toolchain
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
-load("//bazel:go_deps.bzl", "go_dependencies")
-load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+
+# Rules Foreign CC
+load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
+
+# Python toolchain
+load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
 
 # CC toolchain
 load("@toolchains_llvm//toolchain:deps.bzl", "bazel_toolchain_dependencies")
 load("@toolchains_llvm//toolchain:rules.bzl", "llvm_toolchain")
 
-# Python toolchain
-load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
-
-# bazel-lib
-load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
-
 # Googleapis
 load("//bazel:extension_for_com_google_googleapis.bzl", "extension_for_com_google_googleapis")
-
-# gRPC
-load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
-
-# Bazel skylib
-load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
-
-# Rules Foreign CC
-load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
+load("//bazel:go_deps.bzl", "go_dependencies")
 
 def intrinsic_sdks_deps_1(register_go_toolchain = True):
     """Loads workspace dependencies needed for the Intrinsic SDKs.

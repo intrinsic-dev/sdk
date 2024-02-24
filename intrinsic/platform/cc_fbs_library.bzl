@@ -38,9 +38,9 @@ cc_binary(
 )
 """
 
-load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//intrinsic/platform:fbs_library.bzl", "FbsInfo", "make_flatc_include_args")
 load("@bazel_skylib//lib:paths.bzl", "paths")
+load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 def use_cpp_toolchain():
     return ["@bazel_tools//tools/cpp:toolchain_type"]
 
