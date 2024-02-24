@@ -3,6 +3,7 @@
 #include "intrinsic/icon/examples/joint_then_cart_move_lib.h"
 
 #include <iostream>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
