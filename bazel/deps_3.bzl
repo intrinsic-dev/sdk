@@ -2,7 +2,6 @@
 
 """Workspace dependencies needed for the Intrinsic SDKs as a 3rd-party consumer (part 3)."""
 
-# Python pip dependencies
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "install_deps")
 
 def intrinsic_sdks_deps_3():
