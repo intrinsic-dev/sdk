@@ -21,7 +21,7 @@ func newNonStreamingTask(base taskData) (uploadTask, error) {
 }
 
 func (t *nonStreamingTask) runWithCtx(ctx context.Context) error {
-	log.Infof("starting upload: %s", asShortName(t.name))
+	log.InfoContextf(ctx, "starting upload: %s", asShortName(t.name))
 	updateMonitor(t.monitor, asShortName(t.name), ProgressUpdate{
 		Status:  StatusUndetermined,
 		Current: 0,
@@ -61,7 +61,7 @@ func (t *nonStreamingTask) runWithCtx(ctx context.Context) error {
 		}
 		totalSize += int64(length)
 
-		log.Infof("[%s]: sending chunk %5d (%s): (%d/%d) in %d increment", asShortName(t.name), idTracker.Load(), action, totalSize, t.descriptor.Size, t.updateSize)
+		log.InfoContextf(ctx, "[%s]: sending chunk %5d (%s): (%d/%d) in %d increment", asShortName(t.name), idTracker.Load(), action, totalSize, t.descriptor.Size, t.updateSize)
 
 		if firstChunk {
 			digest := t.descriptor.Digest.String()
