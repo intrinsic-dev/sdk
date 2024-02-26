@@ -44,7 +44,7 @@ def intrinsic_sdks_deps_1(register_go_toolchain = True):
     # - Pick a new version that runs on a stable OS similar enough to our sysroot from
     #   https://releases.llvm.org/download.html
     # - Documentation is in
-    #   https://github.com/grailbio/bazel-toolchain/blob/master/toolchain/rules.bzl
+    #   https://github.com/bazel-contrib/toolchains_llvm/blob/master/toolchain/rules.bzl
     # - If system files are not found, add them in ../BUILD.sysroot
     bazel_toolchain_dependencies()
     llvm_toolchain(

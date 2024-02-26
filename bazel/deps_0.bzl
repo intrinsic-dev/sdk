@@ -60,7 +60,7 @@ def intrinsic_sdks_deps_0():
         sha256 = "b7cd301ef7b0ece28d20d3e778697a5e3b81828393150bed04838c0c52963a01",
         strip_prefix = "toolchains_llvm-0.10.3",
         canonical_id = "0.10.3",
-        url = "https://github.com/grailbio/bazel-toolchain/releases/download/0.10.3/toolchains_llvm-0.10.3.tar.gz",
+        url = "https://github.com/bazel-contrib/toolchains_llvm/releases/download/0.10.3/toolchains_llvm-0.10.3.tar.gz",
     )
 
     # Python rules, toolchain and pip dependencies
