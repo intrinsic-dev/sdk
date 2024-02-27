@@ -21,8 +21,9 @@ import (
 var (
 	// These will be returned on corresponding http error codes, since they are errors that are
 	// expected and can be printed with better UX than just the number.
-	ErrNotFound   = fmt.Errorf("Not found")
-	ErrBadGateway = fmt.Errorf("Bad Gateway")
+	ErrNotFound     = fmt.Errorf("Not found")
+	ErrBadGateway   = fmt.Errorf("Bad Gateway")
+	ErrUnauthorized = fmt.Errorf("Unauthorized")
 )
 
 // AuthedClient injects an api key for the project into every request.
@@ -121,6 +122,9 @@ func (c *AuthedClient) GetJSON(ctx context.Context, cluster, deviceID, subPath s
 		}
 		if resp.StatusCode == http.StatusBadGateway {
 			return ErrBadGateway
+		}
+		if resp.StatusCode == http.StatusUnauthorized {
+			return ErrUnauthorized
 		}
 
 		return fmt.Errorf("get status code: %v", resp.StatusCode)

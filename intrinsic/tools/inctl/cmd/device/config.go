@@ -25,7 +25,8 @@ import (
 )
 
 const (
-	gatewayError = "Cluster is currently not connected to the cloud relay. Make sure it is turned on and connected to the internet.\nIf the device restarted in the last 10 minutes, wait a couple of minutes, then try again.\n"
+	gatewayError      = "Cluster is currently not connected to the cloud relay. Make sure it is turned on and connected to the internet.\nIf the device restarted in the last 10 minutes, wait a couple of minutes, then try again.\n"
+	unauthorizedError = "Request authorization failed. This happens when you generated a new API-Key on a different machine or the API-Key expired.\n"
 )
 
 var (
@@ -81,6 +82,11 @@ var configGetCmd = &cobra.Command{
 
 			if errors.Is(err, projectclient.ErrBadGateway) {
 				fmt.Fprint(os.Stderr, gatewayError)
+				return err
+			}
+
+			if errors.Is(err, projectclient.ErrUnauthorized) {
+				fmt.Fprint(os.Stderr, unauthorizedError)
 				return err
 			}
 
@@ -184,6 +190,11 @@ func setConfig(ctx context.Context, client *projectclient.AuthedClient, clusterN
 
 		if errors.Is(err, projectclient.ErrBadGateway) {
 			fmt.Fprint(os.Stderr, gatewayError)
+			return err
+		}
+
+		if errors.Is(err, projectclient.ErrUnauthorized) {
+			fmt.Fprint(os.Stderr, unauthorizedError)
 			return err
 		}
 
