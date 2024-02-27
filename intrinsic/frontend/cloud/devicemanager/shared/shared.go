@@ -102,4 +102,6 @@ type StatusInterface struct {
 	MTU        int      `json:"mtu"`
 	IPAddress  []string `json:"addresses"`
 	Speed      int      `json:"speed,omitempty"`
+	Realtime   bool     `json:"realtime"`
+	HasCarrier bool     `json:"carrier"`
 }
