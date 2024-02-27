@@ -5,6 +5,7 @@
 import sys
 
 from intrinsic.math.proto import array_pb2
+from intrinsic.math.proto import matrix_pb2
 from intrinsic.math.proto import point_pb2
 from intrinsic.math.proto import pose_pb2
 from intrinsic.math.proto import quaternion_pb2
@@ -70,6 +71,44 @@ def ndarray_to_proto(array: np.ndarray) -> array_pb2.Array:
       shape=array.shape,
       type=scalar_type,
       byte_order=byte_order,
+  )
+
+
+def ndarray_from_matrix_proto(proto: matrix_pb2.Matrixd) -> np.ndarray:
+  """Converts a matrix_pb2.Matrixd to a np.ndarray.
+
+  Args:
+    proto: The matrix as proto.
+
+  Raises:
+    ValueError: If the number of values in the proto do not match the spicified
+      size.
+  Returns:
+    The matrix as np.ndarray.
+  """
+  if len(proto.values) != proto.rows * proto.cols:
+    raise ValueError(
+        f'matrix is not {proto.rows}x{proto.cols}, it has'
+        f' {len(proto.values)} values.'
+    )
+  return np.array(proto.values).reshape(proto.rows, proto.cols)
+
+
+def ndarray_to_matrix_proto(matrix: np.ndarray) -> matrix_pb2.Matrixd:
+  """Converts a np.ndarray to a matrix_pb2.Matrixd.
+
+  Args:
+    matrix: The matrix as numpy array.
+
+  Raises:
+    ValueError: If the input is not a 2D array.
+  Returns:
+    The matrix as matrix_pb2.Matrixd.
+  """
+  if len(matrix.shape) != 2:
+    raise ValueError(f'expected a 2D array, got shape {matrix.shape}.')
+  return matrix_pb2.Matrixd(
+      rows=matrix.shape[0], cols=matrix.shape[1], values=matrix.flatten()
   )
 
 

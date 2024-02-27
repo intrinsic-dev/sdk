@@ -14,6 +14,7 @@ py_library(
     deps = [
         ":data_types",
         "//intrinsic/math/proto:array_py_pb2",
+        "//intrinsic/math/proto:matrix_py_pb2",
         "//intrinsic/math/proto:point_py_pb2",
         "//intrinsic/math/proto:pose_py_pb2",
         "//intrinsic/math/proto:quaternion_py_pb2",
@@ -32,12 +33,14 @@ py_test(
         ":proto_conversion",
         "//intrinsic/icon/proto:cart_space_py_pb2",
         "//intrinsic/math/proto:array_py_pb2",
+        "//intrinsic/math/proto:matrix_py_pb2",
         "//intrinsic/math/proto:point_py_pb2",
         "//intrinsic/math/proto:pose_py_pb2",
         "//intrinsic/math/proto:quaternion_py_pb2",
         "//intrinsic/math/proto:vector3_py_pb2",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
+        requirement("hypothesis"),
         requirement("numpy"),
     ],
 )

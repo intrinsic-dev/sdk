@@ -4,7 +4,10 @@
 
 from absl.testing import absltest
 from absl.testing import parameterized
+import hypothesis
+from hypothesis.extra import numpy as np_strategies
 from intrinsic.math.proto import array_pb2
+from intrinsic.math.proto import matrix_pb2
 from intrinsic.math.proto import point_pb2
 from intrinsic.math.proto import pose_pb2
 from intrinsic.math.proto import quaternion_pb2
@@ -209,6 +212,67 @@ class ProtoConversionTest(parameterized.TestCase):
     )
     # We expect bit-wise equality
     self.assertEqual(result_proto, pose_proto)
+
+  ndarray_from_matrix_proto_test_cases = [
+      dict(
+          testcase_name='1x1_zeros',
+          array=np.zeros((1, 1)),
+          proto=matrix_pb2.Matrixd(rows=1, cols=1, values=[0.0]),
+      ),
+      dict(
+          testcase_name='2x2_values',
+          array=np.arange(0, 4).reshape((2, 2)),
+          proto=matrix_pb2.Matrixd(rows=2, cols=2, values=[0.0, 1.0, 2.0, 3.0]),
+      ),
+      dict(
+          testcase_name='3x2_values',
+          array=np.arange(0, 6).reshape((3, 2)),
+          proto=matrix_pb2.Matrixd(
+              rows=3, cols=2, values=[0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
+          ),
+      ),
+  ]
+
+  @parameterized.named_parameters(ndarray_from_matrix_proto_test_cases)
+  def test_ndarray_to_matrix_proto(
+      self, array: np.ndarray, proto: matrix_pb2.Matrixd
+  ):
+    self.assertEqual(proto_conversion.ndarray_to_matrix_proto(array), proto)
+
+  @parameterized.named_parameters(ndarray_from_matrix_proto_test_cases)
+  def test_ndarray_from_matrix_proto(
+      self, array: np.ndarray, proto: matrix_pb2.Matrixd
+  ):
+    got_array = proto_conversion.ndarray_from_matrix_proto(proto)
+    np.testing.assert_array_equal(got_array, array)
+
+  @hypothesis.given(
+      np_strategies.arrays(
+          dtype=np_strategies.floating_dtypes(),
+          shape=np_strategies.array_shapes(min_dims=2, max_dims=2),
+      )
+  )
+  def test_ndarray_to_from_matrix_proto_roundtrip(self, array: np.ndarray):
+    proto = proto_conversion.ndarray_to_matrix_proto(array)
+    np.testing.assert_array_equal(
+        proto_conversion.ndarray_from_matrix_proto(proto), array
+    )
+
+  def test_ndarray_from_matrix_proto_fails_for_wrong_size(self):
+    with self.assertRaisesRegex(
+        ValueError, 'matrix is not 3x2, it has 5 values.'
+    ):
+      proto_conversion.ndarray_from_matrix_proto(
+          matrix_pb2.Matrixd(rows=3, cols=2, values=[0.0, 1.0, 2.0, 3.0, 4.0])
+      )
+
+  def test_ndarray_to_matrix_proto_fails_for_wrong_size(self):
+    with self.assertRaisesRegex(
+        ValueError, r'expected a 2D array, got shape \(3, 2, 1\).'
+    ):
+      proto_conversion.ndarray_to_matrix_proto(
+          np.arange(0, 6).reshape((3, 2, 1))
+      )
 
 
 if __name__ == '__main__':
