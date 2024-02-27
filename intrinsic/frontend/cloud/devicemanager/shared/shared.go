@@ -7,13 +7,14 @@ import "encoding/json"
 
 // ConfigureData is the data type used during the configuration push by inctl.
 type ConfigureData struct {
-	Config   []byte `json:"config"`
-	Hostname string `json:"hostname"`
-	Role     string `json:"role"`
-	Cluster  string `json:"cluster"`
-	Private  bool   `json:"private"`
-	Region   string `json:"region"`
-	Replace  bool   `json:"replace"`
+	Config     []byte `json:"config"`
+	Hostname   string `json:"hostname"`
+	Role       string `json:"role"`
+	Cluster    string `json:"cluster"`
+	Private    bool   `json:"private"`
+	Region     string `json:"region"`
+	Replace    bool   `json:"replace"`
+	AutoUpdate bool   `json:"auto_update"`
 	// CreatedByTest is only used for automated testing, and contains the ID of the test that is
 	// registering this device. It is used to label the resources (in particular the Robot CR) so we
 	// can clean it up.
