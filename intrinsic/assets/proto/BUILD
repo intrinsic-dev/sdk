@@ -58,7 +58,7 @@ proto_library(
     deps = [
         ":documentation_proto",
         ":id_proto",
-        ":tag_proto",
+        ":release_tag_proto",
         ":vendor_proto",
         "@com_google_protobuf//:timestamp_proto",
     ],
@@ -81,7 +81,7 @@ go_proto_library(
     go_deps = [
         ":documentation_go_proto",
         ":id_go_proto",
-        ":tag_go_proto",
+        ":release_tag_go_proto",
         ":vendor_go_proto",
     ],
     visibility = ["//intrinsic:__subpackages__"],
@@ -89,15 +89,15 @@ go_proto_library(
 )
 
 proto_library(
-    name = "tag_proto",
-    srcs = ["tag.proto"],
+    name = "release_tag_proto",
+    srcs = ["release_tag.proto"],
     visibility = ["//intrinsic:__subpackages__"],
 )
 
 go_proto_library(
-    name = "tag_go_proto",
+    name = "release_tag_go_proto",
     visibility = ["//intrinsic:__subpackages__"],
-    deps = [":tag_proto"],
+    deps = [":release_tag_proto"],
 )
 
 proto_library(

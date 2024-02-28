@@ -7,7 +7,7 @@ package intrinsic_proto.assets;
 import "google/protobuf/timestamp.proto";
 import "intrinsic/assets/proto/documentation.proto";
 import "intrinsic/assets/proto/id.proto";
-import "intrinsic/assets/proto/tag.proto";
+import "intrinsic/assets/proto/release_tag.proto";
 import "intrinsic/assets/proto/vendor.proto";
 
 // General metadata for a specific version of an asset.
@@ -28,7 +28,7 @@ message Metadata {
   string release_notes = 5;
 
   // Release tag for this version of the asset.
-  Tag tag = 6;
+  ReleaseTag release_tag = 6;
 
   // The time at which this version of the asset became available.
   google.protobuf.Timestamp update_time = 7;
