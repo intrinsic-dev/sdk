@@ -982,7 +982,7 @@ class Skills(providers.SkillProvider):
         capability_names_batch.append(slot_selector.capability_names)
 
     handles_by_selector = (
-        self._resource_registry.batch_list_all_resource_handles(
+        self._resource_registry.batch_list_all_resource_handles(  # pytype: disable=wrong-arg-types  # always-use-property-annotation
             capability_names_batch=capability_names_batch
         )
     )
