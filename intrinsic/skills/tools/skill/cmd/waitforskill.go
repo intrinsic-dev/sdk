@@ -17,8 +17,12 @@ import (
 
 // Params holds parameters for waitForSkill.
 type Params struct {
-	// gRPC connection to the skill registry to use.
+	// gRPC connection to the skill registry. This will not be used if `Client` is provided and may be
+	// omitted in that case.
 	Connection *grpc.ClientConn
+	// gRPC client for the skill registry. The `Connection` will be ignored (and can be omitted) when
+	// this is provided.
+	Client srgrpcpb.SkillRegistryClient
 	// The ID of the skill to wait for.
 	SkillID string
 	// If non-empty, then wait for this specific version of the skill.
@@ -30,7 +34,12 @@ type Params struct {
 // WaitForSkill polls the skill registry until matching skill is found.
 func WaitForSkill(ctx context.Context, params *Params) error {
 
-	client := srgrpcpb.NewSkillRegistryClient(params.Connection)
+	var client srgrpcpb.SkillRegistryClient
+	if params.Client != nil {
+		client = params.Client
+	} else {
+		client = srgrpcpb.NewSkillRegistryClient(params.Connection)
+	}
 	start := time.Now()
 	for {
 		res, err := client.GetSkill(ctx, &srgrpcpb.GetSkillRequest{
