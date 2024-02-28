@@ -160,7 +160,6 @@ $ inctl skill load --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution=
 		log.Printf("Waiting for the skill to be available for a maximum of %s", timeoutStr)
 		err = waitforskill.WaitForSkill(ctx,
 			&waitforskill.Params{
-				Address:        installerAddress,
 				Connection:     conn,
 				SkillID:        installerParams.SkillID,
 				SkillIDVersion: skillIDVersion,

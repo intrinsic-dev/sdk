@@ -17,9 +17,7 @@ import (
 
 // Params holds parameters for waitForSkill.
 type Params struct {
-	// The address of the skill registry.
-	Address string
-	// gRPC connection to use.
+	// gRPC connection to the skill registry to use.
 	Connection *grpc.ClientConn
 	// The ID of the skill to wait for.
 	SkillID string
