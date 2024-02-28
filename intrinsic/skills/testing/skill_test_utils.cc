@@ -5,6 +5,7 @@
 #include "absl/log/check.h"
 #include "absl/status/status.h"
 #include "intrinsic/skills/cc/skill_interface.h"
+#include "intrinsic/skills/proto/skill_manifest.pb.h"
 
 namespace intrinsic {
 namespace skills {
