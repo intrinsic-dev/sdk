@@ -350,6 +350,11 @@ go_proto_library(
     deps = [":robot_payload_proto"],
 )
 
+go_proto_library(
+    name = "entity_search_go_proto",
+    deps = [":entity_search_proto"],
+)
+
 cc_proto_library(
     name = "robot_payload_cc_proto",
     deps = [":robot_payload_proto"],
