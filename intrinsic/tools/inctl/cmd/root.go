@@ -27,6 +27,8 @@ import (
 const (
 	// ClusterCmdName is the name of the `inctl cluster` command.
 	ClusterCmdName = "cluster"
+	// ProcessCmdName is the name of the `inctl process` command.
+	ProcessCmdName = "process"
 	// SolutionCmdName is the name of the `inctl solution` command.
 	SolutionCmdName = "solution"
 	// SolutionsCmdName is the alias for the `inctl solution` command.
@@ -76,7 +78,7 @@ func (e *executionContext) RewriteError(err error, cmdNames []string) string {
 		// (see b/292218614).
 		if grpcStatus.Code() == grpccodes.Unavailable && len(cmdNames) > 0 &&
 			slices.Contains([]string{
-				ClusterCmdName, SolutionCmdName, SolutionsCmdName, SkillCmdName}, cmdNames[0]) {
+				ClusterCmdName, ProcessCmdName, SolutionCmdName, SolutionsCmdName, SkillCmdName}, cmdNames[0]) {
 
 			return fmt.Sprintf("%v\nThe GCP project given by --project is not reachable at the "+
 				"moment or is not valid.", err)

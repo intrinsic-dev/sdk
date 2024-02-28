@@ -208,6 +208,25 @@ py_proto_library(
     deps = [":object_world_updates_proto"],
 )
 
+go_proto_library(
+    name = "object_world_updates_go_proto",
+    go_deps = [
+        ":collision_action_go_proto",
+        ":collision_settings_go_proto",
+        ":geometry_component_go_proto",
+        ":gripper_component_go_proto",
+        ":robot_payload_go_proto",
+        ":physics_component_go_proto",
+        ":simulation_component_go_proto",
+        ":spawner_component_go_proto",
+        ":object_world_refs_go_proto",
+        "//intrinsic/icon/proto:cart_space_go_proto",
+        "//intrinsic/kinematics/types:joint_limits_go_proto",
+        "//intrinsic/math/proto:pose_go_proto",
+    ],
+    deps = [":object_world_updates_proto"],
+)
+
 proto_library(
     name = "physics_component_proto",
     srcs = ["physics_component.proto"],

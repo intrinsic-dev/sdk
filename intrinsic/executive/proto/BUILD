@@ -1,7 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
-load("//bazel:go_macros.bzl", "go_proto_library")
+load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_proto_library")
 load("//intrinsic/util/proto/build_defs:descriptor_set.bzl", "proto_source_code_info_transitive_descriptor_set")
 
@@ -86,6 +86,30 @@ py_grpc_library(
     deps = [":executive_service_py_pb2"],
 )
 
+go_proto_library(
+    name = "executive_service_go_proto",
+    go_deps = [
+        ":behavior_tree_go_proto",
+        ":executive_execution_mode_go_proto",
+        ":run_metadata_go_proto",
+        "@com_google_cloud_go_longrunning//autogen/longrunningpb",
+        "@org_golang_google_genproto_googleapis_api//annotations",
+    ],
+    deps = [":executive_service_proto"],
+)
+
+go_grpc_library(
+    name = "executive_service_go_grpc_proto",
+    srcs = [":executive_service_proto"],
+    deps = [
+        ":behavior_tree_go_proto",
+        ":executive_execution_mode_go_proto",
+        ":run_metadata_go_proto",
+        "@com_google_cloud_go_longrunning//autogen/longrunningpb",
+        "@org_golang_google_genproto_googleapis_api//annotations",
+    ],
+)
+
 # run_metadata
 proto_library(
     name = "run_metadata_proto",
@@ -104,6 +128,16 @@ py_proto_library(
 
 cc_proto_library(
     name = "run_metadata_cc_proto",
+    deps = [":run_metadata_proto"],
+)
+
+go_proto_library(
+    name = "run_metadata_go_proto",
+    go_deps = [
+        ":behavior_tree_go_proto",
+        ":executive_execution_mode_go_proto",
+        "//intrinsic/logging/proto:context_go_proto",
+    ],
     deps = [":run_metadata_proto"],
 )
 
