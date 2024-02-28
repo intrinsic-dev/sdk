@@ -125,7 +125,8 @@ func waitForStatusAvailable(ctx context.Context, client projectclient.AuthedClie
 		}
 
 		// StatusBadGateway is expected when the control plane isn't up yet.
-		if resp.StatusCode != http.StatusBadGateway {
+		// StatusNotFound is expected when a worker node isn't up yet.
+		if resp.StatusCode != http.StatusBadGateway && resp.StatusCode != http.StatusNotFound {
 			return fmt.Errorf("IPC did not offer status. http code: %v", resp.StatusCode)
 		}
 
