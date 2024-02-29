@@ -30,6 +30,7 @@ exports_files(
     srcs = [
         "BUILD",
         "BUILD.eigen",
+        "BUILD.libarchive",
         "BUILD.retrying",
         "BUILD.sysroot",
         "BUILD.workspace_root",
