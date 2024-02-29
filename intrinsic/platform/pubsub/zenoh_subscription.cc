@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 
+#include "absl/strings/string_view.h"
 #include "intrinsic/platform/pubsub/subscription.h"
 #include "intrinsic/platform/pubsub/zenoh_subscription_data.h"
 #include "intrinsic/platform/pubsub/zenoh_util/zenoh_handle.h"

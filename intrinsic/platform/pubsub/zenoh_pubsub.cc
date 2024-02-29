@@ -9,6 +9,8 @@
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
+#include "intrinsic/platform/pubsub/adapters/pubsub.pb.h"
 #include "intrinsic/platform/pubsub/publisher.h"
 #include "intrinsic/platform/pubsub/pubsub.h"
 #include "intrinsic/platform/pubsub/subscription.h"

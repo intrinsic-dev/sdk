@@ -5,6 +5,7 @@
 #include <limits>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace intrinsic::internal {
