@@ -67,9 +67,9 @@ def intrinsic_sdks_deps_0():
     maybe(
         http_archive,
         name = "rules_python",
-        strip_prefix = "rules_python-0.27.1",
-        url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.27.1.zip",
-        sha256 = "19250cc0ab89f052131137a58c993d988d74637b52a5b137a4264d9917c13a3e",
+        strip_prefix = "rules_python-0.31.0",
+        url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.31.0.zip",
+        sha256 = "9110e83a233c9edce177241f3ae95eae4e4cc3b602d845878d76ad4e3bab7c60",
     )
 
     maybe(
