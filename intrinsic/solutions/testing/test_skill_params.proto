@@ -66,6 +66,13 @@ message TestMessage {
   map<string, intrinsic_proto.executive.TestMessage> string_message_map = 30;
 
   intrinsic_proto.executive.TestMessage executive_test_message = 27;
+
+  // Two fields with the same name but different types.
+  message AnotherType {}
+  message SomeType {
+    AnotherType non_unique_field_name = 1;
+  }
+  SomeType non_unique_field_name = 31;
 }
 
 message ResourceConflict {

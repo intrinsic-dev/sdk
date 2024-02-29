@@ -31,6 +31,7 @@ _MESSAGE_WITH_DEFAULT_VALUES = test_skill_params_pb2.TestMessage(
     my_oneof_double=1.1,
     pose=math_proto_conversion.pose_to_proto(data_types.Pose3()),
     int32_string_map={1: 'foo'},
+    non_unique_field_name=test_skill_params_pb2.TestMessage.SomeType(),
 )
 
 
@@ -50,6 +51,7 @@ class SkillParametersTest(parameterized.TestCase):
               'my_repeated_doubles',
               'repeated_submessages',
               'executive_test_message',
+              'non_unique_field_name',
           ],
       ),
       (
@@ -74,6 +76,7 @@ class SkillParametersTest(parameterized.TestCase):
               'my_repeated_doubles',
               'repeated_submessages',
               'executive_test_message',
+              'non_unique_field_name',
           ],
       ),
   )

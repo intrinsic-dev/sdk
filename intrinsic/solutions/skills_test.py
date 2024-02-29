@@ -1057,6 +1057,7 @@ class SkillsTest(parameterized.TestCase):
         'foo: intrinsic.solutions.skills.my_skill.Foo, '
         'enum_v: int, '
         'executive_test_message: intrinsic.solutions.skills.my_skill.TestMessage, '
+        'non_unique_field_name: intrinsic.solutions.skills.my_skill.SomeType, '
         'my_repeated_doubles: Sequence[float] = [], '
         'repeated_submessages: Sequence[intrinsic.solutions.skills.my_skill.SubMessage] '
         '= [], string_int32_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
@@ -1122,6 +1123,8 @@ class SkillsTest(parameterized.TestCase):
         'enum_v: int, '
         'executive_test_message:'
         ' intrinsic.solutions.skills.my_skill.TestMessage, '
+        'non_unique_field_name:'
+        ' intrinsic.solutions.skills.my_skill.SomeType, '
         'my_double: float = 2.5, '
         'my_float: float = -1.5, '
         'my_int32: int = 5, '
@@ -1169,6 +1172,8 @@ Args:
     my_oneof_sub_message:
         Mockup comment
     my_required_int32:
+        Mockup comment
+    non_unique_field_name:
         Mockup comment
     optional_sub_message:
         Mockup comment
@@ -1258,6 +1263,8 @@ Returns:
     my_uint32:
         Mockup comment
     my_uint64:
+        Mockup comment
+    non_unique_field_name:
         Mockup comment
     optional_sub_message:
         Mockup comment
@@ -1642,9 +1649,6 @@ Returns:
 
   def test_message_wrapper_signature(self):
     skill_info = _create_test_skill_info(skill_id='ai.intrinsic.my_skill')
-    parameters = _SKILL_PARAMETER_DICT
-
-    expected_signature = '(*, name: str)'
 
     skill_registry_stub = mock.MagicMock()
     skill_registry_response = skill_registry_pb2.GetSkillsResponse()
@@ -1660,9 +1664,15 @@ Returns:
 
     skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
-    my_skill = skills.my_skill(**parameters)
-    signature = inspect.signature(my_skill.SubMessage)
-    self.assertSignature(signature, expected_signature)
+    signature = inspect.signature(skills.my_skill.SubMessage)
+    self.assertSignature(signature, '(*, name: str)')
+
+    signature = inspect.signature(skills.my_skill.SomeType)
+    self.assertSignature(
+        signature,
+        '(*, non_unique_field_name:'
+        ' intrinsic.solutions.skills.my_skill.AnotherType)',
+    )
 
   def test_top_level_enum_values(self):
     """If the skill parameter proto defines any enums, the values of those enums should become constants on the skill wrapper class."""

@@ -126,6 +126,7 @@ class SkillUtilsTest(absltest.TestCase):
         'my_required_int32': '0',
         'foo': 'skills["test"].message_classes["intrinsic_proto.test_data.TestMessage.Foo"]()',
         'executive_test_message': 'skills["test"].message_classes["intrinsic_proto.executive.TestMessage"]()',
+        'non_unique_field_name': 'skills["test"].message_classes["intrinsic_proto.test_data.TestMessage.SomeType"]()',
     }
     parameter_defaults = _DEFAULT_TEST_MESSAGE
     for field in parameter_defaults.DESCRIPTOR.fields:
