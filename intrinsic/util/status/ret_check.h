@@ -8,6 +8,7 @@
 #include <sstream>
 #include <string>
 
+#include "absl/base/attributes.h"
 #include "absl/base/optimization.h"
 #include "absl/flags/declare.h"
 #include "absl/status/status.h"

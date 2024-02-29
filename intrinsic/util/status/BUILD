@@ -164,7 +164,11 @@ cc_library(
         ":status_conversion_grpc",
         "//intrinsic/icon/release:source_location",
         "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:log_severity",
+        "@com_google_absl//absl/log:log_sink",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:cord",
         "@com_google_absl//absl/time",
     ],
 )
@@ -190,9 +194,11 @@ cc_library(
     hdrs = ["ret_check_grpc.h"],
     deps = [
         ":ret_check",
+        ":status_builder",
         ":status_builder_grpc",
         ":status_macros_grpc",
         "//intrinsic/icon/release:source_location",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/base:log_severity",
         "@com_google_absl//absl/status",
     ],

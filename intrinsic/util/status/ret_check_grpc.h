@@ -6,9 +6,11 @@
 #include <string>
 
 #include "absl/base/log_severity.h"
+#include "absl/base/optimization.h"
 #include "absl/status/status.h"
 #include "intrinsic/icon/release/source_location.h"
 #include "intrinsic/util/status/ret_check.h"
+#include "intrinsic/util/status/status_builder.h"
 #include "intrinsic/util/status/status_builder_grpc.h"
 #include "intrinsic/util/status/status_macros_grpc.h"
 

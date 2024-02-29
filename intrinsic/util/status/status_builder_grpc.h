@@ -7,7 +7,11 @@
 #include <string_view>
 #include <utility>
 
+#include "absl/base/attributes.h"
+#include "absl/base/log_severity.h"
+#include "absl/log/log_sink.h"
 #include "absl/status/status.h"
+#include "absl/strings/cord.h"
 #include "absl/time/time.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/icon/release/source_location.h"
