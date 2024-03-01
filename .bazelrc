@@ -61,5 +61,11 @@ build:remote_cache --google_default_credentials=true
 build:remote       --config=linux_x86_64
 build:remote_cache --config=linux_x86_64
 
+# Enable absl support in googletest. If this define is set, googletest's default
+# main function initializes absl, including the command line flag subsystem.
+#
+# See https://github.com/google/googletest/issues/2883#issuecomment-647540343
+build --define absl=1
+
 # Avoid building grpc with xDS support to reduce build time
 build --define=grpc_no_xds=true
