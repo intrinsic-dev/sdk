@@ -964,8 +964,8 @@ class Blackboard(Condition):
       blackboard.
   """
 
-  def __init__(self, cel_expression: str):
-    self.cel_expression: str = cel_expression
+  def __init__(self, cel_expression: str | skill_utils.CelExpression):
+    self.cel_expression: str = str(cel_expression)
 
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
