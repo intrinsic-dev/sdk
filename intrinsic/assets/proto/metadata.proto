@@ -5,6 +5,8 @@ syntax = "proto3";
 package intrinsic_proto.assets;
 
 import "google/protobuf/timestamp.proto";
+import "intrinsic/assets/proto/asset_tag.proto";
+import "intrinsic/assets/proto/asset_type.proto";
 import "intrinsic/assets/proto/documentation.proto";
 import "intrinsic/assets/proto/id.proto";
 import "intrinsic/assets/proto/release_tag.proto";
@@ -32,4 +34,10 @@ message Metadata {
 
   // The time at which this version of the asset became available.
   google.protobuf.Timestamp update_time = 7;
+
+  // The type of the asset.
+  AssetType asset_type = 8;
+
+  // A tag identifying the category of the asset.
+  AssetTag asset_tag = 9;
 }
