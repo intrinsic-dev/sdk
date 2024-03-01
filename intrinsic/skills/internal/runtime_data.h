@@ -112,8 +112,6 @@ class SkillRuntimeData {
 
   const ParameterData& GetParameterData() const { return parameter_data_; }
 
-  const ReturnTypeData& GetReturnTypeData() const { return return_type_data_; }
-
   const ExecutionOptions& GetExecutionOptions() const {
     return execution_options_;
   }
