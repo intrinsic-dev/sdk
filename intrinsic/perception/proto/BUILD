@@ -155,7 +155,9 @@ go_proto_library(
 go_grpc_library(
     name = "camera_drivers_go_grpc_proto",
     srcs = [":camera_drivers_proto"],
-    deps = [":camera_drivers_go_proto"],
+    deps = [
+        ":camera_drivers_go_proto",
+    ],
 )
 
 proto_library(
