@@ -85,6 +85,21 @@ proto_library(
 )
 
 proto_library(
+    name = "motion_planning_error_proto",
+    srcs = ["motion_planning_error.proto"],
+    deps = [
+        "//intrinsic/icon/proto:joint_space_proto",
+        "//intrinsic/world/proto:collision_settings_proto",
+        "//intrinsic/world/proto:geometric_constraints_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "motion_planning_error_cc_proto",
+    deps = [":motion_planning_error_proto"],
+)
+
+proto_library(
     name = "motion_planner_config_proto",
     srcs = ["motion_planner_config.proto"],
     deps = ["@com_google_protobuf//:duration_proto"],

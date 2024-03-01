@@ -1,0 +1,67 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.motion_planning;
+
+import "intrinsic/icon/proto/joint_space.proto";
+import "intrinsic/world/proto/collision_settings.proto";
+import "intrinsic/world/proto/geometric_constraints.proto";
+
+// Defines the errors when multi-segment planning
+// Currently we only support error for single segments.
+message MotionPipelineError {
+  // Used for multi-segment planning.
+  repeated MotionPlanningError motion_planning_error = 1;
+  string logging_id = 2;
+}
+
+// Defines a motion planning error
+message MotionPlanningError {
+  oneof error {
+    // The collision error that is reported for a given geometric constraint/
+    // pose.
+    CollisionError collision_error = 1;
+    IKError ik_error = 2;
+  }
+  // Segment id represents the segment for which the error was reported.
+  // For multiple segments we add the first and last segment ids where
+  // the planning failures occurred.
+  repeated int32 segment_id = 3;
+}
+
+message CollisionError {
+  repeated CollisionDebug collision_debug = 1;
+  // Collision settings used for the collision checker.
+  optional intrinsic_proto.world.CollisionSettings collision_settings = 2;
+  // Allows any additional information regarding context where the error
+  // occurs.
+  optional string error_context = 3;
+}
+
+// Each collision debug message corresponds to a collision check.
+message CollisionDebug {
+  // Error message reported.
+  string error_message = 1;
+  // Joint positions for which collision was checked.
+  intrinsic_proto.icon.JointVec joint_positions = 2;
+  // Left entity for the reported collision.
+  string left_entity = 3;
+  // Right entity/entities for the reported collision.
+  // The number of entities in right entities depends on the type of collision
+  // checker that is used. If we use no-merge collision checker, we have only
+  // one right entity. If we use the merge collision checker, it probable there
+  // are multiple entities.
+  string right_entities = 4;
+}
+
+message IKError {
+  string error_message = 1;
+  // Constraint for which the error was reported. This is an optional field that
+  // is populated for all IK methods that have access to the object world.
+  optional intrinsic_proto.world.geometric_constraints.GeometricConstraint
+      constraint = 2;
+  // Allows any additional information regarding context where the error
+  // occurs.
+  optional string error_context = 3;
+}
