@@ -1,0 +1,13 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.assets;
+
+// Identifies the type of an asset.
+enum AssetType {
+  ASSET_TYPE_UNSPECIFIED = 0;
+  ASSET_TYPE_SCENE_OBJECT = 1;
+  ASSET_TYPE_SERVICE = 2;
+  ASSET_TYPE_SKILL = 3;
+}

@@ -4,6 +4,58 @@ load("//bazel:go_macros.bzl", "go_proto_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 
 proto_library(
+    name = "asset_tag_proto",
+    srcs = ["asset_tag.proto"],
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":asset_type_proto"],
+)
+
+cc_proto_library(
+    name = "asset_tag_cc_proto",
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":asset_tag_proto"],
+)
+
+py_proto_library(
+    name = "asset_tag_py_pb2",
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":asset_tag_proto"],
+)
+
+go_proto_library(
+    name = "asset_tag_go_proto",
+    go_deps = [
+        ":asset_type_go_proto",
+    ],
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":asset_tag_proto"],
+)
+
+proto_library(
+    name = "asset_type_proto",
+    srcs = ["asset_type.proto"],
+    visibility = ["//intrinsic:__subpackages__"],
+)
+
+cc_proto_library(
+    name = "asset_type_cc_proto",
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":asset_type_proto"],
+)
+
+py_proto_library(
+    name = "asset_type_py_pb2",
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":asset_type_proto"],
+)
+
+go_proto_library(
+    name = "asset_type_go_proto",
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":asset_type_proto"],
+)
+
+proto_library(
     name = "documentation_proto",
     srcs = ["documentation.proto"],
     visibility = ["//intrinsic:__subpackages__"],

@@ -1,0 +1,42 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.assets;
+
+import "intrinsic/assets/proto/asset_type.proto";
+
+/* A tag that identifies the category of an asset.
+
+Not all tags are applicable to every asset type (see AssetTagMetadata). */
+enum AssetTag {
+  ASSET_TAG_UNSPECIFIED = 0;
+  ASSET_TAG_CAMERA = 1;
+  ASSET_TAG_GRIPPER = 2;
+}
+
+/* Metadata about a particular asset tag value. */
+message AssetTagMetadata {
+  /* The asset tag to which these metadata apply. */
+  AssetTag asset_tag = 1;
+
+  /* The display name of the asset tag. */
+  string display_name = 2;
+
+  /* The asset types to which the asset tag applies.
+
+  An asset tag may only be associated with an asset if the asset is of a type
+  listed here. */
+  repeated AssetType applicable_asset_types = 3;
+}
+
+/* Describes the metadata of a set of asset tags.
+
+  Each AssetTag value must have a corresponding entry in `tags`, ordered by enum
+  value.
+
+  A value of this proto is defined in asset_tags.textproto; it describes the
+  canonical set of built-in tags that can be associated with assets. */
+message AssetTagMetadataSet {
+  repeated AssetTagMetadata tags = 1;
+}
