@@ -213,5 +213,4 @@ cc_test(
 cc_library(
     name = "current_cycle",
     hdrs = ["current_cycle.h"],
-    visibility = ["//visibility:private"],
 )
