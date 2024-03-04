@@ -58,8 +58,6 @@ const (
 	KeyTimeout = "timeout"
 	// KeyUseBorgCredentials is the name of the flag to use borg credentials.
 	KeyUseBorgCredentials = "use_borg_credentials"
-	// KeyUseFirebaseCredentials is the name of the flag to use firebase credentials.
-	KeyUseFirebaseCredentials = "use_firebase_credentials"
 	// KeyUseInProcCatalog is the name of the flag for using an in-proc catalog.
 	KeyUseInProcCatalog = "use_in_proc_catalog"
 	// KeyVendor is the name of the vendor flag.
@@ -110,21 +108,16 @@ func (cf *CmdFlags) GetFlagsCatalogInProcEnvironment() (bool, string) {
 
 // AddFlagsCredentials adds args for specifying credentials.
 func (cf *CmdFlags) AddFlagsCredentials() {
-	cf.OptionalBool(KeyUseFirebaseCredentials, false, "Use Firebase credentials (may require copy/pasting info from a URL).")
 	cf.OptionalBool(KeyUseBorgCredentials, false, "Use credentials associated with the current borg user, rather than application-default credentials.")
 	cf.OptionalString(KeyAPIKey, "", "The API key to use for authentication.")
-
-	cf.cmd.MarkFlagsMutuallyExclusive(KeyUseFirebaseCredentials, KeyUseBorgCredentials)
-	cf.cmd.MarkFlagsMutuallyExclusive(KeyUseFirebaseCredentials, KeyAPIKey)
 }
 
 // GetFlagsCredentials gets the values of the credential args.
-func (cf *CmdFlags) GetFlagsCredentials() (useFirebase bool, useBorgCredentials bool, apiKey string) {
-	useFirebase = cf.GetBool(KeyUseFirebaseCredentials)
+func (cf *CmdFlags) GetFlagsCredentials() (useBorgCredentials bool, apiKey string) {
 	useBorgCredentials = cf.GetBool(KeyUseBorgCredentials)
 	apiKey = cf.GetString(KeyAPIKey)
 
-	return useFirebase, useBorgCredentials, apiKey
+	return useBorgCredentials, apiKey
 }
 
 // AddFlagDefault adds a flag for marking a released asset as default.

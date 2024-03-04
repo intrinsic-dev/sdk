@@ -59,13 +59,12 @@ var (
 
 // DialCatalogOptions specifies the options for DialSkillCatalog and DialCatalog.
 type DialCatalogOptions struct {
-	Address          string
-	APIKey           string
-	Organization     string
-	Project          string
-	UseFirebaseCreds bool
-	UserReader       *bufio.Reader // Required if UseFirebaseAuth is true.
-	UserWriter       io.Writer     // Required if UseFirebaseAuth is true.
+	Address      string
+	APIKey       string
+	Organization string
+	Project      string
+	UserReader   *bufio.Reader // Required if UseFirebaseAuth is true.
+	UserWriter   io.Writer     // Required if UseFirebaseAuth is true.
 }
 
 // DialCatalogFromInctl creates a connection to an asset catalog service from an inctl command.
@@ -92,11 +91,7 @@ func DialCatalog(ctx context.Context, opts DialCatalogOptions) (*grpc.ClientConn
 	}
 
 	options := BaseDialOptions
-
-	// Determine credentials to include in requests.
-	if opts.UseFirebaseCreds { // Use firebase creds.
-		return nil, fmt.Errorf("firebase auth unimplemented")
-	} else if IsLocalAddress(opts.Address) { // Use insecure creds.
+	if IsLocalAddress(opts.Address) { // Use insecure creds.
 		options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	} else { // Use api-key creds.
 		rpcCreds, err := getAPIKeyPerRPCCredentials(opts.APIKey, opts.Project, opts.Organization)
@@ -118,13 +113,12 @@ func DialSkillCatalogFromInctl(cmd *cobra.Command, flags *cmdutils.CmdFlags) (*g
 
 	return DialSkillCatalog(
 		cmd.Context(), DialCatalogOptions{
-			Address:          "",
-			APIKey:           "",
-			Organization:     flags.GetFlagOrganization(),
-			Project:          flags.GetFlagProject(),
-			UseFirebaseCreds: false,
-			UserReader:       bufio.NewReader(cmd.InOrStdin()),
-			UserWriter:       cmd.OutOrStdout(),
+			Address:      "",
+			APIKey:       "",
+			Organization: flags.GetFlagOrganization(),
+			Project:      flags.GetFlagProject(),
+			UserReader:   bufio.NewReader(cmd.InOrStdin()),
+			UserWriter:   cmd.OutOrStdout(),
 		},
 	)
 }
@@ -140,9 +134,7 @@ func DialSkillCatalog(ctx context.Context, opts DialCatalogOptions) (*grpc.Clien
 	options := BaseDialOptions
 
 	// Determine credentials to include in requests.
-	if opts.UseFirebaseCreds { // Use firebase creds.
-		return nil, fmt.Errorf("firebase auth unimplemented")
-	} else if IsLocalAddress(opts.Address) { // Use insecure creds.
+	if IsLocalAddress(opts.Address) { // Use insecure creds.
 		options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	} else { // Use api-key creds.
 		rpcCreds, err := getAPIKeyPerRPCCredentials(opts.APIKey, opts.Project, opts.Organization)
