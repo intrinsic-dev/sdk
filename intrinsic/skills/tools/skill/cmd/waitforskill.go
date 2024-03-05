@@ -5,6 +5,7 @@ package waitforskill
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -29,6 +30,27 @@ type Params struct {
 	SkillIDVersion string
 	// How long WaitForSkill should wait.
 	WaitDuration time.Duration
+}
+
+// ErrSkillRegistryUnimplemented is returned when the request to the skill registry comes back as
+// unimplemented at any point. This may indicate that no solution is running.
+var ErrSkillRegistryUnimplemented = errors.New("querying skill registry failed (is a solution running in the target cluster?)")
+
+// TimeoutError is returned when [WaitForSkill] times out with its configured deadline. It contains
+// (but does not wrap!) the last error received from the skill registry.
+type TimeoutError struct {
+	ElapsedTime time.Duration
+	LastErr     error
+}
+
+func (e *TimeoutError) Error() string {
+	lastErr := "n/a"
+	if e.LastErr != nil {
+		lastErr = e.LastErr.Error()
+	}
+	return fmt.Sprintf(
+		"timed out after %q. Skill may not be running, see skill logs for details.\n"+
+			"Last known error: %v", e.ElapsedTime, lastErr)
 }
 
 // WaitForSkill polls the skill registry until matching skill is found.
@@ -61,8 +83,7 @@ func WaitForSkill(ctx context.Context, params *Params) error {
 			switch grpcStatus.Code() {
 			case codes.Unimplemented:
 				// Ingress will return Unimplemented if no skill registry is running as part of a solution.
-				return fmt.Errorf(
-					"querying skill registry failed (is a solution running in the target cluster?): %w", err)
+				return errors.Join(ErrSkillRegistryUnimplemented, err)
 			case codes.NotFound:
 				// Wait and retry because skill is not registered yet.
 			case codes.Unavailable:
@@ -77,9 +98,7 @@ func WaitForSkill(ctx context.Context, params *Params) error {
 		}
 		timeSince := time.Since(start)
 		if timeSince > params.WaitDuration {
-			return fmt.Errorf(
-				"timed out after %q. Skill may not be running, see skill logs for details.\n"+
-					"Last known error: %w", timeSince, err)
+			return &TimeoutError{ElapsedTime: timeSince, LastErr: err}
 		}
 		time.Sleep(1 * time.Second)
 	}
