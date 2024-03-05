@@ -24,3 +24,10 @@ genrule(
           r"| perl -0777pe 's/(^\s*\n)*(^#.*\n)*(^build:.*\n)+//mg' " +
           "> $@",
 )
+
+genrule(
+    name = "bazelversion",
+    srcs = ["//:.bazelversion"],
+    outs = ["bazelversion.template"],
+    cmd = "cat $< > $@",
+)

@@ -5,7 +5,10 @@ load("@bazel_gazelle//:def.bzl", "gazelle")
 gazelle(name = "gazelle")
 
 exports_files(
-    srcs = [".bazelrc"],
+    srcs = [
+        ".bazelrc",
+        ".bazelversion",
+    ],
     visibility = ["//intrinsic/tools/inctl/cmd/bazel/templates:__subpackages__"],
 )
 

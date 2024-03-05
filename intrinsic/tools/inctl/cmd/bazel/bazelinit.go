@@ -105,11 +105,13 @@ func RunInitCmd(params *InitCmdParams) (InitSuccessMessage, error) {
 		SDKVersionDefaultValue: version.SDKVersionDefaultValue,
 	}
 
+	bazelVersionFile := filepath.Join(workspaceRoot, ".bazelversion")
 	workspaceFile := filepath.Join(workspaceRoot, "WORKSPACE")
 	bazelrcFile := filepath.Join(workspaceRoot, ".bazelrc")
 	createdFiles := []string{bazelrcFile}
 
 	if !params.BazelrcOnly {
+		createdFiles = append(createdFiles, bazelVersionFile)
 		createdFiles = append(createdFiles, workspaceFile)
 	}
 
@@ -130,6 +132,13 @@ func RunInitCmd(params *InitCmdParams) (InitSuccessMessage, error) {
 		if !params.BazelrcOnly {
 			if err := templateutil.CreateNewFileFromTemplate(
 				workspaceFile, "WORKSPACE.template", templateParams, templateSet,
+				templateutil.CreateFileOptions{
+					Override: params.Override,
+				}); err != nil {
+				return InitSuccessMessage{}, fmt.Errorf("creating file: %w", err)
+			}
+			if err := templateutil.CreateNewFileFromTemplate(
+				bazelVersionFile, "bazelversion.template", templateParams, templateSet,
 				templateutil.CreateFileOptions{
 					Override: params.Override,
 				}); err != nil {
