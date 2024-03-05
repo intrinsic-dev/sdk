@@ -3,20 +3,53 @@
 package process
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/prototext"
 	btpb "intrinsic/executive/proto/behavior_tree_go_proto"
 	"intrinsic/tools/inctl/util/orgutil"
 )
 
+func setProcessFromTextProto(ctx context.Context, conn *grpc.ClientConn, content []byte, clearTreeID bool, clearNodeIDs bool) error {
+	skills, err := getSkills(ctx, conn)
+	if err != nil {
+		return errors.Wrapf(err, "could not list skills")
+	}
+
+	t, err := populateProtoTypes(skills)
+	if err != nil {
+		return errors.Wrapf(err, "failed to populate proto types")
+	}
+
+	unmarshaller := prototext.UnmarshalOptions{
+		Resolver:       t,
+		AllowPartial:   true,
+		DiscardUnknown: true,
+	}
+
+	bt := &btpb.BehaviorTree{}
+	if err := unmarshaller.Unmarshal(content, bt); err != nil {
+		return errors.Wrapf(err, "could not parse input file")
+	}
+
+	clearTree(bt, clearTreeID, clearNodeIDs)
+
+	if err := setBT(ctx, conn, bt); err != nil {
+		return errors.Wrapf(err, "could not set behavior tree")
+	}
+
+	return nil
+}
+
 var processSetCmd = &cobra.Command{
 	Use:   "set",
 	Short: "Set process (behavior tree) of a solution. ",
-	Long: `Set the active process (behavior tree) of a currently deployed solution. 
+	Long: `Set the active process (behavior tree) of a currently deployed solution.
 
 Example:
 inctl process set --solution my-solution --cluster my-cluster --input_file /tmp/my-process.textproto
@@ -41,37 +74,13 @@ inctl process set --solution my-solution --cluster my-cluster --input_file /tmp/
 		}
 		defer conn.Close()
 
-		skills, err := getSkills(ctx, conn)
-		if err != nil {
-			return errors.Wrapf(err, "could not list skills")
-		}
-
-		t, err := populateProtoTypes(skills)
-		if err != nil {
-			return errors.Wrapf(err, "failed to populate proto types")
-		}
-
 		content, err := ioutil.ReadFile(flagInputFile)
-
 		if err != nil {
 			return errors.Wrapf(err, "could not read input file")
 		}
 
-		unmarshaller := prototext.UnmarshalOptions{
-			Resolver:       t,
-			AllowPartial:   true,
-			DiscardUnknown: true,
-		}
-
-		bt := &btpb.BehaviorTree{}
-		if err := unmarshaller.Unmarshal(content, bt); err != nil {
-			return errors.Wrapf(err, "could not parse input file")
-		}
-
-		clearTree(bt, flagClearTreeID, flagClearNodeIDs)
-
-		if err := setBT(ctx, conn, bt); err != nil {
-			return errors.Wrapf(err, "could not set behavior tree")
+		if err = setProcessFromTextProto(ctx, conn, content, flagClearTreeID, flagClearNodeIDs); err != nil {
+			return errors.Wrapf(err, "could not set BT")
 		}
 
 		fmt.Println("BT loaded successfully to the executive. To edit behavior tree in the frontend, click on Process -> Load -> From executive.")

@@ -3,14 +3,42 @@
 package process
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/prototext"
 	"intrinsic/tools/inctl/util/orgutil"
 )
+
+func getProcessAsTextProto(ctx context.Context, conn *grpc.ClientConn, clearTreeID bool, clearNodeIDs bool) (string, error) {
+	skills, err := getSkills(ctx, conn)
+	if err != nil {
+		return "", errors.Wrapf(err, "could not list skills")
+	}
+
+	t, err := populateProtoTypes(skills)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to populate proto types")
+	}
+
+	bt, err := getBT(ctx, conn)
+	if err != nil {
+		return "", errors.Wrapf(err, "could not get behavior tree")
+	}
+
+	clearTree(bt, clearTreeID, clearNodeIDs)
+
+	marshaller := prototext.MarshalOptions{
+		Resolver:  t,
+		Indent:    "  ",
+		Multiline: true,
+	}
+	return marshaller.Format(bt), nil
+}
 
 var processGetCmd = &cobra.Command{
 	Use:   "get",
@@ -37,29 +65,10 @@ inctl process get --solution my-solution-id --cluster my-cluster [--output_file 
 		}
 		defer conn.Close()
 
-		skills, err := getSkills(ctx, conn)
+		s, err := getProcessAsTextProto(ctx, conn, flagClearTreeID, flagClearNodeIDs)
 		if err != nil {
-			return errors.Wrapf(err, "could not list skills")
+			return errors.Wrapf(err, "could not get BT as text")
 		}
-
-		t, err := populateProtoTypes(skills)
-		if err != nil {
-			return errors.Wrapf(err, "failed to populate proto types")
-		}
-
-		bt, err := getBT(ctx, conn)
-		if err != nil {
-			return errors.Wrapf(err, "could not get behavior tree")
-		}
-
-		clearTree(bt, flagClearTreeID, flagClearNodeIDs)
-
-		marshaller := prototext.MarshalOptions{
-			Resolver:  t,
-			Indent:    "  ",
-			Multiline: true,
-		}
-		s := marshaller.Format(bt)
 
 		if flagOutputFile != "" {
 			if err := os.WriteFile(flagOutputFile, []byte(s), 0644); err != nil {
