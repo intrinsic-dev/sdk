@@ -156,6 +156,7 @@ func (h *defaultHelper) uploadImageParts(ctx context.Context, image crv1.Image, 
 
 	log.InfoContextf(ctx, "uploading image %s to upstream...", response.Ref)
 	missingRefs := asRefMap(response.MissingRefs...)
+	presentRefs := asRefMap(response.PresentRefs...)
 	maxUpdateSize := response.MaxUpdateSize
 	// if check image returns image name as missing reference, we need
 	// to upload everything.
@@ -164,9 +165,17 @@ func (h *defaultHelper) uploadImageParts(ctx context.Context, image crv1.Image, 
 		return fmt.Errorf("system error: %w", err)
 	}
 
-	if len(missingRefs) > 0 {
+	var fullUpload = false
 
-		fullUpload := len(missingRefs) == 1 && response.MissingRefs[0] == imgDigest.String()
+	responseDigest := valueOrDefault(response.Digest, "")
+	if responseDigest != imgDigest.String() {
+		// the image digest does not match what we expect, we are doing full upload
+		// server was not able to determine state of our image. see b/327799134
+		fullUpload = true
+	}
+	if len(missingRefs) > 0 || fullUpload {
+
+		fullUpload = fullUpload || (len(missingRefs) == 1 && response.MissingRefs[0] == imgDigest.String())
 
 		// we are missing some references, let's start by uploading layers
 		layers, err := image.Layers()
@@ -180,7 +189,9 @@ func (h *defaultHelper) uploadImageParts(ctx context.Context, image crv1.Image, 
 				return err
 			}
 
-			if _, missing := missingRefs[digest.String()]; missing || fullUpload {
+			_, isPresent := presentRefs[digest.String()] // see b/327799134
+			if _, missing := missingRefs[digest.String()]; missing ||
+				(fullUpload && !isPresent) { // if present, we are going to skip
 				mediaType, _ := layer.MediaType()
 				log.InfoContextf(ctx, "uploading layer %s (%s) ", digest, mediaType)
 				delete(missingRefs, digest.String())

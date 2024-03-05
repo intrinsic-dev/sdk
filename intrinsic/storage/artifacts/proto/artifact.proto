@@ -69,8 +69,8 @@ message ImageRequest {
   // Containerd treats this as the primary identifier.
   string name = 1;
 
-  // Target describes the content entry point of the image.
-  ImageManifest manifest = 2;
+  // Manifest describes the content entry point of the image.
+  optional ImageManifest manifest = 2;
 }
 
 message ArtifactDescriptor {

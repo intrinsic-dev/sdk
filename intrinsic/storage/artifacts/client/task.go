@@ -15,6 +15,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/partial"
 	crtypes "github.com/google/go-containerregistry/pkg/v1/types"
 	"go.uber.org/atomic"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	artifactgrpcpb "intrinsic/storage/artifacts/proto/artifact_go_grpc_proto"
 	artifactpb "intrinsic/storage/artifacts/proto/artifact_go_grpc_proto"
 )
@@ -160,13 +162,31 @@ func (t *streamingTask) runWithCtx(ctx context.Context) error {
 			digest := t.descriptor.Digest.String()
 			updateRequest.ExpectedDigest = &digest
 			updateRequest.Content = asArtifactDescriptor(t.descriptor)
-			firstChunk = false
 		}
 
 		err = stream.Send(updateRequest)
 		if err != nil {
+			if firstChunk {
+				// on first chunk we need to check if resource we are writing already
+				// exists. see b/327799134
+				if errStatus, ok := status.FromError(err); ok {
+					if errStatus.Code() == codes.AlreadyExists {
+						// this item already exists. This could be for various reasons,
+						// but we consider this success.
+						updateMonitor(t.monitor, asShortName(t.name), ProgressUpdate{
+							Status:  StatusSuccess,
+							Current: t.descriptor.Size,
+							Total:   t.descriptor.Size,
+							Message: "already exists",
+						})
+						log.InfoContextf(ctx, "[%s] already exists", asShortName(t.name))
+						return nil // our work is done.
+					}
+				}
+			}
 			return fmt.Errorf("[%s] send failed: %w", asShortName(t.name), err)
 		}
+		firstChunk = false
 
 		totalSize += int64(length)
 		if action == artifactpb.UpdateAction_UPDATE_ACTION_COMMIT {

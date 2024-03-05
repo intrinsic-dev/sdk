@@ -7,13 +7,13 @@ import (
 	"fmt"
 )
 
-// StatusState indicates type of status performed related to update operation on server
+// StatusState indicates type of hasStatus performed related to update operation on server
 type StatusState int
 
 const (
 	// StatusUndetermined indicates that nature of action was not known, init state
 	StatusUndetermined StatusState = iota
-	// StatusContinue indicates in flying status update
+	// StatusContinue indicates in flying hasStatus update
 	StatusContinue
 	// StatusSuccess indicates that update operation finished successfully
 	StatusSuccess

@@ -9,6 +9,8 @@ import (
 
 	log "github.com/golang/glog"
 	"go.uber.org/atomic"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	artifactpb "intrinsic/storage/artifacts/proto/artifact_go_grpc_proto"
 )
 
@@ -21,7 +23,7 @@ func newNonStreamingTask(base taskData) (uploadTask, error) {
 }
 
 func (t *nonStreamingTask) runWithCtx(ctx context.Context) error {
-	log.InfoContextf(ctx, "starting upload: %s", asShortName(t.name))
+	log.InfoContextf(ctx, "[%s] starting upload", asShortName(t.name))
 	updateMonitor(t.monitor, asShortName(t.name), ProgressUpdate{
 		Status:  StatusUndetermined,
 		Current: 0,
@@ -29,7 +31,7 @@ func (t *nonStreamingTask) runWithCtx(ctx context.Context) error {
 		Message: "waiting for upload",
 	})
 
-	contentBuffer := make([]byte, t.updateSize)
+	contentBuffer := make([]byte, 100) // initial exploratory chunk, see b/327799134
 	idTracker := atomic.NewInt64(0)
 	firstChunk := true
 	var totalSize int64 = 0
@@ -67,13 +69,33 @@ func (t *nonStreamingTask) runWithCtx(ctx context.Context) error {
 			digest := t.descriptor.Digest.String()
 			updateRequest.ExpectedDigest = &digest
 			updateRequest.Content = asArtifactDescriptor(t.descriptor)
-			firstChunk = false
+			// reset contentBuffer to full size after first chunk
+			contentBuffer = make([]byte, t.updateSize)
 		}
 
 		response, err := t.client.WriteContent(ctx, updateRequest)
 		if err != nil {
+			if firstChunk {
+				// on first chunk we need to check if resource we are writing already
+				// exists. see b/327799134
+				if errStatus, ok := status.FromError(err); ok {
+					if errStatus.Code() == codes.AlreadyExists {
+						// this item already exists. This could be for various reasons,
+						// but we consider this success.
+						updateMonitor(t.monitor, asShortName(t.name), ProgressUpdate{
+							Status:  StatusSuccess,
+							Current: t.descriptor.Size,
+							Total:   t.descriptor.Size,
+							Message: "already exists",
+						})
+						log.InfoContextf(ctx, "[%s] already exists", asShortName(t.name))
+						return nil // our work is done.
+					}
+				}
+			}
 			return fmt.Errorf("[%s] write failed: %w", asShortName(t.name), err)
 		}
+		firstChunk = false
 		doUpdateMonitor(t.monitor, response, t.descriptor)
 
 		updateAction := valueOrDefault(response.Action, action)
