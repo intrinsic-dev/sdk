@@ -392,6 +392,7 @@ def cc_skill(
     _skill_service_config_manifest(
         name = skill_service_config_name,
         manifest = manifest,
+        testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
     )
@@ -400,6 +401,7 @@ def cc_skill(
     _skill_id(
         name = skill_id_name,
         manifest = manifest,
+        testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
     )
@@ -409,6 +411,7 @@ def cc_skill(
         name = skill_service_name,
         deps = deps,
         manifest = manifest,
+        testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
     )
@@ -473,6 +476,7 @@ def py_skill(
     _skill_service_config_manifest(
         name = skill_service_config_name,
         manifest = manifest,
+        testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
     )
@@ -481,6 +485,7 @@ def py_skill(
     _skill_id(
         name = skill_id_name,
         manifest = manifest,
+        testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
     )
@@ -492,6 +497,7 @@ def py_skill(
         manifest = manifest,
         python_version = "PY3",
         exec_compatible_with = ["@io_bazel_rules_docker//platforms:run_in_container"],
+        testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
     )
@@ -509,6 +515,7 @@ def py_skill(
         # workspace directory to ensure the symlinks are valid. See
         # https://github.com/bazelbuild/rules_docker/issues/161 for details.
         create_empty_workspace_dir = True,
+        testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
     )
