@@ -13,18 +13,18 @@ import "intrinsic/logging/proto/log_item.proto";
 message PutLogItemsRequest {
   repeated intrinsic_proto.data_logger.LogItem items = 1;
 
-  // the cluster the logs originated from
+  // The cluster the logs originated from.
   string workcell_name = 2;
 
-  // the tenant ID (prefixes the bucket that logs are uploaded into)
-  string tenant_id = 3;
+  // The organization ID prefixes the bucket that logs are uploaded into.
+  string organization_id = 3;
 }
 
 message PutLogItemsResponse {
-  // The number of log items successfully ingested
+  // The number of log items successfully ingested.
   int32 log_items_ingested = 1;
 
-  // The number of log items dropped
+  // The number of log items dropped.
   int32 log_items_dropped = 2;
 
   // log items in request == (log_items_ingested + log_items_dropped)
@@ -33,11 +33,11 @@ message PutLogItemsResponse {
 message PutBlobRequest {
   Blob blob = 1;
 
-  // the cluster the blob originated from
+  // The cluster the blob originated from.
   string workcell_name = 2;
 
-  // the tenant ID (prefixes the bucket that blobs are uploaded into)
-  string tenant_id = 3;
+  // The organization ID prefixes the bucket that blobs are uploaded into.
+  string organization_id = 3;
 }
 
 // Service to relay and dispatch CRUD operations on behalf of users for items
