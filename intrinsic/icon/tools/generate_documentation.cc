@@ -3,11 +3,8 @@
 #include "intrinsic/icon/tools/generate_documentation.h"
 
 #include <algorithm>
-#include <ios>
-#include <iostream>
 #include <iterator>
 #include <optional>
-#include <ostream>
 #include <string>
 #include <vector>
 
@@ -17,7 +14,6 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "intrinsic/icon/proto/types.pb.h"
-#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
 namespace icon {
@@ -60,6 +56,8 @@ std::string DisplayEntryMarkdown(const Content::Entry& entry) {
       !signature.fixed_parameters_message_type().empty();
   const bool has_streaming_input = (signature.streaming_input_infos_size() > 0);
   const bool has_state_variables = (signature.state_variable_infos_size() > 0);
+  const bool has_realtime_signals =
+      (signature.realtime_signal_infos_size() > 0);
 
   absl::StrAppend(&out, signature.text_description(), "\n");
 
@@ -77,6 +75,9 @@ std::string DisplayEntryMarkdown(const Content::Entry& entry) {
   }
   if (!has_state_variables) {
     does_not_have.emplace_back("state variables");
+  }
+  if (!has_realtime_signals) {
+    does_not_have.emplace_back("real-time signals");
   }
   if (!does_not_have.empty()) {
     absl::StrAppend(
@@ -117,6 +118,15 @@ std::string DisplayEntryMarkdown(const Content::Entry& entry) {
                     signature.streaming_output_info().parameter_name(), "\n");
     absl::StrAppend(&out, signature.streaming_output_info().text_description(),
                     "\n");
+  }
+
+  if (has_realtime_signals) {
+    absl::StrAppend(&out, "\n### Realtime Signals\n\n");
+    for (const intrinsic_proto::icon::ActionSignature::RealtimeSignalInfo&
+             param : signature.realtime_signal_infos()) {
+      absl::StrAppend(&out, "#### ", param.signal_name(), "\n");
+      absl::StrAppend(&out, param.text_description(), "\n");
+    }
   }
 
   if (has_state_variables) {

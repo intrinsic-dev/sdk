@@ -26,7 +26,6 @@ cc_library(
     hdrs = ["generate_documentation.h"],
     deps = [
         "//intrinsic/icon/proto:types_cc_proto",
-        "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
