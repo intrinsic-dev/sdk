@@ -311,6 +311,26 @@ class Session:
             )
           request.reactions.append(reaction_proto)
           added_reaction_proto = True
+        elif isinstance(response, _reactions.TriggerRealtimeSignal):
+          additional_reaction_id = (
+              self._next_reaction_id() if added_reaction_proto else reaction_id
+          )
+          if action_id is None:
+            raise errors.Session.ActionError(
+                'Reaction with TriggerRealtimeSignal must have an associated'
+                ' action_id.'
+            )
+          reaction_proto = types_pb2.Reaction(
+              reaction_instance_id=additional_reaction_id,
+              condition=reaction.condition.proto,
+          )
+          reaction_proto.action_association.action_instance_id = action_id
+          reaction_proto.action_association.stop_associated_action = False
+          reaction_proto.action_association.triggered_signal_name = (
+              response.realtime_signal_name
+          )
+          request.reactions.append(reaction_proto)
+          added_reaction_proto = True
         elif isinstance(response, _reactions.TriggerCallback):
           self._watcher_callbacks[reaction_id].append(response.callback)
         elif isinstance(response, _reactions.Signal):
@@ -547,6 +567,7 @@ class Session:
       action: _actions.Action,
       condition: _reactions.Condition,
       callback: Optional[_reactions.ReactionCallback] = None,
+      realtime_signal: Optional[str] = None,
   ) -> _reactions.SignalFlag:
     """Adds a reaction to the session.
 
@@ -557,6 +578,7 @@ class Session:
       action: Action the reaction is associated with.
       condition: Condition which triggers the reaction.
       callback: Optional function to trigger by this reaction.
+      realtime_signal: Optional realtime signal to trigger with this reaction.
 
     Returns:
       A SignalFlag on the given condition.
@@ -572,6 +594,8 @@ class Session:
     responses = [_reactions.Signal(signal)]
     if callback is not None:
       responses.append(_reactions.TriggerCallback(callback))
+    if realtime_signal is not None:
+      responses.append(_reactions.TriggerRealtimeSignal(realtime_signal))
 
     self.add_reactions(action, [_reactions.Reaction(condition, responses)])
     return signal

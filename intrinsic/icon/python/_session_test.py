@@ -248,7 +248,9 @@ class SessionTest(absltest.TestCase):
             _reactions.Condition.is_less_than('foo_var', 1.0),
             [
                 _reactions.StartActionInRealTime(start_action_id=20),
-                _reactions.StartActionInRealTime(start_action_id=30),
+                _reactions.TriggerRealtimeSignal(
+                    realtime_signal_name='foo_signal'
+                ),
                 _reactions.StartParallelActionInRealTime(start_action_id=40),
                 _reactions.TriggerCallback(callback),
             ],
@@ -273,7 +275,9 @@ class SessionTest(absltest.TestCase):
             types_pb2.Reaction(
                 reaction_instance_id=2,
                 action_association=types_pb2.Reaction.ActionAssociation(
-                    action_instance_id=0, stop_associated_action=True
+                    action_instance_id=0,
+                    stop_associated_action=False,
+                    triggered_signal_name='foo_signal',
                 ),
                 condition=types_pb2.Condition(
                     comparison=types_pb2.Comparison(
@@ -282,7 +286,6 @@ class SessionTest(absltest.TestCase):
                         double_value=1.0,
                     )
                 ),
-                response=(types_pb2.Response(start_action_instance_id=30)),
             ),
             types_pb2.Reaction(
                 reaction_instance_id=3,
@@ -315,7 +318,9 @@ class SessionTest(absltest.TestCase):
             types_pb2.Reaction(
                 reaction_instance_id=5,
                 action_association=types_pb2.Reaction.ActionAssociation(
-                    action_instance_id=10, stop_associated_action=True
+                    action_instance_id=10,
+                    stop_associated_action=False,
+                    triggered_signal_name='foo_signal',
                 ),
                 condition=types_pb2.Condition(
                     comparison=types_pb2.Comparison(
@@ -324,7 +329,6 @@ class SessionTest(absltest.TestCase):
                         double_value=1.0,
                     )
                 ),
-                response=(types_pb2.Response(start_action_instance_id=30)),
             ),
             types_pb2.Reaction(
                 reaction_instance_id=6,
@@ -461,6 +465,7 @@ class SessionTest(absltest.TestCase):
           _actions.Action(3, 'bar', 'foo', None, []),
           _reactions.Condition.is_true('some_condition_var'),
           callback,
+          'foo_signal',
       )
 
       mock_request_stream.write.assert_called_with(
@@ -478,6 +483,7 @@ class SessionTest(absltest.TestCase):
                           ),
                           action_association=types_pb2.Reaction.ActionAssociation(
                               action_instance_id=3,
+                              triggered_signal_name='foo_signal',
                           ),
                       ),
                   ],
