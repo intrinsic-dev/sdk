@@ -152,6 +152,16 @@ class ActionSignatureBuilder {
           optional_feature_interfaces = {},
       intrinsic::SourceLocation loc = intrinsic::SourceLocation::current());
 
+  // Adds a Real-time signal with the given `signal_name` and description.
+  //
+  // This indicates that a Reaction associated to this action may trigger this
+  // signal.
+  //
+  // Returns AlreadyExistsError if `signal_name` is already taken.
+  absl::Status AddRealtimeSignal(
+      absl::string_view signal_name, absl::string_view signal_description,
+      intrinsic::SourceLocation loc = intrinsic::SourceLocation::current());
+
   intrinsic_proto::icon::ActionSignature Finish() const { return signature_; }
 
  private:
@@ -167,6 +177,7 @@ class ActionSignatureBuilder {
   absl::flat_hash_set<std::string> streaming_input_names_;
   absl::flat_hash_set<std::string> state_variable_names_;
   absl::flat_hash_set<std::string> part_slot_names_;
+  absl::flat_hash_set<std::string> realtime_signal_names_;
 };
 
 }  // namespace icon

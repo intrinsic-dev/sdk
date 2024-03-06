@@ -103,6 +103,16 @@ message ActionSignature {
     reserved 1;
   }
 
+  // RealtimeSignalInfo describes the type of an action's realtime signal.
+  // Realtime signals can trigger a change in behavior of a running action.
+  message RealtimeSignalInfo {
+    string signal_name = 1;
+
+    // Text description of this signal, for human consumption. Describe what
+    // your action does if it receives this signal.
+    string text_description = 2;
+  }
+
   // Unique name of the action type, e.g. "xfa.joint_move".
   string action_type_name = 1;
 
@@ -131,6 +141,10 @@ message ActionSignature {
 
   // List of Slot names the Action expects.
   map<string, PartSlotInfo> part_slot_infos = 9;
+
+  // List of realtime signals that the Action expects. Users may trigger each
+  // one via realtime reactions.
+  repeated RealtimeSignalInfo realtime_signal_infos = 10;
 
   reserved 6;
 }

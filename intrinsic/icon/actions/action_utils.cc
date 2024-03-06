@@ -83,5 +83,21 @@ absl::Status ActionSignatureBuilder::AddPartSlot(
   return absl::OkStatus();
 }
 
+absl::Status ActionSignatureBuilder::AddRealtimeSignal(
+    absl::string_view signal_name, absl::string_view signal_description,
+    intrinsic::SourceLocation loc) {
+  if (realtime_signal_names_.contains(signal_name)) {
+    return absl::AlreadyExistsError(
+        absl::StrCat(loc.file_name(), ":", loc.line(),
+                     " Duplicate Realtime Signal name \"", signal_name, "\""));
+  }
+  intrinsic_proto::icon::ActionSignature::RealtimeSignalInfo* signal_info =
+      signature_.add_realtime_signal_infos();
+  signal_info->set_signal_name(signal_name);
+  signal_info->set_text_description(std::string(signal_description));
+  realtime_signal_names_.insert(std::string(signal_name));
+  return absl::OkStatus();
+}
+
 }  // namespace icon
 }  // namespace intrinsic
