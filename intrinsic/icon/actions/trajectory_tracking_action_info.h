@@ -61,6 +61,12 @@ struct TrajectoryTrackingActionInfo {
       "in the cycle that the final setpoint is commanded and in all cycles "
       "before that.";
 
+  static constexpr char kSignalPathAccurateStop[] = "signal_path_accurate_stop";
+  static constexpr char kSignalPathAccurateStopDescription[] =
+      "Requests a path-accurate stop along the given trajectory. The "
+      "path-accurate stop is guaranteed to be time-optimal w.r.t. the given "
+      "system limits.";
+
   using FixedParams = xfa::icon::actions::TrajectoryTrackingActionFixedParams;
 };
 
