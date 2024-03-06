@@ -15,10 +15,7 @@ cc_library(
 cc_library(
     name = "id_types",
     hdrs = ["id_types.h"],
-    deps = [
-        "//intrinsic/util:int_id",
-        "@com_google_absl//absl/strings",
-    ],
+    deps = ["//intrinsic/util:int_id"],
 )
 
 cc_library(

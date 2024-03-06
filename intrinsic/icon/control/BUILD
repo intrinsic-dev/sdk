@@ -47,3 +47,9 @@ cc_library(
         "@com_google_absl//absl/time",
     ],
 )
+
+cc_library(
+    name = "realtime_signal_types",
+    hdrs = ["realtime_signal_types.h"],
+    deps = ["//intrinsic/util:int_id"],
+)

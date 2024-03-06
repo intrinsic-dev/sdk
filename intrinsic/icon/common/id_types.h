@@ -5,7 +5,6 @@
 
 #include <cstdint>
 
-#include "absl/strings/string_view.h"
 #include "intrinsic/util/int_id.h"  // IWYU pragma: export // ID operators
 
 namespace intrinsic {

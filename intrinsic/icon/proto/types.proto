@@ -332,6 +332,11 @@ message Reaction {
     // If false, the currently active, associated action keeps running and the
     // action (if any) specified in `response` will be started in parallel.
     bool stop_associated_action = 2;
+
+    // If present this is the name of the signal (associated with
+    // action_instance_id) which will be triggered and switched to true, if not
+    // already triggered.
+    optional string triggered_signal_name = 3;
   }
 
   // Associates the reaction with an action instance. The reaction can only
@@ -354,6 +359,9 @@ message Reaction {
   // it will only trigger once.
   //
   // If false, the reaction will trigger on every rising edge again.
+  //
+  // This does not effect real-time signal responses. Since signals remain true
+  // after the first rising edge, subsequent triggerings have no effect.
   bool fire_once = 5;
 
   reserved 2;
