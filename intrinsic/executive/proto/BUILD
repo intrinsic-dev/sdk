@@ -157,28 +157,6 @@ cc_proto_library(
     deps = [":run_response_proto"],
 )
 
-# blackboard_service
-proto_library(
-    name = "blackboard_service_proto",
-    srcs = ["blackboard_service.proto"],
-    deps = [
-        "@com_google_protobuf//:any_proto",
-        "@com_google_protobuf//:empty_proto",
-    ],
-)
-
-py_proto_library(
-    name = "blackboard_service_py_pb2",
-    deps = [":blackboard_service_proto"],
-)
-
-py_grpc_library(
-    name = "blackboard_service_py_pb2_grpc",
-    srcs = [":blackboard_service_proto"],
-    grpc_library = requirement("grpcio"),
-    deps = [":blackboard_service_py_pb2"],
-)
-
 # executive_execution_mode
 proto_library(
     name = "executive_execution_mode_proto",
