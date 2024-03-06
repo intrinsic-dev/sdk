@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	descriptorpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"intrinsic/tools/inctl/cmd/root"
@@ -38,13 +39,24 @@ const (
 	keyFilter = "filter"
 )
 
+const (
+	// TextProtoFormat is the textproto output format.
+	TextProtoFormat = "textproto"
+	// BinaryProtoFormat is the binary proto output format.
+	BinaryProtoFormat = "binaryproto"
+)
+
+// AllowedFormats is a list of possible output formats.
+var AllowedFormats = []string{TextProtoFormat, BinaryProtoFormat}
+
 var (
-	flagSolutionName string
-	flagClusterName  string
-	flagInputFile    string
-	flagOutputFile   string
-	flagClearTreeID  bool
-	flagClearNodeIDs bool
+	flagSolutionName  string
+	flagClusterName   string
+	flagInputFile     string
+	flagOutputFile    string
+	flagClearTreeID   bool
+	flagClearNodeIDs  bool
+	flagProcessFormat string
 )
 
 var (
@@ -240,6 +252,9 @@ var processCmd = orgutil.WrapCmd(&cobra.Command{
 }, viperLocal)
 
 func init() {
+	processCmd.PersistentFlags().StringVar(
+		&flagProcessFormat, "process_format", TextProtoFormat,
+		fmt.Sprintf("(optional) Output format. One of: (%s)", strings.Join(AllowedFormats, ", ")))
 	processCmd.Flags().BoolVar(&flagClearTreeID, "clear_tree_id", true, "Clear the tree_id field from the BT proto.")
 	processCmd.Flags().BoolVar(&flagClearNodeIDs, "clear_node_ids", true, "Clear the nodes' id fields from the BT proto.")
 	root.RootCmd.AddCommand(processCmd)

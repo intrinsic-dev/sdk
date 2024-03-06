@@ -11,33 +11,87 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/prototext"
+	"google.golang.org/protobuf/proto"
+	btpb "intrinsic/executive/proto/behavior_tree_go_proto"
 	"intrinsic/tools/inctl/util/orgutil"
 )
 
-func getProcessAsTextProto(ctx context.Context, conn *grpc.ClientConn, clearTreeID bool, clearNodeIDs bool) (string, error) {
-	skills, err := getSkills(ctx, conn)
+type serializer interface {
+	serialize(*btpb.BehaviorTree) ([]byte, error)
+}
+
+type textSerializer struct {
+	ctx  context.Context
+	conn *grpc.ClientConn
+}
+
+func (t *textSerializer) serialize(bt *btpb.BehaviorTree) ([]byte, error) {
+	skills, err := getSkills(t.ctx, t.conn)
 	if err != nil {
-		return "", errors.Wrapf(err, "could not list skills")
+		return nil, errors.Wrapf(err, "could not list skills")
 	}
 
-	t, err := populateProtoTypes(skills)
+	pt, err := populateProtoTypes(skills)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to populate proto types")
+		return nil, errors.Wrapf(err, "failed to populate proto types")
 	}
 
+	marshaller := prototext.MarshalOptions{
+		Resolver:  pt,
+		Indent:    "  ",
+		Multiline: true,
+	}
+	s := marshaller.Format(bt)
+	return []byte(s), nil
+}
+
+func newTextSerializer(ctx context.Context, conn *grpc.ClientConn) *textSerializer {
+	return &textSerializer{ctx: ctx, conn: conn}
+}
+
+type binarySerializer struct {
+}
+
+func (b *binarySerializer) serialize(bt *btpb.BehaviorTree) ([]byte, error) {
+	marshaller := proto.MarshalOptions{}
+	content, err := marshaller.Marshal(bt)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not marshal BT")
+	}
+	return content, nil
+}
+
+func newBinarySerializer() *binarySerializer {
+	return &binarySerializer{}
+}
+
+func serializeBT(ctx context.Context, conn *grpc.ClientConn, bt *btpb.BehaviorTree, format string) ([]byte, error) {
+	var s serializer
+	switch format {
+	case TextProtoFormat:
+		s = newTextSerializer(ctx, conn)
+	case BinaryProtoFormat:
+		s = newBinarySerializer()
+	default:
+		return nil, fmt.Errorf("unknown format %s", format)
+	}
+
+	data, err := s.serialize(bt)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not serialize BT")
+	}
+	return data, nil
+}
+
+func getProcess(ctx context.Context, conn *grpc.ClientConn, format string, clearTreeID bool, clearNodeIDs bool) ([]byte, error) {
 	bt, err := getBT(ctx, conn)
 	if err != nil {
-		return "", errors.Wrapf(err, "could not get behavior tree")
+		return nil, errors.Wrapf(err, "could not get behavior tree")
 	}
 
 	clearTree(bt, clearTreeID, clearNodeIDs)
 
-	marshaller := prototext.MarshalOptions{
-		Resolver:  t,
-		Indent:    "  ",
-		Multiline: true,
-	}
-	return marshaller.Format(bt), nil
+	return serializeBT(ctx, conn, bt, format)
 }
 
 var processGetCmd = &cobra.Command{
@@ -46,7 +100,7 @@ var processGetCmd = &cobra.Command{
 	Long: `Get the active process (behavior tree) of a currently deployed solution.
 
 Example:
-inctl process get --solution my-solution-id --cluster my-cluster [--output_file /tmp/process.textproto]
+inctl process get --solution my-solution-id --cluster my-cluster [--output_file /tmp/process.textproto] [--process_format textproto|binaryproto]
 
 	`,
 	Args: cobra.ExactArgs(0),
@@ -65,19 +119,19 @@ inctl process get --solution my-solution-id --cluster my-cluster [--output_file 
 		}
 		defer conn.Close()
 
-		s, err := getProcessAsTextProto(ctx, conn, flagClearTreeID, flagClearNodeIDs)
+		content, err := getProcess(ctx, conn, flagProcessFormat, flagClearTreeID, flagClearNodeIDs)
 		if err != nil {
-			return errors.Wrapf(err, "could not get BT as text")
+			return errors.Wrapf(err, "could not get BT")
 		}
 
 		if flagOutputFile != "" {
-			if err := os.WriteFile(flagOutputFile, []byte(s), 0644); err != nil {
+			if err := os.WriteFile(flagOutputFile, content, 0644); err != nil {
 				return errors.Wrapf(err, "could not write to file %s", flagOutputFile)
 			}
 			return nil
 		}
 
-		fmt.Println(s)
+		fmt.Println(string(content))
 
 		return nil
 	},

@@ -11,33 +11,95 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/prototext"
+	"google.golang.org/protobuf/proto"
 	btpb "intrinsic/executive/proto/behavior_tree_go_proto"
 	"intrinsic/tools/inctl/util/orgutil"
 )
 
-func setProcessFromTextProto(ctx context.Context, conn *grpc.ClientConn, content []byte, clearTreeID bool, clearNodeIDs bool) error {
-	skills, err := getSkills(ctx, conn)
+type deserializer interface {
+	deserialize([]byte) (*btpb.BehaviorTree, error)
+}
+
+type textDeserializer struct {
+	ctx  context.Context
+	conn *grpc.ClientConn
+}
+
+func (t *textDeserializer) deserialize(content []byte) (*btpb.BehaviorTree, error) {
+	skills, err := getSkills(t.ctx, t.conn)
 	if err != nil {
-		return errors.Wrapf(err, "could not list skills")
+		return nil, errors.Wrapf(err, "could not list skills")
 	}
 
-	t, err := populateProtoTypes(skills)
+	pt, err := populateProtoTypes(skills)
 	if err != nil {
-		return errors.Wrapf(err, "failed to populate proto types")
+		return nil, errors.Wrapf(err, "failed to populate proto types")
 	}
 
 	unmarshaller := prototext.UnmarshalOptions{
-		Resolver:       t,
+		Resolver:       pt,
 		AllowPartial:   true,
 		DiscardUnknown: true,
 	}
 
 	bt := &btpb.BehaviorTree{}
 	if err := unmarshaller.Unmarshal(content, bt); err != nil {
-		return errors.Wrapf(err, "could not parse input file")
+		return nil, errors.Wrapf(err, "could not parse input file")
+	}
+	return bt, nil
+}
+
+func newTextDeserializer(ctx context.Context, conn *grpc.ClientConn) *textDeserializer {
+	return &textDeserializer{ctx: ctx, conn: conn}
+}
+
+type binaryDeserializer struct {
+}
+
+func (b *binarySerializer) deserialize(content []byte) (*btpb.BehaviorTree, error) {
+	bt := &btpb.BehaviorTree{}
+	if err := proto.Unmarshal(content, bt); err != nil {
+		return nil, errors.Wrapf(err, "could not parse input file")
+	}
+	return bt, nil
+}
+
+func newBinaryDeserializer() *binarySerializer {
+	return &binarySerializer{}
+}
+
+type setProcessParams struct {
+	format       string
+	content      []byte
+	clearTreeID  bool
+	clearNodeIDs bool
+}
+
+func deserializeBT(ctx context.Context, conn *grpc.ClientConn, format string, content []byte) (*btpb.BehaviorTree, error) {
+	var d deserializer
+	switch format {
+	case TextProtoFormat:
+		d = newTextDeserializer(ctx, conn)
+	case BinaryProtoFormat:
+		d = newBinaryDeserializer()
+	default:
+		return nil, fmt.Errorf("unknown format %s", format)
 	}
 
-	clearTree(bt, clearTreeID, clearNodeIDs)
+	bt, err := d.deserialize(content)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not serialize BT")
+	}
+	return bt, nil
+}
+
+func setProcess(ctx context.Context, conn *grpc.ClientConn, params *setProcessParams) error {
+	bt, err := deserializeBT(ctx, conn, params.format, params.content)
+	if err != nil {
+		return errors.Wrapf(err, "could not deserialize BT")
+	}
+
+	clearTree(bt, params.clearTreeID, params.clearNodeIDs)
 
 	if err := setBT(ctx, conn, bt); err != nil {
 		return errors.Wrapf(err, "could not set behavior tree")
@@ -52,7 +114,7 @@ var processSetCmd = &cobra.Command{
 	Long: `Set the active process (behavior tree) of a currently deployed solution.
 
 Example:
-inctl process set --solution my-solution --cluster my-cluster --input_file /tmp/my-process.textproto
+inctl process set --solution my-solution --cluster my-cluster --input_file /tmp/my-process.textproto [--process_format textproto|binaryproto]
 `,
 	Args: cobra.ExactArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -79,7 +141,12 @@ inctl process set --solution my-solution --cluster my-cluster --input_file /tmp/
 			return errors.Wrapf(err, "could not read input file")
 		}
 
-		if err = setProcessFromTextProto(ctx, conn, content, flagClearTreeID, flagClearNodeIDs); err != nil {
+		if err = setProcess(ctx, conn, &setProcessParams{
+			content:      content,
+			format:       flagProcessFormat,
+			clearTreeID:  flagClearTreeID,
+			clearNodeIDs: flagClearNodeIDs,
+		}); err != nil {
 			return errors.Wrapf(err, "could not set BT")
 		}
 
