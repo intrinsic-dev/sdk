@@ -160,13 +160,13 @@ class SessionTest(absltest.TestCase):
 
     request = types_pb2.ActionsAndReactions()
     callback = mock.Mock()
-    flag = _reactions.SignalFlag()
+    flag = _reactions.EventFlag()
     reactions = [
         _reactions.Reaction(
             _reactions.Condition.is_true('some_condition_var'),
             [
                 _reactions.StartActionInRealTime(start_action_id=20),
-                _reactions.Signal(flag),
+                _reactions.Event(flag),
             ],
         ),
         _reactions.Reaction(
@@ -392,7 +392,7 @@ class SessionTest(absltest.TestCase):
     with mock.patch.object(
         session, '_request_stream', autospec=True
     ) as mock_request_stream:
-      flag = _reactions.SignalFlag()
+      flag = _reactions.EventFlag()
 
       session.add_reactions(
           _actions.Action(3, 'bar', 'foo', None, []),
@@ -401,7 +401,7 @@ class SessionTest(absltest.TestCase):
                   _reactions.Condition.is_true('some_condition_var'),
                   [
                       _reactions.TriggerCallback(callback),
-                      _reactions.Signal(flag),
+                      _reactions.Event(flag),
                   ],
               ),
               _reactions.Reaction(
@@ -556,13 +556,13 @@ class SessionTest(absltest.TestCase):
     session = self._prepare_session_with_response(grpc.StatusCode.OK)
 
     callback = mock.Mock()
-    flag = _reactions.SignalFlag()
+    flag = _reactions.EventFlag()
     reactions = [
         _reactions.Reaction(
             _reactions.Condition.is_true('some_condition_var'),
             [
                 _reactions.StartActionInRealTime(start_action_id=20),
-                _reactions.Signal(flag),
+                _reactions.Event(flag),
             ],
         ),
         _reactions.Reaction(
@@ -1054,11 +1054,11 @@ class SessionTest(absltest.TestCase):
     # Add signals to be flagged for 3 but not for 1 and 2, and a dummy 4.
     session._watcher_signal_flags = collections.defaultdict(list)
     session._watcher_signal_flags[3] = [
-        mock.create_autospec(_reactions.SignalFlag),
-        mock.create_autospec(_reactions.SignalFlag),
+        mock.create_autospec(_reactions.EventFlag),
+        mock.create_autospec(_reactions.EventFlag),
     ]
     session._watcher_signal_flags[4] = [
-        mock.create_autospec(_reactions.SignalFlag)
+        mock.create_autospec(_reactions.EventFlag)
     ]
 
     session._watch_reaction_responses()

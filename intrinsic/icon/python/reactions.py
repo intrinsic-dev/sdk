@@ -475,7 +475,7 @@ class Condition:
     )
 
 
-class SignalFlag:
+class EventFlag:
   """Provides the signalling mechanism for waiting on Reactions."""
 
   def __init__(self):
@@ -591,14 +591,14 @@ class TriggerRealtimeSignal(_Response):
     self.realtime_signal_name = realtime_signal_name
 
 
-class Signal(_Response):
-  """Signals a flag in response to a real-time condition.
+class Event(_Response):
+  """Signals an event flag in response to a real-time condition.
 
   Attributes:
     flag: The flag to be signalled in response.
   """
 
-  def __init__(self, flag: SignalFlag):
+  def __init__(self, flag: EventFlag):
     """Constructs a Response that signals the given flag.
 
     Args:

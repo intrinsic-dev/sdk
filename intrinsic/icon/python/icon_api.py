@@ -34,8 +34,8 @@ Reaction = reactions.Reaction
 StartActionInRealTime = reactions.StartActionInRealTime
 StartParallelActionInRealTime = reactions.StartParallelActionInRealTime
 TriggerCallback = reactions.TriggerCallback
-Signal = reactions.Signal
-SignalFlag = reactions.SignalFlag
+Event = reactions.Event
+EventFlag = reactions.EventFlag
 OperationalState = types_pb2.OperationalState
 StateVariablePath = state_variable_path.StateVariablePath
 # For generating documentation, Session needs to be publicly visible, but we

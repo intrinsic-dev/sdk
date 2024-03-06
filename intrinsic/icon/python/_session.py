@@ -333,7 +333,7 @@ class Session:
           added_reaction_proto = True
         elif isinstance(response, _reactions.TriggerCallback):
           self._watcher_callbacks[reaction_id].append(response.callback)
-        elif isinstance(response, _reactions.Signal):
+        elif isinstance(response, _reactions.Event):
           self._watcher_signal_flags[reaction_id].append(response.flag)
         else:
           raise errors.Session.ActionError(f'Unsupported response: {response}')
@@ -403,7 +403,7 @@ class Session:
   def add_action_sequence(
       self,
       actions: Sequence[ActionOrActionWithCondition],
-  ) -> _reactions.SignalFlag:
+  ) -> _reactions.EventFlag:
     """Adds a sequence of Actions to the session.
 
     Adds the actions to the session and connects them with transitions. The
@@ -428,7 +428,7 @@ class Session:
         transition to the next action.
 
     Returns:
-      A SignalFlag on the last condition in the sequence.
+      An EventFlag on the last condition in the sequence.
     """
     request = service_pb2.OpenSessionRequest()
 
@@ -463,7 +463,7 @@ class Session:
     last_action, last_condition = _get_action_and_condition(actions[-1])
     request.add_actions_and_reactions.action_instances.append(last_action.proto)
 
-    done_flag = _reactions.SignalFlag()
+    done_flag = _reactions.EventFlag()
 
     self._add_reactions_to_proto(
         last_action.id,
@@ -472,7 +472,7 @@ class Session:
             _reactions.Reaction(
                 last_condition,
                 responses=[
-                    _reactions.Signal(done_flag),
+                    _reactions.Event(done_flag),
                 ],
             )
         ],
@@ -532,7 +532,7 @@ class Session:
       to_action: _actions.Action,
       condition: Optional[_reactions.Condition] = None,
       callback: Optional[_reactions.ReactionCallback] = None,
-  ) -> _reactions.SignalFlag:
+  ) -> _reactions.EventFlag:
     """Adds a transition from `from_action` to `to_action`.
 
     Adds a transition from one action to another action. This is a simple
@@ -545,15 +545,15 @@ class Session:
       callback: An optional callback to trigger by this transition.
 
     Returns:
-      A SignalFlag triggered by this transition.
+      A EventFlag triggered by this transition.
     """
 
     if condition is None:
       condition = _reactions.Condition.is_done()
 
-    signal = _reactions.SignalFlag()
+    signal = _reactions.EventFlag()
     responses = [
-        _reactions.Signal(signal),
+        _reactions.Event(signal),
         _reactions.StartActionInRealTime(to_action.id),
     ]
     if callback is not None:
@@ -568,10 +568,10 @@ class Session:
       condition: _reactions.Condition,
       callback: Optional[_reactions.ReactionCallback] = None,
       realtime_signal: Optional[str] = None,
-  ) -> _reactions.SignalFlag:
+  ) -> _reactions.EventFlag:
     """Adds a reaction to the session.
 
-    This adds a SignalFlag and optionally a callback reaction to the action,
+    This adds a EventFlag and optionally a callback reaction to the action,
     triggered on the given condition.
 
     Args:
@@ -581,7 +581,7 @@ class Session:
       realtime_signal: Optional realtime signal to trigger with this reaction.
 
     Returns:
-      A SignalFlag on the given condition.
+      A EventFlag on the given condition.
 
     Raises:
       errors.Session.ActionError: A non-session ending failure occurred, or
@@ -590,8 +590,8 @@ class Session:
         server returned an aborted error then the session will be ended
         automatically.
     """
-    signal = _reactions.SignalFlag()
-    responses = [_reactions.Signal(signal)]
+    signal = _reactions.EventFlag()
+    responses = [_reactions.Event(signal)]
     if callback is not None:
       responses.append(_reactions.TriggerCallback(callback))
     if realtime_signal is not None:
@@ -682,13 +682,13 @@ class Session:
   def start_action_and_wait(
       self,
       action: _actions.Action,
-      wait_for: Optional[_reactions.SignalFlag] = None,
+      wait_for: Optional[_reactions.EventFlag] = None,
       timeout_s: Optional[float] = None,
   ) -> bool:
     """Starts an action and waits for the finish signal.
 
-    The wait_for SignalFlag defines the waiting condition. If the wait_for
-    Signal is not defined, the `is_done` condition on the started action is
+    The wait_for EventFlag defines the waiting condition. If the wait_for
+    Event is not defined, the `is_done` condition on the started action is
     used. This call stops all running actions before starting the new action.
 
     You must call `add_action` before calling `start_action_and_wait`.
