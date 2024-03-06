@@ -15,8 +15,8 @@ proto_library(
     deps = [
         ":motion_planner_config_proto",
         ":motion_specification_proto",
+        ":robot_specification_proto",
         "//intrinsic/geometry/proto:shape_data_proto",
-        "//intrinsic/icon/proto:cart_space_proto",
         "//intrinsic/icon/proto:joint_space_proto",
         "//intrinsic/kinematics/types:joint_limits_proto",
         "//intrinsic/logging/proto:context_proto",
@@ -103,6 +103,26 @@ proto_library(
     name = "motion_planner_config_proto",
     srcs = ["motion_planner_config.proto"],
     deps = ["@com_google_protobuf//:duration_proto"],
+)
+
+proto_library(
+    name = "robot_specification_proto",
+    srcs = ["robot_specification.proto"],
+    deps = [
+        "//intrinsic/icon/proto:cart_space_proto",
+        "//intrinsic/icon/proto:joint_space_proto",
+        "//intrinsic/world/proto:object_world_refs_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "robot_specification_cc_proto",
+    deps = [":robot_specification_proto"],
+)
+
+py_proto_library(
+    name = "robot_specification_py_pb2",
+    deps = [":robot_specification_proto"],
 )
 
 cc_proto_library(

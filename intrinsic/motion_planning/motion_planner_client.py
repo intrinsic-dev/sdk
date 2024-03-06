@@ -22,6 +22,7 @@ from intrinsic.motion_planning.proto import motion_planner_service_pb2
 from intrinsic.motion_planning.proto import motion_planner_service_pb2_grpc
 from intrinsic.motion_planning.proto import motion_specification_pb2
 from intrinsic.motion_planning.proto import motion_target_pb2
+from intrinsic.motion_planning.proto import robot_specification_pb2
 from intrinsic.world.proto import collision_settings_pb2
 from intrinsic.world.proto import geometric_constraints_pb2
 from intrinsic.world.python import object_world_ids
@@ -97,7 +98,7 @@ class MotionPlannerClient:
 
   def plan_trajectory(
       self,
-      robot_specification: motion_planner_service_pb2.RobotSpecification,
+      robot_specification: robot_specification_pb2.RobotSpecification,
       motion_specification: motion_specification_pb2.MotionSpecification,
       options: MotionPlanningOptions = MotionPlanningOptions(),
       caller_id: str = "Anonymous",
@@ -246,7 +247,7 @@ class MotionPlannerClient:
 
     request = motion_planner_service_pb2.CheckCollisionsRequest(
         world_id=self._world_id,
-        robot_reference=motion_planner_service_pb2.RobotReference(),
+        robot_reference=robot_specification_pb2.RobotReference(),
         waypoint=waypoints,
         collision_settings=options.collision_settings,
     )

@@ -5,40 +5,16 @@ syntax = "proto3";
 package intrinsic_proto.motion_planning;
 
 import "intrinsic/geometry/proto/shape_data.proto";
-import "intrinsic/icon/proto/cart_space.proto";
 import "intrinsic/icon/proto/joint_space.proto";
 import "intrinsic/kinematics/types/joint_limits.proto";
 import "intrinsic/logging/proto/context.proto";
 import "intrinsic/math/proto/pose.proto";
 import "intrinsic/motion_planning/proto/motion_planner_config.proto";
 import "intrinsic/motion_planning/proto/motion_specification.proto";
+import "intrinsic/motion_planning/proto/robot_specification.proto";
 import "intrinsic/world/proto/collision_settings.proto";
 import "intrinsic/world/proto/geometric_constraints.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
-
-// Different ways to specify a robot.
-message RobotReference {
-  oneof robot_reference {
-    // Must have ObjectType==ROBOT_PART.
-    intrinsic_proto.world.ObjectReference object_id = 1;
-  }
-}
-
-// Robot specifications definitions
-message RobotSpecification {
-  // Specification of what robot is being controlled.
-  RobotReference robot_reference = 1;
-
-  // Starting joint configuration of the robot. If not set, the
-  // current position in the world will be used.
-  optional intrinsic_proto.icon.JointVec start_configuration = 2;
-
-  // Default cartesian robot limits to apply to the motion.
-  intrinsic_proto.icon.CartesianLimits default_cartesian_limits = 3;
-
-  reserved 4;
-  reserved "l1_joint_limits";
-}
 
 message MotionPlanningRequest {
   string world_id = 1;
