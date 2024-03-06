@@ -194,6 +194,12 @@ ReactionDescriptor& ReactionDescriptor::FireOnce(bool enable) {
   return *this;
 }
 
+ReactionDescriptor& ReactionDescriptor::WithRealtimeSignalOnCondition(
+    absl::string_view realtime_signal_name) {
+  realtime_signal_name_ = realtime_signal_name;
+  return *this;
+}
+
 // static
 intrinsic_proto::icon::Reaction ReactionDescriptor::ToProto(
     const ReactionDescriptor& reaction_descriptor, ReactionId reaction_id,
@@ -208,6 +214,10 @@ intrinsic_proto::icon::Reaction ReactionDescriptor::ToProto(
     action_association.set_stop_associated_action(
         reaction_descriptor.stop_associated_action_);
     *reaction.mutable_action_association() = action_association;
+    if (reaction_descriptor.realtime_signal_name_.has_value()) {
+      reaction.mutable_action_association()->set_triggered_signal_name(
+          reaction_descriptor.realtime_signal_name_.value());
+    }
   }
   reaction.set_reaction_instance_id(reaction_id.value());
   if (reaction_descriptor.action_id_.has_value()) {

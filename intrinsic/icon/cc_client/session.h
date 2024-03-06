@@ -113,6 +113,16 @@ class ReactionDescriptor {
   // FireOnce(false) is the default behavior if FireOnce() is not called.
   ReactionDescriptor& FireOnce(bool enable = true);
 
+  // Triggers `signal_name` the first time `condition` is met. The signal
+  // remains true thereafter. `signal_name` must be a real-time signal declared
+  // by the signature of the `action_id_` which this reaction is attached to. If
+  // it is not, ICON will return an error when the Reaction is added.
+  //
+  // Repeated calls will override the previously set real-time signal. Each
+  // reaction may only trigger a single signal.
+  ReactionDescriptor& WithRealtimeSignalOnCondition(
+      absl::string_view realtime_signal_name);
+
   // Creates a reaction from `reaction_descriptor`, applied to the action
   // identified by `action_id` or as a free-standing reaction if `action_id` is
   // not set.
@@ -128,6 +138,7 @@ class ReactionDescriptor {
   std::optional<std::function<void()>> on_condition_;
   std::optional<std::pair<ReactionHandle, intrinsic::SourceLocation>>
       reaction_handle_;
+  std::optional<std::string> realtime_signal_name_;
   bool fire_once_ = false;
   bool stop_associated_action_ = false;
 };
