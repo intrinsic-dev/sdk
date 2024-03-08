@@ -9,6 +9,7 @@ go_library(
     srcs = ["test_io.go"],
     visibility = ["//intrinsic:__subpackages__"],
     deps = [
+        "@io_bazel_rules_go//go/tools/bazel:go_default_library",
         "@org_golang_google_protobuf//encoding/prototext:go_default_library",
         "@org_golang_google_protobuf//proto",
     ],

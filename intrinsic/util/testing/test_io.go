@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/bazelbuild/rules_go/go/tools/bazel"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 )
@@ -33,6 +34,7 @@ func MustCreateFile(t *testing.T, content []byte, path string) {
 // MustCreateBinaryProto creates a serialized binary proto file at the given
 // path.
 func MustCreateBinaryProto(t *testing.T, p proto.Message, path string) {
+	t.Helper()
 	b, err := proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("Failed to marshal proto: %v", err)
@@ -45,9 +47,22 @@ func MustCreateBinaryProto(t *testing.T, p proto.Message, path string) {
 // This should only be used to create artifacts that are immediately parsed by
 // tests.
 func MustCreateTextProto(t *testing.T, p proto.Message, path string) {
+	t.Helper()
 	b, err := prototext.Marshal(p)
 	if err != nil {
 		t.Fatalf("Failed to marshal proto: %v", err)
 	}
 	MustCreateFile(t, b, path)
+}
+
+// MustCreateRunfilePath returns an expected path within the expected runfiles
+// directory.
+func MustCreateRunfilePath(t *testing.T, path string) string {
+	t.Helper()
+	root, err := bazel.RunfilesPath()
+	if err != nil {
+		t.Fatalf("bazel.RunfilesPath() failed: %v", err)
+	}
+
+	return filepath.Join(root, path)
 }
