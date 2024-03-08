@@ -1,0 +1,28 @@
+# Copyright 2023 Intrinsic Innovation LLC
+
+package(default_visibility = ["//visibility:public"])
+
+copy_and_rename = "\n".join([
+    "cp $< $@",
+    # Replace XLS with INTRINSIC.
+    "sed -i 's/XLS_COMMON_/INTRINSIC_THIRD_PARTY_INTOPS_/g' $@",
+    "sed -i 's/xls/intrinsic/g' $@",
+    "sed -i 's/XLS_DEFINE/DEFINE/g' $@",
+])
+
+genrule(
+    name = "strong_int_h",
+    srcs = ["@com_google_xls_strong_int_h//file"],
+    outs = ["strong_int.h"],
+    cmd = copy_and_rename,
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "strong_int",
+    hdrs = [":strong_int.h"],
+    deps = [
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/meta:type_traits",
+    ],
+)

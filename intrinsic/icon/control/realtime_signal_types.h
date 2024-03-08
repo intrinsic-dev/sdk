@@ -5,12 +5,12 @@
 
 #include <cstdint>
 
-#include "intrinsic/util/int_id.h"  // IWYU pragma: export // ID operators
+#include "intrinsic/third_party/intops/strong_int.h"
 
 namespace intrinsic::icon {
 
 // Identifier for a Real-time Signal.
-INTRINSIC_DEFINE_INT_ID_TYPE(RealtimeSignalId, int64_t);
+DEFINE_STRONG_INT_TYPE(RealtimeSignalId, int64_t);
 
 // Hold both the current and previous signal value, to allow easy querying of
 // rising edges.

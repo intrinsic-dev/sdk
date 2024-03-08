@@ -5,19 +5,19 @@
 
 #include <cstdint>
 
-#include "intrinsic/util/int_id.h"  // IWYU pragma: export // ID operators
+#include "intrinsic/third_party/intops/strong_int.h"
 
 namespace intrinsic {
 namespace icon {
 
 // Identifier for an Action Instance.
-INTRINSIC_DEFINE_INT_ID_TYPE(ActionInstanceId, int64_t);
+DEFINE_STRONG_INT_TYPE(ActionInstanceId, int64_t);
 
 // Identifier for a Reaction.
-INTRINSIC_DEFINE_INT_ID_TYPE(ReactionId, int64_t);
+DEFINE_STRONG_INT_TYPE(ReactionId, int64_t);
 
 // Identifier for a Session.
-INTRINSIC_DEFINE_INT_ID_TYPE(SessionId, int64_t);
+DEFINE_STRONG_INT_TYPE(SessionId, int64_t);
 
 }  // namespace icon
 }  // namespace intrinsic

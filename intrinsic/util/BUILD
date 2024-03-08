@@ -24,7 +24,7 @@ cc_test(
 cc_library(
     name = "atomic_sequence_num",
     hdrs = ["atomic_sequence_num.h"],
-    deps = [":int_id"],
+    deps = ["//intrinsic/third_party/intops:strong_int"],
 )
 
 cc_library(
@@ -78,15 +78,6 @@ cc_test(
         "//intrinsic/math:pose3",
         "//intrinsic/util/testing:gtest_wrapper",
         "@com_google_protobuf//:protobuf",
-    ],
-)
-
-cc_library(
-    name = "int_id",
-    hdrs = ["int_id.h"],
-    deps = [
-        "@com_google_absl//absl/meta:type_traits",
-        "@com_google_absl//absl/strings",
     ],
 )
 

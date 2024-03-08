@@ -9,7 +9,7 @@
 
 #include "absl/status/statusor.h"
 #include "google/protobuf/any.pb.h"
-#include "intrinsic/util/int_id.h"
+#include "intrinsic/third_party/intops/strong_int.h"
 
 namespace intrinsic::icon {
 
@@ -17,7 +17,7 @@ namespace intrinsic::icon {
 // factory saves IDs for any inputs. The Action instance can then use those IDs
 // to access streaming inputs via the StreamingIoRealtimeAccess object that we
 // pass to its Sense() method.
-INTRINSIC_DEFINE_INT_ID_TYPE(StreamingInputId, int64_t);
+DEFINE_STRONG_INT_TYPE(StreamingInputId, int64_t);
 
 // These definitions are used for storing streaming input parsers / output
 // converters. Users do not interact with these definitions directly, but rather

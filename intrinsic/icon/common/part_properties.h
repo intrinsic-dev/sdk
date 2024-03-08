@@ -4,23 +4,20 @@
 #define INTRINSIC_ICON_COMMON_PART_PROPERTIES_H_
 
 #include <cstddef>
-#include <memory>
-#include <optional>
 #include <string>
 #include <variant>
-#include <vector>
 
 #include "absl/container/flat_hash_map.h"
-#include "absl/container/flat_hash_set.h"
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 #include "intrinsic/icon/proto/service.pb.h"
-#include "intrinsic/util/int_id.h"
+#include "intrinsic/third_party/intops/strong_int.h"
 
 namespace intrinsic::icon {
 
 // Identifier for a Part Property.
-INTRINSIC_DEFINE_INT_ID_TYPE(PartPropertyId, size_t);
+DEFINE_STRONG_INT_TYPE(PartPropertyId, size_t);
 
 // A PartPropertyValue is the in-memory representation of a part property. It is
 // stored in the AsyncBuffers that move information about part properties

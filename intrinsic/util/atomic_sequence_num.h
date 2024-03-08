@@ -11,7 +11,7 @@
 //
 // This can also be used with user-defined strong integer types:
 //
-//     INTRINSIC_DEFINE_INT_ID_TYPE(MyIntId64, int64);
+//     DEFINE_STRONG_INT_TYPE(MyIntId64, int64);
 //     SequenceNumber<MyIntId64> sequence;
 //      ...
 //     MyIntId64 y = sequence.GetNext();     // get the next sequence number
@@ -19,8 +19,9 @@
 // If your code already uses a Mutex, you may find it faster to protect a
 // simple counter with that Mutex.
 #include <atomic>
+#include <type_traits>
 
-#include "intrinsic/util/int_id.h"
+#include "intrinsic/third_party/intops/strong_int.h"
 
 namespace intrinsic {
 
@@ -28,8 +29,8 @@ template <typename T, class IsIntIdCheck = void>
 class SequenceNumber;
 
 template <typename ValueT>
-class SequenceNumber<ValueT,
-                     typename std::enable_if<!IsIntId<ValueT>::value>::type> {
+class SequenceNumber<
+    ValueT, typename std::enable_if<!IsStrongInt<ValueT>::value>::type> {
  public:
   constexpr SequenceNumber() : word_(0) {}
 
@@ -60,8 +61,8 @@ class SequenceNumber<ValueT,
 
 // Specialization for strong ints.
 template <typename ValueT>
-class SequenceNumber<ValueT,
-                     typename std::enable_if<IsIntId<ValueT>::value>::type> {
+class SequenceNumber<
+    ValueT, typename std::enable_if<IsStrongInt<ValueT>::value>::type> {
  public:
   constexpr SequenceNumber() : word_(0) {}
 

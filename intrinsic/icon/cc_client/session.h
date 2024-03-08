@@ -36,16 +36,16 @@
 #include "intrinsic/icon/release/source_location.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/platform/common/buffers/realtime_write_queue.h"
+#include "intrinsic/third_party/intops/strong_int.h"
 #include "intrinsic/util/atomic_sequence_num.h"
 #include "intrinsic/util/grpc/channel_interface.h"
-#include "intrinsic/util/int_id.h"  // IWYU pragma: export
 #include "intrinsic/util/thread/thread.h"
 
 namespace intrinsic {
 namespace icon {
 
 // Client-side identifier for a Reaction.
-INTRINSIC_DEFINE_INT_ID_TYPE(ReactionHandle, int64_t);
+DEFINE_STRONG_INT_TYPE(ReactionHandle, int64_t);
 
 // Describes a reaction consisting of a condition that is evaluated on the
 // robot, and possible events that are triggered when the condition is true.

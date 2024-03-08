@@ -92,6 +92,14 @@ def non_module_deps():
         sha256 = "d56e8c15b55240c92143ee3ed717956c67961a24f97711ca410030de92633288",
     )
 
+    XLS_COMMIT = "507b33b5bdd696adb7933a6617b65c70e46d4703"  # 2024-03-06
+    http_file(
+        name = "com_google_xls_strong_int_h",
+        downloaded_file_path = "strong_int.h",
+        urls = ["https://raw.githubusercontent.com/google/xls/%s/xls/common/strong_int.h" % XLS_COMMIT],
+        sha256 = "4daad402bc0913e05b83d0bded9dd699738935e6d59d1424c99c944d6e0c2897",
+    )
+
 def _non_module_deps_impl(ctx):  # @unused
     non_module_deps()
 

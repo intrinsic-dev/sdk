@@ -2,12 +2,11 @@
 
 #include "intrinsic/icon/common/part_properties.h"
 
-#include <optional>
-#include <string>
 #include <variant>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "intrinsic/icon/proto/service.pb.h"
 
 namespace intrinsic::icon {

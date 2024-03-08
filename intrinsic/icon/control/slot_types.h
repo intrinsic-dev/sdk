@@ -6,11 +6,11 @@
 #include <cstdint>
 
 #include "intrinsic/icon/proto/types.pb.h"
-#include "intrinsic/util/int_id.h"
+#include "intrinsic/third_party/intops/strong_int.h"
 
 namespace intrinsic::icon {
 
-INTRINSIC_DEFINE_INT_ID_TYPE(RealtimeSlotId, int64_t);
+DEFINE_STRONG_INT_TYPE(RealtimeSlotId, int64_t);
 
 struct SlotInfo {
   // Contains things like the supported FeatureInterfaceTypes, and (depending on
