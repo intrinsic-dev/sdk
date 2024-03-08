@@ -35,7 +35,6 @@ cc_library(
         "//intrinsic/icon/utils:log",
         "//intrinsic/icon/utils:realtime_status",
         "//intrinsic/icon/utils:realtime_status_macro",
-        "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/time",
     ],
 )

@@ -13,8 +13,7 @@
 #include "absl/strings/string_view.h"
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/descriptor.pb.h"
-#include "google/protobuf/descriptor_database.h"
-#include "google/protobuf/repeated_field.h"
+#include "google/protobuf/map.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
