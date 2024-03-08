@@ -15,3 +15,8 @@ type Info struct {
 	RollbackOS   string `json:"rollbackOS,omitempty"`
 	RollbackBase string `json:"rollbackBase,omitempty"`
 }
+
+// RollbackAvailable reports whether a rollback is available according to this info object
+func (i *Info) RollbackAvailable() bool {
+	return i.RollbackOS != "" && i.RollbackBase != ""
+}
