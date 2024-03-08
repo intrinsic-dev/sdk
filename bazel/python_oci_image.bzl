@@ -3,13 +3,13 @@
 """Helpers for dealing with Python docker images."""
 
 load("@aspect_bazel_lib//lib:tar.bzl", "mtree_spec", "tar")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("//bazel:container.bzl", "container_image")
 
 def python_oci_image(
         name,
         binary,
-        extra_tars = [],
+        extra_tars = None,
         symlinks = None,
         **kwargs):
     """Wrapper for creating a oci_image from a py_binary target.
@@ -103,21 +103,13 @@ def python_oci_image(
         symlinks = symlinks,
     )
 
-    oci_image(
+    container_image(
         name = name,
-        tars = [
+        layers = [
             ":" + name + "_interpreter_layer",
             ":" + name + "_packages_layer",
             ":" + name + "_app_layer",
             ":" + name + "_symlink_layer",
-        ] + extra_tars,
-        visibility = ["//visibility:public"],
+        ] + (extra_tars if extra_tars else []),
         **kwargs
-    )
-
-    oci_tarball(
-        name = name + ".tar",
-        image = ":" + name,
-        repo_tags = ["%s/%s:latest" % (native.package_name(), name)],
-        visibility = ["//visibility:public"],
     )

@@ -7,6 +7,21 @@
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
+def _symlink_tarball_impl(ctx):
+    ctx.actions.symlink(output = ctx.outputs.output, target_file = ctx.file.src)
+
+_symlink_tarball = rule(
+    implementation = _symlink_tarball_impl,
+    doc = "Creates a symlink to tarball.tar in src's DefaultInfo at output",
+    attrs = {
+        "src": attr.label(
+            allow_single_file = [".tar"],
+            mandatory = True,
+        ),
+        "output": attr.output(),
+    },
+)
+
 def container_layer(name, files, data_path = None, directory = None, **kwargs):
     pkg_tar(
         name = name,
@@ -55,8 +70,17 @@ def container_image(
     )
 
     oci_tarball(
-        name = name + ".tar",
+        name = "_%s_tarball" % name,
         image = name,
         repo_tags = ["%s/%s:latest" % (native.package_name(), name)],
-        **kwargs
+        visibility = kwargs.get("visibility"),
+        testonly = kwargs.get("testonly"),
+    )
+
+    _symlink_tarball(
+        name = "_%s_tarball_symlink" % name,
+        src = "_%s_tarball" % name,
+        output = "%s.tar" % name,
+        visibility = kwargs.get("visibility"),
+        testonly = kwargs.get("testonly"),
     )
