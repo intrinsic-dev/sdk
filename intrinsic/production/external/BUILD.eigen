@@ -4,14 +4,26 @@
 #   Eigen is a C++ template library for linear algebra: vectors,
 #   matrices, and related algorithms.
 
-licenses([
-    # Note: Eigen is an MPL2 library that includes GPL v3 and LGPL v2.1+ code.
-    #       We've taken special care to not reference any restricted code.
-    "reciprocal",  # MPL2
-    "notice",  # Portions BSD
-])
+load("@rules_license//rules:license.bzl", "license")
+
+package(
+    default_applicable_licenses = [":license"],
+    default_visibility = ["//visibility:public"],
+)
 
 exports_files(["COPYING.MPL2"])
+
+license(
+    name = "license",
+    package_name = "eigen",
+    license_kinds = [
+        # Note: Eigen is an MPL2 library that includes GPL v3 and LGPL v2.1+ code.
+        #       We've taken special care to not reference any restricted code.
+        "@rules_license//licenses/spdx:MPL-2.0",
+    ],
+    license_text = "COPYING.MPL2",
+    package_url = "https://gitlab.com/libeigen/eigen",
+)
 
 EIGEN_FILES = [
     "Eigen/**",

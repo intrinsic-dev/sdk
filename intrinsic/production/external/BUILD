@@ -31,7 +31,6 @@ exports_files(
         "BUILD",
         "BUILD.eigen",
         "BUILD.libarchive",
-        "BUILD.retrying",
         "BUILD.sysroot",
         "BUILD.workspace_root",
         "LICENSE",
