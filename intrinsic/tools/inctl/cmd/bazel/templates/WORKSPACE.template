@@ -10,7 +10,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
     name = "ai_intrinsic_sdks",
     remote = "{{.SDKRepository}}",
-    {{if eq .SDKVersion .SDKVersionDefaultValue -}}
+    {{if eq .SDKVersion "latest" -}}
     # To pin a version change the following to, e.g.:
     #   tag = "intrinsic.platform.20221231.RC00",
     branch = "main",
