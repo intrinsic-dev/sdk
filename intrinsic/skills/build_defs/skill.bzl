@@ -90,6 +90,7 @@ def _cc_skill_service(name, deps, manifest, **kwargs):
         name = gen_main_name,
         manifest = manifest,
         deps = deps,
+        testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
     )
@@ -175,6 +176,7 @@ def _py_skill_service(name, deps, manifest, **kwargs):
         name = gen_main_name,
         manifest = manifest,
         deps = deps,
+        testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
     )
