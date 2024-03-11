@@ -184,9 +184,9 @@ def intrinsic_sdks_deps_0():
     maybe(
         http_archive,
         name = "com_github_google_benchmark",
-        sha256 = "59f918c8ccd4d74b6ac43484467b500f1d64b40cc1010daa055375b322a43ba3",
-        strip_prefix = "benchmark-16703ff83c1ae6d53e5155df3bb3ab0bc96083be",
-        urls = ["https://github.com/google/benchmark/archive/16703ff83c1ae6d53e5155df3bb3ab0bc96083be.zip"],
+        sha256 = "6bc180a57d23d4d9515519f92b0c83d61b05b5bab188961f36ac7b06b0d9e9ce",
+        strip_prefix = "benchmark-1.8.3",
+        urls = ["https://github.com/google/benchmark/archive/refs/tags/v1.8.3.tar.gz"],
     )
 
     # Google Commandline Flags.
