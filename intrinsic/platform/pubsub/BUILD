@@ -51,6 +51,7 @@ cc_library(
         "//intrinsic/platform/pubsub/zenoh_util:zenoh_config",
         "//intrinsic/platform/pubsub/zenoh_util:zenoh_handle",
         "//intrinsic/util/status:status_macros",
+        "//net/proto2/util/legacy_debug_string:legacy_unredacted_debug_string",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",

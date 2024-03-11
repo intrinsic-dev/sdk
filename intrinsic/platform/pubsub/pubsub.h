@@ -16,6 +16,7 @@
 #include "intrinsic/platform/pubsub/publisher.h"
 #include "intrinsic/platform/pubsub/subscription.h"
 #include "intrinsic/util/status/status_macros.h"
+#include "net/proto2/util/legacy_debug_string/legacy_unredacted_debug_string.h"
 
 // The PubSub class implements an interface to a publisher-subscriber
 // system, a one-to-many communication bus that allows sending protocol buffers
@@ -210,16 +211,18 @@ class PubSub {
                           const intrinsic_proto::pubsub::PubSubPacket& packet,
                           const google::protobuf::Message& payload) {
     if (error_callback == nullptr) {
-      LOG(ERROR) << (packet.DebugString(),
+      LOG(ERROR) << (::google::protobuf::util::LegacyUnredactedDebugString(
+                         packet),
                      absl::InvalidArgumentError(absl::StrCat(
                          "Expected payload of type ", payload.GetTypeName(),
                          " but got ", packet.payload().type_url())));
       return;
     }
-    error_callback(packet.DebugString(),
-                   absl::InvalidArgumentError(absl::StrCat(
-                       "Expected payload of type ", payload.GetTypeName(),
-                       " but got ", packet.payload().type_url())));
+    error_callback(
+        ::google::protobuf::util::LegacyUnredactedDebugString(packet),
+        absl::InvalidArgumentError(
+            absl::StrCat("Expected payload of type ", payload.GetTypeName(),
+                         " but got ", packet.payload().type_url())));
   }
 
   // We use a shared_ptr here because it allows us to auto generate the
