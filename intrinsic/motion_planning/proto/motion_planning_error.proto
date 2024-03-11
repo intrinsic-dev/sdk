@@ -8,6 +8,30 @@ import "intrinsic/icon/proto/joint_space.proto";
 import "intrinsic/world/proto/collision_settings.proto";
 import "intrinsic/world/proto/geometric_constraints.proto";
 
+// Defines the context in which error occurred.
+// We use this field to create the frontend error messages.
+// So removing an error context type can impact or alter the generated error
+// message.
+message ErrorContext {
+  enum Type {
+    // Default context is set to UNKNOWN for all errors.
+    UNKNOWN = 0;
+    // IK error when solution(s) are in collision.
+    IK_COLLISION = 1;
+    // IK error when no solution(s) are found due to limit violation
+    // or outside the reachable envelope.
+    IK_NO_SOLUTIONS_FOUND = 2;
+    // IK error when using nlopt solver.
+    IK_NO_SOLUTIONS_FOUND_W_COLLISION_CHECKING = 3;
+    // Error when initial state is in collision.
+    INITIAL_STATE_COLLISION = 4;
+    // Error when goal state is in collision.
+    GOAL_STATE_COLLISION = 5;
+    // Error when a joint configuration (state) is in collision.
+    STATE_IN_COLLISION = 6;
+  }
+}
+
 // Defines the errors when multi-segment planning
 // Currently we only support error for single segments.
 message MotionPipelineError {
@@ -36,7 +60,7 @@ message CollisionError {
   optional intrinsic_proto.world.CollisionSettings collision_settings = 2;
   // Allows any additional information regarding context where the error
   // occurs.
-  optional string error_context = 3;
+  optional ErrorContext.Type error_context = 3;
 }
 
 // Each collision debug message corresponds to a collision check.
@@ -63,5 +87,5 @@ message IKError {
       constraint = 2;
   // Allows any additional information regarding context where the error
   // occurs.
-  optional string error_context = 3;
+  optional ErrorContext.Type error_context = 3;
 }
