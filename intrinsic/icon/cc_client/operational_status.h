@@ -57,6 +57,10 @@ class OperationalStatus final {
   // When not in the `kFaulted` state, returns an empty string.
   std::string fault_reason() const { return fault_reason_; }
 
+  bool operator==(const OperationalStatus& other) const {
+    return state_ == other.state_ && fault_reason_ == other.fault_reason_;
+  }
+
  private:
   // Private constructor. Use static methods (`Disabled()`, etc.) to create an
   // `OperationalStatus` object.
