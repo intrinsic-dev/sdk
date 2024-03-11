@@ -238,29 +238,36 @@ _skill_service_config_manifest = rule(
     },
 )
 
+SkillIdInfo = provider(
+    "Id for a skill",
+    fields = {
+        "skill_package": "The skill package name.",
+        "skill_name": "The skill name.",
+    },
+)
+
 def _skill_id_impl(ctx):
     manifest_pbbin_file = ctx.attr.manifest[SkillManifestInfo].manifest_binary_file
-    outputfile = ctx.actions.declare_file(ctx.label.name + ".pbbin")
 
     arguments = ctx.actions.args().add(
         "--manifest_pbbin_filename",
-        manifest_pbbin_file.path,
+        manifest_pbbin_file,
     ).add(
-        "--output_pbbin_filename",
-        outputfile.path,
+        "--out_package_filename",
+        ctx.outputs.package_name,
+    ).add(
+        "--out_name_filename",
+        ctx.outputs.skill_name,
     )
 
     ctx.actions.run(
-        outputs = [outputfile],
+        outputs = [ctx.outputs.package_name, ctx.outputs.skill_name],
         inputs = [manifest_pbbin_file],
         executable = ctx.executable._skill_id_gen,
         arguments = [arguments],
     )
 
-    return DefaultInfo(
-        files = depset([outputfile]),
-        runfiles = ctx.runfiles(files = [outputfile]),
-    )
+    return SkillIdInfo(skill_package = ctx.outputs.package_name, skill_name = ctx.outputs.skill_name)
 
 _skill_id = rule(
     implementation = _skill_id_impl,
@@ -274,12 +281,22 @@ _skill_id = rule(
             mandatory = True,
             providers = [SkillManifestInfo],
         ),
+        "package_name": attr.output(
+            mandatory = True,
+            doc = "The file containing the package name of the skill.",
+        ),
+        "skill_name": attr.output(
+            mandatory = True,
+            doc = "The file containing the name of the skill.",
+        ),
     },
+    provides = [SkillIdInfo],
 )
 
 def _skill_impl(ctx):
     skill_service_config_file = ctx.attr.skill_service_config[DefaultInfo].files.to_list()[0]
-    skill_id_file = ctx.attr.skill_id[DefaultInfo].files.to_list()[0]
+    skill_package_file = ctx.attr.skill_id[SkillIdInfo].skill_package
+    skill_name_file = ctx.attr.skill_id[SkillIdInfo].skill_name
     skill_service_binary_file = ctx.executable.skill_service_binary
     image_name = ctx.attr.name
 
@@ -295,7 +312,8 @@ def _skill_impl(ctx):
     }
 
     labels = {
-        "ai.intrinsic.skill-id": "@" + skill_id_file.path,
+        "ai.intrinsic.package-name": "@" + skill_package_file.path,
+        "ai.intrinsic.skill-name": "@" + skill_name_file.path,
         "ai.intrinsic.skill-image-name": image_name,
     }
 
@@ -314,8 +332,8 @@ def _skill_impl(ctx):
         # passing in `label_file_strings`. See _container.image.implementation()
         # for further documentation.
         labels = labels,
-        label_files = [skill_id_file],
-        label_file_strings = [skill_id_file.path],
+        label_files = [skill_package_file, skill_name_file],
+        label_file_strings = [skill_package_file.path, skill_name_file.path],
     )
 
 _skill = rule(
@@ -328,6 +346,7 @@ _skill = rule(
         ),
         "skill_id": attr.label(
             mandatory = True,
+            providers = [SkillIdInfo],
         ),
         "skill_service_config": attr.label(
             mandatory = True,
@@ -403,6 +422,8 @@ def cc_skill(
     _skill_id(
         name = skill_id_name,
         manifest = manifest,
+        package_name = skill_id_name + ".package.txt",
+        skill_name = skill_id_name + ".skill-name.txt",
         testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
@@ -487,6 +508,8 @@ def py_skill(
     _skill_id(
         name = skill_id_name,
         manifest = manifest,
+        package_name = skill_id_name + ".package.txt",
+        skill_name = skill_id_name + ".skill-name.txt",
         testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
