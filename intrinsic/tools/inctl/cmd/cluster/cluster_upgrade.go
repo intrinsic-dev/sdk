@@ -17,8 +17,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"intrinsic/frontend/cloud/updatemanager/info"
-	"intrinsic/frontend/cloud/updatemanager/messages"
+	"intrinsic/frontend/cloud/devicemanager/info"
+	"intrinsic/frontend/cloud/devicemanager/messages"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/auth"
 	"intrinsic/tools/inctl/util/orgutil"
