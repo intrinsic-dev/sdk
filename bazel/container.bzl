@@ -42,6 +42,7 @@ def container_image(
         files = None,
         labels = None,
         layers = None,
+        symlinks = None,
         **kwargs):
     """Wrapper for creating an oci_image from a rules_docker container_image target.
 
@@ -59,6 +60,14 @@ def container_image(
             srcs = files,
         )
         tars.append(name + "_main_files")
+
+    if symlinks:
+        pkg_tar(
+            name = name + "_symlink_layer",
+            strip_prefix = "/",
+            symlinks = symlinks,
+        )
+        tars.append(name + "_symlink_layer")
 
     oci_image(
         name = name,

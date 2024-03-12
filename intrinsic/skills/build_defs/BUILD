@@ -19,9 +19,6 @@ bzl_library(
     deps = [
         ":manifest_bzl",
         "//intrinsic/util/proto/build_defs:descriptor_set",
-        "@bazel_skylib//lib:dicts",
-        "@io_bazel_rules_docker//container",
-        "@io_bazel_rules_docker//lang:image",
     ],
 )
 
