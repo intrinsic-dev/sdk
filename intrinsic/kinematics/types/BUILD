@@ -115,3 +115,10 @@ cc_library(
         "//intrinsic/eigenmath",
     ],
 )
+
+cc_library(
+    name = "to_string",
+    srcs = ["to_string.cc"],
+    hdrs = ["to_string.h"],
+    deps = ["//intrinsic/eigenmath"],
+)

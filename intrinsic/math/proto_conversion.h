@@ -6,9 +6,21 @@
 #include "absl/status/statusor.h"
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/math/pose3.h"
+#include "intrinsic/math/proto/matrix.pb.h"
 #include "intrinsic/math/proto/point.pb.h"
 #include "intrinsic/math/proto/pose.pb.h"
 #include "intrinsic/math/proto/quaternion.pb.h"
+
+// All conversions from INTRINSIC protos to their respective C++ types should be
+// declared in namespace intrinsic_proto. This makes it possible to make
+// unqualified calls to FromProto() throughout our code base.
+namespace intrinsic_proto {
+
+constexpr int kMaxMatrixProtoDimension = 2048;
+absl::StatusOr<intrinsic::eigenmath::MatrixXd> FromProto(
+    const Matrixd& proto_matrix);
+
+}  // namespace intrinsic_proto
 
 // All conversions from Intrinsic protos to their respective C++ types should be
 // declared in namespace intrinsic_proto. This makes it possible to make
@@ -33,6 +45,7 @@ intrinsic_proto::Pose ToProto(const Pose& pose);
 intrinsic_proto::Point ToProto(const eigenmath::Vector3d& point);
 intrinsic_proto::Quaternion ToProto(const eigenmath::Quaterniond& quaternion);
 
+intrinsic_proto::Matrixd ToProto(const eigenmath::Matrix3d& matrix);
 }  // namespace intrinsic
 
 #endif  // INTRINSIC_MATH_PROTO_CONVERSION_H_

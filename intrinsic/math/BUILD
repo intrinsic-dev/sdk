@@ -22,11 +22,14 @@ cc_library(
     deps = [
         ":pose3",
         "//intrinsic/eigenmath",
+        "//intrinsic/math/proto:matrix_cc_proto",
         "//intrinsic/math/proto:point_cc_proto",
         "//intrinsic/math/proto:pose_cc_proto",
         "//intrinsic/math/proto:quaternion_cc_proto",
         "//intrinsic/util/status:status_macros",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
 

@@ -6,8 +6,12 @@
 #include <cmath>
 #include <limits>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/substitute.h"
 #include "intrinsic/eigenmath/types.h"
+#include "intrinsic/math/pose3.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic_proto {
@@ -45,6 +49,40 @@ static bool AlmostEquals(const double x, const double y,
 }
 
 }  // namespace
+}  // namespace intrinsic_proto
+
+namespace intrinsic_proto {
+
+absl::StatusOr<intrinsic::eigenmath::MatrixXd> FromProto(
+    const Matrixd& proto_matrix) {
+  if (proto_matrix.rows() > intrinsic_proto::kMaxMatrixProtoDimension ||
+      proto_matrix.rows() < 1) {
+    return absl::InvalidArgumentError(absl::Substitute(
+        "Invalid number of rows in matrix proto: $0. Must be "
+        "in the range [1, $1]",
+        proto_matrix.rows(), intrinsic_proto::kMaxMatrixProtoDimension));
+  }
+
+  if (proto_matrix.cols() > intrinsic_proto::kMaxMatrixProtoDimension ||
+      proto_matrix.cols() < 1) {
+    return absl::InvalidArgumentError(absl::Substitute(
+        "Invalid number of columns in matrix proto: $0. Must "
+        "be in the range [1, $1]",
+        proto_matrix.cols(), intrinsic_proto::kMaxMatrixProtoDimension));
+  }
+
+  intrinsic::eigenmath::MatrixXd eigen_matrix(proto_matrix.rows(),
+                                              proto_matrix.cols());
+  if (proto_matrix.values().size() != eigen_matrix.size()) {
+    return absl::InvalidArgumentError(
+        absl::Substitute("The number of elements in the matrix doesn't match "
+                         "the size (cols x rows) definition: $0 vs $1",
+                         proto_matrix.values().size(), eigen_matrix.size()));
+  }
+  absl::c_copy(proto_matrix.values(), eigen_matrix.reshaped().begin());
+  return eigen_matrix;
+}
+
 }  // namespace intrinsic_proto
 
 namespace intrinsic_proto {
@@ -138,4 +176,37 @@ intrinsic_proto::Quaternion ToProto(const eigenmath::Quaterniond& quaternion) {
   return proto_quaternion;
 }
 
+namespace {
+template <typename MatrixType>
+absl::StatusOr<intrinsic_proto::Matrixd> ToProtoImpl(
+    const MatrixType& eigen_matrix) {
+  if (eigen_matrix.rows() < 1 ||
+      eigen_matrix.rows() > intrinsic_proto::kMaxMatrixProtoDimension) {
+    return absl::InvalidArgumentError(absl::Substitute(
+        "Invalid number of rows in matrix for serialization: $0. Must be "
+        "in the range [1, $1]",
+        eigen_matrix.rows(), intrinsic_proto::kMaxMatrixProtoDimension));
+  }
+
+  if (eigen_matrix.cols() < 1 ||
+      eigen_matrix.cols() > intrinsic_proto::kMaxMatrixProtoDimension) {
+    return absl::InvalidArgumentError(absl::Substitute(
+        "Invalid number of columns in matrix for serialization: $0. Must be "
+        "in the range [1, $1]",
+        eigen_matrix.cols(), intrinsic_proto::kMaxMatrixProtoDimension));
+  }
+
+  const auto reshaped_matrix = eigen_matrix.reshaped();  // NOLINT
+  intrinsic_proto::Matrixd proto_matrix;
+  proto_matrix.set_rows(eigen_matrix.rows());
+  proto_matrix.set_cols(eigen_matrix.cols());
+  proto_matrix.mutable_values()->Add(reshaped_matrix.begin(),
+                                     reshaped_matrix.end());
+  return proto_matrix;
+}
+}  // namespace
+
+intrinsic_proto::Matrixd ToProto(const eigenmath::Matrix3d& matrix) {
+  return ToProtoImpl(matrix).value();
+}
 }  // namespace intrinsic
