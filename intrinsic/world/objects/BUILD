@@ -92,6 +92,7 @@ cc_library(
         "//intrinsic/util:eigen",
         "//intrinsic/util/status:status_macros",
         "//intrinsic/world/proto:object_world_service_cc_proto",
+        "//intrinsic/world/robot_payload",
         "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

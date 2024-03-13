@@ -24,6 +24,7 @@
 #include "intrinsic/world/objects/transform_node.h"
 #include "intrinsic/world/objects/world_object.h"
 #include "intrinsic/world/proto/object_world_service.pb.h"
+#include "intrinsic/world/robot_payload/robot_payload.h"
 
 namespace intrinsic {
 namespace world {
@@ -58,12 +59,20 @@ absl::StatusOr<KinematicObject> KinematicObject::Create(
         proto.kinematic_object_component().control_frequency_hz();
   }
 
+  std::optional<RobotPayload> mounted_payload;
+  if (proto.kinematic_object_component().has_mounted_payload()) {
+    INTR_ASSIGN_OR_RETURN(
+        mounted_payload,
+        intrinsic::FromProto(
+            proto.kinematic_object_component().mounted_payload()));
+  }
+
   INTR_ASSIGN_OR_RETURN(std::shared_ptr<const WorldObject::Data> data,
                         CreateWorldObjectData(std::move(proto)));
 
   return KinematicObject(std::make_shared<const Data>(
       std::move(*data), joint_system_limits, joint_application_limits,
-      cartesian_limits, control_frequency_hz));
+      cartesian_limits, control_frequency_hz, mounted_payload));
 }
 
 std::optional<KinematicObject> KinematicObject::FromTransformNode(
@@ -152,6 +161,11 @@ absl::StatusOr<std::optional<double>> KinematicObject::GetControlFrequencyHz()
   return GetData().ControlFrequencyHz();
 }
 
+absl::StatusOr<std::optional<RobotPayload>> KinematicObject::GetMountedPayload()
+    const {
+  return GetData().MountedPayload();
+}
+
 const KinematicObject::Data& KinematicObject::GetData() const {
   // This has to succeed because instances of KinematicObject are always only
   // created with an instance of KinematicObject::Data or a subclass thereof.
@@ -162,12 +176,14 @@ KinematicObject::Data::Data(WorldObject::Data data,
                             JointLimitsXd joint_system_limits,
                             JointLimitsXd joint_application_limits,
                             intrinsic::CartesianLimits cartesian_limits,
-                            std::optional<double> control_frequency_hz)
+                            std::optional<double> control_frequency_hz,
+                            std::optional<RobotPayload> mounted_payload)
     : WorldObject::Data(std::move(data)),
       joint_system_limits_(std::move(joint_system_limits)),
       joint_application_limits_(std::move(joint_application_limits)),
       cartesian_limits_(std::move(cartesian_limits)),
-      control_frequency_hz_(std::move(control_frequency_hz)) {}
+      control_frequency_hz_(std::move(control_frequency_hz)),
+      mounted_payload_(std::move(mounted_payload)) {}
 
 const JointLimitsXd& KinematicObject::Data::JointSystemLimits() const {
   return joint_system_limits_;
@@ -184,6 +200,11 @@ const intrinsic::CartesianLimits& KinematicObject::Data::CartesianLimits()
 
 const std::optional<double>& KinematicObject::Data::ControlFrequencyHz() const {
   return control_frequency_hz_;
+}
+
+const std::optional<RobotPayload>& KinematicObject::Data::MountedPayload()
+    const {
+  return mounted_payload_;
 }
 
 }  // namespace world

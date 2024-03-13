@@ -16,6 +16,7 @@
 #include "intrinsic/world/objects/transform_node.h"
 #include "intrinsic/world/objects/world_object.h"
 #include "intrinsic/world/proto/object_world_service.pb.h"
+#include "intrinsic/world/robot_payload/robot_payload.h"
 
 namespace intrinsic {
 namespace world {
@@ -32,7 +33,7 @@ class KinematicObject : public WorldObject {
  public:
   // Creates a new instance from the given proto. The caller must ensure that
   // the object has 'type'==ObjectType::KINEMATIC_OBJECT and has a set
-  // 'kinematic_object_component' (i.e., it was retrieved with an apppropriately
+  // 'kinematic_object_component' (i.e., it was retrieved with an appropriately
   // detailed ObjectView).
   static absl::StatusOr<KinematicObject> Create(
       intrinsic_proto::world::Object proto);
@@ -71,24 +72,30 @@ class KinematicObject : public WorldObject {
   // otherwise.
   absl::StatusOr<std::optional<double>> GetControlFrequencyHz() const;
 
+  // Gets the mounted payload if it is set, nullopt otherwise.
+  absl::StatusOr<std::optional<RobotPayload>> GetMountedPayload() const;
+
  private:
   class Data final : public WorldObject::Data {
    public:
     Data(WorldObject::Data data, JointLimitsXd joint_system_limits,
          JointLimitsXd joint_application_limits,
          intrinsic::CartesianLimits cartesian_limits,
-         std::optional<double> control_frequency_hz);
+         std::optional<double> control_frequency_hz,
+         std::optional<RobotPayload> mounted_payload);
 
     const JointLimitsXd& JointSystemLimits() const;
     const JointLimitsXd& JointApplicationLimits() const;
     const intrinsic::CartesianLimits& CartesianLimits() const;
     const std::optional<double>& ControlFrequencyHz() const;
+    const std::optional<RobotPayload>& MountedPayload() const;
 
    private:
     JointLimitsXd joint_system_limits_;
     JointLimitsXd joint_application_limits_;
     intrinsic::CartesianLimits cartesian_limits_;
     std::optional<double> control_frequency_hz_;
+    std::optional<RobotPayload> mounted_payload_;
   };
 
   explicit KinematicObject(std::shared_ptr<const Data> data);
