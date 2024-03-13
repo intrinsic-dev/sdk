@@ -7,14 +7,13 @@ import (
 	"fmt"
 	"log"
 
-	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
-
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/spf13/cobra"
 	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/imagetransfer"
 	"intrinsic/assets/imageutils"
+	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
