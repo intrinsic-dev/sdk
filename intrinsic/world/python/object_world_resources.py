@@ -3,7 +3,7 @@
 """Defines the resources used for the object world python api."""
 
 import abc
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Protocol
 
 from intrinsic.icon.proto import cart_space_pb2
 from intrinsic.kinematics.types import joint_limits_pb2
@@ -28,6 +28,14 @@ def _list_public_methods(instance: object) -> List[str]:
   ]
 
 
+class TransformNodeProto(Protocol):
+
+  @property
+  @abc.abstractmethod
+  def world_id(self) -> str:
+    return NotImplemented
+
+
 class TransformNode(metaclass=abc.ABCMeta):
   """Abstract base class of all transform nodes in the object world.
 
@@ -37,8 +45,10 @@ class TransformNode(metaclass=abc.ABCMeta):
       that uniquely identifies the frame in the world as a TransformNode.
     parent: The parent node of this TransformNode. None if this is the root.
     world_id: The id of the world in which the object resides.
-    proto: The underlying proto data structure.
   """
+
+  # child classes depending on the class type.
+  _proto: TransformNodeProto
 
   def __init__(
       self, stub: object_world_service_pb2_grpc.ObjectWorldServiceStub
@@ -47,8 +57,6 @@ class TransformNode(metaclass=abc.ABCMeta):
     # with chained . operators can be supported.
     # Refrain from using the stub apart from __getattr__ or its helpers.
     self._stub = stub
-    # child classes depending on the class type.
-    self._proto = None
 
   @property
   @abc.abstractmethod
@@ -74,15 +82,6 @@ class TransformNode(metaclass=abc.ABCMeta):
   @property
   def world_id(self) -> str:
     return self._proto.world_id
-
-  @property
-  @abc.abstractmethod
-  def proto(self) -> None:
-    """Returns the underying proto data structure.
-
-    Overwrite this method in child classes with a proper return type.
-    """
-    return NotImplemented
 
   # Disable hashing because __eq__ is disabled.
   __hash__ = None
@@ -120,6 +119,7 @@ class Frame(TransformNode):
     parent_t_this: Pose of this frame in the space of the parent object.
     reference: The object_world_refs_pb2.FrameReference that uniquely identifies
       the frame in the world based on the ID.
+    proto: The underlying proto data structure.
   """
 
   def __init__(
@@ -272,6 +272,7 @@ class WorldObject(TransformNode):
       identifies the object in the world based on the ID.
     transform_node_reference: The object_world_refs_pb2.TransformNodeReference
       that uniquely identifies the object in the world as a TransformNode.
+    proto: The underlying proto data structure.
   """
 
   def __init__(
