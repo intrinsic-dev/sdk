@@ -129,6 +129,7 @@ cc_library(
         "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
         "//intrinsic/world/proto:object_world_service_cc_proto",
         "//intrinsic/world/proto:object_world_updates_cc_proto",
+        "//intrinsic/world/robot_payload",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",

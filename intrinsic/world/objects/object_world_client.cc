@@ -39,6 +39,7 @@
 #include "intrinsic/world/proto/object_world_service.grpc.pb.h"
 #include "intrinsic/world/proto/object_world_service.pb.h"
 #include "intrinsic/world/proto/object_world_updates.pb.h"
+#include "intrinsic/world/robot_payload/robot_payload.h"
 
 namespace intrinsic {
 namespace world {
@@ -616,6 +617,22 @@ absl::Status ObjectWorldClient::UpdateCartesianLimits(
   request.mutable_object()->set_id(kinematic_object.Id().value());
   *request.mutable_cartesian_limits() =
       intrinsic::icon::ToProto(cartesian_limits);
+  // Use minimalistic view since we are ignoring the response.
+  request.set_view(intrinsic_proto::world::ObjectView::BASIC);
+  intrinsic_proto::world::Object response;
+  INTR_RETURN_IF_ERROR(
+      ToAbslStatus(object_world_service_->UpdateKinematicObjectProperties(
+          &ctx, request, &response)));
+  return absl::OkStatus();
+}
+
+absl::Status ObjectWorldClient::UpdateMountedPayload(
+    const KinematicObject& kinematic_object, const RobotPayload& payload) {
+  grpc::ClientContext ctx;
+  intrinsic_proto::world::UpdateKinematicObjectPropertiesRequest request;
+  request.set_world_id(world_id_);
+  request.mutable_object()->set_id(kinematic_object.Id().value());
+  *request.mutable_mounted_payload() = ToProto(payload);
   // Use minimalistic view since we are ignoring the response.
   request.set_view(intrinsic_proto::world::ObjectView::BASIC);
   intrinsic_proto::world::Object response;

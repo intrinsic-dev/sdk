@@ -25,6 +25,7 @@
 #include "intrinsic/world/objects/world_object.h"
 #include "intrinsic/world/proto/object_world_refs.pb.h"
 #include "intrinsic/world/proto/object_world_service.grpc.pb.h"
+#include "intrinsic/world/robot_payload/robot_payload.h"
 
 namespace intrinsic {
 namespace world {
@@ -249,6 +250,11 @@ class ObjectWorldClient {
   // values.
   absl::Status UpdateCartesianLimits(const KinematicObject& kinematic_object,
                                      const CartesianLimits& cartesian_limits);
+
+  // Sets the mounted payload of the given kinematic object to the given
+  // value.
+  absl::Status UpdateMountedPayload(const KinematicObject& kinematic_object,
+                                    const RobotPayload& payload);
 
   // Reparent 'object' to 'new_parent', leaving the global pose of the
   // reparented object unaffected (i.e., "parent_t_object" might change but
