@@ -38,7 +38,6 @@ exports_files(
         "WORKSPACE",
         "copy.bara.sky",
         "extension_for_com_google_googleapis.bzl",
-        "extension_for_io_bazel_rules_docker.bzl",
         "extension_for_rules_oci.bzl",
         "go.mod",
         "go.sum",

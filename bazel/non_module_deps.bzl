@@ -31,15 +31,6 @@ def non_module_deps():
     )
 
     http_archive(
-        name = "io_bazel_rules_docker",
-        urls = [
-            "https://github.com/bazelbuild/rules_docker/archive/ca2f3086ead9f751975d77db0255ffe9ee07a781.tar.gz",
-        ],
-        sha256 = "f6d71a193ff6df39900417b50e67a5cf0baad2e90f83c8aefe66902acce4c34d",
-        strip_prefix = "rules_docker-ca2f3086ead9f751975d77db0255ffe9ee07a781",
-    )
-
-    http_archive(
         name = "com_google_googleapis",
         urls = [
             "https://github.com/googleapis/googleapis/archive/d9250048e9b9df4d8a0ce67b8ccf84e0aab0d50e.tar.gz",
@@ -53,14 +44,6 @@ def non_module_deps():
         remote = "https://github.com/google/flatbuffers.git",
         commit = "615616cb5549a34bdf288c04bc1b94bd7a65c396",
         shallow_since = "1644943722 -0500",
-    )
-    http_file(
-        name = "go_puller_linux_amd64",
-        executable = True,
-        sha256 = "08b8963cce9234f57055bafc7cadd1624cdce3c5990048cea1df453d7d288bc6",
-        urls = [
-            "https://storage.googleapis.com/rules_docker/aad94363e63d31d574cf701df484b3e8b868a96a/puller-linux-amd64",
-        ],
     )
     http_jar(
         name = "firestore_emulator",
