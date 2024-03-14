@@ -1,0 +1,24 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.solutions.tools;
+
+message MyMsg {
+  bool bool_value = 2;
+  int32 int32_value = 3;
+  int64 int64_value = 4;
+  uint32 uint32_value = 5;
+  uint64 uint64_value = 6;
+  float float_value = 7;
+  double double_value = 8;
+  string string_value = 1;
+  enum Enum {
+    UNKNOWN = 0;
+    VALUE_A = 1;
+    VALUE_B = 2;
+  }
+  Enum enum_value = 9;
+  MyMsg msg_value = 10;
+  repeated MyMsg repeated_msg_value = 11;
+}

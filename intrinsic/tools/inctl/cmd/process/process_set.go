@@ -6,15 +6,21 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protodesc"
+	"google.golang.org/protobuf/reflect/protoregistry"
 	btpb "intrinsic/executive/proto/behavior_tree_go_proto"
 	"intrinsic/tools/inctl/util/orgutil"
+	"intrinsic/util/proto/registryutil"
 )
+
+var allowedSetFormats = []string{TextProtoFormat, BinaryProtoFormat}
 
 type deserializer interface {
 	deserialize([]byte) (*btpb.BehaviorTree, error)
@@ -31,9 +37,20 @@ func (t *textDeserializer) deserialize(content []byte) (*btpb.BehaviorTree, erro
 		return nil, errors.Wrapf(err, "could not list skills")
 	}
 
-	pt, err := populateProtoTypes(skills)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to populate proto types")
+	r := new(protoregistry.Files)
+	for _, skill := range skills {
+		for _, parameterDescriptorFile := range skill.GetParameterDescription().GetParameterDescriptorFileset().GetFile() {
+			fd, err := protodesc.NewFile(parameterDescriptorFile, r)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to add file to registry")
+			}
+			r.RegisterFile(fd)
+		}
+	}
+
+	pt := new(protoregistry.Types)
+	if err := registryutil.PopulateTypesFromFiles(pt, r); err != nil {
+		return nil, errors.Wrapf(err, "failed to populate types from files")
 	}
 
 	unmarshaller := prototext.UnmarshalOptions{
@@ -157,6 +174,9 @@ inctl process set --solution my-solution --cluster my-cluster --input_file /tmp/
 }
 
 func init() {
+	processSetCmd.Flags().StringVar(
+		&flagProcessFormat, "process_format", TextProtoFormat,
+		fmt.Sprintf("(optional) input format. One of: (%s)", strings.Join(allowedSetFormats, ", ")))
 	processSetCmd.Flags().StringVar(&flagSolutionName, "solution", "", "Solution to set the process on. For example, use `inctl solutions list --project intrinsic-workcells --output json [--filter running_in_sim]` to see the list of solutions.")
 	processSetCmd.Flags().StringVar(&flagClusterName, "cluster", "", "Cluster to set the process on.")
 	processSetCmd.Flags().StringVar(&flagInputFile, "input_file", "", "File from which to read the process.")

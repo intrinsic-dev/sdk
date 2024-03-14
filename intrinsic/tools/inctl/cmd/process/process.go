@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	descriptorpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"intrinsic/tools/inctl/cmd/root"
@@ -20,9 +19,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/reflect/protoregistry"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	apb "intrinsic/executive/proto/annotations_go_proto"
 	btpb "intrinsic/executive/proto/behavior_tree_go_proto"
@@ -32,7 +29,6 @@ import (
 	skillspb "intrinsic/skills/proto/skills_go_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
-	"intrinsic/util/proto/registryutil"
 )
 
 const (
@@ -44,10 +40,14 @@ const (
 	TextProtoFormat = "textproto"
 	// BinaryProtoFormat is the binary proto output format.
 	BinaryProtoFormat = "binaryproto"
+	// PythonScriptFormat means to generate a self-contained Python script (export only).
+	PythonScriptFormat = "python"
+	// PythonMinimalFormat means to just generate the Python code to build the BT, but without
+	// imports or executive.run().
+	PythonMinimalFormat = "python-minimal"
+	// PythonNotebookFormat means to generate a Python notebook (export only).
+	PythonNotebookFormat = "notebook"
 )
-
-// AllowedFormats is a list of possible output formats.
-var AllowedFormats = []string{TextProtoFormat, BinaryProtoFormat}
 
 var (
 	flagSolutionName  string
@@ -213,26 +213,6 @@ func getSkills(ctx context.Context, conn *grpc.ClientConn) ([]*skillspb.Skill, e
 	return resp.GetSkills(), nil
 }
 
-func populateProtoTypes(skills []*skillspb.Skill) (*protoregistry.Types, error) {
-	r := new(protoregistry.Files)
-	for _, skill := range skills {
-		for _, parameterDescriptorFile := range skill.GetParameterDescription().GetParameterDescriptorFileset().GetFile() {
-			fd, err := protodesc.NewFile(parameterDescriptorFile, r)
-			if err != nil {
-				return nil, errors.Wrapf(err, "failed to add file to registry")
-			}
-			r.RegisterFile(fd)
-		}
-	}
-
-	t := new(protoregistry.Types)
-	if err := registryutil.PopulateTypesFromFiles(t, r); err != nil {
-		return nil, errors.Wrapf(err, "failed to populate types from files")
-	}
-
-	return t, nil
-}
-
 var processCmd = orgutil.WrapCmd(&cobra.Command{
 	Use:     root.ProcessCmdName,
 	Aliases: []string{root.ProcessCmdName},
@@ -252,9 +232,6 @@ var processCmd = orgutil.WrapCmd(&cobra.Command{
 }, viperLocal)
 
 func init() {
-	processCmd.PersistentFlags().StringVar(
-		&flagProcessFormat, "process_format", TextProtoFormat,
-		fmt.Sprintf("(optional) Output format. One of: (%s)", strings.Join(AllowedFormats, ", ")))
 	processCmd.Flags().BoolVar(&flagClearTreeID, "clear_tree_id", true, "Clear the tree_id field from the BT proto.")
 	processCmd.Flags().BoolVar(&flagClearNodeIDs, "clear_node_ids", true, "Clear the nodes' id fields from the BT proto.")
 	root.RootCmd.AddCommand(processCmd)
