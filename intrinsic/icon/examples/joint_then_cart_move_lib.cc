@@ -2,7 +2,9 @@
 
 #include "intrinsic/icon/examples/joint_then_cart_move_lib.h"
 
+#include <cmath>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <ostream>
 #include <string>
@@ -29,12 +31,31 @@
 
 namespace intrinsic::icon::examples {
 
-constexpr int kNDof = 6;
 constexpr double kCartesianVelocityFraction = 0.2;
 constexpr double kExpectedJointDifference = 0.002;
 constexpr double kSettlingTimeoutSeconds = 1;
 
+// Proto returns max instead of infinity in some cases.
+constexpr double kFunctionalInfinity = std::numeric_limits<double>::max();
+
 namespace {
+
+// Replaces values whose absolute value >= kFunctionalInfinity with Zero.
+// Joint limits may be infinite, which breaks computing the center_pos and
+// range.
+eigenmath::VectorNd ReplaceInf(const eigenmath::VectorNd& input) {
+  eigenmath::VectorNd ret;
+  ret.setZero(input.size());
+
+  for (int i = 0; i < input.size(); ++i) {
+    if (fabs(input[i]) >= kFunctionalInfinity) {
+      ret[i] = 0;
+    } else {
+      ret[i] = input[i];
+    }
+  }
+  return ret;
+}
 
 // Prints the Joint Position for every DoF, or n/a if it's missing.
 void PrintJointPosition(const intrinsic_proto::icon::PartStatus& part_status) {
@@ -113,11 +134,11 @@ absl::Status JointThenCartMove(
         JointLimits joint_limits,
         intrinsic::FromProto(
             part_config.joint_limits_config().application_limits()));
+    eigenmath::VectorNd max_position = ReplaceInf(joint_limits.max_position);
+    eigenmath::VectorNd min_position = ReplaceInf(joint_limits.min_position);
 
-    eigenmath::VectorNd joint_range =
-        joint_limits.max_position - joint_limits.min_position;
-    eigenmath::VectorNd center_pos =
-        joint_limits.min_position + (joint_range / 2.0);
+    eigenmath::VectorNd joint_range = max_position - min_position;
+    eigenmath::VectorNd center_pos = min_position + (joint_range / 2.0);
 
     // Add an offset from the center of the joint range to avoid a "zero" joint
     // configuration to avoid side-effects due to kinematic singularities during
@@ -126,7 +147,7 @@ absl::Status JointThenCartMove(
     jpos_1 = center_pos + (joint_range / 10.0).cwiseMin(0.5);
   }
 
-  std::vector<double> zero_velocity(kNDof, 0.0);
+  std::vector<double> zero_velocity(jpos_1.size(), 0.0);
 
   // Forward declare the ActionInstanceIds to simplify reasoning about
   // Reactions.

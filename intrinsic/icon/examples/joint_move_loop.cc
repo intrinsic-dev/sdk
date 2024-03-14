@@ -24,7 +24,7 @@ ABSL_FLAG(
     std::string, instance, "",
     "Optional name of the ICON instance. Use this to select a specific ICON "
     "instance if multiple ones are running behind an ingress server.");
-ABSL_FLAG(std::string, header, "x-icon-instance-name",
+ABSL_FLAG(std::string, header, "x-resource-instance-name",
           "Optional header name to be used to select a specific ICON instance. "
           " Has no effect if --instance is not set");
 ABSL_FLAG(std::string, part, "arm", "Part to control.");

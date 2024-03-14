@@ -2,16 +2,17 @@
 
 #include "intrinsic/icon/examples/joint_move_loop_lib.h"
 
+#include <cmath>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
-#include <type_traits>
-#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -29,6 +30,26 @@
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon::examples {
+
+// Proto returns max instead of infinity in some cases.
+constexpr double kFunctionalInfinity = std::numeric_limits<double>::max();
+
+// Replaces values whose absolute value >= kFunctionalInfinity with Zero.
+// Joint limits may be infinite, which breaks computing the center_pos and
+// range.
+eigenmath::VectorNd ReplaceInf(const eigenmath::VectorNd& input) {
+  eigenmath::VectorNd ret;
+  ret.setZero(input.size());
+
+  for (int i = 0; i < input.size(); ++i) {
+    if (fabs(input[i]) >= kFunctionalInfinity) {
+      ret[i] = 0;
+    } else {
+      ret[i] = input[i];
+    }
+  }
+  return ret;
+}
 
 absl::Status RunJointMoveLoop(
     absl::string_view part_name, absl::Duration duration,
@@ -50,11 +71,12 @@ absl::Status RunJointMoveLoop(
 
   if (!joint_move_positions.has_value()) {
     // Compute two feasible joint configurations based on the joint limits.
+    eigenmath::VectorNd max_position = ReplaceInf(joint_limits.max_position);
+    eigenmath::VectorNd min_position = ReplaceInf(joint_limits.min_position);
+
     {
-      eigenmath::VectorNd joint_range =
-          joint_limits.max_position - joint_limits.min_position;
-      eigenmath::VectorNd center_pos =
-          joint_limits.min_position + (joint_range / 2.0);
+      eigenmath::VectorNd joint_range = max_position - min_position;
+      eigenmath::VectorNd center_pos = min_position + (joint_range / 2.0);
 
       // The offset from the joint range center is proportional to the joint
       // range to avoid going outside the range in case it is very small.
@@ -79,6 +101,9 @@ absl::Status RunJointMoveLoop(
         std::vector<double>(joint_move_positions->joint_positions_2().begin(),
                             joint_move_positions->joint_positions_2().end());
   }
+
+  LOG(INFO) << "Looping between [" << absl::StrJoin(jpos_1, ",") << "] and ["
+            << absl::StrJoin(jpos_2, ",") << "].";
 
   INTR_ASSIGN_OR_RETURN(
       std::unique_ptr<intrinsic::icon::Session> session,
