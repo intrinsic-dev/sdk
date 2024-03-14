@@ -50,6 +50,7 @@ const (
 )
 
 var (
+	flagServerAddress string
 	flagSolutionName  string
 	flagClusterName   string
 	flagInputFile     string
@@ -116,27 +117,26 @@ func clearTree(m proto.Message, clearTreeID bool, clearNodeIDs bool) error {
 	return nil
 }
 
-func connectToCluster(ctx context.Context, projectName string, orgName string, solutionName string, clusterName string) (context.Context, *grpc.ClientConn, error) {
-	// Establish a gRPC connection to project and organization.
-	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
-		CredName: projectName,
-		CredOrg:  orgName,
-	})
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create client connection: %w", err)
-	}
-	defer conn.Close()
+func connectToCluster(ctx context.Context, projectName string, orgName string, address string, solutionName string, clusterName string) (context.Context, *grpc.ClientConn, error) {
+	if solutionName != "" {
+		// Look up solution name via cloud portal.
+		ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
+			CredName: projectName,
+			CredOrg:  orgName,
+		})
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create client connection: %w", err)
+		}
 
-	// Optionally resolve solution name to cluster name.
-	if clusterName == "" {
 		clusterName, err = solutionutil.GetClusterNameFromSolution(ctx, conn, solutionName)
 		if err != nil {
 			return nil, nil, errors.Wrapf(err, "could not resolve solution to cluster")
 		}
 	}
 
-	// Establish a gRPC connection to cluster.
-	ctxCluster, connCluster, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
+	// Establish a gRPC connection to server, cluster, or cloud.
+	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
+		Address:  address,
 		Cluster:  clusterName,
 		CredName: projectName,
 		CredOrg:  orgName,
@@ -145,7 +145,7 @@ func connectToCluster(ctx context.Context, projectName string, orgName string, s
 		return nil, nil, fmt.Errorf("failed to create client connection: %w", err)
 	}
 
-	return ctxCluster, connCluster, nil
+	return ctx, conn, nil
 }
 
 func getBT(ctx context.Context, conn *grpc.ClientConn) (*btpb.BehaviorTree, error) {
@@ -232,7 +232,8 @@ var processCmd = orgutil.WrapCmd(&cobra.Command{
 }, viperLocal)
 
 func init() {
-	processCmd.Flags().BoolVar(&flagClearTreeID, "clear_tree_id", true, "Clear the tree_id field from the BT proto.")
-	processCmd.Flags().BoolVar(&flagClearNodeIDs, "clear_node_ids", true, "Clear the nodes' id fields from the BT proto.")
+	processCmd.PersistentFlags().BoolVar(&flagClearTreeID, "clear_tree_id", true, "Clear the tree_id field from the BT proto.")
+	processCmd.PersistentFlags().BoolVar(&flagClearNodeIDs, "clear_node_ids", true, "Clear the nodes' id fields from the BT proto.")
+	processCmd.PersistentFlags().StringVar(&flagServerAddress, "server", "", "Server address of the cluster. Format is {ADDRESS}:{PORT}, for example 'localhost:17080'")
 	root.RootCmd.AddCommand(processCmd)
 }

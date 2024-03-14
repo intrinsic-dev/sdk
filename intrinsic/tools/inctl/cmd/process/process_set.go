@@ -135,21 +135,17 @@ inctl process set --solution my-solution --cluster my-cluster --input_file /tmp/
 `,
 	Args: cobra.ExactArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		projectName := viperLocal.GetString(orgutil.KeyProject)
-		orgName := viperLocal.GetString(orgutil.KeyOrganization)
-		solutionName := flagSolutionName
-		clusterName := flagClusterName
-
-		if (solutionName == "" && clusterName == "") || solutionName != "" && clusterName != "" {
-			return fmt.Errorf("exactly one of --solution or --cluster must be specified. To find the solution name, use `inctl solutions list --project intrinsic-workcells --output json [--filter running_in_sim]` to see the list of solutions")
-		}
 		if flagInputFile == "" {
 			return fmt.Errorf("--input_file must be specified")
 		}
 
-		ctx, conn, err := connectToCluster(cmd.Context(), projectName, orgName, solutionName, clusterName)
+		projectName := viperLocal.GetString(orgutil.KeyProject)
+		orgName := viperLocal.GetString(orgutil.KeyOrganization)
+		ctx, conn, err := connectToCluster(cmd.Context(), projectName,
+			orgName, flagServerAddress,
+			flagSolutionName, flagClusterName)
 		if err != nil {
-			return errors.Wrapf(err, "could not connect to cluster")
+			return errors.Wrapf(err, "could not dial connection")
 		}
 		defer conn.Close()
 
