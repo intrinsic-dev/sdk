@@ -28,6 +28,7 @@ from intrinsic.resources.client import resource_registry_client
 from intrinsic.skills.client import skill_registry_client
 from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions import blackboard_value
+from intrinsic.solutions import provided
 from intrinsic.solutions import providers
 from intrinsic.solutions import skill_parameters
 from intrinsic.solutions import skill_utils
@@ -38,7 +39,7 @@ from intrinsic.solutions.utils import classproperty
 
 # Typing aliases
 # Maps slot name to resource names.
-ResourceMap = dict[str, providers.ResourceHandle]
+ResourceMap = dict[str, provided.ResourceHandle]
 
 
 def print_failed_descriptor_infra(
@@ -67,7 +68,7 @@ def print_failed_descriptor_infra(
   return True
 
 
-class SkillInfoImpl(providers.SkillInfo):
+class SkillInfoImpl(provided.SkillInfo):
   """Implementation of the SkillInfo interface."""
 
   _skill_proto: skills_pb2.Skill
@@ -234,8 +235,8 @@ def _get_descriptor(
 
 
 def _gen_init_docstring(
-    info: providers.SkillInfo,
-    compatible_resources: dict[str, providers.ResourceList],
+    info: provided.SkillInfo,
+    compatible_resources: dict[str, provided.ResourceList],
 ) -> str:
   """Generates documentation string for init function.
 
@@ -369,8 +370,8 @@ def _gen_init_docstring(
 
 
 def _gen_init_params(
-    info: providers.SkillInfo,
-    compatible_resources: dict[str, providers.ResourceList],
+    info: provided.SkillInfo,
+    compatible_resources: dict[str, provided.ResourceList],
     message_classes: dict[str, Type[message.Message]],
 ) -> list[inspect.Parameter]:
   """Create argument typing information for a given skill info.
@@ -432,7 +433,7 @@ def _gen_init_params(
         inspect.Parameter(
             skill_utils.deconflict_param_and_resources(slot, param_names),
             inspect.Parameter.KEYWORD_ONLY,
-            annotation=providers.ResourceHandle,
+            annotation=provided.ResourceHandle,
             default=default,
         )
     )
@@ -453,8 +454,8 @@ def _gen_init_params(
 
 
 def _gen_init_fun(
-    info: providers.SkillInfo,
-    compatible_resources: dict[str, providers.ResourceList],
+    info: provided.SkillInfo,
+    compatible_resources: dict[str, provided.ResourceList],
     message_classes: dict[str, Type[message.Message]],
 ) -> Callable[[Any, Any], "GeneratedSkill"]:
   """Generate custom __init__ class method with proper auto-completion info.
@@ -504,8 +505,8 @@ def _gen_init_fun(
 
 
 def _gen_skill_class(
-    info: providers.SkillInfo,
-    compatible_resources: dict[str, providers.ResourceList],
+    info: provided.SkillInfo,
+    compatible_resources: dict[str, provided.ResourceList],
 ) -> Type[Any]:
   """This generates a new skill wrapper class type.
 
@@ -535,7 +536,7 @@ def _gen_skill_class(
 
   skill_methods = {
       "_info": info,
-      "_compatible_resources": providers.SkillCompatibleResourcesMap(
+      "_compatible_resources": provided.SkillCompatibleResourcesMap(
           compatible_resources
       ),
       # We use the __init__ documentation because that is shown in the
@@ -647,11 +648,11 @@ def _skill_name_from_name_or_id(name: str, identifier: str) -> str:
   return _skill_name_from_id(identifier)
 
 
-class GeneratedSkill(providers.SkillBase):
+class GeneratedSkill(provided.SkillBase):
   """Base class for skill classes dynamically generated at runtime."""
 
-  _info: providers.SkillInfo
-  _compatible_resources: dict[str, providers.ResourceList] = {}
+  _info: provided.SkillInfo
+  _compatible_resources: dict[str, provided.ResourceList] = {}
 
   def __init__(self, **kwargs):
     """This constructor normally will not be called.
@@ -837,7 +838,7 @@ class GeneratedSkill(providers.SkillBase):
           else compatible_resources[dir(compatible_resources)[0]]
       )
 
-      if not isinstance(resource, providers.ResourceHandle):
+      if not isinstance(resource, provided.ResourceHandle):
         raise TypeError(
             f"Given value for resource slot '{slot_param_name}' "
             "is not a ResourceHandle."
@@ -917,11 +918,11 @@ class GeneratedSkill(providers.SkillBase):
     )
 
   @classproperty
-  def compatible_resources(cls) -> providers.SkillCompatibleResourcesMap:  # pylint:disable=no-self-argument
+  def compatible_resources(cls) -> provided.SkillCompatibleResourcesMap:  # pylint:disable=no-self-argument
     return cls._compatible_resources
 
   @classproperty
-  def skill_info(cls) -> providers.SkillInfo:  # pylint:disable=no-self-argument
+  def skill_info(cls) -> provided.SkillInfo:  # pylint:disable=no-self-argument
     return cls._info
 
   @classproperty
@@ -937,12 +938,12 @@ class Skills(providers.SkillProvider):
 
   _skill_registry: skill_registry_client.SkillRegistryClient
   _resource_registry: resource_registry_client.ResourceRegistryClient
-  _skills_by_name: dict[str, providers.SkillInfo]
-  _skills_by_id: dict[str, providers.SkillInfo]
-  _skill_type_classes_by_name: dict[str, Type[providers.SkillBase]]
-  _skill_type_classes_by_id: dict[str, Type[providers.SkillBase]]
-  _compatible_resources_by_name: dict[str, dict[str, providers.ResourceList]]
-  _compatible_resources_by_id: dict[str, dict[str, providers.ResourceList]]
+  _skills_by_name: dict[str, provided.SkillInfo]
+  _skills_by_id: dict[str, provided.SkillInfo]
+  _skill_type_classes_by_name: dict[str, Type[provided.SkillBase]]
+  _skill_type_classes_by_id: dict[str, Type[provided.SkillBase]]
+  _compatible_resources_by_name: dict[str, dict[str, provided.ResourceList]]
+  _compatible_resources_by_id: dict[str, dict[str, provided.ResourceList]]
 
   def __init__(
       self,
@@ -999,7 +1000,7 @@ class Skills(providers.SkillProvider):
           resource_slot = slot + skill_utils.RESOURCE_SLOT_DECONFLICT_SUFFIX
         self._compatible_resources_by_name[skill_name][resource_slot] = (
             resources.ResourceListImpl(
-                [providers.ResourceHandle(h) for h in handles]
+                [provided.ResourceHandle(h) for h in handles]
             )
         )
         self._compatible_resources_by_id[skill_info.id][resource_slot] = (

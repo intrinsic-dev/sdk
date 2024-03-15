@@ -29,7 +29,7 @@ from intrinsic.skills.client import skill_registry_client
 from intrinsic.skills.proto import skill_registry_pb2
 from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions import blackboard_value
-from intrinsic.solutions import providers
+from intrinsic.solutions import provided
 from intrinsic.solutions import skill_utils
 from intrinsic.solutions import skills as skills_mod
 from intrinsic.solutions.testing import compare
@@ -369,7 +369,7 @@ class SkillsTest(parameterized.TestCase):
         my_repeated_doubles=expected_repeated_doubles,
         repeated_submessages=expected_repeated_submessages,
         my_oneof_double=parameters.my_oneof_double,
-        a=providers.ResourceHandle.create(resource_name, [resource_capability]),
+        a=provided.ResourceHandle.create(resource_name, [resource_capability]),
     )
 
     expected_proto = behavior_call_pb2.BehaviorCall(
@@ -422,7 +422,7 @@ class SkillsTest(parameterized.TestCase):
     skills = skills_mod.Skills(skill_registry, resource_registry)
 
     skill = skills.my_skill(
-        a=providers.ResourceHandle.create(resource_name, [resource_capability])
+        a=provided.ResourceHandle.create(resource_name, [resource_capability])
     )
 
     expected_proto = behavior_call_pb2.BehaviorCall(
@@ -484,7 +484,7 @@ class SkillsTest(parameterized.TestCase):
     skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
     skill = skills.my_skill(
         executive_test_message=parameters.executive_test_message,
-        a=providers.ResourceHandle.create(resource_name, [resource_capability]),
+        a=provided.ResourceHandle.create(resource_name, [resource_capability]),
     )
 
     expected_proto = behavior_call_pb2.BehaviorCall(
@@ -534,7 +534,7 @@ class SkillsTest(parameterized.TestCase):
 
     skill = skills.my_skill(
         my_oneof_double=value_specification,
-        a=providers.ResourceHandle.create(resource_name, [resource_capability]),
+        a=provided.ResourceHandle.create(resource_name, [resource_capability]),
     )
 
     expected_proto = behavior_call_pb2.BehaviorCall(
@@ -587,7 +587,7 @@ class SkillsTest(parameterized.TestCase):
 
     skill = skills.my_skill(
         my_oneof_double=value_specification,
-        a=providers.ResourceHandle.create(resource_name, [resource_capability]),
+        a=provided.ResourceHandle.create(resource_name, [resource_capability]),
         executive_test_message=skills.my_skill.TestMessage(
             message_list=[
                 skills.my_skill.TestMessage(int32_value=value_specification),
@@ -1006,7 +1006,7 @@ class SkillsTest(parameterized.TestCase):
     )
     skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
-    resource_a = providers.ResourceHandle.create('resource_a', ['some-type'])
+    resource_a = provided.ResourceHandle.create('resource_a', ['some-type'])
 
     with self.assertRaises(TypeError):
       skills.my_skill(a=resource_a)
@@ -1320,8 +1320,8 @@ Returns:
 
     self.assertEqual(skills.my_skill.__doc__, docstring)
 
-    resource_a = providers.ResourceHandle.create('resource_a', ['some-type-a'])
-    resource_b = providers.ResourceHandle.create('resource_b', ['some-type-b'])
+    resource_a = provided.ResourceHandle.create('resource_a', ['some-type-a'])
+    resource_b = provided.ResourceHandle.create('resource_b', ['some-type-b'])
 
     skill = skills.my_skill(**parameters, a=resource_a, b=resource_b)
     self.assertEqual(repr(skill), skill_repr)
@@ -1377,7 +1377,7 @@ Returns:
                     Default value: bar"""),
     )
 
-    resource_a = providers.ResourceHandle.create('resource_a', ['some-type-a'])
+    resource_a = provided.ResourceHandle.create('resource_a', ['some-type-a'])
 
     skill = skills.my_skill(a='foo', a_resource=resource_a)
     self.assertEqual(

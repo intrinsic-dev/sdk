@@ -64,6 +64,7 @@ py_library(
     deps = [
         "//intrinsic/resources/client:resource_registry_client",
         "//intrinsic/resources/proto:resource_handle_py_pb2",
+        "//intrinsic/solutions:provided",
         "//intrinsic/solutions:providers",
     ],
 )
@@ -76,7 +77,7 @@ py_test(
     deps = [
         ":resources",
         "//intrinsic/resources/proto:resource_handle_py_pb2",
-        "//intrinsic/solutions:providers",
+        "//intrinsic/solutions:provided",
         "@com_google_absl_py//absl/testing:absltest",
     ],
 )

@@ -7,6 +7,7 @@ from typing import Iterator, Union
 
 from intrinsic.resources.client import resource_registry_client
 from intrinsic.resources.proto import resource_handle_pb2
+from intrinsic.solutions import provided
 from intrinsic.solutions import providers
 
 _REGEX_INVALID_PYTHON_VAR_CHARS = r"\W|^(?=\d)"
@@ -19,12 +20,12 @@ def resource_to_python_name(handle_name: str) -> str:
   return re.sub(_REGEX_INVALID_PYTHON_VAR_CHARS, "_", handle_name)
 
 
-class ResourceListImpl(providers.ResourceList):
+class ResourceListImpl(provided.ResourceList):
   """List container for resource handles."""
 
-  _handles: dict[str, providers.ResourceHandle]
+  _handles: dict[str, provided.ResourceHandle]
 
-  def __init__(self, handles: list[providers.ResourceHandle]):
+  def __init__(self, handles: list[provided.ResourceHandle]):
     """Constructs a new instance.
 
     Args:
@@ -34,22 +35,22 @@ class ResourceListImpl(providers.ResourceList):
     for h in handles:
       self.append(h)
 
-  def append(self, handle: providers.ResourceHandle) -> None:
+  def append(self, handle: provided.ResourceHandle) -> None:
     self._handles[handle.name] = handle
 
     clean_name = resource_to_python_name(handle.name)
     if clean_name != handle.name:
       self._handles[clean_name] = handle
 
-  def __getitem__(self, name: str) -> providers.ResourceHandle:
+  def __getitem__(self, name: str) -> provided.ResourceHandle:
     if name not in self._handles:
       raise KeyError(f"Resource {name} not registered")
     return self._handles[name]
 
-  def __setitem__(self, name: str, handle: providers.ResourceHandle) -> None:
+  def __setitem__(self, name: str, handle: provided.ResourceHandle) -> None:
     self._handles[name] = handle
 
-  def __getattr__(self, name: str) -> providers.ResourceHandle:
+  def __getattr__(self, name: str) -> provided.ResourceHandle:
     if name not in self._handles:
       raise AttributeError(f"Resource {name} not registered")
     return self._handles[name]
@@ -68,7 +69,7 @@ class ResourceListImpl(providers.ResourceList):
     # to get the unique elements and count them.
     return len(self.__dir__())
 
-  def __iter__(self) -> Iterator[providers.ResourceHandle]:
+  def __iter__(self) -> Iterator[provided.ResourceHandle]:
     for name in dir(self):
       try:
         yield self.__getattr__(name)
@@ -83,7 +84,7 @@ class Resources(providers.ResourceProvider):
   """Wrapper to easily access resources from a solution."""
 
   _resource_registry: resource_registry_client.ResourceRegistryClient
-  _resources: providers.ResourceList
+  _resources: provided.ResourceList
 
   def __init__(
       self, resource_registry: resource_registry_client.ResourceRegistryClient
@@ -103,28 +104,28 @@ class Resources(providers.ResourceProvider):
   def update(self) -> None:
     self._resources = ResourceListImpl([])
     for handle in self._resource_registry.list_all_resource_handles():
-      self._resources.append(providers.ResourceHandle(handle))
+      self._resources.append(provided.ResourceHandle(handle))
 
   def append(
       self,
       handle_or_proto: Union[
-          providers.ResourceHandle, resource_handle_pb2.ResourceHandle
+          provided.ResourceHandle, resource_handle_pb2.ResourceHandle
       ],
   ) -> None:
-    handle: providers.ResourceHandle = None
-    if isinstance(handle_or_proto, providers.ResourceHandle):
+    handle: provided.ResourceHandle = None
+    if isinstance(handle_or_proto, provided.ResourceHandle):
       handle = handle_or_proto
     elif isinstance(handle_or_proto, resource_handle_pb2.ResourceHandle):
-      handle = providers.ResourceHandle(proto=handle_or_proto)
+      handle = provided.ResourceHandle(proto=handle_or_proto)
     else:
       raise TypeError("Invalid argument type")
 
     self._resources.append(handle)
 
-  def __getitem__(self, name: str) -> providers.ResourceHandle:
+  def __getitem__(self, name: str) -> provided.ResourceHandle:
     return self._resources[name]
 
-  def __getattr__(self, name: str) -> providers.ResourceHandle:
+  def __getattr__(self, name: str) -> provided.ResourceHandle:
     return self._resources[name]
 
   def __dir__(self) -> list[str]:

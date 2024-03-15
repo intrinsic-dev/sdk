@@ -425,8 +425,8 @@ py_test(
 )
 
 py_library(
-    name = "providers",
-    srcs = ["providers.py"],
+    name = "provided",
+    srcs = ["provided.py"],
     srcs_version = "PY3",
     deps = [
         ":blackboard_value",
@@ -435,6 +435,16 @@ py_library(
         "//intrinsic/skills/proto:skills_py_pb2",
         "//intrinsic/solutions/internal:actions",
         "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_library(
+    name = "providers",
+    srcs = ["providers.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":provided",
+        "//intrinsic/resources/proto:resource_handle_py_pb2",
     ],
 )
 
@@ -489,6 +499,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":blackboard_value",
+        ":provided",
         ":providers",
         ":skill_parameters",
         ":skill_utils",
@@ -513,7 +524,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":blackboard_value",
-        ":providers",
+        ":provided",
         ":skill_utils",
         ":skills",
         "//intrinsic/executive/proto:behavior_call_py_pb2",

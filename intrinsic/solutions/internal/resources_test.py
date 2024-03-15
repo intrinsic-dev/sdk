@@ -4,7 +4,7 @@ from unittest import mock
 
 from absl.testing import absltest
 from intrinsic.resources.proto import resource_handle_pb2
-from intrinsic.solutions import providers
+from intrinsic.solutions import provided
 from intrinsic.solutions.internal import resources as resources_mod
 
 
@@ -38,7 +38,7 @@ class ResourcesTest(absltest.TestCase):
 
   def test_resource_handle_repr(self):
     """Tests proper repr() implementation."""
-    handle = providers.ResourceHandle.create('Foo', ['type1', 'type2'])
+    handle = provided.ResourceHandle.create('Foo', ['type1', 'type2'])
 
     self.assertEqual(
         repr(handle),
