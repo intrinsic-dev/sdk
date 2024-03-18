@@ -50,6 +50,13 @@ message LogOptions {
   // The token bucket options for rate limiting on the Log() rpc of the data
   // logger.
   optional TokenBucketOptions logging_budget = 4;
+
+  // Priority denotes value of items in the event_source. Higher priority
+  // event sources are prioritized for upload. For upload, this can potentially
+  // lead to starvation as we don't upload lower priority items until all higher
+  // priority items are uploaded. This is an int32 parameter. Larger the value,
+  // higher the priority.
+  optional int32 priority = 5;
 }
 
 message ListLogSourcesResponse {
