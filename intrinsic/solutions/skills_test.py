@@ -198,13 +198,23 @@ def _create_get_skills_response(
   return skill_registry_response
 
 
-def _skill_registry_with_mock_stub():
+def _create_skill_registry_with_mock_stub():
   skill_registry_stub = mock.MagicMock()
   skill_registry = skill_registry_client.SkillRegistryClient(
       skill_registry_stub
   )
 
   return (skill_registry, skill_registry_stub)
+
+
+def _create_skill_registry_for_skill_info(
+    skill_info: skills_pb2.Skill,
+) -> skill_registry_client.SkillRegistryClient:
+  skill_registry_stub = mock.MagicMock()
+  skill_registry_response = skill_registry_pb2.GetSkillsResponse()
+  skill_registry_response.skills.add().CopyFrom(skill_info)
+  skill_registry_stub.GetSkills.return_value = skill_registry_response
+  return skill_registry_client.SkillRegistryClient(skill_registry_stub)
 
 
 class SkillsTest(parameterized.TestCase):
@@ -280,7 +290,9 @@ class SkillsTest(parameterized.TestCase):
       {'parameter': {'my_double': [1, 2]}},
   )
   def test_gen_skill_param_message_type_mismatch(self, parameter):
-    skill_registry, skill_registry_stub = _skill_registry_with_mock_stub()
+    skill_registry, skill_registry_stub = (
+        _create_skill_registry_with_mock_stub()
+    )
     skill_registry_stub.GetSkills.return_value = _create_get_skills_response(
         'my_skill', parameter_defaults=_DEFAULT_TEST_MESSAGE
     )
@@ -297,24 +309,18 @@ class SkillsTest(parameterized.TestCase):
     skill_info = text_format.Parse(
         """id: '%s'""" % skill_id, skills_pb2.Skill()
     )
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub = mock.MagicMock()
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
     skills = skills_mod.Skills(
-        skill_registry, self._create_empty_resource_registry()
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
     )
 
     skills = dir(skills)
     self.assertEqual(skills, ['my_skill'])
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
   def test_gen_skill(self):
-    skill_registry, skill_registry_stub = _skill_registry_with_mock_stub()
+    skill_registry, skill_registry_stub = (
+        _create_skill_registry_with_mock_stub()
+    )
 
     skill_id = 'ai.intrinsic.my_skill'
     resource_slot = 'a'
@@ -400,7 +406,9 @@ class SkillsTest(parameterized.TestCase):
     self.assertEqual(str(skill), skill_str)
 
   def test_gen_skill_uses_defaults(self):
-    skill_registry, skill_registry_stub = _skill_registry_with_mock_stub()
+    skill_registry, skill_registry_stub = (
+        _create_skill_registry_with_mock_stub()
+    )
 
     skill_id = 'ai.intrinsic.my_skill'
     resource_slot = 'a'
@@ -457,7 +465,9 @@ class SkillsTest(parameterized.TestCase):
     self.assertEqual(str(skill), skill_str)
 
   def test_gen_skill_nested_map(self):
-    skill_registry, skill_registry_stub = _skill_registry_with_mock_stub()
+    skill_registry, skill_registry_stub = (
+        _create_skill_registry_with_mock_stub()
+    )
 
     skill_id = 'ai.intrinsic.my_skill'
     resource_slot = 'a'
@@ -512,7 +522,9 @@ class SkillsTest(parameterized.TestCase):
       {'value_specification': skill_utils.CelExpression('test')},
   )
   def test_gen_skill_with_blackboard_parameter(self, value_specification):
-    skill_registry, skill_registry_stub = _skill_registry_with_mock_stub()
+    skill_registry, skill_registry_stub = (
+        _create_skill_registry_with_mock_stub()
+    )
 
     skill_id = 'ai.intrinsic.my_skill'
     resource_slot = 'a'
@@ -561,7 +573,9 @@ class SkillsTest(parameterized.TestCase):
   def test_gen_skill_with_nested_blackboard_parameter(
       self, value_specification
   ):
-    skill_registry, skill_registry_stub = _skill_registry_with_mock_stub()
+    skill_registry, skill_registry_stub = (
+        _create_skill_registry_with_mock_stub()
+    )
 
     skill_id = 'ai.intrinsic.my_skill'
     resource_slot = 'a'
@@ -713,7 +727,9 @@ class SkillsTest(parameterized.TestCase):
     compare.assertProto2Equal(self, expected_proto, skill.proto)
 
   def test_gen_skill_with_map_parameter(self):
-    skill_registry, skill_registry_stub = _skill_registry_with_mock_stub()
+    skill_registry, skill_registry_stub = (
+        _create_skill_registry_with_mock_stub()
+    )
 
     skill_id = 'ai.intrinsic.my_skill'
     resource_slot = 'a'
@@ -749,7 +765,9 @@ class SkillsTest(parameterized.TestCase):
     compare.assertProto2Equal(self, expected_parameters, actual_parameters)
 
   def test_gen_skill_with_message_map_parameter_from_alias(self):
-    skill_registry, skill_registry_stub = _skill_registry_with_mock_stub()
+    skill_registry, skill_registry_stub = (
+        _create_skill_registry_with_mock_stub()
+    )
 
     skill_id = 'ai.intrinsic.my_skill'
     resource_slot = 'a'
@@ -781,7 +799,9 @@ class SkillsTest(parameterized.TestCase):
     compare.assertProto2Equal(self, expected_parameters, actual_parameters)
 
   def test_gen_skill_with_message_map_parameter_from_actual_type(self):
-    skill_registry, skill_registry_stub = _skill_registry_with_mock_stub()
+    skill_registry, skill_registry_stub = (
+        _create_skill_registry_with_mock_stub()
+    )
 
     skill_id = 'ai.intrinsic.my_skill'
     resource_slot = 'a'
@@ -813,7 +833,9 @@ class SkillsTest(parameterized.TestCase):
     compare.assertProto2Equal(self, expected_parameters, actual_parameters)
 
   def test_gen_skill_fails_for_set_instead_of_dict(self):
-    skill_registry, skill_registry_stub = _skill_registry_with_mock_stub()
+    skill_registry, skill_registry_stub = (
+        _create_skill_registry_with_mock_stub()
+    )
 
     skill_id = 'ai.intrinsic.my_skill'
     resource_slot = 'a'
@@ -837,7 +859,9 @@ class SkillsTest(parameterized.TestCase):
       skills.my_skill(string_int32_map={'foo', 1})
 
   def test_gen_skill_map_rejects_blackboard_value(self):
-    skill_registry, skill_registry_stub = _skill_registry_with_mock_stub()
+    skill_registry, skill_registry_stub = (
+        _create_skill_registry_with_mock_stub()
+    )
 
     skill_id = 'ai.intrinsic.my_skill'
     resource_slot = 'a'
@@ -865,7 +889,9 @@ class SkillsTest(parameterized.TestCase):
       )
 
   def test_gen_skill_with_invalid_parameter(self):
-    skill_registry, skill_registry_stub = _skill_registry_with_mock_stub()
+    skill_registry, skill_registry_stub = (
+        _create_skill_registry_with_mock_stub()
+    )
 
     skill_id = 'ai.intrinsic.my_skill'
     resource_name = 'some-name'
@@ -980,7 +1006,6 @@ class SkillsTest(parameterized.TestCase):
     )
 
   def test_gen_skill_incompatible_resources(self):
-    skill_registry_stub = mock.MagicMock()
     skill_id = 'ai.intrinsic.my_skill'
     skill_info = text_format.Parse(
         """id: '%s'
@@ -994,17 +1019,10 @@ class SkillsTest(parameterized.TestCase):
         """ % skill_id,
         skills_pb2.Skill(),
     )
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
     skills = skills_mod.Skills(
-        skill_registry, self._create_empty_resource_registry()
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
     )
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
     resource_a = provided.ResourceHandle.create('resource_a', ['some-type'])
 
@@ -1012,20 +1030,13 @@ class SkillsTest(parameterized.TestCase):
       skills.my_skill(a=resource_a)
 
   def test_skills_access(self):
-    skill_registry_stub = mock.MagicMock()
     skill_id = 'ai.intrinsic.my_skill'
     skill_info = text_format.Parse(
         """id: '%s'""" % skill_id, skills_pb2.Skill()
     )
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
     skills = skills_mod.Skills(
-        skill_registry, self._create_empty_resource_registry()
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
     )
 
     _ = skills['my_skill']
@@ -1066,44 +1077,25 @@ class SkillsTest(parameterized.TestCase):
     )
     # pyformat: enable
 
-    skill_registry_stub = mock.MagicMock()
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
     skills = skills_mod.Skills(
-        skill_registry, self._create_empty_resource_registry()
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
     )
-
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
     my_skill = skills.my_skill(**parameters)
     signature = inspect.signature(my_skill.__init__)
     self.assertSignature(signature, expected_signature)
 
   def test_skill_signature_with_default_value(self):
-    skill_registry_stub = mock.MagicMock()
-
     parameter_defaults = _DEFAULT_TEST_MESSAGE
 
     skill_info = _create_test_skill_info(
         skill_id='ai.intrinsic.my_skill', parameter_defaults=parameter_defaults
     )
-
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
     skills = skills_mod.Skills(
-        skill_registry, self._create_empty_resource_registry()
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
     )
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
     my_skill = skills.my_skill()
     signature = inspect.signature(my_skill.__init__)
@@ -1304,19 +1296,10 @@ Returns:
         'b={handle: "resource_b"})'
     )
 
-    skill_registry_stub = mock.MagicMock()
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
     skills = skills_mod.Skills(
-        skill_registry, self._create_empty_resource_registry()
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
     )
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
     self.assertEqual(skills.my_skill.__doc__, docstring)
 
@@ -1337,15 +1320,6 @@ Returns:
             'a': 'some-type-a',
         },
     )
-
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub = mock.MagicMock()
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
     resource_registry = self._create_resource_registry_with_handles([
         text_format.Parse(
             """name: 'some-resource1'
@@ -1359,9 +1333,9 @@ Returns:
         ),
     ])
 
-    skills = skills_mod.Skills(skill_registry, resource_registry)
-
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
+    skills = skills_mod.Skills(
+        _create_skill_registry_for_skill_info(skill_info), resource_registry
+    )
 
     self.assertEqual(
         skills.my_skill.__doc__,
@@ -1403,21 +1377,14 @@ Returns:
         """ % skill_id,
         skills_pb2.Skill(),
     )
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub = mock.MagicMock()
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
 
     resource_registry = self._create_resource_registry_with_single_handle(
         'some-resource', 'some-type-a'
     )
 
-    skills = skills_mod.Skills(skill_registry, resource_registry)
-
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
+    skills = skills_mod.Skills(
+        _create_skill_registry_for_skill_info(skill_info), resource_registry
+    )
 
     self.assertEqual(
         skills.my_skill.__doc__,
@@ -1451,21 +1418,14 @@ Returns:
         """ % skill_id,
         skills_pb2.Skill(),
     )
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub = mock.MagicMock()
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
 
     resource_registry = self._create_resource_registry_with_single_handle(
         'some-resource', 'some-type-a'
     )
 
-    skills = skills_mod.Skills(skill_registry, resource_registry)
-
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
+    skills = skills_mod.Skills(
+        _create_skill_registry_for_skill_info(skill_info), resource_registry
+    )
 
     class BogusObject:
 
@@ -1479,19 +1439,10 @@ Returns:
     """Tests if timeouts are transferred to proto."""
     skill_id = 'ai.intrinsic.my_skill'
     skill_info = text_format.Parse(f"id: '{skill_id}'", skills_pb2.Skill())
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub = mock.MagicMock()
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
     skills = skills_mod.Skills(
-        skill_registry, self._create_empty_resource_registry()
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
     )
-
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
     skill = skills.my_skill()
     skill.execute_timeout = datetime.timedelta(seconds=5)
@@ -1518,19 +1469,10 @@ Returns:
         skill_id='ai.intrinsic.my_skill',
         parameter_defaults=_DEFAULT_TEST_MESSAGE,
     )
-
-    skill_registry_stub = mock.MagicMock()
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
     skills = skills_mod.Skills(
-        skill_registry, self._create_empty_resource_registry()
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
     )
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
     sub_message = skills.my_skill.SubMessage(
         name='nested_message_classes_test_name'
@@ -1552,19 +1494,10 @@ Returns:
         skill_id='ai.intrinsic.my_skill',
         parameter_defaults=test_skill_params_pb2.TestMessage(),
     )
-
-    skill_registry_stub = mock.MagicMock()
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
     skills = skills_mod.Skills(
-        skill_registry, self._create_empty_resource_registry()
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
     )
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
     sub_message = skills.my_skill.SubMessage(
         name=skill_utils.CelExpression('test')
@@ -1595,20 +1528,10 @@ Returns:
         skill_id='ai.intrinsic.my_skill',
         parameter_defaults=_DEFAULT_TEST_MESSAGE,
     )
-
-    skill_registry_stub = mock.MagicMock()
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
     skills = skills_mod.Skills(
-        skill_registry, self._create_empty_resource_registry()
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
     )
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
     parameters = {'my_float': 1.0, 'my_bool': True}
     skill = skills.my_skill(**parameters)
@@ -1621,7 +1544,9 @@ Returns:
     self.assertEqual(skill.result.value_access_path(), skill.result_key)
 
   def test_gen_message_wrapper(self):
-    skill_registry, skill_registry_stub = _skill_registry_with_mock_stub()
+    skill_registry, skill_registry_stub = (
+        _create_skill_registry_with_mock_stub()
+    )
 
     skill_id = 'ai.intrinsic.my_skill'
     resource_slot = 'a'
@@ -1649,20 +1574,10 @@ Returns:
 
   def test_message_wrapper_signature(self):
     skill_info = _create_test_skill_info(skill_id='ai.intrinsic.my_skill')
-
-    skill_registry_stub = mock.MagicMock()
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
     skills = skills_mod.Skills(
-        skill_registry, self._create_empty_resource_registry()
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
     )
-
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
     signature = inspect.signature(skills.my_skill.SubMessage)
     self.assertSignature(signature, '(*, name: str)')
@@ -1674,25 +1589,72 @@ Returns:
         ' intrinsic.solutions.skills.my_skill.AnotherType)',
     )
 
+  def test_message_wrapper_params(self):
+    skill_info = _create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=test_skill_params_pb2.TestMessageWrapped(),
+    )
+    skills = skills_mod.Skills(
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
+    )
+
+    expected_test_message = test_skill_params_pb2.TestMessage(
+        my_double=2,
+        my_float=-1.8,
+        my_int32=5,
+        my_uint32=11,
+        my_bool=True,
+        my_string='bar',
+        repeated_submessages=[
+            test_skill_params_pb2.SubMessage(),
+            test_skill_params_pb2.SubMessage(name='foo'),
+            test_skill_params_pb2.SubMessage(),
+            test_skill_params_pb2.SubMessage(),
+        ],
+    )
+
+    test_message_wrapper = skills.my_skill.TestMessage(
+        my_double=2.0,
+        my_float=-1.8,
+        my_int32=5,
+        my_int64=blackboard_value.BlackboardValue({}, 'my_int64', None, None),
+        my_uint32=11,
+        my_uint64=skill_utils.CelExpression('my_uint64'),
+        my_bool=True,
+        my_string='bar',
+        repeated_submessages=[
+            blackboard_value.BlackboardValue({}, 'test', None, None),
+            test_skill_params_pb2.SubMessage(name='foo'),
+            blackboard_value.BlackboardValue({}, 'bar', None, None),
+            skill_utils.CelExpression('fax'),
+        ],
+    )
+
+    self.assertContainsSubset(
+        {
+            'repeated_submessages[0]': 'test',
+            'repeated_submessages[2]': 'bar',
+            'repeated_submessages[3]': 'fax',
+            'my_int64': 'my_int64',
+            'my_uint64': 'my_uint64',
+        },
+        test_message_wrapper._blackboard_params,
+    )
+    compare.assertProto2Equal(
+        self, test_message_wrapper.wrapped_message, expected_test_message
+    )
+
   def test_top_level_enum_values(self):
     """If the skill parameter proto defines any enums, the values of those enums should become constants on the skill wrapper class."""
     skill_info = _create_test_skill_info(
         skill_id='ai.intrinsic.my_skill',
         parameter_defaults=_DEFAULT_TEST_MESSAGE,
     )
-
-    skill_registry_stub = mock.MagicMock()
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
     skills = skills_mod.Skills(
-        skill_registry, self._create_empty_resource_registry()
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
     )
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
 
     self.assertTrue(hasattr(skills.my_skill, 'ONE'))
     self.assertEqual(getattr(skills.my_skill, 'ONE'), 1)

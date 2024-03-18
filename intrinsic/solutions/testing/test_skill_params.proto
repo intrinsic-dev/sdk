@@ -75,6 +75,10 @@ message TestMessage {
   SomeType non_unique_field_name = 31;
 }
 
+message TestMessageWrapped {
+  TestMessage test_message = 1;
+}
+
 message ResourceConflict {
   // param a
   optional string a = 1;
