@@ -12,11 +12,13 @@ package(
 
 proto_library(
     name = "no_op_skill_proto",
+    testonly = False,
     srcs = ["no_op_skill.proto"],
 )
 
 cc_proto_library(
     name = "no_op_skill_cc_proto",
+    testonly = False,
     deps = [":no_op_skill_proto"],
 )
 
@@ -40,6 +42,7 @@ py_library(
 
 cc_library(
     name = "no_op_skill",
+    testonly = False,
     srcs = ["no_op_skill.cc"],
     hdrs = ["no_op_skill.h"],
     deps = [
