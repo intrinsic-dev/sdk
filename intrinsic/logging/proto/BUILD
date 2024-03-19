@@ -166,6 +166,7 @@ proto_library(
         ":blob_proto",
         ":log_item_proto",
         "@com_google_protobuf//:empty_proto",
+        "@com_google_protobuf//:timestamp_proto",
     ],
 )
 

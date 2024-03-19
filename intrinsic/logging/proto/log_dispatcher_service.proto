@@ -5,6 +5,7 @@ syntax = "proto3";
 package intrinsic_proto.data_logger;
 
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 import "intrinsic/logging/proto/blob.proto";
 import "intrinsic/logging/proto/log_item.proto";
 
@@ -30,14 +31,78 @@ message PutLogItemsResponse {
   // log items in request == (log_items_ingested + log_items_dropped)
 }
 
+// A single blob to be sent to the LogDispatcher, to be PUT into storage
+// on the cloud.
 message PutBlobRequest {
   Blob blob = 1;
 
   // The cluster the blob originated from.
   string workcell_name = 2;
 
-  // The organization ID prefixes the bucket that blobs are uploaded into.
+  // The organization ID prefixes the bucket that logs are uploaded into.
   string organization_id = 3;
+}
+
+// ID of a cloud structured log source.
+message LogSource {
+  string workcell_name = 1;  // The cluster the logs originated from.
+  string event_source = 2;
+}
+
+// Downsampling options.
+message DownsamplingOptions {
+  oneof downsampling {
+    // Duration in milliseconds between subsequent LogItems.
+    uint32 sampling_period_ms = 1;
+
+    // Decimation. Keep every N logs and skip everything else.
+    uint32 keep_every_n_items = 2;
+  }
+}
+
+// A request to load one batch of LogItems into the cloud cache, for later
+// retrieval using GetCloudLogItems.
+//
+// Will return a cache session token to retrieve the LogItems.
+message LoadCloudLogItemsRequest {
+  message LoadCloudLogItemsQuery {
+    LogSource log_source = 1;
+    DownsamplingOptions downsampling_options = 2;
+  }
+
+  LoadCloudLogItemsQuery load_query = 1;
+  google.protobuf.Timestamp start_time = 2;
+  google.protobuf.Timestamp end_time = 3;
+
+  // Truncate load if any of these parameters are met.
+  optional uint32 max_num_items = 4;           // Defaults to 100000.
+  optional double max_total_byte_size_mb = 5;  // Cumulative, defaults to 1GB
+
+  // Session is bound to organization ID.
+  string organization_id = 6;
+}
+
+message LoadCloudLogItemsResponse {
+  // Specifies the range of logs that were loaded and can be queried.
+  message LoadedCloudLogItems {
+    bytes cursor = 1;  // Opaque cursor to the first log in range.
+
+    LogSource log_source = 2;
+    google.protobuf.Timestamp start_time = 3;
+    google.protobuf.Timestamp end_time = 4;
+
+    uint32 num_items = 5;
+    double total_byte_size_mb = 6;
+    DownsamplingOptions downsampling_options = 7;
+  }
+
+  LoadedCloudLogItems loaded_items = 1;
+
+  string session_token = 2;              // Cache token for session.
+  google.protobuf.Timestamp expiry = 3;  // When the logs will be deleted.
+
+  bool truncated = 4;  // True if truncated (from client or server-side limits).
+  string truncation_cause = 5;
 }
 
 // Service to relay and dispatch CRUD operations on behalf of users for items
@@ -49,4 +114,9 @@ service LogDispatcher {
 
   // Put one Blob to the cloud.
   rpc PutBlob(PutBlobRequest) returns (google.protobuf.Empty) {}
+
+  // Load a batch of LogItems into the cloud cache and get a cache token to
+  // retrieve the LogItems later.
+  rpc LoadCloudLogItems(LoadCloudLogItemsRequest)
+      returns (LoadCloudLogItemsResponse) {}
 }
