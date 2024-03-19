@@ -105,6 +105,45 @@ message LoadCloudLogItemsResponse {
   string truncation_cause = 5;
 }
 
+message GetCloudLogItemsRequest {
+  message GetCloudLogItemsQuery {
+    LogSource log_source = 1;
+    google.protobuf.Timestamp start_time = 2;
+    google.protobuf.Timestamp end_time = 3;
+  }
+
+  oneof query {
+    GetCloudLogItemsQuery get_query = 1;
+    bytes cursor = 2;  // Generally used for pagination.
+  }
+
+  string session_token = 3;
+
+  // Limits for the number of results per page.
+  optional uint32 max_num_items = 4;           // Defaults to 10000.
+  optional double max_total_byte_size_mb = 5;  // Cumulative, defaults to 25MB
+
+  // Session is bound to organization_id.
+  string organization_id = 6;
+}
+
+message GetCloudLogItemsResponse {
+  message Metadata {
+    google.protobuf.Timestamp start_time = 1;
+    google.protobuf.Timestamp end_time = 2;
+    uint32 num_items = 3;
+    double total_byte_size_mb = 4;
+  }
+
+  repeated intrinsic_proto.data_logger.LogItem items = 1;
+
+  // Opaque cursor to the next page of results. If empty, no next page exists.
+  optional bytes next_page_cursor = 2;
+
+  // Metadata for this page of results.
+  Metadata results_metadata = 3;
+}
+
 // Service to relay and dispatch CRUD operations on behalf of users for items
 // relating to structured logs.
 // (e.g., putting logs, uploading blobs, etc.)
@@ -119,4 +158,9 @@ service LogDispatcher {
   // retrieve the LogItems later.
   rpc LoadCloudLogItems(LoadCloudLogItemsRequest)
       returns (LoadCloudLogItemsResponse) {}
+
+  // Fetch a batch of LogItems loaded with LoadCloudLogItems from the cloud
+  // cache.
+  rpc GetCloudLogItems(GetCloudLogItemsRequest)
+      returns (GetCloudLogItemsResponse) {}
 }
