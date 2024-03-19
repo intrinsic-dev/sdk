@@ -2,6 +2,8 @@
 
 """Utility functions for working with skill classes."""
 
+from __future__ import annotations
+
 import collections
 import dataclasses
 import datetime
@@ -149,7 +151,7 @@ _MESSAGE_NAME_TO_PYTHONIC_TYPE = {
 
 def repeated_pythonic_field_type(
     field_descriptor: descriptor.FieldDescriptor,
-    message_classes: Dict[str, Type[message.Message]],
+    wrapper_classes: dict[str, Type[MessageWrapper]],
 ) -> Type[Sequence[Any]]:
   """Returns a 'pythonic' type based on the field_descriptor.
 
@@ -157,7 +159,8 @@ def repeated_pythonic_field_type(
 
   Args:
     field_descriptor: The Protobuf descriptor for the field
-    message_classes: Map from proto type names to corresponding message classes.
+    wrapper_classes: Map from proto message names to corresponding message
+      wrapper classes.
 
   Returns:
     The Python type of the field.
@@ -174,14 +177,14 @@ def repeated_pythonic_field_type(
               field_descriptor.message_type.full_name
           ]
       ]
-    return Sequence[message_classes[field_descriptor.message_type.full_name]]
+    return Sequence[wrapper_classes[field_descriptor.message_type.full_name]]
 
   return Sequence[_PYTHONIC_SCALAR_FIELD_TYPE[field_descriptor.type]]
 
 
 def pythonic_field_type(
     field_descriptor: descriptor.FieldDescriptor,
-    message_classes: Dict[str, Type[message.Message]],
+    wrapper_classes: dict[str, Type[MessageWrapper]],
 ) -> Type[Any]:
   """Returns a 'pythonic' type based on the field_descriptor.
 
@@ -189,7 +192,8 @@ def pythonic_field_type(
 
   Args:
     field_descriptor: The Protobuf descriptor for the field
-    message_classes: Map from proto type names to corresponding message classes.
+    wrapper_classes: Map from proto message names to corresponding message
+      wrapper classes.
 
   Returns:
     The Python type of the field.
@@ -198,7 +202,7 @@ def pythonic_field_type(
     message_full_name = field_descriptor.message_type.full_name
     if message_full_name in _MESSAGE_NAME_TO_PYTHONIC_TYPE:
       return _MESSAGE_NAME_TO_PYTHONIC_TYPE[message_full_name]
-    return message_classes[field_descriptor.message_type.full_name]
+    return wrapper_classes[field_descriptor.message_type.full_name]
 
   return _PYTHONIC_SCALAR_FIELD_TYPE[field_descriptor.type]
 
@@ -1079,12 +1083,17 @@ class MessageWrapper:
   cannot be added to the message directly.
   """
 
+  # Class attributes
+  _wrapped_type: Type[message.Message]
+
+  # Instance attributes
   _wrapped_message: Optional[message.Message]
+  _blackboard_params: dict[str, Any]
 
   def __init__(self):
     """This constructor normally will not be called from outside."""
     self._wrapped_message = None
-    self._blackboard_params: Dict[str, Any] = {}
+    self._blackboard_params = {}
 
   def _set_params(self, **kwargs) -> List[str]:
     """Set parameters of message.
@@ -1183,6 +1192,10 @@ class MessageWrapper:
       return self._wrapped_message
     return None
 
+  @utils.classproperty
+  def wrapped_type(cls) -> Type[message.Message]:  # pylint:disable=no-self-argument
+    return cls._wrapped_type
+
   @property
   def blackboard_params(self) -> Dict[str, str]:
     return self._blackboard_params
@@ -1212,8 +1225,8 @@ class MessageWrapper:
 
 def _gen_wrapper_class(
     wrapped_type: Type[message.Message],
+    skill_name: str,
     type_name: str,
-    message_classes: Dict[str, Type[message.Message]],
     field_doc_strings: Dict[str, str],
 ) -> Type[Any]:
   """Generates a new message wrapper class type.
@@ -1226,27 +1239,26 @@ def _gen_wrapper_class(
 
   Args:
     wrapped_type: Message to wrap.
+    skill_name: Name of the skill.
     type_name: Type name of the object to wrap.
-    message_classes: Map from proto type names to corresponding message classes.
     field_doc_strings: Dict mapping from field name to doc string comment.
 
   Returns:
     A new type for a MessageWrapper sub-class.
   """
+  solutions_module = __name__.replace(".skill_utils", "")
+
   type_class = type(
-      "MessageWrapper_" + type_name,
+      type_name,
       (MessageWrapper,),
       {
           "__doc__": _gen_init_docstring(
               wrapped_type, type_name, field_doc_strings
           ),
-          "message_type": lambda: wrapped_type,
+          "__module__": solutions_module + ".skills." + skill_name,
+          "_wrapped_type": wrapped_type,
       },
   )
-  init_fun = _gen_init_fun(
-      wrapped_type, type_name, message_classes, field_doc_strings
-  )
-  type_class.__init__ = init_fun
 
   msg = wrapped_type()
   for enum_type in msg.DESCRIPTOR.enum_types:
@@ -1259,7 +1271,7 @@ def _gen_wrapper_class(
 def _gen_init_fun(
     wrapped_type: Type[message.Message],
     type_name: str,
-    message_classes: Dict[str, Type[message.Message]],
+    wrapper_classes: dict[str, Type[MessageWrapper]],
     field_doc_strings: Dict[str, str],
 ) -> Callable[[Any, Any], None]:
   """Generates custom __init__ class method with proper auto-completion info.
@@ -1267,7 +1279,8 @@ def _gen_init_fun(
   Args:
     wrapped_type: Message to wrap.
     type_name: Type name of the object to wrap.
-    message_classes: Map from proto type names to corresponding message classes.
+    wrapper_classes: Map from proto message names to corresponding message
+      wrapper classes.
     field_doc_strings: dict mapping from field name to doc string comment.
 
   Returns:
@@ -1276,7 +1289,7 @@ def _gen_init_fun(
   """
 
   def new_init_fun(self, **kwargs) -> None:
-    MessageWrapper.__init__(self)
+    MessageWrapper.__init__(self)  # pytype: disable=wrong-arg-count
     self._wrapped_message = wrapped_type()  # pylint: disable=protected-access
     params_set = self._set_params(**kwargs)  # pylint: disable=protected-access
     # Arguments which are not expected parameters.
@@ -1290,7 +1303,7 @@ def _gen_init_fun(
           inspect.Parameter.POSITIONAL_OR_KEYWORD,
           annotation="MessageWrapper_" + type_name,
       )
-  ] + _gen_init_params(wrapped_type, message_classes)
+  ] + _gen_init_params(wrapped_type, wrapper_classes)
   new_init_fun.__signature__ = inspect.Signature(params)
   new_init_fun.__annotations__ = collections.OrderedDict(
       [(p.name, p.annotation) for p in params]
@@ -1357,20 +1370,21 @@ def _gen_init_docstring(
 
 def _gen_init_params(
     wrapped_type: Type[message.Message],
-    message_classes: Dict[str, Type[message.Message]],
+    wrapper_classes: dict[str, Type[MessageWrapper]],
 ) -> List[inspect.Parameter]:
   """Create argument typing information for a given message.
 
   Args:
     wrapped_type: Message to be wrapped.
-    message_classes: Map from proto type names to corresponding message classes.
+    wrapper_classes: Map from proto message names to corresponding message
+      wrapper classes.
 
   Returns:
     List of extracted parameters with typing information.
   """
   defaults = wrapped_type()
   param_info = extract_parameter_information_from_message(
-      defaults, None, message_classes
+      defaults, None, wrapper_classes
   )
   params = [p for p, _ in param_info]
 
@@ -1382,28 +1396,27 @@ def _gen_init_params(
 
 def update_message_class_modules(
     cls: Type[Any],
-    cls_name: str,
-    module_prefix: str,
+    skill_name: str,
     enum_types: List[descriptor.EnumDescriptor],
     nested_classes: List[
         Tuple[str, Type[message.Message], descriptor.FieldDescriptor]
     ],
-    message_classes: Dict[str, Type[message.Message]],
     field_doc_strings: Dict[str, str],
-) -> None:
+) -> dict[str, Type[MessageWrapper]]:
   """Updates given class with type aliases.
 
   Creates aliases (members) in the given cls for the given nested classes.
 
   Args:
     cls: class to modify
-    cls_name: Name of cls (can be different for auto-generated classes)
-    module_prefix: module which to make prefix the class name with
+    skill_name: Name of skill to correspoding to 'cls'.
     enum_types: Top-level enum classes whose values should be aliased to
       attributes of the message class.
     nested_classes: classes to be aliased
-    message_classes: Map from proto type names to corresponding message classes.
     field_doc_strings: dict mapping from field name to doc string comment.
+
+  Returns:
+    Map from proto message names to corresponding message wrapper classes.
   """
   for enum_type in enum_types:
     for enum_value in enum_type.values:
@@ -1420,14 +1433,22 @@ def update_message_class_modules(
       else:
         setattr(cls, value_name, enum_value.number)
 
+  wrapper_classes: dict[str, Type[MessageWrapper]] = {}
   for nested_class_attr_name, message_type, field in nested_classes:
     if field.message_type.full_name in _MESSAGE_NAME_TO_PYTHONIC_TYPE:
       continue
-    # display module as desired for messages
-    message_type.__module__ = module_prefix + "." + cls_name
+
+    wrapper_class = _gen_wrapper_class(
+        message_type,
+        skill_name,
+        nested_class_attr_name,
+        field_doc_strings,
+    )
+    wrapper_classes[field.message_type.full_name] = wrapper_class
+
     if (
         hasattr(cls, nested_class_attr_name)
-        and getattr(cls, nested_class_attr_name).message_type() != message_type
+        and getattr(cls, nested_class_attr_name).wrapped_type != message_type
     ):
       print(
           f"Duplicate definition of type {nested_class_attr_name}.",
@@ -1438,16 +1459,20 @@ def update_message_class_modules(
           ),
       )
     else:
-      setattr(
-          cls,
-          nested_class_attr_name,
-          _gen_wrapper_class(
-              message_type,
-              nested_class_attr_name,
-              message_classes,
-              field_doc_strings,
-          ),
-      )
+      setattr(cls, nested_class_attr_name, wrapper_class)
+
+  # The init function of a wrapper class may reference any other wrapper class
+  # (proto definitions can be recursive!). So we can only generate the init
+  # functions after all classes have been generated.
+  for message_name, wrapper_class in wrapper_classes.items():
+    wrapper_class.__init__ = _gen_init_fun(
+        wrapper_class.wrapped_type,
+        message_name,
+        wrapper_classes,
+        field_doc_strings,
+    )
+
+  return wrapper_classes
 
 
 def deconflict_param_and_resources(
@@ -1495,14 +1520,15 @@ def deconflict_param_and_resources(
 def extract_parameter_information_from_message(
     param_defaults: message.Message,
     skill_params: Optional[skill_parameters.SkillParameters],
-    message_classes: Dict[str, Type[message.Message]],
+    wrapper_classes: dict[str, Type[MessageWrapper]],
 ) -> List[Tuple[inspect.Parameter, str]]:
   """Extracts signature information from message and SkillParameters.
 
   Args:
     param_defaults: The message filled with default parameters.
     skill_params: Utility class to inspect the skill's parameters.
-    message_classes: Map from proto type names to corresponding message classes.
+    wrapper_classes: Map from proto message names to corresponding message
+      wrapper classes.
 
   Returns:
     List of extracted parameters together with the corresponding field name.
@@ -1527,14 +1553,14 @@ def extract_parameter_information_from_message(
         else:
           default_value = map_field_default
       else:
-        field_type = repeated_pythonic_field_type(field, message_classes)
+        field_type = repeated_pythonic_field_type(field, wrapper_classes)
         repeated_field_default = getattr(param_defaults, field.name)
         default_value = [
             pythonic_field_default_value(value, field)
             for value in repeated_field_default
         ]
     else:
-      field_type = pythonic_field_type(field, message_classes)
+      field_type = pythonic_field_type(field, wrapper_classes)
       if skill_params and skill_params.has_default_value(field.name):
         default_value = pythonic_field_default_value(
             getattr(param_defaults, field.name), field

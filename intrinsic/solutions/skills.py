@@ -372,7 +372,7 @@ def _gen_init_docstring(
 def _gen_init_params(
     info: provided.SkillInfo,
     compatible_resources: dict[str, provided.ResourceList],
-    message_classes: dict[str, Type[message.Message]],
+    wrapper_classes: dict[str, Type[skill_utils.MessageWrapper]],
 ) -> list[inspect.Parameter]:
   """Create argument typing information for a given skill info.
 
@@ -385,7 +385,8 @@ def _gen_init_params(
     compatible_resources: Map from resource slot names to resources suitable for
       that slot. It is used to determine whether a default value can be assigned
       for resource parameters.
-    message_classes: Map from proto type names to corresponding message classes.
+    wrapper_classes: Map from proto message names to corresponding message
+      wrapper classes.
 
   Returns:
     A dict mapping from field name to pythonic type.
@@ -411,7 +412,7 @@ def _gen_init_params(
         param_defaults, _get_descriptor(info.skill_proto.parameter_description)
     )
     param_info = skill_utils.extract_parameter_information_from_message(
-        param_defaults, skill_params, message_classes
+        param_defaults, skill_params, wrapper_classes
     )
     if param_info:
       params, param_names = map(list, zip(*param_info))
@@ -456,7 +457,7 @@ def _gen_init_params(
 def _gen_init_fun(
     info: provided.SkillInfo,
     compatible_resources: dict[str, provided.ResourceList],
-    message_classes: dict[str, Type[message.Message]],
+    wrapper_classes: dict[str, Type[skill_utils.MessageWrapper]],
 ) -> Callable[[Any, Any], "GeneratedSkill"]:
   """Generate custom __init__ class method with proper auto-completion info.
 
@@ -465,7 +466,8 @@ def _gen_init_fun(
     compatible_resources: Map from resource slot names to resources suitable for
       that slot. It is used to determine whether a default value can be assigned
       for resource parameters.
-    message_classes: Map from proto type names to corresponding message classes.
+    wrapper_classes: Map from proto message names to corresponding message
+      wrapper classes.
 
   Returns:
     A function suitable to be used as __init__ function for a GeneratedSkill
@@ -494,7 +496,7 @@ def _gen_init_fun(
           inspect.Parameter.POSITIONAL_OR_KEYWORD,
           annotation="Skill_" + _skill_name_from_id(info.skill_proto.id),
       )
-  ] + _gen_init_params(info, compatible_resources, message_classes)
+  ] + _gen_init_params(info, compatible_resources, wrapper_classes)
   new_init_fun.__signature__ = inspect.Signature(params)
   new_init_fun.__annotations__ = collections.OrderedDict(
       [(p.name, p.annotation) for p in params]
@@ -525,13 +527,11 @@ def _gen_skill_class(
     A new type for a GeneratedSkill sub-class.
   """
   nested_classes = []
-  message_classes: dict[str, Type[message.Message]] = {}
   enum_types = []
   if info.skill_proto.HasField("parameter_description"):
     skill_utils.get_field_classes_to_alias(
         info.parameter_descriptor(), info.message_classes, nested_classes
     )
-    message_classes = info.message_classes
     enum_types = info.parameter_descriptor().enum_types
 
   skill_methods = {
@@ -548,17 +548,15 @@ def _gen_skill_class(
       "Skill_" + info.skill_proto.skill_name, (GeneratedSkill,), skill_methods
   )
 
-  skill_utils.update_message_class_modules(
+  wrapper_classes = skill_utils.update_message_class_modules(
       type_class,
       _skill_name_from_id(info.skill_proto.id),
-      __name__,
       enum_types,
       nested_classes,
-      message_classes,
       dict(info.skill_proto.parameter_description.parameter_field_comments),
   )
 
-  init_fun = _gen_init_fun(info, compatible_resources, message_classes)
+  init_fun = _gen_init_fun(info, compatible_resources, wrapper_classes)
   type_class.__init__ = init_fun
 
   return type_class
