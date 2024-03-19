@@ -29,6 +29,8 @@ const (
 	ClusterCmdName = "cluster"
 	// ProcessCmdName is the name of the `inctl process` command.
 	ProcessCmdName = "process"
+	// ServiceCmdName is the name of the `inctl service` command.
+	ServiceCmdName = "service"
 	// SolutionCmdName is the name of the `inctl solution` command.
 	SolutionCmdName = "solution"
 	// SolutionsCmdName is the alias for the `inctl solution` command.

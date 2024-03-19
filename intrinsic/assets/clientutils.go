@@ -74,8 +74,8 @@ func DialCatalogFromInctl(cmd *cobra.Command, flags *cmdutils.CmdFlags) (*grpc.C
 		cmd.Context(), DialCatalogOptions{
 			Address:      "",
 			APIKey:       "",
-			Organization: flags.GetFlagOrganization(),
-			Project:      flags.GetFlagProject(),
+			Organization: "",
+			Project:      "intrinsic-assets-prod",
 			UserReader:   bufio.NewReader(cmd.InOrStdin()),
 			UserWriter:   cmd.OutOrStdout(),
 		},
