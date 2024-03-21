@@ -27,6 +27,7 @@ go_binary(
     srcs = ["gen_skill_id.go"],
     visibility = ["//visibility:public"],
     deps = [
+        "//intrinsic/assets:idutils",
         "//intrinsic/production:intrinsic",
         "//intrinsic/skills/proto:skill_manifest_go_proto",
         "//intrinsic/util/proto:protoio",

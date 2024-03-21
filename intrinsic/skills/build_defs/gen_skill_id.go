@@ -9,15 +9,15 @@ import (
 
 	"flag"
 	log "github.com/golang/glog"
+	"intrinsic/assets/idutils"
 	intrinsic "intrinsic/production/intrinsic"
 	smpb "intrinsic/skills/proto/skill_manifest_go_proto"
 	"intrinsic/util/proto/protoio"
 )
 
 var (
-	flagManifest   = flag.String("manifest_pbbin_filename", "", "Path to the manifest binary proto file.")
-	flagOutPackage = flag.String("out_package_filename", "", "Path to file to write package name to.")
-	flagOutName    = flag.String("out_name_filename", "", "Path to file to write skill name to.")
+	flagManifest = flag.String("manifest_pbbin_filename", "", "Path to the manifest binary proto file.")
+	flagOutID    = flag.String("out_id_filename", "", "Path to file to which to write the skills' ID.")
 )
 
 func writeToFile(path string, content string) error {
@@ -42,10 +42,11 @@ func genSkillIDFile() error {
 		return fmt.Errorf("failed to read manifest: %v", err)
 	}
 
-	if err := writeToFile(*flagOutPackage, m.GetId().GetPackage()); err != nil {
-		return err
+	id, err := idutils.IDFromProto(m.GetId())
+	if err != nil {
+		return fmt.Errorf("invalid skill ID: %v", err)
 	}
-	if err := writeToFile(*flagOutName, m.GetId().GetName()); err != nil {
+	if err := writeToFile(*flagOutID, id); err != nil {
 		return err
 	}
 
@@ -55,6 +56,6 @@ func genSkillIDFile() error {
 func main() {
 	intrinsic.Init()
 	if err := genSkillIDFile(); err != nil {
-		log.Exitf("Failed generate skill ID filet: %v", err)
+		log.Exitf("Failed generate skill ID file: %v", err)
 	}
 }

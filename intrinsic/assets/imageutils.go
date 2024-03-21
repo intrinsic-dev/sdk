@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
+	"intrinsic/assets/idutils"
 	"intrinsic/assets/imagetransfer"
 	idpb "intrinsic/assets/proto/id_go_proto"
 	"intrinsic/kubernetes/workcell_spec/imagetags"
@@ -40,10 +40,7 @@ const (
 	// Number of times to try uploading a container image if we get retriable errors.
 	remoteWriteTries = 5
 
-	dockerLabelSkillIDKey        = "ai.intrinsic.skill-id"
-	dockerLabelSkillNameKey      = "ai.intrinsic.skill-name"
-	dockerLabelPackageNameKey    = "ai.intrinsic.package-name"
-	dockerLabelSkillImageNameKey = "ai.intrinsic.skill-image-name"
+	dockerLabelSkillIDKey = "ai.intrinsic.asset-id"
 )
 
 // SkillInstallerParams contains parameters used to install a docker image that
@@ -69,10 +66,6 @@ const (
 	Name TargetType = "name"
 	ID TargetType = "id"
 )
-
-func getIDFromProto(idProto *idpb.Id) string {
-	return idProto.GetPackage() + "." + idProto.GetName()
-}
 
 // buildExec runs the build command and captures its output.
 func buildExec(buildCommand string, buildArgs ...string) ([]byte, error) {
@@ -330,10 +323,10 @@ func extractSkillIDFromSkillRule(target string) (string, error) {
 		return "", fmt.Errorf("could not read file %q: %v", outputFile, err)
 	}
 
-	return getIDFromProto(idProto), nil
+	return idutils.IDFromProto(idProto)
 }
 
-// SkillIDFromTarget gets the skill name from the given target and registry.
+// SkillIDFromTarget gets the skill ID from the given target and registry.
 func SkillIDFromTarget(target string, targetType TargetType, t imagetransfer.Transferer) (string, error) {
 	switch targetType {
 	case Build:
@@ -377,31 +370,17 @@ func GetSkillInstallerParams(image containerregistry.Image) (*SkillInstallerPara
 		return nil, errors.Wrapf(err, "could not extract installer labels from image file")
 	}
 	imageLabels := configFile.Config.Labels
-	imageName, ok := imageLabels[dockerLabelSkillImageNameKey]
+	skillID, ok := imageLabels[dockerLabelSkillIDKey]
 	if !ok {
-		return nil, fmt.Errorf("docker container does not have label %q", dockerLabelSkillImageNameKey)
+		return nil, fmt.Errorf("docker container does not have label %q", dockerLabelSkillIDKey)
 	}
-	if skillIDBinary, ok := imageLabels[dockerLabelSkillIDKey]; ok {
-		idProto := &idpb.Id{}
-		if err := proto.Unmarshal([]byte(skillIDBinary), idProto); err != nil {
-			return nil, fmt.Errorf("could not unmarshal the id proto from the extracted label %q: %v", dockerLabelSkillIDKey, err)
-		}
-		return &SkillInstallerParams{
-			SkillID:   getIDFromProto(idProto),
-			ImageName: imageName,
-		}, nil
+	skillIDLabel, err := idutils.ToLabel(skillID)
+	if err != nil {
+		return nil, fmt.Errorf("could not convert skill ID %q to label: %v", skillID, err)
 	}
-
-	skillName, ok := imageLabels[dockerLabelSkillNameKey]
-	if !ok {
-		return nil, fmt.Errorf("docker container does not have label %q", dockerLabelSkillNameKey)
-	}
-	packageName, ok := imageLabels[dockerLabelPackageNameKey]
-	if !ok {
-		return nil, fmt.Errorf("docker container does not have label %q", dockerLabelPackageNameKey)
-	}
+	imageName := fmt.Sprintf("skill-%s", skillIDLabel)
 	return &SkillInstallerParams{
-		SkillID:   packageName + "." + skillName,
+		SkillID:   skillID,
 		ImageName: imageName,
 	}, nil
 }

@@ -238,8 +238,7 @@ _skill_service_config_manifest = rule(
 SkillIdInfo = provider(
     "Id for a skill",
     fields = {
-        "skill_package": "The skill package name.",
-        "skill_name": "The skill name.",
+        "id_filename": "The path to the file containing the skill ID.",
     },
 )
 
@@ -250,21 +249,18 @@ def _skill_id_impl(ctx):
         "--manifest_pbbin_filename",
         manifest_pbbin_file,
     ).add(
-        "--out_package_filename",
-        ctx.outputs.package_name,
-    ).add(
-        "--out_name_filename",
-        ctx.outputs.skill_name,
+        "--out_id_filename",
+        ctx.outputs.id_filename,
     )
 
     ctx.actions.run(
-        outputs = [ctx.outputs.package_name, ctx.outputs.skill_name],
+        outputs = [ctx.outputs.id_filename],
         inputs = [manifest_pbbin_file],
         executable = ctx.executable._skill_id_gen,
         arguments = [arguments],
     )
 
-    return SkillIdInfo(skill_package = ctx.outputs.package_name, skill_name = ctx.outputs.skill_name)
+    return SkillIdInfo(id_filename = ctx.outputs.id_filename)
 
 _skill_id = rule(
     implementation = _skill_id_impl,
@@ -278,13 +274,9 @@ _skill_id = rule(
             mandatory = True,
             providers = [SkillManifestInfo],
         ),
-        "package_name": attr.output(
+        "id_filename": attr.output(
             mandatory = True,
-            doc = "The file containing the package name of the skill.",
-        ),
-        "skill_name": attr.output(
-            mandatory = True,
-            doc = "The file containing the name of the skill.",
+            doc = "The path to the file containing the skill ID.",
         ),
     },
     provides = [SkillIdInfo],
@@ -303,18 +295,12 @@ def _skill_labels_impl(ctx):
     skill_id = ctx.attr.skill_id[SkillIdInfo]
     outputfile = ctx.actions.declare_file(ctx.label.name + ".labels")
     cmd = """
-    skill_package=$(cat {skill_package})
-    skill_name=$(cat {skill_name})
-    echo "ai.intrinsic.package-name=$skill_package
-ai.intrinsic.skill-name=$skill_name
-ai.intrinsic.skill-image-name={skill_image_name}" > {output}""".format(
-        skill_package = skill_id.skill_package.path,
-        skill_name = skill_id.skill_name.path,
-        skill_image_name = ctx.attr.skill_image_name,
+    echo "ai.intrinsic.asset-id=$(cat {id_filename})" > {output}""".format(
+        id_filename = skill_id.id_filename.path,
         output = outputfile.path,
     )
     ctx.actions.run_shell(
-        inputs = [skill_id.skill_package, skill_id.skill_name],
+        inputs = [skill_id.id_filename],
         outputs = [outputfile],
         command = cmd,
     )
@@ -327,9 +313,6 @@ _skill_labels = rule(
         "skill_id": attr.label(
             mandatory = True,
             providers = [SkillIdInfo],
-        ),
-        "skill_image_name": attr.string(
-            mandatory = True,
         ),
     },
 )
@@ -394,8 +377,7 @@ def cc_skill(
     _skill_id(
         name = skill_id_name,
         manifest = manifest,
-        package_name = skill_id_name + ".package.txt",
-        skill_name = skill_id_name + ".skill-name.txt",
+        id_filename = skill_id_name + ".id.txt",
         testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
@@ -420,7 +402,6 @@ def cc_skill(
     _skill_labels(
         name = labels,
         skill_id = skill_id_name,
-        skill_image_name = name,
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
     )
@@ -494,8 +475,7 @@ def py_skill(
     _skill_id(
         name = skill_id_name,
         manifest = manifest,
-        package_name = skill_id_name + ".package.txt",
-        skill_name = skill_id_name + ".skill-name.txt",
+        id_filename = skill_id_name + ".id.txt",
         testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
@@ -526,7 +506,6 @@ def py_skill(
     _skill_labels(
         name = labels_name,
         skill_id = skill_id_name,
-        skill_image_name = name,
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
     )
