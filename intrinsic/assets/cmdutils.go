@@ -46,6 +46,8 @@ const (
 	KeyManifestFile = "manifest_file"
 	// KeyManifestTarget is the build target to the skill manifest.
 	KeyManifestTarget = "manifest_target"
+	// KeyOrgPrivate is the name of the org-private flag.
+	KeyOrgPrivate = "org_private"
 	// KeyRegistry is the name of the registry flag.
 	KeyRegistry = "registry"
 	// KeyReleaseNotes is the name of the release notes flag.
@@ -201,6 +203,16 @@ func (cf *CmdFlags) AddFlagManifestTarget() {
 // GetFlagManifestTarget gets the value of the manifest file flag added by AddFlagManifestTarget.
 func (cf *CmdFlags) GetFlagManifestTarget() string {
 	return cf.GetString(KeyManifestTarget)
+}
+
+// AddFlagOrgPrivate adds a flag for marking a released asset as private to the organization.
+func (cf *CmdFlags) AddFlagOrgPrivate() {
+	cf.OptionalBool(KeyOrgPrivate, false, "Whether this asset should be private to the organization that owns it.")
+}
+
+// GetFlagOrgPrivate gets the value of the org_private flag added by AddFlagOrgPrivate.
+func (cf *CmdFlags) GetFlagOrgPrivate() bool {
+	return cf.GetBool(KeyOrgPrivate)
 }
 
 // AddFlagsProjectOrg adds both the project and org flag, including the necessary handling.
