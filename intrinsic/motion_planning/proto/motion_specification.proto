@@ -5,6 +5,7 @@ syntax = "proto3";
 package intrinsic_proto.motion_planning;
 
 import "intrinsic/icon/proto/joint_space.proto";
+import "intrinsic/skills/proto/skill_parameter_metadata.proto";
 import "intrinsic/world/proto/collision_settings.proto";
 import "intrinsic/world/proto/geometric_constraints.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
@@ -42,35 +43,49 @@ message PathConstraint {
 }
 
 message DynamicCartesianLimits {
-  // Maximum Cartesian rotational velocity in radians per second. If not
+  // Maximum Cartesian rotational velocity. If not
   // specified, the default value defined in the robot limits will be used.
-  optional double max_rotational_velocity = 2;
-  // Maximum Cartesian translational velocity in meters per second. The value
+  optional double max_rotational_velocity = 2
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "radians/second"];
+  // Maximum Cartesian translational velocity. The value
   // defines the max translational velocity in the x, y, and z axis. If not
   // specified, the default value defined in the robot limits will be used.
-  optional double max_translational_velocity = 3;
-  // Maximum Cartesian rotational acceleration limits in radians per second^2.
+  optional double max_translational_velocity = 3
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "meters/second"];
+  // Maximum Cartesian rotational acceleration limits.
   // If not specified, the default value defined in the robot limits will be
   // used.
-  optional double max_rotational_acceleration = 4;
-  // Maximum Cartesian translational acceleration limits in meters per
-  // second^2. The value defines the max translational acceleration in the x, y,
+  optional double max_rotational_acceleration = 4
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "radians/second^2"];
+  // Maximum Cartesian translational acceleration limits.
+  // The value defines the max translational acceleration in the x, y,
   // and z axis. If not specified, the default value defined in the robot limits
   // will be used.
-  optional double max_translational_acceleration = 5;
+  optional double max_translational_acceleration = 5
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "meters/second^2"];
 }
 message DynamicJointLimits {
   // Maximum joint velocity limits per joint. Units are in radians per second.
   // When not specified, the application limits of the robot will be used.
-  optional intrinsic_proto.icon.JointVec max_velocity = 1;
-  // Max joint acceleration limits per joint. Units are in radians per second^2.
+  optional intrinsic_proto.icon.JointVec max_velocity = 1
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "radians/second"];
+  // Max joint acceleration limits per joint.
   // When not specified, the acceleration limits from the robot application
   // limits will be used.
-  optional intrinsic_proto.icon.JointVec max_acceleration = 2;
-  // Maximum joint jerk limits for the robot. Units are in radians per second^3.
+  optional intrinsic_proto.icon.JointVec max_acceleration = 2
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "radians/second^2"];
+  // Maximum joint jerk limits for the robot.
   // When not specified, the jerk limits from the robot application limits
   // will be used.
-  optional intrinsic_proto.icon.JointVec max_jerk = 3;
+  optional intrinsic_proto.icon.JointVec max_jerk = 3
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "radians/second^3"];
 }
 message DynamicLimitConstraint {
   // Dynamic Cartesian limit constraints allow to restrict the Cartesian
@@ -87,12 +102,13 @@ message DynamicLimitConstraint {
 
 // Blending parameters for Cartesian linear trajectory generation.
 message CartesianBlendingParameters {
-  // Cartesian radius of the circular blend around a Cartesian waypoint corner
-  // in m. Default value is 0.001 meter.
-  optional double translation_corner_rounding = 1;
+  // Cartesian radius of the circular blend around a Cartesian waypoint corner.
+  optional double translation_corner_rounding = 1
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "meters"];
   // Radius of the circular blend around a waypoint corner (max angles-axis
-  // deviation) in radians. Default value is 0.01 rad.
-  optional double rotational_corner_rounding = 2;
+  // deviation).
+  optional double rotational_corner_rounding = 2
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "radians"];
 }
 
 // Single waypoints blending parameter that apply to all
@@ -100,8 +116,9 @@ message CartesianBlendingParameters {
 message JointBlendingParameters {
   // Quantifies how closely the blend must pass by the joint configuration
   // waypoint. It can be interpreted as the coordinate-wise distance at which
-  // the blending arc begins. Default value is 0.1 rad.
-  optional double desired_tightness_rad = 1;
+  // the blending arc begins.
+  optional double desired_tightness_rad = 1
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "radians"];
 }
 message BlendingParameters {
   optional CartesianBlendingParameters cartesian_blending = 1;

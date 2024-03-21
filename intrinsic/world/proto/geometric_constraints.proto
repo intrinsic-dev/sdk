@@ -9,6 +9,7 @@ import "intrinsic/math/proto/point.proto";
 import "intrinsic/math/proto/pose.proto";
 import "intrinsic/math/proto/quaternion.proto";
 import "intrinsic/math/proto/vector3.proto";
+import "intrinsic/skills/proto/skill_parameter_metadata.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 
 message JointIds {
@@ -33,11 +34,13 @@ message JointPositionLimits {
 
   // Either one element per joint or empty, in which case the limits default to
   // those defined in the `World` in which this constraint is applied
-  repeated double lower_limits = 3;
+  repeated double lower_limits = 3
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "radians"];
 
   // Either one element per joint or empty, in which case the limits default to
   // those defined in the `World` in which this constraint is applied
-  repeated double upper_limits = 4;
+  repeated double upper_limits = 4
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "radians"];
 }
 
 // Requires a point attached to `moving_frame` to have the same position as
@@ -143,10 +146,12 @@ message PositionFrustum {
   // Reference frame for the frustrum.
   TransformNodeReference target_frame = 2;
 
-  // Angle in radians between frustrum surface plane and x-z plane
-  double x_angle = 3;
-  // Angle in radians between frustrum surface plane and y-z plane
-  double y_angle = 4;
+  // Angle between frustrum surface plane and x-z plane
+  double x_angle = 3
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "radians"];
+  // Angle between frustrum surface plane and y-z plane
+  double y_angle = 4
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "radians"];
 
   // The point defined relative to `moving_frame` whose position must remain
   // within the frustum attached to the `target_frame`. If unset, defaults to
@@ -196,10 +201,11 @@ message RotationBall {
   // moving frame that is within some angular offset of a given rotation.
   TransformNodeReference target_frame = 2;
 
-  // The radius of the ball, measured in radians. This is an upper bound on the
+  // The radius of the ball. This is an upper bound on the
   // angular distance between `rotation_offset` defined below and
   // the relative rotation between the `moving_frame` and `target_frame`.
-  double angular_radius = 4;  // [radians]
+  double angular_radius = 4
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "radians"];
 
   // The required relative rotation between `moving_frame` and
   // `target_frame`. If unset, defaults to the identity rotation.
@@ -224,11 +230,12 @@ message RotationCone {
   // norm. If unset, defaults to `moving_axis`.
   optional intrinsic_proto.Vector3 target_axis = 4;
 
-  // The maximum absolute angle in radians from which the axes are allowed to
+  // The maximum absolute angle from which the axes are allowed to
   // deviate from parallel. This is equivalent to half of the opening angle of
   // the cone formed from all allowed positions of `moving_axis` relative to
   // `target_axis`, which is the axis of the cone. If unset, defaults to 0.
-  optional double cone_opening_half_angle = 5;  // [radians]
+  optional double cone_opening_half_angle = 5
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "radians"];
 }
 
 // Requires `moving_frame` and `target_frame` to have a fixed relative pose.

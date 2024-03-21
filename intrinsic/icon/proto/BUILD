@@ -223,6 +223,7 @@ proto_library(
     srcs = ["joint_space.proto"],
     deps = [
         "//intrinsic/kinematics/types:dynamic_limits_check_mode_proto",
+        "//intrinsic/skills/proto:skill_parameter_metadata_proto",
         "@com_google_protobuf//:duration_proto",
     ],
 )

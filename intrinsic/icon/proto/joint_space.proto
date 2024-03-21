@@ -6,32 +6,50 @@ package intrinsic_proto.icon;
 
 import "google/protobuf/duration.proto";
 import "intrinsic/kinematics/types/dynamic_limits_check_mode.proto";
+import "intrinsic/skills/proto/skill_parameter_metadata.proto";
 
 // Joint state.
 // Unused fields are empty.
 message JointState {
-  uint64 timepoint_nsec = 1;         // absolute or relative timestamp.
-  repeated double position = 2;      // Position of each joint.
-  repeated double velocity = 3;      // Velocity of each joint.
-  repeated double acceleration = 4;  // Acceleration of each joint.
-  repeated double torque = 5;        // Torque that a joint is applying
-                                     //  to its subordinate link.
+  uint64 timepoint_nsec = 1;  // absolute or relative timestamp.
+  repeated double position = 2
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "radians"];  // Position of each joint.
+  repeated double velocity = 3
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "radians/second"];  // Velocity of each joint.
+  repeated double acceleration = 4
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "radians/second^2"];  // Acceleration of each joint.
+  repeated double torque = 5;    // Torque that a joint is applying
+                                 //  to its subordinate link.
 }
 
 // One double per joint
 message JointVec {
-  repeated double joints = 1;
+  repeated double joints = 1
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "radians"];
 }
 
 message JointStatePV {
-  repeated double position = 1;  // Position of each joint.
-  repeated double velocity = 2;  // Velocity of each joint.
+  repeated double position = 1
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "radians"];  // Position of each joint.
+  repeated double velocity = 2
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "radians/second"];  // Velocity of each joint.
 }
 
 message JointStatePVA {
-  repeated double position = 1;      // Position of each joint.
-  repeated double velocity = 2;      // Velocity of each joint.
-  repeated double acceleration = 3;  // Acceleration of each joint.
+  repeated double position = 1
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "radians"];  // Position of each joint.
+  repeated double velocity = 2
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "radians/second"];  // Velocity of each joint.
+  repeated double acceleration = 3
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit =
+           "radians/second^2"];  // Acceleration of each joint.
 }
 
 message JointTrajectoryPVA {

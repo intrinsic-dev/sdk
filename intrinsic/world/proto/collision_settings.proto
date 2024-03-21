@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package intrinsic_proto.world;
 
+import "intrinsic/skills/proto/skill_parameter_metadata.proto";
 import "intrinsic/world/proto/collision_action.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 
@@ -53,8 +54,8 @@ message CollisionSettings {
   // minimum margin and exclusion pairs for specific objects in the world.
   repeated CollisionRule collision_rules = 3;
 
-  // Spacing between collision checks (in radians in the joint space of the
-  // robot). A typical value is 0.01. Increasing this value will speed up
+  // Spacing between collision checks (in the joint space of the
+  // robot). Increasing this value will speed up
   // collision checking at the expense of possibly having small collisions on
   // the path (in between the discrete points checked).
   //
@@ -62,8 +63,9 @@ message CollisionSettings {
   // of updating more callsites to use this parameter, so expect this list to
   // evolve over time:
   //   * For skills/code that produce a linear trajectory, collision checking
-  //     will be performed with a default spacing (0.01 in joint space).
+  //     will be performed with a default spacing.
   // Use-cases not listed will likely ignore this parameter in favor of some
   // default behavior.
-  optional double collision_check_spacing = 4;
+  optional double collision_check_spacing = 4
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "radians"];
 }

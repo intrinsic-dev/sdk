@@ -33,6 +33,7 @@ proto_library(
     deps = [
         ":collision_action_proto",
         ":object_world_refs_proto",
+        "//intrinsic/skills/proto:skill_parameter_metadata_proto",
     ],
 )
 
@@ -51,6 +52,7 @@ go_proto_library(
     go_deps = [
         ":collision_action_go_proto",
         ":object_world_refs_go_proto",
+        "//intrinsic/skills/proto:skill_parameter_metadata_go_proto",
     ],
     deps = [":collision_settings_proto"],
 )
@@ -343,6 +345,7 @@ proto_library(
         "//intrinsic/math/proto:pose_proto",
         "//intrinsic/math/proto:quaternion_proto",
         "//intrinsic/math/proto:vector3_proto",
+        "//intrinsic/skills/proto:skill_parameter_metadata_proto",
     ],
 )
 

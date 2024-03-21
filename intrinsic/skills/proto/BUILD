@@ -364,6 +364,11 @@ go_proto_library(
     deps = [":skill_parameter_metadata_proto"],
 )
 
+py_proto_library(
+    name = "skill_parameter_metadata_py_pb2",
+    deps = [":skill_parameter_metadata_proto"],
+)
+
 proto_library(
     name = "skills_all_protos",
     deps = [
