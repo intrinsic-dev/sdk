@@ -136,7 +136,9 @@ class Session:
     self._watcher_thread.start()
     self._reaction_responses_error = None
     self._ended = False
-    logging.info('Started session with id: %d', self._session_id)
+    logging.info(
+        'Started session with id: %d and context: %s', self._session_id, context
+    )
 
   def __enter__(self):
     """Allows usage in a with-statement context."""

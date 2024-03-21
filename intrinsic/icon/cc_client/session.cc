@@ -318,6 +318,8 @@ absl::StatusOr<std::unique_ptr<Session>> Session::StartImpl(
         "ready.");
   }
 
+  LOG(INFO) << "Session started with context: " << context;
+
   return absl::WrapUnique(
       new Session(std::move(icon_channel), std::move(start_session_context),
                   std::move(action_stream), std::move(watcher_context),
