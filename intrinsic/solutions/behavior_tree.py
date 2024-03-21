@@ -33,6 +33,7 @@ from intrinsic.executive.proto import behavior_tree_pb2
 from intrinsic.executive.proto import world_query_pb2
 from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions import blackboard_value
+from intrinsic.solutions import cel
 from intrinsic.solutions import errors as solutions_errors
 from intrinsic.solutions import ipython
 from intrinsic.solutions import providers
@@ -964,7 +965,7 @@ class Blackboard(Condition):
       blackboard.
   """
 
-  def __init__(self, cel_expression: str | skill_utils.CelExpression):
+  def __init__(self, cel_expression: str | cel.CelExpression):
     self.cel_expression: str = str(cel_expression)
 
   def __repr__(self) -> str:

@@ -29,8 +29,8 @@ from intrinsic.skills.client import skill_registry_client
 from intrinsic.skills.proto import skill_registry_pb2
 from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions import blackboard_value
+from intrinsic.solutions import cel
 from intrinsic.solutions import provided
-from intrinsic.solutions import skill_utils
 from intrinsic.solutions import skills as skills_mod
 from intrinsic.solutions.testing import compare
 from intrinsic.solutions.testing import test_skill_params_pb2
@@ -519,7 +519,7 @@ class SkillsTest(parameterized.TestCase):
               {}, 'test', None, None
           )
       },
-      {'value_specification': skill_utils.CelExpression('test')},
+      {'value_specification': cel.CelExpression('test')},
   )
   def test_gen_skill_with_blackboard_parameter(self, value_specification):
     skill_registry, skill_registry_stub = (
@@ -568,7 +568,7 @@ class SkillsTest(parameterized.TestCase):
               {}, 'test', None, None
           )
       },
-      {'value_specification': skill_utils.CelExpression('test')},
+      {'value_specification': cel.CelExpression('test')},
   )
   def test_gen_skill_with_nested_blackboard_parameter(
       self, value_specification
@@ -1499,9 +1499,7 @@ Returns:
         self._create_empty_resource_registry(),
     )
 
-    sub_message = skills.my_skill.SubMessage(
-        name=skill_utils.CelExpression('test')
-    )
+    sub_message = skills.my_skill.SubMessage(name=cel.CelExpression('test'))
 
     skill_with_nested_class_generated_param = skills.my_skill(
         repeated_submessages=[sub_message]
@@ -1620,14 +1618,14 @@ Returns:
         my_int32=5,
         my_int64=blackboard_value.BlackboardValue({}, 'my_int64', None, None),
         my_uint32=11,
-        my_uint64=skill_utils.CelExpression('my_uint64'),
+        my_uint64=cel.CelExpression('my_uint64'),
         my_bool=True,
         my_string='bar',
         repeated_submessages=[
             blackboard_value.BlackboardValue({}, 'test', None, None),
             test_skill_params_pb2.SubMessage(name='foo'),
             blackboard_value.BlackboardValue({}, 'bar', None, None),
-            skill_utils.CelExpression('fax'),
+            cel.CelExpression('fax'),
         ],
     )
 

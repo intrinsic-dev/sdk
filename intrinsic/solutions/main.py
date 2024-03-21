@@ -6,6 +6,7 @@ Used by the ":main" target.
 """
 # pylint:disable=unused-import,line-too-long
 from intrinsic.solutions import blackboard_value
+from intrinsic.solutions import cel
 from intrinsic.solutions import deployments
 from intrinsic.solutions import errors
 from intrinsic.solutions import execution

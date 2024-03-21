@@ -27,6 +27,7 @@ from intrinsic.motion_planning.proto import motion_target_pb2
 from intrinsic.skills.client import skill_registry_client
 from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions import blackboard_value
+from intrinsic.solutions import cel
 from intrinsic.solutions import skill_parameters
 from intrinsic.solutions import utils
 from intrinsic.solutions import worlds
@@ -36,22 +37,6 @@ from intrinsic.world.proto import object_world_refs_pb2
 from intrinsic.world.python import object_world_resources
 
 RESOURCE_SLOT_DECONFLICT_SUFFIX = "_resource"
-
-
-class CelExpression:
-  """A CEL expression.
-
-  Represents an expression to be evaluated in lieu of a parameter value or a
-  BlackboardValue.
-  """
-
-  _expression: str
-
-  def __init__(self, expression: str):
-    self._expression = expression
-
-  def __str__(self) -> str:
-    return self._expression
 
 
 @dataclasses.dataclass
@@ -733,7 +718,9 @@ def set_fields_in_msg(
     ) from e
 
   for field_name, arg_value in fields.items():
-    if isinstance(arg_value, blackboard_value.BlackboardValue | CelExpression):
+    if isinstance(
+        arg_value, blackboard_value.BlackboardValue | cel.CelExpression
+    ):
       continue
     field_desc = field_descriptor_map[field_name]
     field_type = field_desc.type
@@ -757,7 +744,9 @@ def set_fields_in_msg(
         value_type = field_desc.message_type.fields_by_name["value"]
 
         for k, v in arg_value.items():
-          if isinstance(v, blackboard_value.BlackboardValue | CelExpression):
+          if isinstance(
+              v, blackboard_value.BlackboardValue | cel.CelExpression
+          ):
             raise TypeError(
                 f"Cannot set field {field_name}['{k}'] from blackboard"
                 " value, not supported for maps"
@@ -782,7 +771,7 @@ def set_fields_in_msg(
         del repeated_field[:]  # clear field default since value was provided
         for value in arg_value:
           if isinstance(
-              value, blackboard_value.BlackboardValue | CelExpression
+              value, blackboard_value.BlackboardValue | cel.CelExpression
           ):
             if field_message_type is not None:
               repeated_field.add()
@@ -1175,7 +1164,7 @@ class MessageWrapper:
         consumed.append(key)
       return True
 
-    elif isinstance(value, CelExpression):
+    elif isinstance(value, cel.CelExpression):
       self._blackboard_params[key] = str(value)
       if consumed is not None:
         consumed.append(key)

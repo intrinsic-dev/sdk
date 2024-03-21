@@ -28,6 +28,7 @@ from intrinsic.resources.client import resource_registry_client
 from intrinsic.skills.client import skill_registry_client
 from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions import blackboard_value
+from intrinsic.solutions import cel
 from intrinsic.solutions import provided
 from intrinsic.solutions import providers
 from intrinsic.solutions import skill_parameters
@@ -724,7 +725,7 @@ class GeneratedSkill(provided.SkillBase):
             self._blackboard_params[param_name] = value.value_access_path()
             continue
 
-          if isinstance(value, skill_utils.CelExpression):
+          if isinstance(value, cel.CelExpression):
             self._blackboard_params[param_name] = str(value)
             continue
 

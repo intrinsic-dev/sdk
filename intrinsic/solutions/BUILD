@@ -16,6 +16,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":blackboard_value",
+        ":cel",
         ":errors",
         ":ipython",
         ":providers",
@@ -94,6 +95,11 @@ py_test(
         "@com_google_absl_py//absl/testing:absltest",
         requirement("numpy"),
     ],
+)
+
+py_library(
+    name = "cel",
+    srcs = ["cel.py"],
 )
 
 py_library(
@@ -298,6 +304,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":blackboard_value",
+        ":cel",
         ":deployments",
         ":errors",
         ":execution",
@@ -454,6 +461,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":blackboard_value",
+        ":cel",
         ":skill_parameters",
         ":utils",
         ":worlds",
@@ -499,6 +507,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":blackboard_value",
+        ":cel",
         ":provided",
         ":providers",
         ":skill_parameters",
@@ -524,8 +533,8 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":blackboard_value",
+        ":cel",
         ":provided",
-        ":skill_utils",
         ":skills",
         "//intrinsic/executive/proto:behavior_call_py_pb2",
         "//intrinsic/executive/proto:test_message_py_pb2",
