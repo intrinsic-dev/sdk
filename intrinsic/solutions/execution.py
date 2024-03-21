@@ -854,6 +854,8 @@ class Executive:
       embed_skill_traces: bool = False,
   ) -> None:
     """Starts the executive and handles errors."""
+    if self._operation is None:
+      raise RuntimeError("Internal error: expected operation to be loaded.")
     request = executive_service_pb2.StartOperationRequest(
         name=self._operation.name
     )
@@ -890,11 +892,11 @@ class Executive:
       self,
       mode: Optional[ResumeMode] = None,
   ) -> None:
-    operation_name = self.operation.name
-    self._operation.update_from_proto(
+    operation = self.operation
+    operation.update_from_proto(
         self._stub.ResumeOperation(
             executive_service_pb2.ResumeOperationRequest(
-                name=operation_name,
+                name=operation.name,
                 mode=None if mode is None else mode.value,
             )
         )

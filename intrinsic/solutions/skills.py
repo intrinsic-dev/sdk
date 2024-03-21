@@ -651,7 +651,7 @@ class GeneratedSkill(provided.SkillBase):
   """Base class for skill classes dynamically generated at runtime."""
 
   _info: provided.SkillInfo
-  _compatible_resources: dict[str, provided.ResourceList] = {}
+  _compatible_resources: provided.SkillCompatibleResourcesMap
 
   def __init__(self, **kwargs):
     """This constructor normally will not be called.
