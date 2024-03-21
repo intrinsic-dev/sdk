@@ -40,7 +40,7 @@ go_grpc_library(
     srcs = [":ping_proto"],
     visibility = ["//intrinsic:__subpackages__"],
     deps = [
-        "@org_golang_google_protobuf//types/known/emptypb:go_default_library",
+        "@org_golang_google_protobuf//types/known/emptypb",
     ],
 )
 

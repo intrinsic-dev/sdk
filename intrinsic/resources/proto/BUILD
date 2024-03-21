@@ -29,7 +29,7 @@ go_grpc_library(
     srcs = [":resource_registry_proto"],
     deps = [
         "//intrinsic/resources/proto:resource_handle_go_proto",
-        "@org_golang_google_protobuf//types/known/anypb:go_default_library",
+        "@org_golang_google_protobuf//types/known/anypb",
     ],
 )
 

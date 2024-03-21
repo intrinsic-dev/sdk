@@ -40,6 +40,6 @@ go_library(
         "@org_golang_google_protobuf//reflect/protodesc:go_default_library",
         "@org_golang_google_protobuf//reflect/protoreflect:go_default_library",
         "@org_golang_google_protobuf//reflect/protoregistry:go_default_library",
-        "@org_golang_google_protobuf//types/known/emptypb:go_default_library",
+        "@org_golang_google_protobuf//types/known/emptypb",
     ],
 )
