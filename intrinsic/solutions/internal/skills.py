@@ -535,23 +535,29 @@ def _gen_skill_class(
     )
     enum_types = info.parameter_descriptor().enum_types
 
-  skill_methods = {
-      "_info": info,
-      "_compatible_resources": provided.SkillCompatibleResourcesMap(
-          compatible_resources
-      ),
-      # We use the __init__ documentation because that is shown in the
-      # auto-completion tooltip, not __init__.__doc__.
-      "__doc__": _gen_init_docstring(info, compatible_resources),
-  }
-
   type_class = type(
-      "Skill_" + info.skill_proto.skill_name, (GeneratedSkill,), skill_methods
+      # E.g.: 'move_robot'
+      info.skill_proto.skill_name,
+      (GeneratedSkill,),
+      {
+          "_info": info,
+          "_compatible_resources": provided.SkillCompatibleResourcesMap(
+              compatible_resources
+          ),
+          # We use the __init__ documentation because that is shown in the
+          # auto-completion tooltip, not __init__.__doc__.
+          "__doc__": _gen_init_docstring(info, compatible_resources),
+          # E.g.: 'intrinsic.solutions.skills.ai.intrinsic'.
+          "__module__": skill_utils.module_for_generated_skill(
+              info.skill_proto.package_name
+          ),
+      },
   )
 
   wrapper_classes = skill_utils.update_message_class_modules(
       type_class,
-      _skill_name_from_id(info.skill_proto.id),
+      info.skill_proto.skill_name,
+      info.skill_proto.package_name,
       enum_types,
       nested_classes,
       dict(info.skill_proto.parameter_description.parameter_field_comments),

@@ -39,6 +39,21 @@ from intrinsic.world.python import object_world_resources
 RESOURCE_SLOT_DECONFLICT_SUFFIX = "_resource"
 
 
+def module_for_generated_skill(skill_package: str) -> str:
+  """Generates the module name for a generated skill class.
+
+  This module does not exist at runtime but there may be a type stub for it.
+
+  Args:
+    skill_package: The skill package name, e.g., 'ai.intrinsic'.
+
+  Returns:
+    A module name string, e.g., 'intrinsic.solutions.skills.ai.intrinsic'.
+  """
+  skills_python_package = __name__.replace(".internal.skill_utils", ".skills")
+  return skills_python_package + "." + skill_package
+
+
 @dataclasses.dataclass
 class ParameterInformation:
   """Class for collecting information about a parameter."""
@@ -1215,7 +1230,7 @@ class MessageWrapper:
 def _gen_wrapper_class(
     wrapped_type: Type[message.Message],
     skill_name: str,
-    type_name: str,
+    skill_package: str,
     field_doc_strings: Dict[str, str],
 ) -> Type[Any]:
   """Generates a new message wrapper class type.
@@ -1229,22 +1244,22 @@ def _gen_wrapper_class(
   Args:
     wrapped_type: Message to wrap.
     skill_name: Name of the skill.
-    type_name: Type name of the object to wrap.
+    skill_package: Package name of the skill.
     field_doc_strings: Dict mapping from field name to doc string comment.
 
   Returns:
     A new type for a MessageWrapper sub-class.
   """
-  solutions_module = __name__.replace(".internal.skill_utils", "")
-
   type_class = type(
-      type_name,
+      # E.g.: 'Pose'
+      wrapped_type.DESCRIPTOR.name,
       (MessageWrapper,),
       {
-          "__doc__": _gen_init_docstring(
-              wrapped_type, type_name, field_doc_strings
-          ),
-          "__module__": solutions_module + ".skills." + skill_name,
+          "__doc__": _gen_init_docstring(wrapped_type, field_doc_strings),
+          # E.g.: 'move_robot.intrinsic_proto.Pose'.
+          "__qualname__": skill_name + "." + wrapped_type.DESCRIPTOR.full_name,
+          # E.g.: 'intrinsic.solutions.skills.ai.intrinsic'.
+          "__module__": module_for_generated_skill(skill_package),
           "_wrapped_type": wrapped_type,
       },
   )
@@ -1297,22 +1312,18 @@ def _gen_init_fun(
   new_init_fun.__annotations__ = collections.OrderedDict(
       [(p.name, p.annotation) for p in params]
   )
-  new_init_fun.__doc__ = _gen_init_docstring(
-      wrapped_type, type_name, field_doc_strings
-  )
+  new_init_fun.__doc__ = _gen_init_docstring(wrapped_type, field_doc_strings)
   return new_init_fun
 
 
 def _gen_init_docstring(
     wrapped_type: Type[message.Message],
-    type_name: str,
     field_doc_strings: Dict[str, str],
 ) -> str:
   """Generates documentation string for init function.
 
   Args:
     wrapped_type: Message to wrap.
-    type_name: Type name of the object to wrap.
     field_doc_strings: Dict mapping from field name to doc string comment.
 
   Returns:
@@ -1320,7 +1331,9 @@ def _gen_init_docstring(
   """
   param_defaults = wrapped_type()
 
-  docstring: List[str] = [f"Wrapper class for {type_name}.\n"]
+  docstring: List[str] = [
+      f"Wrapper class for {wrapped_type.DESCRIPTOR.full_name}.\n"
+  ]
   message_doc_string = ""
   if param_defaults.DESCRIPTOR.full_name in field_doc_strings:
     message_doc_string = field_doc_strings[param_defaults.DESCRIPTOR.full_name]
@@ -1386,6 +1399,7 @@ def _gen_init_params(
 def update_message_class_modules(
     cls: Type[Any],
     skill_name: str,
+    skill_package: str,
     enum_types: List[descriptor.EnumDescriptor],
     nested_classes: List[
         Tuple[str, Type[message.Message], descriptor.FieldDescriptor]
@@ -1398,7 +1412,8 @@ def update_message_class_modules(
 
   Args:
     cls: class to modify
-    skill_name: Name of skill to correspoding to 'cls'.
+    skill_name: Name of the skill to correspoding to 'cls'.
+    skill_package: Package name of the skill to correspoding to 'cls'.
     enum_types: Top-level enum classes whose values should be aliased to
       attributes of the message class.
     nested_classes: classes to be aliased
@@ -1430,7 +1445,7 @@ def update_message_class_modules(
     wrapper_class = _gen_wrapper_class(
         message_type,
         skill_name,
-        nested_class_attr_name,
+        skill_package,
         field_doc_strings,
     )
     wrapper_classes[field.message_type.full_name] = wrapper_class

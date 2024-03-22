@@ -118,7 +118,10 @@ def _create_test_skill_info(
     parameter_defaults: message.Message = test_skill_params_pb2.TestMessage(),
     resource_selectors: dict[str, str] = None,
 ) -> skills_pb2.Skill:
-  skill_info = skills_pb2.Skill(id=skill_id)
+  id_parts = skill_id.split('.')
+  skill_info = skills_pb2.Skill(
+      id=skill_id, skill_name=id_parts[-1], package_name='.'.join(id_parts[:-1])
+  )
 
   skill_info.parameter_description.parameter_descriptor_fileset.CopyFrom(
       _get_test_message_file_descriptor_set()
@@ -1044,6 +1047,20 @@ class SkillsTest(parameterized.TestCase):
     with self.assertRaises(KeyError):
       _ = skills['skill5']
 
+  def test_skill_class_name(self):
+    skill_info = _create_test_skill_info(skill_id='ai.intrinsic.my_skill')
+    skills = skills_mod.Skills(
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
+    )
+
+    self.assertEqual(skills.my_skill.__name__, 'my_skill')
+    self.assertEqual(skills.my_skill.__qualname__, 'my_skill')
+    self.assertEqual(
+        skills.my_skill.__module__,
+        'intrinsic.solutions.skills.ai.intrinsic',
+    )
+
   def test_skill_signature(self):
     skill_info = _create_test_skill_info(skill_id='ai.intrinsic.my_skill')
     parameters = _SKILL_PARAMETER_DICT
@@ -1059,19 +1076,35 @@ class SkillsTest(parameterized.TestCase):
         'my_uint64: int, '
         'my_bool: bool, '
         'my_string: str, '
-        'sub_message: intrinsic.solutions.skills.my_skill.SubMessage, '
-        'optional_sub_message: intrinsic.solutions.skills.my_skill.SubMessage, '
+        'sub_message:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'optional_sub_message:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
         'my_required_int32: int, '
         'my_oneof_double: float, '
-        'my_oneof_sub_message: intrinsic.solutions.skills.my_skill.SubMessage, '
-        'pose: intrinsic.solutions.skills.my_skill.Pose, '
-        'foo: intrinsic.solutions.skills.my_skill.Foo, '
+        'my_oneof_sub_message:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'pose:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
+        'foo:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo, '
         'enum_v: int, '
-        'executive_test_message: intrinsic.solutions.skills.my_skill.TestMessage, '
-        'non_unique_field_name: intrinsic.solutions.skills.my_skill.SomeType, '
+        'executive_test_message:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage, '
+        'non_unique_field_name:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType, '
         'my_repeated_doubles: Sequence[float] = [], '
-        'repeated_submessages: Sequence[intrinsic.solutions.skills.my_skill.SubMessage] '
-        '= [], string_int32_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
+        'repeated_submessages:'
+        ' Sequence[intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = [], '
+        'string_int32_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
         'int32_string_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
         'string_message_map: dict[typing.Union[str, int, bool], typing.Any] = {})'
     )
@@ -1101,41 +1134,31 @@ class SkillsTest(parameterized.TestCase):
     signature = inspect.signature(my_skill.__init__)
 
     expected_signature = (
-        '(*, '
-        'sub_message:'
-        ' intrinsic.solutions.skills.my_skill.SubMessage, '
-        'optional_sub_message:'
-        ' intrinsic.solutions.skills.my_skill.SubMessage, '
-        'my_required_int32: int, '
-        'my_oneof_sub_message:'
-        ' intrinsic.solutions.skills.my_skill.SubMessage, '
-        'pose:'
-        ' intrinsic.solutions.skills.my_skill.Pose, '
-        'foo: intrinsic.solutions.skills.my_skill.Foo, '
-        'enum_v: int, '
-        'executive_test_message:'
-        ' intrinsic.solutions.skills.my_skill.TestMessage, '
-        'non_unique_field_name:'
-        ' intrinsic.solutions.skills.my_skill.SomeType, '
-        'my_double: float = 2.5, '
-        'my_float: float = -1.5, '
-        'my_int32: int = 5, '
-        'my_int64: int = 9, '
-        'my_uint32: int = 11, '
-        'my_uint64: int = 21, '
-        'my_bool: bool = False, '
-        "my_string: str = 'bar', "
-        'my_repeated_doubles: Sequence[float] = [-5.5, 10.5], '
-        'repeated_submessages:'
-        ' Sequence[intrinsic.solutions.skills.my_skill.SubMessage]'
-        ' = [name: "foo"\n, name: "bar"\n], '
-        'my_oneof_double: float = 1.5, '
-        'string_int32_map: dict[typing.Union[str, int, bool], typing.Any] ='
-        " {'foo': 1}, "
-        'int32_string_map: dict[typing.Union[str, int, bool], typing.Any] = {3:'
-        " 'foobar'}, "
-        'string_message_map: dict[typing.Union[str, int, bool], typing.Any] ='
-        " {'bar': int32_value: 1\n})"
+        '(*, sub_message:'
+        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage,'
+        ' optional_sub_message:'
+        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage,'
+        ' my_required_int32: int, my_oneof_sub_message:'
+        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage,'
+        ' pose:'
+        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.Pose,'
+        ' foo:'
+        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo,'
+        ' enum_v: int, executive_test_message:'
+        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage,'
+        ' non_unique_field_name:'
+        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType,'
+        ' my_double: float = 2.5, my_float: float = -1.5, my_int32: int = 5,'
+        ' my_int64: int = 9, my_uint32: int = 11, my_uint64: int = 21, my_bool:'
+        " bool = False, my_string: str = 'bar', my_repeated_doubles:"
+        ' Sequence[float] = [-5.5, 10.5], repeated_submessages:'
+        ' Sequence[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage]'
+        ' = [name: "foo"\n, name: "bar"\n], my_oneof_double: float = 1.5,'
+        ' string_int32_map: dict[typing.Union[str, int, bool], typing.Any] ='
+        " {'foo': 1}, int32_string_map: dict[typing.Union[str, int, bool],"
+        " typing.Any] = {3: 'foobar'}, string_message_map:"
+        " dict[typing.Union[str, int, bool], typing.Any] = {'bar': int32_value:"
+        ' 1\n})'
     )
     self.assertSignature(signature, expected_signature)
 
@@ -1570,6 +1593,35 @@ Returns:
 
     self.assertEqual('name: "bar"\n', str(test_message.wrapped_message))
 
+  def test_wrapper_class_name(self):
+    skill_info = _create_test_skill_info(skill_id='ai.intrinsic.my_skill')
+    skills = skills_mod.Skills(
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
+    )
+
+    # SubMessage is a top-level message in proto file.
+    self.assertEqual(skills.my_skill.SubMessage.__name__, 'SubMessage')
+    self.assertEqual(
+        skills.my_skill.SubMessage.__qualname__,
+        'my_skill.intrinsic_proto.test_data.SubMessage',
+    )
+    self.assertEqual(
+        skills.my_skill.SubMessage.__module__,
+        'intrinsic.solutions.skills.ai.intrinsic',
+    )
+
+    # Foo (=TestMessage.Foo) is a nested message in proto file.
+    self.assertEqual(skills.my_skill.Foo.__name__, 'Foo')
+    self.assertEqual(
+        skills.my_skill.Foo.__qualname__,
+        'my_skill.intrinsic_proto.test_data.TestMessage.Foo',
+    )
+    self.assertEqual(
+        skills.my_skill.Foo.__module__,
+        'intrinsic.solutions.skills.ai.intrinsic',
+    )
+
   def test_message_wrapper_signature(self):
     skill_info = _create_test_skill_info(skill_id='ai.intrinsic.my_skill')
     skills = skills_mod.Skills(
@@ -1584,7 +1636,7 @@ Returns:
     self.assertSignature(
         signature,
         '(*, non_unique_field_name:'
-        ' intrinsic.solutions.skills.my_skill.AnotherType)',
+        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.AnotherType)',
     )
 
   def test_message_wrapper_params(self):
