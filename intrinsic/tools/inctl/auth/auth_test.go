@@ -3,6 +3,7 @@
 package auth
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"google.golang.org/grpc/metadata"
 )
 
 // Same as authtest.NewStoreForTest which is not accessible here as long as
@@ -205,6 +207,121 @@ func TestStore_OrgInfoEquality(t *testing.T) {
 
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Errorf("OrgInfo returned an unexpected diff (-want +got): %v", diff)
+			}
+		})
+	}
+}
+
+func TestStore_AuthorizeContext(t *testing.T) {
+	projectName := "friendly-name"
+
+	tests := []struct {
+		name                      string
+		givenProjectConfiguration *ProjectConfiguration
+		ctx                       context.Context
+		projectName               string
+		wantOutgoingMetadata      metadata.MD
+		wantErr                   bool
+	}{
+		{
+			name: "adds authorization header to the context",
+			givenProjectConfiguration: &ProjectConfiguration{
+				Name: projectName,
+				Tokens: map[string]*ProjectToken{
+					AliasDefaultToken: {
+						APIKey:     "abcdefg.xyz",
+						ValidUntil: toRFC3339Time(time.Now().Add(24 * time.Hour)),
+					},
+				},
+			},
+			ctx:                  context.Background(),
+			projectName:          projectName,
+			wantOutgoingMetadata: metadata.Pairs("authorization", "Bearer abcdefg.xyz"),
+		},
+		{
+			name: "does not change an existing authorization header",
+			givenProjectConfiguration: &ProjectConfiguration{
+				Name: projectName,
+				Tokens: map[string]*ProjectToken{
+					AliasDefaultToken: {
+						APIKey:     "abcdefg.xyz",
+						ValidUntil: toRFC3339Time(time.Now().Add(24 * time.Hour)),
+					},
+				},
+			},
+			ctx: metadata.NewOutgoingContext(
+				context.Background(),
+				metadata.Pairs("authorization", "Bearer existing.token"),
+			),
+			projectName:          projectName,
+			wantOutgoingMetadata: metadata.Pairs("authorization", "Bearer existing.token"),
+		},
+		{
+			name: "fails if there is no authorization information for the project",
+			givenProjectConfiguration: &ProjectConfiguration{
+				Name: projectName,
+				Tokens: map[string]*ProjectToken{
+					AliasDefaultToken: {
+						APIKey:     "abcdefg.xyz",
+						ValidUntil: toRFC3339Time(time.Now().Add(24 * time.Hour)),
+					},
+				},
+			},
+			ctx:         context.Background(),
+			projectName: "other-project",
+			wantErr:     true,
+		},
+		{
+			name: "fails if there is no default credential for the project",
+			givenProjectConfiguration: &ProjectConfiguration{
+				Name: projectName,
+				Tokens: map[string]*ProjectToken{
+					"not-default": {
+						APIKey:     "abcdefg.xyz",
+						ValidUntil: toRFC3339Time(time.Now().Add(24 * time.Hour)),
+					},
+				},
+			},
+			ctx:         context.Background(),
+			projectName: projectName,
+			wantErr:     true,
+		},
+		{
+			name: "fails if the default credential for the project is invalid",
+			givenProjectConfiguration: &ProjectConfiguration{
+				Name: projectName,
+				Tokens: map[string]*ProjectToken{
+					AliasDefaultToken: {
+						APIKey:     "", // empty key is invalid
+						ValidUntil: toRFC3339Time(time.Now().Add(24 * time.Hour)),
+					},
+				},
+			},
+			ctx:         context.Background(),
+			projectName: projectName,
+			wantErr:     true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			store := newStoreForTest(t)
+
+			if _, err := store.WriteConfiguration(tc.givenProjectConfiguration); err != nil {
+				t.Fatalf("WriteConfiguration(%v) returned an unexpected error: %v", tc.givenProjectConfiguration, err)
+			}
+
+			got, err := store.AuthorizeContext(tc.ctx, tc.projectName)
+			if !tc.wantErr && err != nil {
+				t.Errorf("AuthorizeContext(%v) returned an unexpected error: %v", tc.projectName, err)
+			}
+			if tc.wantErr && err == nil {
+				t.Errorf("AuthorizeContext(%v) returned no error, want error", tc.projectName)
+			}
+
+			gotOutgoingMetadata, _ := metadata.FromOutgoingContext(got)
+			if diff := cmp.Diff(tc.wantOutgoingMetadata, gotOutgoingMetadata); diff != "" {
+				t.Errorf("AuthorizeContext(%v) has unexpected metadata (-want +got): %v", tc.projectName, diff)
 			}
 		})
 	}

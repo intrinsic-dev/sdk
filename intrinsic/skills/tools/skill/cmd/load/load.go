@@ -25,6 +25,7 @@ import (
 	"intrinsic/skills/tools/skill/cmd/skillid"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
 	"intrinsic/skills/tools/skill/cmd/waitforskill"
+	"intrinsic/tools/inctl/auth"
 )
 
 var cmdFlags = cmdutils.NewCmdFlags()
@@ -135,7 +136,14 @@ $ inctl skill load --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution=
 			return fmt.Errorf("could not parse version from ID version: %w", err)
 		}
 		log.Printf("Installing skill %q using the installer service at %q", skillIDVersion, installerAddress)
-		err = imageutils.InstallContainer(ctx,
+		// This returns a valid context at all times. We only log any errors here because we will also
+		// sideload without authorization. This may mean that some features (namely persisting
+		// sideloaded skills) will not work as expected.
+		installerCtx, err := auth.NewStore().AuthorizeContext(ctx, project)
+		if err != nil {
+			log.Printf("Warning: Could not find authentication information. Some features (such as persistence for skills) may not work correctly. Try running 'inctl auth login --project %s' to authenticate.", project)
+		}
+		err = imageutils.InstallContainer(installerCtx,
 			&imageutils.InstallContainerParams{
 				Address:    installerAddress,
 				Connection: conn,

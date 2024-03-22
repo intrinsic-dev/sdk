@@ -21,6 +21,7 @@ go_library(
         "//intrinsic/skills/tools/skill/cmd:solutionutil",
         "//intrinsic/skills/tools/skill/cmd:waitforskill",
         "//intrinsic/skills/tools/skill/cmd/directupload",
+        "//intrinsic/tools/inctl/auth",
         "@com_github_google_go_containerregistry//pkg/authn:go_default_library",
         "@com_github_google_go_containerregistry//pkg/v1/google:go_default_library",
         "@com_github_google_go_containerregistry//pkg/v1/remote:go_default_library",

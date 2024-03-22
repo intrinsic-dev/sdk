@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"google.golang.org/grpc/metadata"
 )
 
 const (
@@ -87,7 +89,7 @@ func (p *ProjectToken) Validate() error {
 
 func (p *ProjectToken) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
 	return map[string]string{
-		"authorization": "Bearer " + p.APIKey,
+		"authorization": fmt.Sprintf("Bearer %s", p.APIKey),
 	}, p.Validate()
 }
 
@@ -290,7 +292,7 @@ func (s *Store) ListConfigurations() ([]string, error) {
 	globPattern := filepath.Join(storeLocation, "*"+authConfigExtension)
 	matches, err := filepath.Glob(globPattern)
 	if err != nil {
-		panic(fmt.Errorf("invalid glob pattern, programer error: %w", err))
+		panic(fmt.Errorf("invalid glob pattern, programmer error: %w", err))
 	}
 	if len(matches) == 0 {
 		// this is valid response, there are no projects found.
@@ -323,6 +325,28 @@ func (s *Store) RemoveConfiguration(name string) error {
 		return fmt.Errorf("cannot remove configuration: %w", err)
 	}
 	return os.RemoveAll(filename)
+}
+
+// AuthorizeContext retrieves the default credentials for the given project and adds authorization
+// information directly to a context derived from the given context. If the context already has
+// authorization information this function will *not* modify the context.
+func (s *Store) AuthorizeContext(ctx context.Context, projectName string) (context.Context, error) {
+	configuration, err := s.GetConfiguration(projectName)
+	if err != nil {
+		return ctx, fmt.Errorf("cannot get configuration: %w", err)
+	}
+	pt, err := configuration.GetDefaultCredentials()
+	if err != nil {
+		return ctx, fmt.Errorf("cannot get default credentials: %w", err)
+	}
+	if err := pt.Validate(); err != nil {
+		return ctx, fmt.Errorf("invalid credentials: %w", err)
+	}
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if ok && len(md.Get("authorization")) > 0 {
+		return ctx, nil
+	}
+	return metadata.AppendToOutgoingContext(ctx, "authorization", fmt.Sprintf("Bearer %s", pt.APIKey)), nil
 }
 
 func (s *Store) orgStoreLocation() (string, error) {
