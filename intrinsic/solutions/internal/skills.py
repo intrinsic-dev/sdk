@@ -31,10 +31,10 @@ from intrinsic.solutions import blackboard_value
 from intrinsic.solutions import cel
 from intrinsic.solutions import provided
 from intrinsic.solutions import providers
-from intrinsic.solutions import skill_parameters
-from intrinsic.solutions import skill_utils
 from intrinsic.solutions.internal import actions
 from intrinsic.solutions.internal import resources
+from intrinsic.solutions.internal import skill_parameters
+from intrinsic.solutions.internal import skill_utils
 from intrinsic.solutions.utils import classproperty
 
 

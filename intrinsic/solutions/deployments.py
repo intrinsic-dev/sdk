@@ -39,10 +39,10 @@ from intrinsic.solutions import ipython
 from intrinsic.solutions import pose_estimation
 from intrinsic.solutions import providers
 from intrinsic.solutions import simulation
-from intrinsic.solutions import skills as skills_mod
 from intrinsic.solutions import userconfig
 from intrinsic.solutions import worlds
 from intrinsic.solutions.internal import resources as resources_mod
+from intrinsic.solutions.internal import skills as skills_mod
 from intrinsic.util.grpc import error_handling
 
 

@@ -20,8 +20,6 @@ py_library(
         ":errors",
         ":ipython",
         ":providers",
-        ":skill_utils",
-        ":skills",
         ":utils",
         "//intrinsic/executive/proto:any_list_py_pb2",
         "//intrinsic/executive/proto:any_with_assignments_py_pb2",
@@ -31,6 +29,8 @@ py_library(
         "//intrinsic/skills/proto:skills_py_pb2",
         "//intrinsic/solutions/internal:actions",
         "//intrinsic/solutions/internal:behavior_call",
+        "//intrinsic/solutions/internal:skill_utils",
+        "//intrinsic/solutions/internal:skills",
         "//intrinsic/world/proto:object_world_refs_py_pb2",
         "//intrinsic/world/python:object_world_resources",
         "@com_google_protobuf//:protobuf_python",
@@ -116,7 +116,6 @@ py_library(
         ":pose_estimation",
         ":providers",
         ":simulation",
-        ":skills",
         ":userconfig",
         ":worlds",
         "//intrinsic/frontend/cloud/api:solutiondiscovery_api_py_pb2",
@@ -126,6 +125,7 @@ py_library(
         "//intrinsic/resources/client:resource_registry_client",
         "//intrinsic/skills/client:skill_registry_client",
         "//intrinsic/solutions/internal:resources",
+        "//intrinsic/solutions/internal:skills",
         "//intrinsic/util/grpc:error_handling",
         requirement("grpcio"),
         "@com_google_protobuf//:protobuf_python",
@@ -410,28 +410,6 @@ py_test(
 )
 
 py_library(
-    name = "skill_parameters",
-    srcs = ["skill_parameters.py"],
-    deps = ["@com_google_protobuf//:protobuf_python"],
-)
-
-py_test(
-    name = "skill_parameters_test",
-    srcs = ["skill_parameters_test.py"],
-    srcs_version = "PY3",
-    deps = [
-        ":skill_parameters",
-        "//intrinsic/math/python:data_types",
-        "//intrinsic/math/python:proto_conversion",
-        "//intrinsic/skills/proto:skills_py_pb2",
-        "//intrinsic/solutions/testing:test_skill_params_py_pb2",
-        "@com_google_absl_py//absl/testing:absltest",
-        "@com_google_absl_py//absl/testing:parameterized",
-        "@com_google_protobuf//:protobuf_python",
-    ],
-)
-
-py_library(
     name = "provided",
     srcs = ["provided.py"],
     srcs_version = "PY3",
@@ -452,109 +430,6 @@ py_library(
     deps = [
         ":provided",
         "//intrinsic/resources/proto:resource_handle_py_pb2",
-    ],
-)
-
-py_library(
-    name = "skill_utils",
-    srcs = ["skill_utils.py"],
-    srcs_version = "PY3",
-    deps = [
-        ":blackboard_value",
-        ":cel",
-        ":skill_parameters",
-        ":utils",
-        ":worlds",
-        "//intrinsic/icon/proto:joint_space_py_pb2",
-        "//intrinsic/math/proto:pose_py_pb2",
-        "//intrinsic/math/python:data_types",
-        "//intrinsic/math/python:proto_conversion",
-        "//intrinsic/motion_planning/proto:motion_target_py_pb2",
-        "//intrinsic/skills/client:skill_registry_client",
-        "//intrinsic/skills/proto:skills_py_pb2",
-        "//intrinsic/util/proto:descriptors_py",
-        "//intrinsic/world/proto:collision_settings_py_pb2",
-        "//intrinsic/world/proto:object_world_refs_py_pb2",
-        "//intrinsic/world/python:object_world_resources",
-        requirement("grpcio"),
-        "@com_google_protobuf//:protobuf_python",
-    ],
-)
-
-py_test(
-    name = "skill_utils_external_test",
-    srcs = ["skill_utils_external_test.py"],
-    deps = [
-        ":skill_utils",
-        ":utils",
-        ":worlds",
-        "//intrinsic/icon/proto:joint_space_py_pb2",
-        "//intrinsic/math/python:data_types",
-        "//intrinsic/math/python:proto_conversion",
-        "//intrinsic/skills/proto:skills_py_pb2",
-        "//intrinsic/solutions/testing:compare",
-        "//intrinsic/solutions/testing:test_skill_params_py_pb2",
-        "//intrinsic/world/proto:collision_settings_py_pb2",
-        "//intrinsic/world/proto:object_world_service_py_pb2",
-        "//intrinsic/world/python:object_world_resources",
-        "@com_google_absl_py//absl/testing:absltest",
-    ],
-)
-
-py_library(
-    name = "skills",
-    srcs = ["skills.py"],
-    srcs_version = "PY3",
-    deps = [
-        ":blackboard_value",
-        ":cel",
-        ":provided",
-        ":providers",
-        ":skill_parameters",
-        ":skill_utils",
-        ":utils",
-        "//intrinsic/executive/proto:behavior_call_py_pb2",
-        "//intrinsic/resources/client:resource_registry_client",
-        "//intrinsic/skills/client:skill_registry_client",
-        "//intrinsic/skills/proto:skills_py_pb2",
-        "//intrinsic/solutions/internal:actions",
-        "//intrinsic/solutions/internal:resources",
-        "@com_google_protobuf//:protobuf_python",
-    ],
-)
-
-py_test(
-    name = "skills_test",
-    srcs = ["skills_test.py"],
-    data = [
-        "//intrinsic/solutions/testing:test_skill_params_proto_descriptors",
-    ],
-    python_version = "PY3",
-    srcs_version = "PY3",
-    deps = [
-        ":blackboard_value",
-        ":cel",
-        ":provided",
-        ":skills",
-        "//intrinsic/executive/proto:behavior_call_py_pb2",
-        "//intrinsic/executive/proto:test_message_py_pb2",
-        "//intrinsic/math/proto:point_py_pb2",
-        "//intrinsic/math/proto:pose_py_pb2",
-        "//intrinsic/math/proto:quaternion_py_pb2",
-        "//intrinsic/math/python:data_types",
-        "//intrinsic/math/python:proto_conversion",
-        "//intrinsic/resources/client:resource_registry_client",
-        "//intrinsic/resources/proto:resource_handle_py_pb2",
-        "//intrinsic/resources/proto:resource_registry_py_pb2",
-        "//intrinsic/skills/client:skill_registry_client",
-        "//intrinsic/skills/proto:skill_registry_py_pb2",
-        "//intrinsic/skills/proto:skills_py_pb2",
-        "//intrinsic/solutions/testing:compare",
-        "//intrinsic/solutions/testing:test_skill_params_py_pb2",
-        "@com_google_absl_py//absl/flags",
-        "@com_google_absl_py//absl/testing:absltest",
-        "@com_google_absl_py//absl/testing:parameterized",
-        "@com_google_protobuf//:protobuf_python",
     ],
 )
 

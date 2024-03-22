@@ -8,7 +8,7 @@ from google.protobuf import descriptor_pb2
 from intrinsic.math.python import data_types
 from intrinsic.math.python import proto_conversion as math_proto_conversion
 from intrinsic.skills.proto import skills_pb2
-from intrinsic.solutions import skill_parameters
+from intrinsic.solutions.internal import skill_parameters
 from intrinsic.solutions.testing import test_skill_params_pb2
 
 _MESSAGE_WITHOUT_DEFAULTS = test_skill_params_pb2.TestMessage()

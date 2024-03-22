@@ -28,9 +28,9 @@ from intrinsic.skills.client import skill_registry_client
 from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions import blackboard_value
 from intrinsic.solutions import cel
-from intrinsic.solutions import skill_parameters
 from intrinsic.solutions import utils
 from intrinsic.solutions import worlds
+from intrinsic.solutions.internal import skill_parameters
 from intrinsic.util.proto import descriptors
 from intrinsic.world.proto import collision_settings_pb2
 from intrinsic.world.proto import object_world_refs_pb2
@@ -1235,7 +1235,7 @@ def _gen_wrapper_class(
   Returns:
     A new type for a MessageWrapper sub-class.
   """
-  solutions_module = __name__.replace(".skill_utils", "")
+  solutions_module = __name__.replace(".internal.skill_utils", "")
 
   type_class = type(
       type_name,

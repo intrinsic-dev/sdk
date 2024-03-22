@@ -15,10 +15,10 @@ from intrinsic.executive.proto import behavior_call_pb2
 from intrinsic.skills.client import skill_registry_client
 from intrinsic.skills.proto import skill_registry_pb2
 from intrinsic.skills.proto import skills_pb2
-from intrinsic.solutions import skills as skills_mod
 from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
 from intrinsic.solutions.internal import behavior_call
+from intrinsic.solutions.internal import skills as skills_mod
 from intrinsic.solutions.testing import compare
 from intrinsic.solutions.testing import test_skill_params_pb2
 

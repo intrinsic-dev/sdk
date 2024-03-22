@@ -6,9 +6,9 @@ from typing import Optional
 
 from intrinsic.executive.proto import behavior_call_pb2
 from intrinsic.solutions import providers
-from intrinsic.solutions import skill_utils
 from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
+from intrinsic.solutions.internal import skill_utils
 
 
 class Action(actions.ActionBase):

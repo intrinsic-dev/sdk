@@ -37,11 +37,11 @@ from intrinsic.solutions import cel
 from intrinsic.solutions import errors as solutions_errors
 from intrinsic.solutions import ipython
 from intrinsic.solutions import providers
-from intrinsic.solutions import skill_utils
-from intrinsic.solutions import skills as skills_mod
 from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
 from intrinsic.solutions.internal import behavior_call
+from intrinsic.solutions.internal import skill_utils
+from intrinsic.solutions.internal import skills as skills_mod
 from intrinsic.world.proto import object_world_refs_pb2
 from intrinsic.world.python import object_world_resources
 

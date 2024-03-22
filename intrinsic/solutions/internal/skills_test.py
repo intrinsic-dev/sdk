@@ -31,7 +31,7 @@ from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions import blackboard_value
 from intrinsic.solutions import cel
 from intrinsic.solutions import provided
-from intrinsic.solutions import skills as skills_mod
+from intrinsic.solutions.internal import skills as skills_mod
 from intrinsic.solutions.testing import compare
 from intrinsic.solutions.testing import test_skill_params_pb2
 
