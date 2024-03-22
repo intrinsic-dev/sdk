@@ -113,6 +113,15 @@ _DEFAULT_TEST_MESSAGE = test_skill_params_pb2.TestMessage(
 )
 
 
+def _create_parameterless_skill_info(skill_id: str) -> skills_pb2.Skill:
+  id_parts = skill_id.split('.')
+  skill_info = skills_pb2.Skill(
+      id=skill_id, skill_name=id_parts[-1], package_name='.'.join(id_parts[:-1])
+  )
+
+  return skill_info
+
+
 def _create_test_skill_info(
     skill_id: str,
     parameter_defaults: message.Message = test_skill_params_pb2.TestMessage(),
@@ -210,14 +219,21 @@ def _create_skill_registry_with_mock_stub():
   return (skill_registry, skill_registry_stub)
 
 
-def _create_skill_registry_for_skill_info(
-    skill_info: skills_pb2.Skill,
+def _create_skill_registry_for_skill_infos(
+    skill_infos: list[skills_pb2.Skill],
 ) -> skill_registry_client.SkillRegistryClient:
   skill_registry_stub = mock.MagicMock()
   skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-  skill_registry_response.skills.add().CopyFrom(skill_info)
+  for info in skill_infos:
+    skill_registry_response.skills.add().CopyFrom(info)
   skill_registry_stub.GetSkills.return_value = skill_registry_response
   return skill_registry_client.SkillRegistryClient(skill_registry_stub)
+
+
+def _create_skill_registry_for_skill_info(
+    skill_info: skills_pb2.Skill,
+) -> skill_registry_client.SkillRegistryClient:
+  return _create_skill_registry_for_skill_infos([skill_info])
 
 
 class SkillsTest(parameterized.TestCase):
@@ -308,17 +324,104 @@ class SkillsTest(parameterized.TestCase):
       skills.my_skill(**parameter)
 
   def test_list_skills(self):
-    skill_id = 'ai.intrinsic.my_skill'
-    skill_info = text_format.Parse(
-        """id: '%s'""" % skill_id, skills_pb2.Skill()
-    )
+    skill_infos = [
+        _create_parameterless_skill_info('ai.intr.intr_skill_one'),
+        _create_parameterless_skill_info('ai.intr.intr_skill_two'),
+        _create_parameterless_skill_info('ai.ai_skill'),
+        _create_parameterless_skill_info('foo.foo_skill'),
+        _create_parameterless_skill_info('foo.foo'),
+        _create_parameterless_skill_info('foo.bar.bar_skill'),
+        _create_parameterless_skill_info('foo.bar.bar'),
+        _create_parameterless_skill_info('global_skill'),
+    ]
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
+        _create_skill_registry_for_skill_infos(skill_infos),
         self._create_empty_resource_registry(),
     )
 
-    skills = dir(skills)
-    self.assertEqual(skills, ['my_skill'])
+    self.assertEqual(
+        dir(skills),
+        [
+            'ai',
+            'ai_skill',
+            'bar',
+            'bar_skill',
+            'foo',
+            'foo_skill',
+            'global_skill',
+            'intr_skill_one',
+            'intr_skill_two',
+        ],
+    )
+    self.assertEqual(dir(skills.ai), ['ai_skill', 'intr'])
+    self.assertEqual(dir(skills.foo), ['bar', 'foo', 'foo_skill'])
+    self.assertEqual(dir(skills.foo.bar), ['bar', 'bar_skill'])
+
+  def test_skills_access(self):
+    skill_infos = [
+        _create_parameterless_skill_info('ai.intr.intr_skill_one'),
+        _create_parameterless_skill_info('ai.intr.intr_skill_two'),
+        _create_parameterless_skill_info('ai.ai_skill'),
+        _create_parameterless_skill_info('foo.foo_skill'),
+        _create_parameterless_skill_info('foo.foo'),
+        _create_parameterless_skill_info('foo.bar.bar_skill'),
+        _create_parameterless_skill_info('foo.bar.bar'),
+        _create_parameterless_skill_info('global_skill'),
+    ]
+    skills = skills_mod.Skills(
+        _create_skill_registry_for_skill_infos(skill_infos),
+        self._create_empty_resource_registry(),
+    )
+
+    # Shortcut notation: skills.<skill_name>
+    self.assertIsInstance(skills.intr_skill_one(), skills_mod.GeneratedSkill)
+    self.assertIsInstance(skills.intr_skill_two(), skills_mod.GeneratedSkill)
+    self.assertIsInstance(skills.ai_skill(), skills_mod.GeneratedSkill)
+    self.assertIsInstance(skills.foo_skill(), skills_mod.GeneratedSkill)
+
+    # Id notation: skills.<skill_id>
+    self.assertIsInstance(skills.ai, provided.SkillPackage)
+    self.assertIsInstance(skills.ai.intr, provided.SkillPackage)
+    self.assertIsInstance(skills.foo, provided.SkillPackage)
+    self.assertIsInstance(skills.foo.bar, provided.SkillPackage)
+
+    self.assertIsInstance(
+        skills.ai.intr.intr_skill_one(), skills_mod.GeneratedSkill
+    )
+    self.assertIsInstance(
+        skills.ai.intr.intr_skill_two(), skills_mod.GeneratedSkill
+    )
+    self.assertIsInstance(skills.ai.ai_skill(), skills_mod.GeneratedSkill)
+    self.assertIsInstance(skills.foo.foo_skill(), skills_mod.GeneratedSkill)
+    self.assertIsInstance(skills.foo.foo(), skills_mod.GeneratedSkill)
+    self.assertIsInstance(skills.foo.bar.bar_skill(), skills_mod.GeneratedSkill)
+    self.assertIsInstance(skills.foo.bar.bar(), skills_mod.GeneratedSkill)
+    self.assertIsInstance(skills.global_skill(), skills_mod.GeneratedSkill)
+
+    # Id-string-based access: skills['<skill_id>']
+    self.assertIsInstance(
+        skills['ai.intr.intr_skill_one'](), skills_mod.GeneratedSkill
+    )
+    self.assertIsInstance(
+        skills['ai.intr.intr_skill_two'](), skills_mod.GeneratedSkill
+    )
+    self.assertIsInstance(skills['ai.ai_skill'](), skills_mod.GeneratedSkill)
+    self.assertIsInstance(skills['foo.foo_skill'](), skills_mod.GeneratedSkill)
+    self.assertIsInstance(skills['foo.foo'](), skills_mod.GeneratedSkill)
+    self.assertIsInstance(
+        skills['foo.bar.bar_skill'](), skills_mod.GeneratedSkill
+    )
+    self.assertIsInstance(skills['foo.bar.bar'](), skills_mod.GeneratedSkill)
+    self.assertIsInstance(skills['global_skill'](), skills_mod.GeneratedSkill)
+
+    with self.assertRaises(AttributeError):
+      _ = skills.skill5
+
+    with self.assertRaises(AttributeError):
+      _ = skills.foo.skill5
+
+    with self.assertRaises(KeyError):
+      _ = skills['skill5']
 
   def test_gen_skill(self):
     skill_registry, skill_registry_stub = (
@@ -1031,21 +1134,6 @@ class SkillsTest(parameterized.TestCase):
 
     with self.assertRaises(TypeError):
       skills.my_skill(a=resource_a)
-
-  def test_skills_access(self):
-    skill_id = 'ai.intrinsic.my_skill'
-    skill_info = text_format.Parse(
-        """id: '%s'""" % skill_id, skills_pb2.Skill()
-    )
-    skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
-        self._create_empty_resource_registry(),
-    )
-
-    _ = skills['my_skill']
-
-    with self.assertRaises(KeyError):
-      _ = skills['skill5']
 
   def test_skill_class_name(self):
     skill_info = _create_test_skill_info(skill_id='ai.intrinsic.my_skill')

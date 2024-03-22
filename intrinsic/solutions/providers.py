@@ -68,11 +68,11 @@ class ResourceProvider(abc.ABC):
 
 
 class SkillProvider(abc.ABC):
-  """Abstract base class for generators that provide skills.
+  """A container that provides access to the skills of a solution.
 
-  Skill providers are directly user-facing in Jupyter. Hence `__dir__` and
-  `__getattr__` are used by auto-completion and must adhere to the standard
-  interface, which this abstract base class enforces.
+  Skill providers are directly user-facing. Hence `__dir__` and `__getattr__`
+  may be used by auto-completion and must adhere to the standard interface,
+  which this abstract base class enforces.
   """
 
   @abc.abstractmethod
@@ -92,10 +92,11 @@ class SkillProvider(abc.ABC):
   # the constructor parameters explicitly against SkillBase, which we don't
   # want and which is rather odd. Therefore, just state that it's a type.
   @abc.abstractmethod
-  def __getattr__(self, name: str) -> Type[Any]:
-    """Returns the action skill class."""
+  def __getattr__(self, name: str) -> Union[Type[Any], provided.SkillPackage]:
+    """Returns the global skill class or skill package with the given name."""
     raise NotImplementedError("Skill provider did not implement __getattr__")
 
   @abc.abstractmethod
   def __getitem__(self, skill_name: str) -> Type[Any]:
+    """Returns the skill class or with the given skill id."""
     raise NotImplementedError("Skill provider did not implement __getitem__")

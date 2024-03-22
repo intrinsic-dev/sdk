@@ -12,11 +12,13 @@ Typical usage example:
   workcell.executive.run(say)
 """
 
+from __future__ import annotations
+
 import collections
 import inspect
 import re
 import textwrap
-from typing import Any, Callable, Set, Type
+from typing import Any, Callable, Set, Type, Union
 import uuid
 
 from google.protobuf import descriptor
@@ -935,11 +937,122 @@ class GeneratedSkill(provided.SkillBase):
     return cls._info.message_classes
 
 
-class Skills(providers.SkillProvider):
-  """Wrapper to easily access skills from Workcell.
+def _create_skill_packages(
+    current_package: str,
+    relative_child_package_names: set[str],
+    skill_infos: list[SkillInfoImpl],
+    compatible_resources_by_id: dict[str, dict[str, provided.ResourceList]],
+) -> dict[str, _SkillPackageImpl]:
+  """Recursively creates a hierarchy of skill packages.
 
-  This enables easy access to skills configured for a workcell.
+  Args:
+    current_package: The current package name, e.g., "" or "ai".
+    relative_child_package_names: The package names to create below
+      'current_package' and  relative to 'current_package'. Passed as a set to
+      avoid duplicates. E.g., {'intrinsic', 'intrinsic.special_skills'} if the
+      current package is 'ai'.
+    skill_infos: All skill infos from the skill registry.
+    compatible_resources_by_id: All compatible resource definitions by skill id.
+
+  Returns:
+    A mapping from skill package prefix to child skill packages. E.g., if the
+    current package is 'ai' the returned mapping might be:
+      { 'intrinsic': <SkillPackageImpl for 'ai.intrinsic'> }
   """
+
+  prefixes = {package.split(".")[0] for package in relative_child_package_names}
+
+  skill_packages = {}
+  for prefix in prefixes:
+    prefix_dotted = prefix + "."
+    relative_child_package_names_of_child = {
+        package.removeprefix(prefix_dotted)
+        for package in relative_child_package_names
+        if package.startswith(prefix_dotted)
+    }
+    skill_packages[prefix] = _SkillPackageImpl(
+        current_package + "." + prefix if current_package else prefix,
+        relative_child_package_names_of_child,
+        skill_infos,
+        compatible_resources_by_id,
+    )
+
+  return skill_packages
+
+
+class _SkillPackageImpl(provided.SkillPackage):
+  """Implementation of the SkillPackage interface."""
+
+  # Full package name (e.g. 'ai.intrinsic').
+  _package_name: str
+  _skills_by_name: dict[str, provided.SkillInfo]
+  _compatible_resources_by_name: dict[str, dict[str, provided.ResourceList]]
+  _skill_type_classes_by_name: dict[str, Type[provided.SkillBase]]
+  _child_packages_by_prefix: dict[str, _SkillPackageImpl]
+
+  def __init__(
+      self,
+      package_name: str,
+      relative_child_package_names: set[str],
+      skill_infos: list[SkillInfoImpl],
+      compatible_resources_by_id: dict[str, dict[str, provided.ResourceList]],
+  ):
+    """Creates a new skills package including all child packages.
+
+    Args:
+      package_name: The full package name (e.g. 'ai.intrinsic').
+      relative_child_package_names: The relative names of any child packages.
+        E.g. {'intrinsic', 'intrinsic.special_skills'} if the package name is
+        'ai'.
+      skill_infos: All skill infos from the skill registry.
+      compatible_resources_by_id: All compatible resource definitions by skill
+        id.
+    """
+
+    self._package_name = package_name
+    self._skills_by_name = {
+        _skill_name_from_name_or_id(
+            info.skill_proto.skill_name, info.skill_proto.id
+        ): info
+        for info in skill_infos
+        if info.skill_proto.package_name == package_name
+    }
+    self._compatible_resources_by_name = {
+        name: compatible_resources_by_id[info.id]
+        for name, info in self._skills_by_name.items()
+    }
+    self._skill_type_classes_by_name = {}
+    self._child_packages_by_prefix = _create_skill_packages(
+        package_name,
+        relative_child_package_names,
+        skill_infos,
+        compatible_resources_by_id,
+    )
+
+  def __getattr__(self, name: str) -> Union[Type[Any], provided.SkillPackage]:
+    if name in self._child_packages_by_prefix:
+      return self._child_packages_by_prefix[name]
+    elif name not in self._skills_by_name:
+      raise AttributeError(
+          f"Could not resolve the attribute '{name}'."
+          f" '{self._package_name}.{name}' is not an available skill id or"
+          " skill package. Use update() or reconnect to the deployed solution"
+          " to update the available skills."
+      )
+    if name not in self._skill_type_classes_by_name:
+      self._skill_type_classes_by_name[name] = _gen_skill_class(
+          self._skills_by_name[name], self._compatible_resources_by_name[name]
+      )
+    return self._skill_type_classes_by_name[name]
+
+  def __dir__(self) -> list[str]:
+    return sorted(
+        self._child_packages_by_prefix.keys() | self._skills_by_name.keys()
+    )
+
+
+class Skills(providers.SkillProvider):
+  """Implementation of the SkillProvider interface."""
 
   _skill_registry: skill_registry_client.SkillRegistryClient
   _resource_registry: resource_registry_client.ResourceRegistryClient
@@ -949,6 +1062,7 @@ class Skills(providers.SkillProvider):
   _skill_type_classes_by_id: dict[str, Type[provided.SkillBase]]
   _compatible_resources_by_name: dict[str, dict[str, provided.ResourceList]]
   _compatible_resources_by_id: dict[str, dict[str, provided.ResourceList]]
+  _skill_packages: dict[str, _SkillPackageImpl]
 
   def __init__(
       self,
@@ -963,16 +1077,19 @@ class Skills(providers.SkillProvider):
     self._skill_type_classes_by_id = {}
     self._compatible_resources_by_name = {}
     self._compatible_resources_by_id = {}
+    self._skill_packages = {}
     self.update()
 
   def update(self) -> None:
     """Retrieve most recent list of available skills."""
     skills = self._skill_registry.get_skills()
+    skill_infos = [SkillInfoImpl(info) for info in skills]
+
     self._skills_by_name = {
-        _skill_name_from_name_or_id(info.skill_name, info.id): SkillInfoImpl(
-            info
-        )
-        for info in skills
+        _skill_name_from_name_or_id(
+            info.skill_proto.skill_name, info.skill_proto.id
+        ): info
+        for info in skill_infos
     }
     self._skills_by_id = {info.id: SkillInfoImpl(info) for info in skills}
     self._skill_type_classes_by_name = {}
@@ -1013,12 +1130,19 @@ class Skills(providers.SkillProvider):
         )
         selector_index += 1
 
-  def __getattr__(self, name: str) -> Type[Any]:
-    if name not in self._skills_by_name:
+    package_names = {info.package_name for info in skills if info.package_name}
+    self._skill_packages = _create_skill_packages(
+        "", package_names, skill_infos, self._compatible_resources_by_id
+    )
+
+  def __getattr__(self, name: str) -> Union[Type[Any], provided.SkillPackage]:
+    if name in self._skill_packages:
+      return self._skill_packages[name]
+    elif name not in self._skills_by_name:
       raise AttributeError(
-          f"Could not resolve the attribute {name}."
-          " If you intended to construct a skill, add "
-          "that skill to the skill registry."
+          f"Could not resolve the attribute '{name}'. '{name}' is not an"
+          " available skill name, skill id or skill package. Use update() or"
+          " reconnect to the deployed solution to update the available skills."
       )
     if name not in self._skill_type_classes_by_name:
       self._skill_type_classes_by_name[name] = _gen_skill_class(
@@ -1027,16 +1151,10 @@ class Skills(providers.SkillProvider):
     return self._skill_type_classes_by_name[name]
 
   def __dir__(self) -> list[str]:
-    return sorted(self._skills_by_name.keys())
+    return sorted(self._skill_packages.keys() | self._skills_by_name.keys())
 
   def __getitem__(self, name: str) -> Type[Any]:
-    if name in self._skills_by_name:
-      if name not in self._skill_type_classes_by_name:
-        self._skill_type_classes_by_name[name] = _gen_skill_class(
-            self._skills_by_name[name], self._compatible_resources_by_name[name]
-        )
-      return self._skill_type_classes_by_name[name]
-    elif name in self._skills_by_id:
+    if name in self._skills_by_id:
       if name not in self._skill_type_classes_by_id:
         self._skill_type_classes_by_id[name] = _gen_skill_class(
             self._skills_by_id[name], self._compatible_resources_by_id[name]
@@ -1044,7 +1162,7 @@ class Skills(providers.SkillProvider):
       return self._skill_type_classes_by_id[name]
     else:
       raise KeyError(
-          f"Could not resolve the key {name}."
-          " If you intended to construct a skill, add "
-          "that skill to the skill registry."
+          f"Could not resolve the attribute '{name}'. '{name}' is not an"
+          " available skill skill id. Use update() or reconnect to the"
+          " deployed solution to update the available skills."
       )

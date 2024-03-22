@@ -2,8 +2,10 @@
 
 """Base classes for everything provided by skill and resource providers."""
 
+from __future__ import annotations
+
 import abc
-from typing import Dict, Iterator, List, Set, Type
+from typing import Any, Dict, Iterator, List, Set, Type, Union
 
 from google.protobuf import descriptor
 from google.protobuf import message
@@ -326,3 +328,28 @@ class SkillBase(actions.ActionBase):
     """
     # @classproperty requires an error-free default implementation.
     return {}
+
+
+class SkillPackage(abc.ABC):
+  """A container that provides access a skill package.
+
+  A skill package may contain skills as well as further child skill packages.
+  E.g.:
+    - The SkillPackage for 'foo' will contain the skill 'foo_skill' if the
+      skill 'foo.foo_skill' is available in the solution."
+    - The SkillPackage for 'foo' will contain the child skill package 'bar' if
+      the skill 'foo.bar.bar_skill' is available in the solution.
+  """
+
+  # We would like to use Type[SkillBase] instead, but Python then checks
+  # the constructor parameters explicitly against SkillBase, which we don't
+  # want and which is rather odd. Therefore, just state that it's a type.
+  @abc.abstractmethod
+  def __getattr__(self, name: str) -> Union[Type[Any], SkillPackage]:
+    """Returns the skill class or child skill package with the given name."""
+    ...
+
+  @abc.abstractmethod
+  def __dir__(self) -> list[str]:
+    """Returns the list of available skill classes or child skill packages."""
+    ...
