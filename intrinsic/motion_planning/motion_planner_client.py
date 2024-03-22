@@ -158,7 +158,8 @@ class MotionPlannerClient:
     if isinstance(target, motion_target_pb2.CartesianMotionTarget):
       request.target.pose_equality.moving_frame.CopyFrom(target.tool)
       request.target.pose_equality.target_frame.CopyFrom(target.frame)
-      request.target.pose_equality.target_frame_offset.CopyFrom(target.offset)
+      if target.HasField("offset"):
+        request.target.pose_equality.target_frame_offset.CopyFrom(target.offset)
     else:
       request.target.CopyFrom(target)
 

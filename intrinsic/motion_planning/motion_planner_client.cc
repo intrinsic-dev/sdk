@@ -94,8 +94,10 @@ absl::StatusOr<std::vector<eigenmath::VectorXd>> MotionPlannerClient::ComputeIk(
       cartesian_target.frame();
   *geometric_target.mutable_pose_equality()->mutable_moving_frame() =
       cartesian_target.tool();
-  *geometric_target.mutable_pose_equality()->mutable_target_frame_offset() =
-      cartesian_target.offset();
+  if (cartesian_target.has_offset()) {
+    *geometric_target.mutable_pose_equality()->mutable_target_frame_offset() =
+        cartesian_target.offset();
+  }
 
   return ComputeIk(robot, geometric_target, options);
 }
