@@ -1,7 +1,7 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-// Package unload defines the skill unload command which removes a skill.
-package unload
+// Package uninstall defines the skill command which uninstalls a skill.
+package uninstall
 
 import (
 	"fmt"
@@ -21,29 +21,32 @@ import (
 
 var cmdFlags = cmdutils.NewCmdFlags()
 
-var unloadCmd = &cobra.Command{
-	Use:   "unload --type=TYPE TARGET",
+var uninstallCmd = &cobra.Command{
+	Use:   "uninstall --type=TYPE TARGET",
 	Short: "Remove a skill",
 	Example: `Stop a running skill using its build target
-$ inctl skill unload --type=build //abc:skill.tar --context=minikube
+$ inctl skill uninstall --type=build //abc:skill.tar --context=minikube
 
 Stop a running skill using an already-built image file
-$ inctl skill unload --type=archive abc/skill.tar --context=minikube
+$ inctl skill uninstall --type=archive abc/skill.tar --context=minikube
 
 Stop a running skill using an already-pushed image
-$ inctl skill unload --type=image gcr.io/my-workcell/abc@sha256:20ab4f --context=minikube
+$ inctl skill uninstall --type=image gcr.io/my-workcell/abc@sha256:20ab4f --context=minikube
 
 Use the solution flag to automatically resolve the context (requires the solution to run)
-$ inctl skill unload --type=archive abc/skill.tar --solution=my-solution
+$ inctl skill uninstall --type=archive abc/skill.tar --solution=my-solution
 
 Stop a running skill by specifying its id
-$ inctl skill unload --type=id com.foo.skill
+$ inctl skill uninstall --type=id com.foo.skill
 
 Stop a running skill by specifying its name [deprecated]
-$ inctl skill unload --type=id skill
+$ inctl skill uninstall --type=id skill
 `,
-	Args:    cobra.ExactArgs(1),
-	Aliases: []string{"stop"},
+	Args: cobra.ExactArgs(1),
+	Aliases: []string{
+		"stop",
+		"unload",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		target := args[0]
 		targetType := imageutils.TargetType(cmdFlags.GetFlagSideloadStopType())
@@ -109,8 +112,8 @@ $ inctl skill unload --type=id skill
 }
 
 func init() {
-	cmd.SkillCmd.AddCommand(unloadCmd)
-	cmdFlags.SetCommand(unloadCmd)
+	cmd.SkillCmd.AddCommand(uninstallCmd)
+	cmdFlags.SetCommand(uninstallCmd)
 
 	cmdFlags.AddFlagInstallerAddress()
 	cmdFlags.AddFlagsProjectOrg()

@@ -15,10 +15,10 @@ import (
 	_ "intrinsic/skills/tools/skill/cmd/list/listreleased"
 	// Add subcommand "skill listreleasedversions".
 	_ "intrinsic/skills/tools/skill/cmd/list/listreleasedversions"
-	// Add subcommand "skill load".
-	_ "intrinsic/skills/tools/skill/cmd/load"
-	// Add subcommand "skill unload".
-	_ "intrinsic/skills/tools/skill/cmd/load/unload"
+	// Add subcommand "skill install".
+	_ "intrinsic/skills/tools/skill/cmd/install"
+	// Add subcommand "skill uninstall".
+	_ "intrinsic/skills/tools/skill/cmd/install/uninstall"
 	// Add subcommand "skill logs".
 	_ "intrinsic/skills/tools/skill/cmd/logs"
 	// Add subcommand "skill release".
