@@ -182,6 +182,7 @@ py_test(
     python_version = "PY3",
     srcs_version = "PY3",
     deps = [
+        ":skill_utils",
         ":skills",
         "//intrinsic/executive/proto:behavior_call_py_pb2",
         "//intrinsic/executive/proto:test_message_py_pb2",

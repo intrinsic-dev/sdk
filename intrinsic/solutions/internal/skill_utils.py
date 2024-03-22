@@ -36,6 +36,9 @@ from intrinsic.world.proto import collision_settings_pb2
 from intrinsic.world.proto import object_world_refs_pb2
 from intrinsic.world.python import object_world_resources
 
+_PYTHON_PACKAGE_SEPARATOR = "."
+_PROTO_PACKAGE_SEPARATOR = "."
+
 RESOURCE_SLOT_DECONFLICT_SUFFIX = "_resource"
 
 
@@ -1396,6 +1399,105 @@ def _gen_init_params(
   return params
 
 
+def _gen_wrapper_namespace_class(
+    name: str, proto_path: str, skill_name: str, skill_package: str
+) -> Type[Any]:
+  """Generates a class to be used as a namespace for nested wrapper classes.
+
+  Args:
+    name: Name of the class to generate.
+    proto_path: Prefix of a full proto type name corresponding to the namespace
+      class to generate. E.g. 'intrinsic_proto', 'intrinsic_proto.foo' or
+      'intrinsic_proto.foo.Bar' (if 'Bar' is just required as a namespace and we
+      don't have a message wrapper for it).
+    skill_name: Name of the parent skill.
+    skill_package: Package name of the parent skill.
+
+  Returns:
+    The generated namespace class.
+  """
+
+  def init_fun(self, *args, **kwargs) -> None:
+    del self, args, kwargs
+    raise RuntimeError(
+        f"This class ({proto_path}) serves only as a namespace and should not"
+        " be instantiated."
+    )
+
+  return type(
+      name,
+      (),  # no base classes
+      {
+          "__init__": init_fun,
+          "__name__": name,
+          "__qualname__": skill_name + _PYTHON_PACKAGE_SEPARATOR + proto_path,
+          "__module__": module_for_generated_skill(skill_package),
+      },
+  )
+
+
+def _attach_wrapper_class(
+    parent_name: str,
+    relative_name: str,
+    parent_class: Type[Any],
+    wrapper_class: Type[MessageWrapper],
+    skill_name: str,
+    skill_package: str,
+) -> None:
+  """Attaches the given wrapper class as a nested class under a skill class.
+
+  E.g. the wrapper class corresponding to the message 'intrinsic_proto.foo.Bar'
+  will be attached as:
+    skill class
+      -> namespace class 'intrinsic_proto'
+      -> namespace class 'foo'
+      -> wrapper class 'Bar'
+
+  Args:
+    parent_name: Full name of the parent class.
+    relative_name: Current path relative to parent_name under which to attach.
+    parent_class: Current parent under which to attach.
+    wrapper_class: Wrapper class to attach.
+    skill_name: Name of the parent skill.
+    skill_package: Package name of the parent skill.
+  """
+
+  if _PROTO_PACKAGE_SEPARATOR not in relative_name:
+    if hasattr(parent_class, relative_name):
+      raise AssertionError(
+          f"Internal error: Parent class {parent_name} already has a nested"
+          f" class {relative_name}. Wrong attachment order?"
+      )
+    setattr(parent_class, relative_name, wrapper_class)
+    return
+
+  prefix = relative_name.split(_PROTO_PACKAGE_SEPARATOR)[0]
+  child_name = (
+      f"{parent_name}{_PROTO_PACKAGE_SEPARATOR}{prefix}"
+      if parent_name
+      else prefix
+  )
+
+  if not hasattr(parent_class, prefix):
+    child_class = _gen_wrapper_namespace_class(
+        prefix, child_name, skill_name, skill_package
+    )
+    setattr(parent_class, prefix, child_class)
+  else:
+    # In this case, 'child_class' is a namespace class or a message wrapper
+    # class that serves as a namespace for a nested proto message.
+    child_class = getattr(parent_class, prefix)
+
+  _attach_wrapper_class(
+      child_name,
+      relative_name.removeprefix(prefix).lstrip("."),
+      child_class,
+      wrapper_class,
+      skill_name,
+      skill_package,
+  )
+
+
 def update_message_class_modules(
     cls: Type[Any],
     skill_name: str,
@@ -1438,43 +1540,52 @@ def update_message_class_modules(
         setattr(cls, value_name, enum_value.number)
 
   wrapper_classes: dict[str, Type[MessageWrapper]] = {}
-  for nested_class_attr_name, message_type, field in nested_classes:
+  for _, message_type, field in nested_classes:
     if field.message_type.full_name in _MESSAGE_NAME_TO_PYTHONIC_TYPE:
       continue
 
-    wrapper_class = _gen_wrapper_class(
-        message_type,
-        skill_name,
-        skill_package,
-        field_doc_strings,
-    )
-    wrapper_classes[field.message_type.full_name] = wrapper_class
-
-    if (
-        hasattr(cls, nested_class_attr_name)
-        and getattr(cls, nested_class_attr_name).wrapped_type != message_type
-    ):
-      print(
-          f"Duplicate definition of type {nested_class_attr_name}.",
-          (
-              "Aliasing under skill has lead to information loss,"
-              f" {nested_class_attr_name} does not match for field"
-              f" {field.full_name}"
-          ),
+    if field.message_type.full_name not in wrapper_classes:
+      wrapper_class = _gen_wrapper_class(
+          message_type,
+          skill_name,
+          skill_package,
+          field_doc_strings,
       )
-    else:
-      setattr(cls, nested_class_attr_name, wrapper_class)
+      wrapper_classes[field.message_type.full_name] = wrapper_class
 
   # The init function of a wrapper class may reference any other wrapper class
   # (proto definitions can be recursive!). So we can only generate the init
   # functions after all classes have been generated.
-  for message_name, wrapper_class in wrapper_classes.items():
+  for message_full_name, wrapper_class in wrapper_classes.items():
     wrapper_class.__init__ = _gen_init_fun(
         wrapper_class.wrapped_type,
-        message_name,
+        message_full_name,
         wrapper_classes,
         field_doc_strings,
     )
+
+  # Attach message classes to skill class in sorted order to ensure that nested
+  # proto message are handled correctly. E.g., 'foo.Bar' needs to be attached
+  # before 'foo.Bar.Nested' so that we don't create a namespace class for
+  # 'foo.Bar' when inserting 'foo.Bar.Nested'. Note that we might still create
+  # 'foo.Bar' as a namespace class if the skill uses 'foo.Bar.Nested' but not
+  # 'foo.Bar'.
+  for message_full_name in sorted(wrapper_classes):
+    wrapper_class = wrapper_classes[message_full_name]
+    _attach_wrapper_class(
+        "", message_full_name, cls, wrapper_class, skill_name, skill_package
+    )
+
+  # Create my_skill.<message name> shortcuts. Iterate in 'nested_classes' order
+  # for backwards compatibility and also to ensure that the shortcuts are
+  # deterministic in case of name collisions.
+  for _, _, field in nested_classes:
+    if field.message_type.full_name not in wrapper_classes:
+      continue
+    wrapper_class = wrapper_classes[field.message_type.full_name]
+    message_name = wrapper_class.wrapped_type.DESCRIPTOR.name
+    if not hasattr(cls, message_name):
+      setattr(cls, message_name, wrapper_class)
 
   return wrapper_classes
 

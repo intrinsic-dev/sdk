@@ -31,6 +31,7 @@ from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions import blackboard_value
 from intrinsic.solutions import cel
 from intrinsic.solutions import provided
+from intrinsic.solutions.internal import skill_utils
 from intrinsic.solutions.internal import skills as skills_mod
 from intrinsic.solutions.testing import compare
 from intrinsic.solutions.testing import test_skill_params_pb2
@@ -1688,26 +1689,88 @@ Returns:
         self._create_empty_resource_registry(),
     )
 
-    # SubMessage is a top-level message in proto file.
-    self.assertEqual(skills.my_skill.SubMessage.__name__, 'SubMessage')
+    my_skill = skills.ai.intrinsic.my_skill
+
+    # test_data is the subpackage of the proto file and should be represented by
+    # a simple namespace class.
+    self.assertEqual(my_skill.intrinsic_proto.test_data.__name__, 'test_data')
     self.assertEqual(
-        skills.my_skill.SubMessage.__qualname__,
+        my_skill.intrinsic_proto.test_data.__qualname__,
+        'my_skill.intrinsic_proto.test_data',
+    )
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.__module__,
+        'intrinsic.solutions.skills.ai.intrinsic',
+    )
+
+    # SubMessage is a top-level message in proto file.
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.SubMessage.__name__, 'SubMessage'
+    )
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.SubMessage.__qualname__,
         'my_skill.intrinsic_proto.test_data.SubMessage',
     )
     self.assertEqual(
-        skills.my_skill.SubMessage.__module__,
+        my_skill.intrinsic_proto.test_data.SubMessage.__module__,
         'intrinsic.solutions.skills.ai.intrinsic',
     )
 
     # Foo (=TestMessage.Foo) is a nested message in proto file.
-    self.assertEqual(skills.my_skill.Foo.__name__, 'Foo')
     self.assertEqual(
-        skills.my_skill.Foo.__qualname__,
+        my_skill.intrinsic_proto.test_data.TestMessage.Foo.__name__, 'Foo'
+    )
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.TestMessage.Foo.__qualname__,
         'my_skill.intrinsic_proto.test_data.TestMessage.Foo',
     )
     self.assertEqual(
-        skills.my_skill.Foo.__module__,
+        my_skill.intrinsic_proto.test_data.TestMessage.Foo.__module__,
         'intrinsic.solutions.skills.ai.intrinsic',
+    )
+
+  def test_wrapper_access(self):
+    skill_info = _create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=test_skill_params_pb2.TestMessageWrapped(),
+    )
+    skills = skills_mod.Skills(
+        _create_skill_registry_for_skill_info(skill_info),
+        self._create_empty_resource_registry(),
+    )
+
+    my_skill = skills.ai.intrinsic.my_skill
+
+    # Shortcut notation: skill.<message name>
+    self.assertIsInstance(my_skill.SubMessage(), skill_utils.MessageWrapper)
+    self.assertIsInstance(my_skill.Foo(), skill_utils.MessageWrapper)
+    self.assertIsInstance(my_skill.Bar(), skill_utils.MessageWrapper)
+    self.assertIsInstance(my_skill.Any(), skill_utils.MessageWrapper)
+
+    # Id notation: skill.<full message name>
+    self.assertIsInstance(
+        my_skill.intrinsic_proto.test_data.SubMessage(),
+        skill_utils.MessageWrapper,
+    )
+    self.assertIsInstance(
+        my_skill.intrinsic_proto.test_data.TestMessage(),
+        skill_utils.MessageWrapper,
+    )
+    self.assertIsInstance(
+        my_skill.intrinsic_proto.test_data.TestMessage.Foo(),
+        skill_utils.MessageWrapper,
+    )
+    self.assertIsInstance(
+        my_skill.intrinsic_proto.test_data.TestMessage.Foo.Bar(),
+        skill_utils.MessageWrapper,
+    )
+    self.assertIsInstance(
+        my_skill.intrinsic_proto.executive.TestMessage(),
+        skill_utils.MessageWrapper,
+    )
+    self.assertIsInstance(
+        my_skill.google.protobuf.Any(),
+        skill_utils.MessageWrapper,
     )
 
   def test_message_wrapper_signature(self):
