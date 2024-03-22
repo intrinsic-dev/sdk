@@ -10,9 +10,12 @@ from numpy import testing as np_testing
 
 from intrinsic.icon.proto import cart_space_pb2
 from intrinsic.kinematics.types import joint_limits_pb2
+from intrinsic.math.python import data_types
+
 from intrinsic.solutions.testing import compare
 from intrinsic.world.proto import object_world_refs_pb2
 from intrinsic.world.proto import object_world_service_pb2
+
 from intrinsic.world.python import object_world_ids
 from intrinsic.world.python import object_world_resources
 from google.protobuf import text_format
@@ -1046,6 +1049,39 @@ class KinematicObjectTests(absltest.TestCase):
         my_robot.joint_configurations.my_motion_target.joint_position,
         [1.0, 2.0, 3.0],
     )
+
+  def test_get_mounted_payload(self):
+    object_proto_string = """
+      name: 'my_robot'
+      object_component: {}
+      kinematic_object_component: {
+        mounted_payload: {
+          mass_kg: 1.03
+          tip_t_cog: {
+            position: {}
+            orientation: { w: 1.0 }
+          }
+          inertia: {
+            rows: 3
+            cols: 3
+            values: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+          }
+        }
+      }
+    """
+    my_robot = object_world_resources.KinematicObject(
+        text_format.Parse(
+            object_proto_string, object_world_service_pb2.Object()
+        ),
+        self._stub,
+    )
+
+    self.assertEqual(
+        my_robot.mounted_payload.mass,
+        1.03,
+    )
+    self.assertEqual(my_robot.mounted_payload.tip_t_cog, data_types.Pose3())
+    np_testing.assert_array_equal(my_robot.mounted_payload.inertia, np.eye(3))
 
 
 class JointConfigurationTest(absltest.TestCase):

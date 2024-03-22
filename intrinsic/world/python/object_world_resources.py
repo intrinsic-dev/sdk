@@ -15,6 +15,7 @@ from intrinsic.world.proto import object_world_service_pb2
 from intrinsic.world.proto import object_world_service_pb2_grpc
 from intrinsic.world.proto import object_world_updates_pb2
 from intrinsic.world.python import object_world_ids
+from intrinsic.world.robot_payload.python import robot_payload
 
 
 def _list_public_methods(instance: object) -> List[str]:
@@ -559,6 +560,8 @@ class KinematicObject(WorldObject):
     iso_flange_frames: Flange frames (see 'frame_ids').
     joint_configurations: Joint configurations belonging to this kinematic
       object.
+    mounted_payload: The payload mounted at the robot. Returns None if payload
+      is not set.
   """
 
   def __init__(
@@ -631,6 +634,14 @@ class KinematicObject(WorldObject):
         for frame in self._proto.frames
         if frame.id in flanges
     ]
+
+  @property
+  def mounted_payload(self) -> robot_payload.RobotPayload | None:
+    if not self._proto.kinematic_object_component.mounted_payload:
+      return None
+    return robot_payload.payload_from_proto(
+        self._proto.kinematic_object_component.mounted_payload
+    )
 
   def get_single_iso_flange_frame(self) -> Frame:
     """Returns the single flange frame of this kinematic object.

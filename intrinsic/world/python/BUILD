@@ -24,6 +24,7 @@ py_library(
         "//intrinsic/world/proto:object_world_service_py_pb2",
         "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
         "//intrinsic/world/proto:object_world_updates_py_pb2",
+        "//intrinsic/world/robot_payload/python:robot_payload",
     ],
 )
 
@@ -36,6 +37,7 @@ py_test(
         ":object_world_resources",
         "//intrinsic/icon/proto:cart_space_py_pb2",
         "//intrinsic/kinematics/types:joint_limits_py_pb2",
+        "//intrinsic/math/python:data_types",
         "//intrinsic/solutions/testing:compare",
         "//intrinsic/world/proto:object_world_refs_py_pb2",
         "//intrinsic/world/proto:object_world_service_py_pb2",
@@ -83,6 +85,7 @@ py_library(
         "//intrinsic/world/proto:object_world_service_py_pb2",
         "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
         "//intrinsic/world/proto:object_world_updates_py_pb2",
+        "//intrinsic/world/robot_payload/python:robot_payload",
         requirement("grpcio"),
     ],
 )

@@ -26,6 +26,7 @@ from intrinsic.world.proto import object_world_service_pb2_grpc
 from intrinsic.world.proto import object_world_updates_pb2
 from intrinsic.world.python import object_world_ids
 from intrinsic.world.python import object_world_resources
+from intrinsic.world.robot_payload.python import robot_payload
 
 # Convenience constant for an ObjectEntityFilter that selects only the base
 # entity.
@@ -628,6 +629,21 @@ class ObjectWorldClient:
             world_id=self._world_id,
             object=kinematic_object.reference,
             cartesian_limits=limits,
+        )
+    )
+
+  @error_handling.retry_on_grpc_unavailable
+  def update_kinematic_object_payload(
+      self,
+      kinematic_object: object_world_resources.KinematicObject,
+      payload: robot_payload.RobotPayload,
+  ) -> None:
+
+    self._stub.UpdateKinematicObjectProperties(
+        object_world_updates_pb2.UpdateKinematicObjectPropertiesRequest(
+            world_id=self._world_id,
+            object=kinematic_object.reference,
+            mounted_payload=robot_payload.payload_to_proto(payload),
         )
     )
 
