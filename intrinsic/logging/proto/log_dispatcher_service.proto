@@ -121,8 +121,8 @@ message GetCloudLogItemsRequest {
   string session_token = 3;
 
   // Limits for the number of results per page.
-  optional uint32 max_num_items = 4;  // Defaults to 10000.
-  optional double max_total_byte_size_mb = 5;  // Cumulative, defaults to 10MB
+  optional uint32 max_num_items = 4;           // Defaults to 10000.
+  optional double max_total_byte_size_mb = 5;  // Cumulative, defaults to 25MB
 
   // Session is bound to organization_id.
   string organization_id = 6;
