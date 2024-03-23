@@ -103,7 +103,11 @@ func (dt *directTransfer) Write(ref name.Reference, img crv1.Image) error {
 		if err != nil {
 			return fmt.Errorf("cannot connect: %w", err)
 		}
-		dt.uploader, err = client.NewUploader(apiClient, client.WithSequentialUpload())
+		dt.uploader, err = client.NewUploader(apiClient, client.WithSequentialUpload(),
+			// To mitigate b/330747118; this is not full fix, but should help.
+			// This setting is forcing to run only 1 upload task at a time.
+			// We are taking significant performance penalty.
+			client.WithUploadParallelism(1))
 		if err != nil {
 			return fmt.Errorf("cannot create uploader: %w", err)
 		}

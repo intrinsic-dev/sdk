@@ -7,11 +7,20 @@ import (
 	"fmt"
 	"io"
 
+	backoff "github.com/cenkalti/backoff/v4"
 	log "github.com/golang/glog"
+	"github.com/pkg/errors"
 	"go.uber.org/atomic"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	artifactpb "intrinsic/storage/artifacts/proto/artifact_go_grpc_proto"
+)
+
+var (
+	// internal error to indicate that item already exists, and we should stop update
+	errAlreadyExists = errors.New("already exists")
+	// this can be set in tests to speed them up
+	backOffStrategy = backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)
 )
 
 type nonStreamingTask struct {
@@ -73,25 +82,18 @@ func (t *nonStreamingTask) runWithCtx(ctx context.Context) error {
 			contentBuffer = make([]byte, t.updateSize)
 		}
 
-		response, err := t.client.WriteContent(ctx, updateRequest)
+		response, err := t.writeContent(ctx, updateRequest, firstChunk)
 		if err != nil {
-			if firstChunk {
-				// on first chunk we need to check if resource we are writing already
-				// exists. see b/327799134
-				if errStatus, ok := status.FromError(err); ok {
-					if errStatus.Code() == codes.AlreadyExists {
-						// this item already exists. This could be for various reasons,
-						// but we consider this success.
-						updateMonitor(t.monitor, asShortName(t.name), ProgressUpdate{
-							Status:  StatusSuccess,
-							Current: t.descriptor.Size,
-							Total:   t.descriptor.Size,
-							Message: "already exists",
-						})
-						log.InfoContextf(ctx, "[%s] already exists", asShortName(t.name))
-						return nil // our work is done.
-					}
-				}
+			if errors.Is(err, errAlreadyExists) {
+				// this item already exists. This could be for various reasons,
+				// but we consider this success.
+				updateMonitor(t.monitor, asShortName(t.name), ProgressUpdate{
+					Status:  StatusSuccess,
+					Current: t.descriptor.Size,
+					Total:   t.descriptor.Size,
+					Message: "already exists",
+				})
+				return nil
 			}
 			return fmt.Errorf("[%s] write failed: %w", asShortName(t.name), err)
 		}
@@ -108,6 +110,32 @@ func (t *nonStreamingTask) runWithCtx(ctx context.Context) error {
 	}
 
 	return fmt.Errorf("[%s]: premature end: %w", asShortName(t.name), ctxErr)
+}
+
+func (t *nonStreamingTask) writeContent(ctx context.Context, updateRequest *artifactpb.UpdateRequest, firstChunk bool) (response *artifactpb.UpdateResponse, err error) {
+	// adding retry for unavailable (503) response. see:b/330747118
+	err = backoff.Retry(func() error {
+		var localErr error
+		response, localErr = t.client.WriteContent(ctx, updateRequest)
+		if localErr != nil {
+			if errStatus, ok := status.FromError(localErr); ok {
+				// this is valid only for first request
+				if codes.AlreadyExists == errStatus.Code() && firstChunk {
+					log.InfoContextf(ctx, "[%s] already exists", asShortName(t.name))
+					return backoff.Permanent(errAlreadyExists) // our work is done.
+				}
+				if codes.Unavailable == errStatus.Code() {
+					// This is transient error, let's retry
+					log.WarningContextf(ctx, "[%s] transient error: %s", asShortName(t.name), errStatus)
+					return localErr
+				}
+			}
+		}
+		// any other error is considered permanent
+		return backoff.Permanent(localErr)
+	}, backOffStrategy)
+
+	return response, err
 }
 
 func (t *nonStreamingTask) sender(ctx context.Context) func(request *artifactpb.UpdateRequest) error {
