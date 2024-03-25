@@ -95,6 +95,13 @@ class RealtimePromise {
       INTRINSIC_RT_LOG(ERROR)
           << "Failed to signal promise destruction: " << post_error.message();
     }
+    // Signal the cancellation to the future, just in case it is or will be
+    // waiting for it.
+    post_error = is_cancel_acknowledged_->Post();
+    if (!post_error.ok()) {
+      INTRINSIC_RT_LOG(ERROR) << "Failed to signal cancel acknowledgement: "
+                              << post_error.message();
+    }
   }
 
   // Sets the value of the promise, which will make the future become ready.
