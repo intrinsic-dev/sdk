@@ -43,6 +43,11 @@ struct TrajectoryTrackingActionInfo {
       "This Action reports 'settled' as soon as the robot has reached a "
       "settled state after tracking the prescribed motion trajectory, only if "
       "its target velocity was zero.";
+  static constexpr char kIsSettledUncertainty[] = "is_settled_uncertainty";
+  static constexpr char kIsSettledUncertaintyDescription[] =
+      "Reports the uncertainty in the belief if the robot has settled or not "
+      "as a continuous measure in the range [0,1]. 1 means maximum uncertainty "
+      "(robot is not settled), and 0 minimum uncertainty (robot has settled). ";
   static constexpr char kTrajectoryProgress[] = "trajectory_progress";
   static constexpr char kTrajectoryProgressDescription[] =
       "A value between 0.0 and 1.0 describing the progress along the "
