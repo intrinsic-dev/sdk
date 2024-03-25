@@ -46,6 +46,11 @@ struct BlendedMoveActionInfo {
       "This Action reports 'is_settled==true' as soon as the robot has reached "
       "a settled state after executing the motion, and tracking errors and "
       "transients have decayed.";
+  static constexpr char kIsSettledUncertainty[] = "is_settled_uncertainty";
+  static constexpr char kIsSettledUncertaintyDescription[] =
+      "Reports the uncertainty in the belief if the robot has settled or not "
+      "as a continuous measure in the range [0,1]. 1 means maximum uncertainty "
+      "(robot is not settled), and 0 minimum uncertainty (robot has settled). ";
   static constexpr char kBlendedMoveDoneForSeconds[] =
       "blended_move_done_for_seconds";
   static constexpr char kBlendedMoveDoneForSecondsDescription[] =
