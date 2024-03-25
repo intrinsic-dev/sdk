@@ -226,6 +226,11 @@ func (cf *CmdFlags) AddFlagProject() {
 	cf.RequiredEnvString(orgutil.KeyProject, "", "The Google Cloud Platform (GCP) project to use.")
 }
 
+// AddFlagProjectOptional adds an optional flag for the GCP project.
+func (cf *CmdFlags) AddFlagProjectOptional() {
+	cf.OptionalEnvString(orgutil.KeyProject, "", "The Google Cloud Platform (GCP) project to use.")
+}
+
 // GetFlagProject gets the value of the project flag added by AddFlagProject.
 func (cf *CmdFlags) GetFlagProject() string {
 	return cf.GetString(orgutil.KeyProject)

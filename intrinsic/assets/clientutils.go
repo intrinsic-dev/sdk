@@ -75,7 +75,7 @@ func DialCatalogFromInctl(cmd *cobra.Command, flags *cmdutils.CmdFlags) (*grpc.C
 			Address:      "",
 			APIKey:       "",
 			Organization: "",
-			Project:      "intrinsic-assets-prod",
+			Project:      ResolveProject(cmd.Context(), flags),
 			UserReader:   bufio.NewReader(cmd.InOrStdin()),
 			UserWriter:   cmd.OutOrStdout(),
 		},
@@ -203,6 +203,13 @@ func GetSkillCatalogProject(project string) (string, error) {
 	return "", fmt.Errorf("cannot infer project from address: %s", address)
 }
 
+// ResolveProject returns the project to use for communicating with a catalog.
+func ResolveProject(ctx context.Context, flags *cmdutils.CmdFlags) string {
+	project := "intrinsic-assets-prod"
+
+	return project
+}
+
 func resolveCatalogAddress(ctx context.Context, opts DialCatalogOptions) (string, error) {
 	// Check for user-provided address.
 	if opts.Address != "" {
@@ -211,7 +218,7 @@ func resolveCatalogAddress(ctx context.Context, opts DialCatalogOptions) (string
 
 	// Derive the address from the project.
 	if opts.Project == "" {
-		return "", fmt.Errorf("project is required if no address is specified")
+		return "", fmt.Errorf("project is empty")
 	}
 	address, err := getCatalogAddressForProject(ctx, opts)
 	if err != nil {
@@ -234,7 +241,7 @@ func resolveSkillCatalogAddress(ctx context.Context, opts DialCatalogOptions) (s
 
 	// Derive the address from the project.
 	if opts.Project == "" {
-		return "", fmt.Errorf("project is required if no address is specified")
+		return "", fmt.Errorf("project is empty")
 	}
 	address, err := getSkillCatalogAddressForProject(ctx, opts)
 	if err != nil {
