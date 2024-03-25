@@ -39,6 +39,11 @@ struct PointToPointMoveInfo {
   static constexpr char kIsSettledDescription[] =
       "This Action reports 'settled' as soon as the robot has reached a "
       "settled state with zero joint velocity after executing the motion.";
+  static constexpr char kIsSettledUncertainty[] = "is_settled_uncertainty";
+  static constexpr char kIsSettledUncertaintyDescription[] =
+      "Reports the uncertainty in the belief if the robot has settled or not "
+      "as a continuous measure in the range [0,1]. 1 means maximum uncertainty "
+      "(robot is not settled), and 0 minimum uncertainty (robot has settled). ";
   static constexpr char kDistanceToSensed[] = "xfa.distance_to_sensed";
   static constexpr char kDistanceToSensedDescription[] =
       "Euclidean norm of the difference between the final setpoint and the "
