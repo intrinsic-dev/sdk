@@ -9,6 +9,9 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/url"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -18,6 +21,9 @@ import (
 	"intrinsic/assets/clientutils"
 	"intrinsic/tools/inctl/auth"
 )
+
+// schemePattern matches a URL scheme according to https://github.com/grpc/grpc/blob/master/doc/naming.md.
+var schemePattern = regexp.MustCompile("^(?:dns|unix|unix-abstract|vsock|ipv4|ipv6):")
 
 // BasicAuth provides the data for perRPC authentication with the relay for the installer.
 //
@@ -118,8 +124,10 @@ func dialInfoCtx(ctx context.Context, params DialInfoParams) (context.Context, *
 		ctx = metadata.AppendToOutgoingContext(ctx, auth.OrgIDHeader, strings.Split(params.CredOrg, "@")[0])
 	}
 
-	if opts := insecureOpts(params.Address); opts != nil {
-		finalOpts := append(clientutils.BaseDialOptions, *opts...)
+	if UseInsecureCredentials(params.Address) {
+		finalOpts := append(clientutils.BaseDialOptions,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		)
 		return ctx, &finalOpts, params.Address, nil
 	}
 
@@ -144,16 +152,22 @@ func dialInfoCtx(ctx context.Context, params DialInfoParams) (context.Context, *
 	return ctx, &finalOpts, params.Address, nil
 }
 
-// insecure returns an insecure dial option when the user has physical access to
-// the server, otherwise it returns nil.
-func insecureOpts(address string) *[]grpc.DialOption {
-	for _, prefix := range []string{"dns:///www.endpoints", "dns:///portal.intrinsic.ai", "dns:///portal-qa.intrinsic.ai"} {
-		if strings.HasPrefix(address, prefix) {
-			return nil
-		}
+// UseInsecureCredentials determines whether insecure credentials can/should be used for the given
+// address. The dialer uses this internally to decide which credentials to provide.
+func UseInsecureCredentials(address string) bool {
+	// Matching a URL without a scheme is invalid. Default to the dns://. This is the same default
+	// Golang uses to dial targets.
+	if !schemePattern.MatchString(address) {
+		address = "dns://" + address
 	}
-
-	return &[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	port := 443
+	if parsed, err := url.Parse(address); err == nil { // if NO error
+		if parsedPort, err := strconv.Atoi(parsed.Port()); err == nil { // if NO error
+			port = parsedPort
+		}
+		fmt.Printf("scheme: %s; port: %d, parsed port: %s; parsed host: %s; parsed path: %s (%s)", parsed.Scheme, port, parsed.Port(), parsed.Host, parsed.Path, address)
+	}
+	return port != 443
 }
 
 func createCredentials(params DialInfoParams) (credentials.PerRPCCredentials, error) {

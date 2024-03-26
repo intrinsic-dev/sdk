@@ -211,7 +211,7 @@ def pythonic_field_type(
 
 
 def _field_to_string_vector(
-    field_value: Union[Sequence[str], skills_pb2.StringVector]
+    field_value: Union[Sequence[str], skills_pb2.StringVector],
 ) -> skills_pb2.StringVector:
   """Converts the field_value to skills_pb2.StringVector."""
   if isinstance(field_value, list) and all(
@@ -228,7 +228,7 @@ def _field_to_string_vector(
 def _field_to_vector_nd_array(
     field_value: Union[
         Sequence[skills_pb2.VectorNdValue], skills_pb2.VectorNdArray
-    ]
+    ],
 ) -> skills_pb2.VectorNdArray:
   """Converts the field_value to skills_pb2.VectorNdArray."""
   if isinstance(field_value, list) and all(
@@ -243,7 +243,7 @@ def _field_to_vector_nd_array(
 
 
 def _field_to_vector_nd_value(
-    field_value: Union[skills_pb2.VectorNdValue, Sequence[float]]
+    field_value: Union[skills_pb2.VectorNdValue, Sequence[float]],
 ) -> skills_pb2.VectorNdValue:
   """Converts the field_value to skills_pb2.VectorNdValue."""
   if isinstance(field_value, skills_pb2.VectorNdValue):
@@ -268,7 +268,7 @@ def _field_to_object_reference(
     field_value: Union[
         object_world_resources.WorldObject,
         object_world_refs_pb2.ObjectReference,
-    ]
+    ],
 ) -> object_world_refs_pb2.ObjectReference:
   """Converts a field_value to object_world_refs_pb2.ObjectReference."""
   if isinstance(field_value, object_world_refs_pb2.ObjectReference):
@@ -283,7 +283,7 @@ def _field_to_object_reference(
 def _field_to_frame_reference(
     field_value: Union[
         object_world_resources.Frame, object_world_refs_pb2.FrameReference
-    ]
+    ],
 ) -> object_world_refs_pb2.FrameReference:
   """Converts a field_value to object_world_refs_pb2.FrameReference."""
   if isinstance(field_value, object_world_refs_pb2.FrameReference):
@@ -300,7 +300,7 @@ def _field_to_transform_node_reference(
         object_world_resources.WorldObject,
         object_world_resources.Frame,
         object_world_refs_pb2.TransformNodeReference,
-    ]
+    ],
 ) -> object_world_refs_pb2.TransformNodeReference:
   """Converts a field_value to TransformNodeReference.
 
@@ -377,7 +377,7 @@ def _field_to_collision_settings(
 
 
 def _field_to_duration(
-    field_value: Union[datetime.timedelta, float, int, duration_pb2.Duration]
+    field_value: Union[datetime.timedelta, float, int, duration_pb2.Duration],
 ) -> duration_pb2.Duration:
   """Create a Duration object from various inputs.
 

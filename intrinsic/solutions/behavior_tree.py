@@ -101,7 +101,7 @@ def _transform_to_node(node: Union['Node', actions.ActionBase]) -> 'Node':
 
 
 def _transform_to_optional_node(
-    node: Optional[Union['Node', actions.ActionBase]]
+    node: Optional[Union['Node', actions.ActionBase]],
 ) -> Optional['Node']:
   if node is None:
     return None

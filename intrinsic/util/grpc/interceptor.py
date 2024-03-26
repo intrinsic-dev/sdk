@@ -129,7 +129,7 @@ class ClientCallDetailsInterceptor(
 
 
 def _AddHeaders(
-    headers_func: Callable[[], Sequence[Tuple[str, str]]]
+    headers_func: Callable[[], Sequence[Tuple[str, str]]],
 ) -> Callable[[ClientCallDetails], ClientCallDetails]:
   """Returns a function that adds headers to client call details."""
 
@@ -157,7 +157,7 @@ def _AddHeaders(
 
 
 def HeaderAdderInterceptor(
-    headers_func: Callable[[], Sequence[Tuple[str, str]]]
+    headers_func: Callable[[], Sequence[Tuple[str, str]]],
 ) -> ClientCallDetailsInterceptor:
   """Returns an interceptor that adds headers generated lazily by header_func.
 
