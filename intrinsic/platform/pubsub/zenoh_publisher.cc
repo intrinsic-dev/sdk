@@ -17,6 +17,7 @@
 #include "intrinsic/platform/pubsub/zenoh_util/zenoh_handle.h"
 #include "intrinsic/util/proto_time.h"
 #include "intrinsic/util/status/status_macros.h"
+#include "opencensus/stats/stats.h"
 
 namespace intrinsic {
 

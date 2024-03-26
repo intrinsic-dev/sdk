@@ -97,6 +97,7 @@ cc_library(
         "@com_google_absl//absl/strings:string_view",
         "@com_google_absl//absl/time",
         "@com_google_protobuf//:protobuf",
+        "@io_opencensus_cpp//opencensus/stats",
     ],
 )
 
