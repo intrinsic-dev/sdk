@@ -14,7 +14,6 @@ proto_library(
     srcs = ["resource_registry.proto"],
     deps = [
         ":resource_handle_proto",
-        "//intrinsic/assets/proto:asset_type_proto",
         "//intrinsic/assets/proto:metadata_proto",
         "//intrinsic/assets/proto:view_proto",
         "@com_google_protobuf//:any_proto",
@@ -24,7 +23,6 @@ proto_library(
 go_proto_library(
     name = "resource_registry_go_proto",
     go_deps = [
-        "//intrinsic/assets/proto:asset_type_go_proto",
         "//intrinsic/assets/proto:metadata_go_proto",
         "//intrinsic/assets/proto:view_go_proto",
         "//intrinsic/resources/proto:resource_handle_go_proto",
@@ -36,7 +34,6 @@ go_grpc_library(
     name = "resource_registry_go_grpc_proto",
     srcs = [":resource_registry_proto"],
     deps = [
-        "//intrinsic/assets/proto:asset_type_go_proto",
         "//intrinsic/assets/proto:metadata_go_proto",
         "//intrinsic/assets/proto:view_go_proto",
         "//intrinsic/resources/proto:resource_handle_go_proto",

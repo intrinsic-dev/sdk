@@ -5,7 +5,6 @@ syntax = "proto3";
 package intrinsic_proto.resources;
 
 import "google/protobuf/any.proto";
-import "intrinsic/assets/proto/asset_type.proto";
 import "intrinsic/assets/proto/metadata.proto";
 import "intrinsic/assets/proto/view.proto";
 import "intrinsic/resources/proto/resource_handle.proto";
@@ -13,7 +12,7 @@ import "intrinsic/resources/proto/resource_handle.proto";
 service ResourceRegistry {
 
   // Lists all of the resources currently installed in the cluster.
-  rpc ListResources(ListResourcesRequest) returns (ListResourcesResponse);
+  rpc ListServices(ListServicesRequest) returns (ListServicesResponse);
 
   // Lists all resource instances in the currently deployed app.
   rpc ListResourceInstances(ListResourceInstanceRequest)
@@ -24,21 +23,7 @@ service ResourceRegistry {
       returns (ResourceInstance) {}
 }
 
-message ListResourcesRequest {
-  message Filter {
-    // Optional. If provided, filter results to a specific type.  Unspecified
-    // results may be still be provided for ambiguous cases.
-    optional intrinsic_proto.assets.AssetType asset_type = 1;
-  }
-
-  // Optional. Apply a filter to the query to retrieve a filtered set of
-  // results.
-  //
-  // N.B.: we name this field `strict_filter` for now, in case we decide to
-  // adopt the suggested more generic filtering specified in
-  // https://google.aip.dev/160.
-  optional Filter strict_filter = 1;
-
+message ListServicesRequest {
   // Upper limit for the returned page size, i.e. the service might return fewer
   // results.
   //
@@ -46,31 +31,28 @@ message ListResourcesRequest {
   // in default behavior.
   //
   // Maximum value is 200. If this is exceeded, returns 200.
-  int64 page_size = 5;
+  int64 page_size = 1;
 
   // If the page token is empty, up to `page_size` first elements of the
   // collection will be returned. On subsequent requests, set the
   // `next_page_token` obtained from the previous call to retrieve the next
   // page.
-  string page_token = 6;
+  string page_token = 2;
 
   // The type of view to return. Defaults to ASSET_VIEW_TYPE_BASIC.
   //
   // The DETAIL view returns the fields noted in the AssetViewType definition as
   // well as the family field.
-  intrinsic_proto.catalog.AssetViewType view = 7;
+  intrinsic_proto.catalog.AssetViewType view = 3;
 }
 
-message Resource {
+message Service {
   // The common metadata for the asset.
   intrinsic_proto.assets.Metadata metadata = 1;
-
-  // The family for the resource
-  string family = 2;
 }
 
-message ListResourcesResponse {
-  repeated Resource resources = 1;
+message ListServicesResponse {
+  repeated Service services = 1;
 
   // Pass this token to the subsequent list requests in to obtain the next page.
   string next_page_token = 2;
