@@ -52,6 +52,7 @@ func init() {
 	cmdFlags.AddFlagDefault("skill")
 	cmdFlags.AddFlagDryRun()
 	cmdFlags.AddFlagIgnoreExisting("skill")
+	cmdFlags.AddFlagOrgPrivate()
 	cmdFlags.AddFlagManifestFile()
 	cmdFlags.AddFlagManifestTarget()
 	cmdFlags.AddFlagReleaseNotes("skill")
