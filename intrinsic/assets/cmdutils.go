@@ -4,13 +4,18 @@
 package cmdutils
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/v1/google"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"intrinsic/assets/imagetransfer"
 	"intrinsic/assets/imageutils"
 	"intrinsic/tools/inctl/util/orgutil"
 )
@@ -513,4 +518,37 @@ func parseNonNegativeDuration(durationStr string) (time.Duration, error) {
 		return 0, fmt.Errorf("duration must not be negative, but got %q", durationStr)
 	}
 	return duration, nil
+}
+
+func (cf *CmdFlags) createBasicAuth() *imageutils.BasicAuth {
+	user, pwd := cf.GetFlagsRegistryAuthUserPassword()
+	if len(user) == 0 || len(pwd) == 0 {
+		return nil
+	}
+	return &imageutils.BasicAuth{
+		User: user,
+		Pwd:  pwd,
+	}
+}
+
+func (cf *CmdFlags) authOpt() remote.Option {
+	if auth := cf.createBasicAuth(); auth != nil {
+		return remote.WithAuth(authn.FromConfig(authn.AuthConfig{
+			Username: auth.User,
+			Password: auth.Pwd,
+		}))
+	}
+	return remote.WithAuthFromKeychain(google.Keychain)
+}
+
+// CreateRegistryOpts creates registry options for processing images.
+func (cf *CmdFlags) CreateRegistryOpts(ctx context.Context) imageutils.RegistryOptions {
+	opts := imageutils.RegistryOptions{
+		Transferer: imagetransfer.RemoteTransferer(remote.WithContext(ctx), cf.authOpt()),
+		URI:        cf.GetFlagRegistry(),
+	}
+	if auth := cf.createBasicAuth(); auth != nil {
+		opts.BasicAuth = *auth
+	}
+	return opts
 }

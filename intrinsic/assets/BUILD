@@ -25,8 +25,12 @@ go_library(
     name = "cmdutils",
     srcs = ["cmdutils.go"],
     deps = [
+        ":imagetransfer",
         ":imageutils",
         "//intrinsic/tools/inctl/util:orgutil",
+        "@com_github_google_go_containerregistry//pkg/authn:go_default_library",
+        "@com_github_google_go_containerregistry//pkg/v1/google:go_default_library",
+        "@com_github_google_go_containerregistry//pkg/v1/remote:go_default_library",
         "@com_github_pkg_errors//:go_default_library",
         "@com_github_spf13_cobra//:go_default_library",
         "@com_github_spf13_viper//:go_default_library",
