@@ -106,7 +106,7 @@ message ListResourceInstanceRequest {
 
   // The maximum number of resource instances to return. If unspecified, at most
   // 50 resource instances will be returned. The maximum value is 200.
-  int32 page_size = 1;
+  int64 page_size = 1;
 
   // A page token from a previous call used to retrieve subsequent resource
   // instances.
