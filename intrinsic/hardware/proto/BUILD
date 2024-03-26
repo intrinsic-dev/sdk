@@ -2,8 +2,8 @@
 
 # This package contains shared protos for different hardware integrations.
 
-load("//bazel:go_macros.bzl", "go_proto_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
+load("//bazel:go_macros.bzl", "go_proto_library")
 
 # The visibility of this entire package is limited since before continued usage of the pattern which
 # is being exposed here we want to explore if proto options

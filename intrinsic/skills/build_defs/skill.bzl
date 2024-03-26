@@ -2,16 +2,16 @@
 
 """Build rules for creating Skill artifacts."""
 
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@rules_python//python:defs.bzl", "py_binary")
+load("//bazel:container.bzl", "container_image")
+load("//bazel:python_oci_image.bzl", "python_oci_image")
 load(
     "//intrinsic/skills/build_defs:manifest.bzl",
     "SkillManifestInfo",
     _skill_manifest = "skill_manifest",
 )
 load("//intrinsic/util/proto/build_defs:descriptor_set.bzl", "proto_source_code_info_transitive_descriptor_set")
-load("//bazel:container.bzl", "container_image")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
-load("//bazel:python_oci_image.bzl", "python_oci_image")
 
 skill_manifest = _skill_manifest
 
