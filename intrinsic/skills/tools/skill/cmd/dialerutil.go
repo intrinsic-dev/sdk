@@ -165,7 +165,6 @@ func UseInsecureCredentials(address string) bool {
 		if parsedPort, err := strconv.Atoi(parsed.Port()); err == nil { // if NO error
 			port = parsedPort
 		}
-		fmt.Printf("scheme: %s; port: %d, parsed port: %s; parsed host: %s; parsed path: %s (%s)", parsed.Scheme, port, parsed.Port(), parsed.Host, parsed.Path, address)
 	}
 	return port != 443
 }
