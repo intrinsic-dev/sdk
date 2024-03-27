@@ -42,6 +42,8 @@ const (
 var (
 	// FlagOutput holds the value of the --output flag.
 	FlagOutput = printer.TextOutputFormat
+
+	// FlagPrintTrace prints the trace identifier to stderr on exit.
 )
 
 // RootCmd is the top level command of inctl.
