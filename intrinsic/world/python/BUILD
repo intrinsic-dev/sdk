@@ -73,6 +73,7 @@ py_library(
         ":object_world_resources",
         "//intrinsic/geometry/service:geometry_service_py_pb2",
         "//intrinsic/geometry/service:geometry_service_py_pb2_grpc",
+        "//intrinsic/geometry/service:geometry_storage_refs_py_pb2",
         "//intrinsic/icon/equipment:icon_equipment_py_pb2",
         "//intrinsic/icon/proto:cart_space_py_pb2",
         "//intrinsic/kinematics/types:joint_limits_py_pb2",

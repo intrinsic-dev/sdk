@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Tuple, Union, cast
 import grpc
 from intrinsic.geometry.service import geometry_service_pb2
 from intrinsic.geometry.service import geometry_service_pb2_grpc
+from intrinsic.geometry.service import geometry_storage_refs_pb2
 from intrinsic.icon.equipment import icon_equipment_pb2
 from intrinsic.icon.proto import cart_space_pb2
 from intrinsic.kinematics.types import joint_limits_pb2
@@ -1219,7 +1220,7 @@ class ObjectWorldClient:
       self,
       *,
       geometry: geometry_service_pb2.CreateGeometryRequest,
-  ) -> str:
+  ) -> geometry_storage_refs_pb2.GeometryStorageRefs:
     """Registers geometry so that it can be referenced to create an object.
 
     Arguments:
@@ -1230,7 +1231,7 @@ class ObjectWorldClient:
       service client.
 
     Returns:
-      Geometry id corresponding to the registered geometry.
+      Opaque references corresponding to the registered geometry.
     """
 
     if self._geometry_service_stub is None:
@@ -1238,7 +1239,9 @@ class ObjectWorldClient:
           'ObjectWorldClient has not been configured to register geometry data.'
       )
 
-    return self._geometry_service_stub.CreateGeometry(geometry).geometry_id
+    return self._geometry_service_stub.CreateGeometry(
+        geometry
+    ).geometry_storage_refs
 
   def create_geometry_object(
       self,
