@@ -25,7 +25,7 @@
 //   INTRINSIC_RT_LOG(INFO) << "first joint position: " << joint_position[0];
 //   INTRINSIC_RT_LOG(ERROR) << "part: " << part.name();  // string_view
 //
-//   // Logs at most ~once per second.
+//   // Logs at most once every 2 seconds.
 //   INTRINSIC_RT_LOG_THROTTLED(WARNING) << "limit exceeded";
 //
 // FATAL LOGGING
@@ -38,7 +38,7 @@
 // THROTTLED LOGGING
 // -----------------
 // INTRINSIC_RT_LOG_THROTTLED collects repetitions of a message at the
-// same call site over a short period of time (~1 second).
+// same call site over a short period of time (2 seconds).
 // It also prints a count how many messages were ignored.
 // This logging function is useful to avoid log spam for
 // high-frequency calls (for example, every millisecond).
