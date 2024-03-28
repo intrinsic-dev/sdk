@@ -118,9 +118,7 @@ cc_library(
     name = "log_internal",
     srcs = ["log_internal.cc"],
     hdrs = ["log_internal.h"],
-    visibility = [
-        "//visibility:private",  # Only private by automation, not intent. Owner may accept CLs adding visibility. See go/scheuklappen#explicit-private.
-    ],
+    visibility = ["//visibility:private"],
     deps = [
         ":fixed_string",
         ":log_sink",
