@@ -18,7 +18,6 @@ proto_library(
 
 py_proto_library(
     name = "geometry_storage_refs_py_pb2",
-    visibility = ["//intrinsic:__subpackages__"],
     deps = [":geometry_storage_refs_proto"],
 )
 
