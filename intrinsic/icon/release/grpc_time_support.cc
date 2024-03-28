@@ -2,8 +2,8 @@
 
 #include "intrinsic/icon/release/grpc_time_support.h"
 
+#include "absl/log/check.h"
 #include "absl/time/time.h"
-#include "grpc/support/log.h"
 #include "grpc/support/time.h"
 #include "grpcpp/support/time.h"
 
@@ -49,7 +49,7 @@ gpr_timespec GprTimeSpecFromTime(absl::Time time) {
 // Converts gpr timespec to absl::Duration. The gpr timespec clock type
 // should be TIMESPAN.
 absl::Duration DurationFromGprTimespec(gpr_timespec time) {
-  GPR_ASSERT(time.clock_type == GPR_TIMESPAN);
+  CHECK_EQ(time.clock_type, GPR_TIMESPAN);
   timespec ts;
   ts.tv_sec = static_cast<decltype(ts.tv_sec)>(time.tv_sec);
   ts.tv_nsec = static_cast<decltype(ts.tv_nsec)>(time.tv_nsec);
