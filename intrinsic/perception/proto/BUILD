@@ -422,6 +422,11 @@ py_proto_library(
     deps = [":dimensions_proto"],
 )
 
+cc_proto_library(
+    name = "hand_eye_calibration_cc_proto",
+    deps = ["hand_eye_calibration"],
+)
+
 py_proto_library(
     name = "hand_eye_calibration_py_pb2",
     deps = [":hand_eye_calibration"],
