@@ -15,3 +15,18 @@ message MotionPlannerConfiguration {
   reserved 2;
   reserved "use_projection_onto_constraint_manifold";
 }
+
+// Contains lock motion specific configurations.
+message LockMotionConfiguration {
+  message SaveMotionCommand {
+    string motion_id = 1;
+  }
+  message LoadMotionCommand {
+    string motion_id = 1;
+  }
+
+  oneof command {
+    SaveMotionCommand save_motion_command = 1;
+    LoadMotionCommand load_motion_command = 2;
+  }
+}
