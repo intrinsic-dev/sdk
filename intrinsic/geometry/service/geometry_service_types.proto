@@ -9,7 +9,6 @@ import "intrinsic/geometry/proto/lazy_exact_geometry.proto";
 import "intrinsic/geometry/proto/renderable.proto";
 import "intrinsic/geometry/service/geometry_storage_refs.proto";
 import "intrinsic/math/proto/matrix.proto";
-import "intrinsic/math/proto/point.proto";
 
 // Response message for getting geometry from the geometry service.
 message GeometryWithMetadata {
