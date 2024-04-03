@@ -12,11 +12,11 @@ import (
 	"github.com/spf13/cobra"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	"intrinsic/assets/cmdutils"
+	"intrinsic/assets/idutils"
 	skillregistrygrpcpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
 	skillCmd "intrinsic/skills/tools/skill/cmd"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/listutil"
-	"intrinsic/skills/tools/skill/cmd/skillid"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/printer"
@@ -142,8 +142,12 @@ func applyFilter(skills *listutil.SkillDescriptions, filter string) *listutil.Sk
 
 	filteredSkills := listutil.SkillDescriptions{Skills: []listutil.SkillDescription{}}
 	for _, skill := range skills.Skills {
-		if filter == sideloadedFilter && skillid.IsSideloaded(skill.IDVersion) ||
-			filter == releasedFilter && !skillid.IsSideloaded(skill.IDVersion) {
+		version, err := idutils.VersionFrom(skill.IDVersion)
+		if err != nil {
+			continue
+		}
+		if filter == sideloadedFilter && idutils.IsUnreleasedVersion(version) ||
+			filter == releasedFilter && !idutils.IsUnreleasedVersion(version) {
 			filteredSkills.Skills = append(filteredSkills.Skills, skill)
 		}
 	}

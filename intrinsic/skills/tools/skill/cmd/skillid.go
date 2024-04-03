@@ -16,11 +16,6 @@ const (
 	sideloadedSkillVersionPrefix = "0.0.1+sideloaded"
 )
 
-// IsSideloaded determines whether the given id_version matches that of a sideloaded skill.
-func IsSideloaded(skillIDVersion string) bool {
-	return strings.Contains(skillIDVersion, sideloadedSkillVersionPrefix)
-}
-
 // CreateSideloadedIDVersion creates a sideloaded skill id_version for the provided skill id.
 func CreateSideloadedIDVersion(skillID string) (string, error) {
 	id := uuid.New()

@@ -33,11 +33,11 @@ go_library(
     srcs = ["list.go"],
     deps = [
         "//intrinsic/assets:cmdutils",
+        "//intrinsic/assets:idutils",
         "//intrinsic/skills/proto:skill_registry_go_grpc_proto",
         "//intrinsic/skills/tools/skill/cmd",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/skills/tools/skill/cmd:listutil",
-        "//intrinsic/skills/tools/skill/cmd:skillid",
         "//intrinsic/skills/tools/skill/cmd:solutionutil",
         "//intrinsic/tools/inctl/cmd:root",
         "//intrinsic/tools/inctl/util:printer",
