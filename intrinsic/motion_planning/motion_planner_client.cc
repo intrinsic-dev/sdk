@@ -2,6 +2,7 @@
 
 #include "intrinsic/motion_planning/motion_planner_client.h"
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -34,6 +35,7 @@ MotionPlannerClient::MotionPlanningOptions::Defaults() {
   static const auto* defaults = new MotionPlannerClient::MotionPlanningOptions({
       .path_planning_time_out = 30,
       .compute_swept_volume = false,
+      .lock_motion_configuration = std::nullopt,
   });
 
   return *defaults;
@@ -65,6 +67,11 @@ MotionPlannerClient::PlanTrajectory(
   const int64_t s = request.motion_planner_config().timeout_sec().seconds();
   request.mutable_motion_planner_config()->mutable_timeout_sec()->set_nanos(
       (options.path_planning_time_out - s) * 1e9);
+  if (options.lock_motion_configuration.has_value()) {
+    *request.mutable_motion_planner_config()
+         ->mutable_lock_motion_configuration() =
+        options.lock_motion_configuration.value();
+  }
   request.set_caller_id(caller_id);
   *request.mutable_context() = context;
 

@@ -13,6 +13,7 @@
 #include "intrinsic/kinematics/types/cartesian_limits.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/math/pose3.h"
+#include "intrinsic/motion_planning/proto/motion_planner_config.pb.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.pb.h"
 #include "intrinsic/motion_planning/proto/motion_specification.pb.h"
@@ -43,6 +44,10 @@ class MotionPlannerClient {
 
     // Optionally generate and return the swept volume for the computed path.
     bool compute_swept_volume = false;
+
+    // Optional configuration for saving or loading a motion.
+    std::optional<intrinsic_proto::motion_planning::LockMotionConfiguration>
+        lock_motion_configuration = std::nullopt;
 
     // Returns the default set of options to use with the plan path requests.
     static const MotionPlanningOptions& Defaults();

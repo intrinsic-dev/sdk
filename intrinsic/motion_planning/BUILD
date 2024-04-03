@@ -47,6 +47,7 @@ py_library(
         "//intrinsic/icon/proto:joint_space_py_pb2",
         "//intrinsic/math/python:data_types",
         "//intrinsic/math/python:proto_conversion",
+        "//intrinsic/motion_planning/proto:motion_planner_config_py_pb2",
         "//intrinsic/motion_planning/proto:motion_planner_service_py_pb2",
         "//intrinsic/motion_planning/proto:motion_planner_service_py_pb2_grpc",
         "//intrinsic/motion_planning/proto:motion_specification_py_pb2",

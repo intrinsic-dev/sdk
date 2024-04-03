@@ -18,6 +18,7 @@ import grpc
 from intrinsic.icon.proto import joint_space_pb2
 from intrinsic.math.python import data_types
 from intrinsic.math.python import proto_conversion as math_proto_conversion
+from intrinsic.motion_planning.proto import motion_planner_config_pb2
 from intrinsic.motion_planning.proto import motion_planner_service_pb2
 from intrinsic.motion_planning.proto import motion_planner_service_pb2_grpc
 from intrinsic.motion_planning.proto import motion_specification_pb2
@@ -74,10 +75,16 @@ class IKOptions:
 class MotionPlanningOptions:
   """Options for Motion Planning.
 
-  Attributes: path_planning_time_out : Timeout for path planning algorithms.
+  Attributes:
+    path_planning_time_out: Timeout for path planning algorithms.
+    lock_motion_configuration: Optional configuration for saving or loading a
+      motion.
   """
 
   path_planning_time_out: int = 30
+  lock_motion_configuration: (
+      motion_planner_config_pb2.LockMotionConfiguration | None
+  ) = None
 
 
 class MotionPlannerClient:
@@ -127,6 +134,10 @@ class MotionPlannerClient:
     request.motion_planner_config.timeout_sec.seconds = (
         options.path_planning_time_out
     )
+    if options.lock_motion_configuration:
+      request.motion_planner_config.lock_motion_configuration.CopyFrom(
+          options.lock_motion_configuration
+      )
     response = self._stub.PlanTrajectory(request)
     return response.discretized
 
