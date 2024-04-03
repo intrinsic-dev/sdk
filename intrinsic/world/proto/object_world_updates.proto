@@ -207,10 +207,20 @@ message ReparentObjectRequest {
   // The object to be reparented (needs to have ObjectType!=ROOT).
   ObjectReference object = 2;
 
-  // The new parent object, including a entity filter specifying to which part
-  // of the parent object the child object shall be attached to. The entity
-  // filter must be set and match exactly one object entity.
-  ObjectReferenceWithEntityFilter new_parent = 3;
+  // DEPRECATED: use parent_object instead.
+  ObjectReferenceWithEntityFilter new_parent = 3 [deprecated = true];
+
+  oneof attach_to {
+    // The object under which the frame shall be parented, including a entity
+    // filter specifying to which part of the parent object the child object
+    // shall be attached to. The entity filter must be set and match exactly
+    // one object entity
+    ObjectReferenceWithEntityFilter parent_object = 5;
+
+    // The frame to which the object shall be attached to. The new object will
+    // be parented under the same object as the given frame.
+    FrameReference parent_frame = 6;
+  }
 
   // Requested object view for the returned, reparented object.
   ObjectView view = 4;
