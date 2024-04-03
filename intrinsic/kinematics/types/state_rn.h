@@ -113,6 +113,10 @@ using StateRnPVAT =
     StateRn<eigenmath::MAX_EIGEN_VECTOR_SIZE, state_rn_details::StateRnBaseP<>,
             state_rn_details::StateRnBaseV<>, state_rn_details::StateRnBaseA<>,
             state_rn_details::StateRnBaseT<>>;
+using StateRnPVAJT =
+    StateRn<eigenmath::MAX_EIGEN_VECTOR_SIZE, state_rn_details::StateRnBaseP<>,
+            state_rn_details::StateRnBaseV<>, state_rn_details::StateRnBaseA<>,
+            state_rn_details::StateRnBaseJ<>, state_rn_details::StateRnBaseT<>>;
 using StateRnVA =
     StateRn<eigenmath::MAX_EIGEN_VECTOR_SIZE, state_rn_details::StateRnBaseV<>,
             state_rn_details::StateRnBaseA<>>;

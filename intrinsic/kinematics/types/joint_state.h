@@ -19,6 +19,7 @@ using JointStatePVA = StateRnPVA;
 using JointStatePVT = StateRnPVT;
 using JointStatePVAJ = StateRnPVAJ;
 using JointStatePVAT = StateRnPVAT;
+using JointStatePVAJT = StateRnPVAJT;
 using JointStateVAJ = StateRnVAJ;
 
 template <int N = eigenmath::MAX_EIGEN_VECTOR_SIZE>
