@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -35,8 +36,18 @@ var (
 
 func prettyPrintStatusInterfaces(interfaces map[string]shared.StatusInterface) string {
 	ret := ""
-	for name, iface := range interfaces {
-		ret = ret + fmt.Sprintf("\t%s: %v\n", name, iface.IPAddress)
+	names := make([]string, len(interfaces))
+	i := 0
+	for k := range interfaces {
+		names[i] = k
+		i++
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		ips := make([]string, len(interfaces[name].IPAddress))
+		copy(ips, interfaces[name].IPAddress)
+		sort.Strings(ips)
+		ret = ret + fmt.Sprintf("\t%s: %v\n", name, ips)
 	}
 
 	return ret
