@@ -40,6 +40,8 @@ _COARSE_ID_VERSION_PATTERN = re.compile(
 
 _LABEL_PATTERN = re.compile(r"^([a-z])|([a-z][a-z0-9-]*[a-z0-9])$")
 
+_UNRELEASED_VERSION_PATTERN = re.compile(r"(\+(?:sideloaded|inlined))")
+
 
 class IdValidationError(ValueError):
   """An id_version or part of one is not valid."""
@@ -431,6 +433,24 @@ def is_version(version: str) -> bool:
   return _VERSION_PATTERN.match(version) is not None
 
 
+def is_unreleased_version(version: str) -> bool:
+  """Tests whether a string is a valid and unreleased asset version.
+
+  A valid unreleased version is formatted as described by semver.org with build
+  metadata matching the reserved prefix for unreleased assets.
+
+  Args:
+    version: The string to test.
+
+  Returns:
+    True if `version` is a valid and unreleased version.
+  """
+  return (
+      is_version(version)
+      and _UNRELEASED_VERSION_PATTERN.search(version) is not None
+  )
+
+
 def validate_id(id: str) -> None:  # pylint: disable=redefined-builtin
   """Validates an id.
 
@@ -504,6 +524,21 @@ def validate_version(version: str) -> None:
   """
   if not is_version(version):
     raise IdValidationError(f"{version!r} is not a valid version.")
+
+
+def validate_unreleased_version(version: str) -> None:
+  """Validates an unreleased version.
+
+  A valid version is formatted as described in is_unreleased_version.
+
+  Args:
+    version: The version to validate.
+
+  Raises:
+    IdValidationError: If the specified version is not valid or not unreleased.
+  """
+  if not is_unreleased_version(version):
+    raise IdValidationError(f"{version!r} is not a valid unreleased version.")
 
 
 def parent_package_from(package: str) -> str:

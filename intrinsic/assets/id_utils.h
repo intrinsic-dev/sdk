@@ -193,6 +193,12 @@ bool IsPackage(absl::string_view package);
 // A valid version is formatted as described by semver.org.
 bool IsVersion(absl::string_view version);
 
+// Tests whether a string is a valid and unreleased asset version.
+//
+// A valid unreleased version is formatted as described by semver.org with build
+// metadata matching the reserved prefix for unreleased assets.
+bool IsUnreleasedVersion(absl::string_view version);
+
 // Validates an id.
 //
 // A valid id is formatted as described in IsId.
@@ -227,6 +233,13 @@ absl::Status ValidatePackage(absl::string_view package);
 //
 // Returns an error if `version` is not valid.
 absl::Status ValidateVersion(absl::string_view version);
+
+// Validates an unreleased version.
+//
+// An unreleased version is formatted as described in IsUnreleasedVersion.
+//
+// Returns an error if `version` is not valid or not unreleased.
+absl::Status ValidateUnreleasedVersion(absl::string_view version);
 
 // Returns the parent package of the specified package/
 //

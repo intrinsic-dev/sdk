@@ -26,6 +26,8 @@ var (
 
 	// labelRegex = regexp.MustCompile(`(^([a-z])|([a-z][a-z0-9-]*[a-z0-9])$)`)
 	labelRegex = regexp.MustCompile(`^[a-z]([a-z0-9\-]*[a-z0-9])*$`)
+
+	nonReleasedVersionRegex = regexp.MustCompile("\\+(?:sideloaded|inlined)")
 )
 
 // getNamedMatch extracts the named group from a match of a string on a regex pattern.
@@ -335,6 +337,14 @@ func IsVersion(version string) bool {
 	return versionRegex.MatchString(version)
 }
 
+// IsUnreleasedVersion tests whether a string is a valid and unreleased asset version.
+//
+// A valid unreleased version is formatted as described by semver.org with build metadata matching
+// the reserved prefix for unreleased assets.
+func IsUnreleasedVersion(version string) bool {
+	return IsVersion(version) && nonReleasedVersionRegex.MatchString(version)
+}
+
 // ValidateID validates an id.
 //
 // A valid id is formatted as described in IsId.
@@ -405,6 +415,18 @@ func ValidatePackage(pkg string) error {
 func ValidateVersion(version string) error {
 	if !IsVersion(version) {
 		return fmt.Errorf("%q is not a valid version", version)
+	}
+	return nil
+}
+
+// ValidateUnreleasedVersion validates an unreleased version.
+//
+// An unreleased version is formatted as described in IsUnreleasedVersion.
+//
+// Returns an error if `version` is not valid or not unreleased.
+func ValidateUnreleasedVersion(version string) error {
+	if !IsUnreleasedVersion(version) {
+		return fmt.Errorf("%q is not a valid unreleased version", version)
 	}
 	return nil
 }
