@@ -65,6 +65,7 @@ go_library(
     srcs = ["listutil.go"],
     deps = [
         "//intrinsic/assets:idutils",
+        "//intrinsic/skills/catalog/proto:skill_catalog_go_grpc_proto",
         "//intrinsic/skills/proto:skills_go_proto",
     ],
 )
