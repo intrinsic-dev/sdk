@@ -1,6 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
+load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_proto_library")
 load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 load("//intrinsic/util/proto/build_defs:descriptor_set.bzl", "proto_source_code_info_transitive_descriptor_set")
@@ -354,4 +355,45 @@ cc_proto_library(
 py_proto_library(
     name = "test_message_py_pb2",
     deps = [":test_message_proto"],
+)
+
+proto_library(
+    name = "proto_builder_proto",
+    srcs = ["proto_builder.proto"],
+    deps = ["@com_google_protobuf//:descriptor_proto"],
+)
+
+py_proto_library(
+    name = "proto_builder_py_pb2",
+    deps = [":proto_builder_proto"],
+)
+
+py_grpc_library(
+    name = "proto_builder_py_pb2_grpc",
+    srcs = [":proto_builder_proto"],
+    grpc_library = requirement("grpcio"),
+    deps = [":proto_builder_py_pb2"],
+)
+
+cc_proto_library(
+    name = "proto_builder_cc_proto",
+    deps = [":proto_builder_proto"],
+)
+
+cc_grpc_library(
+    name = "proto_builder_cc_grpc_proto",
+    srcs = [":proto_builder_proto"],
+    grpc_only = True,
+    deps = [":proto_builder_cc_proto"],
+)
+
+go_proto_library(
+    name = "proto_builder_go_proto",
+    deps = [":proto_builder_proto"],
+)
+
+go_grpc_library(
+    name = "proto_builder_go_grpc_proto",
+    srcs = [":proto_builder_proto"],
+    deps = [":proto_builder_go_proto"],
 )

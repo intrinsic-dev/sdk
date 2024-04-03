@@ -36,7 +36,9 @@ from intrinsic.solutions import error_processing
 from intrinsic.solutions import errors as solution_errors
 from intrinsic.solutions import execution
 from intrinsic.solutions import ipython
+from intrinsic.solutions import pbt_registration
 from intrinsic.solutions import pose_estimation
+from intrinsic.solutions import proto_building
 from intrinsic.solutions import providers
 from intrinsic.solutions import simulation
 from intrinsic.solutions import userconfig
@@ -84,6 +86,8 @@ class Solution:
     errors: Exposes error reports from executions.
     pose_estimators: Optional. Wrapper to access pose estimators.
     world: default world in world service.
+    pbt_registry: gRPC wrapper to sideload PBTs
+    proto_builder: service to build proto FileDescriptorSets from proto schemas
   """
 
   class HealthStatus(enum.Enum):
@@ -109,6 +113,9 @@ class Solution:
   _skill_registry: skill_registry_client.SkillRegistryClient
   _resource_registry: resource_registry_client.ResourceRegistryClient
   _installer_service_stub: installer_pb2_grpc.InstallerServiceStub
+  pbt_registry: Optional[pbt_registration.BehaviorTreeRegistry]
+  proto_builder: Optional[proto_building.ProtoBuilder]
+
   def __init__(
       self,
       grpc_channel: grpc.Channel,
@@ -121,6 +128,8 @@ class Solution:
       errors: error_processing.ErrorsLoader,
       pose_estimators: Optional[pose_estimation.PoseEstimators],
       installer: installer_pb2_grpc.InstallerServiceStub,
+      pbt_registry: Optional[pbt_registration.BehaviorTreeRegistry] = None,
+      proto_builder: Optional[proto_building.ProtoBuilder] = None,
   ):
     self.grpc_channel: grpc.Channel = grpc_channel
     self.is_simulated: bool = is_simulated
@@ -140,6 +149,9 @@ class Solution:
     )
     self.pose_estimators = pose_estimators
     self.errors = errors
+    self.pbt_registry = pbt_registry
+    self.proto_builder = proto_builder
+
   @classmethod
   def for_channel(
       cls,
@@ -214,6 +226,9 @@ class Solution:
           resource_registry,
       )
 
+    pbt_registry = pbt_registration.BehaviorTreeRegistry.connect(grpc_channel)
+    proto_builder = proto_building.ProtoBuilder.connect(grpc_channel)
+
     print(
         f'Connected successfully to "{solution_status.display_name}'
         f'({solution_status.version})" at "{solution_status.workcell_name}".'
@@ -229,6 +244,8 @@ class Solution:
         error_loader,
         pose_estimators,
         installer_stub,
+        pbt_registry,
+        proto_builder,
     )
 
   def get_health_status(self) -> "HealthStatus":

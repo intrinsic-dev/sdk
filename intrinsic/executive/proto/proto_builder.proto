@@ -1,0 +1,55 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+import "google/protobuf/descriptor.proto";
+
+service ProtoBuilder {
+  // Compiles a proto schema into a file descriptor set, e.g., to
+  // generate one for skill parameters.
+  rpc Compile(ProtoCompileRequest) returns (ProtoCompileResponse) {}
+
+  // Composes file descriptor set from a given descriptor using only well-known
+  // types. This creates a transitively closed file descriptor set which
+  // contains the given input descriptor and transitive dependencies.
+  rpc Compose(ProtoComposeRequest) returns (ProtoComposeResponse) {}
+
+  // Retrieves list of well-known types as a list of names and transitively
+  // closed file descriptor set (that may also contain dependencies which are
+  // not considered to be well-known types themselves).
+  rpc GetWellKnownTypes(GetWellKnownTypesRequest)
+      returns (GetWellKnownTypesResponse) {}
+}
+
+message ProtoCompileRequest {
+  string proto_filename = 1;
+  string proto_schema = 2;
+  google.protobuf.FileDescriptorSet dependencies = 3;
+}
+
+message ProtoCompileResponse {
+  google.protobuf.FileDescriptorSet file_descriptor_set = 1;
+}
+
+message ProtoComposeRequest {
+  // Name of the file in the result file descriptor set to contain the input
+  // proto.
+  string proto_filename = 1;
+  // Package for the enclosed type
+  string proto_package = 2;
+  // A descriptor which uses only basic (int64, string etc.) and well-known
+  // (cf. GetWellKnownTypes) types.
+  google.protobuf.DescriptorProto input_descriptor = 3;
+}
+
+message ProtoComposeResponse {
+  google.protobuf.FileDescriptorSet file_descriptor_set = 1;
+}
+
+message GetWellKnownTypesRequest {}
+message GetWellKnownTypesResponse {
+  repeated string type_names = 1;
+  google.protobuf.FileDescriptorSet file_descriptor_set = 2;
+}

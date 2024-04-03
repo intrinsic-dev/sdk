@@ -36,6 +36,7 @@ from intrinsic.solutions import blackboard_value
 from intrinsic.solutions import cel
 from intrinsic.solutions import errors as solutions_errors
 from intrinsic.solutions import ipython
+from intrinsic.solutions import proto_building
 from intrinsic.solutions import providers
 from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
@@ -3450,6 +3451,8 @@ class BehaviorTree:
     root: The root node of the tree of type Node.
     proto: The proto representation of the BehaviorTree.
     dot_graph: The graphviz dot representation of the BehaviorTree.
+    params: BlackboardValue referencing the parameters key if this tree is a
+      parameterizable behavior tree.
 
   Example usage:
     bt = behavior_tree.BehaviorTree('my_behavior_tree_name')
@@ -3725,6 +3728,158 @@ class BehaviorTree:
           ' (per tree):\n'
       ) + '\n'.join(violations)
       raise solutions_errors.InvalidArgumentError(violation_msg)
+
+  def initialize_pbt(
+      self,
+      *,
+      skill_id: str,
+      parameter_proto_schema: str,
+      return_value_proto_schema: str,
+      proto_builder: proto_building.ProtoBuilder,
+      parameter_message_full_name: str = '',
+      return_value_message_full_name: str = '',
+      display_name: str = '',
+  ):
+    """Initializes a behavior tree to be a parameterizable behavior tree.
+
+    For this a behavior tree must have a parameter and return value description.
+    To specify this parameters or return values are given as a proto schema.
+    If that proto schema contains has only a single message, the full message
+    name is extracted from the schema. Otherwise the full name must be given
+    explicitly.
+
+    Args:
+      skill_id: The skill id that this PBT registers under.
+      parameter_proto_schema: A full proto schema for the PBT parameters.
+      return_value_proto_schema: A full proto schema for the return value.
+      proto_builder: An instance of the proto builder service.
+      parameter_message_full_name: The full name of the parameter message.
+      return_value_message_full_name: The full name of the return value proto.
+      display_name: The name to display the PBT with.
+    """
+
+    def get_name_from_set(desc_set: descriptor_pb2.FileDescriptorSet, filename):
+      for file in desc_set.file:
+        if file.name == filename:
+          assert len(file.message_type) == 1
+          return file.package + '.' + file.message_type[0].name
+      return None
+
+    pseudo_file = skill_id.replace('.', '_')
+    if parameter_proto_schema:
+      param_descriptor_set = proto_builder.compile(
+          pseudo_file + '_params.proto', parameter_proto_schema
+      )
+    else:
+      raise solutions_errors.InvalidArgumentError(
+          'initialize_pbt requires parameter_proto_schema to be given.'
+      )
+    if return_value_proto_schema:
+      return_descriptor_set = proto_builder.compile(
+          pseudo_file + '_return.proto', return_value_proto_schema
+      )
+    else:
+      raise solutions_errors.InvalidArgumentError(
+          'initialize_pbt requires return_value_proto_schema to be given.'
+      )
+
+    param_full_name = get_name_from_set(
+        param_descriptor_set, pseudo_file + '_params.proto'
+    )
+    return_full_name = get_name_from_set(
+        return_descriptor_set, pseudo_file + '_return.proto'
+    )
+    if parameter_message_full_name:
+      param_full_name = parameter_message_full_name
+    if return_value_message_full_name:
+      return_full_name = return_value_message_full_name
+
+    pd = skills_pb2.ParameterDescription(
+        parameter_message_full_name=param_full_name
+    )
+    pd.parameter_descriptor_fileset.CopyFrom(param_descriptor_set)
+    rd = skills_pb2.ReturnValueDescription(
+        return_value_message_full_name=return_full_name
+    )
+    rd.descriptor_fileset.CopyFrom(return_descriptor_set)
+    self._description = skills_pb2.Skill(id=skill_id)
+    self._description.parameter_description.CopyFrom(pd)
+    self._description.return_value_description.CopyFrom(rd)
+    self._description.display_name = display_name
+
+  def initialize_pbt_with_known_types(
+      self,
+      *,
+      skill_id: str,
+      display_name: str,
+      parameter_descriptor: descriptor.Descriptor,
+      parameter_dependencies: list[descriptor.FileDescriptor] | None = None,
+      return_value_descriptor: descriptor.Descriptor | None = None,
+      return_value_dependencies: list[descriptor.FileDescriptor] | None = None,
+  ):
+    """Initializes a behavior tree to be a parameterizable behavior tree.
+
+    Unlike `initialize_pbt`, this method can be used to define PBTs with
+    already-compiled protos, as well as protos that have dependencies on
+    other custom protos.
+
+    Args:
+      skill_id: The skill id that this PBT registers under.
+      display_name: The name to display the PBT with.
+      parameter_descriptor: The message descriptor for the parameter message of
+        this PBT. (For example, my_pbt_pb2.InputMessage.DESCRIPTOR)
+      parameter_dependencies: A list of file descriptors that contain all
+        message decsriptors for all transitive dependencies of the parameter
+        decsriptor. For example, if parameter descriptor depends on message A,
+        and message A depends on messages B and C, the file descriptors here
+        should include messages B, C, D.
+      return_value_descriptor: The message descriptor for the return value of
+        this PBT, if one exists.
+      return_value_dependencies: A list of file descriptors that contain all
+        message descriptors for the transitive dependencies of the given return
+        value descriptor.
+    """
+
+    pd = skills_pb2.ParameterDescription(
+        parameter_message_full_name=parameter_descriptor.full_name
+    )
+    parameter_file_descriptor_set = _merge_file_descriptor_set(
+        parameter_descriptor, parameter_dependencies
+    )
+    pd.parameter_descriptor_fileset.CopyFrom(parameter_file_descriptor_set)
+
+    rd = None
+    if return_value_descriptor:
+      rd = skills_pb2.ReturnValueDescription(
+          return_value_message_full_name=return_value_descriptor.full_name,
+      )
+      return_value_file_descriptor_set = _merge_file_descriptor_set(
+          return_value_descriptor, return_value_dependencies
+      )
+      rd.descriptor_fileset.CopyFrom(return_value_file_descriptor_set)
+
+    self._description = skills_pb2.Skill(id=skill_id)
+    self._description.parameter_description.CopyFrom(pd)
+    if rd:
+      self._description.return_value_description.CopyFrom(rd)
+    self._description.display_name = display_name
+
+  @property
+  def params(self) -> blackboard_value.BlackboardValue:
+    if self._description is None:
+      raise solutions_errors.InvalidArgumentError(
+          'description is not set. This is not a Parameterizable Behavior Tree.'
+          ' params are only available for PBTs.'
+      )
+    info = skills_mod.SkillInfoImpl(self._description)
+
+    msg = info.create_param_message()
+    return blackboard_value.BlackboardValue(
+        msg.DESCRIPTOR.fields_by_name,
+        'params',
+        info.get_param_message_type(),
+        None,
+    )
 
   def dot_graph(self) -> graphviz.Digraph:
     """Converts the given behavior tree into a graphviz dot representation.

@@ -19,6 +19,7 @@ py_library(
         ":cel",
         ":errors",
         ":ipython",
+        ":proto_building",
         ":providers",
         ":utils",
         "//intrinsic/executive/proto:any_list_py_pb2",
@@ -113,7 +114,9 @@ py_library(
         ":errors",
         ":execution",
         ":ipython",
+        ":pbt_registration",
         ":pose_estimation",
+        ":proto_building",
         ":providers",
         ":simulation",
         ":userconfig",
@@ -377,6 +380,33 @@ py_library(
     name = "ppr",
     srcs = ["ppr.py"],
     deps = ["//intrinsic/config/proto:ppr_refs_py_pb2"],
+)
+
+py_library(
+    name = "proto_building",
+    srcs = ["proto_building.py"],
+    srcs_version = "PY3",
+    deps = [
+        "//intrinsic/executive/proto:proto_builder_py_pb2",
+        "//intrinsic/executive/proto:proto_builder_py_pb2_grpc",
+        "//intrinsic/util/grpc:error_handling",
+        requirement("grpcio"),
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_library(
+    name = "pbt_registration",
+    srcs = ["pbt_registration.py"],
+    srcs_version = "PY3",
+    deps = [
+        "//intrinsic/executive/proto:behavior_tree_py_pb2",
+        "//intrinsic/skills/proto:behavior_tree_registry_py_pb2",
+        "//intrinsic/skills/proto:behavior_tree_registry_py_pb2_grpc",
+        "//intrinsic/skills/proto:skill_registry_config_py_pb2",
+        "//intrinsic/util/grpc:error_handling",
+        requirement("grpcio"),
+    ],
 )
 
 py_library(
