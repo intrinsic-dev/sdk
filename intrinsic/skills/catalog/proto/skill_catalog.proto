@@ -1,0 +1,156 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.catalog;
+
+import "google/protobuf/empty.proto";
+import "intrinsic/assets/proto/id.proto";
+import "intrinsic/assets/proto/metadata.proto";
+import "intrinsic/assets/proto/release_tag.proto";
+import "intrinsic/assets/proto/view.proto";
+import "intrinsic/executive/proto/behavior_tree.proto";
+import "intrinsic/kubernetes/workcell_spec/proto/image.proto";
+import "intrinsic/skills/proto/skill_manifest.proto";
+
+// Information about a specific version of a skill in the catalog.
+message Skill {
+  // General metadata for the skill.
+  intrinsic_proto.assets.Metadata metadata = 8;
+
+  reserved 1, 2, 3, 4, 5, 6, 7;
+  reserved "id_version", "vendor", "description", "release_notes",
+      "update_time", "tag", "display_name";
+}
+
+// A skill compiled into an image with its skill service implementation.
+message SkillImage {
+  // The inlined skill image archive.
+  bytes image_archive = 1;
+}
+
+message GetSkillRequest {
+  // The fully-qualified globally unique id of the skill version.
+  // Format: {package}.{name}.{version}
+  string id_version = 1;
+
+  // The type of view to return. Defaults to ASSET_VIEW_TYPE_BASIC.
+  AssetViewType view = 2;
+}
+
+message ListSkillsRequest {
+  // Maximum number of skills to return (the service may return fewer).
+  //
+  // If unspecified (or set to 0), at most 20 skills will be returned.
+  //
+  // The maximum value is 200; Larger values will be coerced to the maximum.
+  int64 page_size = 1;
+
+  // A page token received from a previous `ListSkills` call. Provide this to
+  // retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListSkills` must match
+  // the call that provided the page token.
+  //
+  // If unspecified, up to the first `page_size` matching skills will be
+  // returned.
+  string page_token = 2;
+
+  // The type of view to return. Defaults to ASSET_VIEW_TYPE_BASIC.
+  AssetViewType view = 3;
+
+  // Used to filter returned skills.
+  message Filter {
+    // Filter for well-known release tags.
+    //
+    // Defaults to RELEASE_TAG_DEFAULT for basic and detailed views.
+    // Defaults to RELEASE_TAG_UNSPECIFIED (i.e., no filter) for versions view.
+    optional intrinsic_proto.assets.ReleaseTag release_tag = 1;
+
+    // Filter skills by `id`. Must provide either the complete `id` or a
+    // prefix.
+    optional string id = 2;
+
+    // Filter skills by `display_name`. Must provide either the complete
+    // `display_name` or a prefix.
+    optional string display_name = 3;
+  }
+
+  // Optional filter to apply to the query to retrieve a filtered set of
+  // skills.
+  //
+  // Note: This field is named `strict_filter` for now in case we decide to
+  // adopt the suggested more generic filtering specified in
+  // https://google.aip.dev/160.
+  optional Filter strict_filter = 4;
+}
+
+message ListSkillsResponse {
+  // The catalog skills that satisfied the request.
+  repeated Skill skills = 1;
+
+  // A token that can be sent as `ListSkillsRequest.page_token` to retrieve the
+  // next page.
+  //
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+message CreateSkillRequest {
+  // The skill version, in sem-ver format.
+  string version = 4;
+
+  // Release notes for this version of the skill.
+  string release_notes = 5;
+
+  // The skill manifest.
+  skills.Manifest manifest = 12;
+
+  oneof deployment_type {
+    // Container image for the skill with its service.
+    workcell_spec.v1.Image image = 7;
+
+    // Specify if creating a parameterizable behavior tree.
+    executive.BehaviorTree behavior_tree = 8;
+
+    // The skill's compiled image with skill service implementation.
+    SkillImage skill_image = 10;
+  }
+
+  // True if this version of the skill should be the default version.
+  //
+  // The "default" version of a skill is the version that is installed when
+  // the user does not explicitly specify a different version.
+  bool default = 13;
+
+  // True if this version of the skill should be hidden from users who aren't
+  // a member of the organization that owns the skill.
+  //
+  // Cannot be true if `default` is true.
+  bool org_private = 14;
+
+  reserved 1, 2, 3, 6, 11;
+  reserved "name", "vendor", "package_name", "doc_string", "release_tag";
+}
+
+message ClearDefaultRequest {
+  // Skill id for which to clear the default version.
+  intrinsic_proto.assets.Id id = 1;
+}
+
+// Reads skill data from the catalog and adds skills to it.
+service SkillCatalog {
+  // Retrieves information about a skill from the catalog.
+  rpc GetSkill(GetSkillRequest) returns (Skill);
+
+  // Retrieves information about skills from the catalog.
+  rpc ListSkills(ListSkillsRequest) returns (ListSkillsResponse);
+
+  // Creates a new version of a skill in the catalog.
+  //
+  // Returns an ASSET_VIEW_TYPE_BASIC view of the skill.
+  rpc CreateSkill(CreateSkillRequest) returns (Skill);
+
+  // Clears the default version of the specified skill.
+  rpc ClearDefault(ClearDefaultRequest) returns (google.protobuf.Empty);
+}

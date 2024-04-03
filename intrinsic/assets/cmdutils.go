@@ -190,24 +190,24 @@ func (cf *CmdFlags) GetFlagsListClusterSolution() (string, string, error) {
 	return cluster, solution, nil
 }
 
-// AddFlagManifestFile adds a flag for the manifest file path.
-func (cf *CmdFlags) AddFlagManifestFile() {
+// AddFlagsManifest adds flags for specifying a manifest.
+func (cf *CmdFlags) AddFlagsManifest() {
 	cf.OptionalString(KeyManifestFile, "", "The path to the manifest binary file.")
-}
-
-// GetFlagManifestFile gets the value of the manifest file flag added by AddFlagManifestFile.
-func (cf *CmdFlags) GetFlagManifestFile() string {
-	return cf.GetString(KeyManifestFile)
-}
-
-// AddFlagManifestTarget adds a flag for the manifest file build target.
-func (cf *CmdFlags) AddFlagManifestTarget() {
 	cf.OptionalString(KeyManifestTarget, "", "The manifest bazel target.")
+
+	cf.cmd.MarkFlagsMutuallyExclusive(KeyManifestFile, KeyManifestTarget)
 }
 
-// GetFlagManifestTarget gets the value of the manifest file flag added by AddFlagManifestTarget.
-func (cf *CmdFlags) GetFlagManifestTarget() string {
-	return cf.GetString(KeyManifestTarget)
+// GetFlagsManifest gets the values of the manifest flags added by AddFlagsManifest.
+func (cf *CmdFlags) GetFlagsManifest() (string, string, error) {
+	mf := cf.GetString(KeyManifestFile)
+	mt := cf.GetString(KeyManifestTarget)
+
+	if mf == "" && mt == "" {
+		return "", "", fmt.Errorf("one of --%s or --%s must provided", KeyManifestFile, KeyManifestTarget)
+	}
+
+	return mf, mt, nil
 }
 
 // AddFlagOrgPrivate adds a flag for marking a released asset as private to the organization.
@@ -286,6 +286,8 @@ func (cf *CmdFlags) AddFlagSkillReleaseType() {
 
 	targetTypeDescriptions = append(targetTypeDescriptions, `"build": a build target that creates a skill image.`)
 	targetTypeDescriptions = append(targetTypeDescriptions, `"archive": a file path to an already-built image.`)
+	targetTypeDescriptions = append(targetTypeDescriptions, `"image": a container image name.`)
+	targetTypeDescriptions = append(targetTypeDescriptions, `"archive_server_side_push": a file path to an already-built image.`)
 
 	cf.RequiredString(
 		KeyType,

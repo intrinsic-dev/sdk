@@ -113,12 +113,11 @@ func DialSkillCatalogFromInctl(cmd *cobra.Command, flags *cmdutils.CmdFlags) (*g
 
 	return DialSkillCatalog(
 		cmd.Context(), DialCatalogOptions{
-			Address:      "",
-			APIKey:       "",
-			Organization: flags.GetFlagOrganization(),
-			Project:      flags.GetFlagProject(),
-			UserReader:   bufio.NewReader(cmd.InOrStdin()),
-			UserWriter:   cmd.OutOrStdout(),
+			Address:    "",
+			APIKey:     "",
+			Project:    flags.GetFlagProject(),
+			UserReader: bufio.NewReader(cmd.InOrStdin()),
+			UserWriter: cmd.OutOrStdout(),
 		},
 	)
 }
