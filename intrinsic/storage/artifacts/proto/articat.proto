@@ -1,0 +1,11 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.storage.artifacts.v1;
+
+// Service alias for intrinsic_proto.storage.artifacts.v1.ArtifactServiceApi
+// It is here so the name cannot be stolen from us by some other service
+// causing a name collision. There should never be a real instance of this
+// service running anywhere.
+service ArtifactCatalogService {}

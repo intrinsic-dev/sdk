@@ -14,9 +14,15 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	crv1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
+	"github.com/pborman/uuid"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc/metadata"
 	artifactgrpcpb "intrinsic/storage/artifacts/proto/artifact_go_grpc_proto"
 	artifactpb "intrinsic/storage/artifacts/proto/artifact_go_grpc_proto"
+)
+
+const (
+	extraHeaderIntrinsicClientID = "intrinsic-client-id"
 )
 
 // UploaderOption is an option for the Uploader.
@@ -27,6 +33,7 @@ type uploaderOptions struct {
 	maxCheckWaitTime   time.Duration
 	strategy           uploadStrategy
 	alignForK8s        bool
+	clientIDHeader     string
 }
 
 var defaultOptions = uploaderOptions{
@@ -112,6 +119,8 @@ func NewUploader(client artifactgrpcpb.ArtifactServiceApiClient, opts ...Uploade
 	for _, opt := range opts {
 		options = opt(options)
 	}
+	// client ID for ingress affinity calculations, collisions are ok.
+	options.clientIDHeader = uuid.New()
 
 	return &defaultHelper{uploaderOptions: options, client: client}, nil
 }
@@ -147,6 +156,8 @@ func (h *defaultHelper) UploadImage(ctx context.Context, imageName string, image
 		return fmt.Errorf("check image failed: %w", err)
 	}
 
+	ctx = metadata.AppendToOutgoingContext(ctx, extraHeaderIntrinsicClientID, h.clientIDHeader)
+	ctx = attachImageName(ctx, imageName)
 	return h.uploadImageParts(ctx, image, response)
 }
 

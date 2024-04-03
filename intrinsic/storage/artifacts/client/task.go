@@ -14,9 +14,11 @@ import (
 	crv1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/partial"
 	crtypes "github.com/google/go-containerregistry/pkg/v1/types"
+	"github.com/pkg/errors"
 	"go.uber.org/atomic"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"intrinsic/storage/artifacts/internal/utils"
 	artifactgrpcpb "intrinsic/storage/artifacts/proto/artifact_go_grpc_proto"
 	artifactpb "intrinsic/storage/artifacts/proto/artifact_go_grpc_proto"
 )
@@ -24,6 +26,13 @@ import (
 const (
 	chunkIDMaxIncrement int64 = 100
 	size4MB             int   = 4 * 1024 * 1024
+)
+
+type imageNameCtxType struct {
+}
+
+var (
+	imageNameCtxValue = imageNameCtxType{}
 )
 
 type uploadStrategy int
@@ -161,28 +170,20 @@ func (t *streamingTask) runWithCtx(ctx context.Context) error {
 		if firstChunk {
 			digest := t.descriptor.Digest.String()
 			updateRequest.ExpectedDigest = &digest
-			updateRequest.Content = asArtifactDescriptor(t.descriptor)
+			updateRequest.Content = asArtifactDescriptor(ctx, t.descriptor)
 		}
 
 		err = stream.Send(updateRequest)
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				// fetch error details and break the loop.
+				_, ctxErr = stream.CloseAndRecv()
+				break
+			}
 			if firstChunk {
 				// on first chunk we need to check if resource we are writing already
 				// exists. see b/327799134
-				if errStatus, ok := status.FromError(err); ok {
-					if errStatus.Code() == codes.AlreadyExists {
-						// this item already exists. This could be for various reasons,
-						// but we consider this success.
-						updateMonitor(t.monitor, asShortName(t.name), ProgressUpdate{
-							Status:  StatusSuccess,
-							Current: t.descriptor.Size,
-							Total:   t.descriptor.Size,
-							Message: "already exists",
-						})
-						log.InfoContextf(ctx, "[%s] already exists", asShortName(t.name))
-						return nil // our work is done.
-					}
-				}
+				return t.checkForAlreadyExists(ctx, err)
 			}
 			return fmt.Errorf("[%s] send failed: %w", asShortName(t.name), err)
 		}
@@ -191,7 +192,7 @@ func (t *streamingTask) runWithCtx(ctx context.Context) error {
 		totalSize += int64(length)
 		if action == artifactpb.UpdateAction_UPDATE_ACTION_COMMIT {
 			response, err := stream.CloseAndRecv()
-			if err != nil {
+			if t.checkForAlreadyExists(ctx, err) != nil {
 				return fmt.Errorf("error waiting for response: %w", err)
 			}
 			doUpdateMonitor(t.monitor, response, t.descriptor)
@@ -208,11 +209,32 @@ func (t *streamingTask) runWithCtx(ctx context.Context) error {
 		// but if we didn't finish, we will put Abort on wire to make sure we
 		// abort requests in flight
 		abortRun(t.name, firstChunk, idTracker, stream.Send)
-		return fmt.Errorf("premature termination: %w", ctxErr)
+		return fmt.Errorf("[%s] premature termination: %w", asShortName(t.name), ctxErr)
 	}
 
 	return ctxErr
 
+}
+
+func (t *streamingTask) checkForAlreadyExists(ctx context.Context, err error) error {
+	if err == nil {
+		return nil
+	}
+	if errStatus, ok := status.FromError(err); ok {
+		if errStatus.Code() == codes.AlreadyExists {
+			// this item already exists. This could be for various reasons,
+			// but we consider this success.
+			updateMonitor(t.monitor, asShortName(t.name), ProgressUpdate{
+				Status:  StatusSuccess,
+				Current: t.descriptor.Size,
+				Total:   t.descriptor.Size,
+				Message: "already exists",
+			})
+			log.InfoContextf(ctx, "[%s] already exists", asShortName(t.name))
+			return nil // our work is done.
+		}
+	}
+	return err
 }
 
 func nextChunkID() int64 {
@@ -244,14 +266,16 @@ func asShortName(name string) string {
 	return name
 }
 
-func asArtifactDescriptor(descriptor *crv1.Descriptor) *artifactpb.ArtifactDescriptor {
+func asArtifactDescriptor(ctx context.Context, descriptor *crv1.Descriptor) *artifactpb.ArtifactDescriptor {
 	digest := descriptor.Digest.String()
-	return &artifactpb.ArtifactDescriptor{
+	ad := &artifactpb.ArtifactDescriptor{
 		MediaType:   string(descriptor.MediaType),
 		Digest:      &digest,
 		Size:        &descriptor.Size,
 		Annotations: descriptor.Annotations,
 	}
+	setImageName(ctx, ad)
+	return ad
 }
 
 func makeProgressResponse(update *artifactpb.UpdateRequest, total int64) *artifactpb.UpdateResponse {
@@ -384,4 +408,24 @@ func valueOrDefault[T any](ptr *T, def T) T {
 		return def
 	}
 	return *ptr
+}
+
+func attachImageName(ctx context.Context, imageName string) context.Context {
+	return context.WithValue(ctx, imageNameCtxValue, imageName)
+}
+
+func setImageName(ctx context.Context, ad *artifactpb.ArtifactDescriptor) {
+	if ad == nil {
+		return
+	}
+	value := ctx.Value(imageNameCtxValue)
+	if value == nil || value.(string) == "" {
+		return
+	}
+
+	if ad.Annotations == nil {
+		ad.Annotations = make(map[string]string)
+	}
+	ad.Annotations[utils.AnnotationImageName] = value.(string)
+	return
 }

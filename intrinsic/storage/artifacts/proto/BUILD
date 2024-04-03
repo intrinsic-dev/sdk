@@ -22,3 +22,23 @@ go_grpc_library(
     srcs = [":artifact_proto"],
     deps = [":artifact_go_proto"],
 )
+
+proto_library(
+    name = "articat_proto",
+    srcs = ["articat.proto"],
+)
+
+go_proto_library(
+    name = "articat_go_proto",
+    deps = [
+        ":articat_proto",
+    ],
+)
+
+go_grpc_library(
+    name = "articat_go_grpc_proto",
+    srcs = [":articat_proto"],
+    deps = [
+        ":articat_go_proto",
+    ],
+)

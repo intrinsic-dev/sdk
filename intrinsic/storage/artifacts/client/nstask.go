@@ -77,7 +77,7 @@ func (t *nonStreamingTask) runWithCtx(ctx context.Context) error {
 		if firstChunk {
 			digest := t.descriptor.Digest.String()
 			updateRequest.ExpectedDigest = &digest
-			updateRequest.Content = asArtifactDescriptor(t.descriptor)
+			updateRequest.Content = asArtifactDescriptor(ctx, t.descriptor)
 			// reset contentBuffer to full size after first chunk
 			contentBuffer = make([]byte, t.updateSize)
 		}
