@@ -11,6 +11,9 @@ import (
 type Info struct {
 	Cluster      string `json:"cluster,omitempty"`
 	State        string `json:"state,omitempty"`
+	OSState      string `json:"osState,omitempty"`
+	BaseState    string `json:"baseState,omitempty"`
+	BaseManager  string `json:"baseManager,omitempty"`
 	Mode         string `json:"mode,omitempty"`
 	CurrentBase  string `json:"currentBase,omitempty"`
 	TargetBase   string `json:"targetBase,omitempty"`
