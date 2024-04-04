@@ -8,6 +8,8 @@
 package idutils
 
 import (
+	"crypto/sha256"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -484,4 +486,33 @@ func ToLabel(s string) (string, error) {
 // FromLabel recovers an input string previously passed to ToLabel.
 func FromLabel(label string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(label, "--", "."), "-", "_")
+}
+
+// UnreleasedAssetKind describes the kind (i.e. the "source") of an unreleased asset.
+//
+// The kind is encoded in the version of the asset.
+type UnreleasedAssetKind string
+
+const (
+	// UnreleasedAssetKindSideloaded describes an asset that has been or will be sideloaded.
+	UnreleasedAssetKindSideloaded = "sideloaded"
+
+	// UnreleasedAssetKindInlined describes an asset that has been or will be inlined from source.
+	UnreleasedAssetKindInlined = "inlined"
+)
+
+// UnreleasedVersion creates a deterministic, unreleased version of the given kind. The version is
+// marked with a digest of the data to provide strong uniqueness guarantees.
+//
+// The resulting version is formatted as described in IsUnreleasedVersion.
+//
+// Returns an error if the kind is unknown/invalid or data is empty.
+func UnreleasedVersion(kind UnreleasedAssetKind, data []byte) (string, error) {
+	if kind != UnreleasedAssetKindSideloaded && kind != UnreleasedAssetKindInlined {
+		return "", errors.New("invalid kind")
+	}
+	if len(data) == 0 {
+		return "", errors.New("empty data")
+	}
+	return fmt.Sprintf("0.0.1+%s%x", kind, sha256.Sum256(data)), nil
 }
