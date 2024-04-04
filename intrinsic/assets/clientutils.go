@@ -57,14 +57,13 @@ var (
 	catalogAssetAddressRegex    = regexp.MustCompile(`(^|/)assets[-]?([^\.]*)\.intrinsic\.ai`)
 )
 
-// DialCatalogOptions specifies the options for DialSkillCatalog and DialCatalog.
+// DialCatalogOptions specifies the options for DialCatalog.
 type DialCatalogOptions struct {
-	Address      string
-	APIKey       string
-	Organization string
-	Project      string
-	UserReader   *bufio.Reader // Required if UseFirebaseAuth is true.
-	UserWriter   io.Writer     // Required if UseFirebaseAuth is true.
+	Address    string
+	APIKey     string
+	Project    string
+	UserReader *bufio.Reader // Required if UseFirebaseAuth is true.
+	UserWriter io.Writer     // Required if UseFirebaseAuth is true.
 }
 
 // DialCatalogFromInctl creates a connection to an asset catalog service from an inctl command.
@@ -72,12 +71,11 @@ func DialCatalogFromInctl(cmd *cobra.Command, flags *cmdutils.CmdFlags) (*grpc.C
 
 	return DialCatalog(
 		cmd.Context(), DialCatalogOptions{
-			Address:      "",
-			APIKey:       "",
-			Organization: "",
-			Project:      ResolveProject(cmd.Context(), flags),
-			UserReader:   bufio.NewReader(cmd.InOrStdin()),
-			UserWriter:   cmd.OutOrStdout(),
+			Address:    "",
+			APIKey:     "",
+			Project:    ResolveProject(cmd.Context(), flags),
+			UserReader: bufio.NewReader(cmd.InOrStdin()),
+			UserWriter: cmd.OutOrStdout(),
 		},
 	)
 }
@@ -94,7 +92,7 @@ func DialCatalog(ctx context.Context, opts DialCatalogOptions) (*grpc.ClientConn
 	if IsLocalAddress(opts.Address) { // Use insecure creds.
 		options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	} else { // Use api-key creds.
-		rpcCreds, err := getAPIKeyPerRPCCredentials(opts.APIKey, opts.Project, opts.Organization)
+		rpcCreds, err := getAPIKeyPerRPCCredentials(opts.APIKey, opts.Project)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get api-key credentials")
 		}
@@ -108,46 +106,11 @@ func DialCatalog(ctx context.Context, opts DialCatalogOptions) (*grpc.ClientConn
 	return grpc.DialContext(ctx, address, options...)
 }
 
-// DialSkillCatalogFromInctl creates a connection to a skill catalog service from an inctl command.
-func DialSkillCatalogFromInctl(cmd *cobra.Command, flags *cmdutils.CmdFlags) (*grpc.ClientConn, error) {
+// ResolveProject returns the project to use for communicating with a catalog.
+func ResolveProject(ctx context.Context, flags *cmdutils.CmdFlags) string {
+	project := "intrinsic-assets-prod"
 
-	return DialSkillCatalog(
-		cmd.Context(), DialCatalogOptions{
-			Address:    "",
-			APIKey:     "",
-			Project:    flags.GetFlagProject(),
-			UserReader: bufio.NewReader(cmd.InOrStdin()),
-			UserWriter: cmd.OutOrStdout(),
-		},
-	)
-}
-
-// DialSkillCatalog creates a connection to a skill catalog service.
-func DialSkillCatalog(ctx context.Context, opts DialCatalogOptions) (*grpc.ClientConn, error) {
-	// Get the catalog address.
-	address, err := resolveSkillCatalogAddress(ctx, opts)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot resolve address")
-	}
-
-	options := BaseDialOptions
-
-	// Determine credentials to include in requests.
-	if IsLocalAddress(opts.Address) { // Use insecure creds.
-		options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	} else { // Use api-key creds.
-		rpcCreds, err := getAPIKeyPerRPCCredentials(opts.APIKey, opts.Project, opts.Organization)
-		if err != nil {
-			return nil, errors.Wrap(err, "cannot get api-key credentials")
-		}
-		tcOption, err := GetTransportCredentialsDialOption()
-		if err != nil {
-			return nil, errors.Wrap(err, "cannot get transport credentials")
-		}
-		options = append(options, grpc.WithPerRPCCredentials(rpcCreds), tcOption)
-	}
-
-	return grpc.DialContext(ctx, address, options...)
+	return project
 }
 
 // GetTransportCredentialsDialOption returns transport credentials from the system certificate pool.
@@ -168,45 +131,6 @@ func IsLocalAddress(address string) bool {
 		}
 	}
 	return false
-}
-
-// GetSkillCatalogProject returns the SkillCatalog project that the specified project uses.
-func GetSkillCatalogProject(project string) (string, error) {
-	address, err := getCustomSkillCatalogAddressForProject(project)
-	if err != nil {
-		return "", err
-	}
-
-	// No custom address, so the project is running its own catalog.
-	if address == "" {
-		return project, nil
-	}
-
-	// Try to derive the project from an endpoint-style catalog address.
-	submatches := catalogEndpointAddressRegex.FindStringSubmatch(address)
-	if submatches != nil {
-		return submatches[2], nil
-	}
-
-	// Try to derive the project from an asset-style catalog address.
-	submatches = catalogAssetAddressRegex.FindStringSubmatch(address)
-	if submatches != nil {
-		addressSuffix := submatches[2]
-		projectSuffix := "prod"
-		if len(addressSuffix) > 0 {
-			projectSuffix = addressSuffix
-		}
-		return fmt.Sprintf("intrinsic-assets-%s", projectSuffix), nil
-	}
-
-	return "", fmt.Errorf("cannot infer project from address: %s", address)
-}
-
-// ResolveProject returns the project to use for communicating with a catalog.
-func ResolveProject(ctx context.Context, flags *cmdutils.CmdFlags) string {
-	project := "intrinsic-assets-prod"
-
-	return project
 }
 
 func resolveCatalogAddress(ctx context.Context, opts DialCatalogOptions) (string, error) {
@@ -232,94 +156,21 @@ func resolveCatalogAddress(ctx context.Context, opts DialCatalogOptions) (string
 	return address, nil
 }
 
-func resolveSkillCatalogAddress(ctx context.Context, opts DialCatalogOptions) (string, error) {
-	// Check for user-provided address.
-	if opts.Address != "" {
-		return opts.Address, nil
+func defaultGetCatalogAddressForProject(ctx context.Context, opts DialCatalogOptions) (address string, err error) {
+	if opts.Project != "intrinsic-assets-prod" {
+		return "", fmt.Errorf("unsupported project %s", opts.Project)
 	}
-
-	// Derive the address from the project.
-	if opts.Project == "" {
-		return "", fmt.Errorf("project is empty")
-	}
-	address, err := getSkillCatalogAddressForProject(ctx, opts)
-	if err != nil {
-		return "", err
-	}
-
-	addDNS := true
-	if addDNS && !strings.HasPrefix(address, "dns:///") {
-		address = fmt.Sprintf("dns:///%s", address)
-	}
+	address = fmt.Sprintf("assets.intrinsic.ai:443")
 
 	return address, nil
 }
 
-func defaultGetSkillCatalogAddressForProject(ctx context.Context, opts DialCatalogOptions) (string, error) {
-	// Check for a custom address for this project.
-	if address, err := getCustomSkillCatalogAddressForProject(opts.Project); err != nil {
-		return "", err
-	} else if address != "" {
-		return address, nil
-	}
-
-	// Otherwise derive address from project.
-	address := fmt.Sprintf("www.endpoints.%s.cloud.goog:443", opts.Project)
-
-	return address, nil
-}
-
-func defaultGetCatalogAddressForProject(ctx context.Context, opts DialCatalogOptions) (string, error) {
-	// Check for a custom address for this project.
-	if address, err := getCustomCatalogAddressForProject(opts.Project); err != nil {
-		return "", err
-	} else if address != "" {
-		return address, nil
-	}
-
-	// Otherwise use address of global catalog
-	address := fmt.Sprintf("assets.intrinsic.ai:443")
-
-	return address, nil
-}
-
-func defaultGetCustomCatalogAddressForProject(project string) (string, error) {
-	address := ""
-
-	return address, nil
-}
-
-func defaultGetCustomSkillCatalogAddressForProject(project string) (string, error) {
-	address := ""
-
-	return address, nil
-}
-
-// CustomOrganizationCredentials adds a custom organization to credentials provided by a base
-// PerRPCCredentials.
-type CustomOrganizationCredentials struct {
-	c            credentials.PerRPCCredentials
-	organization string
-}
-
-// GetRequestMetadata returns a map of request metadata.
-func (c *CustomOrganizationCredentials) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
-	md, err := c.c.GetRequestMetadata(ctx, uri...)
-	if err != nil {
-		return nil, err
-	}
-	md[auth.OrgIDHeader] = c.organization
-
-	return md, nil
-}
-
-// RequireTransportSecurity always returns true to protect credentials
-func (c *CustomOrganizationCredentials) RequireTransportSecurity() bool {
-	return true
-}
+var (
+	getCatalogAddressForProject = defaultGetCatalogAddressForProject
+)
 
 // getAPIKeyPerRPCCredentials returns api-key PerRPCCredentials.
-func getAPIKeyPerRPCCredentials(apiKey string, project string, organization string) (credentials.PerRPCCredentials, error) {
+func getAPIKeyPerRPCCredentials(apiKey string, project string) (credentials.PerRPCCredentials, error) {
 	var token *auth.ProjectToken
 
 	if apiKey != "" {
@@ -338,20 +189,5 @@ func getAPIKeyPerRPCCredentials(apiKey string, project string, organization stri
 		}
 	}
 
-	if organization != "" {
-		return &CustomOrganizationCredentials{
-			c:            token,
-			organization: organization,
-		}, nil
-	}
-
 	return token, nil
 }
-
-// Overridable for testing.
-var (
-	getCatalogAddressForProject            = defaultGetCatalogAddressForProject
-	getCustomCatalogAddressForProject      = defaultGetCustomCatalogAddressForProject
-	getSkillCatalogAddressForProject       = defaultGetSkillCatalogAddressForProject
-	getCustomSkillCatalogAddressForProject = defaultGetCustomSkillCatalogAddressForProject
-)

@@ -42,7 +42,7 @@ var (
 )
 
 func release(cmd *cobra.Command, req *skillcatalogpb.CreateSkillRequest, idVersion string) error {
-	conn, err := clientutils.DialSkillCatalogFromInctl(cmd, cmdFlags)
+	conn, err := clientutils.DialCatalogFromInctl(cmd, cmdFlags)
 	if err != nil {
 		return fmt.Errorf("failed to create client connection: %v", err)
 	}
