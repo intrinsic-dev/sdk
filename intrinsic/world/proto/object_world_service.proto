@@ -347,7 +347,11 @@ message Object {
   repeated IdAndName children = 6;
 
   // All child frames under this object, including ones that are attached
-  // indirectly to this object via another child frame.
+  // indirectly to this object via another child frame. Frames are derived from
+  // Entities. The Entity a Frame is derived from has the same `name` (but not
+  // `id`) as the Frame. The Entity may have additional information, such as
+  // which part of the parent Object's internal kinematic structure it is
+  // attached to.
   //
   // If ObjectView==BASIC, included Frame instances will only be partically
   // populated (if ObjectView==BASIC, Frame.parent_t_this is not populated).
@@ -359,8 +363,8 @@ message Object {
   // Only present if ObjectView==FULL and ObjectType==KINEMATIC_OBJECT.
   KinematicObjectComponent kinematic_object_component = 9;
 
-  // The entities which make up the internal structure of the object. Only
-  // filled if ObjectView==FULL.
+  // The entities which make up the internal structure of the object, by Id.
+  // Only filled if ObjectView==FULL.
   map<string, Entity> entities = 10;
 
   // Id of the root entity of this object. If ObjectView==FULL, then this is a
@@ -464,7 +468,8 @@ message Frame {
   string name = 3;
 
   // Id and name of the parent object. Equal to {id: "root" name: "root"} if the
-  // frame is a child of the root object.
+  // frame is a child of the root object. The parent object contains an Entity
+  // with the same name as this Frame.
   IdAndName object = 4;
 
   // The full path from root of the parent object.
@@ -479,8 +484,15 @@ message Frame {
   // attached directly to the parent object. Not sorted in any particular order.
   repeated IdAndName child_frames = 7;
 
-  // Pose of this frame in the space of the parent object (if 'parent_frame' is
-  // empty) or frame (if 'parent_frame' is set).
+  // Pose of this frame relative to its parent Object's root entity (if
+  // 'parent_frame' is empty) or Frame (if 'parent_frame' is set).
+  //
+  // Note that in the former case (`parent_frame` is empty), the corresponding
+  // entity in the parent `object` (see above) may have a parent entity *other
+  // than* the object's root entity. If there are entities with kinematic
+  // components in the same object, then the `parent_t_this` pose of the *frame*
+  // may change as the kinematic components (i.e. joints) move, while the
+  // `parent_t_this` pose of the *entity* will not.
   intrinsic_proto.Pose parent_t_this = 5;
 
   // If set then this frame is designated as an attachment frame.
