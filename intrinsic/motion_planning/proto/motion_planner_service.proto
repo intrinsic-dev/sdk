@@ -6,7 +6,6 @@ package intrinsic_proto.motion_planning;
 
 import "intrinsic/geometry/proto/shape_data.proto";
 import "intrinsic/icon/proto/joint_space.proto";
-import "intrinsic/kinematics/types/joint_limits.proto";
 import "intrinsic/logging/proto/context.proto";
 import "intrinsic/math/proto/pose.proto";
 import "intrinsic/motion_planning/proto/motion_planner_config.proto";
