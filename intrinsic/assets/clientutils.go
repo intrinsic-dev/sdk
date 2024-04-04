@@ -4,11 +4,9 @@
 package clientutils
 
 import (
-	"bufio"
 	"context"
 	"crypto/x509"
 	"fmt"
-	"io"
 	"math"
 	"regexp"
 	"strings"
@@ -59,11 +57,9 @@ var (
 
 // DialCatalogOptions specifies the options for DialCatalog.
 type DialCatalogOptions struct {
-	Address    string
-	APIKey     string
-	Project    string
-	UserReader *bufio.Reader // Required if UseFirebaseAuth is true.
-	UserWriter io.Writer     // Required if UseFirebaseAuth is true.
+	Address string
+	APIKey  string
+	Project string
 }
 
 // DialCatalogFromInctl creates a connection to an asset catalog service from an inctl command.
@@ -71,11 +67,9 @@ func DialCatalogFromInctl(cmd *cobra.Command, flags *cmdutils.CmdFlags) (*grpc.C
 
 	return DialCatalog(
 		cmd.Context(), DialCatalogOptions{
-			Address:    "",
-			APIKey:     "",
-			Project:    ResolveProject(cmd.Context(), flags),
-			UserReader: bufio.NewReader(cmd.InOrStdin()),
-			UserWriter: cmd.OutOrStdout(),
+			Address: "",
+			APIKey:  "",
+			Project: ResolveProject(cmd.Context(), flags),
 		},
 	)
 }
