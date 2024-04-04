@@ -37,14 +37,6 @@ build --incompatible_default_to_explicit_init_py
 # Set a higher timeout value, just in case.
 build --remote_timeout=3600
 
-# Platform flags
-# The toolchain container used for execution is defined in the target indicated
-# by "extra_execution_platforms", "host_platform" and "platforms".
-# More about platforms: https://docs.bazel.build/versions/master/platforms.html
-build:linux_x86_64 --extra_execution_platforms=//bazel:linux_x86_64
-build:linux_x86_64 --host_platform=//bazel:linux_x86_64
-build:linux_x86_64 --platforms=//bazel:linux_x86_64
-
 build:remote       --remote_executor=grpcs://remotebuildexecution.googleapis.com
 build:remote_cache --remote_cache=grpcs://remotebuildexecution.googleapis.com
 
@@ -54,9 +46,10 @@ build:remote_cache --remote_cache=grpcs://remotebuildexecution.googleapis.com
 build:remote       --google_default_credentials=true
 build:remote_cache --google_default_credentials=true
 
-# RBE builds only support linux_x86_64.
-build:remote       --config=linux_x86_64
-build:remote_cache --config=linux_x86_64
+# The toolchain container used for execution. RBE builds only support linux_x86_64.
+# More about platforms: https://docs.bazel.build/versions/master/platforms.html
+build:remote       --host_platform=//bazel:linux_x86_64
+build:remote_cache --host_platform=//bazel:linux_x86_64
 
 # Enable absl support in googletest. If this define is set, googletest's default
 # main function initializes absl, including the command line flag subsystem.
