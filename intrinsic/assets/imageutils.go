@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"intrinsic/assets/idutils"
 	"intrinsic/assets/imagetransfer"
 	idpb "intrinsic/assets/proto/id_go_proto"
@@ -41,6 +42,12 @@ const (
 	remoteWriteTries = 5
 
 	dockerLabelSkillIDKey = "ai.intrinsic.asset-id"
+
+	// The following labels are DEPRECATED and should not be used other than for backwards
+	// compatibility.
+	deprecatedDockerLabelSkillIDProtoKey = "ai.intrinsic.skill-id"
+	deprecatedDockerLabelPackageName     = "ai.intrinsic.package-name"
+	deprecatedDockerLabelSkillName       = "ai.intrinsic.skill-name"
 )
 
 // SkillInstallerParams contains parameters used to install a docker image that
@@ -372,7 +379,21 @@ func GetSkillInstallerParams(image containerregistry.Image) (*SkillInstallerPara
 	imageLabels := configFile.Config.Labels
 	skillID, ok := imageLabels[dockerLabelSkillIDKey]
 	if !ok {
-		return nil, fmt.Errorf("docker container does not have label %q", dockerLabelSkillIDKey)
+		// Backward-compatibility for deprecated image labels.
+		idProto := &idpb.Id{}
+		if skillIDBinary, ok := imageLabels[deprecatedDockerLabelSkillIDProtoKey]; !ok {
+			skillName, skillNameOK := imageLabels[deprecatedDockerLabelSkillName]
+			skillPackage, skillPackageOK := imageLabels[deprecatedDockerLabelPackageName]
+			if !skillNameOK || !skillPackageOK {
+				return nil, fmt.Errorf("cannot recover skill ID from image labels")
+			} else if skillID, err = idutils.IDFrom(skillPackage, skillName); err != nil {
+				return nil, fmt.Errorf("invalid skill ID: %v", err)
+			}
+		} else if err := proto.Unmarshal([]byte(skillIDBinary), idProto); err != nil {
+			return nil, fmt.Errorf("cannot unmarshal Id proto from the label %q: %v", deprecatedDockerLabelSkillIDProtoKey, err)
+		} else if skillID, err = idutils.IDFromProto(idProto); err != nil {
+			return nil, fmt.Errorf("invalid Id proto: %v", err)
+		}
 	}
 	skillIDLabel, err := idutils.ToLabel(skillID)
 	if err != nil {

@@ -94,7 +94,15 @@ func push(target string, image containerregistry.Image, imageName string, opts P
 	case imageutils.Build, imageutils.Archive:
 		return pushBuildOrArchiveTypes(image, imageName, opts)
 	case imageutils.Image:
-		return imagePbFromRef(target, imageName, opts)
+		if imageProto, err := imagePbFromRef(target, imageName, opts); err != nil {
+			return nil, err
+		} else if imageProto.GetRegistry() == opts.Registry || opts.Registry == "" {
+			// Target image is already in the specified registry, so nothing to do.
+			return imageProto, nil
+		}
+
+		// Target is in a different registry, so we need to push the image to the specified registry.
+		return pushBuildOrArchiveTypes(image, imageName, opts)
 	}
 	return nil, fmt.Errorf("unimplemented target type: %v", targetType)
 }
