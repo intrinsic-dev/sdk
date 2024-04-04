@@ -90,6 +90,8 @@ proto_library(
     srcs = ["motion_planning_error.proto"],
     deps = [
         "//intrinsic/icon/proto:joint_space_proto",
+        "//intrinsic/kinematics/types:joint_limits_proto",
+        "//intrinsic/math/proto:pose_proto",
         "//intrinsic/world/proto:collision_settings_proto",
         "//intrinsic/world/proto:geometric_constraints_proto",
     ],

@@ -5,6 +5,8 @@ syntax = "proto3";
 package intrinsic_proto.motion_planning;
 
 import "intrinsic/icon/proto/joint_space.proto";
+import "intrinsic/kinematics/types/joint_limits.proto";
+import "intrinsic/math/proto/pose.proto";
 import "intrinsic/world/proto/collision_settings.proto";
 import "intrinsic/world/proto/geometric_constraints.proto";
 
@@ -29,6 +31,14 @@ message ErrorContext {
     GOAL_STATE_COLLISION = 5;
     // Error when a joint configuration (state) is in collision.
     STATE_IN_COLLISION = 6;
+    // Fine Path Error
+    FINE_PATH_IK_ERROR = 7;
+    // Linear Cartesian Path planner
+    LINEAR_CARTESIAN_PATH_PLANNER_ERROR = 8;
+    // Traj
+    TRAJECTORY_PLANNING_INITIAL_STATE_COLLISION = 9;
+    TRAJECTORY_PLANNING_GOAL_STATE_COLLISION = 10;
+    TRAJECTORY_PLANNING_STATE_COLLISION = 11;
   }
 }
 
@@ -46,7 +56,14 @@ message MotionPlanningError {
     // The collision error that is reported for a given geometric constraint/
     // pose.
     CollisionError collision_error = 1;
+    // IK error reported by the IK solver
     IKError ik_error = 2;
+    // FinePathIK error reported during path planning
+    FinePathIKError fine_path_ik_error = 4;
+    // LinearCartesianMotionPathPlannerError reported during path planning for
+    //  cartesian linear motions.
+    LinearCartesianMotionPathPlannerError linear_cartesian_path_planning_error =
+        5;
   }
   // Segment id represents the segment for which the error was reported.
   // For multiple segments we add the first and last segment ids where
@@ -88,4 +105,37 @@ message IKError {
   // Allows any additional information regarding context where the error
   // occurs.
   optional ErrorContext.Type error_context = 3;
+}
+
+// FinePathIKError corresponds to an error that is generated during path
+// planning when using the FinePathIK planner which computes the inverse
+// kinematics on a finely interpolated Cartesian path. This message holds the
+// previous and current IK solution, hint for the IK solution.
+// This error also includes the desired base to tip transform and the
+// joint limits used as optional fields.
+message FinePathIKError {
+  string error_message = 1;
+  intrinsic_proto.icon.JointVec previous_ik_solution = 2;
+  intrinsic_proto.icon.JointVec current_ik_hint = 3;
+  intrinsic_proto.icon.JointVec current_ik_solution = 4;
+  optional intrinsic_proto.Pose base_t_tip_desired = 5;
+  optional intrinsic_proto.JointLimits applied_joint_limits = 6;
+  // Allows any additional information regarding context where the error
+  // occurs.
+  optional ErrorContext.Type error_context = 7;
+}
+
+// LinearCartesianMotionPathPlannerError corresponds to an error generated
+// during path planning when planning for linear cartesian motions. This message
+// holds the target joint positions that the planner tries to plan for and the
+// final joint positions it was able to reach.
+message LinearCartesianMotionPathPlannerError {
+  string error_message = 1;
+  // Target joint positions that the planner tried to plan to.
+  optional intrinsic_proto.icon.JointVec target_joint_positions = 3;
+  // Final joint positions where the path planner was able to reach.
+  optional intrinsic_proto.icon.JointVec final_joint_positions = 4;
+  // Allows any additional information regarding context where the error
+  // occurs.
+  optional ErrorContext.Type error_context = 5;
 }

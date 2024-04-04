@@ -26,4 +26,19 @@ absl::Status AnnotateError(const absl::Status& status,
   return new_status;
 }
 
+absl::Status PrependError(const absl::Status& status,
+                          std::string_view message) {
+  if (status.ok()) {
+    return status;
+  }
+  absl::Status new_status(status.code(),
+                          absl::StrCat(message, " ", status.message()));
+  status.ForEachPayload(
+      [&new_status](absl::string_view type_url, const absl::Cord& payload) {
+        new_status.SetPayload(type_url, payload);
+      });
+
+  return new_status;
+}
+
 }  // namespace intrinsic
