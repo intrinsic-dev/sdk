@@ -107,3 +107,16 @@ type StatusInterface struct {
 	Realtime   bool     `json:"realtime"`
 	HasCarrier bool     `json:"carrier"`
 }
+
+// PingCommand allows to trigger an ICMP ping from the device.
+// This can be used to test (L3) connectivity to networked peripherals.
+type PingCommand struct {
+	Target string `json:"target"`
+	// Maximum wait time in milliseconds
+	Duration int `json:"duration"`
+}
+
+// PingResponse represents the response from the ping command.
+type PingResponse struct {
+	Success bool `json:"success"`
+}
