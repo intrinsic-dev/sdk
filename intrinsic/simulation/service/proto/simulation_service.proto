@@ -4,7 +4,6 @@ syntax = "proto3";
 
 package xfa.simulation;
 
-import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
