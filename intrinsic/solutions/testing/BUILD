@@ -29,6 +29,10 @@ py_proto_library(
 
 proto_source_code_info_transitive_descriptor_set(
     name = "test_skill_params_proto_descriptors",
+    visibility = [
+        "//intrinsic/executive/clips_cpp:__subpackages__",
+        "//intrinsic/solutions:__subpackages__",
+    ],
     deps = [":test_skill_params_proto"],
 )
 
