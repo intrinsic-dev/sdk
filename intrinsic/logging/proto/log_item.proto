@@ -13,7 +13,6 @@ import "intrinsic/icon/proto/part_status.proto";
 import "intrinsic/logging/errors/proto/error_report.proto";
 import "intrinsic/logging/proto/blob.proto";
 import "intrinsic/logging/proto/context.proto";
-import "intrinsic/logging/proto/flowstate_event.proto";
 import "intrinsic/perception/proto/frame.proto";
 import "intrinsic/perception/proto/hand_eye_calibration.proto";
 import "intrinsic/perception/proto/pose_estimation_result.proto";
