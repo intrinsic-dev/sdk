@@ -301,6 +301,9 @@ py_library(
     srcs = ["proto_utils.py"],
     data = ["//intrinsic/util/proto:source_code_info_view_py.so"],
     srcs_version = "PY3",
+    visibility = [
+        "//visibility:public",
+    ],
     deps = [
         "//intrinsic/assets:id_utils_py",
         "//intrinsic/skills/proto:skill_manifest_py_pb2",

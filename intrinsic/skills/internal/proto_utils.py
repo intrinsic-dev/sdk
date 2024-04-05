@@ -45,11 +45,6 @@ def proto_from_skill_manifest(
   add_param_file_descriptor_set_without_source_code_from_manifest(
       manifest, file_descriptor_set, skill_proto
   )
-
-  _add_pub_topic_description_from_manifest(
-      manifest, file_descriptor_set, skill_proto
-  )
-
   if manifest.HasField('return_type'):
     add_return_file_descriptor_set_without_source_code_from_manifest(
         manifest, file_descriptor_set, skill_proto
