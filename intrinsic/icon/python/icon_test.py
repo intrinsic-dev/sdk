@@ -6,6 +6,7 @@ from unittest import mock
 
 from absl.testing import absltest
 import grpc
+from intrinsic.icon.proto import logging_mode_pb2
 from intrinsic.icon.proto import safety_status_pb2
 from intrinsic.icon.proto import service_pb2
 from intrinsic.icon.proto import types_pb2
@@ -443,6 +444,35 @@ class IconTest(absltest.TestCase):
     icon_client.set_speed_override(0.75)
     stub.SetSpeedOverride.assert_called_once_with(
         service_pb2.SetSpeedOverrideRequest(override_factor=0.75), timeout=None
+    )
+
+  def test_get_logging_mode(self):
+    stub = mock.MagicMock()
+    response = service_pb2.GetLoggingModeResponse(
+        logging_mode=logging_mode_pb2.LOGGING_MODE_FULL_RATE
+    )
+    stub.GetLoggingMode.return_value = response
+
+    icon_client = icon_api.Client(stub)
+    self.assertEqual(
+        icon_client.get_logging_mode(), logging_mode_pb2.LOGGING_MODE_FULL_RATE
+    )
+    stub.GetLoggingMode.assert_called_once_with(
+        service_pb2.GetLoggingModeRequest(), timeout=None
+    )
+
+  def test_set_logging_mode(self):
+    stub = mock.MagicMock()
+    response = service_pb2.SetLoggingModeResponse()
+    stub.SetLoggingMode.return_value = response
+
+    icon_client = icon_api.Client(stub)
+    icon_client.set_logging_mode(logging_mode_pb2.LOGGING_MODE_FULL_RATE)
+    stub.SetLoggingMode.assert_called_once_with(
+        service_pb2.SetLoggingModeRequest(
+            logging_mode=logging_mode_pb2.LOGGING_MODE_FULL_RATE
+        ),
+        timeout=None,
     )
 
   def test_get_part_properties(self):

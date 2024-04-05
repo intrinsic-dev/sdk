@@ -13,6 +13,7 @@ from typing import Iterable, List, Mapping, Optional, Union
 import warnings
 
 import grpc
+from intrinsic.icon.proto import logging_mode_pb2
 from intrinsic.icon.proto import service_pb2
 from intrinsic.icon.proto import service_pb2_grpc
 from intrinsic.icon.proto import types_pb2
@@ -22,6 +23,7 @@ from intrinsic.icon.python import errors
 from intrinsic.icon.python import reactions
 from intrinsic.icon.python import state_variable_path
 from intrinsic.logging.proto import context_pb2
+from intrinsic.solutions import deployments
 from intrinsic.util.grpc import connection
 from intrinsic.util.grpc import interceptor
 
@@ -204,6 +206,11 @@ class Client:
         ),
         rpc_timeout,
     )
+
+  @classmethod
+  def for_solution(cls, solution: deployments.Solution) -> Client:
+    """Connects to the ICON gRPC service for a given solution."""
+    return cls(service_pb2_grpc.IconApiStub(solution.grpc_channel))
 
   def get_action_signature_by_name(
       self, action_type_name: str
@@ -455,6 +462,29 @@ class Client:
     """
     self._stub.SetSpeedOverride(
         service_pb2.SetSpeedOverrideRequest(override_factor=new_speed_override),
+        timeout=self._rpc_timeout_seconds,
+    )
+
+  def get_logging_mode(self) -> logging_mode_pb2.LoggingMode:
+    """Gets the logging mode."""
+    return self._stub.GetLoggingMode(
+        service_pb2.GetLoggingModeRequest(), timeout=self._rpc_timeout_seconds
+    ).logging_mode
+
+  def set_logging_mode(
+      self, logging_mode: logging_mode_pb2.LoggingMode
+  ) -> None:
+    """Sets the logging mode.
+
+    The logging mode defines which robot-status logs are logged to the cloud.
+    ICON logs only to the cloud if a session is active. PuSub is not influenced
+    by this setting.
+
+    Args:
+      logging_mode: The logging mode to set.
+    """
+    self._stub.SetLoggingMode(
+        service_pb2.SetLoggingModeRequest(logging_mode=logging_mode),
         timeout=self._rpc_timeout_seconds,
     )
 

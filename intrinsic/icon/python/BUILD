@@ -31,12 +31,14 @@ py_library(
     ],
     srcs_version = "PY3",
     deps = [
+        "//intrinsic/icon/proto:logging_mode_py_pb2",
         "//intrinsic/icon/proto:matrix_conversions",  # buildcleaner: keep to allow import
         "//intrinsic/icon/proto:service_py_pb2",
         "//intrinsic/icon/proto:service_py_pb2_grpc",
         "//intrinsic/icon/proto:streaming_output_py_pb2",
         "//intrinsic/icon/proto:types_py_pb2",
         "//intrinsic/logging/proto:context_py_pb2",
+        "//intrinsic/solutions:deployments",
         "//intrinsic/util/grpc:connection",
         "//intrinsic/util/grpc:interceptor",
         requirement("grpcio"),
@@ -111,6 +113,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":icon",
+        "//intrinsic/icon/proto:logging_mode_py_pb2",
         "//intrinsic/icon/proto:safety_status_py_pb2",
         "//intrinsic/icon/proto:service_py_pb2",
         "//intrinsic/icon/proto:types_py_pb2",

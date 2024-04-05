@@ -1,0 +1,15 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+enum LoggingMode {
+  LOGGING_MODE_UNSPECIFIED = 0;
+
+  // Log at every cycle.
+  LOGGING_MODE_FULL_RATE = 1;
+
+  // Log at a throttled rate.
+  LOGGING_MODE_THROTTLED = 2;
+}

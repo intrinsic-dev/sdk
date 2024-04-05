@@ -12,6 +12,7 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "google/rpc/status.proto";
 import "intrinsic/icon/proto/joint_space.proto";
+import "intrinsic/icon/proto/logging_mode.proto";
 import "intrinsic/icon/proto/part_status.proto";
 import "intrinsic/icon/proto/safety_status.proto";
 import "intrinsic/icon/proto/streaming_output.proto";
@@ -71,6 +72,18 @@ message GetSpeedOverrideRequest {}
 
 message GetSpeedOverrideResponse {
   double override_factor = 1;
+}
+
+message SetLoggingModeRequest {
+  LoggingMode logging_mode = 1;
+}
+
+message SetLoggingModeResponse {}
+
+message GetLoggingModeRequest {}
+
+message GetLoggingModeResponse {
+  LoggingMode logging_mode = 1;
 }
 
 // IsActionCompatible() request.
@@ -480,6 +493,14 @@ service IconApi {
   // Returns the current speed override value.
   rpc GetSpeedOverride(GetSpeedOverrideRequest)
       returns (GetSpeedOverrideResponse);
+
+  // Configure the logging mode. The logging mode defines which robot-status
+  // logs are logged to the cloud. ICON logs only to the cloud if a session is
+  // active. Pusub is not influenced by this setting.
+  rpc SetLoggingMode(SetLoggingModeRequest) returns (SetLoggingModeResponse);
+
+  // Returns the current logging mode.
+  rpc GetLoggingMode(GetLoggingModeRequest) returns (GetLoggingModeResponse);
 
   // Returns the current values of all part properties.
   // Note that all values are collected at the same point in time.

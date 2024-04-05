@@ -37,6 +37,7 @@ proto_library(
     srcs = ["service.proto"],
     deps = [
         ":joint_space_proto",
+        ":logging_mode_proto",
         ":part_status_proto",
         ":safety_status_proto",
         ":streaming_output_proto",
@@ -354,6 +355,26 @@ cc_proto_library(
 py_proto_library(
     name = "blended_cartesian_move_py_pb2",
     deps = [":blended_cartesian_move_proto"],
+)
+
+proto_library(
+    name = "logging_mode_proto",
+    srcs = ["logging_mode.proto"],
+)
+
+go_proto_library(
+    name = "logging_mode_go_proto",
+    deps = [":logging_mode_proto"],
+)
+
+cc_proto_library(
+    name = "logging_mode_cc_proto",
+    deps = [":logging_mode_proto"],
+)
+
+py_proto_library(
+    name = "logging_mode_py_pb2",
+    deps = [":logging_mode_proto"],
 )
 
 proto_library(

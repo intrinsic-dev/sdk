@@ -17,12 +17,12 @@
 #include "intrinsic/icon/cc_client/robot_config.h"
 #include "intrinsic/icon/common/part_properties.h"
 #include "intrinsic/icon/common/slot_part_map.h"
+#include "intrinsic/icon/control/logging_mode.h"
 #include "intrinsic/icon/proto/part_status.pb.h"
 #include "intrinsic/icon/proto/service.grpc.pb.h"
 #include "intrinsic/icon/proto/service.pb.h"
 #include "intrinsic/icon/proto/types.pb.h"
 #include "intrinsic/util/grpc/channel_interface.h"
-#include "intrinsic/util/status/status_macros.h"
 
 // This header defines the ICON Application Layer C++ client library, which is a
 // thin wrapper around the ICON Application Layer GRPC Service.
@@ -189,6 +189,10 @@ class Client {
 
   absl::Status SetSpeedOverride(double new_speed_override);
   absl::StatusOr<double> GetSpeedOverride() const;
+
+  absl::Status SetLoggingMode(LoggingMode logging_mode) const;
+
+  absl::StatusOr<LoggingMode> GetLoggingMode() const;
 
   absl::Status SetPartProperties(const PartPropertyMap& property_map) const;
   absl::StatusOr<TimestampedPartProperties> GetPartProperties() const;

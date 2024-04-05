@@ -13,8 +13,13 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
+#include "grpcpp/client_context.h"
+#include "intrinsic/icon/cc_client/operational_status.h"
 #include "intrinsic/icon/cc_client/robot_config.h"
 #include "intrinsic/icon/common/part_properties.h"
+#include "intrinsic/icon/common/slot_part_map.h"
+#include "intrinsic/icon/control/logging_mode.h"
 #include "intrinsic/icon/proto/service.grpc.pb.h"
 #include "intrinsic/icon/proto/service.pb.h"
 #include "intrinsic/icon/proto/types.pb.h"
@@ -224,6 +229,24 @@ absl::StatusOr<double> Client::GetSpeedOverride() const {
   INTR_RETURN_IF_ERROR(ToAbslStatus(stub_->GetSpeedOverride(
       context.get(), intrinsic_proto::icon::GetSpeedOverrideRequest(), &resp)));
   return resp.override_factor();
+}
+
+absl::Status Client::SetLoggingMode(LoggingMode logging_mode) const {
+  std::unique_ptr<::grpc::ClientContext> context = client_context_factory_();
+  context->set_deadline(::grpc::DeadlineFromDuration(timeout_));
+  intrinsic_proto::icon::SetLoggingModeRequest req;
+  req.set_logging_mode(ToProto(logging_mode));
+  intrinsic_proto::icon::SetLoggingModeResponse resp;
+  return ToAbslStatus(stub_->SetLoggingMode(context.get(), req, &resp));
+}
+
+absl::StatusOr<LoggingMode> Client::GetLoggingMode() const {
+  std::unique_ptr<::grpc::ClientContext> context = client_context_factory_();
+  context->set_deadline(::grpc::DeadlineFromDuration(timeout_));
+  intrinsic_proto::icon::GetLoggingModeResponse resp;
+  INTR_RETURN_IF_ERROR(ToAbslStatus(stub_->GetLoggingMode(
+      context.get(), intrinsic_proto::icon::GetLoggingModeRequest(), &resp)));
+  return FromProto(resp.logging_mode());
 }
 
 absl::Status Client::SetPartProperties(

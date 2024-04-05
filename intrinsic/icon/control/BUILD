@@ -53,3 +53,11 @@ cc_library(
     hdrs = ["realtime_signal_types.h"],
     deps = ["//intrinsic/third_party/intops:strong_int"],
 )
+
+cc_library(
+    name = "logging_mode",
+    srcs = ["logging_mode.cc"],
+    hdrs = ["logging_mode.h"],
+    visibility = ["//intrinsic/icon:__subpackages__"],
+    deps = ["//intrinsic/icon/proto:logging_mode_cc_proto"],
+)
