@@ -12,6 +12,7 @@ go_library(
         "//intrinsic/assets:cmdutils",
         "//intrinsic/assets:idutils",
         "//intrinsic/assets:imagetransfer",
+        "//intrinsic/assets:imageutils",
         "//intrinsic/skills/catalog/proto:skill_catalog_go_grpc_proto",
         "//intrinsic/skills/proto:skill_manifest_go_proto",
         "//intrinsic/skills/tools/skill/cmd",

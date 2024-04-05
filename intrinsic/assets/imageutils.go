@@ -38,6 +38,9 @@ var (
 )
 
 const (
+	// Domain used for images managed by Intrinsic.
+	registryDomain = "gcr.io"
+
 	// Number of times to try uploading a container image if we get retriable errors.
 	remoteWriteTries = 5
 
@@ -82,6 +85,28 @@ func buildExec(buildCommand string, buildArgs ...string) ([]byte, error) {
 		return nil, fmt.Errorf("could not build docker image: %v\n%s", err, out)
 	}
 	return out, nil
+}
+
+// ValidateImageProto verifies that the specified image proto is valid for the specified project.
+func ValidateImageProto(image *ipb.Image, project string) error {
+	if err := ValidateRegistry(image.GetRegistry(), project); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ValidateRegistry verifies that the specified registry is valid for the specified project.
+func ValidateRegistry(registry string, project string) error {
+	expectedRegistry := GetRegistry(project)
+	if registry != expectedRegistry {
+		return status.Errorf(codes.InvalidArgument, "unexpected registry specified (expected %q, got %q)", expectedRegistry, registry)
+	}
+	return nil
+}
+
+// GetRegistry returns the registry to use for images in the specified project.
+func GetRegistry(project string) string {
+	return fmt.Sprintf("%s/%s", registryDomain, project)
 }
 
 // buildImage builds the given target. The built image's file path is returned.

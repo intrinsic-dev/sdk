@@ -20,6 +20,7 @@ import (
 	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/idutils"
 	"intrinsic/assets/imagetransfer"
+	"intrinsic/assets/imageutils"
 	skillcataloggrpcpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillcatalogpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillmanifestpb "intrinsic/skills/proto/skill_manifest_go_proto"
@@ -208,7 +209,7 @@ var releaseCmd = &cobra.Command{
 				transferer = imagetransfer.RemoteTransferer(remoteOpt())
 			}
 			imgpb, _, err := registry.PushSkill(target, registry.PushOptions{
-				Registry:   fmt.Sprintf("gcr.io/%s", project),
+				Registry:   imageutils.GetRegistry(project),
 				Type:       targetType,
 				Transferer: transferer,
 			})
