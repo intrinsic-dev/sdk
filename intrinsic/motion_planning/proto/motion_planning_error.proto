@@ -39,6 +39,12 @@ message ErrorContext {
     TRAJECTORY_PLANNING_INITIAL_STATE_COLLISION = 9;
     TRAJECTORY_PLANNING_GOAL_STATE_COLLISION = 10;
     TRAJECTORY_PLANNING_STATE_COLLISION = 11;
+    // Initial configuration validation
+    INITIAL_CONF_VALIDATION = 12;
+    // Goal configuration validation
+    GOAL_CONF_VALIDATION = 13;
+    // Joint configuration validation
+    CONF_VALIDATION = 14;
   }
 }
 
@@ -64,6 +70,7 @@ message MotionPlanningError {
     //  cartesian linear motions.
     LinearCartesianMotionPathPlannerError linear_cartesian_path_planning_error =
         5;
+    JointLimitError joint_limit_error = 6;
   }
   // Segment id represents the segment for which the error was reported.
   // For multiple segments we add the first and last segment ids where
@@ -138,4 +145,17 @@ message LinearCartesianMotionPathPlannerError {
   // Allows any additional information regarding context where the error
   // occurs.
   optional ErrorContext.Type error_context = 5;
+}
+
+// JointLimitsError corresponds to an error generated when the joint limits
+// are violated during planning.
+message JointLimitError {
+  string error_message = 1;
+  // Joint limits that are enforced.
+  optional intrinsic_proto.JointLimits joint_limits = 2;
+  // Joint positions that violate the joint limits.
+  intrinsic_proto.icon.JointVec joint_positions = 3;
+  // Allows any additional information regarding context where the error
+  // occurs.
+  optional ErrorContext.Type error_context = 4;
 }
