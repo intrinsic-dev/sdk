@@ -6,7 +6,6 @@ package intrinsic_proto.world;
 
 import "intrinsic/geometry/service/geometry_storage_refs.proto";
 import "intrinsic/math/proto/matrix.proto";
-import "intrinsic/math/proto/point.proto";
 
 // Component indicating the owning Entity has geometry (e.g. collision, visual,
 // etc.).
