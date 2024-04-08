@@ -820,7 +820,9 @@ class StructuredLogs:
     self._stub.Log(request)
 
   @error_handling.retry_on_grpc_unavailable
-  def sync_and_rotate_logs(self, *event_sources: str) -> List[str]:
+  def sync_and_rotate_logs(
+      self, *event_sources: str
+  ) -> 'logger_service_pb2.SyncResponse':
     """Syncs remaining logs to GCS and rotates log files.
 
     If no event source is specified, all logs should be synced and rotated.
@@ -829,7 +831,7 @@ class StructuredLogs:
       *event_sources: event sources to sync.
 
     Returns:
-      List of all event sources synced and rotated.
+      A SyncAndRotateLogsResponse instance representing the response.
     """
     sync_request = logger_service_pb2.SyncRequest()
     if not event_sources:
@@ -838,4 +840,4 @@ class StructuredLogs:
       sync_request.sync_all = False
       for event_source in event_sources:
         sync_request.event_sources.append(event_source)
-    return list(self._stub.SyncAndRotateLogs(sync_request).event_sources)
+    return self._stub.SyncAndRotateLogs(sync_request)
