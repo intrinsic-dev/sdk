@@ -89,6 +89,11 @@ func NewCmdFlags() *CmdFlags {
 	viperLocal := viper.New()
 	viperLocal.SetEnvPrefix(envPrefix)
 
+	return NewCmdFlagsWithViper(viperLocal)
+}
+
+// NewCmdFlagsWithViper returns a new CmdFlags instance with a custom Viper.
+func NewCmdFlagsWithViper(viperLocal *viper.Viper) *CmdFlags {
 	return &CmdFlags{cmd: nil, viperLocal: viperLocal}
 }
 

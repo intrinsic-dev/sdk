@@ -169,7 +169,7 @@ var releaseCmd = &cobra.Command{
 		target := args[0]
 		dryRun := cmdFlags.GetFlagDryRun()
 		targetType := cmdFlags.GetFlagSkillReleaseType()
-		project := clientutils.ResolveProject(cmd.Context(), cmdFlags)
+		project := clientutils.ResolveCatalogProjectFromInctl(cmdFlags)
 
 		manifest, err := getManifest()
 		if err != nil {

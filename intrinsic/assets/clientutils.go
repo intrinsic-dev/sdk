@@ -39,6 +39,8 @@ const (
 				}
 		}]
 }`
+
+	defaultCatalogProject = "intrinsic-assets-prod"
 )
 
 var (
@@ -59,7 +61,7 @@ var (
 type DialCatalogOptions struct {
 	Address string
 	APIKey  string
-	Project string
+	Project string // Defaults to the global assets project.
 }
 
 // DialCatalogFromInctl creates a connection to an asset catalog service from an inctl command.
@@ -69,13 +71,15 @@ func DialCatalogFromInctl(cmd *cobra.Command, flags *cmdutils.CmdFlags) (*grpc.C
 		cmd.Context(), DialCatalogOptions{
 			Address: "",
 			APIKey:  "",
-			Project: ResolveProject(cmd.Context(), flags),
+			Project: ResolveCatalogProjectFromInctl(flags),
 		},
 	)
 }
 
 // DialCatalog creates a connection to a asset catalog service.
 func DialCatalog(ctx context.Context, opts DialCatalogOptions) (*grpc.ClientConn, error) {
+	opts.Project = ResolveCatalogProject(opts.Project)
+
 	// Get the catalog address.
 	address, err := resolveCatalogAddress(ctx, opts)
 	if err != nil {
@@ -100,10 +104,16 @@ func DialCatalog(ctx context.Context, opts DialCatalogOptions) (*grpc.ClientConn
 	return grpc.DialContext(ctx, address, options...)
 }
 
-// ResolveProject returns the project to use for communicating with a catalog.
-func ResolveProject(ctx context.Context, flags *cmdutils.CmdFlags) string {
-	project := "intrinsic-assets-prod"
+// ResolveCatalogProjectFromInctl returns the project to use for communicating with a catalog.
+func ResolveCatalogProjectFromInctl(flags *cmdutils.CmdFlags) string {
+	return ResolveCatalogProject(flags.GetFlagProject())
+}
 
+// ResolveCatalogProject returns the project to use for communicating with a catalog.
+func ResolveCatalogProject(project string) string {
+	if project == "" {
+		return defaultCatalogProject
+	}
 	return project
 }
 
