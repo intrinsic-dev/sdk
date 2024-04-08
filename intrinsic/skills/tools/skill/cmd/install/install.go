@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/pborman/uuid"
 	"github.com/spf13/cobra"
 	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/idutils"
@@ -22,7 +23,6 @@ import (
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/directupload"
 	"intrinsic/skills/tools/skill/cmd/registry"
-	"intrinsic/skills/tools/skill/cmd/skillid"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
 	"intrinsic/skills/tools/skill/cmd/waitforskill"
 	"intrinsic/tools/inctl/auth"
@@ -130,13 +130,21 @@ $ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --soluti
 			return fmt.Errorf("could not push target %q to the container registry: %v", target, err)
 		}
 
-		skillIDVersion, err := skillid.CreateSideloadedIDVersion(installerParams.SkillID)
+		pkg, err := idutils.PackageFrom(installerParams.SkillID)
 		if err != nil {
-			return fmt.Errorf("could not create sideloaded ID version: %w", err)
+			return fmt.Errorf("could not parse package from ID: %w", err)
 		}
-		version, err := idutils.VersionFrom(skillIDVersion)
+		name, err := idutils.NameFrom(installerParams.SkillID)
 		if err != nil {
-			return fmt.Errorf("could not parse version from ID version: %w", err)
+			return fmt.Errorf("could not parse name from ID: %w", err)
+		}
+		version, err := idutils.UnreleasedVersion(idutils.UnreleasedAssetKindSideloaded, []byte(uuid.New()))
+		if err != nil {
+			return fmt.Errorf("could not create version: %v", err)
+		}
+		skillIDVersion, err := idutils.IDVersionFrom(pkg, name, version)
+		if err != nil {
+			return fmt.Errorf("could not create id_version: %w", err)
 		}
 		log.Printf("Installing skill %q using the installer service at %q", skillIDVersion, installerAddress)
 		// Only propagate the authorization header if the installer address uses an insecure connection.

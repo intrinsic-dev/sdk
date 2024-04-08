@@ -17,7 +17,6 @@ go_library(
         "//intrinsic/skills/tools/skill/cmd",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/skills/tools/skill/cmd:registry",
-        "//intrinsic/skills/tools/skill/cmd:skillid",
         "//intrinsic/skills/tools/skill/cmd:solutionutil",
         "//intrinsic/skills/tools/skill/cmd:waitforskill",
         "//intrinsic/skills/tools/skill/cmd/directupload",
@@ -25,6 +24,7 @@ go_library(
         "@com_github_google_go_containerregistry//pkg/authn:go_default_library",
         "@com_github_google_go_containerregistry//pkg/v1/google:go_default_library",
         "@com_github_google_go_containerregistry//pkg/v1/remote:go_default_library",
+        "@com_github_pborman_uuid//:go_default_library",
         "@com_github_spf13_cobra//:go_default_library",
     ],
 )
