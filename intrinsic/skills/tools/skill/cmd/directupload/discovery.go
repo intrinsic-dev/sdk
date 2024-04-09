@@ -8,6 +8,8 @@ import (
 	"context"
 
 	"google.golang.org/grpc"
+	"intrinsic/storage/artifacts/client"
+	articatgrpcpb "intrinsic/storage/artifacts/proto/articat_go_grpc_proto"
 	artifactgrpcpb "intrinsic/storage/artifacts/proto/artifact_go_grpc_proto"
 )
 
@@ -31,4 +33,21 @@ type staticConnection struct {
 
 func (s *staticConnection) GetClient(_ context.Context) (artifactgrpcpb.ArtifactServiceApiClient, error) {
 	return artifactgrpcpb.NewArtifactServiceApiClient(s.conn), nil
+}
+
+// NewCatalogTarget creates new TargetDiscovery implementation which connects
+// to Artifact Service for Catalogs in Cloud. ArtiCat uses different service
+// name then regular Artifacts service in order to properly reach cloud based
+// service.
+func NewCatalogTarget(conn *grpc.ClientConn) TargetDiscovery {
+	return &catalogConnection{conn: conn}
+}
+
+type catalogConnection struct {
+	conn *grpc.ClientConn
+}
+
+func (c *catalogConnection) GetClient(_ context.Context) (artifactgrpcpb.ArtifactServiceApiClient, error) {
+	serviceName := articatgrpcpb.ArtifactCatalogService_ServiceDesc.ServiceName
+	return artifactgrpcpb.NewArtifactServiceApiClient(client.NewRenamedConnection(c.conn, serviceName)), nil
 }

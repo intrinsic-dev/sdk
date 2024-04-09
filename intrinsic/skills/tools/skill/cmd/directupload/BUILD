@@ -14,6 +14,7 @@ go_library(
     deps = [
         "//intrinsic/assets:imagetransfer",
         "//intrinsic/storage/artifacts/client",
+        "//intrinsic/storage/artifacts/proto:articat_go_grpc_proto",
         "//intrinsic/storage/artifacts/proto:artifact_go_grpc_proto",
         "@com_github_cenkalti_backoff_v4//:go_default_library",
         "@com_github_golang_glog//:go_default_library",

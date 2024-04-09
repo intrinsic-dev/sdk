@@ -8,6 +8,7 @@ package(default_visibility = ["//visibility:public"])
 go_library(
     name = "client",
     srcs = [
+        "adapter.go",
         "monitor.go",
         "nstask.go",
         "task.go",
@@ -26,6 +27,7 @@ go_library(
         "@com_github_google_go_containerregistry//pkg/v1/types:go_default_library",
         "@com_github_pborman_uuid//:go_default_library",
         "@com_github_pkg_errors//:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//codes:go_default_library",
         "@org_golang_google_grpc//metadata:go_default_library",
         "@org_golang_google_grpc//status:go_default_library",
