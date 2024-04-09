@@ -8,6 +8,7 @@
 #include <fstream>
 #include <ios>
 #include <sstream>
+#include <string>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -21,7 +22,8 @@ namespace intrinsic {
 // T should be a proto.
 template <typename T>
 absl::StatusOr<T> GetBinaryProto(absl::string_view filename) {
-  std::ifstream ifs(filename, std::ios_base::in | std::ios_base::binary);
+  std::ifstream ifs(std::string(filename),
+                    std::ios_base::in | std::ios_base::binary);
   if (!ifs.is_open()) {
     return absl::InvalidArgumentError(
         absl::StrCat("Unable to open file '", filename,
@@ -43,7 +45,8 @@ absl::StatusOr<T> GetBinaryProto(absl::string_view filename) {
 // T should be a proto.
 template <typename T>
 absl::Status SetBinaryProto(absl::string_view filename, const T& my_proto) {
-  std::ofstream ofs(filename, std::ios_base::out | std::ios_base::binary);
+  std::ofstream ofs(std::string(filename),
+                    std::ios_base::out | std::ios_base::binary);
   if (!ofs.is_open()) {
     return absl::InvalidArgumentError(
         absl::StrCat("Unable to open file '", filename, "'."));
