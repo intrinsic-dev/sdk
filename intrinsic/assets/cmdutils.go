@@ -162,6 +162,19 @@ func (cf *CmdFlags) GetFlagIgnoreExisting() bool {
 	return cf.GetBool(KeyIgnoreExisting)
 }
 
+// AddFlagAddress adds a flag for the installer service address.
+func (cf *CmdFlags) AddFlagAddress() {
+	cf.OptionalEnvString(KeyAddress, "xfa.lan:17080", `The address of the cluster.
+When not running the cluster on localhost, this should be the address of the relay
+(e.g.: dns:///www.endpoints.<gcp_project_name>.cloud.goog:443).`)
+}
+
+// GetFlagAddress gets the value of the cluster address flag added by
+// AddFlagAddress.
+func (cf *CmdFlags) GetFlagAddress() string {
+	return cf.GetString(KeyAddress)
+}
+
 // AddFlagInstallerAddress adds a flag for the installer service address.
 func (cf *CmdFlags) AddFlagInstallerAddress() {
 	cf.OptionalEnvString(KeyInstallerAddress, "xfa.lan:17080", `The address of the installer service.
