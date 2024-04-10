@@ -21,10 +21,12 @@
 #include "absl/strings/cord.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/time/civil_time.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "google/protobuf/wrappers.pb.h"
 #include "intrinsic/icon/release/source_location.h"
+#include "intrinsic/util/proto/type_url.h"
 #include "intrinsic/util/testing/gtest_wrapper.h"
 
 namespace intrinsic {
@@ -32,6 +34,8 @@ namespace {
 
 using ::absl::LogSeverity;
 using ::absl::ScopedMockLog;
+using ::intrinsic::testing::EqualsProto;
+using ::intrinsic::testing::IsOkAndHolds;
 using ::testing::_;
 using ::testing::AnyOf;
 using ::testing::Eq;
@@ -654,11 +658,11 @@ TEST(StatusBuilderTest, SetPayloadAdds) {
   value_proto.set_value(-123);
   StatusBuilder builder(absl::StatusCode::kInvalidArgument);
   ASSERT_FALSE(builder.ok());
-  builder.SetPayload(value_proto.GetDescriptor()->full_name(),
+  builder.SetPayload(AddTypeUrlPrefix(value_proto.GetDescriptor()->full_name()),
                      value_proto.SerializeAsCord());
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload =
-      result.GetPayload(value_proto.GetDescriptor()->full_name());
+  std::optional<absl::Cord> result_payload = result.GetPayload(
+      AddTypeUrlPrefix(value_proto.GetDescriptor()->full_name()));
   EXPECT_TRUE(result_payload.has_value());
   google::protobuf::Int64Value result_proto;
   EXPECT_TRUE(result_proto.ParseFromCord(*result_payload));
@@ -671,11 +675,11 @@ TEST(StatusBuilderTest, SetPayloadIgnoredOnOkStatus) {
 
   google::protobuf::Int64Value value_proto;
   value_proto.set_value(-123);
-  builder.SetPayload(value_proto.GetDescriptor()->full_name(),
+  builder.SetPayload(AddTypeUrlPrefix(value_proto.GetDescriptor()->full_name()),
                      value_proto.SerializeAsCord());
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload =
-      result.GetPayload(value_proto.GetDescriptor()->full_name());
+  std::optional<absl::Cord> result_payload = result.GetPayload(
+      AddTypeUrlPrefix(value_proto.GetDescriptor()->full_name()));
   EXPECT_FALSE(result_payload.has_value());
 }
 
@@ -689,19 +693,19 @@ TEST(StatusBuilderTest, SetPayloadMultiplePayloads) {
   StatusBuilder builder(absl::StatusCode::kInvalidArgument);
   ASSERT_FALSE(builder.ok());
   builder
-      .SetPayload(value1_proto.GetDescriptor()->full_name(),
+      .SetPayload(AddTypeUrlPrefix(value1_proto.GetDescriptor()->full_name()),
                   value1_proto.SerializeAsCord())
-      .SetPayload(value2_proto.GetDescriptor()->full_name(),
+      .SetPayload(AddTypeUrlPrefix(value2_proto.GetDescriptor()->full_name()),
                   value2_proto.SerializeAsCord());
 
   absl::Status result1 = builder;
-  std::optional<absl::Cord> result1_payload =
-      result1.GetPayload(value1_proto.GetDescriptor()->full_name());
+  std::optional<absl::Cord> result1_payload = result1.GetPayload(
+      AddTypeUrlPrefix(value1_proto.GetDescriptor()->full_name()));
   EXPECT_TRUE(result1_payload.has_value());
 
   absl::Status result2 = builder;
-  std::optional<absl::Cord> result2_payload =
-      result2.GetPayload(value2_proto.GetDescriptor()->full_name());
+  std::optional<absl::Cord> result2_payload = result2.GetPayload(
+      AddTypeUrlPrefix(value2_proto.GetDescriptor()->full_name()));
   EXPECT_TRUE(result2_payload.has_value());
 
   google::protobuf::Int64Value result1_proto;
@@ -709,7 +713,7 @@ TEST(StatusBuilderTest, SetPayloadMultiplePayloads) {
   EXPECT_EQ(result1_proto.value(), value1_proto.value());
 
   google::protobuf::StringValue result2_proto;
-  EXPECT_TRUE(result2_proto.ParseFromCord(*result2_payload));
+  ASSERT_TRUE(result2_proto.ParseFromCord(*result2_payload));
   EXPECT_EQ(result2_proto.value(), value2_proto.value());
 }
 

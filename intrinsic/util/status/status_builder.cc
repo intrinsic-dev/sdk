@@ -3,6 +3,7 @@
 #include "intrinsic/util/status/status_builder.h"
 
 #include <array>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -193,6 +194,7 @@ absl::Status StatusBuilder::AnnotateStatus(const absl::Status& s,
 absl::Status StatusBuilder::CreateStatusAndConditionallyLog() && {
   absl::Status result = JoinMessageToStatus(
       std::move(status_), rep_->stream.str(), rep_->message_join_style);
+
   ConditionallyLog(result);
 
   // We consumed the status above, we set it to some error just to prevent

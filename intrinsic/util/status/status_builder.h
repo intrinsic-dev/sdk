@@ -3,6 +3,7 @@
 #ifndef INTRINSIC_UTIL_STATUS_STATUS_BUILDER_H_
 #define INTRINSIC_UTIL_STATUS_STATUS_BUILDER_H_
 
+#include <cstdint>
 #include <memory>
 #include <ostream>
 #include <sstream>
@@ -15,6 +16,7 @@
 #include "absl/log/log_sink.h"
 #include "absl/status/status.h"
 #include "absl/strings/cord.h"
+#include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "intrinsic/icon/release/source_location.h"
 
