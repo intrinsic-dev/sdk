@@ -9,6 +9,7 @@ go_library(
     srcs = ["logs.go"],
     deps = [
         "//intrinsic/assets:cmdutils",
+        "//intrinsic/assets:imagetransfer",
         "//intrinsic/assets:imageutils",
         "//intrinsic/skills/tools/skill/cmd",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",

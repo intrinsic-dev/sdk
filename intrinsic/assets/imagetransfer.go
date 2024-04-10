@@ -5,6 +5,8 @@
 package imagetransfer
 
 import (
+	"fmt"
+
 	backoff "github.com/cenkalti/backoff/v4"
 	log "github.com/golang/glog"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -79,4 +81,15 @@ func Readonly(opts ...remote.Option) Transferer {
 	return &readonly{
 		Opts: opts,
 	}
+}
+
+// NoOpTransferer errors if any attempt is made to read or write an image.
+type NoOpTransferer struct{}
+
+func (NoOpTransferer) Read(ref name.Reference) (containerregistry.Image, error) {
+	return nil, fmt.Errorf("NoOpTransferer forbids reading an image")
+}
+
+func (NoOpTransferer) Write(ref name.Reference, img containerregistry.Image) error {
+	return fmt.Errorf("NoOpTransferer forbids writing an image")
 }
