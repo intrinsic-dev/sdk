@@ -642,6 +642,20 @@ absl::Status ObjectWorldClient::UpdateMountedPayload(
   return absl::OkStatus();
 }
 
+absl::Status ObjectWorldClient::BatchUpdate(
+    const ::intrinsic_proto::world::ObjectWorldUpdates& updates) {
+  grpc::ClientContext ctx;
+  intrinsic_proto::world::UpdateWorldResourcesRequest request;
+  request.set_world_id(world_id_);
+  // Use minimalistic view since we are ignoring the response.
+  request.set_view(intrinsic_proto::world::ObjectView::BASIC);
+  *request.mutable_world_updates() = updates;
+  intrinsic_proto::world::UpdateWorldResourcesResponse response;
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service_->UpdateWorldResources(&ctx, request, &response)));
+  return absl::OkStatus();
+}
+
 namespace {
 
 absl::Status CallReparentObject(

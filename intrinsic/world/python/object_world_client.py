@@ -1281,6 +1281,23 @@ class ObjectWorldClient:
     self._call_create_object(request=req)
 
   @error_handling.retry_on_grpc_unavailable
+  def batch_update(
+      self, updates: object_world_updates_pb2.ObjectWorldUpdates
+  ) -> None:
+    """Processes a number of world updates all at once.
+
+    Arguments:
+      updates: The set of updates to apply.
+    """
+    self._stub.UpdateWorldResources(
+        object_world_service_pb2.UpdateWorldResourcesRequest(
+            world_id=self._world_id,
+            world_updates=updates,
+            view=object_world_updates_pb2.ObjectView.BASIC,
+        )
+    )
+
+  @error_handling.retry_on_grpc_unavailable
   def reset(self) -> None:
     """Restores the initial world from the world service.
 

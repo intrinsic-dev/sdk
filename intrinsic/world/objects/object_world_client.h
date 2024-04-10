@@ -256,6 +256,14 @@ class ObjectWorldClient {
   absl::Status UpdateMountedPayload(const KinematicObject& kinematic_object,
                                     const RobotPayload& payload);
 
+  // Performs a sequence of update operations on various resources in a single
+  // world.
+  //
+  // The update is atomic. Either all or, in case of an error, none of the given
+  // updates will be applied.
+  absl::Status BatchUpdate(
+      const ::intrinsic_proto::world::ObjectWorldUpdates& updates);
+
   // Reparent 'object' to 'new_parent', leaving the global pose of the
   // reparented object unaffected (i.e., "parent_t_object" might change but
   // "root_t_object" will not change).
