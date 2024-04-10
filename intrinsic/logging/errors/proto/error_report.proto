@@ -83,6 +83,7 @@ message ErrorReport {
 
         // status may be set if acquiring data failed
         google.rpc.Status status = 4;
+
       }
 
       reserved 2;

@@ -10,12 +10,14 @@ import "intrinsic/executive/proto/executive_state.proto";
 import "intrinsic/icon/proto/cart_space.proto";
 import "intrinsic/icon/proto/joint_space.proto";
 import "intrinsic/icon/proto/part_status.proto";
+
 import "intrinsic/logging/errors/proto/error_report.proto";
 import "intrinsic/logging/proto/blob.proto";
 import "intrinsic/logging/proto/context.proto";
 import "intrinsic/perception/proto/frame.proto";
 import "intrinsic/perception/proto/hand_eye_calibration.proto";
 import "intrinsic/perception/proto/pose_estimation_result.proto";
+
 import "intrinsic/skills/proto/skill_service.proto";
 
 // Represents an event. Payload can be structured data and/or blobs.
@@ -107,7 +109,6 @@ message LogItem {
           hand_eye_calibration_result = 26;
       intrinsic_proto.perception.HandEyeCalibrationRequest
           hand_eye_calibration_request = 29;
-
       // ===== Icon =====
       intrinsic_proto.icon.JointState icon_l1_joint_state = 14;
       intrinsic_proto.icon.Wrench icon_ft_wrench = 17;

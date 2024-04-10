@@ -423,6 +423,11 @@ py_proto_library(
 )
 
 cc_proto_library(
+    name = "frame_post_processing_cc_proto",
+    deps = ["frame_post_processing_proto"],
+)
+
+cc_proto_library(
     name = "hand_eye_calibration_cc_proto",
     deps = ["hand_eye_calibration"],
 )

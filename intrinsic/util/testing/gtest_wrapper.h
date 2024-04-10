@@ -15,6 +15,7 @@ using cel::internal::IsOk;
 using cel::internal::IsOkAndHolds;
 using cel::internal::StatusIs;
 using google::fhir::testutil::EqualsProto;
+using google::fhir::testutil::Partially;
 using google::fhir::testutil::internal::ProtoCompare;
 using google::fhir::testutil::internal::ProtoComparison;
 }  // namespace testing
