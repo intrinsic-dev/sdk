@@ -1,0 +1,60 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.status;
+
+import "google/protobuf/timestamp.proto";
+import "intrinsic/logging/proto/context.proto";
+
+// The ExtendedStatus proto is currently work in progress. Do not rely on it,
+// yet. If you want to discuss a potential use case contact timdn@.
+
+message StatusCode {
+  string component = 1;
+  uint32 code = 2;
+}
+
+message ExtendedStatus {
+  enum Severity {
+    option allow_alias = true;
+
+    DEFAULT = 0;  // Default log severity is info unless otherwise specified.
+    // Severity values are the same as the ones for absl::LogSeverity.
+    INFO = 0;
+    WARNING = 1;
+    ERROR = 2;
+    FATAL = 3;
+  }
+
+  StatusCode status_code = 1;
+  Severity severity = 2;
+
+  // One-line summary that can be used as a headline to describe the error
+  string title = 3;
+
+  // Time when the error occurred that produced the extended status
+  google.protobuf.Timestamp timestamp = 4;
+
+  repeated ExtendedStatus context = 5;
+
+  message Report {
+    string message = 1;
+    string instructions = 2;
+
+    // To be extended later, e.g., machine-readable interactive instructions,
+    // images, links etc.
+  }
+
+  // Internal report only available to developers/owners of the component. It is
+  // the responsibility of the emitter of the extended status to determine when
+  // to include an internal report. A criterion could be, for example, that the
+  // component is run in one of the component's vendor's orgs.
+  optional Report internal_report = 10;
+
+  // This report is available to external users, e.g., callers of a component
+  // even if they are from a different org.
+  optional Report external_report = 11;
+
+  optional intrinsic_proto.data_logger.Context log_context = 20;
+}

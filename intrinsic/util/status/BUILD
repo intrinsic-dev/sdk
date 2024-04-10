@@ -2,6 +2,8 @@
 
 # StatusBuilder to build Intrinsic platform error reports
 
+load("//bazel:go_macros.bzl", "go_proto_library")
+
 package(
     default_visibility = ["//visibility:public"],
 )
@@ -281,6 +283,28 @@ cc_test(
 proto_library(
     name = "status_proto",
     srcs = ["status.proto"],
+)
+
+proto_library(
+    name = "extended_status_proto",
+    srcs = ["extended_status.proto"],
+    deps = [
+        "//intrinsic/logging/proto:context_proto",
+        "@com_google_protobuf//:timestamp_proto",
+    ],
+)
+
+go_proto_library(
+    name = "extended_status_go_proto",
+    go_deps = [
+        "//intrinsic/logging/proto:context_go_proto",
+    ],
+    deps = [":extended_status_proto"],
+)
+
+cc_proto_library(
+    name = "extended_status_cc_proto",
+    deps = [":extended_status_proto"],
 )
 
 cc_proto_library(
