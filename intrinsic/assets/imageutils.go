@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
-	"regexp"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -26,7 +25,6 @@ import (
 	ipb "intrinsic/kubernetes/workcell_spec/proto/image_go_proto"
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	installerservicegrpcpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
-	"intrinsic/util/proto/protoio"
 )
 
 var (
@@ -274,29 +272,6 @@ func GetImage(target string, targetType TargetType, t imagetransfer.Transferer) 
 	}
 }
 
-func getRuleType(target string) (string, error) {
-	queryArgs := []string{"query", "--output=label_kind", target}
-	out, err := build(buildCommand, queryArgs...)
-	if err != nil {
-		return "", fmt.Errorf("could not query type of label for target: %v\n%s", err, out)
-	}
-	re := regexp.MustCompile(`^([^ ]+) rule [^ ]+\n$`)
-	matches := re.FindSubmatch(out)
-	if len(matches) != 2 {
-		return "", fmt.Errorf("given label is not a rule\n[%s]", out)
-	}
-	return string(matches[1]), nil
-}
-
-func getLabelFromArgument(target string, argument string) (string, error) {
-	queryArgs := []string{"query", fmt.Sprintf("labels(\"%s\", %s)", argument, target)}
-	out, err := build(buildCommand, queryArgs...)
-	if err != nil {
-		return "", fmt.Errorf("could not query for label in argument: %v\n%s", err, out)
-	}
-	return strings.TrimSpace(string(out)), nil
-}
-
 func getOutputFiles(target string) ([]string, error) {
 	buildArgs := []string{"cquery"}
 	buildArgs = append(buildArgs, buildConfigArgs...)
@@ -308,65 +283,40 @@ func getOutputFiles(target string) ([]string, error) {
 	return strings.Split(strings.TrimSpace(string(out)), "\n"), nil
 }
 
-// ExtractSkillIDFromBuildTargetLabel returns a skill id extracted from the given build target.
-func ExtractSkillIDFromBuildTargetLabel(target string) (string, error) {
-	log.Printf("Extracting a skill id from the label of build target: %s", target)
-	ruleType, err := getRuleType(target)
+func getOneOutputFile(target string) (string, error) {
+	files, err := getOutputFiles(target)
 	if err != nil {
-		return "", fmt.Errorf("could not query target %s: %v", target, err)
+		return "", err
 	}
-	if ruleType == "_skill" {
-		return extractSkillIDFromSkillRule(target)
+	if len(files) != 1 {
+		return "", fmt.Errorf("expected 1 output file, got %d", len(files))
 	}
-	return "", fmt.Errorf("given build target does not appear to be a skill image rule")
+	return files[0], nil
 }
 
-// extractSkillIDFromSkillRule returns a skill id from rules like cc_skill or py_skill.
-func extractSkillIDFromSkillRule(target string) (string, error) {
-	// Get the label from the skill_id argument passed to _skill()
-	label, err := getLabelFromArgument(target, "skill_id")
-	if err != nil {
-		return "", fmt.Errorf("could not find skill_id argument on %s: %v", target, err)
+// GetArchiveFromBazelLabel takes a bazel label for an image target and gets the path to the created archive in the bazel output files.
+func GetArchiveFromBazelLabel(target string) (string, error) {
+	log.Printf("Locating archive from target: %s", target)
+	// py_skill and cc_skill starlark macros enforce target name ending in _image.
+	// They also create a target that builds an archive with the same label + ".tar".
+	if strings.HasSuffix(target, "_image.tar") {
+		return getOneOutputFile(target)
 	}
-	// Build that label to make it extract the image id from the manifest
-	buildArgs := []string{"build"}
-	buildArgs = append(buildArgs, buildConfigArgs...)
-	buildArgs = append(buildArgs, label)
-	_, err = build(buildCommand, buildArgs...)
-	if err != nil {
-		return "", fmt.Errorf("could not build target to extract id from manifest %s: %v", label, err)
+	if strings.HasSuffix(target, "_image") {
+		return getOneOutputFile(strings.Join([]string{target, "tar"}, "."))
 	}
-	// Query for the pbbin which contains the skill id
-	outputFiles, err := getOutputFiles(label)
-	if err != nil {
-		return "", fmt.Errorf("could not get output files of target %s: %v", label, err)
-	}
-	if len(outputFiles) == 0 {
-		return "", fmt.Errorf("target %s did not have any output files", label)
-	}
-	if len(outputFiles) > 1 {
-		log.Printf("Warning: Rule %s was expected to have only one output file, but it had %d", label, len(outputFiles))
-	}
-	// Assumes the rule only has one output file
-	outputFile := outputFiles[0]
-	// Parse the pbbin
-	idProto := &idpb.Id{}
-	if err := protoio.ReadBinaryProto(outputFile, idProto); err != nil {
-		return "", fmt.Errorf("could not read file %q: %v", outputFile, err)
-	}
-
-	return idutils.IDFromProto(idProto)
+	return "", fmt.Errorf("given build target does not appear to be a skill image rule")
 }
 
 // SkillIDFromTarget gets the skill ID from the given target and registry.
 func SkillIDFromTarget(target string, targetType TargetType, t imagetransfer.Transferer) (string, error) {
 	switch targetType {
 	case Build:
-		skillID, err := ExtractSkillIDFromBuildTargetLabel(target)
+		archivePath, err := GetArchiveFromBazelLabel(target)
 		if err != nil {
 			return "", fmt.Errorf("could not extract a skill id from the given build target %s: %v", target, err)
 		}
-		return skillID, nil
+		return SkillIDFromTarget(archivePath, Archive, t)
 	case Archive, Image:
 		image, err := GetImage(target, targetType, t)
 		if err != nil {
