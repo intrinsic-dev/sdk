@@ -39,11 +39,13 @@ def non_module_deps():
         strip_prefix = "googleapis-d9250048e9b9df4d8a0ce67b8ccf84e0aab0d50e",
     )
 
-    git_repository(
+    http_archive(
         name = "com_github_google_flatbuffers",
-        remote = "https://github.com/google/flatbuffers.git",
-        commit = "615616cb5549a34bdf288c04bc1b94bd7a65c396",
-        shallow_since = "1644943722 -0500",
+        urls = [
+            "https://github.com/google/flatbuffers/archive/refs/tags/v23.3.3.tar.gz",
+        ],
+        sha256 = "8aff985da30aaab37edf8e5b02fda33ed4cbdd962699a8e2af98fdef306f4e4d",
+        strip_prefix = "flatbuffers-23.3.3",
     )
     http_jar(
         name = "firestore_emulator",
