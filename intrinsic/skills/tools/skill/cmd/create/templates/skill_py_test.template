@@ -1,0 +1,18 @@
+{{/*
+Copyright 2023 Intrinsic Innovation LLC
+*/ -}}
+
+import unittest
+
+from {{if .BazelPackage}}{{strJoin .BazelPackage "."}}.{{end}}{{.SkillNameSnakeCase}} import {{.SkillNameUpperCamelCase}}
+from {{if .BazelPackage}}{{strJoin .BazelPackage "."}}.{{end}}{{.SkillNameSnakeCase}}_pb2 import {{.SkillNameUpperCamelCase}}Params
+
+
+class {{.SkillNameUpperCamelCase}}Test(unittest.TestCase):
+
+    def test_create_skill(self):
+        skill = {{.SkillNameUpperCamelCase}}()
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -55,6 +55,10 @@ var projectLayouts = map[string]projectFolder{
 				templateFilename: "skill_py.template",
 			},
 			projectFile{
+				extension:        "_test.py",
+				templateFilename: "skill_py_test.template",
+			},
+			projectFile{
 				extension:        ".proto",
 				templateFilename: "skill_params_proto.template",
 			},

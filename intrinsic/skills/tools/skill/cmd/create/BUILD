@@ -16,6 +16,7 @@ go_library(
         "templates/skill_params_proto.template",  #keep
         "templates/skill_py.template",  #keep
         "templates/skill_py_manifest.template",  #keep
+        "templates/skill_py_test.template",  #keep
     ],
     deps = [
         "//intrinsic/assets:idutils",
