@@ -11,8 +11,11 @@ package intrinsic_proto.data_logger;
 // particular execution of the skill. There can be multiple active Contexts in
 // the stack at a given layer at a time, for example if two skills are executing
 // concurrently.
-// Next ID: 10
+// Next ID: 11
 message Context {
+  // Logging associated with operations to acquire a perception scene.
+  optional string scene_id = 10;
+
   // The top context layer. Represents all of the work done by the executive
   // from when it is initialized until it is destroyed. This is currently used
   // by the frontend to load meshes, which would be expensive for the executive
