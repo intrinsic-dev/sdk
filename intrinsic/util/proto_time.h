@@ -3,8 +3,9 @@
 #ifndef INTRINSIC_UTIL_PROTO_TIME_H_
 #define INTRINSIC_UTIL_PROTO_TIME_H_
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "google/protobuf/duration.pb.h"
 #include "google/protobuf/timestamp.pb.h"
 

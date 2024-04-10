@@ -3,6 +3,14 @@
 #include "intrinsic/util/proto_time.h"
 
 #include <algorithm>
+#include <cstdint>
+#include <ctime>
+
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 
 namespace intrinsic {
 
