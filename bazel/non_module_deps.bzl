@@ -75,6 +75,13 @@ def non_module_deps():
         sha256 = "d56e8c15b55240c92143ee3ed717956c67961a24f97711ca410030de92633288",
     )
 
+    http_archive(
+        name = "com_google_riegeli",
+        url = "https://github.com/google/riegeli/archive/1d90cec619f9b9660ff2db6eb3e35f5ea65dddb2.tar.gz",  # 2024-04-04
+        strip_prefix = "riegeli-1d90cec619f9b9660ff2db6eb3e35f5ea65dddb2",
+        sha256 = "",
+    )
+
     XLS_COMMIT = "507b33b5bdd696adb7933a6617b65c70e46d4703"  # 2024-03-06
     http_file(
         name = "com_google_xls_strong_int_h",
