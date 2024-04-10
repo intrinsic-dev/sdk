@@ -96,11 +96,11 @@ def _non_module_deps_impl(ctx):  # @unused
     non_module_deps()
 
     # When included from WORKSPACE, we need repo_mapping for local_config_python
-    git_repository(
+    http_archive(
         name = "pybind11_abseil",
-        remote = "https://github.com/pybind/pybind11_abseil.git",
-        commit = "2bf606ceddb0b7d874022defa8ea6d2d3e1605ad",
-        shallow_since = "1684958620 -0700",
+        sha256 = "1496b112e86416e2dcf288569a3e7b64f3537f0b18132224f492266e9ff76c44",
+        strip_prefix = "pybind11_abseil-202402.0",
+        urls = ["https://github.com/pybind/pybind11_abseil/archive/refs/tags/v202402.0.tar.gz"],
     )
     git_repository(
         name = "pybind11_protobuf",

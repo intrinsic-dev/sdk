@@ -260,12 +260,12 @@ def intrinsic_sdks_deps_0():
 
     # C++ rules for pybind11
     maybe(
-        git_repository,
+        http_archive,
         name = "pybind11_abseil",
-        commit = "2bf606ceddb0b7d874022defa8ea6d2d3e1605ad",  # May 24, 2023
-        remote = "https://github.com/pybind/pybind11_abseil.git",
+        sha256 = "1496b112e86416e2dcf288569a3e7b64f3537f0b18132224f492266e9ff76c44",
+        strip_prefix = "pybind11_abseil-202402.0",
         repo_mapping = {"@local_config_python": "@local_config_python"},
-        shallow_since = "1684958620 -0700",
+        urls = ["https://github.com/pybind/pybind11_abseil/archive/refs/tags/v202402.0.tar.gz"],
     )
 
     maybe(
