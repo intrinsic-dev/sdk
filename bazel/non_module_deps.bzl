@@ -4,7 +4,6 @@
 Module extension for non-module dependencies
 """
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", git_repository = "new_git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file", "http_jar")
 
 def non_module_deps():
@@ -102,11 +101,11 @@ def _non_module_deps_impl(ctx):  # @unused
         strip_prefix = "pybind11_abseil-202402.0",
         urls = ["https://github.com/pybind/pybind11_abseil/archive/refs/tags/v202402.0.tar.gz"],
     )
-    git_repository(
+    http_archive(
         name = "pybind11_protobuf",
-        commit = "5baa2dc9d93e3b608cde86dfa4b8c63aeab4ac78",
-        remote = "https://github.com/pybind/pybind11_protobuf.git",
-        shallow_since = "1687199891 -0700",
+        sha256 = "abf2d5704d9fb2c5e66e6333667bf5f92aaaac74c05d704a84a7478d91dc6663",
+        strip_prefix = "pybind11_protobuf-5baa2dc9d93e3b608cde86dfa4b8c63aeab4ac78",
+        urls = ["https://github.com/pybind/pybind11_protobuf/archive/5baa2dc9d93e3b608cde86dfa4b8c63aeab4ac78.tar.gz"],  #  Jun 19, 2023
     )
 
 non_module_deps_ext = module_extension(implementation = _non_module_deps_impl)

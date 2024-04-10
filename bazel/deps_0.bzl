@@ -2,7 +2,6 @@
 
 """Workspace dependencies needed for the Intrinsic SDKs as a 3rd-party consumer (part 0)."""
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_jar")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("//bazel:non_module_deps.bzl", "non_module_deps")
@@ -113,20 +112,20 @@ def intrinsic_sdks_deps_0():
     # http://go/upsalite-prod/8e107935-5aad-422c-bda4-747ffd58f4b9/targets
     RE2_COMMIT = "055e1241fcfde4f19f072b4dd909a824de54ceb8"  # tag: 2023-03-01
     maybe(
-        git_repository,
+        http_archive,
         name = "com_googlesource_code_re2",
-        commit = RE2_COMMIT,
-        remote = "https://github.com/google/re2.git",
-        shallow_since = "1645717357 +0000",
+        sha256 = "47c5b6f31745cb0507dd6a4e8ed1d531ba871d0d8fc9f359c16386615018c2c0",
+        strip_prefix = "re2-" + RE2_COMMIT,
+        urls = ["https://github.com/google/re2/archive/" + RE2_COMMIT + ".tar.gz"],
     )
 
     # Another alias for RE2
     maybe(
-        git_repository,
+        http_archive,
         name = "com_github_google_re2",
-        commit = RE2_COMMIT,
-        remote = "https://github.com/google/re2.git",
-        shallow_since = "1645717357 +0000",
+        sha256 = "47c5b6f31745cb0507dd6a4e8ed1d531ba871d0d8fc9f359c16386615018c2c0",
+        strip_prefix = "re2-" + RE2_COMMIT,
+        urls = ["https://github.com/google/re2/archive/" + RE2_COMMIT + ".tar.gz"],
     )
 
     # Protobuf
@@ -262,28 +261,28 @@ def intrinsic_sdks_deps_0():
     maybe(
         http_archive,
         name = "pybind11_abseil",
+        repo_mapping = {"@local_config_python": "@local_config_python"},
         sha256 = "1496b112e86416e2dcf288569a3e7b64f3537f0b18132224f492266e9ff76c44",
         strip_prefix = "pybind11_abseil-202402.0",
-        repo_mapping = {"@local_config_python": "@local_config_python"},
         urls = ["https://github.com/pybind/pybind11_abseil/archive/refs/tags/v202402.0.tar.gz"],
     )
 
     maybe(
-        git_repository,
+        http_archive,
         name = "pybind11_bazel",
-        commit = "b162c7c88a253e3f6b673df0c621aca27596ce6b",  # May 3, 2023
-        remote = "https://github.com/pybind/pybind11_bazel.git",
         repo_mapping = {"@local_config_python": "@local_config_python"},
-        shallow_since = "1638580149 -0800",
+        sha256 = "3f4da867f80075d95bdd346018c2057c00e3b22ce527c3ea8af9d19f08bbb7ea",
+        strip_prefix = "pybind11_bazel-b162c7c88a253e3f6b673df0c621aca27596ce6b",
+        urls = ["https://github.com/pybind/pybind11_bazel/archive/b162c7c88a253e3f6b673df0c621aca27596ce6b.tar.gz"],  # May 3, 2023
     )
 
     maybe(
-        git_repository,
+        http_archive,
         name = "pybind11_protobuf",
-        commit = "5baa2dc9d93e3b608cde86dfa4b8c63aeab4ac78",  #  Jun 19, 2023
-        remote = "https://github.com/pybind/pybind11_protobuf.git",
         repo_mapping = {"@local_config_python": "@local_config_python"},
-        shallow_since = "1687199891 -0700",
+        sha256 = "abf2d5704d9fb2c5e66e6333667bf5f92aaaac74c05d704a84a7478d91dc6663",
+        strip_prefix = "pybind11_protobuf-5baa2dc9d93e3b608cde86dfa4b8c63aeab4ac78",
+        urls = ["https://github.com/pybind/pybind11_protobuf/archive/5baa2dc9d93e3b608cde86dfa4b8c63aeab4ac78.tar.gz"],  #  Jun 19, 2023
     )
 
     maybe(
