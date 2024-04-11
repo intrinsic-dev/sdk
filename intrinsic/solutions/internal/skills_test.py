@@ -358,7 +358,8 @@ class SkillsTest(parameterized.TestCase):
     self.assertEqual(dir(skills.foo), ['bar', 'foo', 'foo_skill'])
     self.assertEqual(dir(skills.foo.bar), ['bar', 'bar_skill'])
 
-  def test_skills_access(self):
+  def test_skills_attribute_access(self):
+    """Tests attribute-based access (skills.<skill_id>)."""
     skill_infos = [
         _create_parameterless_skill_info('ai.intr.intr_skill_one'),
         _create_parameterless_skill_info('ai.intr.intr_skill_two'),
@@ -399,30 +400,89 @@ class SkillsTest(parameterized.TestCase):
     self.assertIsInstance(skills.foo.bar.bar(), skills_mod.GeneratedSkill)
     self.assertIsInstance(skills.global_skill(), skills_mod.GeneratedSkill)
 
-    # Id-string-based access: skills['<skill_id>']
-    self.assertIsInstance(
-        skills['ai.intr.intr_skill_one'](), skills_mod.GeneratedSkill
-    )
-    self.assertIsInstance(
-        skills['ai.intr.intr_skill_two'](), skills_mod.GeneratedSkill
-    )
-    self.assertIsInstance(skills['ai.ai_skill'](), skills_mod.GeneratedSkill)
-    self.assertIsInstance(skills['foo.foo_skill'](), skills_mod.GeneratedSkill)
-    self.assertIsInstance(skills['foo.foo'](), skills_mod.GeneratedSkill)
-    self.assertIsInstance(
-        skills['foo.bar.bar_skill'](), skills_mod.GeneratedSkill
-    )
-    self.assertIsInstance(skills['foo.bar.bar'](), skills_mod.GeneratedSkill)
-    self.assertIsInstance(skills['global_skill'](), skills_mod.GeneratedSkill)
-
     with self.assertRaises(AttributeError):
       _ = skills.skill5
 
     with self.assertRaises(AttributeError):
       _ = skills.foo.skill5
 
+  def test_skills_dict_access(self):
+    """Tests id-string-based access via __getitem__ (skills['<skill_id>'])."""
+    skill_infos = [
+        _create_parameterless_skill_info('ai.intr.skill_one'),
+        _create_parameterless_skill_info('ai.intr.skill_two'),
+        _create_parameterless_skill_info('global_skill'),
+    ]
+    skills = skills_mod.Skills(
+        _create_skill_registry_for_skill_infos(skill_infos),
+        self._create_empty_resource_registry(),
+    )
+
+    self.assertIsInstance(
+        skills['ai.intr.skill_one'](), skills_mod.GeneratedSkill
+    )
+    self.assertIsInstance(
+        skills['ai.intr.skill_two'](), skills_mod.GeneratedSkill
+    )
+    self.assertIsInstance(skills['global_skill'](), skills_mod.GeneratedSkill)
+
     with self.assertRaises(KeyError):
       _ = skills['skill5']
+
+  def test_skills_get_skill_ids(self):
+    skill_infos = [
+        _create_parameterless_skill_info('ai.intr.skill_one'),
+        _create_parameterless_skill_info('ai.intr.skill_two'),
+        _create_parameterless_skill_info('global_skill'),
+    ]
+    skills = skills_mod.Skills(
+        _create_skill_registry_for_skill_infos(skill_infos),
+        self._create_empty_resource_registry(),
+    )
+
+    skill_ids = skills.get_skill_ids()
+
+    self.assertCountEqual(
+        list(skill_ids),
+        ['ai.intr.skill_one', 'ai.intr.skill_two', 'global_skill'],
+    )
+
+  def test_skills_get_skill_classes(self):
+    skill_infos = [
+        _create_parameterless_skill_info('ai.intr.skill_one'),
+        _create_parameterless_skill_info('ai.intr.skill_two'),
+        _create_parameterless_skill_info('global_skill'),
+    ]
+    skills = skills_mod.Skills(
+        _create_skill_registry_for_skill_infos(skill_infos),
+        self._create_empty_resource_registry(),
+    )
+
+    skill_classes = skills.get_skill_classes()
+
+    self.assertLen(skill_classes, 3)
+    for skill_class in skill_classes:
+      self.assertIsInstance(skill_class(), skills_mod.GeneratedSkill)
+
+  def test_skills_get_skill_ids_and_classes(self):
+    skill_infos = [
+        _create_parameterless_skill_info('ai.intr.skill_one'),
+        _create_parameterless_skill_info('ai.intr.skill_two'),
+        _create_parameterless_skill_info('global_skill'),
+    ]
+    skills = skills_mod.Skills(
+        _create_skill_registry_for_skill_infos(skill_infos),
+        self._create_empty_resource_registry(),
+    )
+
+    ids_and_classes = skills.get_skill_ids_and_classes()
+
+    self.assertCountEqual(
+        [skill_id for skill_id, _ in ids_and_classes],
+        ['ai.intr.skill_one', 'ai.intr.skill_two', 'global_skill'],
+    )
+    for _, skill_class in ids_and_classes:
+      self.assertIsInstance(skill_class(), skills_mod.GeneratedSkill)
 
   def test_gen_skill(self):
     skill_registry, skill_registry_stub = (

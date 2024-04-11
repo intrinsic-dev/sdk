@@ -3,7 +3,7 @@
 """Abstract base classes for skill and resource providers."""
 
 import abc
-from typing import Any, List, Type, Union
+from typing import Any, Iterable, List, Type, Union
 
 from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.solutions import provided
@@ -82,11 +82,12 @@ class SkillProvider(abc.ABC):
     This causes the provider to regenerate its set of skills. This should be
     called whenever a skill is added, deleted, or modified in a workcell."
     """
+    ...
 
   @abc.abstractmethod
   def __dir__(self) -> List[str]:
     """Returns the names of available skills."""
-    return []
+    ...
 
   # We would like to use Type[SkillBase] instead, but Python then checks
   # the constructor parameters explicitly against SkillBase, which we don't
@@ -94,9 +95,24 @@ class SkillProvider(abc.ABC):
   @abc.abstractmethod
   def __getattr__(self, name: str) -> Union[Type[Any], provided.SkillPackage]:
     """Returns the global skill class or skill package with the given name."""
-    raise NotImplementedError("Skill provider did not implement __getattr__")
+    ...
 
   @abc.abstractmethod
   def __getitem__(self, skill_name: str) -> Type[Any]:
-    """Returns the skill class or with the given skill id."""
-    raise NotImplementedError("Skill provider did not implement __getitem__")
+    """Returns the skill class with the given skill id."""
+    ...
+
+  @abc.abstractmethod
+  def get_skill_ids(self) -> Iterable[str]:
+    """Returns all available skill ids."""
+    ...
+
+  @abc.abstractmethod
+  def get_skill_classes(self) -> Iterable[Type[Any]]:
+    """Returns all available skill classes."""
+    ...
+
+  @abc.abstractmethod
+  def get_skill_ids_and_classes(self) -> Iterable[tuple[str, Type[Any]]]:
+    """Returns all available skill ids and corresponding skill classes."""
+    ...

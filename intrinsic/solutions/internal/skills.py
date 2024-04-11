@@ -18,7 +18,7 @@ import collections
 import inspect
 import re
 import textwrap
-from typing import Any, Callable, Set, Type, Union
+from typing import Any, Callable, Iterable, Set, Type, Union
 import uuid
 
 from google.protobuf import descriptor
@@ -1091,7 +1091,7 @@ class Skills(providers.SkillProvider):
         ): info
         for info in skill_infos
     }
-    self._skills_by_id = {info.id: SkillInfoImpl(info) for info in skills}
+    self._skills_by_id = {info.id: info for info in skill_infos}
     self._skill_type_classes_by_name = {}
     self._skill_type_classes_by_id = {}
     self._compatible_resources_by_name = {}
@@ -1153,16 +1153,36 @@ class Skills(providers.SkillProvider):
   def __dir__(self) -> list[str]:
     return sorted(self._skill_packages.keys() | self._skills_by_name.keys())
 
-  def __getitem__(self, name: str) -> Type[Any]:
-    if name in self._skills_by_id:
-      if name not in self._skill_type_classes_by_id:
-        self._skill_type_classes_by_id[name] = _gen_skill_class(
-            self._skills_by_id[name], self._compatible_resources_by_id[name]
+  def __getitem__(self, skill_id: str) -> Type[Any]:
+    if skill_id in self._skills_by_id:
+      if skill_id not in self._skill_type_classes_by_id:
+        self._skill_type_classes_by_id[skill_id] = _gen_skill_class(
+            self._skills_by_id[skill_id],
+            self._compatible_resources_by_id[skill_id],
         )
-      return self._skill_type_classes_by_id[name]
+      return self._skill_type_classes_by_id[skill_id]
     else:
       raise KeyError(
-          f"Could not resolve the attribute '{name}'. '{name}' is not an"
-          " available skill skill id. Use update() or reconnect to the"
+          f"Could not resolve the attribute '{skill_id}'. '{skill_id}' is not"
+          " an available skill skill id. Use update() or reconnect to the"
           " deployed solution to update the available skills."
       )
+
+  def get_skill_ids(self) -> Iterable[str]:
+    return self._skills_by_id.keys()
+
+  def get_skill_classes(self) -> Iterable[Type[Any]]:
+    self._generate_all_skills()
+    return self._skill_type_classes_by_id.values()
+
+  def get_skill_ids_and_classes(self) -> Iterable[tuple[str, Type[Any]]]:
+    self._generate_all_skills()
+    return self._skill_type_classes_by_id.items()
+
+  def _generate_all_skills(self) -> None:
+    for skill_id in self._skills_by_id:
+      if skill_id not in self._skill_type_classes_by_id:
+        self._skill_type_classes_by_id[skill_id] = _gen_skill_class(
+            self._skills_by_id[skill_id],
+            self._compatible_resources_by_id[skill_id],
+        )
