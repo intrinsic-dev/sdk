@@ -30,8 +30,7 @@ constexpr timespec kMinProtoTimestamp{.tv_sec = -62135596800,
 constexpr timespec kMaxProtoTimestamp{.tv_sec = 253402300799,
                                       .tv_nsec = kMaxProtoTimestampNanos};
 
-// Validation requirements documented at:
-// http://google3/google/protobuf/duration.proto
+// Validation requirements documented in duration.proto
 absl::Status Validate(const google::protobuf::Duration& d) {
   const auto sec = d.seconds();
   const auto ns = d.nanos();

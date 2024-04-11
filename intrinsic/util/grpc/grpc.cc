@@ -102,10 +102,9 @@ absl::StatusOr<std::unique_ptr<::grpc::Server>> CreateServer(
 }
 
 void ConfigureClientContext(::grpc::ClientContext* client_context) {
-  // Disable fast failure in google3, since our code is written against the
-  // (correct-in-blue) expectation that gRPC service calls will block/retry if
-  // the other end isn't ready yet.
-  client_context->set_fail_fast(false);
+  // Expect that gRPC service calls will block/retry if the other end isn't
+  // ready yet.
+  client_context->set_wait_for_ready(true);
 }
 
 absl::Status WaitForChannelConnected(absl::string_view address,
