@@ -288,9 +288,8 @@ def build_symlinks(skill_service_name, skill_service_config_name):
         "/skills/skill_service": native.package_name() + "/" + skill_service_name,
     }
 
-# Generate a file containing the Docker image labels. This only works for rules_oci, not
-# rules_docker in google3, as rules_docker does not support a file containing labels as input
-# to docker_build.
+# Generate a file containing the Docker image labels. This only works for rules_oci, as
+# rules_docker does not support a file containing labels as input to docker_build.
 def _skill_labels_impl(ctx):
     skill_id = ctx.attr.skill_id[SkillIdInfo]
     outputfile = ctx.actions.declare_file(ctx.label.name + ".labels")
