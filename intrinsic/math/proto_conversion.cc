@@ -140,9 +140,9 @@ absl::StatusOr<intrinsic::Pose> FromProtoNormalized(const Pose& pose) {
     return absl::InvalidArgumentError(absl::StrFormat(
         "Failed to create Pose from proto which contains a "
         "non-unit quaternion with norm(quat) == %.6f . The normalized "
-        "quaternion would be %.4f, %.4f, %.4f, %.4f. Provided quaternion %s",
+        "quaternion would be %.4f, %.4f, %.4f, %.4f. Provided quaternion %v",
         std::sqrt(squared_norm), normalized_quat.x(), normalized_quat.y(),
-        normalized_quat.z(), normalized_quat.w(), pose.DebugString()));
+        normalized_quat.z(), normalized_quat.w(), pose));
   }
   return intrinsic::Pose(normalized_quat, FromProto(pose.position()),
                          intrinsic::eigenmath::kDoNotNormalize);
