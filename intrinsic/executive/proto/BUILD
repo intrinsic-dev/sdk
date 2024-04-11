@@ -395,5 +395,5 @@ go_proto_library(
 go_grpc_library(
     name = "proto_builder_go_grpc_proto",
     srcs = [":proto_builder_proto"],
-    deps = [":proto_builder_go_proto"],
+    deps = ["@io_bazel_rules_go//proto/wkt:descriptor_go_proto"],
 )
