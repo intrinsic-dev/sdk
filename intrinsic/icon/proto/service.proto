@@ -463,8 +463,11 @@ service IconApi {
     option deprecated = true;
   }
 
-  // Clears all faults and returns the server to a disabled state.
-  // Returns an OkStatus if faults were successfully cleared.
+  // Clears all faults.
+  // Returns `OkStatus` if faults were successfully cleared.
+  // Returns `ResourceExhausted` when a fatal fault is being cleared, which is
+  // not completed yet and involves a process restart, indicating that the
+  // client should retry until receiving `OkStatus`.
   rpc ClearFaults(ClearFaultsRequest) returns (ClearFaultsResponse);
 
   // Returns the operational status of the server.
