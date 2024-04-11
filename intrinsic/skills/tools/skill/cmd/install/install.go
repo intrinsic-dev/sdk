@@ -147,16 +147,13 @@ $ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --soluti
 			return fmt.Errorf("could not create id_version: %w", err)
 		}
 		log.Printf("Installing skill %q using the installer service at %q", skillIDVersion, installerAddress)
-		// Only propagate the authorization header if the installer address uses an insecure connection.
-		// Otherwise we would add a header conflict ("authorization") with the per-RPC credentials of
-		// the connection.
 		installerCtx := ctx
 		if dialerutil.UseInsecureCredentials(installerAddress) {
 			// This returns a valid context at all times. We only log any errors here because we will also
-			// sideload without authorization. This may mean that some features (namely persisting
-			// sideloaded skills) will not work as expected.
+			// install without authorization. This may mean that some features (namely persistence) will
+			// not work as expected.
 			if installerCtx, err = auth.NewStore().AuthorizeContext(ctx, project); err != nil {
-				log.Printf("Warning: Could not find authentication information. Some features (such as persistence for skills) may not work correctly. Try running 'inctl auth login --project %s' to authenticate.", project)
+				log.Printf("Warning: Could not find authentication information. Some features (such as persistence) may not work correctly. Try running 'inctl auth login --project %s' to authenticate.", project)
 			}
 		}
 		err = imageutils.InstallContainer(installerCtx,
