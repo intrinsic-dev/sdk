@@ -151,6 +151,14 @@ StructuredLoggingClient::GetLogItems(absl::string_view event_source) {
 
 absl::StatusOr<StructuredLoggingClient::GetResult>
 StructuredLoggingClient::GetLogItems(absl::string_view event_source,
+                                     absl::Time start_time,
+                                     absl::Time end_time) {
+  return GetLogItems(event_source, std::numeric_limits<int>::max(), "",
+                     start_time, end_time);
+}
+
+absl::StatusOr<StructuredLoggingClient::GetResult>
+StructuredLoggingClient::GetLogItems(absl::string_view event_source,
                                      int page_size,
                                      absl::string_view page_token,
                                      absl::Time start_time,

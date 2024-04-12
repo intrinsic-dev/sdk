@@ -95,6 +95,13 @@ class StructuredLoggingClient {
   // Returns a list of log items for the specified event source. If no data is
   // available, an empty vector is returned and the function does not generate
   // an error.
+  absl::StatusOr<GetResult> GetLogItems(absl::string_view event_source,
+                                        absl::Time start_time,
+                                        absl::Time end_time);
+
+  // Returns a list of log items for the specified event source. If no data is
+  // available, an empty vector is returned and the function does not generate
+  // an error.
   // The function supports pagination. On each request 'page_size' items are
   // returned if that many are available. In addition a 'page_token' is returned
   // which can be used on the next request to request the next batch of items.
