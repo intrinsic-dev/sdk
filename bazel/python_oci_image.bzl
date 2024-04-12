@@ -96,7 +96,7 @@ def python_oci_image(
 
     # Layer with a single symlink to make the migration to rules_oci from rules_docker/py3_image backwards compatible.
     # This is needed because the Aspect tar rule used above does not support `symlinks` or `package_dir` and I cannot
-    # atomically change the entry point in the yaml (in google3).
+    # atomically change the entry point in the yaml.
     pkg_tar(
         name = name + "_symlink_layer",
         strip_prefix = "/",
