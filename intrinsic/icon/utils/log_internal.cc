@@ -40,7 +40,7 @@ struct LoggerThreadInfo {
 // Note: In threads created via intrinsic::Thread this is allocated at thread
 // creation time via the call to GlobalLogContext::SetThreadLocalLogSink from
 // Thread::setup(). Therefore these will not allocate in runtime threads once
-// the thread has started. NOLINTNEXTLINE(google3-runtime-global-variables)
+// the thread has started.
 static thread_local internal::LoggerThreadInfo s_thread_info;
 
 //-----------------------------------------------------------------------------

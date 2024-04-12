@@ -15,10 +15,9 @@
 // http://abseil.io/docs/cpp/guides/logging. It does not allocate and
 // truncates messages longer than LogSinkInterface::kLogMessageMaxSize.
 // Allowed log levels are INFO, WARNING and ERROR. Instead of FATAL, you could
-// log ERROR and then call CHECK from google3/third_party/absl/log/check.h.
-// It supports all types that google3/third_party/absl/strings/str_cat.h can
-// convert, including absl::string_view, which works well with
-// icon::FixedString.
+// log ERROR and then call CHECK from absl/log/check.h. It supports all types
+// that absl/strings/str_cat.h can convert, including absl::string_view, which
+// works well with icon::FixedString.
 //
 // Examples:
 //   #include "intrinsic/icon/utils/log.h"
@@ -32,8 +31,7 @@
 // -------------
 // None of these macros is fatal.  For a non-recoverable error use
 // LOG(FATAL) or or CHECK_* which will log a message and terminate the program
-// (see google3/third_party/absl/log/check.h and
-// google3/third_party/absl/log/log.h).
+// (see absl/log/check.h and absl/log/log.h).
 //
 // THROTTLED LOGGING
 // -----------------

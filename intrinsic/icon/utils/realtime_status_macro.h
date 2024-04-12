@@ -3,16 +3,12 @@
 // Helper macros and methods to return and propagate errors with RealtimeStatus
 // and RealtimeStatusOr
 //
-// These are extremely limited versions of similar macros implemented in
-// Google3.
-//
 // NOTE: This file uses "expression statement" syntax which is a non-standard
 //       language extension.
 //
-// Public macros in this file are created with formatting options and are
-// otherwise similar to their google3 counterparts. Most of the macros support
-// up to ten arguments for the formatting, but unlimited can be used by using
-// the _F equivalent of a macro.
+// Public macros in this file are created with formatting options. Most of the
+// macros support up to ten arguments for the formatting, but unlimited can be
+// used by using the _F equivalent of a macro.
 #ifndef INTRINSIC_ICON_UTILS_REALTIME_STATUS_MACRO_H_
 #define INTRINSIC_ICON_UTILS_REALTIME_STATUS_MACRO_H_
 
@@ -69,12 +65,11 @@ class RealtimeStatusToBool {
     }                                                                  \
   } while (0)
 
-// Generally similar to google3 INTR_ASSIGN_OR_RETURN, but with different
-// behavior for >=4 arguments. Leaks a _status_or_value# variable into the
-// scope.
+// Generally similar to INTR_ASSIGN_OR_RETURN, but with different behavior for
+// >=4 arguments. Leaks a _status_or_value# variable into the scope.
 //
 // For >= 4 arguments, concatenation of the status message is performed instead
-// of formatting, as the google3 version does.
+// of formatting.
 //
 // Example:
 // INTRINSIC_RT_ASSIGN_OR_RETURN(auto foo,

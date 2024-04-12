@@ -53,10 +53,6 @@ int LogEntryFormatToBuffer(char* buffer, int buffer_size,
   int entry_msg_size =
       std::min(entry.msglen, static_cast<int>(sizeof(entry.msg)));
 
-  // This matches the log format used by google3, which enables the text
-  // output to be parsed by go/analog. The regex used for parsing can be
-  // found here:
-  // monitoring/bugscope/analog/text_logs/cpp_text_log_parser_factory.cc
   int num_chars =
       snprintf(buffer, buffer_size, kFormat, priority[0], wall.c_str(), base,
                entry.line, sec, usec, entry_msg_size, entry.msg);
