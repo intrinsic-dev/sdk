@@ -14,7 +14,10 @@
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
+#include "grpcpp/channel.h"
+#include "grpcpp/client_context.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/logging/proto/logger_service.grpc.pb.h"
 #include "intrinsic/logging/proto/logger_service.pb.h"
@@ -73,7 +76,7 @@ StructuredLoggingClient& StructuredLoggingClient::operator=(
 StructuredLoggingClient::~StructuredLoggingClient() = default;
 
 // Dispatches one log item to the data logger.
-absl::Status StructuredLoggingClient::Log(LogItem&& item) {
+absl::Status StructuredLoggingClient::Log(LogItem&& item) const {
   grpc::ClientContext context;
   intrinsic_proto::data_logger::LogRequest request;
   *request.mutable_item() = std::move(item);
@@ -81,12 +84,12 @@ absl::Status StructuredLoggingClient::Log(LogItem&& item) {
   return ToAbslStatus(impl_->stub->Log(&context, request, &response));
 }
 
-absl::Status StructuredLoggingClient::Log(const LogItem& item) {
+absl::Status StructuredLoggingClient::Log(const LogItem& item) const {
   LogItem log_item = item;
   return Log(std::move(log_item));
 }
 
-void StructuredLoggingClient::LogAsync(LogItem&& item) {
+void StructuredLoggingClient::LogAsync(LogItem&& item) const {
   std::string event_source = item.metadata().event_source();
   return LogAsync(std::move(item),
                   [event_source = std::move(event_source)](absl::Status s) {
@@ -98,7 +101,7 @@ void StructuredLoggingClient::LogAsync(LogItem&& item) {
 }
 
 void StructuredLoggingClient::LogAsync(
-    LogItem&& item, std::function<void(absl::Status)> callback) {
+    LogItem&& item, std::function<void(absl::Status)> callback) const {
   struct LogArgs {
     // Both, the context as well as the response need to persist until the
     // callback function is invoked regardless of whether the response is used
@@ -120,20 +123,20 @@ void StructuredLoggingClient::LogAsync(
       [args](grpc::Status s) { args->callback(ToAbslStatus(s)); });
 }
 
-void StructuredLoggingClient::LogAsync(const LogItem& item) {
+void StructuredLoggingClient::LogAsync(const LogItem& item) const {
   LogItem log_item = item;
   return LogAsync(std::move(log_item));
 }
 
 void StructuredLoggingClient::LogAsync(
-    const LogItem& item, std::function<void(absl::Status)> callback) {
+    const LogItem& item, std::function<void(absl::Status)> callback) const {
   LogItem log_item = item;
   return LogAsync(std::move(log_item), std::move(callback));
 }
 
 // Returns a list of `event_source` that can be requested using GetLogItems.
 absl::StatusOr<std::vector<std::string>>
-StructuredLoggingClient::ListLogSources() {
+StructuredLoggingClient::ListLogSources() const {
   grpc::ClientContext context;
   google::protobuf::Empty request;
   intrinsic_proto::data_logger::ListLogSourcesResponse response;
@@ -145,14 +148,14 @@ StructuredLoggingClient::ListLogSources() {
 }
 
 absl::StatusOr<StructuredLoggingClient::GetResult>
-StructuredLoggingClient::GetLogItems(absl::string_view event_source) {
+StructuredLoggingClient::GetLogItems(absl::string_view event_source) const {
   return GetLogItems(event_source, std::numeric_limits<int>::max());
 }
 
 absl::StatusOr<StructuredLoggingClient::GetResult>
 StructuredLoggingClient::GetLogItems(absl::string_view event_source,
                                      absl::Time start_time,
-                                     absl::Time end_time) {
+                                     absl::Time end_time) const {
   return GetLogItems(event_source, std::numeric_limits<int>::max(), "",
                      start_time, end_time);
 }
@@ -162,7 +165,7 @@ StructuredLoggingClient::GetLogItems(absl::string_view event_source,
                                      int page_size,
                                      absl::string_view page_token,
                                      absl::Time start_time,
-                                     absl::Time end_time) {
+                                     absl::Time end_time) const {
   grpc::ClientContext context;
   intrinsic_proto::data_logger::GetLogItemsRequest request;
   intrinsic_proto::data_logger::GetLogItemsResponse response;
@@ -188,7 +191,8 @@ StructuredLoggingClient::GetLogItems(absl::string_view event_source,
 // source, from an in-memory cache. If no LogItem with a matching event_source
 // has been logged since --file_ttl, then NOT_FOUND will be returned instead.
 absl::StatusOr<intrinsic_proto::data_logger::LogItem>
-StructuredLoggingClient::GetMostRecentItem(absl::string_view event_source) {
+StructuredLoggingClient::GetMostRecentItem(
+    absl::string_view event_source) const {
   grpc::ClientContext context;
   intrinsic_proto::data_logger::GetMostRecentItemRequest request;
   request.set_event_source(std::string{event_source});
@@ -201,7 +205,7 @@ StructuredLoggingClient::GetMostRecentItem(absl::string_view event_source) {
 // Flushes all remaining LogItems
 absl::StatusOr<std::vector<std::string>>
 StructuredLoggingClient::SyncAndRotateLogs(
-    const std::vector<std::string>& event_sources) {
+    const std::vector<std::string>& event_sources) const {
   grpc::ClientContext context;
   intrinsic_proto::data_logger::SyncRequest request;
   *request.mutable_event_sources() = {event_sources.begin(),
@@ -217,7 +221,7 @@ StructuredLoggingClient::SyncAndRotateLogs(
 }
 
 absl::StatusOr<std::vector<std::string>>
-StructuredLoggingClient::SyncAndRotateLogs() {
+StructuredLoggingClient::SyncAndRotateLogs() const {
   grpc::ClientContext context;
   intrinsic_proto::data_logger::SyncRequest request;
   request.set_sync_all(true);
@@ -232,7 +236,7 @@ StructuredLoggingClient::SyncAndRotateLogs() {
 
 absl::Status StructuredLoggingClient::SetLogOptions(
     const std::map<std::string, intrinsic_proto::data_logger::LogOptions>&
-        options) {
+        options) const {
   grpc::ClientContext context;
   intrinsic_proto::data_logger::SetLogOptionsRequest request;
   for (const auto& [event_source, log_options] : options) {
@@ -245,7 +249,7 @@ absl::Status StructuredLoggingClient::SetLogOptions(
 }
 
 absl::StatusOr<LogOptions> StructuredLoggingClient::GetLogOptions(
-    absl::string_view event_source) {
+    absl::string_view event_source) const {
   grpc::ClientContext context;
   intrinsic_proto::data_logger::GetLogOptionsRequest request;
   request.set_event_source(std::string{event_source});

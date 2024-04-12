@@ -60,44 +60,45 @@ class StructuredLoggingClient {
   ~StructuredLoggingClient();
 
   // Logs an r-value item.
-  absl::Status Log(LogItem&& item);
+  absl::Status Log(LogItem&& item) const;
 
   // Logs an item. The item will be internally copied to the logging request.
-  absl::Status Log(const LogItem& item);
+  absl::Status Log(const LogItem& item) const;
 
   // Performs asynchronous logging of an r-value item. A default callback is
   // installed, which prints a warning message in case of a logging failure.
-  void LogAsync(LogItem&& item);
+  void LogAsync(LogItem&& item) const;
 
   // Performs asynchronous logging of an r-value item and calls the user
   // specified callback when done.
-  void LogAsync(LogItem&& item, std::function<void(absl::Status)> callback);
+  void LogAsync(LogItem&& item,
+                std::function<void(absl::Status)> callback) const;
 
   // Performs asynchronous logging of an item. The item will be internally
   // copied to the logging request. A default callback is
   // installed, which prints a warning message in case of a logging failure.
-  void LogAsync(const LogItem& item);
+  void LogAsync(const LogItem& item) const;
 
   // Performs asynchronous logging of an item and calls the user specified
   // callback when done. The item will be internally copied to the logging
   // request.
   void LogAsync(const LogItem& item,
-                std::function<void(absl::Status)> callback);
+                std::function<void(absl::Status)> callback) const;
 
   // Returns a list of `event_source` that can be requested using list requests.
-  absl::StatusOr<std::vector<std::string>> ListLogSources();
+  absl::StatusOr<std::vector<std::string>> ListLogSources() const;
 
   // Returns a list of log items for the specified event source. If no data is
   // available, an empty vector is returned and the function does not generate
   // an error.
-  absl::StatusOr<GetResult> GetLogItems(absl::string_view event_source);
+  absl::StatusOr<GetResult> GetLogItems(absl::string_view event_source) const;
 
   // Returns a list of log items for the specified event source. If no data is
   // available, an empty vector is returned and the function does not generate
   // an error.
   absl::StatusOr<GetResult> GetLogItems(absl::string_view event_source,
                                         absl::Time start_time,
-                                        absl::Time end_time);
+                                        absl::Time end_time) const;
 
   // Returns a list of log items for the specified event source. If no data is
   // available, an empty vector is returned and the function does not generate
@@ -111,12 +112,13 @@ class StructuredLoggingClient {
       absl::string_view event_source, int page_size,
       absl::string_view page_token = "",
       absl::Time start_time = absl::UniversalEpoch(),
-      absl::Time end_time = absl::Now());
+      absl::Time end_time = absl::Now()) const;
 
   // Returns the most recent LogItem that has been logged for the given event
   // source. If no LogItem with a matching event_source has been logged since
   // --file_ttl, then NOT_FOUND will be returned instead.
-  absl::StatusOr<LogItem> GetMostRecentItem(absl::string_view event_source);
+  absl::StatusOr<LogItem> GetMostRecentItem(
+      absl::string_view event_source) const;
 
   // Writes all log files of the specified 'event_sources' to GCS.
   // Might be throttled per-event-source if called too frequently.
@@ -124,7 +126,7 @@ class StructuredLoggingClient {
   // Returns absl::ResourceExhaustedError if any sync for any event source was
   // throttled.
   absl::StatusOr<std::vector<std::string>> ABSL_MUST_USE_RESULT
-  SyncAndRotateLogs(const std::vector<std::string>& event_sources);
+  SyncAndRotateLogs(const std::vector<std::string>& event_sources) const;
 
   // Writes all log files to GCS.
   // Might be throttled per-event-source if called too frequently.
@@ -132,15 +134,16 @@ class StructuredLoggingClient {
   // Returns absl::ResourceExhaustedError if any sync for any event source was
   // throttled.
   absl::StatusOr<std::vector<std::string>> ABSL_MUST_USE_RESULT
-  SyncAndRotateLogs();
+  SyncAndRotateLogs() const;
 
   // Set the logging configuration for an event_source
   absl::Status SetLogOptions(
       const std::map<std::string, intrinsic_proto::data_logger::LogOptions>&
-          options);
+          options) const;
 
   // Get the logging configuration for an event_source
-  absl::StatusOr<LogOptions> GetLogOptions(absl::string_view event_source);
+  absl::StatusOr<LogOptions> GetLogOptions(
+      absl::string_view event_source) const;
 
  private:
   // Use of pimpl / firewall idiom to hide gRPC details.
