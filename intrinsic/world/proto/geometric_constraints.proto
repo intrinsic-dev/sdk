@@ -114,13 +114,16 @@ message PositionEllipsoid {
   TransformNodeReference target_frame = 2;
 
   // The x-radius of the ellipsoid
-  double rx = 3;
+  double rx = 3
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "meters"];
 
   // The y-radius of the ellipsoid. If unset, defaults to `rx`.
-  optional double ry = 4;
+  optional double ry = 4
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "meters"];
 
   // The z-radius of the ellipsoid. If unset, defaults to `rx`.
-  optional double rz = 5;
+  optional double rz = 5
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "meters"];
 
   // The point defined relative to `moving_frame` whose position must remain
   // within the ellipsoid attached to the `target_frame`. If unset, defaults
@@ -165,13 +168,15 @@ message PositionFrustum {
   // plane that cuts the tip of the pyramid to form a surface of the frustum.
   // This plane is parallel to the x-y plane in the `target_frame`. If unset,
   // defaults to 0. Must be >= 0.
-  optional double min_z_distance = 6;  // [meters]
+  optional double min_z_distance = 6
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "meters"];
 
   // The distance in meters between the origin of the `target_frame` and the
   // plane that defines the base of the frustum. This plane is parallel to the
   // x-y plane in the `target_frame`. If unset, defaults to infinity.
   // Must be >= `min_z_distance`.
-  optional double max_z_distance = 7;  // [meters]
+  optional double max_z_distance = 7
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "meters"];
 }
 
 // Requires `moving_frame` and `target_frame` to have a fixed relative
