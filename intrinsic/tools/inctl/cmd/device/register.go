@@ -177,8 +177,7 @@ var registerCmd = &cobra.Command{
 			return fmt.Errorf("get client for project: %w", err)
 		}
 
-		// This map represents a json mapping of the config struct which lives in GoB:
-		// https://source.corp.google.com/h/intrinsic/xfa-tools/+/main:internal/config/config.go
+		// This map represents a json mapping of a config struct.
 		config := map[string]any{
 			"hostname": hostname,
 			"cloudConnection": map[string]any{
