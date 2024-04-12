@@ -29,7 +29,8 @@ message CollisionSettings {
   // with "anything" with the margin set to minimum_margin. Therefore, this rule
   // will take precedence over all other object rules below with lower priority
   // (i.e. those with higher margin values).
-  optional double minimum_margin = 2;
+  optional double minimum_margin = 2
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "meters"];
 
   // Rule defining the minimum_margin (or collision exclusion) between an
   // object(s) and "anything else" or between the object(s) and the "other"
