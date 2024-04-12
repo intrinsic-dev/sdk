@@ -1,6 +1,6 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-// Package authtest provides test helpers for google3/intrinsic/tools/inctl/auth/auth.
+// Package authtest provides test helpers.
 package authtest
 
 import (
