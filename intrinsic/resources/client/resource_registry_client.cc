@@ -13,6 +13,7 @@
 #include "absl/time/time.h"
 #include "grpcpp/client_context.h"
 #include "intrinsic/resources/proto/resource_registry.grpc.pb.h"
+#include "intrinsic/resources/proto/resource_registry.pb.h"
 #include "intrinsic/util/grpc/grpc.h"
 #include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_macros.h"
