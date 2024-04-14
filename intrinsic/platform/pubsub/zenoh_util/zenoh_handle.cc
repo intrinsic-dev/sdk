@@ -7,6 +7,10 @@
 #include <string>
 
 #include "absl/log/log.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "intrinsic/platform/pubsub/zenoh_util/zenoh_helpers.h"
 #include "tools/cpp/runfiles/runfiles.h"
 

@@ -21,6 +21,7 @@ cc_library(
         ":zenoh_helpers",
         "@bazel_tools//tools/cpp/runfiles",
         "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
