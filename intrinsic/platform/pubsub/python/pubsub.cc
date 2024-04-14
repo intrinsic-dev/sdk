@@ -12,9 +12,12 @@
 #include <string_view>
 #include <utility>
 
+#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "google/protobuf/message.h"
+#include "intrinsic/platform/pubsub/publisher.h"
 #include "intrinsic/platform/pubsub/subscription.h"
 #include "pybind11_abseil/no_throw_status.h"
 #include "pybind11_abseil/status_casters.h"

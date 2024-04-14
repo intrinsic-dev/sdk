@@ -12,10 +12,13 @@ pybind_extension(
     srcs = ["pubsub.cc"],
     deps = [
         "//intrinsic/platform/pubsub",
+        "//intrinsic/platform/pubsub:publisher",
         "//intrinsic/platform/pubsub:subscription",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf",
         "@pybind11_abseil//pybind11_abseil:no_throw_status",
         "@pybind11_abseil//pybind11_abseil:status_casters",
         "@pybind11_protobuf//pybind11_protobuf:native_proto_caster",
