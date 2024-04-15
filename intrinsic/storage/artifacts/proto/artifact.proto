@@ -32,7 +32,7 @@ service ArtifactServiceApi {
 
 // OciDescriptor describes the image content.
 // For details see
-// cs//depot/google3/third_party/golang/opencontainers/image_spec/specs_go/v1/descriptor.go;l=22
+// https://pkg.go.dev/github.com/opencontainers/image-spec@v1.1.0/specs-go/v1#Descriptor
 message ImageManifest {
   // MediaType is the media type of the object this schema refers to.
   string media_type = 1;
