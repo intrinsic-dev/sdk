@@ -12,6 +12,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "intrinsic/eigenmath/types.h"
+#include "intrinsic/kinematics/types/cartesian_limits.h"
 #include "intrinsic/kinematics/types/joint_limits_xd.h"
 #include "intrinsic/math/pose3.h"
 #include "intrinsic/resources/proto/resource_handle.pb.h"
@@ -23,8 +24,10 @@
 #include "intrinsic/world/objects/object_world_ids.h"
 #include "intrinsic/world/objects/transform_node.h"
 #include "intrinsic/world/objects/world_object.h"
+#include "intrinsic/world/proto/geometry_component.pb.h"
 #include "intrinsic/world/proto/object_world_refs.pb.h"
 #include "intrinsic/world/proto/object_world_service.grpc.pb.h"
+#include "intrinsic/world/proto/object_world_updates.pb.h"
 #include "intrinsic/world/robot_payload/robot_payload.h"
 
 namespace intrinsic {

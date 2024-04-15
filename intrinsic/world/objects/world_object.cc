@@ -18,6 +18,7 @@
 #include "intrinsic/math/proto_conversion.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/world/objects/frame.h"
+#include "intrinsic/world/objects/object_entity_filter.h"
 #include "intrinsic/world/objects/object_world_ids.h"
 #include "intrinsic/world/objects/transform_node.h"
 #include "intrinsic/world/proto/object_world_refs.pb.h"

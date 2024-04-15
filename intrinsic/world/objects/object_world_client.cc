@@ -19,6 +19,7 @@
 #include "intrinsic/icon/equipment/equipment_utils.h"
 #include "intrinsic/icon/equipment/icon_equipment.pb.h"
 #include "intrinsic/icon/proto/cart_space_conversion.h"
+#include "intrinsic/kinematics/types/cartesian_limits.h"
 #include "intrinsic/kinematics/types/joint_limits.pb.h"
 #include "intrinsic/kinematics/types/joint_limits_xd.h"
 #include "intrinsic/math/pose3.h"
