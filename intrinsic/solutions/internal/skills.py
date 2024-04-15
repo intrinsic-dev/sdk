@@ -150,6 +150,22 @@ class SkillInfoImpl(provided.SkillInfo):
     return self._skill_proto.id
 
   @property
+  def skill_name(self) -> str:
+    if self._skill_proto.skill_name:
+      return self._skill_proto.skill_name
+
+    # Extract from the skill ID if the skill name is not explicitly set.
+    return _skill_name_from_id(self._skill_proto.id)
+
+  @property
+  def package_name(self) -> str:
+    if self._skill_proto.package_name:
+      return self._skill_proto.package_name
+
+    # Extract from the skill ID if the package name is not explicitly set.
+    return _skill_package_name_from_id(self._skill_proto.id)
+
+  @property
   def skill_proto(self) -> skills_pb2.Skill:
     return self._skill_proto
 
@@ -497,7 +513,7 @@ def _gen_init_fun(
       inspect.Parameter(
           "self",
           inspect.Parameter.POSITIONAL_OR_KEYWORD,
-          annotation="Skill_" + _skill_name_from_id(info.skill_proto.id),
+          annotation="Skill_" + info.skill_name,
       )
   ] + _gen_init_params(info, compatible_resources, wrapper_classes)
   new_init_fun.__signature__ = inspect.Signature(params)
@@ -539,7 +555,7 @@ def _gen_skill_class(
 
   type_class = type(
       # E.g.: 'move_robot'
-      info.skill_proto.skill_name,
+      info.skill_name,
       (GeneratedSkill,),
       {
           "_info": info,
@@ -551,15 +567,15 @@ def _gen_skill_class(
           "__doc__": _gen_init_docstring(info, compatible_resources),
           # E.g.: 'intrinsic.solutions.skills.ai.intrinsic'.
           "__module__": skill_utils.module_for_generated_skill(
-              info.skill_proto.package_name
+              info.package_name
           ),
       },
   )
 
   wrapper_classes = skill_utils.update_message_class_modules(
       type_class,
-      info.skill_proto.skill_name,
-      info.skill_proto.package_name,
+      info.skill_name,
+      info.package_name,
       enum_types,
       nested_classes,
       dict(info.skill_proto.parameter_description.parameter_field_comments),
@@ -618,41 +634,46 @@ def _field_to_repr(field: descriptor.FieldDescriptor, field_value: Any) -> str:
   )
 
 
-# regex is derived from semver.org's definition.
-_SKILL_ID_VERSION_REGEX = r"^(?P<id>(?:(?P<package>(?:\D\w*\.)*\D\w*)\.)?(?P<name>\D\w*))(?P<version>\.(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)?$"
+_SKILL_ID_VERSION_REGEX = (
+    r"^(?P<id>(?:(?P<package>(?:\D\w*\.)*\D\w*)\.)?(?P<name>\D\w*))$"
+)
 
 
-def _skill_name_from_id(identifier: str) -> str:
-  """Extracts the name from the id.
+def _skill_name_from_id(skill_id: str) -> str:
+  """Extracts the name from the given skill ID.
 
   Args:
-    identifier: The skill ID.
+    skill_id: The skill ID.
 
   Returns:
     The name extracted from the ID.
   """
 
-  m = re.search(_SKILL_ID_VERSION_REGEX, identifier)
+  m = re.search(_SKILL_ID_VERSION_REGEX, skill_id)
 
   if m is not None:
     return m.group("name")
 
-  return identifier
+  return skill_id
 
 
-def _skill_name_from_name_or_id(name: str, identifier: str) -> str:
-  """Picks either the provided name, or extracts name from given ID.
+def _skill_package_name_from_id(skill_id: str) -> str:
+  """Extracts the name from the given skill ID.
 
   Args:
-    name: Name or empty string.
-    identifier: The skill ID.
+    skill_id: The skill ID.
 
   Returns:
-    The name extracted from the given name or ID.
+    The name extracted from the ID.
   """
-  if name:
-    return name
-  return _skill_name_from_id(identifier)
+  m = re.search(_SKILL_ID_VERSION_REGEX, skill_id)
+
+  if m is not None:
+    package = m.group("package")
+    if package is not None:
+      return package
+
+  return ""
 
 
 class GeneratedSkill(provided.SkillBase):
@@ -678,9 +699,7 @@ class GeneratedSkill(provided.SkillBase):
     self._plan_params: dict[str, str] = {}
     self._blackboard_params: dict[str, Any] = {}
     self._return_value_key = (
-        self._info.skill_proto.skill_name
-        + "_"
-        + str(uuid.uuid4()).replace("-", "_")
+        self._info.skill_name + "_" + str(uuid.uuid4()).replace("-", "_")
     )
 
   @property
@@ -1011,11 +1030,9 @@ class _SkillPackageImpl(provided.SkillPackage):
 
     self._package_name = package_name
     self._skills_by_name = {
-        _skill_name_from_name_or_id(
-            info.skill_proto.skill_name, info.skill_proto.id
-        ): info
+        info.skill_name: info
         for info in skill_infos
-        if info.skill_proto.package_name == package_name
+        if info.package_name == package_name
     }
     self._compatible_resources_by_name = {
         name: compatible_resources_by_id[info.id]
@@ -1085,12 +1102,7 @@ class Skills(providers.SkillProvider):
     skills = self._skill_registry.get_skills()
     skill_infos = [SkillInfoImpl(info) for info in skills]
 
-    self._skills_by_name = {
-        _skill_name_from_name_or_id(
-            info.skill_proto.skill_name, info.skill_proto.id
-        ): info
-        for info in skill_infos
-    }
+    self._skills_by_name = {info.skill_name: info for info in skill_infos}
     self._skills_by_id = {info.id: info for info in skill_infos}
     self._skill_type_classes_by_name = {}
     self._skill_type_classes_by_id = {}
@@ -1130,7 +1142,11 @@ class Skills(providers.SkillProvider):
         )
         selector_index += 1
 
-    package_names = {info.package_name for info in skills if info.package_name}
+    package_names = {
+        package_name
+        for info in skill_infos
+        if (package_name := info.package_name)
+    }
     self._skill_packages = _create_skill_packages(
         "", package_names, skill_infos, self._compatible_resources_by_id
     )

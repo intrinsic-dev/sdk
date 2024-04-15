@@ -135,7 +135,9 @@ class SkillInfo(abc.ABC):
   """Containes information about a Skill.
 
   Attributes:
-    id: Skill ID.
+    id: Skill ID (e.g. 'ai.intrinsic.move_robot').
+    skill_name: Skill name (e.g. 'move_robot').
+    package_name: Skill package name (e.g. 'ai.intrinsic').
     skill_proto: proto with skill information that this instance represents.
     field_names: names of top-level fields in parameter proto.
     message_classes: mapping from type names to default messages for that type.
@@ -144,6 +146,16 @@ class SkillInfo(abc.ABC):
   @property
   @abc.abstractmethod
   def id(self) -> str:
+    ...
+
+  @property
+  @abc.abstractmethod
+  def skill_name(self) -> str:
+    ...
+
+  @property
+  @abc.abstractmethod
+  def package_name(self) -> str:
     ...
 
   @property

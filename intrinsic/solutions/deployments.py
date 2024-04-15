@@ -312,16 +312,14 @@ class Solution:
         parameters.append(param)
       return ", ".join(parameters)
 
-    skill_names = dir(self.skills)
-    for skill_name in skill_names:
-      skill = getattr(self.skills, skill_name)
+    for skill_id, skill in self.skills.get_skill_ids_and_classes():
       if with_signatures:
         signature_str = build_signature(
             skill, with_type_annotations, shorten_type_annotations
         )
-        print(f"{skill_name}({signature_str})")
+        print(f"{skill_id}({signature_str})")
       else:
-        print(skill_name)
+        print(skill_id)
       if with_doc:
         print(f"\n{inspect.getdoc(skill)}\n")
 

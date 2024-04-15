@@ -360,9 +360,16 @@ class SkillsTest(parameterized.TestCase):
 
   def test_skills_attribute_access(self):
     """Tests attribute-based access (skills.<skill_id>)."""
+    ai_intr_intr_skill_two = _create_parameterless_skill_info(
+        'ai.intr.intr_skill_two'
+    )
+    # Some skill protos may only have the skill id but not the skill_name or
+    # package_name set.
+    ai_intr_intr_skill_two.skill_name = ''
+    ai_intr_intr_skill_two.package_name = ''
     skill_infos = [
         _create_parameterless_skill_info('ai.intr.intr_skill_one'),
-        _create_parameterless_skill_info('ai.intr.intr_skill_two'),
+        ai_intr_intr_skill_two,
         _create_parameterless_skill_info('ai.ai_skill'),
         _create_parameterless_skill_info('foo.foo_skill'),
         _create_parameterless_skill_info('foo.foo'),
@@ -1691,6 +1698,44 @@ Returns:
     skills_mod.SkillInfoImpl(
         _create_test_skill_info(skill_id='ai.intrinsic.my_skill')
     )
+
+  @parameterized.parameters(
+      {
+          'skill': skills_pb2.Skill(
+              skill_name='my_skill', id='com.foo.some_skill'
+          )
+      },
+      {'skill': skills_pb2.Skill(id='com.foo.my_skill')},
+      {'skill': skills_pb2.Skill(id='foo.my_skill')},
+      {'skill': skills_pb2.Skill(id='my_skill')},
+  )
+  def test_skill_info_skill_name(self, skill):
+    info = skills_mod.SkillInfoImpl(skill)
+    self.assertEqual(info.skill_name, 'my_skill')
+
+  @parameterized.parameters(
+      {
+          'skill': skills_pb2.Skill(
+              package_name='com.foo', id='com.bar.my_skill'
+          ),
+          'expected_package_name': 'com.foo',
+      },
+      {
+          'skill': skills_pb2.Skill(id='com.foo.my_skill'),
+          'expected_package_name': 'com.foo',
+      },
+      {
+          'skill': skills_pb2.Skill(id='foo.my_skill'),
+          'expected_package_name': 'foo',
+      },
+      {
+          'skill': skills_pb2.Skill(id='my_skill'),
+          'expected_package_name': '',
+      },
+  )
+  def test_skill_info_package_name(self, skill, expected_package_name):
+    info = skills_mod.SkillInfoImpl(skill)
+    self.assertEqual(info.package_name, expected_package_name)
 
   def test_result_access(self):
     """Tests if BlackboardValue gets created when accessing result."""

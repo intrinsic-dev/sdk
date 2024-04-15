@@ -367,7 +367,7 @@ class SolutionTest(absltest.TestCase):
     solution = self.init_solution()
     with mock.patch("sys.stdout", mock_stdout):
       solution.skills_overview()
-    self.assertEqual(mock_stdout.getvalue(), "my_skill\n")
+    self.assertEqual(mock_stdout.getvalue(), "ai.intrinsic.my_skill\n")
 
     # Add a 'z_move' skill with description
     skill_registry_response = self._skill_registry_stub.GetSkills.return_value
@@ -382,7 +382,9 @@ More z_move Doc."""
     mock_stdout = io.StringIO()
     with mock.patch("sys.stdout", mock_stdout):
       solution.skills_overview()
-    self.assertEqual(mock_stdout.getvalue(), "my_skill\nz_move\n")
+    self.assertEqual(
+        mock_stdout.getvalue(), "ai.intrinsic.my_skill\nai.intrinsic.z_move\n"
+    )
 
     # Test docstring output
     mock_stdout = io.StringIO()
@@ -390,13 +392,13 @@ More z_move Doc."""
       solution.skills_overview(with_doc=True)
     self.assertEqual(
         mock_stdout.getvalue(),
-        r"""my_skill
+        r"""ai.intrinsic.my_skill
 
 Skill class for ai.intrinsic.my_skill skill.
 
 This skill requires no resources
 
-z_move
+ai.intrinsic.z_move
 
 Skill class for ai.intrinsic.z_move skill.
 
