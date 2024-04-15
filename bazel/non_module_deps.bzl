@@ -80,7 +80,7 @@ def non_module_deps():
         name = "com_google_riegeli",
         url = "https://github.com/google/riegeli/archive/1d90cec619f9b9660ff2db6eb3e35f5ea65dddb2.tar.gz",  # 2024-04-04
         strip_prefix = "riegeli-1d90cec619f9b9660ff2db6eb3e35f5ea65dddb2",
-        sha256 = "",
+        sha256 = "2304f64a246181b94083cdbc86d69c4b93346c196f93b2c5f05a93767bec793d",
     )
 
     XLS_COMMIT = "507b33b5bdd696adb7933a6617b65c70e46d4703"  # 2024-03-06
