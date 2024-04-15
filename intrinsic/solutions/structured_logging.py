@@ -2,9 +2,8 @@
 
 """API to work with/visualize structured data.
 
-This class provides access to LogItem
-(intrinsic/logging/proto/log_item.proto) protos logged by the
-Intrinsic Data Logger.
+This class provides access to LogItem protos logged by the Intrinsic Data
+Logger.
 
 Throughout this file, you'll see that the current time is obtained with:
 
@@ -17,8 +16,8 @@ explanation about "aware" and "naive" in the following section.)
 The fact the timezone is specified is important because this makes the created
 datetime object "aware" of the timezone and ensures that the conversion to
 google.protobuf.Timestamp is correct since FromDatetime assumes a UTC timezone
-for "naive" datetime objects (see
-cs/google3/third_party/py/google/protobuf/internal/well_known_types.py;rcl=543160289;l=261).
+for "naive" datetime objects.
+https://github.com/protocolbuffers/protobuf/blob/10307b5b1d7ca5cec4e7e18c1c12eb989c5435e9/python/google/protobuf/internal/well_known_types.py#L265
 
 Note the fact that the timezone is UTC specifically is not important. As long as
 the datetime object is "aware", the conversion to google.protobuf.Timestamp will

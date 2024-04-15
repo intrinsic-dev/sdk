@@ -3,11 +3,10 @@
 """Provides access to the IPython environment.
 
 Provides meaningful fallback behavior if IPython is not present, e.g., if we are
-running in a google3 Python runtime.
+running in a regular Python script.
 
 Imports for IPython modules in this file have to be done on-the-fly and behind
-'_running_in_ipython()' checks, which prevents them from being executed in a
-google3 Python runtime. There is no build dependency on
+'_running_in_ipython()' checks. There is no build dependency on
 //third_party/py/IPython, but imports for IPython modules will be successful
 when running in an IPython enabled runtime such as our Jupyter container.
 """
@@ -17,10 +16,7 @@ from typing import Any
 
 
 def _running_in_ipython() -> bool:
-  """Returns whether we are running in an IPython environment.
-
-  Will return False when running in a google3 Python runtime.
-  """
+  """Returns true if we are running in an IPython environment."""
   return hasattr(builtins, '__IPYTHON__')
 
 

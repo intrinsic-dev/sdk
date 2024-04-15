@@ -271,7 +271,6 @@ class Solution:
       self,
       with_signatures: bool = False,
       with_type_annotations: bool = False,
-      shorten_type_annotations: bool = False,
       with_doc: bool = False,
   ) -> None:
     """Prints an overview of the registered skills.
@@ -280,22 +279,16 @@ class Solution:
       with_signatures: Include signatures for skill construction.
       with_type_annotations: Include type annotations and not just the parameter
         name.
-      shorten_type_annotations: Removes path prefixes from the signature to
-        shorten lengthy types.
       with_doc: Also print out docstring for each skill.
     """
 
-    def build_signature(
-        skill, with_type_annotations: bool, shorten_type_annotations: bool
-    ) -> str:
+    def build_signature(skill, with_type_annotations: bool) -> str:
       """Build a signature for skill, optionally including type annotations.
 
       Args:
         skill: The skill to build the signature for.
         with_type_annotations: Include type annotations and not just the
           parameter name.
-        shorten_type_annotations: Removes 'google3.googlex.intrinsic.' from the
-          signature to shoren lengthy types.
 
       Returns:
         The skill signature.
@@ -307,16 +300,12 @@ class Solution:
           parameters.append(k)
           continue
         param = str(v)
-        if shorten_type_annotations:
-          param = param.replace("google3.googlex.intrinsic.", "")
         parameters.append(param)
       return ", ".join(parameters)
 
     for skill_id, skill in self.skills.get_skill_ids_and_classes():
       if with_signatures:
-        signature_str = build_signature(
-            skill, with_type_annotations, shorten_type_annotations
-        )
+        signature_str = build_signature(skill, with_type_annotations)
         print(f"{skill_id}({signature_str})")
       else:
         print(skill_id)
