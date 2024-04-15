@@ -5,7 +5,6 @@ package waitforskill
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -31,10 +30,6 @@ type Params struct {
 	// How long WaitForSkill should wait.
 	WaitDuration time.Duration
 }
-
-// ErrSkillRegistryUnimplemented is returned when the request to the skill registry comes back as
-// unimplemented at any point. This may indicate that no solution is running.
-var ErrSkillRegistryUnimplemented = errors.New("querying skill registry failed (is a solution running in the target cluster?)")
 
 // TimeoutError is returned when [WaitForSkill] times out with its configured deadline. It contains
 // (but does not wrap!) the last error received from the skill registry.
@@ -83,7 +78,7 @@ func WaitForSkill(ctx context.Context, params *Params) error {
 			switch grpcStatus.Code() {
 			case codes.Unimplemented:
 				// Ingress will return Unimplemented if no skill registry is running as part of a solution.
-				return errors.Join(ErrSkillRegistryUnimplemented, err)
+				// Retry because it might not be running yet.
 			case codes.NotFound:
 				// Wait and retry because skill is not registered yet.
 			case codes.Unavailable:
