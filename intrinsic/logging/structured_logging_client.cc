@@ -39,10 +39,9 @@ struct StructuredLoggingClient::StructuredLoggingClientImpl {
       std::unique_ptr<StructuredLoggingClient::LoggerStub> stub)
       : stub(std::move(stub)) {}
 
-  // Following the general documentation here:
-  // https://g3doc.corp.google.com/net/grpc/g3doc/grpc_prod/cpp/client_side_operation.md#creating-channels-and-stubs
-  // we do not need to protect the stub with a dedicated mutex since the "stub
+  // We do not need to protect the stub with a dedicated mutex since the "stub
   // is thread-safe and should be re-used for multiple (concurrent) RPCs".
+  // https://github.com/grpc/grpc/issues/5649
   std::unique_ptr<intrinsic_proto::data_logger::DataLogger::StubInterface> stub;
 };
 
