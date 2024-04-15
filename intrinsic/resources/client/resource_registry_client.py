@@ -44,18 +44,18 @@ class ResourceRegistryClient:
 
   @error_handling.retry_on_grpc_unavailable
   def get_resource_instance(
-      self, resource_id: str
+      self, name: str
   ) -> resource_registry_pb2.ResourceInstance:
-    """Returns the resource instance with the given id.
+    """Returns the resource instance with the given name.
 
     Args:
-      resource_id: Id of the resource instance to return.
+      name: Name of the resource instance to return.
 
     Returns:
       The requested resource instance.
     """
     return self._stub.GetResourceInstance(
-        resource_registry_pb2.GetResourceInstanceRequest(id=resource_id)
+        resource_registry_pb2.GetResourceInstanceRequest(name=name)
     )
 
   def list_all_resource_instances(

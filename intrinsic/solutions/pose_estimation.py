@@ -56,8 +56,8 @@ class PoseEstimators:
         )
     )
     return {
-        resource_instance.id: pose_estimator_id_pb2.PoseEstimatorId(
-            id=resource_instance.id
+        resource_instance.name: pose_estimator_id_pb2.PoseEstimatorId(
+            id=resource_instance.name
         )
         for resource_instance in pose_estimator_resources
     }

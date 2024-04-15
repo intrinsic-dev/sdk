@@ -22,7 +22,7 @@ class ResourceRegistryClientTest(absltest.TestCase):
 
   def test_get_resource_instance(self):
     camera_instance = resource_registry_pb2.ResourceInstance(
-        id='my_camera', resource_family_id='camera'
+        name='my_camera', resource_family_id='camera'
     )
     self._resource_registry_stub.GetResourceInstance.return_value = (
         camera_instance
@@ -33,15 +33,15 @@ class ResourceRegistryClientTest(absltest.TestCase):
         camera_instance,
     )
     self._resource_registry_stub.GetResourceInstance.assert_called_with(
-        resource_registry_pb2.GetResourceInstanceRequest(id='my_camera')
+        resource_registry_pb2.GetResourceInstanceRequest(name='my_camera')
     )
 
   def test_list_all_resource_instances(self):
     camera_instance = resource_registry_pb2.ResourceInstance(
-        id='my_camera', resource_family_id='camera'
+        name='my_camera', resource_family_id='camera'
     )
     robot_instance = resource_registry_pb2.ResourceInstance(
-        id='my_robot', resource_family_id='robot'
+        name='my_robot', resource_family_id='robot'
     )
     self._resource_registry_stub.ListResourceInstances.return_value = (
         resource_registry_pb2.ListResourceInstanceResponse(
@@ -64,10 +64,10 @@ class ResourceRegistryClientTest(absltest.TestCase):
 
   def test_list_all_resource_instances_paged(self):
     camera_instance = resource_registry_pb2.ResourceInstance(
-        id='my_camera', resource_family_id='camera'
+        name='my_camera', resource_family_id='camera'
     )
     robot_instance = resource_registry_pb2.ResourceInstance(
-        id='my_robot', resource_family_id='robot'
+        name='my_robot', resource_family_id='robot'
     )
     self._resource_registry_stub.ListResourceInstances.side_effect = [
         resource_registry_pb2.ListResourceInstanceResponse(
@@ -92,10 +92,10 @@ class ResourceRegistryClientTest(absltest.TestCase):
 
   def test_list_all_resource_instances_with_family_filter(self):
     model_instance = resource_registry_pb2.ResourceInstance(
-        id='my_model', resource_family_id='perception_model'
+        name='my_model', resource_family_id='perception_model'
     )
     other_model_instance = resource_registry_pb2.ResourceInstance(
-        id='my_other_model', resource_family_id='perception_model'
+        name='my_other_model', resource_family_id='perception_model'
     )
 
     self._resource_registry_stub.ListResourceInstances.return_value = (

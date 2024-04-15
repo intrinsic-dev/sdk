@@ -44,7 +44,7 @@ class ResourceRegistryClient : public ResourceRegistryClientInterface {
                     StrictFilter &filter) const override;
 
   absl::StatusOr<intrinsic_proto::resources::ResourceInstance> GetResource(
-      absl::string_view id) const override;
+      absl::string_view name) const override;
 
  private:
   std::unique_ptr<intrinsic_proto::resources::ResourceRegistry::StubInterface>

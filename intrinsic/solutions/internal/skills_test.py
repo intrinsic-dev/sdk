@@ -248,7 +248,7 @@ class SkillsTest(parameterized.TestCase):
         resource_registry_pb2.ListResourceInstanceResponse(
             instances=[
                 resource_registry_pb2.ResourceInstance(
-                    id=handle.name, resource_handle=handle
+                    name=handle.name, resource_handle=handle
                 )
                 for handle in handles
             ],

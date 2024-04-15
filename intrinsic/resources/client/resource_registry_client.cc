@@ -58,13 +58,13 @@ ResourceRegistryClient::ListResources(
 }
 
 absl::StatusOr<intrinsic_proto::resources::ResourceInstance>
-ResourceRegistryClient::GetResource(absl::string_view id) const {
+ResourceRegistryClient::GetResource(absl::string_view name) const {
   ::grpc::ClientContext context;
   context.set_deadline(absl::ToChronoTime(absl::Now() + timeout_));
 
   intrinsic_proto::resources::GetResourceInstanceRequest req;
   intrinsic_proto::resources::ResourceInstance instance;
-  req.set_id(id);
+  req.set_name(name);
   INTR_RETURN_IF_ERROR(
       ToAbslStatus(stub_->GetResourceInstance(&context, req, &instance)));
   return instance;

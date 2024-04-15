@@ -14,8 +14,8 @@ class PoseEstimatorsTest(absltest.TestCase):
   def test_lists_pose_estimators(self):
     resource_registry_client = mock.MagicMock()
     resource_registry_client.list_all_resource_instances.return_value = [
-        resource_registry_pb2.ResourceInstance(id="pose_estimator_1"),
-        resource_registry_pb2.ResourceInstance(id="pose_estimator_2"),
+        resource_registry_pb2.ResourceInstance(name="pose_estimator_1"),
+        resource_registry_pb2.ResourceInstance(name="pose_estimator_2"),
     ]
 
     pose_estimators = pose_estimation.PoseEstimators(

@@ -60,7 +60,7 @@ message ListServicesResponse {
 
 message ResourceInstance {
   // The resource instance's unique identifier with the resource set.
-  string id = 1;
+  string name = 1;
 
   // Resource type identifier. Type information can be requested through the
   // resource catalog unless this instance was instantiated via sideloading.
@@ -106,5 +106,5 @@ message ListResourceInstanceResponse {
 }
 
 message GetResourceInstanceRequest {
-  string id = 1;
+  string name = 1;
 }
