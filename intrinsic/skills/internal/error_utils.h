@@ -7,7 +7,7 @@
 
 #include "absl/status/status.h"
 #include "google/rpc/status.pb.h"
-#include "grpcpp/grpcpp.h"
+#include "grpcpp/support/status.h"
 #include "intrinsic/skills/proto/error.pb.h"
 
 namespace intrinsic {
