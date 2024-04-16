@@ -9,6 +9,7 @@ import (
 
 	// Add subcommand "skill create"
 	_ "intrinsic/skills/tools/skill/cmd/create"
+
 	// Add subcommand "skill list".
 	_ "intrinsic/skills/tools/skill/cmd/list"
 	// Add subcommand "skill listreleased".
