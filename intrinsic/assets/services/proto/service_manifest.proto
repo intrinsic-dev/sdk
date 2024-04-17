@@ -1,0 +1,87 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.services;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/descriptor.proto";
+import "intrinsic/assets/proto/asset_tag.proto";
+import "intrinsic/assets/proto/documentation.proto";
+import "intrinsic/assets/proto/id.proto";
+import "intrinsic/assets/proto/vendor.proto";
+import "intrinsic/kubernetes/workcell_spec/proto/image.proto";
+
+message ServiceMetadata {
+  // The service's id.
+  intrinsic_proto.assets.Id id = 1;
+  // The service's vendor.
+  intrinsic_proto.assets.Vendor vendor = 2;
+  // Documentation about the service which will be shown to users.
+  intrinsic_proto.assets.Documentation documentation = 3;
+  // The display name of this service to be shown in UIs.
+  string display_name = 4;
+  // A tag identifying the category of the service.
+  intrinsic_proto.assets.AssetTag asset_tag = 5;
+}
+
+message ServiceDef {
+  // The list of gRPC service names that this service will expose.
+  repeated string service_proto_prefixes = 1;
+  // The pod spec to be used in real environments.
+  ServicePodSpec real_spec = 2;
+  // The pod spec to be used in simulated environments.
+  ServicePodSpec sim_spec = 3;
+}
+
+message ServicePodSpec {
+  // The image to be used in simulated or real environments.
+  ServiceImage image = 1;
+}
+
+message ServiceImage {
+  // The image archive file.
+  string archive_filename = 1;
+}
+
+message ServiceAssets {
+  // The binary proto file containing the default configuration.
+  optional string default_configuration_filename = 1;
+  // The file descriptor set containing the service's parameters.
+  optional string parameter_descriptor_filename = 2;
+  // The filenames of images used in the service definition.
+  repeated string image_filenames = 3;
+}
+
+message ServiceManifest {
+  // Metadata associated with this service (e.g., id, documentation, etc.)
+  ServiceMetadata metadata = 1;
+  // The service's pod spec.
+  ServiceDef service_def = 2;
+  // This service's assets.
+  ServiceAssets assets = 3;
+}
+
+message ProcessedServiceAssets {
+  // Default configuration data for the service.
+  google.protobuf.Any default_configuration = 1;
+  // A complete descriptor set for the configuration message.
+  google.protobuf.FileDescriptorSet file_descriptor_set = 2;
+  // References to images uploaded in a container registry. The keys are the
+  // original filenames in the bundle, as referenced by the service definition.
+  map<string, workcell_spec.v1.Image> images = 3;
+}
+
+message ProcessedServiceManifest {
+  // Metadata associated with this service (e.g., id, documentation, etc.)
+  ServiceMetadata metadata = 1;
+  // The service's pod spec.
+  ServiceDef service_def = 2;
+  // The processed version of the service assets. This can be used to send a
+  // complete description of a service using a manifest.
+  ProcessedServiceAssets assets = 3;
+}
+
+message ServiceManifests {
+  repeated ServiceManifest manifests = 1;
+}

@@ -110,3 +110,17 @@ go_library(
         "@org_golang_google_protobuf//proto",
     ],
 )
+
+go_library(
+    name = "bundleio",
+    srcs = ["bundle_io.go"],
+    deps = [
+        "//intrinsic/assets/proto:id_go_proto",
+        "//intrinsic/assets/services/proto:service_manifest_go_proto",
+        "//intrinsic/kubernetes/workcell_spec/proto:image_go_proto",
+        "//intrinsic/util/archive:tartooling",
+        "@io_bazel_rules_go//proto/wkt:descriptor_go_proto",
+        "@org_golang_google_protobuf//proto",
+        "@org_golang_google_protobuf//types/known/anypb",
+    ],
+)
