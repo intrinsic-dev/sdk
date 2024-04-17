@@ -46,6 +46,7 @@ def intrinsic_sdks_deps_1(register_go_toolchain = True):
     # - Documentation is in
     #   https://github.com/bazel-contrib/toolchains_llvm/blob/master/toolchain/rules.bzl
     # - If system files are not found, add them in ../BUILD.sysroot
+    # - BUG(b/334809653): You might need to manually fix the mirror.
     bazel_toolchain_dependencies()
     llvm_toolchain(
         name = "llvm_toolchain",
