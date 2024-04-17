@@ -108,11 +108,13 @@ func RunInitCmd(params *InitCmdParams) (InitSuccessMessage, error) {
 	bazelVersionFile := filepath.Join(workspaceRoot, ".bazelversion")
 	workspaceFile := filepath.Join(workspaceRoot, "WORKSPACE")
 	bazelrcFile := filepath.Join(workspaceRoot, ".bazelrc")
+	permissiveContentMirrorFile := filepath.Join(workspaceRoot, "bazel/content_mirror/permissive.cfg")
 	createdFiles := []string{bazelrcFile}
 
 	if !params.BazelrcOnly {
 		createdFiles = append(createdFiles, bazelVersionFile)
 		createdFiles = append(createdFiles, workspaceFile)
+		createdFiles = append(createdFiles, permissiveContentMirrorFile)
 	}
 
 	// Check early for collisions with existing files to enable dry-runs and to
@@ -139,6 +141,13 @@ func RunInitCmd(params *InitCmdParams) (InitSuccessMessage, error) {
 			}
 			if err := templateutil.CreateNewFileFromTemplate(
 				bazelVersionFile, "bazelversion.template", templateParams, templateSet,
+				templateutil.CreateFileOptions{
+					Override: params.Override,
+				}); err != nil {
+				return InitSuccessMessage{}, fmt.Errorf("creating file: %w", err)
+			}
+			if err := templateutil.CreateNewFileFromTemplate(
+				permissiveContentMirrorFile, "permissive_content_mirror.template", templateParams, templateSet,
 				templateutil.CreateFileOptions{
 					Override: params.Override,
 				}); err != nil {

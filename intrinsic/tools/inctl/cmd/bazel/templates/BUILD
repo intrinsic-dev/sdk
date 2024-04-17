@@ -31,3 +31,10 @@ genrule(
     outs = ["bazelversion.template"],
     cmd = "cat $< > $@",
 )
+
+genrule(
+    name = "permissive_content_mirror",
+    srcs = ["//bazel:content_mirror/permissive.cfg"],
+    outs = ["permissive_content_mirror.template"],
+    cmd = "cat $< > $@",
+)

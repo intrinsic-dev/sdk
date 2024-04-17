@@ -14,6 +14,7 @@ go_library(
         "//intrinsic/tools/inctl/cmd/bazel/templates:WORKSPACE.template",  #keep
         "//intrinsic/tools/inctl/cmd/bazel/templates:bazelrc.template",  #keep
         "//intrinsic/tools/inctl/cmd/bazel/templates:bazelversion.template",  #keep
+        "//intrinsic/tools/inctl/cmd/bazel/templates:permissive_content_mirror.template",  #keep
     ],
     visibility = [
         "//intrinsic/skills/tools:__subpackages__",

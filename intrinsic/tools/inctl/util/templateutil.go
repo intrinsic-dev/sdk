@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"text/template"
 )
 
@@ -46,6 +47,9 @@ func CreateNewFileFromTemplate(path string, templateName string, data any, templ
 		return fmt.Errorf("file %s cannot be created since it already exists: %w", path, os.ErrExist)
 	}
 
+	if err := os.MkdirAll(filepath.Dir(path), 0770 /*rwxrwx---*/); err != nil {
+		return fmt.Errorf("creating directory %s: %w", filepath.Dir(path), err)
+	}
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0660 /*rw-rw----*/)
 	if err != nil {
 		return fmt.Errorf("creating file %s: %w", path, err)
