@@ -103,7 +103,7 @@ absl::Status RunBlendedJointMove(
   waypoint2 << -0.6, 0.5, -0.5, 0.5, 0.5, 0.5;
   eigenmath::VectorNd waypoint3 = eigenmath::VectorNd::Zero(kNDof);
   waypoint3 << -0.6, 0.0, 0, 0.5, 0, 0.5;
-  eigenmath::VectorNd target_joint_pos = initial_joint_pos;
+  const eigenmath::VectorNd& target_joint_pos = initial_joint_pos;
 
   Client icon_client(icon_channel);
   INTR_RETURN_IF_ERROR(icon_client.Enable());
