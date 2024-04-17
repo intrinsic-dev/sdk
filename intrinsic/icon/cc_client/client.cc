@@ -52,6 +52,7 @@ Client::GetActionSignatureByName(absl::string_view action_type_name) const {
   std::unique_ptr<::grpc::ClientContext> context = client_context_factory_();
   context->set_deadline(::grpc::DeadlineFromDuration(timeout_));
   intrinsic_proto::icon::GetActionSignatureByNameRequest request;
+
   request.set_name(std::string(action_type_name));
   intrinsic_proto::icon::GetActionSignatureByNameResponse response;
   INTR_RETURN_IF_ERROR(ToAbslStatus(
@@ -110,7 +111,9 @@ absl::StatusOr<bool> Client::IsActionCompatible(
   std::unique_ptr<::grpc::ClientContext> context = client_context_factory_();
   context->set_deadline(::grpc::DeadlineFromDuration(timeout_));
   intrinsic_proto::icon::IsActionCompatibleRequest request;
+
   request.set_part_name(std::string(part_name));
+
   request.set_action_type_name(std::string(action_type_name));
   intrinsic_proto::icon::IsActionCompatibleResponse response;
   INTR_RETURN_IF_ERROR(ToAbslStatus(
@@ -125,6 +128,7 @@ absl::StatusOr<bool> Client::IsActionCompatible(
   context->set_deadline(::grpc::DeadlineFromDuration(timeout_));
   intrinsic_proto::icon::IsActionCompatibleRequest request;
   *request.mutable_slot_part_map() = ToProto(slot_part_map);
+
   request.set_action_type_name(std::string(action_type_name));
   intrinsic_proto::icon::IsActionCompatibleResponse response;
   INTR_RETURN_IF_ERROR(ToAbslStatus(

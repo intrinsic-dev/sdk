@@ -53,7 +53,7 @@ class CartesianVector : public CartesianVectorBase {
   double RY() const { return operator()(4); }
   double RZ() const { return operator()(5); }
 
-  // NOLINTNEXTLINE (google3-readability-class-member-naming)
+
   static const CartesianVector ZERO;
 
  private:
@@ -82,7 +82,7 @@ class CartesianVectorSubclass : public CartesianVector {
     return *this;
   }
 
-  // NOLINTNEXTLINE (google3-readability-class-member-naming)
+
   static const CartesianVectorSubclass ZERO;
 };
 

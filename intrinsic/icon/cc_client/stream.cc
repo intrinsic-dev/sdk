@@ -32,7 +32,9 @@ absl::Status GenericStreamWriter::OpenStreamWriter(
   initial_req.set_session_id(session_id.value());
   initial_req.mutable_add_write_stream()->set_action_id(
       action_instance_id.value());
+
   initial_req.mutable_add_write_stream()->set_field_name(
+
       std::string(input_name));
   if (!grpc_stream_->Write(initial_req)) {
     INTR_RETURN_IF_ERROR(FinishIfNeeded());

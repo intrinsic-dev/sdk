@@ -137,6 +137,7 @@ absl::StatusOr<Comparison> FromProto(
 
 intrinsic_proto::icon::Comparison ToProto(const Comparison& condition) {
   intrinsic_proto::icon::Comparison out;
+
   out.set_state_variable_name(std::string(condition.state_variable_name()));
   out.set_operation(condition.operation());
   out.set_max_abs_error(condition.max_abs_error());

@@ -28,6 +28,7 @@ google::rpc::Status SaveStatusAsRpcStatus(const absl::Status& status) {
         } else {
           google::protobuf::Any* any = ret.add_details();
           any->set_type_url(type_url);
+
           any->set_value(std::string(payload));
         }
       });
