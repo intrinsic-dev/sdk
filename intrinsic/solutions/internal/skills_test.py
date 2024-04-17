@@ -1204,17 +1204,27 @@ class SkillsTest(parameterized.TestCase):
       skills.my_skill(a=resource_a)
 
   def test_skill_class_name(self):
-    skill_info = _create_test_skill_info(skill_id='ai.intrinsic.my_skill')
+    skill_infos = [
+        _create_parameterless_skill_info('ai.intrinsic.my_skill'),
+        _create_parameterless_skill_info('global_skill'),
+    ]
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
+        _create_skill_registry_for_skill_infos(skill_infos),
         self._create_empty_resource_registry(),
     )
 
-    self.assertEqual(skills.my_skill.__name__, 'my_skill')
-    self.assertEqual(skills.my_skill.__qualname__, 'my_skill')
+    self.assertEqual(skills.ai.intrinsic.my_skill.__name__, 'my_skill')
+    self.assertEqual(skills.ai.intrinsic.my_skill.__qualname__, 'my_skill')
     self.assertEqual(
-        skills.my_skill.__module__,
+        skills.ai.intrinsic.my_skill.__module__,
         'intrinsic.solutions.skills.ai.intrinsic',
+    )
+
+    self.assertEqual(skills.global_skill.__name__, 'global_skill')
+    self.assertEqual(skills.global_skill.__qualname__, 'global_skill')
+    self.assertEqual(
+        skills.global_skill.__module__,
+        'intrinsic.solutions.skills',
     )
 
   def test_skill_signature(self):

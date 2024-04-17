@@ -54,7 +54,10 @@ def module_for_generated_skill(skill_package: str) -> str:
     A module name string, e.g., 'intrinsic.solutions.skills.ai.intrinsic'.
   """
   skills_python_package = __name__.replace(".internal.skill_utils", ".skills")
-  return skills_python_package + "." + skill_package
+  if skill_package:
+    return skills_python_package + "." + skill_package
+  else:
+    return skills_python_package
 
 
 @dataclasses.dataclass
