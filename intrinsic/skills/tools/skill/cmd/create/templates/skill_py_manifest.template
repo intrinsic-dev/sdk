@@ -6,7 +6,7 @@ id {
   package: "{{.SkillPackageName}}"
   name: "{{.SkillNameSnakeCase}}"
 }
-display_name: "Unknown Skill"
+display_name: "{{.SkillNameUpperCamelCase}}"
 vendor {
   display_name: "Unknown Vendor"
 }
