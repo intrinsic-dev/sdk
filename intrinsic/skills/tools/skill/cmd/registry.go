@@ -23,15 +23,19 @@ type PushOptions struct {
 	AuthUser string
 	// AuthPwd is the optional password used to authenticate registry access.
 	AuthPwd string
-	// Registry is the container registry (ignored with Type is image).
+	// Registry is the container registry to which to push the image.
 	Registry string
+	// Tag is the optional image tag to use.
+	//
+	// If empty, then imageutils.WithDefaultTag is used to determine the tag.
+	Tag string
 	// Type is the target type. See --type flag definition in start.go for info.
 	Type string
 	//
 	Transferer imagetransfer.Transferer
 }
 
-func pushBuildOrArchiveTypes(image containerregistry.Image, imageName string, opts PushOptions) (*imagepb.Image, error) {
+func pushImage(image containerregistry.Image, imageName string, opts PushOptions) (*imagepb.Image, error) {
 	reg := imageutils.RegistryOptions{
 		URI:        opts.Registry,
 		Transferer: opts.Transferer,
@@ -40,9 +44,19 @@ func pushBuildOrArchiveTypes(image containerregistry.Image, imageName string, op
 			Pwd:  opts.AuthPwd,
 		},
 	}
-	imgOpts, err := imageutils.WithDefaultTag(imageName)
-	if err != nil {
-		return nil, fmt.Errorf("could not create a tag for the image %q: %v", imageName, err)
+
+	var imgOpts imageutils.ImageOptions
+	if opts.Tag == "" {
+		var err error
+		imgOpts, err = imageutils.WithDefaultTag(imageName)
+		if err != nil {
+			return nil, fmt.Errorf("could not create a tag for the image %q: %v", imageName, err)
+		}
+	} else {
+		imgOpts = imageutils.ImageOptions{
+			Name: imageName,
+			Tag:  opts.Tag,
+		}
 	}
 
 	return imageutils.PushImage(image, imgOpts, reg)
@@ -92,17 +106,37 @@ func push(target string, image containerregistry.Image, imageName string, opts P
 	targetType := imageutils.TargetType(opts.Type)
 	switch targetType {
 	case imageutils.Build, imageutils.Archive:
-		return pushBuildOrArchiveTypes(image, imageName, opts)
+		return pushImage(image, imageName, opts)
 	case imageutils.Image:
-		if imageProto, err := imagePbFromRef(target, imageName, opts); err != nil {
+		imageProto, err := imagePbFromRef(target, imageName, opts)
+		if err != nil {
 			return nil, err
-		} else if imageProto.GetRegistry() == opts.Registry || opts.Registry == "" {
+		}
+
+		sourceRegistry := imageProto.GetRegistry()
+		targetRegistry := opts.Registry
+		if strings.HasSuffix(targetRegistry, "/") {
+			targetRegistry = targetRegistry[:len(targetRegistry)-1]
+		}
+		if sourceRegistry == targetRegistry || targetRegistry == "" {
 			// Target image is already in the specified registry, so nothing to do.
 			return imageProto, nil
 		}
 
+		if opts.Tag == "" {
+			// We could probably recover the original tag, given the digest, but won't implement unless we
+			// need to.
+			if strings.HasPrefix(imageProto.GetTag(), "@") {
+				return nil, fmt.Errorf("tag is required when pushing an image with digest tag to a different registry")
+			}
+			if !strings.HasSuffix(imageProto.GetTag(), ":") {
+				return nil, fmt.Errorf("unexpected image proto tag: %s", imageProto.GetTag())
+			}
+			opts.Tag = imageProto.GetTag()[1:]
+		}
+
 		// Target is in a different registry, so we need to push the image to the specified registry.
-		return pushBuildOrArchiveTypes(image, imageName, opts)
+		return pushImage(image, imageName, opts)
 	}
 	return nil, fmt.Errorf("unimplemented target type: %v", targetType)
 }
@@ -153,7 +187,7 @@ func PushSkillFromBytes(archive []byte, opts PushOptions) (*imagepb.Image, error
 	if err != nil {
 		return nil, fmt.Errorf("could not extract labels from image object: %v", err)
 	}
-	imgpb, err := pushBuildOrArchiveTypes(image, installerParams.ImageName, opts)
+	imgpb, err := pushImage(image, installerParams.ImageName, opts)
 	if err != nil {
 		return nil, err
 	}
