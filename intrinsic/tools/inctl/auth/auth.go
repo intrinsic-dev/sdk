@@ -328,8 +328,17 @@ func (s *Store) RemoveConfiguration(name string) error {
 }
 
 // AuthorizeContext retrieves the default credentials for the given project and adds authorization
-// information directly to a context derived from the given context. If the context already has
-// authorization information this function will *not* modify the context.
+// information directly to a context derived from the given context. If the given context already
+// has authorization information this function will *not* modify the context.
+//
+// Always prefer using [ProjectToken] as per-RPC credentials where possible. This is a fallback that
+// enables passing API keys over insecure boundaries and must be used carefully.
+//
+// Warning: This writes an "authorization" header (outgoing metadata) to the context. Only one such
+// header is permitted on requests. A context authorized with this method must never be used with a
+// connection that specifies per-RPC credentials that also write to the "authorization" header.
+// Prominent examples of per-RPC credentials that must not be used with this method are
+// [oauth.TokenSource] (used for default credentials) and [ProjectToken].
 func (s *Store) AuthorizeContext(ctx context.Context, projectName string) (context.Context, error) {
 	configuration, err := s.GetConfiguration(projectName)
 	if err != nil {
