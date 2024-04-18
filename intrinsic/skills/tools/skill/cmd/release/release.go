@@ -14,6 +14,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"intrinsic/assets/clientutils"
@@ -25,6 +26,7 @@ import (
 	skillcatalogpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillmanifestpb "intrinsic/skills/proto/skill_manifest_go_proto"
 	skillCmd "intrinsic/skills/tools/skill/cmd"
+	"intrinsic/skills/tools/skill/cmd/directupload"
 	"intrinsic/skills/tools/skill/cmd/registry"
 	"intrinsic/util/proto/protoio"
 )
@@ -42,23 +44,9 @@ var (
 	}
 )
 
-func release(cmd *cobra.Command, req *skillcatalogpb.CreateSkillRequest, idVersion string) error {
-	conn, err := clientutils.DialCatalogFromInctl(cmd, cmdFlags)
-	if err != nil {
-		return fmt.Errorf("failed to create client connection: %v", err)
-	}
-	defer conn.Close()
-
+func release(cmd *cobra.Command, conn *grpc.ClientConn, req *skillcatalogpb.CreateSkillRequest, idVersion string) error {
 	_ = skillcataloggrpcpb.NewSkillCatalogClient(conn)
-	err = status.Errorf(codes.Unimplemented, "releasing skills is not yet supported")
-
-	if err != nil {
-		if s, ok := status.FromError(err); ok && cmdFlags.GetFlagIgnoreExisting() && s.Code() == codes.AlreadyExists {
-			log.Printf("skipping release: skill %q already exists in the catalog", idVersion)
-			return nil
-		}
-		return fmt.Errorf("could not release the skill :%w", err)
-	}
+	return status.Errorf(codes.Unimplemented, "releasing skills is not yet supported")
 
 	log.Printf("finished releasing the skill")
 
@@ -184,6 +172,19 @@ var releaseCmd = &cobra.Command{
 			OrgPrivate:   cmdFlags.GetFlagOrgPrivate(),
 		}
 
+		useDirectUpload := true
+		needConn := true
+
+		var conn *grpc.ClientConn
+		if needConn {
+			var err error
+			conn, err = clientutils.DialCatalogFromInctl(cmd, cmdFlags)
+			if err != nil {
+				return fmt.Errorf("failed to create client connection: %v", err)
+			}
+			defer conn.Close()
+		}
+
 		// Functions to prepare each release type.
 		releasePreparers := map[string]func() error{}
 
@@ -202,11 +203,18 @@ var releaseCmd = &cobra.Command{
 		}
 
 		pushSkillPreparer := func() error {
-			var transferer imagetransfer.Transferer
 			if dryRun {
-				transferer = imagetransfer.Readonly(remoteOpt())
-			} else {
-				transferer = imagetransfer.RemoteTransferer(remoteOpt())
+				log.Printf("Skipping pushing skill %q to the container registry (dry-run)", target)
+				return nil
+			}
+
+			var transferer imagetransfer.Transferer
+			if useDirectUpload {
+				opts := []directupload.Option{
+					directupload.WithDiscovery(directupload.NewCatalogTarget(conn)),
+					directupload.WithOutput(cmd.OutOrStdout()),
+				}
+				transferer = directupload.NewTransferer(cmd.Context(), opts...)
 			}
 			imgpb, _, err := registry.PushSkill(target, registry.PushOptions{
 				Registry:   imageutils.GetRegistry(project),
@@ -243,7 +251,7 @@ var releaseCmd = &cobra.Command{
 		}
 		log.Printf("releasing skill %q to the skill catalog", idVersion)
 
-		return release(cmd, req, idVersion)
+		return release(cmd, conn, req, idVersion)
 	},
 }
 
