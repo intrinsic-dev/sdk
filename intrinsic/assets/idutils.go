@@ -26,8 +26,10 @@ var (
 	idRegex        = regexp.MustCompile(`(?P<id>^(?P<package>([a-z]([a-z0-9_]?[a-z0-9])*\.)+[a-z]([a-z0-9_]?[a-z0-9])*)\.(?P<name>[a-z]([a-z0-9_]?[a-z0-9])*)$)`)
 	idVersionRegex = regexp.MustCompile(`(?P<id_version>^(?P<id>(?P<package>([a-z]([a-z0-9_]?[a-z0-9])*\.)+[a-z]([a-z0-9_]?[a-z0-9])*)\.(?P<name>[a-z]([a-z0-9_]?[a-z0-9])*))\.(?P<version>(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$)`)
 
-	// labelRegex = regexp.MustCompile(`(^([a-z])|([a-z][a-z0-9-]*[a-z0-9])$)`)
-	labelRegex = regexp.MustCompile(`^[a-z]([a-z0-9\-]*[a-z0-9])*$`)
+	labelRegex          = regexp.MustCompile(`^[a-z]([a-z0-9\-]*[a-z0-9])*$`)
+	labelFirstCharRegex = regexp.MustCompile(`^[a-z].*`)
+	labelBadCharRegex   = regexp.MustCompile(`[^a-z0-9\-]`)
+	labelLastCharRegex  = regexp.MustCompile(`.*[a-z0-9]$`)
 
 	nonReleasedVersionRegex = regexp.MustCompile("\\+(?:sideloaded|inlined)")
 )
@@ -455,7 +457,7 @@ func ParentFromPackage(pkg string) string {
 //   - a SpiceDB id (https://authzed.com/docs).
 //
 // A label:
-//   - consists of only alphanumeric characters and hyphens (-);
+//   - consists of only lower case alphanumeric characters and hyphens (-);
 //   - begins with an alphabetic character;
 //   - ends with an alphanumeric character.
 //
@@ -477,7 +479,32 @@ func ToLabel(s string) (string, error) {
 	label := strings.ReplaceAll(strings.ReplaceAll(s, "_", "-"), ".", "--")
 
 	if !labelRegex.MatchString(label) {
-		return "", fmt.Errorf("cannot convert %q into a label", s)
+		return "", fmt.Errorf("cannot convert %q into a label (got invalid label: %q)", s, label)
+	}
+
+	return label, nil
+}
+
+// ToLabelNonReversible converts the input into a label (see ToLabel).
+//
+// The label may not be reversible using FromLabel.
+func ToLabelNonReversible(s string) (string, error) {
+	if len(s) == 0 {
+		return "", fmt.Errorf("cannot convert empty string into a label")
+	}
+	label := strings.ToLower(s)
+
+	label = strings.ReplaceAll(strings.ReplaceAll(label, "_", "-"), ".", "--")
+	label = labelBadCharRegex.ReplaceAllString(label, "-")
+	if !labelFirstCharRegex.MatchString(label) {
+		label = fmt.Sprintf("a%s", label)
+	}
+	if !labelLastCharRegex.MatchString(label) {
+		label = fmt.Sprintf("%sa", label)
+	}
+
+	if !labelRegex.MatchString(label) {
+		return "", fmt.Errorf("cannot convert %q into a label (got invalid label: %q)", s, label)
 	}
 
 	return label, nil
