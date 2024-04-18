@@ -97,6 +97,7 @@ py_test(
     deps = [
         ":object_world_client",
         ":object_world_ids",
+        "//intrinsic/world/proto:geometry_component_py_pb2",
         "//intrinsic/world/proto:object_world_service_py_pb2",
         "@com_google_absl_py//absl/testing:absltest",
     ],

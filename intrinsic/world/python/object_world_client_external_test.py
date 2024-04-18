@@ -5,6 +5,7 @@
 from unittest import mock
 
 from absl.testing import absltest
+from intrinsic.world.proto import geometry_component_pb2
 from intrinsic.world.proto import object_world_service_pb2
 from intrinsic.world.python import object_world_client
 from intrinsic.world.python import object_world_ids
@@ -63,6 +64,18 @@ class ObjectWorldClientTest(absltest.TestCase):
 
     self.assertEqual(world_client.my_object.name, 'my_object')
     self.assertEqual(world_client.my_object.id, '15')
+
+  def test_create_geometry(self):
+    self._stub.CreateObject.return_value = self._create_object_proto(
+        name='foo', object_id='23', world_id='world'
+    )
+    world_client = object_world_client.ObjectWorldClient(
+        'world', self._stub, self._geometry_service_stub
+    )
+    world_client.create_geometry_object(
+        object_name='foo',
+        geometry_component=geometry_component_pb2.GeometryComponent(),
+    )
 
 
 if __name__ == '__main__':

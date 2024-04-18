@@ -92,6 +92,12 @@ message UpdateCollisionSettingsRequest {
   }
 }
 
+// Specifies the properties for a simple single-entity object.
+message ObjectSpecForSingleEntityObject {
+  // The geometry component associated with the object's entity.
+  intrinsic_proto.world.GeometryComponent geometry_component = 3;
+}
+
 // Specifies to create an object by instantiating a ProductPart.
 message ObjectSpecFromProduct {
   // Name of the product part in the Product document of the running
@@ -130,6 +136,7 @@ message CreateObjectRequest {
 
   // Options for specifying the contents and properties of the object.
   oneof object_spec {
+    ObjectSpecForSingleEntityObject create_single_entity_object = 5;
     ObjectSpecFromProduct create_from_product = 8;
   }
 
