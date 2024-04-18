@@ -112,6 +112,15 @@ go_library(
 )
 
 go_library(
+    name = "typeutils",
+    srcs = ["typeutils.go"],
+    deps = [
+        "//intrinsic/assets/proto:asset_type_go_proto",
+        "@org_golang_x_exp//slices",
+    ],
+)
+
+go_library(
     name = "bundleio",
     srcs = ["bundle_io.go"],
     deps = [
