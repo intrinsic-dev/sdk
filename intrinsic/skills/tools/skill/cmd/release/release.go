@@ -216,8 +216,13 @@ var releaseCmd = &cobra.Command{
 				}
 				transferer = directupload.NewTransferer(cmd.Context(), opts...)
 			}
+			imageTag, err := imageutils.GetAssetVersionImageTag("skill", cmdFlags.GetFlagVersion())
+			if err != nil {
+				return err
+			}
 			imgpb, _, err := registry.PushSkill(target, registry.PushOptions{
 				Registry:   imageutils.GetRegistry(project),
+				Tag:        imageTag,
 				Type:       targetType,
 				Transferer: transferer,
 			})
