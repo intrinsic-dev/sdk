@@ -14,6 +14,7 @@ import (
 	containerregistry "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	"github.com/pkg/errors"
+	"github.com/rs/xid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -41,6 +42,8 @@ const (
 
 	// Number of times to try uploading a container image if we get retriable errors.
 	remoteWriteTries = 5
+
+	maxImageTagLength = 128
 
 	dockerLabelSkillIDKey = "ai.intrinsic.asset-id"
 
@@ -105,6 +108,29 @@ func ValidateRegistry(registry string, project string) error {
 // GetRegistry returns the registry to use for images in the specified project.
 func GetRegistry(project string) string {
 	return fmt.Sprintf("%s/%s", registryDomain, project)
+}
+
+// GetAssetVersionImageTag returns the image tag to use for an asset version.
+//
+// imageType is a user-chosen string that can be used to distinguish different images within the
+// same asset version.
+func GetAssetVersionImageTag(imageType string, version string) (string, error) {
+	tag := ""
+
+	if tag == "" {
+		imageTypeVersion := strings.ReplaceAll(fmt.Sprintf("%s.%s", imageType, version), "+", "_")
+		imageTypeVersionLabel, err := idutils.ToLabelNonReversible(imageTypeVersion)
+		if err != nil {
+			return "", fmt.Errorf("could not convert image type + version %q to label: %v", imageTypeVersion, err)
+		}
+		tag = fmt.Sprintf("%s-%s", imageTypeVersionLabel, xid.New().String())
+	}
+
+	if len(tag) > maxImageTagLength {
+		return "", fmt.Errorf("tag %q exceeds maximum length %d", tag, maxImageTagLength)
+	}
+
+	return tag, nil
 }
 
 // buildImage builds the given target. The built image's file path is returned.
