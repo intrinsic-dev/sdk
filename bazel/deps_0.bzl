@@ -85,10 +85,10 @@ def intrinsic_sdks_deps_0():
         http_archive,
         name = "rules_pkg",
         urls = [
-            "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.8.1/rules_pkg-0.8.1.tar.gz",
-            "https://github.com/bazelbuild/rules_pkg/releases/download/0.8.1/rules_pkg-0.8.1.tar.gz",
+            "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.9.1/rules_pkg-0.9.1.tar.gz",
+            "https://github.com/bazelbuild/rules_pkg/releases/download/0.9.1/rules_pkg-0.9.1.tar.gz",
         ],
-        sha256 = "8c20f74bca25d2d442b327ae26768c02cf3c99e93fad0381f32be9aab1967675",
+        sha256 = "8f9ee2dc10c1ae514ee599a8b42ed99fa262b757058f65ad3c384289ff70c4b8",
     )
 
     maybe(
@@ -239,21 +239,20 @@ def intrinsic_sdks_deps_0():
     maybe(
         http_archive,
         name = "com_google_absl_py",
-        sha256 = "d82bb99b96efc726e5d516f6811045097666ea369bbe74f687f71bd3b9390a12",
-        strip_prefix = "abseil-py-2.0.0",
+        sha256 = "0fb3a4916a157eb48124ef309231cecdfdd96ff54adf1660b39c0d4a9790a2c0",
+        strip_prefix = "abseil-py-1.4.0",
         urls = [
-            "https://github.com/abseil/abseil-py/archive/refs/tags/v2.0.0.zip",
+            "https://github.com/abseil/abseil-py/archive/refs/tags/v1.4.0.tar.gz",
         ],
     )
 
     maybe(
         http_archive,
         name = "com_google_absl",
-        sha256 = "aa768256d0567f626334fcbe722f564c40b281518fc8423e2708a308e5f983ea",
-        # Abseil LTS branch, Aug 2023, Patch 1
-        strip_prefix = "abseil-cpp-fb3621f4f897824c0dbe0615fa94543df6192f30",
+        sha256 = "59d2976af9d6ecf001a81a35749a6e551a335b949d34918cfade07737b9d93c5",
+        strip_prefix = "abseil-cpp-20230802.0",
         urls = [
-            "https://github.com/abseil/abseil-cpp/archive/fb3621f4f897824c0dbe0615fa94543df6192f30.zip",
+            "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.0.tar.gz",
         ],
     )
 
@@ -271,9 +270,9 @@ def intrinsic_sdks_deps_0():
         http_archive,
         name = "pybind11_bazel",
         repo_mapping = {"@local_config_python": "@local_config_python"},
-        sha256 = "3f4da867f80075d95bdd346018c2057c00e3b22ce527c3ea8af9d19f08bbb7ea",
-        strip_prefix = "pybind11_bazel-b162c7c88a253e3f6b673df0c621aca27596ce6b",
-        urls = ["https://github.com/pybind/pybind11_bazel/archive/b162c7c88a253e3f6b673df0c621aca27596ce6b.tar.gz"],  # May 3, 2023
+        sha256 = "e2ba5f81f3bf6a3fc0417448d49389cc7950bebe48c42c33dfeb4dd59859b9a4",
+        strip_prefix = "pybind11_bazel-2.11.1.bzl.2",
+        urls = ["https://github.com/pybind/pybind11_bazel/archive/refs/tags/v2.11.1.bzl.2.tar.gz"],
     )
 
     maybe(
@@ -299,10 +298,10 @@ def intrinsic_sdks_deps_0():
     maybe(
         http_archive,
         name = "bazel_skylib",
-        sha256 = "f7be3474d42aae265405a592bb7da8e171919d74c16f082a5457840f06054728",
+        sha256 = "cd55a062e763b9349921f0f5db8c3933288dc8ba4f76dd9416aac68acee3cb94",
         urls = [
-            "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.2.1/bazel-skylib-1.2.1.tar.gz",
-            "https://github.com/bazelbuild/bazel-skylib/releases/download/1.2.1/bazel-skylib-1.2.1.tar.gz",
+            "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.5.0/bazel-skylib-1.5.0.tar.gz",
+            "https://github.com/bazelbuild/bazel-skylib/releases/download/1.5.0/bazel-skylib-1.5.0.tar.gz",
         ],
     )
 
