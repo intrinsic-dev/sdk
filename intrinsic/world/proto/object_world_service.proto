@@ -68,7 +68,8 @@ service ObjectWorldService {
   }
 
   // Creates a new object.
-  rpc CreateObject(CreateObjectRequest) returns (Object) {}
+  rpc CreateObject(CreateObjectRequest) returns (Object) {
+  }
 
   // Deletes an object in the world.
   rpc DeleteObject(DeleteObjectRequest) returns (google.protobuf.Empty) {
