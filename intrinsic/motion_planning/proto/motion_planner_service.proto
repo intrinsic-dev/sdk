@@ -71,8 +71,11 @@ message MotionPlanningRequestCacheKey {
       motion_segment_collision_settings = 7;
   // All parent ids in attachment components in the world.
   repeated uint32 attachment_parent_ids = 8;
-  // All geometry ids in geometry components in the world.
-  repeated string geometry_ids = 9;
+
+  reserved "geometry_ids";
+  reserved 9;
+  // All geometry references in geometry components in the world.
+  repeated string serialized_geometry_refs = 11;
   // UUID used for logging only.
   string uuid = 10;
 }
