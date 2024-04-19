@@ -59,3 +59,23 @@ py_test(
         "@com_google_absl_py//absl/testing:parameterized",
     ],
 )
+
+py_library(
+    name = "skill_test_utils",
+    testonly = True,
+    srcs = ["skill_test_utils.py"],
+    srcs_version = "PY3",
+    visibility = ["//intrinsic/solutions:__subpackages__"],
+    deps = [
+        ":test_skill_params_py_pb2",
+        "//intrinsic/resources/client:resource_registry_client",
+        "//intrinsic/resources/proto:resource_handle_py_pb2",
+        "//intrinsic/resources/proto:resource_registry_py_pb2",
+        "//intrinsic/skills/client:skill_registry_client",
+        "//intrinsic/skills/proto:skill_registry_py_pb2",
+        "//intrinsic/skills/proto:skills_py_pb2",
+        "@com_google_absl_py//absl/flags",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)

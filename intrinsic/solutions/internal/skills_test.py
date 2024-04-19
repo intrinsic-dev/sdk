@@ -4,16 +4,13 @@
 
 import datetime
 import inspect
-import os
 import textwrap
 from unittest import mock
 
-from absl import flags
 from absl.testing import absltest
 from absl.testing import parameterized
 from google.protobuf import descriptor_pb2
 from google.protobuf import empty_pb2
-from google.protobuf import message
 from google.protobuf import text_format
 from intrinsic.executive.proto import behavior_call_pb2
 from intrinsic.executive.proto import test_message_pb2
@@ -22,9 +19,7 @@ from intrinsic.math.proto import pose_pb2
 from intrinsic.math.proto import quaternion_pb2
 from intrinsic.math.python import data_types
 from intrinsic.math.python import proto_conversion as math_proto_conversion
-from intrinsic.resources.client import resource_registry_client
 from intrinsic.resources.proto import resource_handle_pb2
-from intrinsic.resources.proto import resource_registry_pb2
 from intrinsic.skills.client import skill_registry_client
 from intrinsic.skills.proto import skill_registry_pb2
 from intrinsic.skills.proto import skills_pb2
@@ -34,39 +29,8 @@ from intrinsic.solutions import provided
 from intrinsic.solutions.internal import skill_utils
 from intrinsic.solutions.internal import skills as skills_mod
 from intrinsic.solutions.testing import compare
+from intrinsic.solutions.testing import skill_test_utils
 from intrinsic.solutions.testing import test_skill_params_pb2
-
-FLAGS = flags.FLAGS
-
-
-def _read_message_from_pbbin_file(filename):
-  with open(filename, 'rb') as fileobj:
-    return descriptor_pb2.FileDescriptorSet.FromString(fileobj.read())
-
-
-def _get_test_message_file_descriptor_set() -> descriptor_pb2.FileDescriptorSet:
-  """Returns the file descriptor set of transitive dependencies for TestMessage.
-
-  Requires FLAGS to be parsed prior to invocation.
-  """
-  # WORKSPACE
-  test_data_path = os.path.join(
-      FLAGS.test_srcdir,
-      os.environ.get('TEST_WORKSPACE'),
-      'intrinsic/solutions',
-  )
-  if not os.path.exists(test_data_path):
-    # MODULE.bazel
-    test_data_path = os.path.join(
-        FLAGS.test_srcdir,
-        os.environ.get('TEST_WORKSPACE'),
-        'external/ai_intrinsic_sdks~override/intrinsic/solutions',
-    )
-  file_descriptor_set_pbbin_filename = os.path.join(
-      test_data_path,
-      'testing/test_skill_params_proto_descriptors_transitive_set_sci.proto.bin',
-  )
-  return _read_message_from_pbbin_file(file_descriptor_set_pbbin_filename)
 
 
 _SKILL_PARAMETER_DICT = {
@@ -114,103 +78,6 @@ _DEFAULT_TEST_MESSAGE = test_skill_params_pb2.TestMessage(
 )
 
 
-def _create_parameterless_skill_info(skill_id: str) -> skills_pb2.Skill:
-  id_parts = skill_id.split('.')
-  skill_info = skills_pb2.Skill(
-      id=skill_id, skill_name=id_parts[-1], package_name='.'.join(id_parts[:-1])
-  )
-
-  return skill_info
-
-
-def _create_test_skill_info(
-    skill_id: str,
-    parameter_defaults: message.Message = test_skill_params_pb2.TestMessage(),
-    resource_selectors: dict[str, str] = None,
-) -> skills_pb2.Skill:
-  id_parts = skill_id.split('.')
-  skill_info = skills_pb2.Skill(
-      id=skill_id, skill_name=id_parts[-1], package_name='.'.join(id_parts[:-1])
-  )
-
-  skill_info.parameter_description.parameter_descriptor_fileset.CopyFrom(
-      _get_test_message_file_descriptor_set()
-  )
-
-  skill_info.parameter_description.default_value.Pack(parameter_defaults)
-
-  skill_info.parameter_description.parameter_message_full_name = (
-      parameter_defaults.DESCRIPTOR.full_name
-  )
-
-  for field in parameter_defaults.DESCRIPTOR.fields:
-    skill_info.parameter_description.parameter_field_comments[
-        field.full_name
-    ] = 'Mockup comment'
-
-  if resource_selectors:
-    for key, value in resource_selectors.items():
-      skill_info.resource_selectors[key].capability_names.append(value)
-
-  return skill_info
-
-
-def _create_test_skill_info_with_return_value(
-    skill_id: str,
-    parameter_defaults: message.Message = test_skill_params_pb2.TestMessage(),
-    resource_selectors: dict[str, str] = None,
-) -> skills_pb2.Skill:
-  skill_info = skills_pb2.Skill(id=skill_id)
-
-  skill_info.parameter_description.parameter_descriptor_fileset.CopyFrom(
-      _get_test_message_file_descriptor_set()
-  )
-
-  skill_info.parameter_description.default_value.Pack(parameter_defaults)
-
-  skill_info.parameter_description.parameter_message_full_name = (
-      parameter_defaults.DESCRIPTOR.full_name
-  )
-
-  skill_info.return_value_description.descriptor_fileset.CopyFrom(
-      _get_test_message_file_descriptor_set()
-  )
-
-  skill_info.return_value_description.return_value_message_full_name = (
-      parameter_defaults.DESCRIPTOR.full_name
-  )
-
-  for field in parameter_defaults.DESCRIPTOR.fields:
-    skill_info.parameter_description.parameter_field_comments[
-        field.full_name
-    ] = 'Mockup comment'
-
-  for field in parameter_defaults.DESCRIPTOR.fields:
-    skill_info.return_value_description.return_value_field_comments[
-        field.full_name
-    ] = 'Mockup comment'
-
-  if resource_selectors:
-    for key, value in resource_selectors.items():
-      skill_info.resource_selectors[key].capability_names.append(value)
-
-  return skill_info
-
-
-def _create_get_skills_response(
-    skill_id: str,
-    parameter_defaults: test_skill_params_pb2.TestMessage = test_skill_params_pb2.TestMessage(),
-    resource_selectors: dict[str, str] = None,
-) -> skill_registry_pb2.GetSkillsResponse:
-  skill_info = _create_test_skill_info(
-      skill_id, parameter_defaults, resource_selectors
-  )
-
-  skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-  skill_registry_response.skills.add().CopyFrom(skill_info)
-  return skill_registry_response
-
-
 def _create_skill_registry_with_mock_stub():
   skill_registry_stub = mock.MagicMock()
   skill_registry = skill_registry_client.SkillRegistryClient(
@@ -220,61 +87,15 @@ def _create_skill_registry_with_mock_stub():
   return (skill_registry, skill_registry_stub)
 
 
-def _create_skill_registry_for_skill_infos(
-    skill_infos: list[skills_pb2.Skill],
-) -> skill_registry_client.SkillRegistryClient:
-  skill_registry_stub = mock.MagicMock()
-  skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-  for info in skill_infos:
-    skill_registry_response.skills.add().CopyFrom(info)
-  skill_registry_stub.GetSkills.return_value = skill_registry_response
-  return skill_registry_client.SkillRegistryClient(skill_registry_stub)
-
-
-def _create_skill_registry_for_skill_info(
-    skill_info: skills_pb2.Skill,
-) -> skill_registry_client.SkillRegistryClient:
-  return _create_skill_registry_for_skill_infos([skill_info])
-
-
 class SkillsTest(parameterized.TestCase):
   """Tests public methods of the skills wrapper class."""
 
-  def _create_resource_registry_with_handles(
-      self, handles: list[resource_handle_pb2.ResourceHandle]
-  ) -> resource_registry_client.ResourceRegistryClient:
-    resource_registry_stub = mock.MagicMock()
-    resource_registry_stub.ListResourceInstances.return_value = (
-        resource_registry_pb2.ListResourceInstanceResponse(
-            instances=[
-                resource_registry_pb2.ResourceInstance(
-                    name=handle.name, resource_handle=handle
-                )
-                for handle in handles
-            ],
-        )
-    )
-    return resource_registry_client.ResourceRegistryClient(
-        resource_registry_stub
-    )
+  def setUp(self):
+    super().setUp()
 
-  def _create_resource_registry_with_single_handle(
-      self, name: str, type_name: str
-  ) -> resource_registry_client.ResourceRegistryClient:
-    return self._create_resource_registry_with_handles([
-        text_format.Parse(
-            f"""name: '{name}'
-                    resource_data {{
-                      key: '{type_name}'
-                    }}""",
-            resource_handle_pb2.ResourceHandle(),
-        )
-    ])
-
-  def _create_empty_resource_registry(
-      self,
-  ) -> resource_registry_client.ResourceRegistryClient:
-    return self._create_resource_registry_with_handles([])
+    self._utils = skill_test_utils.SkillTestUtils(
+        'testing/test_skill_params_proto_descriptors_transitive_set_sci.proto.bin'
+    )
 
   def assertSignature(self, actual, expected):
     actual = str(actual)
@@ -313,12 +134,14 @@ class SkillsTest(parameterized.TestCase):
     skill_registry, skill_registry_stub = (
         _create_skill_registry_with_mock_stub()
     )
-    skill_registry_stub.GetSkills.return_value = _create_get_skills_response(
-        'my_skill', parameter_defaults=_DEFAULT_TEST_MESSAGE
+    skill_registry_stub.GetSkills.return_value = (
+        self._utils.create_get_skills_response(
+            'my_skill', parameter_defaults=_DEFAULT_TEST_MESSAGE
+        )
     )
 
     skills = skills_mod.Skills(
-        skill_registry, self._create_empty_resource_registry()
+        skill_registry, self._utils.create_empty_resource_registry()
     )
 
     with self.assertRaises(TypeError):
@@ -326,18 +149,18 @@ class SkillsTest(parameterized.TestCase):
 
   def test_list_skills(self):
     skill_infos = [
-        _create_parameterless_skill_info('ai.intr.intr_skill_one'),
-        _create_parameterless_skill_info('ai.intr.intr_skill_two'),
-        _create_parameterless_skill_info('ai.ai_skill'),
-        _create_parameterless_skill_info('foo.foo_skill'),
-        _create_parameterless_skill_info('foo.foo'),
-        _create_parameterless_skill_info('foo.bar.bar_skill'),
-        _create_parameterless_skill_info('foo.bar.bar'),
-        _create_parameterless_skill_info('global_skill'),
+        self._utils.create_parameterless_skill_info('ai.intr.intr_skill_one'),
+        self._utils.create_parameterless_skill_info('ai.intr.intr_skill_two'),
+        self._utils.create_parameterless_skill_info('ai.ai_skill'),
+        self._utils.create_parameterless_skill_info('foo.foo_skill'),
+        self._utils.create_parameterless_skill_info('foo.foo'),
+        self._utils.create_parameterless_skill_info('foo.bar.bar_skill'),
+        self._utils.create_parameterless_skill_info('foo.bar.bar'),
+        self._utils.create_parameterless_skill_info('global_skill'),
     ]
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_infos(skill_infos),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_infos(skill_infos),
+        self._utils.create_empty_resource_registry(),
     )
 
     self.assertEqual(
@@ -360,7 +183,7 @@ class SkillsTest(parameterized.TestCase):
 
   def test_skills_attribute_access(self):
     """Tests attribute-based access (skills.<skill_id>)."""
-    ai_intr_intr_skill_two = _create_parameterless_skill_info(
+    ai_intr_intr_skill_two = self._utils.create_parameterless_skill_info(
         'ai.intr.intr_skill_two'
     )
     # Some skill protos may only have the skill id but not the skill_name or
@@ -368,18 +191,18 @@ class SkillsTest(parameterized.TestCase):
     ai_intr_intr_skill_two.skill_name = ''
     ai_intr_intr_skill_two.package_name = ''
     skill_infos = [
-        _create_parameterless_skill_info('ai.intr.intr_skill_one'),
+        self._utils.create_parameterless_skill_info('ai.intr.intr_skill_one'),
         ai_intr_intr_skill_two,
-        _create_parameterless_skill_info('ai.ai_skill'),
-        _create_parameterless_skill_info('foo.foo_skill'),
-        _create_parameterless_skill_info('foo.foo'),
-        _create_parameterless_skill_info('foo.bar.bar_skill'),
-        _create_parameterless_skill_info('foo.bar.bar'),
-        _create_parameterless_skill_info('global_skill'),
+        self._utils.create_parameterless_skill_info('ai.ai_skill'),
+        self._utils.create_parameterless_skill_info('foo.foo_skill'),
+        self._utils.create_parameterless_skill_info('foo.foo'),
+        self._utils.create_parameterless_skill_info('foo.bar.bar_skill'),
+        self._utils.create_parameterless_skill_info('foo.bar.bar'),
+        self._utils.create_parameterless_skill_info('global_skill'),
     ]
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_infos(skill_infos),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_infos(skill_infos),
+        self._utils.create_empty_resource_registry(),
     )
 
     # Shortcut notation: skills.<skill_name>
@@ -416,13 +239,13 @@ class SkillsTest(parameterized.TestCase):
   def test_skills_dict_access(self):
     """Tests id-string-based access via __getitem__ (skills['<skill_id>'])."""
     skill_infos = [
-        _create_parameterless_skill_info('ai.intr.skill_one'),
-        _create_parameterless_skill_info('ai.intr.skill_two'),
-        _create_parameterless_skill_info('global_skill'),
+        self._utils.create_parameterless_skill_info('ai.intr.skill_one'),
+        self._utils.create_parameterless_skill_info('ai.intr.skill_two'),
+        self._utils.create_parameterless_skill_info('global_skill'),
     ]
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_infos(skill_infos),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_infos(skill_infos),
+        self._utils.create_empty_resource_registry(),
     )
 
     self.assertIsInstance(
@@ -438,13 +261,13 @@ class SkillsTest(parameterized.TestCase):
 
   def test_skills_get_skill_ids(self):
     skill_infos = [
-        _create_parameterless_skill_info('ai.intr.skill_one'),
-        _create_parameterless_skill_info('ai.intr.skill_two'),
-        _create_parameterless_skill_info('global_skill'),
+        self._utils.create_parameterless_skill_info('ai.intr.skill_one'),
+        self._utils.create_parameterless_skill_info('ai.intr.skill_two'),
+        self._utils.create_parameterless_skill_info('global_skill'),
     ]
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_infos(skill_infos),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_infos(skill_infos),
+        self._utils.create_empty_resource_registry(),
     )
 
     skill_ids = skills.get_skill_ids()
@@ -456,13 +279,13 @@ class SkillsTest(parameterized.TestCase):
 
   def test_skills_get_skill_classes(self):
     skill_infos = [
-        _create_parameterless_skill_info('ai.intr.skill_one'),
-        _create_parameterless_skill_info('ai.intr.skill_two'),
-        _create_parameterless_skill_info('global_skill'),
+        self._utils.create_parameterless_skill_info('ai.intr.skill_one'),
+        self._utils.create_parameterless_skill_info('ai.intr.skill_two'),
+        self._utils.create_parameterless_skill_info('global_skill'),
     ]
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_infos(skill_infos),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_infos(skill_infos),
+        self._utils.create_empty_resource_registry(),
     )
 
     skill_classes = skills.get_skill_classes()
@@ -473,13 +296,13 @@ class SkillsTest(parameterized.TestCase):
 
   def test_skills_get_skill_ids_and_classes(self):
     skill_infos = [
-        _create_parameterless_skill_info('ai.intr.skill_one'),
-        _create_parameterless_skill_info('ai.intr.skill_two'),
-        _create_parameterless_skill_info('global_skill'),
+        self._utils.create_parameterless_skill_info('ai.intr.skill_one'),
+        self._utils.create_parameterless_skill_info('ai.intr.skill_two'),
+        self._utils.create_parameterless_skill_info('global_skill'),
     ]
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_infos(skill_infos),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_infos(skill_infos),
+        self._utils.create_empty_resource_registry(),
     )
 
     ids_and_classes = skills.get_skill_ids_and_classes()
@@ -501,14 +324,17 @@ class SkillsTest(parameterized.TestCase):
     resource_name = 'some-name'
     resource_capability = 'some-type'
 
-    resource_registry = self._create_resource_registry_with_single_handle(
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
         resource_name, resource_capability
     )
 
     # No default parameters
-    skill_registry_stub.GetSkills.return_value = _create_get_skills_response(
-        skill_id=skill_id,
-        resource_selectors={resource_slot: resource_capability},
+    skill_registry_stub.GetSkills.return_value = (
+        self._utils.create_get_skills_response(
+            skill_id=skill_id,
+            parameter_defaults=test_skill_params_pb2.TestMessage(),
+            resource_selectors={resource_slot: resource_capability},
+        )
     )
 
     skills = skills_mod.Skills(skill_registry, resource_registry)
@@ -589,16 +415,18 @@ class SkillsTest(parameterized.TestCase):
     resource_name = 'some-name'
     resource_capability = 'some-type'
 
-    resource_registry = self._create_resource_registry_with_single_handle(
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
         resource_name, resource_capability
     )
 
     parameter_defaults = _DEFAULT_TEST_MESSAGE
 
-    skill_registry_stub.GetSkills.return_value = _create_get_skills_response(
-        skill_id=skill_id,
-        parameter_defaults=parameter_defaults,
-        resource_selectors={resource_slot: resource_capability},
+    skill_registry_stub.GetSkills.return_value = (
+        self._utils.create_get_skills_response(
+            skill_id=skill_id,
+            parameter_defaults=parameter_defaults,
+            resource_selectors={resource_slot: resource_capability},
+        )
     )
 
     skills = skills_mod.Skills(skill_registry, resource_registry)
@@ -648,14 +476,17 @@ class SkillsTest(parameterized.TestCase):
     resource_name = 'some-name'
     resource_capability = 'some-type'
 
-    resource_registry = self._create_resource_registry_with_single_handle(
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
         resource_name, resource_capability
     )
 
     # No default parameters
-    skill_registry_stub.GetSkills.return_value = _create_get_skills_response(
-        skill_id=skill_id,
-        resource_selectors={resource_slot: resource_capability},
+    skill_registry_stub.GetSkills.return_value = (
+        self._utils.create_get_skills_response(
+            skill_id=skill_id,
+            parameter_defaults=test_skill_params_pb2.TestMessage(),
+            resource_selectors={resource_slot: resource_capability},
+        )
     )
 
     skills = skills_mod.Skills(skill_registry, resource_registry)
@@ -704,16 +535,18 @@ class SkillsTest(parameterized.TestCase):
     resource_slot = 'a'
     resource_name = 'some-name'
     resource_capability = 'some-type'
-    resource_registry = self._create_resource_registry_with_single_handle(
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
         resource_name, resource_capability
     )
 
     parameter_defaults = _DEFAULT_TEST_MESSAGE
 
-    skill_registry_stub.GetSkills.return_value = _create_get_skills_response(
-        skill_id=skill_id,
-        parameter_defaults=parameter_defaults,
-        resource_selectors={resource_slot: resource_capability},
+    skill_registry_stub.GetSkills.return_value = (
+        self._utils.create_get_skills_response(
+            skill_id=skill_id,
+            parameter_defaults=parameter_defaults,
+            resource_selectors={resource_slot: resource_capability},
+        )
     )
 
     skills = skills_mod.Skills(skill_registry, resource_registry)
@@ -755,14 +588,16 @@ class SkillsTest(parameterized.TestCase):
     resource_slot = 'a'
     resource_name = 'some-name'
     resource_capability = 'some-type'
-    resource_registry = self._create_resource_registry_with_single_handle(
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
         resource_name, resource_capability
     )
 
-    skill_registry_stub.GetSkills.return_value = _create_get_skills_response(
-        skill_id=skill_id,
-        parameter_defaults=test_skill_params_pb2.TestMessage(),
-        resource_selectors={resource_slot: resource_capability},
+    skill_registry_stub.GetSkills.return_value = (
+        self._utils.create_get_skills_response(
+            skill_id=skill_id,
+            parameter_defaults=test_skill_params_pb2.TestMessage(),
+            resource_selectors={resource_slot: resource_capability},
+        )
     )
 
     skills = skills_mod.Skills(skill_registry, resource_registry)
@@ -909,14 +744,16 @@ class SkillsTest(parameterized.TestCase):
     resource_slot = 'a'
     resource_name = 'some-name'
     resource_capability = 'some-type'
-    resource_registry = self._create_resource_registry_with_single_handle(
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
         resource_name, resource_capability
     )
 
-    skill_registry_stub.GetSkills.return_value = _create_get_skills_response(
-        skill_id=skill_id,
-        parameter_defaults=test_skill_params_pb2.TestMessage(),
-        resource_selectors={resource_slot: resource_capability},
+    skill_registry_stub.GetSkills.return_value = (
+        self._utils.create_get_skills_response(
+            skill_id=skill_id,
+            parameter_defaults=test_skill_params_pb2.TestMessage(),
+            resource_selectors={resource_slot: resource_capability},
+        )
     )
 
     skills = skills_mod.Skills(skill_registry, resource_registry)
@@ -947,14 +784,16 @@ class SkillsTest(parameterized.TestCase):
     resource_slot = 'a'
     resource_name = 'some-name'
     resource_capability = 'some-type'
-    resource_registry = self._create_resource_registry_with_single_handle(
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
         resource_name, resource_capability
     )
 
-    skill_registry_stub.GetSkills.return_value = _create_get_skills_response(
-        skill_id=skill_id,
-        parameter_defaults=test_skill_params_pb2.TestMessage(),
-        resource_selectors={resource_slot: resource_capability},
+    skill_registry_stub.GetSkills.return_value = (
+        self._utils.create_get_skills_response(
+            skill_id=skill_id,
+            parameter_defaults=test_skill_params_pb2.TestMessage(),
+            resource_selectors={resource_slot: resource_capability},
+        )
     )
 
     skills = skills_mod.Skills(skill_registry, resource_registry)
@@ -981,14 +820,16 @@ class SkillsTest(parameterized.TestCase):
     resource_slot = 'a'
     resource_name = 'some-name'
     resource_capability = 'some-type'
-    resource_registry = self._create_resource_registry_with_single_handle(
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
         resource_name, resource_capability
     )
 
-    skill_registry_stub.GetSkills.return_value = _create_get_skills_response(
-        skill_id=skill_id,
-        parameter_defaults=test_skill_params_pb2.TestMessage(),
-        resource_selectors={resource_slot: resource_capability},
+    skill_registry_stub.GetSkills.return_value = (
+        self._utils.create_get_skills_response(
+            skill_id=skill_id,
+            parameter_defaults=test_skill_params_pb2.TestMessage(),
+            resource_selectors={resource_slot: resource_capability},
+        )
     )
 
     skills = skills_mod.Skills(skill_registry, resource_registry)
@@ -1015,14 +856,16 @@ class SkillsTest(parameterized.TestCase):
     resource_slot = 'a'
     resource_name = 'some-name'
     resource_capability = 'some-type'
-    resource_registry = self._create_resource_registry_with_single_handle(
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
         resource_name, resource_capability
     )
 
-    skill_registry_stub.GetSkills.return_value = _create_get_skills_response(
-        skill_id=skill_id,
-        parameter_defaults=test_skill_params_pb2.TestMessage(),
-        resource_selectors={resource_slot: resource_capability},
+    skill_registry_stub.GetSkills.return_value = (
+        self._utils.create_get_skills_response(
+            skill_id=skill_id,
+            parameter_defaults=test_skill_params_pb2.TestMessage(),
+            resource_selectors={resource_slot: resource_capability},
+        )
     )
 
     skills = skills_mod.Skills(skill_registry, resource_registry)
@@ -1041,14 +884,16 @@ class SkillsTest(parameterized.TestCase):
     resource_slot = 'a'
     resource_name = 'some-name'
     resource_capability = 'some-type'
-    resource_registry = self._create_resource_registry_with_single_handle(
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
         resource_name, resource_capability
     )
 
-    skill_registry_stub.GetSkills.return_value = _create_get_skills_response(
-        skill_id=skill_id,
-        parameter_defaults=test_skill_params_pb2.TestMessage(),
-        resource_selectors={resource_slot: resource_capability},
+    skill_registry_stub.GetSkills.return_value = (
+        self._utils.create_get_skills_response(
+            skill_id=skill_id,
+            parameter_defaults=test_skill_params_pb2.TestMessage(),
+            resource_selectors={resource_slot: resource_capability},
+        )
     )
 
     skills = skills_mod.Skills(skill_registry, resource_registry)
@@ -1070,15 +915,17 @@ class SkillsTest(parameterized.TestCase):
     skill_id = 'ai.intrinsic.my_skill'
     resource_name = 'some-name'
     resource_capability = 'some-type'
-    resource_registry = self._create_resource_registry_with_single_handle(
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
         resource_name, resource_capability
     )
 
     parameter_defaults = _DEFAULT_TEST_MESSAGE
 
-    skill_registry_stub.GetSkills.return_value = _create_get_skills_response(
-        skill_id=skill_id,
-        parameter_defaults=parameter_defaults,
+    skill_registry_stub.GetSkills.return_value = (
+        self._utils.create_get_skills_response(
+            skill_id=skill_id,
+            parameter_defaults=parameter_defaults,
+        )
     )
 
     skills = skills_mod.Skills(skill_registry, resource_registry)
@@ -1141,7 +988,7 @@ class SkillsTest(parameterized.TestCase):
         skill_registry_stub
     )
 
-    resource_registry = self._create_resource_registry_with_handles([
+    resource_registry = self._utils.create_resource_registry_with_handles([
         text_format.Parse(
             """name: 'foo_resource'
                resource_data { key: 'foo_type' }""",
@@ -1194,8 +1041,8 @@ class SkillsTest(parameterized.TestCase):
         skills_pb2.Skill(),
     )
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
     )
 
     resource_a = provided.ResourceHandle.create('resource_a', ['some-type'])
@@ -1205,12 +1052,12 @@ class SkillsTest(parameterized.TestCase):
 
   def test_skill_class_name(self):
     skill_infos = [
-        _create_parameterless_skill_info('ai.intrinsic.my_skill'),
-        _create_parameterless_skill_info('global_skill'),
+        self._utils.create_parameterless_skill_info('ai.intrinsic.my_skill'),
+        self._utils.create_parameterless_skill_info('global_skill'),
     ]
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_infos(skill_infos),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_infos(skill_infos),
+        self._utils.create_empty_resource_registry(),
     )
 
     self.assertEqual(skills.ai.intrinsic.my_skill.__name__, 'my_skill')
@@ -1228,7 +1075,10 @@ class SkillsTest(parameterized.TestCase):
     )
 
   def test_skill_signature(self):
-    skill_info = _create_test_skill_info(skill_id='ai.intrinsic.my_skill')
+    skill_info = self._utils.create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=test_skill_params_pb2.TestMessage(),
+    )
     parameters = _SKILL_PARAMETER_DICT
 
     # pyformat: disable
@@ -1277,8 +1127,8 @@ class SkillsTest(parameterized.TestCase):
     # pyformat: enable
 
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
     )
 
     my_skill = skills.my_skill(**parameters)
@@ -1288,12 +1138,12 @@ class SkillsTest(parameterized.TestCase):
   def test_skill_signature_with_default_value(self):
     parameter_defaults = _DEFAULT_TEST_MESSAGE
 
-    skill_info = _create_test_skill_info(
+    skill_info = self._utils.create_test_skill_info(
         skill_id='ai.intrinsic.my_skill', parameter_defaults=parameter_defaults
     )
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
     )
 
     my_skill = skills.my_skill()
@@ -1330,7 +1180,7 @@ class SkillsTest(parameterized.TestCase):
 
   def test_str(self):
     """Tests if Action conversion to string works."""
-    skill_info = _create_test_skill_info_with_return_value(
+    skill_info = self._utils.create_test_skill_info_with_return_value(
         skill_id='ai.intrinsic.my_skill',
         parameter_defaults=_DEFAULT_TEST_MESSAGE,
         resource_selectors={'a': 'some-type-a', 'b': 'some-type-b'},
@@ -1486,8 +1336,8 @@ Returns:
     )
 
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
     )
 
     self.assertEqual(skills.my_skill.__doc__, docstring)
@@ -1501,7 +1351,7 @@ Returns:
   def test_ambiguous_parameter_and_resource_name(self):
     """Tests ambiguous parameter name and resource slot are handled properly."""
     skill_id = 'ai.intrinsic.my_skill'
-    skill_info = _create_test_skill_info(
+    skill_info = self._utils.create_test_skill_info(
         skill_id=skill_id,
         parameter_defaults=test_skill_params_pb2.ResourceConflict(a='bar'),
         resource_selectors={
@@ -1509,7 +1359,7 @@ Returns:
             'a': 'some-type-a',
         },
     )
-    resource_registry = self._create_resource_registry_with_handles([
+    resource_registry = self._utils.create_resource_registry_with_handles([
         text_format.Parse(
             """name: 'some-resource1'
                resource_data { key: 'some-type-a' }""",
@@ -1523,7 +1373,8 @@ Returns:
     ])
 
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info), resource_registry
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        resource_registry,
     )
 
     self.assertEqual(
@@ -1567,12 +1418,13 @@ Returns:
         skills_pb2.Skill(),
     )
 
-    resource_registry = self._create_resource_registry_with_single_handle(
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
         'some-resource', 'some-type-a'
     )
 
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info), resource_registry
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        resource_registry,
     )
 
     self.assertEqual(
@@ -1608,12 +1460,13 @@ Returns:
         skills_pb2.Skill(),
     )
 
-    resource_registry = self._create_resource_registry_with_single_handle(
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
         'some-resource', 'some-type-a'
     )
 
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info), resource_registry
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        resource_registry,
     )
 
     class BogusObject:
@@ -1629,8 +1482,8 @@ Returns:
     skill_id = 'ai.intrinsic.my_skill'
     skill_info = text_format.Parse(f"id: '{skill_id}'", skills_pb2.Skill())
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
     )
 
     skill = skills.my_skill()
@@ -1654,13 +1507,13 @@ Returns:
     compare.assertProto2Equal(self, skill.proto, expected_proto)
 
   def test_nested_message_classes(self):
-    skill_info = _create_test_skill_info(
+    skill_info = self._utils.create_test_skill_info(
         skill_id='ai.intrinsic.my_skill',
         parameter_defaults=_DEFAULT_TEST_MESSAGE,
     )
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
     )
 
     sub_message = skills.my_skill.SubMessage(
@@ -1679,13 +1532,13 @@ Returns:
     )
 
   def test_nested_message_list_with_blackboard_value(self):
-    skill_info = _create_test_skill_info(
+    skill_info = self._utils.create_test_skill_info(
         skill_id='ai.intrinsic.my_skill',
         parameter_defaults=test_skill_params_pb2.TestMessage(),
     )
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
     )
 
     sub_message = skills.my_skill.SubMessage(name=cel.CelExpression('test'))
@@ -1706,7 +1559,10 @@ Returns:
 
   def test_construct_skill_info(self):
     skills_mod.SkillInfoImpl(
-        _create_test_skill_info(skill_id='ai.intrinsic.my_skill')
+        self._utils.create_test_skill_info(
+            skill_id='ai.intrinsic.my_skill',
+            parameter_defaults=test_skill_params_pb2.TestMessage(),
+        )
     )
 
   @parameterized.parameters(
@@ -1749,13 +1605,13 @@ Returns:
 
   def test_result_access(self):
     """Tests if BlackboardValue gets created when accessing result."""
-    skill_info = _create_test_skill_info_with_return_value(
+    skill_info = self._utils.create_test_skill_info_with_return_value(
         skill_id='ai.intrinsic.my_skill',
         parameter_defaults=_DEFAULT_TEST_MESSAGE,
     )
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
     )
 
     parameters = {'my_float': 1.0, 'my_bool': True}
@@ -1778,14 +1634,17 @@ Returns:
     resource_name = 'some-name'
     resource_capability = 'some-type'
 
-    resource_registry = self._create_resource_registry_with_single_handle(
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
         resource_name, resource_capability
     )
 
     # No default parameter.
-    skill_registry_stub.GetSkills.return_value = _create_get_skills_response(
-        skill_id=skill_id,
-        resource_selectors={resource_slot: resource_capability},
+    skill_registry_stub.GetSkills.return_value = (
+        self._utils.create_get_skills_response(
+            skill_id=skill_id,
+            parameter_defaults=test_skill_params_pb2.TestMessage(),
+            resource_selectors={resource_slot: resource_capability},
+        )
     )
 
     skills = skills_mod.Skills(skill_registry, resource_registry)
@@ -1798,10 +1657,13 @@ Returns:
     self.assertEqual('name: "bar"\n', str(test_message.wrapped_message))
 
   def test_wrapper_class_name(self):
-    skill_info = _create_test_skill_info(skill_id='ai.intrinsic.my_skill')
+    skill_info = self._utils.create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=test_skill_params_pb2.TestMessage(),
+    )
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
     )
 
     my_skill = skills.ai.intrinsic.my_skill
@@ -1845,13 +1707,13 @@ Returns:
     )
 
   def test_wrapper_access(self):
-    skill_info = _create_test_skill_info(
+    skill_info = self._utils.create_test_skill_info(
         skill_id='ai.intrinsic.my_skill',
         parameter_defaults=test_skill_params_pb2.TestMessageWrapped(),
     )
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
     )
 
     my_skill = skills.ai.intrinsic.my_skill
@@ -1889,10 +1751,13 @@ Returns:
     )
 
   def test_message_wrapper_signature(self):
-    skill_info = _create_test_skill_info(skill_id='ai.intrinsic.my_skill')
+    skill_info = self._utils.create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=test_skill_params_pb2.TestMessage(),
+    )
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
     )
 
     signature = inspect.signature(skills.my_skill.SubMessage)
@@ -1906,13 +1771,13 @@ Returns:
     )
 
   def test_message_wrapper_params(self):
-    skill_info = _create_test_skill_info(
+    skill_info = self._utils.create_test_skill_info(
         skill_id='ai.intrinsic.my_skill',
         parameter_defaults=test_skill_params_pb2.TestMessageWrapped(),
     )
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
     )
 
     expected_test_message = test_skill_params_pb2.TestMessage(
@@ -1963,13 +1828,13 @@ Returns:
 
   def test_top_level_enum_values(self):
     """If the skill parameter proto defines any enums, the values of those enums should become constants on the skill wrapper class."""
-    skill_info = _create_test_skill_info(
+    skill_info = self._utils.create_test_skill_info(
         skill_id='ai.intrinsic.my_skill',
         parameter_defaults=_DEFAULT_TEST_MESSAGE,
     )
     skills = skills_mod.Skills(
-        _create_skill_registry_for_skill_info(skill_info),
-        self._create_empty_resource_registry(),
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
     )
 
     self.assertTrue(hasattr(skills.my_skill, 'ONE'))
