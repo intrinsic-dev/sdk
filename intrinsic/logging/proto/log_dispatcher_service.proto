@@ -41,6 +41,12 @@ message PutBlobRequest {
 
   // The organization ID prefixes the bucket that logs are uploaded into.
   string organization_id = 3;
+
+  // The event source of the blob, if any.
+  //
+  // Used to further prefix the blob ID to prevent collisions between blobs from
+  // different event sources.
+  string event_source = 4;
 }
 
 // ID of a cloud structured log source.
