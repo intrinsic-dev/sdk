@@ -2,6 +2,8 @@
 
 # StatusBuilder to build Intrinsic platform error reports
 
+load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
 load("//bazel:go_macros.bzl", "go_proto_library")
 
 package(
@@ -307,7 +309,34 @@ cc_proto_library(
     deps = [":extended_status_proto"],
 )
 
+py_proto_library(
+    name = "extended_status_py_pb2",
+    deps = [":extended_status_proto"],
+)
+
 cc_proto_library(
     name = "status_cc_proto",
     deps = [":status_proto"],
+)
+
+py_library(
+    name = "status_exception",
+    srcs = ["status_exception.py"],
+    deps = [
+        ":extended_status_py_pb2",
+        "//intrinsic/logging/proto:context_py_pb2",
+    ],
+)
+
+py_test(
+    name = "status_exception_test",
+    srcs = ["status_exception_test.py"],
+    deps = [
+        ":extended_status_py_pb2",
+        ":status_exception",
+        "//intrinsic/logging/proto:context_py_pb2",
+        "//intrinsic/solutions/testing:compare",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_protobuf//:protobuf_python",
+    ],
 )
