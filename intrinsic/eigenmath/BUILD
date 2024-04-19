@@ -28,5 +28,6 @@ cc_library(
         ":rotation_utils",
         "@com_gitlab_libeigen_eigen//:eigen",
         "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
     ],
 )

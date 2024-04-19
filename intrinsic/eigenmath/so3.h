@@ -4,15 +4,17 @@
 #define INTRINSIC_EIGENMATH_SO3_H_
 
 #include <cmath>
-#include <complex>
 #include <cstdlib>
 #include <iomanip>
 #include <ios>
 #include <ostream>
+#include <sstream>
+#include <string>
 #include <type_traits>
 
 #include "Eigen/Core"
 #include "absl/log/check.h"
+#include "absl/status/status.h"
 #include "intrinsic/eigenmath/rotation_utils.h"
 #include "intrinsic/eigenmath/types.h"
 
@@ -60,12 +62,23 @@ class SO3 {
     const bool is_normalized = IsNormalized();
     if (!is_normalized) {
       // Allocating here is OK, as the program will be terminated in any case.
-      CHECK(is_normalized) << std::scientific << std::setprecision(18)
-                           << "quaternion must be normalized (do_normalize= "
-                           << do_normalize << ", quaternion_= " << quaternion_
-                           << ", quaternion_.squaredNorm()= "
-                           << quaternion_.squaredNorm() << ")";
+      CHECK(is_normalized) << ExplainUnNormalizedQuaternion(quaternion_);
     }
+  }
+
+  // Creates a SO3 from `quaternion` and returns an error if given quaternion
+  // cannot be normalized.
+  template <int OtherOptions = kDefaultOptions>
+  static absl::StatusOr<SO3> FromQuaternion(
+      const Quaternion<OtherOptions>& quaternion) {
+    Quaternion<OtherOptions> quaternion_normalized = quaternion.normalized();
+    bool is_normalized = IsNormalizedQuaternion(quaternion_normalized);
+    if (!is_normalized) {
+      return absl::InvalidArgumentError(
+          absl::StrCat("Cannot create rotation from quaternion. ",
+                       ExplainUnNormalizedQuaternion(quaternion)));
+    }
+    return SO3(quaternion_normalized, /*do_normalize=*/false);
   }
 
   // Conversion operator for other SO3 types with different Eigen::Options.
@@ -88,10 +101,7 @@ class SO3 {
     const bool is_normalized = IsNormalized();
     if (!is_normalized) {
       // Allocating here is OK, as the program will be terminated in any case.
-      CHECK(is_normalized) << std::scientific << std::setprecision(18)
-                           << "quaternion must be normalized (quaternion_= "
-                           << quaternion_ << ", quaternion_.squaredNorm()= "
-                           << quaternion_.squaredNorm() << ")";
+      CHECK(is_normalized) << ExplainUnNormalizedQuaternion(quaternion_);
     }
     return *this;
   }
@@ -197,11 +207,27 @@ class SO3 {
     }
   }
 
-  // Check whether the representation is normalized.
-  bool IsNormalized() const {
+  template <int OtherOptions = kDefaultOptions>
+  static bool IsNormalizedQuaternion(
+      const Quaternion<OtherOptions>& quaternion) {
     using std::abs;  // for ADL
-    return abs(quaternion_.squaredNorm() - Scalar(1)) <
+    return abs(quaternion.squaredNorm() - Scalar(1)) <
            Eigen::NumTraits<Scalar>::dummy_precision();
+  }
+
+  // Check whether the representation is normalized.
+  bool IsNormalized() const { return IsNormalizedQuaternion(quaternion_); }
+
+  // Wait what the hell is 'intrinsic::eigenmath::SO3<ceres::Jet<double, 14>
+  // 'const ceres::Jet<double, 14>' to 'const std::wstring'
+  template <int OtherOptions = kDefaultOptions>
+  static std::string ExplainUnNormalizedQuaternion(
+      const Quaternion<OtherOptions>& quaternion) {
+    std::stringstream ss;
+    ss << std::scientific << std::setprecision(18)
+       << "Quaternion must be normalized (quaternion= " << quaternion
+       << ", quaternion.squaredNorm()= " << quaternion.squaredNorm() << ")";
+    return ss.str();
   }
 
  private:
