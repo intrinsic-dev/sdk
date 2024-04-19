@@ -6,7 +6,6 @@ package release
 import (
 	"fmt"
 	"log"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -142,8 +141,6 @@ var releaseExamples = strings.Join(
   $ inctl skill release --type=build //abc:skill.tar ...`,
 		`Upload and release a skill image to the skill catalog:
   $ inctl skill release --type=archive /path/to/skill.tar ...`,
-		`Upload a skill image to the catalog service, push it to the service's configured registry, then release it to the skill catalog:
-  $ inctl skill release --type=archive_server_side_push /path/to/skill.tar ...`,
 	},
 	"\n\n",
 )
@@ -186,22 +183,6 @@ var releaseCmd = &cobra.Command{
 		}
 
 		// Functions to prepare each release type.
-		releasePreparers := map[string]func() error{}
-
-		serverSideArchivePreparer := func() error {
-			bytes, err := os.ReadFile(target)
-			if err != nil {
-				return fmt.Errorf("failed to read skill image %q: %v", target, err)
-			}
-			req.DeploymentType = &skillcatalogpb.CreateSkillRequest_SkillImage{
-				SkillImage: &skillcatalogpb.SkillImage{
-					ImageArchive: bytes,
-				},
-			}
-
-			return nil
-		}
-
 		pushSkillPreparer := func() error {
 			if dryRun {
 				log.Printf("Skipping pushing skill %q to the container registry (dry-run)", target)
@@ -233,10 +214,11 @@ var releaseCmd = &cobra.Command{
 
 			return nil
 		}
-		releasePreparers["build"] = pushSkillPreparer
-		releasePreparers["archive"] = pushSkillPreparer
-		releasePreparers["image"] = pushSkillPreparer
-		releasePreparers["archive_server_side_push"] = serverSideArchivePreparer
+		releasePreparers := map[string]func() error{
+			"archive": pushSkillPreparer,
+			"build":   pushSkillPreparer,
+			"image":   pushSkillPreparer,
+		}
 
 		// Prepare the release based on the specified release type.
 		if prepareRelease, ok := releasePreparers[targetType]; !ok {

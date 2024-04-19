@@ -112,9 +112,6 @@ message CreateSkillRequest {
 
     // Specify if creating a parameterizable behavior tree.
     executive.BehaviorTree behavior_tree = 8;
-
-    // The skill's compiled image with skill service implementation.
-    SkillImage skill_image = 10;
   }
 
   // True if this version of the skill should be the default version.
@@ -129,8 +126,9 @@ message CreateSkillRequest {
   // Cannot be true if `default` is true.
   bool org_private = 14;
 
-  reserved 1, 2, 3, 6, 11;
-  reserved "name", "vendor", "package_name", "doc_string", "release_tag";
+  reserved 1, 2, 3, 6, 10, 11;
+  reserved "name", "vendor", "package_name", "doc_string", "skill_image",
+      "release_tag";
 }
 
 message ClearDefaultRequest {

@@ -305,7 +305,6 @@ func (cf *CmdFlags) AddFlagSkillReleaseType() {
 	targetTypeDescriptions = append(targetTypeDescriptions, `"build": a build target that creates a skill image.`)
 	targetTypeDescriptions = append(targetTypeDescriptions, `"archive": a file path to an already-built image.`)
 	targetTypeDescriptions = append(targetTypeDescriptions, `"image": a container image name.`)
-	targetTypeDescriptions = append(targetTypeDescriptions, `"archive_server_side_push": a file path to an already-built image.`)
 
 	cf.RequiredString(
 		KeyType,
