@@ -6,6 +6,7 @@ package intrinsic_proto.workcell_spec.v1;
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "intrinsic/assets/services/proto/service_manifest.proto";
 import "intrinsic/kubernetes/workcell_spec/proto/image.proto";
 
 message GetInstalledSpecResponse {
@@ -139,6 +140,16 @@ message InstallContainerAddonsRequest {
   repeated InstallContainerAddonRequest requests = 1;
 }
 
+message InstallServiceRequest {
+  intrinsic_proto.services.ProcessedServiceManifest manifest = 1;
+  string version = 2;
+}
+
+message InstallServiceResponse {
+  // Versioned ID of the installed service.
+  string id_version = 1;
+}
+
 service InstallerService {
 
   // Returns information about the currently running (if any) workcell spec.
@@ -159,4 +170,6 @@ service InstallerService {
   // Removes a (eg. 3rd party) container addon from the cluster
   rpc RemoveContainerAddon(RemoveContainerAddonRequest)
       returns (google.protobuf.Empty) {}
+  // Installs a service into the cluster to be added as a instance at a time.
+  rpc InstallService(InstallServiceRequest) returns (InstallServiceResponse) {}
 }
