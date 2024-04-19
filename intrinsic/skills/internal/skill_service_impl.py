@@ -7,7 +7,7 @@ from __future__ import annotations
 from concurrent import futures
 import threading
 import traceback
-from typing import Callable, Dict, NoReturn, Optional
+from typing import Callable, Dict, NoReturn, Optional, cast
 
 from absl import logging
 from google.longrunning import operations_pb2
@@ -39,6 +39,7 @@ from intrinsic.skills.python import proto_utils
 from intrinsic.skills.python import skill_canceller
 from intrinsic.skills.python import skill_interface as skl
 from intrinsic.skills.python import skill_logging_context
+from intrinsic.util.status import status_exception
 from intrinsic.world.proto import object_world_service_pb2_grpc
 from intrinsic.world.python import object_world_client
 from pybind11_abseil import status
@@ -952,9 +953,18 @@ def _handle_skill_error(
   message = f'Skill {skill_id} {action} {op_name}.'
   logging.exception(message)
 
+  details = []
+  if isinstance(err, status_exception.ExtendedStatusError):
+    status_any = any_pb2.Any()
+    status_any.Pack(
+        cast(status_exception.ExtendedStatusError, err).extended_status
+    )
+    details.append(status_any)
+
   return status_pb2.Status(
       code=status.StatusCodeAsInt(code),
       message=f'{message} Error: {traceback.format_exception(err)}',
+      details=details,
   )
 
 

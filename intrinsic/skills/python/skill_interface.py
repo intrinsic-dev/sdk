@@ -15,6 +15,7 @@ from intrinsic.skills.python import get_footprint_request
 from intrinsic.skills.python import preview_context
 from intrinsic.skills.python import preview_request
 from intrinsic.skills.python import skill_canceller
+from intrinsic.util.status import status_exception
 
 # Imported for convenience of skill implementations.
 ExecuteContext = execute_context.ExecuteContext
@@ -29,7 +30,9 @@ TParamsType = TypeVar('TParamsType', bound=message.Message)
 TResultType = TypeVar('TResultType', bound=Union[message.Message, None])
 
 
-class InvalidSkillParametersError(ValueError):
+class InvalidSkillParametersError(
+    ValueError, status_exception.ExtendedStatusError
+):
   """Invalid arguments were passed to the skill parameters."""
 
 

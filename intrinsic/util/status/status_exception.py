@@ -27,8 +27,19 @@ class ExtendedStatusError(Exception):
 
   extended_status: extended_status_pb2.ExtendedStatus
 
-  def __init__(self):
+  def __init__(self, external_report_message: str = ""):
+    """Initializes the instance.
+
+    Args:
+      external_report_message: if non-empty, set extended status external report
+        message to this string. This is for backwards compatibility with Python
+        exceptions. It is recommended to call the appropriate functions to set
+        extended status details.
+    """
     self.extended_status = extended_status_pb2.ExtendedStatus()
+    if external_report_message:
+      self.set_external_report_message(external_report_message)
+    super().__init__(external_report_message)
 
   def set_extended_status(
       self, extended_status: extended_status_pb2.ExtendedStatus
