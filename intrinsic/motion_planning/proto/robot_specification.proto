@@ -8,7 +8,6 @@ import "intrinsic/icon/proto/cart_space.proto";
 import "intrinsic/icon/proto/joint_space.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 
-// Different ways to specify a robot.
 message RobotReference {
   oneof robot_reference {
     // Must have ObjectType==ROBOT_PART.
