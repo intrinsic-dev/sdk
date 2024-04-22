@@ -14,59 +14,60 @@ import (
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 )
 
-var cmdFlags = cmdutils.NewCmdFlags()
+// GetCommand returns the command to list installed services in a cluster.
+func GetCommand() *cobra.Command {
+	flags := cmdutils.NewCmdFlags()
 
-// Command is a command to list installed services in a cluster.
-var Command = &cobra.Command{
-	Use:   "list",
-	Short: "List services",
-	Example: `
-	List the installed services on a particular cluster
-	$ inctl service list --context=minikube --project=my_project
-	`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := cmd.Context()
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List services",
+		Example: `
+		List the installed services on a particular cluster
+		$ inctl service list --context=minikube --project=my_project
+		`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
 
-		// Install the service to the registry
-		ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
-			Address:  cmdFlags.GetFlagAddress(),
-			Cluster:  cmdFlags.GetFlagSideloadContext(),
-			CredName: cmdFlags.GetFlagProject(),
-			CredOrg:  cmdFlags.GetFlagOrganization(),
-		})
-		if err != nil {
-			return fmt.Errorf("could not create connection options for the installer: %v", err)
-		}
-
-		var pageToken string
-		for {
-			client := rrgrpcpb.NewResourceRegistryClient(conn)
-			resp, err := client.ListServices(ctx, &rrpb.ListServicesRequest{
-				PageToken: pageToken,
+			ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
+				Address:  flags.GetFlagAddress(),
+				Cluster:  flags.GetFlagSideloadContext(),
+				CredName: flags.GetFlagProject(),
+				CredOrg:  flags.GetFlagOrganization(),
 			})
 			if err != nil {
-				return fmt.Errorf("could not list services: %v", err)
+				return fmt.Errorf("could not create connection options for the installer: %v", err)
 			}
-			for _, s := range resp.GetServices() {
-				idVersion, err := idutils.IDVersionFromProto(s.GetMetadata().GetIdVersion())
+
+			var pageToken string
+			for {
+				client := rrgrpcpb.NewResourceRegistryClient(conn)
+				resp, err := client.ListServices(ctx, &rrpb.ListServicesRequest{
+					PageToken: pageToken,
+				})
 				if err != nil {
-					return fmt.Errorf("registry returned invalid id_version: %v", err)
+					return fmt.Errorf("could not list services: %v", err)
 				}
-				fmt.Println(idVersion)
+				for _, s := range resp.GetServices() {
+					idVersion, err := idutils.IDVersionFromProto(s.GetMetadata().GetIdVersion())
+					if err != nil {
+						return fmt.Errorf("registry returned invalid id_version: %v", err)
+					}
+					fmt.Println(idVersion)
+				}
+				pageToken = resp.GetNextPageToken()
+				if pageToken == "" {
+					break
+				}
 			}
-			pageToken = resp.GetNextPageToken()
-			if pageToken == "" {
-				break
-			}
-		}
 
-		return nil
-	},
-}
+			return nil
+		},
+	}
 
-func init() {
-	cmdFlags.SetCommand(Command)
-	cmdFlags.AddFlagsProjectOrg()
-	cmdFlags.AddFlagSideloadContext()
-	cmdFlags.AddFlagAddress()
+	flags.SetCommand(cmd)
+	flags.AddFlagsProjectOrg()
+	flags.AddFlagSideloadContext()
+	flags.AddFlagAddress()
+
+	return cmd
 }
