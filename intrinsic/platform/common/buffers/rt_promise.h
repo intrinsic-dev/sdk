@@ -155,6 +155,9 @@ class RealtimePromise {
           "Cancel called on uninitialized promise.");
     }
     is_cancelled_->store(true, std::memory_order_relaxed);
+    INTRINSIC_RT_RETURN_IF_ERROR(
+        is_ready_->Post());  // So that the future, which waits for a value,
+                             // returns early.
     return is_cancel_acknowledged_->Post();
   }
 
@@ -261,6 +264,11 @@ class NonRealtimeFuture {
       return absl::CancelledError("Future or promise have been cancelled.");
     }
     INTRINSIC_RT_RETURN_IF_ERROR(is_ready_.WaitUntil(deadline));
+    // Cancel() might have been called in the meantime, so we need to check
+    // again.
+    if (is_cancelled_.load(std::memory_order_relaxed)) {
+      return absl::CancelledError("Future or promise have been cancelled.");
+    }
     is_value_retrieved_ = true;
     return *buffer_.Front();
   };
