@@ -19,11 +19,10 @@ import (
 	"intrinsic/tools/inctl/auth"
 )
 
-var cmdFlags = cmdutils.NewCmdFlags()
-
 // GetCommand returns a command to install (sideload) the service bundle.
 func GetCommand() *cobra.Command {
-	installCmd := &cobra.Command{
+	flags := cmdutils.NewCmdFlags()
+	cmd := &cobra.Command{
 		Use:   "install bundle",
 		Short: "Install service",
 		Example: `
@@ -37,7 +36,7 @@ func GetCommand() *cobra.Command {
 			target := args[0]
 
 			opts := bundleio.ProcessServiceOpts{
-				ImageProcessor: bundleimages.CreateImageProcessor(cmdFlags.CreateRegistryOpts(ctx)),
+				ImageProcessor: bundleimages.CreateImageProcessor(flags.CreateRegistryOpts(ctx)),
 			}
 
 			manifest, err := bundleio.ProcessService(target, opts)
@@ -55,25 +54,25 @@ func GetCommand() *cobra.Command {
 
 			// Install the service to the registry
 			ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
-				Address:  cmdFlags.GetFlagInstallerAddress(),
-				Cluster:  cmdFlags.GetFlagSideloadContext(),
-				CredName: cmdFlags.GetFlagProject(),
-				CredOrg:  cmdFlags.GetFlagOrganization(),
+				Address:  flags.GetFlagInstallerAddress(),
+				Cluster:  flags.GetFlagSideloadContext(),
+				CredName: flags.GetFlagProject(),
+				CredOrg:  flags.GetFlagOrganization(),
 			})
 			if err != nil {
 				return fmt.Errorf("could not create connection options for the installer: %v", err)
 			}
 
-			log.Printf("Installing service using the installer at %q", cmdFlags.GetFlagInstallerAddress())
+			log.Printf("Installing service using the installer at %q", flags.GetFlagInstallerAddress())
 
 			client := installergrpcpb.NewInstallerServiceClient(conn)
 			installerCtx := ctx
-			if dialerutil.UseInsecureCredentials(cmdFlags.GetFlagInstallerAddress()) {
+			if dialerutil.UseInsecureCredentials(flags.GetFlagInstallerAddress()) {
 				// This returns a valid context at all times. We only log any errors here because we will
 				// also install without authorization. This may mean that some features (namely persistence)
 				// will not work as expected.
-				if installerCtx, err = auth.NewStore().AuthorizeContext(ctx, cmdFlags.GetFlagProject()); err != nil {
-					log.Printf("Warning: Could not find authentication information. Some features (such as persistence) may not work correctly. Try running 'inctl auth login --project %s' to authenticate.", cmdFlags.GetFlagProject())
+				if installerCtx, err = auth.NewStore().AuthorizeContext(ctx, flags.GetFlagProject()); err != nil {
+					log.Printf("Warning: Could not find authentication information. Some features (such as persistence) may not work correctly. Try running 'inctl auth login --project %s' to authenticate.", flags.GetFlagProject())
 				}
 			}
 			resp, err := client.InstallService(installerCtx, &installerpb.InstallServiceRequest{
@@ -89,13 +88,12 @@ func GetCommand() *cobra.Command {
 		},
 	}
 
-	cmdFlags.SetCommand(installCmd)
+	flags.SetCommand(cmd)
+	flags.AddFlagsRegistryAuthUserPassword()
+	flags.AddFlagsProjectOrg()
+	flags.AddFlagSideloadContext()
+	flags.AddFlagInstallerAddress()
+	flags.AddFlagRegistry()
 
-	cmdFlags.AddFlagsRegistryAuthUserPassword()
-	cmdFlags.AddFlagsProjectOrg()
-	cmdFlags.AddFlagSideloadContext()
-	cmdFlags.AddFlagInstallerAddress()
-	cmdFlags.AddFlagRegistry()
-
-	return installCmd
+	return cmd
 }
