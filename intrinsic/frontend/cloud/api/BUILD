@@ -106,16 +106,23 @@ go_grpc_library(
 proto_library(
     name = "clusterdeletion_api_proto",
     srcs = ["clusterdeletion_api.proto"],
-    deps = ["@com_google_protobuf//:empty_proto"],
+    deps = [
+        "@com_google_googleapis//google/api:field_behavior_proto",
+        "@com_google_protobuf//:empty_proto",
+    ],
 )
 
 go_proto_library(
     name = "clusterdeletion_api_go_proto",
+    go_deps = ["@org_golang_google_genproto_googleapis_api//annotations"],
     deps = [":clusterdeletion_api_proto"],
 )
 
 go_grpc_library(
     name = "clusterdeletion_grpc_go_proto",
     srcs = [":clusterdeletion_api_proto"],
-    deps = [":clusterdeletion_api_go_proto"],
+    deps = [
+        ":clusterdeletion_api_go_proto",
+        "@org_golang_google_genproto_googleapis_api//annotations",
+    ],
 )
