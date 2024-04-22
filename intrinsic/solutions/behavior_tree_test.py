@@ -956,6 +956,7 @@ class BehaviorTreeVisitorTest(absltest.TestCase):
                 else_child=bt.Fail(name='branch_else'),
             ),
             bt.Data(name='data'),
+            bt.Debug(name='debug'),
         )
     )
 
@@ -993,6 +994,7 @@ class BehaviorTreeVisitorTest(absltest.TestCase):
             'branch_then',
             'branch_else',
             'data',
+            'debug',
         ],
     )
 
@@ -1631,6 +1633,98 @@ class BehaviorTreeFailTest(absltest.TestCase):
 
     node_dot, node_root_name = node.dot_graph()
     self.assertEqual(node_root_name, 'fail')
+    self.assertEqual(
+        ''.join(str(node_dot).split()), ''.join(dot_string.split())
+    )
+
+
+class BehaviorTreeDebugTest(absltest.TestCase):
+  """Tests the method functions of BehaviorTree.Debug."""
+
+  def test_init(self):
+    """Tests if BehaviorTree.Debug is correctly constructed."""
+    node = bt.Debug(fail_on_resume=True, name='pause')
+    node_proto = behavior_tree_pb2.BehaviorTree.Node(name='pause')
+    node_proto.debug.suspend.fail_on_resume = True
+    compare.assertProto2Equal(self, node.proto, node_proto)
+
+  def test_str_conversion(self):
+    """Tests if conversion to string works."""
+    node = bt.Debug()
+    self.assertEqual(str(node), 'Debug()')
+    node = bt.Debug(True)
+    self.assertEqual(str(node), 'Debug(fail_on_resume=True)')
+    node = bt.Debug(name='my_debug', fail_on_resume=True)
+    self.assertEqual(
+        str(node),
+        'Debug(name="my_debug", fail_on_resume=True)',
+    )
+
+  def test_to_proto_and_from_proto(self):
+    """Tests if conversion to and from a proto representation works."""
+    node = bt.Debug(True, name='pause')
+
+    node_proto = behavior_tree_pb2.BehaviorTree.Node(name='pause')
+    node_proto.debug.suspend.fail_on_resume = True
+
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
+        bt.Node.create_from_proto(node_proto).proto,
+        node_proto,
+    )
+
+    node.set_decorators(_create_test_decorator())
+    node_proto.decorators.condition.blackboard.cel_expression = 'foo'
+
+    compare.assertProto2Equal(self, node.proto, node_proto)
+    compare.assertProto2Equal(
+        self,
+        bt.Node.create_from_proto(node_proto).proto,
+        node_proto,
+    )
+
+  def test_attributes(self):
+    """Tests the name and node_id attributes."""
+    my_node = bt.Debug()
+    self.assertIsNone(my_node.node_id)
+    my_node.name = 'foo'
+    my_node.node_id = 42
+    self.assertEqual(my_node.name, 'foo')
+    self.assertEqual(my_node.node_id, 42)
+
+  def test_generates_node_id(self):
+    """Tests if generate_and_set_unique_id generates a node_id."""
+    my_node = bt.Debug()
+    expected_id = my_node.generate_and_set_unique_id()
+
+    self.assertIsNotNone(my_node.node_id)
+    self.assertNotEqual(my_node.node_id, '')
+    self.assertEqual(my_node.node_id, expected_id)
+
+  def test_to_proto_and_from_proto_retains_node_id(self):
+    """Tests if node conversion to/from proto respects node_id."""
+    my_node = bt.Debug()
+    my_node.node_id = 42
+
+    my_proto = behavior_tree_pb2.BehaviorTree.Node(id=42)
+    my_proto.debug.suspend.fail_on_resume = False
+
+    compare.assertProto2Equal(self, my_node.proto, my_proto)
+    compare.assertProto2Equal(
+        self, bt.Node.create_from_proto(my_proto).proto, my_proto
+    )
+
+  def test_dot_graph(self):
+    """Tests if node conversion to a dot representation works."""
+    node = bt.Debug()
+
+    dot_string = """digraph {
+  debug [label=debug shape=box]
+}"""
+
+    node_dot, node_root_name = node.dot_graph()
+    self.assertEqual(node_root_name, 'debug')
     self.assertEqual(
         ''.join(str(node_dot).split()), ''.join(dot_string.split())
     )

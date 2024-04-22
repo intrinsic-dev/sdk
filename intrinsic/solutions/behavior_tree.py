@@ -59,6 +59,7 @@ _NODE_TYPES_TO_DOT_SHAPES = {
     'retry': 'hexagon',
     'branch': 'diamond',
     'data': 'box',
+    'debug': 'box',
 }
 
 NodeIdentifierType = collections.namedtuple(
@@ -614,6 +615,8 @@ class Node(abc.ABC):
       created_node = Branch._create_from_proto(proto_object.branch)
     elif node_type == 'data':
       created_node = Data._create_from_proto(proto_object.data)
+    elif node_type == 'debug':
+      created_node = Debug._create_from_proto(proto_object.debug)
     else:
       raise TypeError('Unsupported proto node type', node_type)
     # pylint:enable=protected-access
@@ -1590,6 +1593,106 @@ class Fail(Node):
     if self.failure_message:
       failure = f', failure_message="{self.failure_message}"'
     print(f'{identifier} = BT.Fail(name="{self._name or identifier}"{failure})')
+    if self.decorators:
+      decorator_identifier = self.decorators.print_python_code(
+          identifiers, skills
+      )
+      if decorator_identifier:
+        print(f'{identifier}.set_decorators({decorator_identifier})')
+    return identifier
+
+
+class Debug(Node):
+  """A BT node of type Debug for behavior_tree_pb2.BehaviorTree.DebugNode.
+
+  A node that can be used to suspend the tree. Using the optional suspend
+  behavior the outcome of the debug node can be defined (success vs failure).
+
+  Attributes:
+    fail_on_resume: Describes whether the node should succeed or fail after
+      resuming. Defaults to succeed.
+    proto: The proto representation of the node.
+    node_type: A string label of the node type.
+  """
+
+  _decorators: Optional['Decorators']
+  _name: Optional[str]
+  _node_id: Optional[int]
+
+  def __init__(
+      self, fail_on_resume: Optional[bool] = False, name: Optional[str] = None
+  ):
+    self._decorators = None
+    self.fail_on_resume: Optional[bool] = fail_on_resume
+    self._name = name
+    self._node_id = None
+    super().__init__()
+
+  def __repr__(self) -> str:
+    """Returns a compact, human-readable string representation."""
+    rep = f'{type(self).__name__}({self._name_repr()}'
+    if self.fail_on_resume:
+      rep += f'fail_on_resume={self.fail_on_resume}'
+    rep += ')'
+    return rep
+
+  @property
+  def proto(self) -> behavior_tree_pb2.BehaviorTree.Node:
+    proto_object = super().proto
+    proto_object.debug.suspend.fail_on_resume = self.fail_on_resume
+    return proto_object
+
+  @property
+  def name(self) -> Optional[str]:
+    return self._name
+
+  @name.setter
+  def name(self, value: str):
+    self._name = value
+
+  @property
+  def node_id(self) -> Optional[int]:
+    return self._node_id
+
+  @node_id.setter
+  def node_id(self, value: int):
+    self._node_id = value
+
+  @property
+  def node_type(self) -> str:
+    return 'debug'
+
+  def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
+    self._decorators = decorators
+    return self
+
+  @property
+  def decorators(self) -> Optional['Decorators']:
+    return self._decorators
+
+  @classmethod
+  def _create_from_proto(
+      cls, proto_object: behavior_tree_pb2.BehaviorTree.DebugNode
+  ) -> 'Debug':
+    return cls(proto_object.suspend.fail_on_resume)
+
+  def dot_graph(  # pytype: disable=signature-mismatch  # overriding-parameter-count-checks
+      self, node_id_suffix: str = ''
+  ) -> Tuple[graphviz.Digraph, str]:
+    return super().dot_graph(node_id_suffix=node_id_suffix, name=self._name)
+
+  def print_python_code(
+      self, identifiers: List[str], skills: providers.SkillProvider
+  ) -> str:
+    identifier = _generate_unique_identifier(
+        self._name or 'debug_node', identifiers
+    )
+    suspend = ''
+    if self.fail_on_resume:
+      suspend = f', fail_on_resume={self.fail_on_resume}'
+    print(
+        f'{identifier} = BT.Debug(name="{self._name or identifier}"{suspend})'
+    )
     if self.decorators:
       decorator_identifier = self.decorators.print_python_code(
           identifiers, skills
