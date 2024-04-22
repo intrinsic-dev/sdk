@@ -55,6 +55,12 @@ var (
 
 	catalogEndpointAddressRegex = regexp.MustCompile(`(^|/)www\.endpoints\.([^\.]+).cloud.goog`)
 	catalogAssetAddressRegex    = regexp.MustCompile(`(^|/)assets[-]?([^\.]*)\.intrinsic\.ai`)
+
+	assetAddressToProjectSuffix = map[string]string{
+		"":    "prod",
+		"dev": "dev",
+		"qa":  "staging",
+	}
 )
 
 // DialCatalogOptions specifies the options for DialCatalog.
