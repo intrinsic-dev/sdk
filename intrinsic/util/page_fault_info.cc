@@ -5,15 +5,13 @@
 #include <sys/mman.h>
 #include <sys/resource.h>
 
-#include <ostream>
-
 namespace intrinsic {
 
 PagefaultInfo GetPagefaultInfo() {
   static PagefaultInfo info;
 
   rusage usage;
-  getrusage(RUSAGE_SELF, &usage);
+  getrusage(RUSAGE_THREAD, &usage);
 
   info.delta_major_faults = usage.ru_majflt - info.major_faults;
   info.delta_minor_faults = usage.ru_minflt - info.minor_faults;
