@@ -109,7 +109,7 @@ message LoadCloudLogItemsResponse {
   string truncation_cause = 5;
 
   bytes cursor = 6;  // Opaque cursor to the first log in range, spanning the
-                     // entire load range.
+                     // entire load range, to be used for GetCloudLogItems.
 }
 
 message GetCloudLogItemsRequest {
@@ -144,8 +144,12 @@ message GetCloudLogItemsResponse {
 
   repeated intrinsic_proto.data_logger.LogItem items = 1;
 
-  // Opaque cursor to the next page of results. If empty, no next page exists.
+  // Opaque cursor to the next page of results.
+  //
+  // If empty, no next page exists.
+  // Expires at next_page_cursor_expiry.
   optional bytes next_page_cursor = 2;
+  optional google.protobuf.Timestamp next_page_cursor_expiry = 4;
 
   // Metadata for this page of results.
   Metadata metadata = 3;
