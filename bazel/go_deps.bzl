@@ -703,6 +703,18 @@ def go_dependencies():
         version = "v0.0.0-20180111231733-ee0de3bc6815",
     )
     go_repository(
+        name = "com_github_dsnet_compress",
+        importpath = "github.com/dsnet/compress",
+        sum = "h1:PlZu0n3Tuv04TzpfPbrnI0HW/YwodEXDS+oPKahKF0Q=",
+        version = "v0.0.1",
+    )
+    go_repository(
+        name = "com_github_dsnet_golib",
+        importpath = "github.com/dsnet/golib",
+        sum = "h1:tFh1tRc4CA31yP6qDcu+Trax5wW5GuMxvkIba07qVLY=",
+        version = "v0.0.0-20171103203638-1ea166775780",
+    )
+    go_repository(
         name = "com_github_dustin_go_humanize",
         importpath = "github.com/dustin/go-humanize",
         sum = "h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=",
@@ -1537,6 +1549,12 @@ def go_dependencies():
         importpath = "github.com/klauspost/compress",
         sum = "h1:2mk3MPGNzKyxErAw8YaohYh69+pa4sIQSC0fPGCFR9I=",
         version = "v1.16.7",
+    )
+    go_repository(
+        name = "com_github_klauspost_cpuid",
+        importpath = "github.com/klauspost/cpuid",
+        sum = "h1:NMpwD2G9JSFOE1/TJjGSo5zG7Yb2bTe7eq1jH+irmeE=",
+        version = "v1.2.0",
     )
     go_repository(
         name = "com_github_klauspost_cpuid_v2",
@@ -2381,6 +2399,12 @@ def go_dependencies():
         importpath = "github.com/ugorji/go",
         sum = "h1:j4s+tAvLfL3bZyefP2SEWmhBzmuIlH/eqNuPdFPgngw=",
         version = "v1.1.4",
+    )
+    go_repository(
+        name = "com_github_ulikunitz_xz",
+        importpath = "github.com/ulikunitz/xz",
+        sum = "h1:jGHAfXawEGZQ3blwU5wnWKQJvAraT7Ftq9EXjnXYgt8=",
+        version = "v0.5.6",
     )
     go_repository(
         name = "com_github_urfave_cli",
