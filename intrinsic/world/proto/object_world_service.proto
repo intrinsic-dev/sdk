@@ -302,6 +302,30 @@ message KinematicObjectComponent {
 
   // The payload mounted to the robot. Empty if no payload is defined.
   optional RobotPayload mounted_payload = 10;
+
+  message IkSolver {
+    // String identifier of the kinematic solver.
+    string kinematic_solver_key = 1;
+
+    // ID of the Entity that this solver uses as its base.
+    string base_entity_id = 2;
+
+    // ID of the Entity that this solver uses as its tip (i.e. the frame we
+    // want to run IK for).
+    string tip_entity_id = 3;
+  }
+
+  // A list of IK solvers for this Object.
+  //
+  // In many cases, this has one entry. For example, a robot usually has one
+  // solver that can handle the kinematic chain from its base to its tip.
+  //
+  // In other cases this can hold multiple entries, for example one solver for
+  // each finger of a multi-finger gripper.
+  //
+  // In rare cases this can be empty, when there is no chain that the World
+  // knows how to solve inside the Object.
+  repeated IkSolver ik_solvers = 11;
 }
 
 // Basic resource in a world. An Object is part of exactly one world, has
