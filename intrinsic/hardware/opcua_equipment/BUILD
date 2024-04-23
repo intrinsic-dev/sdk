@@ -12,6 +12,7 @@ proto_library(
     deps = [
         "//intrinsic/hardware/gpio:gpio_service_proto",
         "//intrinsic/hardware/gpio:signal_proto",
+        "//intrinsic/world/proto:object_world_updates_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:duration_proto",
     ],

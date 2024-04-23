@@ -8,6 +8,7 @@ import "google/protobuf/any.proto";
 import "google/protobuf/duration.proto";
 import "intrinsic/hardware/gpio/gpio_service.proto";
 import "intrinsic/hardware/gpio/signal.proto";
+import "intrinsic/world/proto/object_world_updates.proto";
 
 message GpioServiceConfig {
   // Using `oneof` to keep the possibility of connecting to an existing GPIO
@@ -82,6 +83,10 @@ message OpcuaEquipmentConfig {
     // Optional command to execute if `wait_for_condition` is not met.
     // This is not executed if `wait_for_condition` is not specified.
     map<string, gpio.SignalValue> on_failure = 5;
+
+    // Optional belief world updates to make on completion. This is executed if
+    // `wait_for_condition` is met or unspecified.
+    intrinsic_proto.world.ObjectWorldUpdates on_success_world_updates = 7;
   }
 
   // Describes a command that reads values from the opcua server and matches
@@ -144,6 +149,9 @@ message ControlResponse {
 
   // Optional message containing the reason for failure (if relevant).
   optional string failure_message = 2;
+
+  // Updates to apply to the world as a result of this control action.
+  optional intrinsic_proto.world.ObjectWorldUpdates world_updates = 3;
 }
 
 message MatchRequest {
