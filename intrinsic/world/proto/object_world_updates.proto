@@ -24,6 +24,7 @@ message ObjectWorldUpdate {
     DeleteObjectRequest delete_object = 11;
     UpdateObjectNameRequest update_object_name = 1;
     UpdateObjectJointsRequest update_object_joints = 2;
+    UpdateObjectJointRequest update_object_joint = 19;
     UpdateKinematicObjectPropertiesRequest update_kinematic_object_properties =
         18;
     UpdateObjectPropertiesRequest update_object_properties = 13;
@@ -283,6 +284,25 @@ message UpdateObjectJointsRequest {
   // of 'joint_positions', 'joint_application_limits', 'joint_system_limits'
   // must be set.
   intrinsic_proto.JointLimitsUpdate joint_system_limits = 5;
+
+  // Requested object view for the returned, updated kinematic object.
+  ObjectView view = 6;
+}
+
+// Request to update a single joint of an object.
+message UpdateObjectJointRequest {
+  // Id of the world to be updated.
+  string world_id = 1;
+
+  // The object to be updated. Must have ObjectType==KINEMATIC_OBJECT.
+  ObjectReference object = 2;
+
+  // New joint positions in degrees (for revolute joints) or meters (for
+  // prismatic joints) that should be applied.
+  optional double joint_position = 3;
+
+  // The name of the joint to be updated.
+  string joint_name = 7;
 
   // Requested object view for the returned, updated kinematic object.
   ObjectView view = 6;
