@@ -353,6 +353,22 @@ class SkillPackage(abc.ABC):
       the skill 'foo.bar.bar_skill' is available in the solution.
   """
 
+  @property
+  @abc.abstractmethod
+  def package_name(self) -> str:
+    """Returns the full name of the skill package (e.g. 'ai.intrinsic')."""
+    ...
+
+  @property
+  @abc.abstractmethod
+  def relative_package_name(self) -> str:
+    """Returns the name of the skill package relative to its parent package.
+
+    For example, the package with the full package name
+    "ai.intrinsic.experimental" would return "experimental".
+    """
+    ...
+
   # We would like to use Type[SkillBase] instead, but Python then checks
   # the constructor parameters explicitly against SkillBase, which we don't
   # want and which is rather odd. Therefore, just state that it's a type.

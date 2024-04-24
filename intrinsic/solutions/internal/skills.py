@@ -39,6 +39,8 @@ from intrinsic.solutions.internal import skill_parameters
 from intrinsic.solutions.internal import skill_utils
 from intrinsic.solutions.utils import classproperty
 
+_SKILL_ID_SEP = "."
+
 
 # Typing aliases
 # Maps slot name to resource names.
@@ -1045,6 +1047,14 @@ class _SkillPackageImpl(provided.SkillPackage):
         skill_infos,
         compatible_resources_by_id,
     )
+
+  @property
+  def package_name(self) -> str:
+    return self._package_name
+
+  @property
+  def relative_package_name(self) -> str:
+    return self._package_name.split(_SKILL_ID_SEP)[-1]
 
   def __getattr__(self, name: str) -> Union[Type[Any], provided.SkillPackage]:
     if name in self._child_packages_by_prefix:
