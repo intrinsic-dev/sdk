@@ -179,9 +179,7 @@ message BehaviorTree {
       reserved 2 to 9;
 
       oneof input_type {
-        // Expression to create a proto to store, must evaluate to a proto, not
-        // to a basic type such as an integer (these can be stored using wrapper
-        // messages such as IntValue).
+        // Expression to create a proto to store.
         string cel_expression = 10;
         // The Any proto MUST be of type intrinsic_proto.executive.WorldQuery.
         AnyWithAssignments from_world = 11;
