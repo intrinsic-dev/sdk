@@ -9,7 +9,7 @@ import (
 	"fmt"
 
 	"google.golang.org/grpc"
-	clusterdiscoverygrpcpb "intrinsic/frontend/cloud/api/clusterdiscovery_grpc_go_proto"
+	clusterdiscoverygrpcpb "intrinsic/frontend/cloud/api/clusterdiscovery_api_go_grpc_proto"
 	"intrinsic/tools/inctl/cmd/solution"
 )
 

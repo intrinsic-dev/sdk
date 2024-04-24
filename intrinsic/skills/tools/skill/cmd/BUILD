@@ -17,7 +17,7 @@ go_library(
     name = "solutionutil",
     srcs = ["solutionutil.go"],
     deps = [
-        "//intrinsic/frontend/cloud/api:clusterdiscovery_grpc_go_proto",
+        "//intrinsic/frontend/cloud/api:clusterdiscovery_api_go_grpc_proto",
         "//intrinsic/tools/inctl/cmd/solution",
         "@org_golang_google_grpc//:go_default_library",
     ],

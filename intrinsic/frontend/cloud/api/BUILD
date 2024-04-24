@@ -26,7 +26,7 @@ proto_library(
 )
 
 go_grpc_library(
-    name = "orgdiscovery_grpc_go_proto",
+    name = "orgdiscovery_api_go_grpc_proto",
     srcs = [":orgdiscovery_api_proto"],
     deps = [":orgdiscovery_api_go_proto"],
 )
@@ -42,7 +42,7 @@ go_proto_library(
 )
 
 go_grpc_library(
-    name = "clusterdiscovery_grpc_go_proto",
+    name = "clusterdiscovery_api_go_grpc_proto",
     srcs = [":clusterdiscovery_api_proto"],
     deps = [":clusterdiscovery_api_go_proto"],
 )
@@ -61,7 +61,7 @@ go_proto_library(
 )
 
 go_grpc_library(
-    name = "projectdiscovery_grpc_go_proto",
+    name = "projectdiscovery_api_go_grpc_proto",
     srcs = [":projectdiscovery_api_proto"],
     deps = [
         ":projectdiscovery_api_go_proto",
@@ -95,10 +95,10 @@ go_proto_library(
 )
 
 go_grpc_library(
-    name = "solutiondiscovery_grpc_go_proto",
+    name = "solutiondiscovery_api_go_grpc_proto",
     srcs = [":solutiondiscovery_api_proto"],
     deps = [
-        ":clusterdiscovery_grpc_go_proto",
+        ":clusterdiscovery_api_go_grpc_proto",
         ":solutiondiscovery_api_go_proto",
     ],
 )
@@ -119,7 +119,7 @@ go_proto_library(
 )
 
 go_grpc_library(
-    name = "clusterdeletion_grpc_go_proto",
+    name = "clusterdeletion_api_go_grpc_proto",
     srcs = [":clusterdeletion_api_proto"],
     deps = [
         ":clusterdeletion_api_go_proto",

@@ -14,7 +14,7 @@ import (
 	"intrinsic/tools/inctl/auth"
 	"intrinsic/tools/inctl/util/printer"
 
-	orgdiscoverygrpcpb "intrinsic/frontend/cloud/api/orgdiscovery_grpc_go_proto"
+	orgdiscoverygrpcpb "intrinsic/frontend/cloud/api/orgdiscovery_api_go_grpc_proto"
 )
 
 const updateCommandDesc = ""

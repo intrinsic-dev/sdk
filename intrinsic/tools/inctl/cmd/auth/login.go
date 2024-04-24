@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	projectdiscoverygrpcpb "intrinsic/frontend/cloud/api/projectdiscovery_grpc_go_proto"
+	projectdiscoverygrpcpb "intrinsic/frontend/cloud/api/projectdiscovery_api_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/auth"
 	"intrinsic/tools/inctl/util/orgutil"

@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	clusterdeletiongrpcpb "intrinsic/frontend/cloud/api/clusterdeletion_grpc_go_proto"
+	clusterdeletiongrpcpb "intrinsic/frontend/cloud/api/clusterdeletion_api_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/util/orgutil"
 )

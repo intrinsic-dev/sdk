@@ -15,8 +15,8 @@ go_library(
         "update.go",
     ],
     deps = [
-        "//intrinsic/frontend/cloud/api:orgdiscovery_grpc_go_proto",
-        "//intrinsic/frontend/cloud/api:projectdiscovery_grpc_go_proto",
+        "//intrinsic/frontend/cloud/api:orgdiscovery_api_go_grpc_proto",
+        "//intrinsic/frontend/cloud/api:projectdiscovery_api_go_grpc_proto",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/tools/inctl/auth",
         "//intrinsic/tools/inctl/cmd:root",
