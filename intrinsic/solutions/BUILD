@@ -572,6 +572,7 @@ py_wheel(
         "matplotlib",
         "numpy",
         "retrying",
+        "typing-extensions",
     ],
     version = "0.0.1",
     deps = [":solutions_py_package"],

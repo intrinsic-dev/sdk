@@ -54,3 +54,5 @@ six==1.16.0
     #   retrying
 sortedcontainers==2.4.0
     # via hypothesis
+typing-extensions==4.11.0
+    # via -r requirements.in
