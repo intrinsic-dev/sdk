@@ -756,6 +756,10 @@ message CompareWorldsRequest {
 
   // The world with changes.
   string changed_world_id = 2;
+
+  // The view of the objects from both worlds. If view == FULL, then returns
+  // the objects from both worlds.
+  ObjectView view = 3;
 }
 
 message CompareWorldsResponse {
@@ -778,6 +782,12 @@ message CompareWorldsResponse {
 
   // Contains all modified frames from modified objects in the changed world.
   repeated Frame modified_frames = 6;
+
+  // Contains all objects from the base world if view == FULL.
+  repeated Object base_world_objects = 7;
+
+  // Contains all objects from the changed world if view == FULL.
+  repeated Object changed_world_objects = 8;
 }
 message SyncObjectRequest {
   // World the object is located in.
