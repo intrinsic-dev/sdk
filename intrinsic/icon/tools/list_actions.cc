@@ -27,9 +27,7 @@ ABSL_FLAG(
     std::string, instance, "",
     "Optional name of the ICON instance. Use this to select a specific ICON "
     "instance if multiple ones are running behind an ingress server.");
-ABSL_FLAG(std::string, header, "x-icon-instance-name",
-          "Optional header name to be used to select a specific ICON instance. "
-          " Has no effect if --instance is not set");
+ABSL_RETIRED_FLAG(std::string, header, "x-icon-instance-name", "retired");
 ABSL_FLAG(bool, show_details, false,
           "Outputs action signature details in markdown format.");
 
@@ -97,8 +95,7 @@ namespace icon {
 namespace {
 
 absl::StatusOr<std::string> Run(
-    const intrinsic::icon::ConnectionParams& connection_params,
-    bool show_details) {
+    const intrinsic::ConnectionParams& connection_params, bool show_details) {
   // Fetch action signatures.
   INTR_ASSIGN_OR_RETURN(auto icon_channel, Channel::Make(connection_params));
   Client icon_client(icon_channel);
@@ -138,11 +135,8 @@ int main(int argc, char** argv) {
   InitXfa(UsageString(), argc, argv);
 
   absl::StatusOr<std::string> result = intrinsic::icon::Run(
-      intrinsic::icon::ConnectionParams{
-          .address = absl::GetFlag(FLAGS_server),
-          .instance_name = absl::GetFlag(FLAGS_instance),
-          .header = absl::GetFlag(FLAGS_header),
-      },
+      intrinsic::ConnectionParams::ResourceInstance(
+          absl::GetFlag(FLAGS_instance), absl::GetFlag(FLAGS_server)),
       absl::GetFlag(FLAGS_show_details));
   if (!result.ok()) {
     LOG(ERROR) << result.status() << std::endl;

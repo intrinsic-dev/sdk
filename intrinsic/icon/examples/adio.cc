@@ -18,9 +18,7 @@ ABSL_FLAG(
     std::string, instance, "",
     "Optional name of the ICON instance. Use this to select a specific ICON "
     "instance if multiple ones are running behind an ingress server.");
-ABSL_FLAG(std::string, header, "x-icon-instance-name",
-          "Optional header name to be used to select a specific ICON instance. "
-          " Has no effect if --instance is not set");
+ABSL_RETIRED_FLAG(std::string, header, "x-icon-instance-name", "retired");
 ABSL_FLAG(std::string, part, "adio", "Part to control.");
 
 ABSL_FLAG(std::string, output_block, "outputs",
@@ -32,7 +30,7 @@ const char kUsage[] =
 
 namespace {
 
-absl::Status Run(const intrinsic::icon::ConnectionParams& connection_params,
+absl::Status Run(const intrinsic::ConnectionParams& connection_params,
                  absl::string_view part_name,
                  absl::string_view output_block_name) {
   if (connection_params.address.empty()) {
@@ -52,12 +50,8 @@ absl::Status Run(const intrinsic::icon::ConnectionParams& connection_params,
 
 int main(int argc, char** argv) {
   InitXfa(kUsage, argc, argv);
-  QCHECK_OK(Run(
-      intrinsic::icon::ConnectionParams{
-          .address = absl::GetFlag(FLAGS_server),
-          .instance_name = absl::GetFlag(FLAGS_instance),
-          .header = absl::GetFlag(FLAGS_header),
-      },
-      absl::GetFlag(FLAGS_part), absl::GetFlag(FLAGS_output_block)));
+  QCHECK_OK(Run(intrinsic::ConnectionParams::ResourceInstance(
+                    absl::GetFlag(FLAGS_instance), absl::GetFlag(FLAGS_server)),
+                absl::GetFlag(FLAGS_part), absl::GetFlag(FLAGS_output_block)));
   return 0;
 }
