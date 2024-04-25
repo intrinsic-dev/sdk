@@ -9,9 +9,6 @@ import "intrinsic/math/proto/matrix.proto";
 
 // A proto holding the shape data wrapping a single shape.
 message ShapeData {
-  // The geometry id for an instance of Geometry.
-  string geometry_id = 2 [deprecated = true];
-
   // The references to the stored geometry.
   GeometryStorageRefs geometry_storage_refs = 5;
 
@@ -20,4 +17,5 @@ message ShapeData {
 
   // A set of labels to apply to the shape if adding to the world.
   repeated string label = 1;
+
 }
