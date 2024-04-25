@@ -13,6 +13,24 @@
 namespace intrinsic {
 
 // static
+ConnectionParams ConnectionParams::ResourceInstance(
+    std::string_view instance_name) {
+  return ConnectionParams::ResourceInstance(
+      /*instance_name=*/instance_name,
+      /*address=*/"xfa.lan:17080");
+}
+
+// static
+ConnectionParams ConnectionParams::ResourceInstance(
+    std::string_view instance_name, std::string_view address) {
+  return {
+      .address = std::string(address),
+      .instance_name = std::string(instance_name),
+      .header = "x-resource-instance-name",
+  };
+}
+
+// static
 ConnectionParams ConnectionParams::NoIngress(std::string_view address) {
   return {
       .address = std::string(address),

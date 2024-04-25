@@ -13,6 +13,16 @@
 namespace intrinsic {
 
 struct ConnectionParams {
+  // Constructs ConnectionParams to connect to a resource using the
+  // cluster ingress on `xfa.lan:17080`. This is the default when running on a
+  // cluster.
+  static ConnectionParams ResourceInstance(std::string_view instance_name);
+
+  // Constructs ConnectionParams to connect to a resource.
+  // The parameter `address` allows using custom ingress endpoints.
+  static ConnectionParams ResourceInstance(std::string_view instance_name,
+                                           std::string_view address);
+
   // Constructs a ConnectionParams that is appropriately configured to work with
   // the no-ingress case, such as integration tests.
   static ConnectionParams NoIngress(std::string_view address);
