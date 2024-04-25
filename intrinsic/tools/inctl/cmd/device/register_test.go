@@ -35,6 +35,11 @@ func TestValidHostname(t *testing.T) {
 			valid:    true,
 		},
 		{
+			name:     "generated",
+			hostname: "node-7da4bec3-3aa2-4859-97dd-b07dcce37c19",
+			valid:    true,
+		},
+		{
 			name:     "with-alpha",
 			hostname: "host123",
 			valid:    true,
@@ -71,7 +76,7 @@ func TestValidHostname(t *testing.T) {
 			name:     "no-overlength",
 			hostname: "host-123456790-123456790-123456790-123456790-123456790-123456790",
 			valid:    false,
-			index:    41,
+			index:    43,
 		},
 	}
 
