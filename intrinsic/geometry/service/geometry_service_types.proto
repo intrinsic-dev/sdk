@@ -68,4 +68,5 @@ message PosedGeometryData {
 
   // A 4x4 affine transform from entity frame to this shape.
   intrinsic_proto.Matrixd ref_t_shape_aff = 5;
+
 }

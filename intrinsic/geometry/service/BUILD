@@ -66,7 +66,6 @@ proto_library(
         "//intrinsic/geometry/proto:lazy_exact_geometry_proto",
         "//intrinsic/geometry/proto:renderable_proto",
         "//intrinsic/math/proto:matrix_proto",
-        "//intrinsic/math/proto:point_proto",
     ],
 )
 
