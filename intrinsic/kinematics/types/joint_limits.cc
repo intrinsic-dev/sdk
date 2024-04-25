@@ -7,11 +7,17 @@
 #include <cstddef>
 #include <limits>
 
+#include "absl/log/check.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/icon/proto/eigen_conversion.h"
 #include "intrinsic/icon/utils/realtime_status.h"
 #include "intrinsic/icon/utils/realtime_status_macro.h"
+#include "intrinsic/icon/utils/realtime_status_or.h"
+#include "intrinsic/kinematics/types/joint_limits.pb.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {

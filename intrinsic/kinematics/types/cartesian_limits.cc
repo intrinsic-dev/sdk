@@ -5,6 +5,8 @@
 #include <cmath>
 #include <limits>
 
+#include "intrinsic/eigenmath/types.h"
+
 namespace intrinsic {
 
 CartesianLimits::CartesianLimits() { SetUnlimited(); }

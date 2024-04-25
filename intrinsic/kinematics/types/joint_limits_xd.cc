@@ -8,11 +8,15 @@
 #include <limits>
 #include <string>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/substitute.h"
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/icon/proto/eigen_conversion.h"
-#include "intrinsic/util/status/status_macros.h"
+#include "intrinsic/kinematics/types/joint_limits.h"
+#include "intrinsic/kinematics/types/joint_limits.pb.h"
 
 namespace intrinsic {
 
