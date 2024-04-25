@@ -3,6 +3,7 @@
 #ifndef INTRINSIC_PLATFORM_PUBSUB_ZENOH_UTIL_ZENOH_HANDLE_H_
 #define INTRINSIC_PLATFORM_PUBSUB_ZENOH_UTIL_ZENOH_HANDLE_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -23,6 +24,17 @@ typedef void imw_subscription_callback_fn(const char *keyexpr,
                                           const void *bytes,
                                           const size_t bytes_len,
                                           void *user_context);
+
+typedef void imw_queryable_callback_fn(const char *keyexpr,
+                                       const void *query_bytes,
+                                       const size_t query_bytes_len,
+                                       const void *query_context,
+                                       void *user_context);
+
+typedef void imw_query_callback_fn(const char *keyexpr,
+                                   const void *response_bytes,
+                                   const size_t response_bytes_len,
+                                   void *user_context);
 
 typedef std::function<void(const char *, const void *, const size_t)>
     imw_callback_functor_t;
@@ -66,6 +78,29 @@ struct ZenohHandle {
       imw_keyexpr_includes;
 
   std::add_pointer_t<int(const char *keyexpr)> imw_keyexpr_is_canon;
+
+  std::add_pointer_t<imw_ret_t(const char *keyexpr,
+                               imw_queryable_callback_fn *callback,
+                               void *user_context)>
+      imw_create_queryable;
+
+  std::add_pointer_t<imw_ret_t(const char *keyexpr,
+                               imw_queryable_callback_fn *callback,
+                               void *user_context)>
+      imw_destroy_queryable;
+
+  std::add_pointer_t<imw_ret_t(const void *query_context, const char *keyexpr,
+                               const void *reply_bytes,
+                               const size_t reply_bytes_len)>
+      imw_queryable_reply;
+
+  std::add_pointer_t<imw_ret_t(
+      const char *keyexpr, imw_query_callback_fn *callback,
+      const void *query_payload, const size_t query_payload_len,
+      void *user_context)>
+      imw_query;
+
+  std::add_pointer_t<const char *const()> imw_version;
 
   static absl::StatusOr<std::string> add_topic_prefix(absl::string_view topic);
   static absl::StatusOr<std::string> remove_topic_prefix(

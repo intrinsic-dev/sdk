@@ -43,6 +43,8 @@ std::unique_ptr<PubSubData> MakePubSubData(
   if (ret != IMW_OK) {
     LOG(FATAL) << "Error creating a zenoh session with config " << config;
   }
+  LOG(INFO) << "Created a zenoh session with libimw_zenoh version: "
+            << Zenoh().imw_version();
   return data;
 }
 

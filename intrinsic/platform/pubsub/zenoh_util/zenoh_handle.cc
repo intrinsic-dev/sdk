@@ -110,6 +110,11 @@ void ZenohHandle::Initialize() {
   GET_FUNCTION_PTR(handle, imw_keyexpr_includes);
   GET_FUNCTION_PTR(handle, imw_keyexpr_intersects);
   GET_FUNCTION_PTR(handle, imw_keyexpr_is_canon);
+  GET_FUNCTION_PTR(handle, imw_version);
+  GET_FUNCTION_PTR(handle, imw_create_queryable);
+  GET_FUNCTION_PTR(handle, imw_destroy_queryable);
+  GET_FUNCTION_PTR(handle, imw_queryable_reply);
+  GET_FUNCTION_PTR(handle, imw_query);
 }
 
 absl::StatusOr<std::string> ZenohHandle::add_topic_prefix(
