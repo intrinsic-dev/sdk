@@ -4,7 +4,7 @@
 
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
-load("//bazel:go_macros.bzl", "go_proto_library")
+load("//bazel:go_macros.bzl", "go_library", "go_proto_library")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -338,5 +338,17 @@ py_test(
         "//intrinsic/solutions/testing:compare",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+go_library(
+    name = "extstatus",
+    srcs = ["extstatus.go"],
+    deps = [
+        ":extended_status_go_proto",
+        "//intrinsic/logging/proto:context_go_proto",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
+        "@org_golang_google_protobuf//proto",
     ],
 )

@@ -1,0 +1,12 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.status.test;
+
+import "google/protobuf/empty.proto";
+
+service StatusTestService {
+  // Method that always returns a failure
+  rpc FailingMethod(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
