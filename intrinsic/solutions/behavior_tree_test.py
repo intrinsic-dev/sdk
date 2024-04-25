@@ -3,7 +3,6 @@
 """Tests for intrinsic.solutions.behavior_tree."""
 
 import copy
-import io
 from typing import Union, cast
 from unittest import mock
 
@@ -17,7 +16,6 @@ from intrinsic.executive.proto import world_query_pb2
 from intrinsic.solutions import behavior_tree as bt
 from intrinsic.solutions import blackboard_value
 from intrinsic.solutions import errors as solutions_errors
-from intrinsic.solutions import providers
 from intrinsic.solutions.internal import behavior_call
 from intrinsic.solutions.testing import compare
 from intrinsic.world.proto import object_world_refs_pb2
@@ -834,27 +832,6 @@ class BehaviorTreeTest(parameterized.TestCase):
     compare.assertProto2Equal(
         self, my_bt.proto, expected_proto, ignored_fields=['tree_id']
     )
-
-  @mock.patch.object(bt, '_generate_unique_identifier', autospec=True)
-  def test_print_python_code(self, generate_mock):
-    """Tests that the expected Python string is generated."""
-
-    my_bt = bt.BehaviorTree('my_bt')
-    my_bt.set_root(bt.Sequence(name='my_seq'))
-
-    generate_mock.side_effect = ['bar1', 'bar2']
-
-    expected_str = """bar1 = BT.Sequence(name="my_seq", children=[])
-bar2 = BT.BehaviorTree(name='my_bt', root=bar1)
-"""
-
-    mock_stdout = io.StringIO()
-    with mock.patch('sys.stdout', mock_stdout):
-      my_bt.print_python_code(
-          mock.create_autospec(providers.SkillProvider, instance=True)
-      )
-
-    self.assertEqual(mock_stdout.getvalue(), expected_str)
 
 
 class BehaviorTreeVisitorTest(absltest.TestCase):
@@ -3395,103 +3372,6 @@ class BehaviorTreeDataTest(parameterized.TestCase):
 
     compare.assertProto2Equal(self, node.proto, node_proto)
 
-  @mock.patch.object(bt, '_generate_unique_identifier', autospec=True)
-  def test_print_python_code_remove(self, generate_mock):
-    """Tests if BehaviorTree.Data is correctly printed."""
-
-    node = (
-        bt.Data(name='foo')
-        .set_operation(bt.Data.OperationType.REMOVE)
-        .set_blackboard_key('bbfoo')
-    )
-
-    generate_mock.side_effect = ['bar1']
-
-    expected_str = """bar1 = BT.Data(name="foo", operation=OperationType.REMOVE, blackboard_key="bbfoo")
-"""
-
-    mock_stdout = io.StringIO()
-    with mock.patch('sys.stdout', mock_stdout):
-      node.print_python_code(
-          [], mock.create_autospec(providers.SkillProvider, instance=True)
-      )
-
-    self.assertEqual(mock_stdout.getvalue(), expected_str)
-
-  @parameterized.named_parameters(
-      dict(
-          testcase_name='cel_expression',
-          arg_name='cel_expression',
-          arg_value='5+5',
-          expected_string='cel_expression="5+5"',
-      ),
-      dict(
-          testcase_name='world_query',
-          arg_name='world_query',
-          arg_value=bt.WorldQuery().select(
-              children_of=object_world_refs_pb2.ObjectReference(
-                  by_name=object_world_refs_pb2.ObjectReferenceByName(
-                      object_name='bar'
-                  )
-              )
-          ),
-          expected_string='''world_query=WorldQuery(text_format.Parse("""select {
-  children_of {
-    by_name {
-      object_name: "bar"
-    }
-  }
-}
-""", intrinsic_proto.executive.WorldQuery()))''',
-      ),
-      dict(
-          testcase_name='proto',
-          arg_name='proto',
-          arg_value=test_message_pb2.TestMessage(int64_value=123),
-          expected_string='''proto=text_format.Parse("""int64_value: 123
-""", intrinsic_proto.executive.TestMessage())''',
-      ),
-      dict(
-          testcase_name='protos',
-          arg_name='protos',
-          arg_value=[
-              test_message_pb2.TestMessage(int64_value=123),
-              test_message_pb2.TestMessage(int32_value=234),
-          ],
-          expected_string='''protos=[text_format.Parse("""int64_value: 123
-
-""", intrinsic_proto.executive.TestMessage()), text_format.Parse("""int32_value: 234
-
-""", intrinsic_proto.executive.TestMessage())]''',
-      ),
-  )
-  @mock.patch.object(bt, '_generate_unique_identifier', autospec=True)
-  def test_print_python_code_create_or_update(
-      self, generate_mock, arg_name, arg_value, expected_string
-  ):
-    """Tests if BehaviorTree.Data is correctly printed."""
-
-    node_args = {
-        'name': 'foo',
-        'operation': bt.Data.OperationType.CREATE_OR_UPDATE,
-        'blackboard_key': 'bbfoo',
-        arg_name: arg_value,
-    }
-    node = bt.Data(**node_args)
-
-    generate_mock.side_effect = ['bar1']
-
-    expected_str = f"""bar1 = BT.Data(name="foo", operation=OperationType.CREATE_OR_UPDATE, blackboard_key="bbfoo", {expected_string})
-"""
-
-    mock_stdout = io.StringIO()
-    with mock.patch('sys.stdout', mock_stdout):
-      node.print_python_code(
-          [], mock.create_autospec(providers.SkillProvider, instance=True)
-      )
-
-    self.assertEqual(mock_stdout.getvalue(), expected_str)
-
   def test_proto_error_on_no_input(self):
     """Tests if BehaviorTree.Data is correctly constructed."""
     node = bt.Data(name='foo')
@@ -3778,29 +3658,6 @@ class DecoratorsTest(absltest.TestCase):
         bt.Decorators.create_from_proto(decorators_proto).proto,
         decorators_proto,
     )
-
-  @mock.patch.object(bt, '_generate_unique_identifier', autospec=True)
-  def test_print_python_code(self, generate_mock):
-    """Tests that the expected Python string is generated."""
-
-    decorators = bt.Decorators(
-        condition=bt.Blackboard(cel_expression='foo'),
-        breakpoint_type=bt.BreakpointType.BEFORE,
-    )
-
-    generate_mock.side_effect = ['bar1', 'bar2']
-
-    expected_str = """bar1 = BT.Blackboard(cel_expression="foo")
-bar2 = BT.Decorators(condition=bar1, breakpoint_type=BT.BreakpointType.BEFORE)
-"""
-
-    mock_stdout = io.StringIO()
-    with mock.patch('sys.stdout', mock_stdout):
-      decorators.print_python_code(
-          [], mock.create_autospec(providers.SkillProvider, instance=True)
-      )
-
-    self.assertEqual(mock_stdout.getvalue(), expected_str)
 
 
 if __name__ == '__main__':

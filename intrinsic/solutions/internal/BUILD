@@ -26,10 +26,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":actions",
-        ":skill_utils",
         "//intrinsic/executive/proto:behavior_call_py_pb2",
-        "//intrinsic/solutions:providers",
-        "//intrinsic/solutions:utils",
     ],
 )
 
@@ -44,14 +41,8 @@ py_test(
     deps = [
         ":actions",
         ":behavior_call",
-        ":skills",
         "//intrinsic/executive/proto:behavior_call_py_pb2",
-        "//intrinsic/skills/client:skill_registry_client",
-        "//intrinsic/skills/proto:skill_registry_py_pb2",
-        "//intrinsic/skills/proto:skills_py_pb2",
-        "//intrinsic/solutions:utils",
         "//intrinsic/solutions/testing:compare",
-        "//intrinsic/solutions/testing:test_skill_params_py_pb2",
         "@com_google_absl_py//absl/flags",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_protobuf//:protobuf_python",
@@ -137,10 +128,6 @@ py_test(
     deps = [
         ":skill_utils",
         "//intrinsic/icon/proto:joint_space_py_pb2",
-        "//intrinsic/math/python:data_types",
-        "//intrinsic/math/python:proto_conversion",
-        "//intrinsic/skills/proto:skills_py_pb2",
-        "//intrinsic/solutions:utils",
         "//intrinsic/solutions:worlds",
         "//intrinsic/solutions/testing:compare",
         "//intrinsic/solutions/testing:test_skill_params_py_pb2",

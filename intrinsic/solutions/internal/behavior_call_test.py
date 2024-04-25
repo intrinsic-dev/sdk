@@ -4,23 +4,15 @@
 
 import datetime
 import os
-from unittest import mock
 
 from absl import flags
 from absl.testing import absltest
 from google.protobuf import descriptor_pb2
-from google.protobuf import empty_pb2
 from google.protobuf import text_format
 from intrinsic.executive.proto import behavior_call_pb2
-from intrinsic.skills.client import skill_registry_client
-from intrinsic.skills.proto import skill_registry_pb2
-from intrinsic.skills.proto import skills_pb2
-from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
 from intrinsic.solutions.internal import behavior_call
-from intrinsic.solutions.internal import skills as skills_mod
 from intrinsic.solutions.testing import compare
-from intrinsic.solutions.testing import test_skill_params_pb2
 
 
 def _create_behavior_call_proto(index: int) -> behavior_call_pb2.BehaviorCall:
@@ -127,97 +119,6 @@ class BehaviorCallActionTest(absltest.TestCase):
         str(behavior_call.Action(proto)),
         r"""Action(skill_id='ai.intrinsic.my_custom_action')."""
         r"""require(device={handle: "SomeSpeaker"})""",
-    )
-
-  def test_to_python_no_parameter(self):
-    """Tests if Action conversion to python string works without parameters."""
-
-    skill_registry_stub = mock.MagicMock()
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
-    skill_id = 'ai.intrinsic.my_skill'
-
-    skill_info = skills_pb2.Skill(skill_name='my_skill', id=skill_id)
-
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-
-    resource_registry_stub = mock.MagicMock()
-
-    skills = skills_mod.Skills(skill_registry, resource_registry_stub)
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
-
-    action = behavior_call_pb2.BehaviorCall(skill_id=skill_id)
-
-    self.assertEqual(
-        behavior_call.Action(action).to_python(
-            utils.PrefixOptions(), 'action_0', skills
-        ),
-        'action_0 = skills.my_skill()',
-    )
-
-  def test_to_python_with_parameter(self):
-    """Tests if Action conversion to python string works with parameters."""
-
-    skill_registry_stub = mock.MagicMock()
-    skill_registry = skill_registry_client.SkillRegistryClient(
-        skill_registry_stub
-    )
-
-    skill_id = 'ai.intrinsic.my_skill'
-
-    skill_info = skills_pb2.Skill(skill_name='my_skill', id=skill_id)
-
-    parameters = test_skill_params_pb2.TestMessage(
-        my_double=1.1,
-        my_float=2.0,
-        my_int32=1,
-        my_int64=2,
-        my_string='foo',
-        my_uint32=10,
-        my_uint64=20,
-        my_bool=True,
-        sub_message=test_skill_params_pb2.SubMessage(name='bar'),
-        my_repeated_doubles=[0.3, 0.4],
-        string_int32_map={'foo': 1},
-    )
-
-    skill_info.parameter_description.parameter_descriptor_fileset.CopyFrom(
-        _get_file_descriptor_set()
-    )
-    skill_info.parameter_description.default_value.Pack(parameters)
-    skill_info.parameter_description.parameter_message_full_name = (
-        parameters.DESCRIPTOR.full_name
-    )
-
-    skill_registry_response = skill_registry_pb2.GetSkillsResponse()
-    skill_registry_response.skills.add().CopyFrom(skill_info)
-    skill_registry_stub.GetSkills.return_value = skill_registry_response
-
-    resource_registry_stub = mock.MagicMock()
-
-    skills = skills_mod.Skills(skill_registry, resource_registry_stub)
-    skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
-
-    action = behavior_call_pb2.BehaviorCall(skill_id=skill_id)
-    action.parameters.Pack(parameters)
-
-    self.assertEqual(
-        behavior_call.Action(action).to_python(
-            utils.PrefixOptions(), 'action_0', skills
-        ),
-        (
-            'action_0 = skills.my_skill(my_double=1.1, my_float=2.0, '
-            'my_int32=1, my_int64=2, my_uint32=10, my_uint64=20, '
-            "my_bool=True, my_string='foo', "
-            'sub_message=skills["ai.intrinsic.my_skill"].message_classes'
-            '["intrinsic_proto.test_data.SubMessage"]'
-            "(name='bar'), my_repeated_doubles=[0.3, 0.4], "
-            "string_int32_map={'foo': 1})"
-        ),
     )
 
   def test_incomplete_abstract_class(self):

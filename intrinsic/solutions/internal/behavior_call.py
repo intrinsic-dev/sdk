@@ -5,10 +5,7 @@
 from typing import Optional
 
 from intrinsic.executive.proto import behavior_call_pb2
-from intrinsic.solutions import providers
-from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
-from intrinsic.solutions.internal import skill_utils
 
 
 class Action(actions.ActionBase):
@@ -50,50 +47,6 @@ class Action(actions.ActionBase):
   @proto.setter
   def proto(self, proto) -> None:
     self._proto = proto
-
-  def to_python(
-      self,
-      prefix_options: utils.PrefixOptions,
-      identifier: str,
-      skills: providers.SkillProvider,
-  ) -> str:
-    """Converts Action to valid Python representation.
-
-    Args:
-      prefix_options: The PrefixOptions for generating the python
-        representation.
-      identifier: Action identifier to be used in building the plan.
-      skills: access to available skills for parameter resolution
-
-    Returns:
-       Valid python representation for action as string.
-    """
-    param = []
-
-    if self.proto:
-      skill_info = skills[self.proto.skill_id].skill_info
-      if skill_info.skill_proto.HasField('parameter_description'):
-        param_message = skill_info.create_param_message()
-        self.proto.parameters.Unpack(param_message)
-        for k, v in param_message.ListFields():
-          python_repr = skill_utils.pythonic_field_to_python_string(
-              v, k, prefix_options, self.proto.skill_id
-          )
-          param.append(f'{k.name}={python_repr}')
-      for entry in self.proto.resources:
-        resource_param = (
-            f'{prefix_options.resource_prefix}.'
-            f'{self.proto.resources[entry].handle.replace(":", "_")}'
-        )
-        param.append(f'{entry}={resource_param}')
-      if self.proto.return_value_name:
-        param.append(f'return_value_key="{self.proto.return_value_name}"')
-      return (
-          f'{identifier} ='
-          f' {prefix_options.skill_prefix}.'
-          f'{skill_info.skill_proto.skill_name}({", ".join(param)})'
-      )
-    return ''
 
   def __repr__(self) -> str:
     """Converts Action to Python (pseudocode) representation."""

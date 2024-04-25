@@ -17,11 +17,9 @@ executive.run() method.
 import abc
 import collections
 import enum
-import sys
 from typing import Any as AnyType, Callable, Iterable, List, Mapping, Optional, Sequence as SequenceType, Tuple, Union
 import uuid
 
-from google.protobuf import any_pb2
 from google.protobuf import descriptor
 from google.protobuf import descriptor_pb2
 from google.protobuf import message as protobuf_message
@@ -37,10 +35,8 @@ from intrinsic.solutions import cel
 from intrinsic.solutions import errors as solutions_errors
 from intrinsic.solutions import ipython
 from intrinsic.solutions import proto_building
-from intrinsic.solutions import providers
 from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
-from intrinsic.solutions.internal import behavior_call
 from intrinsic.solutions.internal import skill_utils
 from intrinsic.solutions.internal import skills as skills_mod
 from intrinsic.world.proto import object_world_refs_pb2
@@ -65,35 +61,6 @@ _NODE_TYPES_TO_DOT_SHAPES = {
 NodeIdentifierType = collections.namedtuple(
     'NodeIdentifierType', ['tree_id', 'node_id']
 )
-
-
-def _generate_unique_identifier(base_name: str, identifiers: List[str]) -> str:
-  """Generates a unique identifier using the given base name.
-
-  The returned string will be unique amongst the list of identifiers, achieved
-  by adding the count of the time the base name already exists.
-
-  Args:
-    base_name: The base of the desired identifier, is returned unchanged if
-      unique.
-     identifiers: List of already present identifiers.
-
-  Returns:
-    unique identifier created from base_name and number of occurrences of said
-    base_name
-
-  Example: The list of identifiers includes `sequence` and `sequence1`, given
-    the base_name `sequence` this function will return `sequence2`.
-  """
-  base_name = base_name.lower().replace(' ', '_').replace('-', '_')
-  while base_name in identifiers:
-    base_name = (
-        base_name
-        + '_'
-        + str(sum(1 for name in identifiers if base_name + '_' in name) + 1)
-    )
-  identifiers.append(base_name)
-  return base_name
 
 
 def _transform_to_node(node: Union['Node', actions.ActionBase]) -> 'Node':
@@ -489,67 +456,6 @@ class Decorators:
         )
     return decorator
 
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    """Prints string with Python code that would create the same instance.
-
-    Args:
-      identifiers: Already existing identifiers (in the larger tree context).
-      skills: Provider giving access to available skills.
-
-    Returns:
-      Identifier used to declare the Decorator, or empty string if no
-      decorator needed to be generated (no field set).
-    """
-    if self.condition is not None:
-      condition_identifier = self.condition.print_python_code(
-          identifiers, skills
-      )
-
-    if (
-        self.condition is not None
-        or self.breakpoint_type is not None
-        or self.execution_mode is not None
-    ):
-      identifier = _generate_unique_identifier('decorator', identifiers)
-      if self.execution_mode is not None:
-        execution_mode_identifier = _generate_unique_identifier(
-            'node_execution_mode', identifiers
-        )
-        disabled_result_state_identifier = None
-        if self.disabled_result_state is not None:
-          disabled_result_state_identifier = _generate_unique_identifier(
-              'disabled_result_state', identifiers
-          )
-          print(
-              f'{execution_mode_identifier} ='
-              f' BT.NodeExecutionMode({self.execution_mode}){disabled_result_state_identifier} ='
-              f' BT.DisabledResultState({self.disabled_result_state})'
-          )
-        else:
-          print(
-              f'{execution_mode_identifier} ='
-              f' BT.NodeExecutionMode({self.execution_mode})'
-          )
-      sys.stdout.write(f'{identifier} = BT.Decorators(')
-      decorator_params = []
-      if self.condition is not None:
-        decorator_params.append(f'condition={condition_identifier}')
-      if self.breakpoint_type is not None:
-        decorator_params.append(f'breakpoint_type=BT.{self.breakpoint_type}')
-      if self.execution_mode is not None:
-        decorator_params.append(f'execution_mode={execution_mode_identifier}')
-        if self.disabled_result_state is not None:
-          decorator_params.append(
-              f'disabled_result_state={disabled_result_state_identifier}'
-          )
-      sys.stdout.write(', '.join(decorator_params))
-      print(')')
-      return identifier
-
-    return ''
-
 
 class Node(abc.ABC):
   """Parent abstract base class for all the supported behavior tree nodes.
@@ -739,12 +645,6 @@ class Node(abc.ABC):
   def decorators(self) -> Optional['Decorators']:
     ...
 
-  @abc.abstractmethod
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ):
-    ...
-
   def visit(
       self,
       containing_tree: 'BehaviorTree',
@@ -875,12 +775,6 @@ class Condition(abc.ABC):
   def proto(self) -> behavior_tree_pb2.BehaviorTree.Condition:
     ...
 
-  @abc.abstractmethod
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    ...
-
   def visit(
       self,
       containing_tree: 'BehaviorTree',
@@ -937,14 +831,6 @@ class SubTreeCondition(Condition):
   ) -> 'SubTreeCondition':
     return cls(BehaviorTree.create_from_proto(proto_object))
 
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    tree_identifier = self.tree.print_python_code(skills, identifiers)
-    identifier = _generate_unique_identifier('subtree_condition', identifiers)
-    print(f'{identifier} = BT.SubTreeCondition(tree={tree_identifier})')
-    return identifier
-
   def visit(
       self,
       containing_tree: 'BehaviorTree',
@@ -993,17 +879,6 @@ class Blackboard(Condition):
   ) -> 'Blackboard':
     return cls(proto_object.cel_expression)
 
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    identifier = _generate_unique_identifier(
-        'blackboard_condition', identifiers
-    )
-    print(
-        f'{identifier} = BT.Blackboard(cel_expression="{self.cel_expression}")'
-    )
-    return identifier
-
 
 class CompoundCondition(Condition):
   """A base implementation for conditions composed of a number of conditions.
@@ -1030,19 +905,6 @@ class CompoundCondition(Condition):
       representation += f'{str(condition)} '
     representation += '])'
     return representation
-
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    identifier = _generate_unique_identifier(self.condition_type, identifiers)
-    conditions = [
-        c.print_python_code(identifiers, skills) for c in self.conditions
-    ]
-    print(
-        f'{identifier} ='
-        f' BT.{self.condition_type}(conditions=[{", ".join(conditions)}])'
-    )
-    return identifier
 
   def visit(
       self,
@@ -1165,14 +1027,6 @@ class Not(Condition):
   ) -> 'Not':
     return cls(Condition.create_from_proto(proto_object))
 
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    identifier = _generate_unique_identifier('not', identifiers)
-    condition = self.condition.print_python_code(identifiers, skills)
-    print(f'{identifier} = BT.Not(condition={condition})')
-    return identifier
-
   def visit(
       self,
       containing_tree: 'BehaviorTree',
@@ -1289,38 +1143,6 @@ class Task(Node):
       else:
         name += f'Skill {self._behavior_call_proto.skill_id}'
     return super().dot_graph(node_id_suffix, name)
-
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    behavior_call_action = behavior_call.Action(self.proto.task.call_behavior)
-    name = self._name or self.proto.task.call_behavior.skill_id
-    identifier_prefix = name.replace('.', '_')
-
-    call_identifier = _generate_unique_identifier(
-        identifier_prefix + '_behavior_call',
-        identifiers,
-    )
-    task_identifier = _generate_unique_identifier(
-        identifier_prefix, identifiers
-    )
-    print(
-        behavior_call_action.to_python(
-            prefix_options=utils.PrefixOptions(),
-            identifier=call_identifier,
-            skills=skills,
-        )
-    )
-    print(
-        f'{task_identifier} = BT.Task(name="{name}", action={call_identifier})'
-    )
-    if self.decorators:
-      decorator_identifier = self.decorators.print_python_code(
-          identifiers, skills
-      )
-      if decorator_identifier:
-        print(f'{task_identifier}.set_decorators({decorator_identifier})')
-    return task_identifier
 
 
 class SubTree(Node):
@@ -1474,26 +1296,6 @@ class SubTree(Node):
     )
     return box_dot_graph, child_node_name
 
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    tree_identifier = self.behavior_tree.root.print_python_code(
-        identifiers, skills=skills
-    )
-    name = self._name if hasattr(self, '_name') and self._name else 'subtree'
-    identifier = _generate_unique_identifier(name, identifiers)
-    print(
-        f"{identifier} = BT.SubTree(name='{name or tree_identifier}',"
-        f' behavior_tree={tree_identifier})'
-    )
-    if self.decorators:
-      decorator_identifier = self.decorators.print_python_code(
-          identifiers, skills
-      )
-      if decorator_identifier:
-        print(f'{identifier}.set_decorators({decorator_identifier})')
-    return identifier
-
   def visit(
       self,
       containing_tree: 'BehaviorTree',
@@ -1583,24 +1385,6 @@ class Fail(Node):
   ) -> Tuple[graphviz.Digraph, str]:
     return super().dot_graph(node_id_suffix=node_id_suffix, name=self._name)
 
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    identifier = _generate_unique_identifier(
-        self._name or 'fail_node', identifiers
-    )
-    failure = ''
-    if self.failure_message:
-      failure = f', failure_message="{self.failure_message}"'
-    print(f'{identifier} = BT.Fail(name="{self._name or identifier}"{failure})')
-    if self.decorators:
-      decorator_identifier = self.decorators.print_python_code(
-          identifiers, skills
-      )
-      if decorator_identifier:
-        print(f'{identifier}.set_decorators({decorator_identifier})')
-    return identifier
-
 
 class Debug(Node):
   """A BT node of type Debug for behavior_tree_pb2.BehaviorTree.DebugNode.
@@ -1681,26 +1465,6 @@ class Debug(Node):
   ) -> Tuple[graphviz.Digraph, str]:
     return super().dot_graph(node_id_suffix=node_id_suffix, name=self._name)
 
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    identifier = _generate_unique_identifier(
-        self._name or 'debug_node', identifiers
-    )
-    suspend = ''
-    if self.fail_on_resume:
-      suspend = f', fail_on_resume={self.fail_on_resume}'
-    print(
-        f'{identifier} = BT.Debug(name="{self._name or identifier}"{suspend})'
-    )
-    if self.decorators:
-      decorator_identifier = self.decorators.print_python_code(
-          identifiers, skills
-      )
-      if decorator_identifier:
-        print(f'{identifier}.set_decorators({decorator_identifier})')
-    return identifier
-
 
 class NodeWithChildren(Node):
   """A parent class for any behavior tree node that has self.children.
@@ -1750,27 +1514,6 @@ class NodeWithChildren(Node):
         label=self.name or '',
     )
     return box_dot_graph, node_name
-
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    name = self.name if self.name else self.node_type
-    identifier = _generate_unique_identifier(name, identifiers)
-    children_identifier = [
-        c.print_python_code(identifiers, skills) for c in self.children
-    ]
-    print(
-        f'{identifier} ='
-        f' BT.{self.node_type}(name="{name}",'
-        f' children=[{", ".join(children_identifier)}])'
-    )
-    if self.decorators:
-      decorator_identifier = self.decorators.print_python_code(
-          identifiers, skills
-      )
-      if decorator_identifier:
-        print(f'{identifier}.set_decorators({decorator_identifier})')
-    return identifier
 
   def visit(
       self,
@@ -2195,29 +1938,6 @@ class Retry(Node):
         label=self._name or '',
     )
     return box_dot_graph, node_name
-
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    child_identifier = self.child.print_python_code(identifiers, skills)
-    recovery_identifier = None
-    if self.recovery is not None:
-      recovery_identifier = self.recovery.print_python_code(identifiers, skills)
-    name = self._name if self._name else 'retry'
-    identifier = _generate_unique_identifier(name, identifiers)
-    print(
-        f'{identifier} = BT.Retry(name="{name}",'
-        f' child={child_identifier}, recovery={recovery_identifier},'
-        f' max_tries={self.max_tries},'
-        f' retry_counter_key="{self._retry_counter_key}")'
-    )
-    if self.decorators:
-      decorator_identifier = self.decorators.print_python_code(
-          identifiers, skills
-      )
-      if decorator_identifier:
-        print(f'{identifier}.set_decorators({decorator_identifier})')
-    return identifier
 
   def visit(
       self,
@@ -2802,51 +2522,6 @@ class Loop(Node):
     )
     return box_dot_graph, node_name
 
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    child_identifier = self.do_child.print_python_code(identifiers, skills)
-    condition_string = ''
-    if self.while_condition:
-      condition_identifier = self.while_condition.print_python_code(
-          identifiers, skills
-      )
-      condition_string = ', while_condition=' + condition_identifier
-    for_each_string = ''
-    if self._for_each_value_key:
-      for_each_string += f', for_each_value_key="{self._for_each_value_key}"'
-    if self._for_each_generator_cel_expression:
-      for_each_string += (
-          f', for_each_generator_cel_expression={self._for_each_generator_cel_expression}'
-      )
-    if self._for_each_protos:
-      for_each_string += ', for_each_protos=['
-      for proto in self._for_each_protos:
-        any_proto = any_pb2.Any()
-        if isinstance(proto, any_pb2.Any):
-          any_proto = proto
-        else:
-          any_proto.Pack(proto)
-        for_each_string += (
-            f'any_pb2.Any(type_url="{any_proto.type_url}",'
-            f' value={any_proto.value}), '
-        )
-      for_each_string += ']'
-    name = self._name if self._name else 'loop'
-    identifier = _generate_unique_identifier(name, identifiers)
-    print(
-        f'{identifier} = BT.Loop(name="{name}",'
-        f' do_child={child_identifier}, max_times={self.max_times},'
-        f' loop_counter_key="{self._loop_counter_key}"{condition_string}{for_each_string})'
-    )
-    if self.decorators:
-      decorator_identifier = self.decorators.print_python_code(
-          identifiers, skills
-      )
-      if decorator_identifier:
-        print(f'{identifier}.set_decorators({decorator_identifier})')
-    return identifier
-
   def visit(
       self,
       containing_tree: 'BehaviorTree',
@@ -3022,37 +2697,6 @@ class Branch(Node):
         label=self._name or '',
     )
     return box_dot_graph, node_name
-
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    name = self._name if self._name else 'branch'
-    identifier = _generate_unique_identifier(name, identifiers)
-    condition_identifier = self.if_condition.print_python_code(
-        identifiers, skills
-    )
-    code = (
-        f'{identifier} = BT.Branch(name="{name}", '
-        f' if_condition={condition_identifier}'
-    )
-    if self.then_child is not None:
-      then_child_identifier = self.then_child.print_python_code(
-          identifiers, skills
-      )
-      code += f', then_child={then_child_identifier}'
-    if self.else_child is not None:
-      else_child_identifier = self.else_child.print_python_code(
-          identifiers, skills
-      )
-      code += f', else_child={else_child_identifier}'
-    print(f'{code})')
-    if self.decorators:
-      decorator_identifier = self.decorators.print_python_code(
-          identifiers, skills
-      )
-      if decorator_identifier:
-        print(f'{identifier}.set_decorators({decorator_identifier})')
-    return identifier
 
   def visit(
       self,
@@ -3466,55 +3110,6 @@ class Data(Node):
       Dot graph representation for this node.
     """
     return super().dot_graph(node_id_suffix=node_id_suffix, name=self._name)
-
-  def print_python_code(
-      self, identifiers: List[str], skills: providers.SkillProvider
-  ) -> str:
-    """Prints Python code suitable to recreate the node.
-
-    Args:
-      identifiers: list of already assigned identifiers.
-      skills: skill provider to retrieve skill info from (unused).
-
-    Returns:
-      Identifier created for this node.
-    """
-
-    name = self._name if self._name else 'data'
-    identifier = _generate_unique_identifier(name, identifiers)
-
-    args = [
-        f'name="{name}"',
-        f'operation={self._operation}',
-        f'blackboard_key="{self._blackboard_key}"',
-    ]
-
-    if self._operation == Data.OperationType.CREATE_OR_UPDATE:
-      if self._cel_expression is not None:
-        args.append(f'cel_expression="{self._cel_expression}"')
-      if self._world_query is not None:
-        args.append(f'world_query={self._world_query}')
-      if self._proto is not None:
-        args.append(
-            f'proto=text_format.Parse("""{self._proto}""",'
-            f' {self._proto.DESCRIPTOR.full_name}())'
-        )
-      if self._protos is not None:
-        proto_strs = []
-        for p in self._protos:
-          proto_strs.append(f'''text_format.Parse("""{p}
-""", {p.DESCRIPTOR.full_name}())''')
-
-        args.append(f'protos=[{", ".join(proto_strs)}]')
-
-    print(f'{identifier} = BT.Data({", ".join(args)})')
-    if self.decorators:
-      decorator_identifier = self.decorators.print_python_code(
-          identifiers, skills
-      )
-      if decorator_identifier:
-        print(f'{identifier}.set_decorators({decorator_identifier})')
-    return identifier
 
 
 class IdRecorder:
@@ -4001,22 +3596,6 @@ class BehaviorTree:
 
   def show(self) -> None:
     return ipython.display_if_ipython(self.dot_graph())
-
-  def print_python_code(
-      self,
-      skills: providers.SkillProvider,
-      identifiers: Optional[List[str]] = None,
-  ) -> None:
-    if identifiers is None:
-      identifiers = []
-    child_identifier = self.root.print_python_code(
-        identifiers=identifiers, skills=skills
-    )
-    identifier = _generate_unique_identifier('tree', identifiers)
-    print(
-        f"{identifier} = BT.BehaviorTree(name='{self.name}',"
-        f' root={child_identifier})'
-    )
 
 
 def _merge_file_descriptor_set(
