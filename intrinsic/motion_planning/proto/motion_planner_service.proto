@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package intrinsic_proto.motion_planning;
 
+import "google/protobuf/empty.proto";
 import "intrinsic/geometry/proto/shape_data.proto";
 import "intrinsic/icon/proto/joint_space.proto";
 import "intrinsic/logging/proto/context.proto";
@@ -172,9 +173,6 @@ message CheckCollisionsResponse {
   string collision_debug_msg = 2;
 }
 
-message ClearCacheRequest {}
-message ClearCacheResponse {}
-
 service MotionPlannerService {
   // Plans a trajectory that fulfills the defined motion specification in the
   // MotionPlannerRequest.
@@ -194,6 +192,7 @@ service MotionPlannerService {
   rpc CheckCollisions(CheckCollisionsRequest)
       returns (CheckCollisionsResponse) {}
 
+  // PlanTrajectory uses caching to speed up repeated similar planning calls.
   // Clear cache for PlanTrajectory.
-  rpc ClearCache(ClearCacheRequest) returns (ClearCacheResponse) {}
+  rpc ClearCache(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }

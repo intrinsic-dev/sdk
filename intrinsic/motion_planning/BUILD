@@ -15,9 +15,7 @@ cc_library(
         ":conversions",
         "//intrinsic/eigenmath",
         "//intrinsic/geometry/proto:shape_data_cc_proto",
-        "//intrinsic/icon/proto:cart_space_conversion",
         "//intrinsic/icon/proto:joint_space_cc_proto",
-        "//intrinsic/kinematics/types:cartesian_limits",
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/math:pose3",
         "//intrinsic/math:proto_conversion",
@@ -35,6 +33,7 @@ cc_library(
         "//intrinsic/world/proto:object_world_refs_cc_proto",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_protobuf//:protobuf",
     ],
 )
@@ -57,6 +56,7 @@ py_library(
         "//intrinsic/world/proto:geometric_constraints_py_pb2",
         "//intrinsic/world/python:object_world_ids",
         requirement("grpcio"),
+        "@com_google_protobuf//:protobuf_python",
     ],
 )
 

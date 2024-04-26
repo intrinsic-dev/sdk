@@ -15,6 +15,7 @@ from typing import List, Optional
 # pylint: disable=unused-import
 import grpc
 
+from google.protobuf import empty_pb2
 from intrinsic.icon.proto import joint_space_pb2
 from intrinsic.math.python import data_types
 from intrinsic.math.python import proto_conversion as math_proto_conversion
@@ -267,6 +268,6 @@ class MotionPlannerClient:
     response = self._stub.CheckCollisions(request)
     return response
 
-  def clear_cache(self) -> motion_planner_service_pb2.ClearCacheResponse:
+  def clear_cache(self) -> empty_pb2.Empty:
     """Calls the ClearCache rpc."""
-    return self._stub.ClearCache(motion_planner_service_pb2.ClearCacheRequest())
+    return self._stub.ClearCache(empty_pb2.Empty())

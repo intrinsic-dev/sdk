@@ -8,9 +8,11 @@
 #include <string>
 #include <vector>
 
+#include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
+#include "google/protobuf/empty.pb.h"
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/geometry/proto/shape_data.pb.h"
-#include "intrinsic/kinematics/types/cartesian_limits.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/math/pose3.h"
 #include "intrinsic/motion_planning/proto/motion_planner_config.pb.h"
@@ -154,8 +156,7 @@ class MotionPlannerClient {
                   const CheckCollisionsOptions& options = {});
 
   // Clear the PlanTrajectory caches.
-  absl::StatusOr<intrinsic_proto::motion_planning::ClearCacheResponse>
-  ClearCache();
+  absl::StatusOr<google::protobuf::Empty> ClearCache();
 
  private:
   std::string world_id_;

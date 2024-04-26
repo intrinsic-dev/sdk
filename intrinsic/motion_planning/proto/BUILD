@@ -26,6 +26,7 @@ proto_library(
         "//intrinsic/world/proto:geometric_constraints_proto",
         "//intrinsic/world/proto:object_world_refs_proto",
         "@com_google_protobuf//:duration_proto",
+        "@com_google_protobuf//:empty_proto",
     ],
 )
 

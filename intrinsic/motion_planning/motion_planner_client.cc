@@ -11,9 +11,9 @@
 
 #include "absl/status/statusor.h"
 #include "google/protobuf/duration.pb.h"
+#include "google/protobuf/empty.pb.h"
 #include "grpcpp/client_context.h"
 #include "intrinsic/eigenmath/types.h"
-#include "intrinsic/icon/proto/cart_space_conversion.h"
 #include "intrinsic/icon/proto/joint_space.pb.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/math/proto_conversion.h"
@@ -225,12 +225,11 @@ MotionPlannerClient::CheckCollisions(
   return response;
 }
 
-absl::StatusOr<intrinsic_proto::motion_planning::ClearCacheResponse>
-MotionPlannerClient::ClearCache() {
-  intrinsic_proto::motion_planning::ClearCacheResponse response;
+absl::StatusOr<google::protobuf::Empty> MotionPlannerClient::ClearCache() {
+  google::protobuf::Empty response;
   grpc::ClientContext ctx;
   INTR_RETURN_IF_ERROR(ToAbslStatus(motion_planner_service_->ClearCache(
-      &ctx, intrinsic_proto::motion_planning::ClearCacheRequest(), &response)));
+      &ctx, google::protobuf::Empty(), &response)));
   return response;
 }
 
