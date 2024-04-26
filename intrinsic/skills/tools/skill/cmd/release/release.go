@@ -21,7 +21,6 @@ import (
 	"intrinsic/assets/idutils"
 	"intrinsic/assets/imagetransfer"
 	"intrinsic/assets/imageutils"
-	skillcataloggrpcpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillcatalogpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillmanifestpb "intrinsic/skills/proto/skill_manifest_go_proto"
 	skillCmd "intrinsic/skills/tools/skill/cmd"
@@ -31,7 +30,7 @@ import (
 )
 
 const (
-	keyDescription = "description"
+	keyDescription                    = "description"
 )
 
 var cmdFlags = cmdutils.NewCmdFlags()
@@ -42,15 +41,6 @@ var (
 		"-c", "opt",
 	}
 )
-
-func release(cmd *cobra.Command, conn *grpc.ClientConn, req *skillcatalogpb.CreateSkillRequest, idVersion string) error {
-	_ = skillcataloggrpcpb.NewSkillCatalogClient(conn)
-	return status.Errorf(codes.Unimplemented, "releasing skills is not yet supported")
-
-	log.Printf("finished releasing the skill")
-
-	return nil
-}
 
 func getManifest() (*skillmanifestpb.Manifest, error) {
 	manifestFilePath, manifestTarget, err := cmdFlags.GetFlagsManifest()
@@ -131,6 +121,14 @@ func namePackageFromID(skillID string) (string, string, error) {
 	return name, pkg, nil
 }
 
+func release(cmd *cobra.Command, conn *grpc.ClientConn, req *skillcatalogpb.CreateSkillRequest, idVersion string) error {
+	return status.Errorf(codes.Unimplemented, "releasing skills is not yet supported")
+
+	log.Printf("finished releasing the skill")
+
+	return nil
+}
+
 func remoteOpt() remote.Option {
 	return remote.WithAuthFromKeychain(google.Keychain)
 }
@@ -168,6 +166,7 @@ var releaseCmd = &cobra.Command{
 			Default:      cmdFlags.GetFlagDefault(),
 			OrgPrivate:   cmdFlags.GetFlagOrgPrivate(),
 		}
+
 
 		useDirectUpload := true
 		needConn := true
@@ -254,4 +253,6 @@ func init() {
 	cmdFlags.AddFlagReleaseNotes("skill")
 	cmdFlags.AddFlagSkillReleaseType()
 	cmdFlags.AddFlagVersion("skill")
+
+
 }
