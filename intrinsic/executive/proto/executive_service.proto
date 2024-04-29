@@ -235,6 +235,9 @@ message CreateOperationRequest {
 
 message ResetOperationRequest {
   string name = 1;
+  // If set to true, the blackboard of the operation will not be reset and all
+  // keys are kept.
+  bool keep_blackboard = 2;
 }
 
 message GetOperationViewRequest {
