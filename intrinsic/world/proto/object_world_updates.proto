@@ -158,6 +158,11 @@ message CreateObjectRequest {
   // - All other cases: Defaults to identity.
   intrinsic_proto.Pose parent_object_t_created_object = 4;
 
+  // If set, we will append a collision settings rule that applies between the
+  // new object entities and all other entities within the world. This is
+  // effectively 'new entities vs *'. The new rule will use the given action.
+  CollisionAction action_for_object_entities = 11;
+
   // Options for specifying the contents and properties of the object.
   oneof object_spec {
     ObjectSpecForSingleEntityObject create_single_entity_object = 5;
