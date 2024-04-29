@@ -1216,6 +1216,25 @@ def _gen_init_params(
   return params
 
 
+class MessageWrapperNamespace:
+  """Common base class for message wrapper namespace classes.
+
+  Subclasses correspond to proto packages and are defined as nested classes
+  within the generated skill classes. Subclasses cannot be instantiated and only
+  serve as a namespace for message wrapper classes and other, nested subclasses
+  of MessageWrapperNamespace.
+
+  See _gen_wrapper_namespace_class() and _attach_wrapper_class() below.
+  """
+
+  def __init__(self, *args, **kwargs) -> None:
+    del args, kwargs
+    raise RuntimeError(
+        f"This class ({type(self).__qualname__}) serves only as a namespace and"
+        " cannot be instantiated."
+    )
+
+
 def _gen_wrapper_namespace_class(
     name: str, proto_path: str, skill_name: str, skill_package: str
 ) -> Type[Any]:
@@ -1233,22 +1252,17 @@ def _gen_wrapper_namespace_class(
   Returns:
     The generated namespace class.
   """
-
-  def init_fun(self, *args, **kwargs) -> None:
-    del self, args, kwargs
-    raise RuntimeError(
-        f"This class ({proto_path}) serves only as a namespace and should not"
-        " be instantiated."
-    )
-
   return type(
       name,
-      (),  # no base classes
+      (MessageWrapperNamespace,),
       {
-          "__init__": init_fun,
           "__name__": name,
           "__qualname__": skill_name + _PYTHON_PACKAGE_SEPARATOR + proto_path,
           "__module__": module_for_generated_skill(skill_package),
+          "__doc__": (
+              "Namespace class corresponding to the proto package or message"
+              f" {proto_path}.\n\nCannot be instantiated."
+          ),
       },
   )
 
