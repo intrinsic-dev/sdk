@@ -15,7 +15,6 @@ from intrinsic.skills.proto import equipment_pb2
 from intrinsic.util.grpc import connection
 
 ICON2_POSITION_PART_KEY = "Icon2PositionPart"
-ICON2_TORQUE_PART_KEY = "Icon2TorquePart"
 ICON2_GRIPPER_PART_KEY = "Icon2GripperPart"
 ICON2_ADIO_PART_KEY = "Icon2AdioPart"
 ICON2_FORCE_TORQUE_SENSOR_PART_KEY = "Icon2ForceTorqueSensorPart"
@@ -24,7 +23,6 @@ ICON2_RANGEFINDER_PART_KEY = "Icon2RangefinderPart"
 
 def make_icon_resource_selector(
     with_position_controlled_part: bool = False,
-    with_torque_controlled_part: bool = False,
     with_gripper_part: bool = False,
     with_adio_part: bool = False,
     with_force_torque_sensor_part: bool = False,
@@ -35,7 +33,6 @@ def make_icon_resource_selector(
 
   Args:
     with_position_controlled_part: If true, requires a position-controlled part.
-    with_torque_controlled_part: If true, requires a torque-controlled part.
     with_gripper_part: If true, requires a gripper part.
     with_adio_part: If true, requires an adio part.
     with_force_torque_sensor_part: If true, requires a force_torque_sensor part.
@@ -49,8 +46,6 @@ def make_icon_resource_selector(
   capability_names = ["intrinsic_proto.icon.IconApi"]
   if with_position_controlled_part:
     capability_names.append(ICON2_POSITION_PART_KEY)
-  if with_torque_controlled_part:
-    capability_names.append(ICON2_TORQUE_PART_KEY)
   if with_gripper_part:
     capability_names.append(ICON2_GRIPPER_PART_KEY)
   if with_adio_part:
@@ -134,32 +129,6 @@ def get_position_part_name(
   resource_handle.resource_data[pos_key].contents.Unpack(icon_position_part)
   logging.info("ICON position_part: %s", icon_position_part)
   return icon_position_part.part_name
-
-
-def get_torque_part_name(
-    resource_handle: resource_handle_pb2.ResourceHandle,
-) -> str:
-  """Gets the name of the Icon2TorquePart from the resource data.
-
-  Args:
-    resource_handle: The resource handle for the robot we want to control.
-
-  Returns:
-    The part name.
-
-  Raises:
-    KeyError: If resource_handle does not include an Icon2TorquePart data.
-  """
-  icon_torque_part = icon_equipment_pb2.Icon2TorquePart()
-  torque_key = ICON2_TORQUE_PART_KEY
-  if torque_key not in resource_handle.resource_data:
-    raise KeyError(
-        "%s is not in resource_handle.resource_data. Available: %r"
-        % (torque_key, resource_handle.resource_data.keys())
-    )
-  resource_handle.resource_data[torque_key].contents.Unpack(icon_torque_part)
-  logging.info("ICON torque_part: %s", icon_torque_part)
-  return icon_torque_part.part_name
 
 
 def get_gripper_part_name(

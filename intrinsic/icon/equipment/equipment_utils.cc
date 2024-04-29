@@ -36,12 +36,6 @@ absl::StatusOr<IconEquipment> ConnectToIconEquipment(
   if (maybe_position_part.ok()) {
     out.position_part_name = maybe_position_part->part_name();
   }
-  auto maybe_torque_part =
-      equipment_pack.Unpack<intrinsic_proto::icon::Icon2TorquePart>(
-          equipment_slot, kIcon2TorquePartKey);
-  if (maybe_torque_part.ok()) {
-    out.torque_part_name = maybe_torque_part->part_name();
-  }
   auto maybe_gripper_part =
       equipment_pack.Unpack<intrinsic_proto::icon::Icon2GripperPart>(
           equipment_slot, kIcon2GripperPartKey);
@@ -86,9 +80,6 @@ intrinsic_proto::skills::ResourceSelector Icon2ResourceSelectorBuilder::Build()
   if (position_part_) {
     selector.add_capability_names(kIcon2PositionPartKey);
   }
-  if (torque_part_) {
-    selector.add_capability_names(kIcon2TorquePartKey);
-  }
   if (gripper_part_) {
     selector.add_capability_names(kIcon2GripperPartKey);
   }
@@ -110,12 +101,6 @@ intrinsic_proto::skills::ResourceSelector Icon2ResourceSelectorBuilder::Build()
 Icon2ResourceSelectorBuilder&
 Icon2ResourceSelectorBuilder::WithPositionControlledPart() {
   position_part_ = true;
-  return *this;
-}
-
-Icon2ResourceSelectorBuilder&
-Icon2ResourceSelectorBuilder::WithTorqueControlledPart() {
-  torque_part_ = true;
   return *this;
 }
 

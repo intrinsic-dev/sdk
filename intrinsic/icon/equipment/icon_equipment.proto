@@ -13,12 +13,6 @@ message Icon2PositionPart {
   reserved "connection_config";
 }
 
-message Icon2TorquePart {
-  string part_name = 1;
-  reserved 2, 3;
-  reserved "connection_config", "world_robot_collection_name";
-}
-
 message Icon2GripperPart {
   string part_name = 1;
   reserved 2, 3;

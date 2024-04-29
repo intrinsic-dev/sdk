@@ -24,7 +24,6 @@ namespace icon {
 // intrinsic/skills/proto/equipment.proto
 constexpr char kIcon2ConnectionKey[] = "intrinsic_proto.icon.IconApi";
 constexpr char kIcon2PositionPartKey[] = "Icon2PositionPart";
-constexpr char kIcon2TorquePartKey[] = "Icon2TorquePart";
 constexpr char kIcon2GripperPartKey[] = "Icon2GripperPart";
 constexpr char kIcon2AdioPartKey[] = "Icon2AdioPart";
 constexpr char kIcon2ForceTorqueSensorPartKey[] = "Icon2ForceTorqueSensorPart";
@@ -37,7 +36,6 @@ constexpr char kIconRobotObservationStreamParamsKey[] =
 struct IconEquipment {
   std::shared_ptr<ChannelInterface> channel;
   std::optional<std::string> position_part_name;
-  std::optional<std::string> torque_part_name;
   std::optional<std::string> gripper_part_name;
   std::optional<std::string> adio_part_name;
   std::optional<std::string> force_torque_sensor_part_name;
@@ -62,8 +60,6 @@ class Icon2ResourceSelectorBuilder {
 
   Icon2ResourceSelectorBuilder& WithPositionControlledPart();
 
-  Icon2ResourceSelectorBuilder& WithTorqueControlledPart();
-
   Icon2ResourceSelectorBuilder& WithGripperPart();
 
   Icon2ResourceSelectorBuilder& WithAdioPart();
@@ -76,7 +72,6 @@ class Icon2ResourceSelectorBuilder {
 
  private:
   bool position_part_ = false;
-  bool torque_part_ = false;
   bool gripper_part_ = false;
   bool adio_part_ = false;
   bool force_torque_sensor_part_ = false;
