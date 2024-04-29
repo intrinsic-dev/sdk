@@ -382,7 +382,8 @@ message Object {
   // populated (if ObjectView==BASIC, Frame.parent_t_this is not populated).
   repeated Frame frames = 7;
 
-  // Only present if ObjectView==FULL and ObjectType!=ROOT.
+  // Only fully populated if ObjectView==FULL and ObjectType!=ROOT.  It will
+  // only contain the pose if ObjectView==BASIC
   ObjectComponent object_component = 8;
 
   // Only present if ObjectView==FULL and ObjectType==KINEMATIC_OBJECT.
@@ -757,8 +758,8 @@ message CompareWorldsRequest {
   // The world with changes.
   string changed_world_id = 2;
 
-  // The view of the objects from both worlds. If view == FULL, then returns
-  // the objects from both worlds.
+  // The view of the objects from both worlds. If view == FULL or BASIC, then
+  // returns the objects from both worlds with the appropriate view.
   ObjectView view = 3;
 }
 
