@@ -93,6 +93,29 @@ message UpdateCollisionSettingsRequest {
   }
 }
 
+// Specifies kinematic properties of an object with an object with type
+// ObjectType==KINEMATIC_OBJECT. Specifically, each entry in `entities`
+// specifies the local name of either a joint or link entity and that entity's
+// transformation with respect to its parent.
+message RobotEntityKinematicProperties {
+  message Entity {
+    string entity_name = 1;
+    intrinsic_proto.Pose parent_t_entity = 2;
+  }
+  repeated Entity entities = 1;
+}
+
+// Specifies changes to the kinematics related properties of an object with type
+// ObjectType==KINEMATIC_OBJECT. Specifically, one can change the relations
+// between entities with `robot_entity_updates` as well as specify a new
+// `ik_solver_key` to be used.
+message RobotKinematicsUpdate {
+  // Updates to be made to entities that belong to the kinematic object.
+  optional RobotEntityKinematicProperties robot_entity_updates = 1;
+  // Replaces the existing solver key for all solvable frames.
+  string ik_solver_key = 2;
+}
+
 // Specifies the properties for a simple single-entity object.
 message ObjectSpecForSingleEntityObject {
   // The geometry component associated with the object's entity.
@@ -334,6 +357,9 @@ message UpdateKinematicObjectPropertiesRequest {
 
   // The payload attached to the robot flange.
   optional RobotPayload mounted_payload = 8;
+
+  // All updates to be made to the robot chain.
+  optional RobotKinematicsUpdate robot_kinematics_update = 9;
 
   // Requested object view for the returned, updated kinematic object.
   ObjectView view = 7;
