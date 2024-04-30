@@ -197,9 +197,6 @@ message WorldMetadata {
   // Unique id of the world.
   string id = 1;
 
-  // Whether the world is out of sync with persistent global storage.
-  bool dirty = 5;
-
   // A hash representing the current structure portion of the world data. This
   // hash will change when there are structural changes to the world, but may
   // not change when state is updated. State in this case could mean pose values
@@ -209,8 +206,8 @@ message WorldMetadata {
   // The timestamp of the most recent update to this world.
   google.protobuf.Timestamp last_update = 7;
 
-  reserved 4;
-  reserved "db_world_id";
+  reserved 4, 5;
+  reserved "db_world_id", "dirty";
 }
 
 // -----------------------------------------------------------------------------
