@@ -52,8 +52,15 @@ message JointStatePVA {
            "radians/second^2"];  // Acceleration of each joint.
 }
 
+enum JointTrajectoryInterpolationType {
+  INTERPOLATION_TYPE_UNSPECIFIED = 0;
+  INTERPOLATION_TYPE_CUBIC_POLYNOMIAL = 1;
+  INTERPOLATION_TYPE_QUINTIC_POLYNOMIAL = 2;
+}
+
 message JointTrajectoryPVA {
   repeated JointStatePVA state = 1;
   repeated google.protobuf.Duration time_since_start = 2;
   intrinsic_proto.DynamicLimitsCheckMode joint_dynamic_limits_check_mode = 3;
+  JointTrajectoryInterpolationType interpolation_type = 4;
 }
