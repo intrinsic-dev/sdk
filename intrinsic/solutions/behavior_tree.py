@@ -37,8 +37,8 @@ from intrinsic.solutions import ipython
 from intrinsic.solutions import proto_building
 from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
+from intrinsic.solutions.internal import skill_generation
 from intrinsic.solutions.internal import skill_utils
-from intrinsic.solutions.internal import skills as skills_mod
 from intrinsic.world.proto import object_world_refs_pb2
 from intrinsic.world.python import object_world_resources
 
@@ -3569,7 +3569,7 @@ class BehaviorTree:
           'description is not set. This is not a Parameterizable Behavior Tree.'
           ' params are only available for PBTs.'
       )
-    info = skills_mod.SkillInfoImpl(self._description)
+    info = skill_generation.SkillInfoImpl(self._description)
 
     msg = info.create_param_message()
     return blackboard_value.BlackboardValue(

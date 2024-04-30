@@ -139,38 +139,50 @@ py_test(
 )
 
 py_library(
-    name = "skills",
-    srcs = ["skills.py"],
+    name = "skill_generation",
+    srcs = ["skill_generation.py"],
     srcs_version = "PY3",
     deps = [
         ":actions",
-        ":resources",
         ":skill_parameters",
         ":skill_utils",
         "//intrinsic/executive/proto:behavior_call_py_pb2",
-        "//intrinsic/resources/client:resource_registry_client",
-        "//intrinsic/skills/client:skill_registry_client",
         "//intrinsic/skills/proto:skills_py_pb2",
         "//intrinsic/solutions:blackboard_value",
         "//intrinsic/solutions:cel",
         "//intrinsic/solutions:provided",
-        "//intrinsic/solutions:providers",
         "//intrinsic/solutions:utils",
         "@com_google_protobuf//:protobuf_python",
     ],
 )
 
+py_library(
+    name = "skill_providing",
+    srcs = ["skill_providing.py"],
+    srcs_version = "PY3",
+    deps = [
+        ":resources",
+        ":skill_generation",
+        ":skill_utils",
+        "//intrinsic/resources/client:resource_registry_client",
+        "//intrinsic/skills/client:skill_registry_client",
+        "//intrinsic/solutions:provided",
+        "//intrinsic/solutions:providers",
+    ],
+)
+
 py_test(
-    name = "skills_test",
-    srcs = ["skills_test.py"],
+    name = "skill_providing_test",
+    srcs = ["skill_providing_test.py"],
     data = [
         "//intrinsic/solutions/testing:test_skill_params_proto_descriptors",
     ],
     python_version = "PY3",
     srcs_version = "PY3",
     deps = [
+        ":skill_generation",
+        ":skill_providing",
         ":skill_utils",
-        ":skills",
         "//intrinsic/executive/proto:behavior_call_py_pb2",
         "//intrinsic/executive/proto:test_message_py_pb2",
         "//intrinsic/math/proto:point_py_pb2",

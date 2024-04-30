@@ -44,7 +44,7 @@ from intrinsic.solutions import simulation
 from intrinsic.solutions import userconfig
 from intrinsic.solutions import worlds
 from intrinsic.solutions.internal import resources as resources_mod
-from intrinsic.solutions.internal import skills as skills_mod
+from intrinsic.solutions.internal import skill_providing
 from intrinsic.util.grpc import error_handling
 
 
@@ -143,7 +143,7 @@ class Solution:
     self.simulator: Optional[simulation.Simulation] = simulator
     self._installer_service_stub = installer
 
-    self.skills = skills_mod.Skills(
+    self.skills = skill_providing.Skills(
         self._skill_registry,
         self._resource_registry,
     )
