@@ -41,6 +41,8 @@ SplitTrajectoryProto(const intrinsic_proto::icon::JointTrajectoryPVA& proto,
     }
     split_trajectories[subel].set_joint_dynamic_limits_check_mode(
         proto.joint_dynamic_limits_check_mode());
+    split_trajectories[subel].set_interpolation_type(
+        proto.interpolation_type());
   }
   return split_trajectories;
 }
@@ -60,6 +62,12 @@ ConcatenateTrajectoryProtos(
       return absl::InvalidArgumentError(
           "All trajectory segments should have the same "
           "dynamic_limits_check_mode.");
+    }
+    if (trajectory_segments[subel].interpolation_type() !=
+        trajectory.interpolation_type()) {
+      return absl::InvalidArgumentError(
+          "All trajectory segments should have the same "
+          "interpolation_type.");
     }
     for (int i = 0; i < trajectory_segments[subel].time_since_start_size();
          i++) {
