@@ -6,39 +6,54 @@ package intrinsic_proto.frontend.v1;
 
 import "intrinsic/frontend/cloud/api/clusterdiscovery_api.proto";
 
+// Details about a solution.
 message SolutionDescription {
+  // The unique name/ID of the solution. For a human readable name, see
+  // 'display_name'.
   string name = 1;
+
+  // The name of the solution under which it should be displayed.
   string display_name = 2;
+
+  // The current state of the solution.
   SolutionState state = 3;
-  // Name of the cluster this solution is deployed to.
-  // Only filled if solution is running.
+
+  // Name of the cluster this solution is deployed to. Only filled if solution
+  // is running (see 'state').
   string cluster_name = 4;
 }
 
 message ListSolutionDescriptionsRequest {
+  // Only return solutions which have any of the given states. If empty, return
+  // all solutions.
   repeated SolutionState filters = 1;
 }
 
 message ListSolutionDescriptionsResponse {
-  // sorted lexicographically by solution name
+  // Details about the solutions matching the filter criteria of the request,
+  // sorted lexicographically by 'name'.
   repeated SolutionDescription solutions = 1;
 }
 
 message GetSolutionDescriptionRequest {
+  // The name/ID of the solution to return.
   string name = 1;
 }
 
 message GetSolutionDescriptionResponse {
+  // Details about the solution matching the request.
   SolutionDescription solution = 1;
 }
 
+// Provides information about a user's solutions in a project.
 service SolutionDiscoveryService {
 
-  // Returns a list of solutions based on the provided filter
+  // Returns a list of the user's solutions which satisfy the given filter
+  // criteria.
   rpc ListSolutionDescriptions(ListSolutionDescriptionsRequest)
       returns (ListSolutionDescriptionsResponse) {}
 
-  // Returns information about a specific solution
+  // Returns information about a specific solution.
   rpc GetSolutionDescription(GetSolutionDescriptionRequest)
       returns (GetSolutionDescriptionResponse) {}
 }
