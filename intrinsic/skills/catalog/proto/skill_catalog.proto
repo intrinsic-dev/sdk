@@ -23,7 +23,7 @@ message Skill {
       "update_time", "tag", "display_name";
 }
 
-// A skill compiled into an image with its skill service implementation.
+// A skill's service implementation compiled into a container image.
 message SkillImage {
   // The inlined skill image archive.
   bytes image_archive = 1;
@@ -34,7 +34,8 @@ message GetSkillRequest {
   // Format: {package}.{name}.{version}
   string id_version = 1;
 
-  // The type of view to return. Defaults to ASSET_VIEW_TYPE_BASIC.
+  // The type of view to return. Each view type determines the set of fields
+  // that are populated in the response. Defaults to ASSET_VIEW_TYPE_BASIC.
   AssetViewType view = 2;
 }
 
@@ -49,14 +50,15 @@ message ListSkillsRequest {
   // A page token received from a previous `ListSkills` call. Provide this to
   // retrieve the subsequent page.
   //
-  // When paginating, all other parameters provided to `ListSkills` must match
-  // the call that provided the page token.
+  // When paginating, all parameters provided to `ListSkills` except page_size
+  // and page_token must match the previous call that provided the page token.
   //
   // If unspecified, up to the first `page_size` matching skills will be
   // returned.
   string page_token = 2;
 
-  // The type of view to return. Defaults to ASSET_VIEW_TYPE_BASIC.
+  // The type of view to return. Each view type determines the set of fields
+  // that are populated in the response. Defaults to ASSET_VIEW_TYPE_BASIC.
   AssetViewType view = 3;
 
   // Used to filter returned skills.
@@ -107,10 +109,10 @@ message CreateSkillRequest {
   skills.Manifest manifest = 12;
 
   oneof deployment_type {
-    // Container image for the skill with its service.
+    // A container image for the skill with its service.
     workcell_spec.v1.Image image = 7;
 
-    // Specify if creating a parameterizable behavior tree.
+    // A parameterizable behavior tree.
     executive.BehaviorTree behavior_tree = 8;
   }
 
@@ -118,6 +120,8 @@ message CreateSkillRequest {
   //
   // The "default" version of a skill is the version that is installed when
   // the user does not explicitly specify a different version.
+  //
+  // Cannot be true if `org_private` is true.
   bool default = 13;
 
   // True if this version of the skill should be hidden from users who aren't
@@ -133,15 +137,20 @@ message CreateSkillRequest {
 
 message ClearDefaultRequest {
   // Skill id for which to clear the default version.
+  //
+  // The "default" version of a skill is the version that is installed when
+  // the user does not explicitly specify a different version. A skill without
+  // a default version will not be shown in the list of available skills.
   intrinsic_proto.assets.Id id = 1;
 }
 
-// Reads skill data from the catalog and adds skills to it.
+// A skill catalog service contains methods that read and write skill data.
 service SkillCatalog {
   // Retrieves information about a skill from the catalog.
   rpc GetSkill(GetSkillRequest) returns (Skill);
 
-  // Retrieves information about skills from the catalog.
+  // Retrieves information about all skills in the catalog that match the
+  // given request.
   rpc ListSkills(ListSkillsRequest) returns (ListSkillsResponse);
 
   // Creates a new version of a skill in the catalog.
