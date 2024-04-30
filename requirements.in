@@ -16,6 +16,7 @@
 #     requirement("numpy"),
 #   ],
 # )
+black==24.4.0
 graphviz==0.20
 grpcio==1.56.0
 hypothesis==6.98.12

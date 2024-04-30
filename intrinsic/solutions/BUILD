@@ -563,6 +563,7 @@ py_wheel(
     name = "solutions_wheel",
     distribution = "solutions",
     requires = [
+        "black",
         "googleapis-common-protos",
         "graphviz",
         "grpcio",
