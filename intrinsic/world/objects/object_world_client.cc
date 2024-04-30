@@ -269,9 +269,9 @@ absl::StatusOr<std::vector<WorldObject>> ObjectWorldClient::ListObjects()
       object_world_service_->ListObjects(&ctx, request, &response)));
   std::vector<WorldObject> objects;
   objects.reserve(response.objects_size());
-  for (const auto& object_proto : response.objects()) {
+  for (auto&& object_proto : *response.mutable_objects()) {
     INTR_ASSIGN_OR_RETURN(WorldObject object,
-                          WorldObject::Create(object_proto));
+                          WorldObject::Create(std::move(object_proto)));
     objects.push_back(std::move(object));
   }
   return objects;

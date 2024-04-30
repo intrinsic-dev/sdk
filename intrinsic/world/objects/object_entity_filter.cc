@@ -4,6 +4,7 @@
 
 #include <set>
 #include <string>
+#include <utility>
 
 #include "absl/strings/string_view.h"
 #include "intrinsic/world/objects/object_world_ids.h"
@@ -33,7 +34,7 @@ ObjectEntityFilter& ObjectEntityFilter::IncludeAllEntities() {
 
 ObjectEntityFilter& ObjectEntityFilter::IncludeEntityId(
     ObjectWorldResourceId entity_id) {
-  entity_ids_.insert(entity_id);
+  entity_ids_.insert(std::move(entity_id));
   return *this;
 }
 
