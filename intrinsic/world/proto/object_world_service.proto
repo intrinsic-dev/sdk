@@ -24,13 +24,36 @@ import "intrinsic/world/proto/sensor_component.proto";
 import "intrinsic/world/proto/simulation_component.proto";
 import "intrinsic/world/proto/spawner_component.proto";
 
-// Provides access to a managed set of world objects.
+// Provides access to a managed set of world models.
 //
-// Offers a simplified/high-level view onto the entities in a world by exposing
-// them as objects and frames.
+// Each world model is represented by a collection of objects. Each object, in
+// turn, is a collection of entities. The entities in a world model may have
+// different properties, but only a subset are usually valid to denote the type
+// of entity (link, joint, frame, etc).
+//
+// There is one special object, the root object, which represents the world
+// origin. The root object contains a single root entity, which is the ancestor
+// of all other entities. Each non-root entity has exactly one parent which is
+// the reference for posing that entity. Objects additionally have a "base
+// entity", which establishes a pose hierarchy of objects on top of the pose
+// hierarchy of entities.
+//
+// Frames are first-class citizens in this API. Although they are also entities
+// in an object, they can be manipulated independently through the RPCs in this
+// service. The consequence is that frames are expected to be dynamic while the
+// other types of entities are expected to be set once at world authoring and
+// not change.
+//
+// All methods in this service provide mutual exclusion with respect to world
+// operations. In other words, if two clients mutate the same world model, then
+// the operations will be atomic but in an indeterminate order.
 service ObjectWorldService {
   // ---------------------------------------------------------------------------
-  // WorldMetadata methods.
+  // World methods.
+  //
+  // These methods operate on world as a whole. Worlds are referenced by their
+  // string identifier, which is sometimes provided by the user and sometimes
+  // auto-generated.
 
   // Returns the metadata about a single world.
   rpc GetWorld(GetWorldRequest) returns (WorldMetadata) {
@@ -50,14 +73,24 @@ service ObjectWorldService {
 
   // ---------------------------------------------------------------------------
   // World-level methods.
+  //
+  // These methods operate on properties that affect all objects and entities of
+  // a given world.
 
   // Updates the collision settings used for the given world. This will override
   // the previous settings and will not attempt to merge anything.
   rpc UpdateCollisionSettings(UpdateCollisionSettingsRequest) returns (World) {
   }
 
+  // Enables or disables collisions between two objects.
+  rpc ToggleCollisions(ToggleCollisionsRequest) returns (Objects) {
+  }
+
   // ---------------------------------------------------------------------------
-  // Object resource methods.
+  // Object-level methods.
+  //
+  // Each object is referenced either by ID or name, and each world is
+  // referenced by its world ID
 
   // Returns a single object.
   rpc GetObject(GetObjectRequest) returns (Object) {
@@ -83,10 +116,6 @@ service ObjectWorldService {
   rpc ReparentObject(ReparentObjectRequest) returns (Object) {
   }
 
-  // Enables or disables collisions between two objects.
-  rpc ToggleCollisions(ToggleCollisionsRequest) returns (Objects) {
-  }
-
   // Updates the current joint positions and/or limits of an object with
   // ObjectType==KINEMATIC_OBJECT.
   rpc UpdateObjectJoints(UpdateObjectJointsRequest) returns (Object) {
@@ -103,14 +132,21 @@ service ObjectWorldService {
   }
 
   // ---------------------------------------------------------------------------
-  // Entity resource methods.
+  // Entity-level methods.
+  //
+  // These methods operate on individual entity properties. These methods are
+  // expected to be for advanced users only. Most operations should be
+  // performable with the other APIs provided.
 
   // Updates properties of an entity.
   rpc UpdateEntityProperties(UpdateEntityPropertiesRequest) returns (Entity) {
   }
 
   // ---------------------------------------------------------------------------
-  // Frame resource methods.
+  // Frame-level methods.
+  //
+  // Frames refer to entities that carry no additional semantic information, and
+  // can be used as named pose information.
 
   // Returns a single frame.
   rpc GetFrame(GetFrameRequest) returns (Frame) {
@@ -141,7 +177,10 @@ service ObjectWorldService {
   }
 
   // ---------------------------------------------------------------------------
-  // Mixed-resource methods.
+  // Common methods.
+  //
+  // These methods apply to both objects and entities, and their semantics
+  // depend on the references provided.
 
   // Returns a transform between objects or frames.
   rpc GetTransform(GetTransformRequest) returns (GetTransformResponse) {
@@ -233,10 +272,6 @@ message ObjectComponent {
   // Transform between the parent object and this frame.
   intrinsic_proto.Pose parent_t_this = 2;
 
-  // Name of the equipment the object is associated with. Empty if this object
-  // is not associated with an equipment.
-  string equipment_name = 4;
-
   // Properties for how this object should be treated in simulation. Will not be
   // set if there are no special properties to be considered in simulation.
   intrinsic_proto.world.SimulationComponent simulation_component = 5;
@@ -273,7 +308,8 @@ message KinematicObjectComponent {
   intrinsic_proto.JointLimits joint_system_limits = 8;
 
   // Joint application limits. Note that the field JointLimits.max_effort is not
-  // supported and will always be filled with zeroes.
+  // supported and will always be filled with zeroes. Application limits may not
+  // be more liberal than system limits.
   intrinsic_proto.JointLimits joint_application_limits = 9;
 
   // Ids of the enties (see 'Object.entities') modelling the individual joints
@@ -291,10 +327,10 @@ message KinematicObjectComponent {
   // Named joint configurations associated with this kinematic object.
   repeated NamedJointConfiguration named_joint_configurations = 4;
 
-  // If set these will be the updated limits to use.
-  intrinsic_proto.icon.CartesianLimits cartesian_limits = 6;
+  // If set these will be the updated limits used by this kinematic object.
+  optional intrinsic_proto.icon.CartesianLimits cartesian_limits = 6;
 
-  // If set this will be the updated control frequency to use
+  // If set this will be the updated control frequency used.
   optional double control_frequency_hz = 7;
 
   // The payload mounted to the robot. Empty if no payload is defined.
@@ -325,9 +361,12 @@ message KinematicObjectComponent {
   repeated IkSolver ik_solvers = 11;
 }
 
-// Basic resource in a world. An Object is part of exactly one world, has
+// High-level world container. An Object is part of exactly one world, has
 // exactly one parent object, can have multiple child objects and can have
-// multiple child frames.
+// multiple entities. Entities that are frames (i.e. have no other semantic
+// information) are surfaced as first-class elements in the rest of the object
+// world APIs.
+//
 // Each world contains one special object - the root object (ObjectType==ROOT) -
 // which is always present and has no parent.
 message Object {
@@ -402,13 +441,12 @@ message Objects {
 }
 
 // -----------------------------------------------------------------------------
-// Entity resource.
+// Entity
 
 // Basic building block for objects. The world consists of a tree of entities
 // and each object consists of one or more entities that are connected to each
 // other. I.e., each object corresponds to a subtree of the world's entities.
 // The root object consists of exactly one entity - the root entity.
-// Next tag: 12
 message Entity {
   // Id of the world which the entity is part of.
   string world_id = 1;
@@ -464,7 +502,7 @@ message Entity {
 }
 
 // -----------------------------------------------------------------------------
-// Frame resource.
+// Frame
 
 // A local or global reference frame that represents a pose in the world (e.g.,
 // a grasp or drop-off position, a tool frame, ... ).
@@ -473,7 +511,6 @@ message Entity {
 // object need to have unique names. The pose of a frame is relative to its
 // parent object unless the parent object is the root object: then the frame is
 // a "global" frame.
-// Next tag: 10
 message Frame {
   // Id of the world which the frame is part of.
   string world_id = 1;
