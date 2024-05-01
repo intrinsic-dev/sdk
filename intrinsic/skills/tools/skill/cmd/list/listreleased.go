@@ -71,4 +71,5 @@ var listReleasedCmd = &cobra.Command{
 func init() {
 	skillCmd.SkillCmd.AddCommand(listReleasedCmd)
 	cmdFlags.SetCommand(listReleasedCmd)
+
 }

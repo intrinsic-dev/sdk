@@ -65,4 +65,5 @@ var listReleasedVersionsCmd = &cobra.Command{
 func init() {
 	skillCmd.SkillCmd.AddCommand(listReleasedVersionsCmd)
 	cmdFlags.SetCommand(listReleasedVersionsCmd)
+
 }
