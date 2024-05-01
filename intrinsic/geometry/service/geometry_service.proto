@@ -7,18 +7,20 @@ package intrinsic_proto.geometry;
 import "intrinsic/geometry/service/geometry_service_types.proto";
 import "intrinsic/geometry/service/geometry_storage_refs.proto";
 
-// Geometry service is a mechanism for storing and retrieving geometry.
+// Geometry service is a mechanism for storing and retrieving geometry like
+// meshes or primitives used within a world instance.
 service GeometryService {
   // Gets the requested Geometry data. Includes computational geometry data as
   // well as the optional Renderable data if available. The Renderable data will
   // be at original quality.
   rpc GetGeometry(GetGeometryRequest) returns (GeometryWithMetadata) {}
 
-  // Gets the requested Renderable data at the requested LOD level.
+  // Gets the requested Renderable data at the requested LOD(Level of Detail).
   rpc GetRenderable(GetRenderableRequest) returns (RenderableWithMetadata) {}
 
   // Adds new geometry data to the service that can be fetched later.
   rpc CreateGeometry(CreateGeometryRequest) returns (GeometryWithMetadata) {}
+
 }
 
 // Request message for getting geometry from the geometry service.
@@ -38,9 +40,9 @@ message GetRenderableRequest {
   // The references to the stored geometry being requested.
   GeometryStorageRefs geometry_storage_refs = 3;
 
-  // The LOD level to use when fetching the renderable data. 0 means the
-  // original quality and any number above that will simplify the geometry. The
-  // higher the number the more simplified it will be.
+  // The LOD to use when fetching the renderable data. 0 means the original
+  // quality and any number above that will simplify the geometry. The higher
+  // the number the more simplified it will be.
   uint32 lod_level = 2;
 }
 
