@@ -27,7 +27,7 @@ message LogRequest {
   intrinsic_proto.data_logger.LogItem item = 1;
 }
 
-// TokenBucketOptions are the options for rate limiting for the logger. See
+// `TokenBucketOptions` are the options for rate limiting for the logger. See
 // go/intrinsic-logging-budgets for more details. To understand the settings
 // better see https://en.wikipedia.org/wiki/Token_bucket
 message TokenBucketOptions {
@@ -38,20 +38,20 @@ message TokenBucketOptions {
 }
 
 message LogOptions {
-  // The event_source to set the log options for.
+  // The event source to set the log options for.
   string event_source = 1;
 
-  // If set to 'true', logs are synched to the cloud.
+  // If set to 'true', logs are synced to the cloud.
   optional bool sync_active = 2;
 
-  // The size of the on_prem buffer for LogItems.
+  // The size of the on-prem buffer for LogItems.
   optional int32 max_buffer_size = 3;
 
   // The token bucket options for rate limiting on the Log() rpc of the data
   // logger.
   optional TokenBucketOptions logging_budget = 4;
 
-  // Priority denotes value of items in the event_source. Higher priority
+  // Priority denotes value of items in the `event_source`. Higher priority
   // event sources are prioritized for upload. For upload, this can potentially
   // lead to starvation as we don't upload lower priority items until all higher
   // priority items are uploaded. This is an int32 parameter. Larger the value,
@@ -64,11 +64,11 @@ message ListLogSourcesResponse {
 }
 
 message GetLogItemsRequest {
-  // Leaving unset will be treated as if start_time = 5 minutes ago.
+  // If unspecified, defaults to `start_time` = 5 minutes before call time.
   oneof start_condition {
-    // Return LogItems whose acquisition time is greater than or equal to this.
-    // Uses the index to find a reasonable starting position for reading the log
-    // files.
+    // Return LogItems whose acquisition time is greater than or equal to
+    // this. Uses the index to find a reasonable starting position for reading
+    // the log files.
     google.protobuf.Timestamp start_time = 1;
 
     // Returned in GetLogItemsResponse to continue where the previous call left
@@ -77,9 +77,13 @@ message GetLogItemsRequest {
     // items starting at the beginning of the available data.
     bytes cursor = 2;
   }
-  // Return log items until encountering one with a timestamp greater than this.
+
+  // Return log items until encountering one with an acquisition time greater
+  // than this.
   google.protobuf.Timestamp end_time = 3;
-  // Only LogItems whose event_source matches one of these will be returned.
+
+  // Only LogItems whose `event_source` matches one of these will be returned.
+  //
   // NOTE: Specifying multiple event_sources in a single request is deprecated.
   // http://cs/symbol:intrinsic_proto.data_logger.LogItem.metadata.event_source.
   repeated string event_sources = 4;
@@ -90,8 +94,8 @@ message GetLogItemsRequest {
   // If unspecified, defaults to 10000.
   int32 max_num_items = 7;
 
-  // Optional downsampling parameter.
   // The duration in milliseconds between subsequent LogItems to return.
+  // If unspecified, defaults to 0.
   int32 sampling_period_ms = 8;
 }
 
@@ -99,16 +103,17 @@ message GetLogItemsResponse {
   // The LogItems that matched the criteria.
   repeated intrinsic_proto.data_logger.LogItem log_items = 1;
 
-  // Can be passed in to GetLogItems to read starting at the LogItem that comes
-  // after the last element of `log_items` in the log files. This can be used,
-  // for example, when polling for recent data to avoid overlaps or gaps in the
-  // windows of data that are returned. Opaque to the client.
+  // Can be passed to `GetLogItems` to continue reading, starting at the LogItem
+  // that would have come after the last element of `log_items` in the response.
+  // This can be used, for example, when polling for recent data to avoid
+  // overlaps or gaps in the windows of data that are returned. Opaque to the
+  // client.
   bytes cursor = 2;
 
-  // If true, the response doesn't contain all available data in the requested
-  // time window. In that case only data up until
-  // that point is returned, and the client can continue reading by passing
-  // cursor to another call.
+  // If true, indicates that the response doesn't contain all available data in
+  // the requested time window. In that case only data up until that point is
+  // returned, and the client can continue reading by passing the `cursor` to
+  // another call.
   bool truncated = 3;
 
   // A descriptor of what caused the truncation. Typically when the response
@@ -128,17 +133,20 @@ message GetMostRecentItemResponse {
 }
 
 message SetLogOptionsRequest {
-  // The actual log options which are being set. Each log option corresponds to
-  // a single event_source. It is not expected that a single event_source has
-  // multiple log options, so overwriting of the earlier log options will occur
-  // in these scenarios.
+  // A map of event source regex to the actual log options which are being set.
+  //
+  // This RPC will set the log options for all current and future event sources
+  // matching the map key (which should be a regex string).
+  //
+  // A single event source should only have one set of log items. Overwriting of
+  // log options will occur if they were previously set.
   map<string, LogOptions> log_options = 1;
 }
 
 message SetLogOptionsResponse {}
 
 message GetLogOptionsRequest {
-  // The event source for which log synching options are being queried.
+  // The event source to look up the options for.
   string event_source = 1;
 }
 
@@ -164,40 +172,60 @@ message SyncResponse {
   repeated string throttled_event_sources = 2;
 }
 
-// Service to persistently store and retrieve structured data on-prem.
-// Data is buffered locally on disk and uploaded to the cloud in the background.
+// Service to:
+// - Persistently store structured logging data on-prem
+// - Retrieve stored structued logging data on-prem
+// - Upload stored to the cloud
+//
+// Data is buffered locally on disk and uploaded to the cloud in the background
+// on a per-event-source basis when any of the following conditions are met:
+//   - The buffer for the event source reaches a configured bytesize
+//   - The time since last upload reaches a configured time threshold
+//   - A manual flush is triggered via SyncAndRotateLogs
 service DataLogger {
 
-  // Dispatches one log item to the data logger.
+  // Sends one structured log to be stored on-prem.
   rpc Log(LogRequest) returns (google.protobuf.Empty) {}
 
-  // Returns a list of `event_source` that can be requested using GetLogItems.
+  // Returns a list of event sources that can be accessed using `GetLogItems`.
   rpc ListLogSources(google.protobuf.Empty) returns (ListLogSourcesResponse) {}
 
-  // Reads the log files seqentially, performing basic filtering and sampling.
-  // The response contains a field 'cursor', whose value can be passed in to
-  // continue reading in the next call where this call left off.
-  // The response will contain log items from request.start_time until one of:
-  //   - response has a log item with timestamp > min(request.end_time, now)
-  //   - the end of the logged data has been reached
-  //   - the response size has reached 1GB
+  // Reads the on-prem logs seqentially, performing basic filtering and
+  // sampling.
+  //
+  // The response contains a field 'cursor', which can be passed to a subsequent
+  // `GetLogItems` call to continue reading log items from where call that
+  // generated it left off.
+  //
+  // The response will contain log items starting from the requested start time
+  // or cursor until any of the following conditions are met:
+  //   - The next log item has acquisition time > min(request.end_time, now)
+  //   - The end of the logged data has been reached
+  //   - The response size has reached 1GB
   rpc GetLogItems(GetLogItemsRequest) returns (GetLogItemsResponse) {}
 
   // Returns the most recent LogItem that has been logged for the given event
-  // source, from an in-memory cache. If no LogItem with a matching event_source
-  // has been logged since --file_ttl, then NOT_FOUND will be returned instead.
+  // source, from an in-memory cache.
+  //
+  // If no `LogItem` with a matching event_source has been logged since
+  // --file_ttl, then NOT_FOUND will be returned instead.
   rpc GetMostRecentItem(GetMostRecentItemRequest)
       returns (GetMostRecentItemResponse) {}
 
-  // Sets log options for a specific event source.
+  // Sets the LogOptions for matching event sources in the request.
+  //
+  // This RPC supports matching event sources via regex, and will apply the log
+  // options to all current and future event sources that match the request.
   rpc SetLogOptions(SetLogOptionsRequest) returns (SetLogOptionsResponse) {}
 
-  // Returns log options for a specific event source. If no user defined options
-  // have been specified, the call returns NOT_FOUND status.
+  // Returns the LogOptions for a specific `event_source`. If no user defined
+  // options have been specified, the call returns NOT_FOUND status.
   rpc GetLogOptions(GetLogOptionsRequest) returns (GetLogOptionsResponse) {}
 
-  // Flushes all buffered LogItems
-  // This is an expensive operation and should NOT be called after every Log().
-  // Each event source will have a global throttle on user-requested flushes.
+  // Manually trigger a flush of all buffered LogItems to the cloud.
+  //
+  // This is an expensive operation and should NOT be called after every
+  // `Log` call. Each event source will have a global throttle on user-requested
+  // flushes.
   rpc SyncAndRotateLogs(SyncRequest) returns (SyncResponse) {}
 }
