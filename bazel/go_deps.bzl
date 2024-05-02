@@ -1000,6 +1000,12 @@ def go_dependencies():
         version = "v1.0.3",
     )
     go_repository(
+        name = "com_github_gobuffalo_flect",
+        importpath = "github.com/gobuffalo/flect",
+        sum = "h1:eqjPGSo2WmjgY2XlpGwo2NXgL3RucAKo4k4qQMNA5sA=",
+        version = "v1.0.2",
+    )
+    go_repository(
         name = "com_github_gobwas_glob",
         importpath = "github.com/gobwas/glob",
         sum = "h1:A4xDbljILXROh+kObIiy5kIaPYD8e96x1tgBhUI5J+Y=",
