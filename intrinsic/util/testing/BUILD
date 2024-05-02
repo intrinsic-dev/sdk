@@ -21,8 +21,8 @@ cc_library(
     hdrs = ["gtest_wrapper.h"],
     visibility = ["//visibility:public"],
     deps = [
+        "@com_github_inazarenko_protobuf_matchers//protobuf-matchers",
         "@com_google_cel_cpp//internal:testing",
-        "@com_google_fhir//cc/google/fhir/testutil:proto_matchers",
         "@com_google_googletest//:gtest_main",
     ],
 )
