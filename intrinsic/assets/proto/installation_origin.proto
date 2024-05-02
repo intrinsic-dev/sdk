@@ -1,0 +1,18 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.assets;
+
+// Denotes the installation origin of an asset. The origin describes where the
+// asset was installed from or how it was installed. One important use case is
+// determining the persistence state of the asset.
+//
+// Installation origin is not exposed through external APIs.
+enum InstallationOrigin {
+  INSTALLATION_ORIGIN_UNSPECIFIED = 0;
+  INSTALLATION_ORIGIN_CATALOG = 1;
+  INSTALLATION_ORIGIN_SIDELOADED = 2;
+  INSTALLATION_ORIGIN_INLINED = 3;
+  INSTALLATION_ORIGIN_SAVE_DATA = 4;
+}

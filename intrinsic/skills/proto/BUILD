@@ -34,6 +34,7 @@ proto_library(
     srcs = ["skills.proto"],
     deps = [
         ":equipment_proto",
+        "//intrinsic/assets/proto:installation_origin_proto",
         "//intrinsic/resources/proto:resource_handle_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:descriptor_proto",
@@ -54,6 +55,7 @@ go_proto_library(
     name = "skills_go_proto",
     go_deps = [
         ":equipment_go_proto",
+        "//intrinsic/assets/proto:installation_origin_go_proto",
         "//intrinsic/resources/proto:resource_handle_go_proto",
     ],
     deps = [":skills_proto"],
@@ -216,6 +218,7 @@ proto_library(
     srcs = ["skill_registry_config.proto"],
     deps = [
         ":skills_proto",
+        "//intrinsic/assets/proto:installation_origin_proto",
         "//intrinsic/executive/proto:behavior_tree_proto",
         "@com_google_protobuf//:any_proto",
     ],
@@ -235,6 +238,7 @@ go_proto_library(
     name = "skill_registry_config_go_proto",
     go_deps = [
         ":skills_go_proto",
+        "//intrinsic/assets/proto:installation_origin_go_proto",
         "//intrinsic/executive/proto:behavior_tree_go_proto",
     ],
     deps = [":skill_registry_config_proto"],

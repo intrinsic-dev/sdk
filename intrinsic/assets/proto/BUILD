@@ -104,6 +104,30 @@ go_proto_library(
 )
 
 proto_library(
+    name = "installation_origin_proto",
+    srcs = ["installation_origin.proto"],
+    visibility = [
+        "//intrinsic/resources/proto:__pkg__",
+        "//intrinsic/skills/proto:__pkg__",
+    ],
+)
+
+go_proto_library(
+    name = "installation_origin_go_proto",
+    visibility = [
+        "//intrinsic/assets/deploy:__pkg__",
+        "//intrinsic/frontend/modified_solution:__pkg__",
+        "//intrinsic/kubernetes/workcell_spec:__pkg__",
+        "//intrinsic/kubernetes/workcell_spec/installer:__pkg__",
+        "//intrinsic/resources:__pkg__",
+        "//intrinsic/resources/proto:__pkg__",
+        "//intrinsic/resources/service:__pkg__",
+        "//intrinsic/skills/proto:__pkg__",
+    ],
+    deps = [":installation_origin_proto"],
+)
+
+proto_library(
     name = "metadata_proto",
     srcs = ["metadata.proto"],
     visibility = ["//intrinsic:__subpackages__"],
