@@ -19,7 +19,8 @@ service GeometryService {
   rpc GetRenderable(GetRenderableRequest) returns (RenderableWithMetadata) {}
 
   // Adds new geometry data to the service that can be fetched later.
-  rpc CreateGeometry(CreateGeometryRequest) returns (GeometryWithMetadata) {}
+  rpc CreateGeometry(CreateGeometryRequest) returns (GeometryWithMetadata) {
+  }
 
 }
 
