@@ -5,6 +5,7 @@
 from typing import Optional, Union
 
 import grpc
+from intrinsic.geometry.service import geometry_service_pb2_grpc
 from intrinsic.math.python import data_types
 from intrinsic.math.python import proto_conversion as math_proto_conversion
 from intrinsic.motion_planning.proto import motion_target_pb2
@@ -67,7 +68,8 @@ class ObjectWorldExternal(object_world_client.ObjectWorldClient):
       grpc_channel: grpc.Channel,
   ) -> "ObjectWorldExternal":
     stub = object_world_service_pb2_grpc.ObjectWorldServiceStub(grpc_channel)
-    return cls(world_id, stub)
+    geometry_stub = geometry_service_pb2_grpc.GeometryServiceStub(grpc_channel)
+    return cls(world_id, stub, geometry_stub)
 
   def create_object_from_product_part(  # pytype: disable=signature-mismatch  # overriding-parameter-count-checks
       self,
