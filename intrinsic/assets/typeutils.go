@@ -4,6 +4,7 @@
 package typeutils
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -32,4 +33,13 @@ func NameFromAssetType(a atypepb.AssetType) string {
 		return strings.ReplaceAll(strings.ToLower(submatch), "_", " ")
 	}
 	return NameFromAssetType(atypepb.AssetType_ASSET_TYPE_UNSPECIFIED)
+}
+
+// IntToAssetType converts a raw int to an AssetType enum.
+// It returns an error if the integer does not match any enum value.
+func IntToAssetType(i int32) (atypepb.AssetType, error) {
+	if _, ok := atypepb.AssetType_name[i]; !ok {
+		return atypepb.AssetType_ASSET_TYPE_UNSPECIFIED, fmt.Errorf("asset type enum int %d is invalid", i)
+	}
+	return atypepb.AssetType(i), nil
 }
