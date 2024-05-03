@@ -23,7 +23,7 @@ message MotionPlanningRequest {
   // Defines the robot for which the motion is planned and its parameters.
   RobotSpecification robot_specification = 2;
 
-  // Specifies the motion planning problem.
+  // Specifies the motion planning problem to be solved.
   MotionSpecification motion_specification = 3;
 
   // Planner specific configuration. Default will set a timeout of 90 seconds
@@ -173,9 +173,15 @@ message CheckCollisionsResponse {
   string collision_debug_msg = 2;
 }
 
+// The Motion Planner Service provides motion planning and related operations,
+// such as kinematics and collision checking. It is used by skills such as
+// `Move Robot` and is available by thid party skills and services.
 service MotionPlannerService {
   // Plans a trajectory that fulfills the defined motion specification in the
-  // MotionPlannerRequest.
+  // MotionPlannerRequest. Requests are cached in a volatile cache, if the
+  // service encounters identical requests it will return previously cached
+  // solutions. The cache can be cleared by either restarting the service or
+  // calling `ClearCache`.
   rpc PlanTrajectory(MotionPlanningRequest)
       returns (TrajectoryPlanningResponse) {}
 

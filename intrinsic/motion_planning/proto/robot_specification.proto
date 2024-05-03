@@ -15,7 +15,8 @@ message RobotReference {
   }
 }
 
-// Robot specifications definitions
+// Contains all relevant information to identify the robot that is being
+// controlled and sets robot specific parameters used for planning.
 message RobotSpecification {
   // Specification of what robot is being controlled.
   RobotReference robot_reference = 1;
@@ -24,7 +25,8 @@ message RobotSpecification {
   // current position in the world will be used.
   optional intrinsic_proto.icon.JointVec start_configuration = 2;
 
-  // Default cartesian robot limits to apply to the motion.
+  // Default cartesian robot limits to apply to the motion. These limits are
+  // currently only applied to linear Cartesian motions.
   intrinsic_proto.icon.CartesianLimits default_cartesian_limits = 3;
 
   reserved 4;
