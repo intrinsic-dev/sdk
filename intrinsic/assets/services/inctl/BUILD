@@ -39,6 +39,7 @@ go_library(
         "//intrinsic/assets:idutils",
         "//intrinsic/resources/proto:resource_registry_go_grpc_proto",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
+        "//intrinsic/skills/tools/skill/cmd:solutionutil",
         "@com_github_spf13_cobra//:go_default_library",
     ],
 )

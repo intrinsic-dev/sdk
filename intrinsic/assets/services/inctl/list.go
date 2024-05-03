@@ -12,6 +12,7 @@ import (
 	rrgrpcpb "intrinsic/resources/proto/resource_registry_go_grpc_proto"
 	rrpb "intrinsic/resources/proto/resource_registry_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
+	"intrinsic/skills/tools/skill/cmd/solutionutil"
 )
 
 // GetCommand returns the command to list installed services in a cluster.
@@ -22,20 +23,45 @@ func GetCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List services",
 		Example: `
-		List the installed services on a particular cluster
-		$ inctl service list --context=minikube --project=my_project
+		List the installed services on a particular cluster:
+		$ inctl service list --org my_organization --solution my_solution_id
+
+			To find a running solution's id, run:
+			$ inctl solution list --project my_project --filter "running_on_hw,running_in_sim" --output json
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := cmd.Context()
+			project := flags.GetFlagProject()
+			org := flags.GetFlagOrganization()
 
-			ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
-				Address:  flags.GetFlagAddress(),
-				Cluster:  flags.GetFlagSideloadContext(),
-				CredName: flags.GetFlagProject(),
-				CredOrg:  flags.GetFlagOrganization(),
+			cluster, solution, err := flags.GetFlagsListClusterSolution()
+			if err != nil {
+				return fmt.Errorf("could not get flags (ie. address, cluster, solution): %v", err)
+			}
+
+			if solution != "" {
+				// attempt to get cluster name from solution id
+				ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
+					CredName: project,
+					CredOrg:  org,
+				})
+				if err != nil {
+					return fmt.Errorf("could not create connection options for list services: %v", err)
+				}
+				defer conn.Close()
+
+				cluster, err = solutionutil.GetClusterNameFromSolution(ctx, conn, solution)
+				if err != nil {
+					return fmt.Errorf("could not get cluster name from solution: %v", err)
+				}
+			}
+
+			ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
+				Cluster:  cluster,
+				CredName: project,
+				CredOrg:  org,
 			})
 			if err != nil {
-				return fmt.Errorf("could not create connection options for the installer: %v", err)
+				return fmt.Errorf("could not create connection options for listing services: %v", err)
 			}
 
 			var pageToken string
@@ -66,8 +92,7 @@ func GetCommand() *cobra.Command {
 
 	flags.SetCommand(cmd)
 	flags.AddFlagsProjectOrg()
-	flags.AddFlagSideloadContext()
-	flags.AddFlagAddress()
+	flags.AddFlagsListClusterSolution("service")
 
 	return cmd
 }
