@@ -67,27 +67,6 @@ absl::Status ValidateRequest(const Request& request) {
   return absl::OkStatus();
 }
 
-template <class ProjectOrExecuteRequest>
-absl::Status SetDefaultsInRequest(
-    const google::protobuf::Message& prototype,
-    const internal::SkillRuntimeData& runtime_data,
-    ProjectOrExecuteRequest& request) {
-  auto param_defaults = absl::WrapUnique(prototype.New());
-  if (std::optional<google::protobuf::Any> defaults =
-          runtime_data.GetParameterData().GetDefault();
-      defaults.has_value()) {
-    if (!defaults->UnpackTo(param_defaults.get())) {
-      return absl::InternalError(absl::StrFormat(
-          "failed to unpack default parameters for: %s", runtime_data.GetId()));
-    }
-  }
-  auto params = absl::WrapUnique(prototype.New());
-  request.parameters().UnpackTo(params.get());
-  INTR_RETURN_IF_ERROR(MergeUnset(*param_defaults, *params));
-  request.mutable_parameters()->PackFrom(*params);
-  return absl::OkStatus();
-}
-
 // Returns an action description for a skill error status.
 std::string ErrorToSkillAction(absl::Status status) {
   switch (status.code()) {
