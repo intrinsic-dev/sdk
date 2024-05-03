@@ -950,20 +950,18 @@ def _handle_skill_error(
 ) -> status_pb2.Status:
   """Handles an error raised by a skill."""
   code, action = _skill_error_to_code_and_action(err)
-  message = f'Skill {skill_id} {action} {op_name}.'
+  message = f'Skill {skill_id} {action} {op_name}:'
   logging.exception(message)
 
   details = []
   if isinstance(err, status_exception.ExtendedStatusError):
     status_any = any_pb2.Any()
-    status_any.Pack(
-        cast(status_exception.ExtendedStatusError, err).extended_status
-    )
+    status_any.Pack(cast(status_exception.ExtendedStatusError, err).proto)
     details.append(status_any)
 
   return status_pb2.Status(
       code=status.StatusCodeAsInt(code),
-      message=f'{message} Error: {traceback.format_exception(err)}',
+      message=f'{message}\n{err}',
       details=details,
   )
 

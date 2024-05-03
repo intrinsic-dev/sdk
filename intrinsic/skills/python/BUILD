@@ -19,7 +19,6 @@ py_library(
         ":skill_canceller",
         "//intrinsic/skills/proto:footprint_py_pb2",
         "//intrinsic/skills/proto:skill_service_py_pb2",
-        "//intrinsic/util/status:status_exception",
         "@com_google_protobuf//:protobuf_python",
     ],
 )

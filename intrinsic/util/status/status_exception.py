@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 import datetime
+import textwrap
+import traceback
 
 from intrinsic.logging.proto import context_pb2
 from intrinsic.util.status import extended_status_pb2
@@ -22,46 +24,61 @@ class ExtendedStatusError(Exception):
     .set_timestamp()
 
   Attributes:
-    extended_status: extended status proto that is modified with builder methods
+    proto: proto representing the extended state
   """
 
-  extended_status: extended_status_pb2.ExtendedStatus
+  _extended_status: extended_status_pb2.ExtendedStatus
+  _emit_traceback: bool
 
-  def __init__(self, external_report_message: str = ""):
+  def __init__(
+      self, component: str, code: int, external_report_message: str = ""
+  ):
     """Initializes the instance.
 
     Args:
+      component: Component for StatusCode where error originated.
+      code: Numeric code specific to component for StatusCode.
       external_report_message: if non-empty, set extended status external report
         message to this string. This is for backwards compatibility with Python
         exceptions. It is recommended to call the appropriate functions to set
         extended status details.
     """
-    self.extended_status = extended_status_pb2.ExtendedStatus()
+    self._extended_status = extended_status_pb2.ExtendedStatus(
+        status_code=extended_status_pb2.StatusCode(
+            component=component, code=code
+        )
+    )
+    self._emit_traceback = False
     if external_report_message:
       self.set_external_report_message(external_report_message)
     super().__init__(external_report_message)
+
+  @property
+  def proto(self) -> extended_status_pb2.ExtendedStatus:
+    """Retrieves extended status encoded as ExtendedStatus proto."""
+    if self._emit_traceback:
+      message_parts: list[str] = []
+      if self._extended_status.internal_report.message:
+        message_parts.append(self._extended_status.internal_report.message)
+        message_parts.append("\n\n")
+
+      message_parts.extend(traceback.format_exception(self))
+
+      self._extended_status.internal_report.message = "".join(message_parts)
+
+    return self._extended_status
 
   def set_extended_status(
       self, extended_status: extended_status_pb2.ExtendedStatus
   ) -> ExtendedStatusError:
     """Sets extended status directly from a proto."""
-    self.extended_status = extended_status
-    return self
-
-  def set_status_code(
-      self, component: str, error_code: int
-  ) -> ExtendedStatusError:
-    """Sets the status code.
-
-    Args:
-      component: component where the error originated
-      error_code: numeric error code for the specific unique error
-
-    Returns:
-      self
-    """
-    self.extended_status.status_code.component = component
-    self.extended_status.status_code.code = error_code
+    # We do not allow overwriting the status code once set
+    status_code = extended_status_pb2.StatusCode(
+        component=self._extended_status.status_code.component,
+        code=self._extended_status.status_code.code,
+    )
+    self._extended_status.CopyFrom(extended_status)
+    self._extended_status.status_code.CopyFrom(status_code)
     return self
 
   def set_timestamp(
@@ -76,7 +93,7 @@ class ExtendedStatusError(Exception):
     Returns:
       self
     """
-    self.extended_status.timestamp.FromDatetime(timestamp)
+    self._extended_status.timestamp.FromDatetime(timestamp)
     return self
 
   def set_title(self, title: str) -> ExtendedStatusError:
@@ -88,7 +105,7 @@ class ExtendedStatusError(Exception):
     Returns:
       self
     """
-    self.extended_status.title = title
+    self._extended_status.title = title
     return self
 
   def add_context(
@@ -103,7 +120,7 @@ class ExtendedStatusError(Exception):
     Returns:
       self
     """
-    self.extended_status.context.append(context_status)
+    self._extended_status.context.append(context_status)
     return self
 
   def set_internal_report_message(self, message: str) -> ExtendedStatusError:
@@ -118,7 +135,7 @@ class ExtendedStatusError(Exception):
     Returns:
       self
     """
-    self.extended_status.internal_report.message = message
+    self._extended_status.internal_report.message = message
     return self
 
   def set_external_report_message(self, message: str) -> ExtendedStatusError:
@@ -132,7 +149,7 @@ class ExtendedStatusError(Exception):
     Returns:
       self
     """
-    self.extended_status.external_report.message = message
+    self._extended_status.external_report.message = message
     return self
 
   def set_log_context(
@@ -149,5 +166,45 @@ class ExtendedStatusError(Exception):
     Returns:
       self
     """
-    self.extended_status.log_context.CopyFrom(context)
+    self._extended_status.log_context.CopyFrom(context)
     return self
+
+  def emit_traceback_to_internal_report(self) -> ExtendedStatusError:
+    """Enables emitting a traceback to internal report when proto is retrieved."""
+    # We cannot directly add the traceback, as that is only created when the
+    # error is raised (which also performs useful depth limitations on the
+    # traceback).
+    self._emit_traceback = True
+    return self
+
+  def __str__(self) -> str:
+    """Converts the error to a string.
+
+    Note that this does not include a traceback, even if enabled via emit. This
+    is primarily because it would cause an infinite loop (traceback generation
+    converts encountered exceptions to a string), and it may not always be set,
+    e.g., if the raiser of the exception prints this for debugging.
+
+    Returns:
+      string representation of error.
+    """
+    strs: list[str] = []
+    status_code = self._extended_status.status_code
+    strs.append(f"StatusCode: {status_code.component}:{status_code.code}\n")
+    if self._extended_status.HasField("timestamp"):
+      strs.append(
+          "Timestamp: "
+          f" {self._extended_status.timestamp.ToDatetime().strftime('%c')}\n"
+      )
+    if self._extended_status.HasField("external_report"):
+      strs.append(
+          "External"
+          f" Report:\n{textwrap.indent(self._extended_status.external_report.message, '  ')}\n"
+      )
+    if self._extended_status.HasField("internal_report"):
+      strs.append(
+          "Internal"
+          f" Report:\n{textwrap.indent(self._extended_status.internal_report.message, '  ')}\n"
+      )
+
+    return "".join(strs)
