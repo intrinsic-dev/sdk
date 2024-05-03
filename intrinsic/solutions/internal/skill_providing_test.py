@@ -374,7 +374,7 @@ class SkillsTest(parameterized.TestCase):
         my_oneof_double=2.0,
     )
     skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
-    skill = skills.my_skill(
+    skill = skills.ai.intrinsic.my_skill(
         my_double=parameters.my_double,
         my_float=parameters.my_float,
         my_int32=parameters.my_int32,
@@ -444,7 +444,7 @@ class SkillsTest(parameterized.TestCase):
 
     skills = skill_providing.Skills(skill_registry, resource_registry)
 
-    skill = skills.my_skill(
+    skill = skills.ai.intrinsic.my_skill(
         a=provided.ResourceHandle.create(resource_name, [resource_capability])
     )
 
@@ -510,7 +510,7 @@ class SkillsTest(parameterized.TestCase):
         )
     )
     skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
-    skill = skills.my_skill(
+    skill = skills.ai.intrinsic.my_skill(
         executive_test_message=parameters.executive_test_message,
         a=provided.ResourceHandle.create(resource_name, [resource_capability]),
     )
@@ -564,7 +564,7 @@ class SkillsTest(parameterized.TestCase):
 
     skills = skill_providing.Skills(skill_registry, resource_registry)
 
-    skill = skills.my_skill(
+    skill = skills.ai.intrinsic.my_skill(
         my_oneof_double=value_specification,
         a=provided.ResourceHandle.create(resource_name, [resource_capability]),
     )
@@ -615,45 +615,47 @@ class SkillsTest(parameterized.TestCase):
 
     skills = skill_providing.Skills(skill_registry, resource_registry)
 
-    tm = skills.my_skill.TestMessage()
-    self.assertEqual(
-        tm.wrapped_message.DESCRIPTOR.full_name,
-        'intrinsic_proto.executive.TestMessage',
-    )
+    my_skill = skills.ai.intrinsic.my_skill
 
-    skill = skills.my_skill(
+    skill = my_skill(
         my_oneof_double=value_specification,
         a=provided.ResourceHandle.create(resource_name, [resource_capability]),
-        executive_test_message=skills.my_skill.TestMessage(
+        executive_test_message=my_skill.intrinsic_proto.executive.TestMessage(
             message_list=[
-                skills.my_skill.TestMessage(int32_value=value_specification),
-                skills.my_skill.TestMessage(message_value=value_specification),
-                skills.my_skill.TestMessage(foo_msg=value_specification),
-                skills.my_skill.TestMessage(
+                my_skill.intrinsic_proto.executive.TestMessage(
+                    int32_value=value_specification
+                ),
+                my_skill.intrinsic_proto.executive.TestMessage(
+                    message_value=value_specification
+                ),
+                my_skill.intrinsic_proto.executive.TestMessage(
+                    foo_msg=value_specification
+                ),
+                my_skill.intrinsic_proto.executive.TestMessage(
                     message_list=[
-                        skills.my_skill.TestMessage(
+                        my_skill.intrinsic_proto.executive.TestMessage(
                             message_value=value_specification
                         )
                     ]
                 ),
-                skills.my_skill.TestMessage(
+                my_skill.intrinsic_proto.executive.TestMessage(
                     message_list=[
-                        skills.my_skill.TestMessage(
+                        my_skill.intrinsic_proto.executive.TestMessage(
                             message_list=value_specification
                         )
                     ]
                 ),
-                skills.my_skill.TestMessage(
+                my_skill.intrinsic_proto.executive.TestMessage(
                     message_list=[value_specification, value_specification]
                 ),
                 value_specification,
-                skills.my_skill.TestMessage(
+                my_skill.intrinsic_proto.executive.TestMessage(
                     int32_list=[value_specification, value_specification]
                 ),
                 # The following is NOT supported, we cannot set a map value from
                 # a CEL expression (we cannot address the field with proto_path)
-                # skills.my_skill.TestMessage( string_int32_map={'foo_key':
-                #   value_specification}
+                # my_skill.intrinsic_proto.executive.TestMessage(
+                #   string_int32_map={'foo_key': value_specification}
                 # ),
             ]
         ),
@@ -771,17 +773,11 @@ class SkillsTest(parameterized.TestCase):
 
     skills = skill_providing.Skills(skill_registry, resource_registry)
 
-    tm = skills.my_skill.TestMessage()
-    self.assertEqual(
-        tm.wrapped_message.DESCRIPTOR.full_name,
-        'intrinsic_proto.executive.TestMessage',
-    )
-
     expected_parameters = test_skill_params_pb2.TestMessage(
         string_int32_map={'foo': 1}
     )
 
-    skill = skills.my_skill(string_int32_map={'foo': 1})
+    skill = skills.ai.intrinsic.my_skill(string_int32_map={'foo': 1})
 
     actual_parameters = test_skill_params_pb2.TestMessage()
     skill.proto.parameters.Unpack(actual_parameters)
@@ -815,8 +811,12 @@ class SkillsTest(parameterized.TestCase):
         string_message_map={'foo': test_message_pb2.TestMessage(int32_value=1)}
     )
 
-    skill = skills.my_skill(
-        string_message_map={'foo': skills.my_skill.TestMessage(int32_value=1)}
+    my_skill = skills.ai.intrinsic.my_skill
+
+    skill = my_skill(
+        string_message_map={
+            'foo': my_skill.intrinsic_proto.executive.TestMessage(int32_value=1)
+        }
     )
 
     actual_parameters = test_skill_params_pb2.TestMessage()
@@ -851,7 +851,7 @@ class SkillsTest(parameterized.TestCase):
         string_message_map={'foo': test_message_pb2.TestMessage(int32_value=1)}
     )
 
-    skill = skills.my_skill(
+    skill = skills.ai.intrinsic.my_skill(
         string_message_map={'foo': test_message_pb2.TestMessage(int32_value=1)}
     )
 
@@ -886,7 +886,7 @@ class SkillsTest(parameterized.TestCase):
     with self.assertRaisesRegex(TypeError, 'Got set where expected dict'):
       # In the following, the map parameter should be initialized as {'foo': 1},
       # with a colon instead of a comma.
-      skills.my_skill(string_int32_map={'foo', 1})
+      skills.ai.intrinsic.my_skill(string_int32_map={'foo', 1})
 
   def test_gen_skill_map_rejects_blackboard_value(self):
     skill_registry, skill_registry_stub = (
@@ -914,7 +914,7 @@ class SkillsTest(parameterized.TestCase):
     with self.assertRaisesRegex(
         TypeError, 'Cannot set field .* from blackboard'
     ):
-      skills.my_skill(
+      skills.ai.intrinsic.my_skill(
           string_int32_map={
               'foo': blackboard_value.BlackboardValue({}, 'test', None, None),
           }
@@ -945,14 +945,18 @@ class SkillsTest(parameterized.TestCase):
 
     # Assignment to unknown field should fail
     with self.assertRaisesRegex(KeyError, 'not_a_field.*does not exist'):
-      skills.my_skill.SubMessage(not_a_field='hello')
+      skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage(
+          not_a_field='hello'
+      )
 
     blackboard_test_value = blackboard_value.BlackboardValue(
         {}, 'test', None, None
     )
     # Assigning blackboard value to unknown field should fail
     with self.assertRaisesRegex(KeyError, 'not_a_field.*does not exist'):
-      skills.my_skill.SubMessage(not_a_field=blackboard_test_value)
+      skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage(
+          not_a_field=blackboard_test_value
+      )
 
   def test_compatible_resources(self):
     skill_registry_stub = mock.MagicMock()
@@ -1023,20 +1027,22 @@ class SkillsTest(parameterized.TestCase):
     skills = skill_providing.Skills(skill_registry, resource_registry)
 
     self.assertCountEqual(
-        dir(skills.skill_one.compatible_resources['slot_one']),
+        dir(skills.ai.intrinsic.skill_one.compatible_resources['slot_one']),
         ['foo_bar_resource'],
     )
     self.assertCountEqual(
-        dir(skills.skill_two.compatible_resources['slot_two_a']),
+        dir(skills.ai.intrinsic.skill_two.compatible_resources['slot_two_a']),
         ['foo_bar_resource', 'foo_resource'],
     )
     self.assertCountEqual(
-        dir(skills.skill_two.compatible_resources['slot_two_b']),
+        dir(skills.ai.intrinsic.skill_two.compatible_resources['slot_two_b']),
         ['bar_resource', 'foo_bar_resource'],
     )
-    self.assertCountEqual(dir(skills.skill_three.compatible_resources), [])
     self.assertCountEqual(
-        dir(skills.skill_four.compatible_resources['slot_one']), []
+        dir(skills.ai.intrinsic.skill_three.compatible_resources), []
+    )
+    self.assertCountEqual(
+        dir(skills.ai.intrinsic.skill_four.compatible_resources['slot_one']), []
     )
 
   def test_gen_skill_incompatible_resources(self):
@@ -1061,7 +1067,7 @@ class SkillsTest(parameterized.TestCase):
     resource_a = provided.ResourceHandle.create('resource_a', ['some-type'])
 
     with self.assertRaises(TypeError):
-      skills.my_skill(a=resource_a)
+      skills.ai.intrinsic.my_skill(a=resource_a)
 
   def test_skill_class_name(self):
     skill_infos = [
@@ -1144,7 +1150,7 @@ class SkillsTest(parameterized.TestCase):
         self._utils.create_empty_resource_registry(),
     )
 
-    my_skill = skills.my_skill(**parameters)
+    my_skill = skills.ai.intrinsic.my_skill(**parameters)
     signature = inspect.signature(my_skill.__init__)
     self.assertSignature(signature, expected_signature)
 
@@ -1159,7 +1165,7 @@ class SkillsTest(parameterized.TestCase):
         self._utils.create_empty_resource_registry(),
     )
 
-    my_skill = skills.my_skill()
+    my_skill = skills.ai.intrinsic.my_skill()
     signature = inspect.signature(my_skill.__init__)
 
     expected_signature = (
@@ -1353,12 +1359,14 @@ Returns:
         self._utils.create_empty_resource_registry(),
     )
 
-    self.assertEqual(skills.my_skill.__doc__, docstring)
+    self.assertEqual(skills.ai.intrinsic.my_skill.__doc__, docstring)
 
     resource_a = provided.ResourceHandle.create('resource_a', ['some-type-a'])
     resource_b = provided.ResourceHandle.create('resource_b', ['some-type-b'])
 
-    skill = skills.my_skill(**parameters, a=resource_a, b=resource_b)
+    skill = skills.ai.intrinsic.my_skill(
+        **parameters, a=resource_a, b=resource_b
+    )
     self.assertEqual(repr(skill), skill_repr)
 
   def test_ambiguous_parameter_and_resource_name(self):
@@ -1391,7 +1399,7 @@ Returns:
     )
 
     self.assertEqual(
-        skills.my_skill.__doc__,
+        skills.ai.intrinsic.my_skill.__doc__,
         textwrap.dedent("""\
             Skill class for ai.intrinsic.my_skill skill.
 
@@ -1406,17 +1414,17 @@ Returns:
 
     resource_a = provided.ResourceHandle.create('resource_a', ['some-type-a'])
 
-    skill = skills.my_skill(a='foo', a_resource=resource_a)
+    skill = skills.ai.intrinsic.my_skill(a='foo', a_resource=resource_a)
     self.assertEqual(
         repr(skill),
         """skills.my_skill(a='foo', a_resource={handle: "resource_a"})""",
     )
 
     with self.assertRaises(TypeError):
-      skills.my_skill(a=resource_a)
+      skills.ai.intrinsic.my_skill(a=resource_a)
 
     with self.assertRaisesRegex(KeyError, '.*more than one compatible.*'):
-      skills.my_skill(a='foo')
+      skills.ai.intrinsic.my_skill(a='foo')
 
   def test_resource_default_value(self):
     """Tests default resource is used properly."""
@@ -1441,7 +1449,7 @@ Returns:
     )
 
     self.assertEqual(
-        skills.my_skill.__doc__,
+        skills.ai.intrinsic.my_skill.__doc__,
         textwrap.dedent("""\
       Skill class for ai.intrinsic.my_skill skill.
 
@@ -1454,7 +1462,7 @@ Returns:
 
     # Ensure that no "resource not found" exception is thrown
     try:
-      skills.my_skill()
+      skills.ai.intrinsic.my_skill()
     except KeyError:
       self.fail('Instantiating skill failed with default resource')
 
@@ -1488,7 +1496,7 @@ Returns:
         pass
 
     with self.assertRaisesRegex(TypeError, '.* not a ResourceHandle'):
-      skills.my_skill(a=BogusObject())
+      skills.ai.intrinsic.my_skill(a=BogusObject())
 
   def test_timeouts(self):
     """Tests if timeouts are transferred to proto."""
@@ -1499,7 +1507,7 @@ Returns:
         self._utils.create_empty_resource_registry(),
     )
 
-    skill = skills.my_skill()
+    skill = skills.ai.intrinsic.my_skill()
     skill.execute_timeout = datetime.timedelta(seconds=5)
     skill.project_timeout = datetime.timedelta(seconds=10)
 
@@ -1529,11 +1537,13 @@ Returns:
         self._utils.create_empty_resource_registry(),
     )
 
-    sub_message = skills.my_skill.SubMessage(
-        name='nested_message_classes_test_name'
+    sub_message = (
+        skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage(
+            name='nested_message_classes_test_name'
+        )
     )
 
-    skill_with_nested_class_generated_param = skills.my_skill(
+    skill_with_nested_class_generated_param = skills.ai.intrinsic.my_skill(
         sub_message=sub_message
     )
     action_proto = skill_with_nested_class_generated_param.proto
@@ -1554,9 +1564,13 @@ Returns:
         self._utils.create_empty_resource_registry(),
     )
 
-    sub_message = skills.my_skill.SubMessage(name=cel.CelExpression('test'))
+    sub_message = (
+        skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage(
+            name=cel.CelExpression('test')
+        )
+    )
 
-    skill_with_nested_class_generated_param = skills.my_skill(
+    skill_with_nested_class_generated_param = skills.ai.intrinsic.my_skill(
         repeated_submessages=[sub_message]
     )
     action_proto = skill_with_nested_class_generated_param.proto
@@ -1628,7 +1642,7 @@ Returns:
     )
 
     parameters = {'my_float': 1.0, 'my_bool': True}
-    skill = skills.my_skill(**parameters)
+    skill = skills.ai.intrinsic.my_skill(**parameters)
     self.assertIsInstance(skill.result, blackboard_value.BlackboardValue)
     self.assertContainsSubset(
         _DEFAULT_TEST_MESSAGE.DESCRIPTOR.fields_by_name.keys(),
@@ -1665,7 +1679,11 @@ Returns:
     parameters = test_skill_params_pb2.SubMessage(name='bar')
 
     skill_registry_stub.GetSkills.assert_called_once_with(empty_pb2.Empty())
-    test_message = skills.my_skill.SubMessage(name=parameters.name)
+    test_message = (
+        skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage(
+            name=parameters.name
+        )
+    )
 
     self.assertEqual('name: "bar"\n', str(test_message.wrapped_message))
 
@@ -1773,10 +1791,14 @@ Returns:
         self._utils.create_empty_resource_registry(),
     )
 
-    signature = inspect.signature(skills.my_skill.SubMessage)
+    signature = inspect.signature(
+        skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage
+    )
     self.assertSignature(signature, '(*, name: str)')
 
-    signature = inspect.signature(skills.my_skill.SomeType)
+    signature = inspect.signature(
+        skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType
+    )
     self.assertSignature(
         signature,
         '(*, non_unique_field_name:'
@@ -1808,21 +1830,25 @@ Returns:
         ],
     )
 
-    test_message_wrapper = skills.my_skill.TestMessage(
-        my_double=2.0,
-        my_float=-1.8,
-        my_int32=5,
-        my_int64=blackboard_value.BlackboardValue({}, 'my_int64', None, None),
-        my_uint32=11,
-        my_uint64=cel.CelExpression('my_uint64'),
-        my_bool=True,
-        my_string='bar',
-        repeated_submessages=[
-            blackboard_value.BlackboardValue({}, 'test', None, None),
-            test_skill_params_pb2.SubMessage(name='foo'),
-            blackboard_value.BlackboardValue({}, 'bar', None, None),
-            cel.CelExpression('fax'),
-        ],
+    test_message_wrapper = (
+        skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage(
+            my_double=2.0,
+            my_float=-1.8,
+            my_int32=5,
+            my_int64=blackboard_value.BlackboardValue(
+                {}, 'my_int64', None, None
+            ),
+            my_uint32=11,
+            my_uint64=cel.CelExpression('my_uint64'),
+            my_bool=True,
+            my_string='bar',
+            repeated_submessages=[
+                blackboard_value.BlackboardValue({}, 'test', None, None),
+                test_skill_params_pb2.SubMessage(name='foo'),
+                blackboard_value.BlackboardValue({}, 'bar', None, None),
+                cel.CelExpression('fax'),
+            ],
+        )
     )
 
     self.assertContainsSubset(
@@ -1850,12 +1876,12 @@ Returns:
         self._utils.create_empty_resource_registry(),
     )
 
-    self.assertTrue(hasattr(skills.my_skill, 'ONE'))
-    self.assertEqual(getattr(skills.my_skill, 'ONE'), 1)
-    self.assertTrue(hasattr(skills.my_skill, 'THREE'))
-    self.assertEqual(getattr(skills.my_skill, 'THREE'), 3)
-    self.assertTrue(hasattr(skills.my_skill, 'FIVE'))
-    self.assertEqual(getattr(skills.my_skill, 'FIVE'), 5)
+    self.assertTrue(hasattr(skills.ai.intrinsic.my_skill, 'ONE'))
+    self.assertEqual(getattr(skills.ai.intrinsic.my_skill, 'ONE'), 1)
+    self.assertTrue(hasattr(skills.ai.intrinsic.my_skill, 'THREE'))
+    self.assertEqual(getattr(skills.ai.intrinsic.my_skill, 'THREE'), 3)
+    self.assertTrue(hasattr(skills.ai.intrinsic.my_skill, 'FIVE'))
+    self.assertEqual(getattr(skills.ai.intrinsic.my_skill, 'FIVE'), 5)
 
 
 if __name__ == '__main__':
