@@ -65,9 +65,9 @@ var (
 
 // DialCatalogOptions specifies the options for DialCatalog.
 type DialCatalogOptions struct {
-	Address string
-	APIKey  string
-	Project string // Defaults to the global assets project.
+	Address      string
+	APIKey       string
+	Project      string // Defaults to the global assets project.
 }
 
 // DialCatalogFromInctl creates a connection to an asset catalog service from an inctl command.
@@ -75,9 +75,9 @@ func DialCatalogFromInctl(cmd *cobra.Command, flags *cmdutils.CmdFlags) (*grpc.C
 
 	return DialCatalog(
 		cmd.Context(), DialCatalogOptions{
-			Address: "",
-			APIKey:  "",
-			Project: ResolveCatalogProjectFromInctl(flags),
+			Address:      "",
+			APIKey: "",
+			Project:      ResolveCatalogProjectFromInctl(flags),
 		},
 	)
 }
