@@ -3,6 +3,7 @@
 package main
 
 import (
+	_ "intrinsic/assets/services/inctl/service"
 	_ "intrinsic/tools/inctl/cmd/auth"
 	_ "intrinsic/tools/inctl/cmd/bazel"
 	_ "intrinsic/tools/inctl/cmd/cluster"
