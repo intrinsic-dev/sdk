@@ -16,7 +16,7 @@ import (
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/skills/tools/resource/cmd/bundleimages"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
-	"intrinsic/tools/inctl/auth"
+	"intrinsic/skills/tools/skill/cmd/solutionutil"
 )
 
 // GetCommand returns a command to install (sideload) the service bundle.
@@ -27,13 +27,43 @@ func GetCommand() *cobra.Command {
 		Short: "Install service",
 		Example: `
 	Upload the relevant artifacts to a container registry and CAS, and then install the service
-	$ inctl service install abc/service_bundle.tar --registry=gcr.io/my-registry --context=minikube
-		--project=my_project
+	$ inctl service install abc/service_bundle.tar \
+			--registry gcr.io/my-registry \
+			--project my_project \
+			--solution my_solution_id
+
+			To find a running solution's id, run:
+			$ inctl solution list --project my-project --filter "running_on_hw,running_in_sim" --output json
+
 	`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			target := args[0]
+
+			project := flags.GetFlagProject()
+			org := flags.GetFlagOrganization()
+			cluster, solution, err := flags.GetFlagsListClusterSolution()
+			if err != nil {
+				return fmt.Errorf("could not get flags (ie. address, cluster, solution): %v", err)
+			}
+
+			if solution != "" {
+				// attempt to get cluster name from solution id
+				ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
+					CredName: project,
+					CredOrg:  org,
+				})
+				if err != nil {
+					return fmt.Errorf("could not create connection options for install service: %v", err)
+				}
+				defer conn.Close()
+
+				cluster, err = solutionutil.GetClusterNameFromSolution(ctx, conn, solution)
+				if err != nil {
+					return fmt.Errorf("could not get cluster name from solution: %v", err)
+				}
+			}
 
 			opts := bundleio.ProcessServiceOpts{
 				ImageProcessor: bundleimages.CreateImageProcessor(flags.CreateRegistryOpts(ctx)),
@@ -54,27 +84,18 @@ func GetCommand() *cobra.Command {
 
 			// Install the service to the registry
 			ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
-				Address:  flags.GetFlagInstallerAddress(),
-				Cluster:  flags.GetFlagSideloadContext(),
-				CredName: flags.GetFlagProject(),
-				CredOrg:  flags.GetFlagOrganization(),
+				Cluster:  cluster,
+				CredName: project,
+				CredOrg:  org,
 			})
 			if err != nil {
 				return fmt.Errorf("could not create connection options for the installer: %v", err)
 			}
 
-			log.Printf("Installing service using the installer at %q", flags.GetFlagInstallerAddress())
 
 			client := installergrpcpb.NewInstallerServiceClient(conn)
 			installerCtx := ctx
-			if dialerutil.UseInsecureCredentials(flags.GetFlagInstallerAddress()) {
-				// This returns a valid context at all times. We only log any errors here because we will
-				// also install without authorization. This may mean that some features (namely persistence)
-				// will not work as expected.
-				if installerCtx, err = auth.NewStore().AuthorizeContext(ctx, flags.GetFlagProject()); err != nil {
-					log.Printf("Warning: Could not find authentication information. Some features (such as persistence) may not work correctly. Try running 'inctl auth login --project %s' to authenticate.", flags.GetFlagProject())
-				}
-			}
+
 			resp, err := client.InstallService(installerCtx, &installerpb.InstallServiceRequest{
 				Manifest: manifest,
 				Version:  version,
@@ -91,9 +112,8 @@ func GetCommand() *cobra.Command {
 	flags.SetCommand(cmd)
 	flags.AddFlagsRegistryAuthUserPassword()
 	flags.AddFlagsProjectOrg()
-	flags.AddFlagSideloadContext()
-	flags.AddFlagInstallerAddress()
 	flags.AddFlagRegistry()
+	flags.AddFlagsListClusterSolution("service")
 
 	return cmd
 }
