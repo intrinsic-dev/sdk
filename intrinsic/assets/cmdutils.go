@@ -76,6 +76,8 @@ const (
 	KeySkipDirectUpload = "skip_direct_upload"
 
 	envPrefix = "intrinsic"
+
+	gcpEndpointsURLFormat = "dns:///www.endpoints.%s.cloud.goog:443"
 )
 
 // CmdFlags abstracts interaction with inctl command flags.
@@ -186,6 +188,29 @@ When not running the cluster on localhost, this should be the address of the rel
 // AddFlagInstallerAddress.
 func (cf *CmdFlags) GetFlagInstallerAddress() string {
 	return cf.GetString(KeyInstallerAddress)
+}
+
+// GetNormalizedInstallerAddress gets the normalized installer address based
+// on --project, --org, --solution and --installer_address flags specified
+// on command line. It tries to avoid returning default value of the
+// --installer_address flag if user sets --solution flag.
+func (cf *CmdFlags) GetNormalizedInstallerAddress() string {
+	installerAddress := cf.GetString(KeyInstallerAddress)
+	if cf.IsSet(KeyInstallerAddress) {
+		// user set this on cmd line, we honor their choice.
+		return installerAddress
+	}
+
+	solution := cf.GetString(KeySolution)
+	project := cf.GetFlagProject()
+	if solution != "" && project != "" {
+		// user selected either `--project` or `--org` and `--solution`
+		// but didn't set `--installer_address`, we are not going to contact
+		// local minikube (as this is highly probably 3P anyway).
+		return fmt.Sprintf(gcpEndpointsURLFormat, project)
+	}
+	// fallback in case we have some weirdness in command flags.
+	return installerAddress
 }
 
 // AddFlagsListClusterSolution  adds flags for the cluster and solution when listing assets.
@@ -521,6 +546,12 @@ func (cf *CmdFlags) OptionalInt(name string, value int, usage string) {
 // GetInt gets the value of an int flag.
 func (cf *CmdFlags) GetInt(name string) int {
 	return cf.viperLocal.GetInt(name)
+}
+
+// IsSet checks if value of given flag was set on command line.
+// Allows to check if value is coming from user, or is default value.
+func (cf *CmdFlags) IsSet(name string) bool {
+	return cf.viperLocal.IsSet(name)
 }
 
 func (cf *CmdFlags) envString(name string, value string, usage string) {

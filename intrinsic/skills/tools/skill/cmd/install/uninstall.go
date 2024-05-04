@@ -55,7 +55,7 @@ $ inctl skill uninstall --type=id skill
 		}
 
 		context, solution := cmdFlags.GetFlagsSideloadContextSolution()
-		installerAddress := cmdFlags.GetFlagInstallerAddress()
+		installerAddress := cmdFlags.GetNormalizedInstallerAddress()
 		project := cmdFlags.GetFlagProject()
 		org := cmdFlags.GetFlagOrganization()
 

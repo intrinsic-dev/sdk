@@ -69,7 +69,7 @@ $ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --soluti
 			return err
 		}
 
-		installerAddress := cmdFlags.GetFlagInstallerAddress()
+		installerAddress := cmdFlags.GetNormalizedInstallerAddress()
 		project := cmdFlags.GetFlagProject()
 
 		cluster, err := discoverClusterFromSolution(command.Context(), installerAddress, project)
