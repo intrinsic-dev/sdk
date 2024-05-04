@@ -222,13 +222,13 @@ class ProtoConversionTest(parameterized.TestCase):
       dict(
           testcase_name='2x2_values',
           array=np.arange(0, 4).reshape((2, 2)),
-          proto=matrix_pb2.Matrixd(rows=2, cols=2, values=[0.0, 1.0, 2.0, 3.0]),
+          proto=matrix_pb2.Matrixd(rows=2, cols=2, values=[0.0, 2.0, 1.0, 3.0]),
       ),
       dict(
           testcase_name='3x2_values',
           array=np.arange(0, 6).reshape((3, 2)),
           proto=matrix_pb2.Matrixd(
-              rows=3, cols=2, values=[0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
+              rows=3, cols=2, values=[0.0, 2.0, 4.0, 1.0, 3.0, 5.0]
           ),
       ),
   ]

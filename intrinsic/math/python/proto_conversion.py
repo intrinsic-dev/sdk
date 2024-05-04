@@ -91,7 +91,7 @@ def ndarray_from_matrix_proto(proto: matrix_pb2.Matrixd) -> np.ndarray:
         f'matrix is not {proto.rows}x{proto.cols}, it has'
         f' {len(proto.values)} values.'
     )
-  return np.array(proto.values).reshape(proto.rows, proto.cols)
+  return np.array(proto.values).reshape(proto.rows, proto.cols, order='F')
 
 
 def ndarray_to_matrix_proto(matrix: np.ndarray) -> matrix_pb2.Matrixd:
@@ -108,7 +108,9 @@ def ndarray_to_matrix_proto(matrix: np.ndarray) -> matrix_pb2.Matrixd:
   if len(matrix.shape) != 2:
     raise ValueError(f'expected a 2D array, got shape {matrix.shape}.')
   return matrix_pb2.Matrixd(
-      rows=matrix.shape[0], cols=matrix.shape[1], values=matrix.flatten()
+      rows=matrix.shape[0],
+      cols=matrix.shape[1],
+      values=matrix.flatten(order='F'),
   )
 
 
