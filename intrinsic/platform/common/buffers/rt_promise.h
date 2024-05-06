@@ -203,7 +203,9 @@ class RealtimePromise {
 
 // The non-real time capable future.
 // Cannot be copied, moved, or (move-)assigned.
-// The future must outlive its promise.
+// The future must outlive its promise. The destructor will block until the
+// promise is destroyed. See `CanBeDestroyed()` whether the destructor would
+// block.
 template <typename T>
 class NonRealtimeFuture {
  public:
@@ -229,6 +231,20 @@ class NonRealtimeFuture {
         LOG(ERROR) << "Failed to destroy future: " << status.message();
       }
     }
+  }
+
+  // Returns true if this future can be destroyed. This class' destructor blocks
+  // if the corresponding promise has not been destroyed yet (since the promise
+  // holds pointers to class members of this future).
+  //
+  // Once this function returns `true`, it will always return `true`.
+  bool CanBeDestroyed() {
+    absl::MutexLock lock(&synchronization_mutex_);
+    if (promise_was_moved_) {
+      return is_destroyed_.Value();
+    }
+    return true;  // If the promise was not moved, it won't stop the destruction
+                  // of this class.
   }
 
   // Returns a promise that may then be moved around for the value to be set.
