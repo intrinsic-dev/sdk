@@ -1,0 +1,68 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.grasping;
+
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/math/proto/vector3.proto";
+
+message GraspAnnotations {
+  oneof grasp_annotations {
+    BoxShapedGraspAnnotationParams box_shaped_grasp_annotations = 1;
+    ManualGraspAnnotations manual_grasp_annotations = 2;
+    string manual_grasp_annotations_json = 3;
+  }
+}
+
+message ManualGraspAnnotations {
+  repeated ManualGraspAnnotation annotations = 1;
+}
+
+message ManualGraspAnnotation {
+  // The reference frame pose in the object frame.
+  // E.g., this can be the object center frame.
+  // If unspecified, use the object frame as the reference frame.
+  optional intrinsic_proto.Pose obj_t_ref = 1;
+
+  // The annotation pose in the object frame.
+  intrinsic_proto.Pose ref_t_annotation = 2;
+
+  // Number of rotations to add at this annotation around its z-axis,
+  // evenly spread in 360 degrees. E.g., if `num_rotations=6`,
+  // then the poses are 60 degree rotations around z-axis of the
+  // annotation pose.
+  optional int32 num_rotations = 3;
+
+  // Score of this grasp annotation that reflects the preference of picking
+  // locations. E.g., a surface center pose might have a higher score than a
+  // pose near an edge, since center grasps are more stable.
+  // Default value: 1.0.
+  optional float score = 4;
+}
+
+message BoxShapedGraspAnnotationParams {
+  // Dimensions of the box shaped object in its x, y, z axes.
+  // Used to compute grasp poses with respect to the target object.
+  optional intrinsic_proto.Vector3 obj_dims_in_meters = 1;
+
+  // The pose of object's center in its mesh frame. Useful when
+  // the mesh frame isn't at the center of the box.
+  // Used to compute grasp poses with respect to the target object.
+  optional intrinsic_proto.Pose obj_t_obj_center = 2;
+
+  // Number of grasps to add on each surface. These are grasp poses at the
+  // center position of a surface, rotated around the z-axis, evenly spread in
+  // 360 degrees. E.g., if `num_rotations=6`, then the grasps are 60 degree
+  // rotations around z-axis.
+  // Used to compute grasp poses with respect to the target object.
+  optional int32 num_rotations = 3;
+
+  // The object surfaces to which to add grasps. Defaults to all surfaces if
+  // unspecified or empty. Used to compute grasp poses with respect
+  // to the target object. `0` for the surface that intersects the x-axis
+  // positive axis; `1` for the surface that intersects the x-axis negative
+  // axis; `2` for y-axis positive axis; `3` for y-axis negative axis, `4` for
+  // z-axis positive, `5` for z-axis negative.
+  repeated int32 surfaces = 4;
+}
