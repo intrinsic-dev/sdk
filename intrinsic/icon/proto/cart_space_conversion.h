@@ -3,6 +3,7 @@
 #ifndef INTRINSIC_ICON_PROTO_CART_SPACE_CONVERSION_H_
 #define INTRINSIC_ICON_PROTO_CART_SPACE_CONVERSION_H_
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "intrinsic/icon/proto/cart_space.pb.h"
 #include "intrinsic/kinematics/types/cartesian_limits.h"
