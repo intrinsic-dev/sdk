@@ -238,26 +238,17 @@ def _get_descriptor(
   )
 
 
-def _gen_init_docstring(
-    info: provided.SkillInfo,
-    compatible_resources: dict[str, provided.ResourceList],
-) -> str:
-  """Generates documentation string for init function.
+def _gen_class_docstring(info: provided.SkillInfo) -> str:
+  """Generates the class docstring for a skill class.
 
   Args:
-    info: Skill information.
-    compatible_resources: Map from resource slot names to resources suitable for
-      that slot. It is used to determine whether a default value can be assigned
-      for resource parameters.
+    info: The skill's SkillInfo.
 
   Returns:
-    Python documentation string.
-
-  Raises:
-    NameError: if a parameter name and resource name are the same and even
-      disambiguation adding a "_resource" suffix failed.
+    The generated Python docstring.
   """
-  docstring: list[str] = [f"Skill class for {info.skill_proto.id} skill.\n"]
+  docstring: list[str] = [f"Skill class for {info.skill_proto.id}.\n"]
+
   # Expect 80 chars width
   is_first_line = True
   for description_line in textwrap.dedent(
@@ -272,11 +263,34 @@ def _gen_init_docstring(
     docstring += wrapped_lines
     is_first_line = False
 
-  # Tuple of: (have_default, name, default_value, [docstrings])
-  # We include have_default for sorting later, such that elements without
-  # default value appear first.
-  params = []
-  param_names = []
+  return "\n".join(docstring)
+
+
+def _gen_init_docstring(
+    info: provided.SkillInfo,
+    compatible_resources: dict[str, provided.ResourceList],
+) -> str:
+  """Generates the __init__ docstring for a skill class.
+
+  Args:
+    info: The skill's SkillInfo.
+    compatible_resources: Map from resource slot names to resources suitable for
+      that slot. It is used to determine whether a default value can be assigned
+      for resource parameters.
+
+  Returns:
+    The generated Python docstring.
+
+  Raises:
+    NameError: if a parameter name and resource name are the same and even
+      disambiguation adding a "_resource" suffix failed.
+  """
+  docstring: list[str] = [
+      f"Initializes an instance of the skill {info.skill_proto.id}."
+  ]
+
+  params: list[skill_utils.ParameterInformation] = []
+  param_names: list[str] = []
 
   if info.skill_proto.HasField("parameter_description"):
     param_defaults = info.create_param_message()
@@ -296,13 +310,13 @@ def _gen_init_docstring(
     )
     param_names = [p.name for p in params]
 
-  return_values = []
+  return_values: list[tuple[str, str]] = []
   if info.skill_proto.HasField("return_value_description"):
     result_defaults = info.create_result_message()
 
     for field in result_defaults.DESCRIPTOR.fields:
       doc_string = info.get_result_field_comments(field.full_name)
-      return_values.append((field.name, [doc_string]))
+      return_values.append((field.name, doc_string))
 
     params.append(
         skill_utils.ParameterInformation(
@@ -310,6 +324,7 @@ def _gen_init_docstring(
             name="return_value_key",
             default=None,
             doc_string=["Blackboard key where to store the return value"],
+            message_full_name=None,
         )
     )
     param_names.append("return_value_key")
@@ -342,8 +357,14 @@ def _gen_init_docstring(
             name=param_name,
             default=None,
             doc_string=slot_docstring,
+            message_full_name=None,
         )
     )
+
+  skill_utils.append_used_message_full_names(info.skill_name, params, docstring)
+
+  if not info.skill_proto.resource_selectors:
+    docstring.append("\nThis skill requires no resources.")
 
   # Generate actual docstring for arguments
   if params:
@@ -353,22 +374,18 @@ def _gen_init_docstring(
       docstring.append(f"    {p.name}:")
       for param_doc_string in p.doc_string:
         # Expect 80 chars width, subtract 8 for leading spaces in args string.
-        for line in textwrap.wrap(param_doc_string, 72):
+        for line in textwrap.wrap(param_doc_string.strip(), 72):
           docstring.append(f"        {line}")
       if p.has_default:
         docstring.append(f"        Default value: {p.default}")
 
-  if not info.skill_proto.resource_selectors:
-    docstring.append("This skill requires no resources")
-
   if return_values:
     docstring.append("\nReturns:")
-    for name, doc_strings in sorted(return_values):
+    for name, result_doc_string in sorted(return_values):
       docstring.append(f"    {name}:")
-      for result_doc_string in doc_strings:
-        # Expect 80 chars width, subtract 8 for leading spaces in args string.
-        for line in textwrap.wrap(result_doc_string, 72):
-          docstring.append(f"        {line}")
+      # Expect 80 chars width, subtract 8 for leading spaces in args string.
+      for line in textwrap.wrap(result_doc_string, 72):
+        docstring.append(f"        {line}")
 
   return "\n".join(docstring)
 
@@ -549,7 +566,7 @@ def gen_skill_class(
           ),
           # We use the __init__ documentation because that is shown in the
           # auto-completion tooltip, not __init__.__doc__.
-          "__doc__": _gen_init_docstring(info, compatible_resources),
+          "__doc__": _gen_class_docstring(info),
           # E.g.: 'intrinsic.solutions.skills.ai.intrinsic'.
           "__module__": skill_utils.module_for_generated_skill(
               info.package_name

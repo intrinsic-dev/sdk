@@ -394,18 +394,15 @@ More z_move Doc."""
         mock_stdout.getvalue(),
         r"""ai.intrinsic.my_skill
 
-Skill class for ai.intrinsic.my_skill skill.
-
-This skill requires no resources
+Skill class for ai.intrinsic.my_skill.
 
 ai.intrinsic.z_move
 
-Skill class for ai.intrinsic.z_move skill.
+Skill class for ai.intrinsic.z_move.
 
 DocFor z_move.
 
 More z_move Doc.
-This skill requires no resources
 
 """,
     )

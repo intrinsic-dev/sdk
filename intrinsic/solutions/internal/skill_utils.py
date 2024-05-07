@@ -68,6 +68,7 @@ class ParameterInformation:
   name: str
   default: Any
   doc_string: List[str]
+  message_full_name: Optional[str]
 
 
 # This must map according to:
@@ -1075,7 +1076,7 @@ def _gen_wrapper_class(
       wrapped_type.DESCRIPTOR.name,
       (MessageWrapper,),
       {
-          "__doc__": _gen_init_docstring(wrapped_type, field_doc_strings),
+          "__doc__": _gen_class_docstring(wrapped_type, field_doc_strings),
           # E.g.: 'move_robot.intrinsic_proto.Pose'.
           "__qualname__": skill_name + "." + wrapped_type.DESCRIPTOR.full_name,
           # E.g.: 'intrinsic.solutions.skills.ai.intrinsic'.
@@ -1094,6 +1095,7 @@ def _gen_wrapper_class(
 
 def _gen_init_fun(
     wrapped_type: Type[message.Message],
+    skill_name: str,
     type_name: str,
     wrapper_classes: dict[str, Type[MessageWrapper]],
     field_doc_strings: Dict[str, str],
@@ -1102,6 +1104,7 @@ def _gen_init_fun(
 
   Args:
     wrapped_type: Message to wrap.
+    skill_name: Name of the parent skill.
     type_name: Type name of the object to wrap.
     wrapper_classes: Map from proto message names to corresponding message
       wrapper classes.
@@ -1132,15 +1135,17 @@ def _gen_init_fun(
   new_init_fun.__annotations__ = collections.OrderedDict(
       [(p.name, p.annotation) for p in params]
   )
-  new_init_fun.__doc__ = _gen_init_docstring(wrapped_type, field_doc_strings)
+  new_init_fun.__doc__ = _gen_init_docstring(
+      wrapped_type, skill_name, field_doc_strings
+  )
   return new_init_fun
 
 
-def _gen_init_docstring(
+def _gen_class_docstring(
     wrapped_type: Type[message.Message],
     field_doc_strings: Dict[str, str],
 ) -> str:
-  """Generates documentation string for init function.
+  """Generates the class docstring for a message wrapper class.
 
   Args:
     wrapped_type: Message to wrap.
@@ -1152,10 +1157,11 @@ def _gen_init_docstring(
   param_defaults = wrapped_type()
 
   docstring: List[str] = [
-      f"Wrapper class for {wrapped_type.DESCRIPTOR.full_name}.\n"
+      f"Proto message wrapper class for {wrapped_type.DESCRIPTOR.full_name}."
   ]
   message_doc_string = ""
   if param_defaults.DESCRIPTOR.full_name in field_doc_strings:
+    docstring += [""]
     message_doc_string = field_doc_strings[param_defaults.DESCRIPTOR.full_name]
   # Expect 80 chars width.
   is_first_line = True
@@ -1169,9 +1175,70 @@ def _gen_init_docstring(
       continue
     docstring += wrapped_lines
 
+  return "\n".join(docstring)
+
+
+def append_used_message_full_names(
+    skill_name: str,
+    params: list[ParameterInformation],
+    docstring: list[str],
+) -> None:
+  """Appends a list of all used message full names to the docstring.
+
+  Appends to the given docstring a list of all used message full names in the
+  given parameter list. The names in the list are printed in the form
+  "my_skill.intrinsic_proto.Pose".
+
+  The list should be included near the top of the given docstring. This helps
+  in some IDEs. E.g., VS Code will only show "Pose" in the signature tooltip but
+  it will show this docstring right below.
+
+  Args:
+    skill_name: Name of the parent skill.
+    params: List of parameter details.
+    docstring: Docstring to append to.
+  """
+
+  message_full_names = {
+      p.message_full_name for p in params if p.message_full_name is not None
+  }
+  if message_full_names:
+    docstring.append("\nThis method accepts the following proto messages:")
+    for name in sorted(message_full_names):
+      # Expect 80 chars width, subtract 4 for leading spaces in list.
+      wrapped_lines = textwrap.wrap(f"{skill_name}.{name}", 76)
+      docstring.append(f"  - {wrapped_lines[0]}")
+      docstring.extend(f"    {line}" for line in wrapped_lines[1:])
+
+
+def _gen_init_docstring(
+    wrapped_type: Type[message.Message],
+    skill_name: str,
+    field_doc_strings: Dict[str, str],
+) -> str:
+  """Generates the __init__ docstring for a message wrapper class.
+
+  Args:
+    wrapped_type: Message to wrap.
+    skill_name: Name of the parent skill.
+    field_doc_strings: Dict mapping from field name to doc string comment.
+
+  Returns:
+    Python documentation string.
+  """
+  param_defaults = wrapped_type()
+
+  docstring: list[str] = [
+      "Initializes an instance of"
+      f" {skill_name}.{wrapped_type.DESCRIPTOR.full_name}."
+  ]
+
   message_fields = extract_docstring_from_message(
       param_defaults, field_doc_strings
   )
+
+  append_used_message_full_names(skill_name, message_fields, docstring)
+
   if message_fields:
     docstring.append("\nFields:")
     message_fields.sort(
@@ -1182,7 +1249,7 @@ def _gen_init_docstring(
       docstring.append(field_name.rjust(len(field_name) + 4))
       # Expect 80 chars width, subtract 8 for leading spaces in args string.
       for param_doc_string in m.doc_string:
-        for line in textwrap.wrap(param_doc_string, 72):
+        for line in textwrap.wrap(param_doc_string.strip(), 72):
           docstring.append(line.rjust(len(line) + 8))
       if m.has_default:
         default = f"Default value: {m.default}"
@@ -1390,6 +1457,7 @@ def update_message_class_modules(
   for message_full_name, wrapper_class in wrapper_classes.items():
     wrapper_class.__init__ = _gen_init_fun(
         wrapper_class.wrapped_type,
+        skill_name,
         message_full_name,
         wrapper_classes,
         field_doc_strings,
@@ -1587,6 +1655,9 @@ def extract_docstring_from_message(
             name=field.name,
             default=default_value,
             doc_string=[doc_string],
+            message_full_name=(
+                field.message_type.full_name if field.message_type else None
+            ),
         )
     )
 

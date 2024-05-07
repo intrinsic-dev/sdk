@@ -7,6 +7,7 @@ from typing import Optional
 from unittest import mock
 
 from absl import flags
+from google.protobuf import descriptor
 from google.protobuf import descriptor_pb2
 from google.protobuf import message
 from google.protobuf import text_format
@@ -149,6 +150,7 @@ class SkillTestUtils:
       skill_id: str,
       parameter_defaults: message.Message,
       resource_selectors: Optional[dict[str, str]] = None,
+      skill_description: Optional[str] = None,
   ) -> skills_pb2.Skill:
     """Creates a skill proto for a skill with parameters and return values.
 
@@ -159,11 +161,15 @@ class SkillTestUtils:
         and return value message type.
       resource_selectors: A mapping from resource selector names to capability
         names.
+      skill_description: The description of the skill.
 
     Returns:
       The skill proto.
     """
     skill_info = skills_pb2.Skill(id=skill_id)
+
+    if skill_description is not None:
+      skill_info.description = skill_description
 
     skill_info.parameter_description.parameter_descriptor_fileset.CopyFrom(
         self._file_descriptor_set
@@ -183,15 +189,24 @@ class SkillTestUtils:
         parameter_defaults.DESCRIPTOR.full_name
     )
 
-    for field in parameter_defaults.DESCRIPTOR.fields:
-      skill_info.parameter_description.parameter_field_comments[
-          field.full_name
-      ] = 'Mockup comment'
+    # Prevents infinite recursion due to recursive messages
+    messages_done: set[str] = set()
 
-    for field in parameter_defaults.DESCRIPTOR.fields:
-      skill_info.return_value_description.return_value_field_comments[
-          field.full_name
-      ] = 'Mockup comment'
+    def add_field_comments(descr: descriptor.Descriptor):
+      if descr.full_name in messages_done:
+        return
+      messages_done.add(descr.full_name)
+      for field in descr.fields:
+        skill_info.parameter_description.parameter_field_comments[
+            field.full_name
+        ] = 'Mockup comment'
+        skill_info.return_value_description.return_value_field_comments[
+            field.full_name
+        ] = 'Mockup comment'
+        if field.message_type is not None:
+          add_field_comments(field.message_type)
+
+    add_field_comments(parameter_defaults.DESCRIPTOR)
 
     if resource_selectors:
       for key, value in resource_selectors.items():

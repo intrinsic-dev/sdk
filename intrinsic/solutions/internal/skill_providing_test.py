@@ -1197,16 +1197,44 @@ class SkillsTest(parameterized.TestCase):
     )
     self.assertSignature(signature, expected_signature)
 
-  def test_str(self):
-    """Tests if Action conversion to string works."""
+  def test_skill_class_docstring(self):
+    skill_info = self._utils.create_test_skill_info_with_return_value(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=_DEFAULT_TEST_MESSAGE,
+        skill_description='This is an awesome skill.',
+        resource_selectors={'a': 'some-type-a', 'b': 'some-type-b'},
+    )
+    docstring = """\
+Skill class for ai.intrinsic.my_skill.
+
+This is an awesome skill."""
+
+    skills = skill_providing.Skills(
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
+    )
+
+    self.assertEqual(skills.ai.intrinsic.my_skill.__doc__, docstring)
+
+  def test_skill_init_docstring(self):
     skill_info = self._utils.create_test_skill_info_with_return_value(
         skill_id='ai.intrinsic.my_skill',
         parameter_defaults=_DEFAULT_TEST_MESSAGE,
         resource_selectors={'a': 'some-type-a', 'b': 'some-type-b'},
     )
     docstring = """\
-Skill class for ai.intrinsic.my_skill skill.
+Initializes an instance of the skill ai.intrinsic.my_skill.
 
+This method accepts the following proto messages:
+  - my_skill.intrinsic_proto.Pose
+  - my_skill.intrinsic_proto.executive.TestMessage"""
+    docstring += """
+  - my_skill.intrinsic_proto.test_data.SubMessage
+  - my_skill.intrinsic_proto.test_data.TestMessage.Foo
+  - my_skill.intrinsic_proto.test_data.TestMessage.Int32StringMapEntry
+  - my_skill.intrinsic_proto.test_data.TestMessage.SomeType
+  - my_skill.intrinsic_proto.test_data.TestMessage.StringInt32MapEntry
+  - my_skill.intrinsic_proto.test_data.TestMessage.StringMessageMapEntry
 
 Args:
     a:
@@ -1329,6 +1357,20 @@ Returns:
     docstring += """
     sub_message:
         Mockup comment"""
+
+    skills = skill_providing.Skills(
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
+    )
+
+    self.assertEqual(skills.ai.intrinsic.my_skill.__init__.__doc__, docstring)
+
+  def test_skill_repr(self):
+    skill_info = self._utils.create_test_skill_info_with_return_value(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=_DEFAULT_TEST_MESSAGE,
+        resource_selectors={'a': 'some-type-a', 'b': 'some-type-b'},
+    )
     parameters = {'my_float': 1.25, 'my_bool': True}
 
     skill_repr = (
@@ -1358,8 +1400,6 @@ Returns:
         self._utils.create_skill_registry_for_skill_info(skill_info),
         self._utils.create_empty_resource_registry(),
     )
-
-    self.assertEqual(skills.ai.intrinsic.my_skill.__doc__, docstring)
 
     resource_a = provided.ResourceHandle.create('resource_a', ['some-type-a'])
     resource_b = provided.ResourceHandle.create('resource_b', ['some-type-b'])
@@ -1399,10 +1439,9 @@ Returns:
     )
 
     self.assertEqual(
-        skills.ai.intrinsic.my_skill.__doc__,
+        skills.ai.intrinsic.my_skill.__init__.__doc__,
         textwrap.dedent("""\
-            Skill class for ai.intrinsic.my_skill skill.
-
+            Initializes an instance of the skill ai.intrinsic.my_skill.
 
             Args:
                 a_resource:
@@ -1449,10 +1488,9 @@ Returns:
     )
 
     self.assertEqual(
-        skills.ai.intrinsic.my_skill.__doc__,
+        skills.ai.intrinsic.my_skill.__init__.__doc__,
         textwrap.dedent("""\
-      Skill class for ai.intrinsic.my_skill skill.
-
+      Initializes an instance of the skill ai.intrinsic.my_skill.
 
       Args:
           a:
@@ -1779,6 +1817,102 @@ Returns:
     self.assertIsInstance(
         my_skill.google.protobuf.Any(),
         skill_utils.MessageWrapper,
+    )
+
+  def test_message_wrapper_class_docstring(self):
+    skill_info = self._utils.create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=test_skill_params_pb2.TestMessageWrapped(),
+    )
+
+    skills = skill_providing.Skills(
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
+    )
+
+    self.assertEqual(
+        skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.__doc__,
+        'Proto message wrapper class for'
+        ' intrinsic_proto.test_data.TestMessage.',
+    )
+
+  def test_message_wrapper_init_docstring(self):
+    skill_info = self._utils.create_test_skill_info_with_return_value(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=test_skill_params_pb2.TestMessageWrapped(),
+    )
+    docstring = """\
+Initializes an instance of my_skill.intrinsic_proto.test_data.TestMessage.
+
+This method accepts the following proto messages:
+  - my_skill.intrinsic_proto.Pose
+  - my_skill.intrinsic_proto.executive.TestMessage"""
+    docstring += """
+  - my_skill.intrinsic_proto.test_data.SubMessage
+  - my_skill.intrinsic_proto.test_data.TestMessage.Foo
+  - my_skill.intrinsic_proto.test_data.TestMessage.Int32StringMapEntry
+  - my_skill.intrinsic_proto.test_data.TestMessage.SomeType
+  - my_skill.intrinsic_proto.test_data.TestMessage.StringInt32MapEntry
+  - my_skill.intrinsic_proto.test_data.TestMessage.StringMessageMapEntry
+
+Fields:
+    enum_v:
+        Mockup comment
+    executive_test_message:
+        Mockup comment
+    foo:
+        Mockup comment
+    int32_string_map:
+        Mockup comment
+    my_bool:
+        Mockup comment
+    my_double:
+        Mockup comment
+    my_float:
+        Mockup comment
+    my_int32:
+        Mockup comment
+    my_int64:
+        Mockup comment
+    my_oneof_double:
+        Mockup comment
+    my_oneof_sub_message:
+        Mockup comment
+    my_repeated_doubles:
+        Mockup comment
+    my_required_int32:
+        Mockup comment
+    my_string:
+        Mockup comment
+    my_uint32:
+        Mockup comment
+    my_uint64:
+        Mockup comment
+    non_unique_field_name:
+        Mockup comment
+    optional_sub_message:
+        Mockup comment
+    pose:
+        Mockup comment
+    repeated_submessages:
+        Mockup comment
+    string_int32_map:
+        Mockup comment
+    string_message_map:
+        Mockup comment"""
+    docstring += """
+    sub_message:
+        Mockup comment"""
+
+    skills = skill_providing.Skills(
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
+    )
+    my_skill = skills.ai.intrinsic.my_skill
+
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.TestMessage.__init__.__doc__,
+        docstring,
     )
 
   def test_message_wrapper_signature(self):
