@@ -6,7 +6,6 @@ package intrinsic_proto.skills;
 
 import "google/protobuf/any.proto";
 import "google/protobuf/descriptor.proto";
-import "intrinsic/assets/proto/installation_origin.proto";
 import "intrinsic/resources/proto/resource_handle.proto";
 import "intrinsic/skills/proto/equipment.proto";
 
@@ -124,9 +123,6 @@ message SkillInstance {
   // The fully-qualified globally unique id of the skill, formatted as:
   // <package_name>.<name>.<version>
   string id_version = 10;
-
-  // Origin that the skill was installed from.
-  intrinsic_proto.assets.InstallationOrigin installation_origin = 11;
 
   // Dispatcher handle to project this skill.
   SkillHandle project_handle = 4;
