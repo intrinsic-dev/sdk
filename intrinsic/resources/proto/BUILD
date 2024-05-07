@@ -87,3 +87,29 @@ go_proto_library(
     name = "resource_handle_go_proto",
     deps = [":resource_handle_proto"],
 )
+
+proto_library(
+    name = "runtime_context_proto",
+    srcs = ["runtime_context.proto"],
+    deps = [
+        "@com_google_protobuf//:any_proto",
+    ],
+)
+
+py_proto_library(
+    name = "runtime_context_py_pb2",
+    deps = [":runtime_context_proto"],
+)
+
+go_proto_library(
+    name = "runtime_context_go_proto",
+    go_deps = [
+        ":resource_registry_go_proto",
+    ],
+    deps = [":runtime_context_proto"],
+)
+
+cc_proto_library(
+    name = "runtime_context_cc_proto",
+    deps = [":runtime_context_proto"],
+)
