@@ -75,6 +75,11 @@ proto_library(
     ],
 )
 
+proto_source_code_info_transitive_descriptor_set(
+    name = "executive_service_proto_descriptor_set",
+    deps = [":executive_service_proto"],
+)
+
 py_proto_library(
     name = "executive_service_py_pb2",
     deps = [":executive_service_proto"],
