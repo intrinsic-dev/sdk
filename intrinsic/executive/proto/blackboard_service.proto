@@ -1,0 +1,108 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+import "google/api/annotations.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/empty.proto";
+
+message BlackboardValue {
+  string key = 1;
+  string scope = 2;
+  string operation_name = 4;
+  google.protobuf.Any value = 3;
+}
+
+service ExecutiveBlackboard {
+
+  // Retrieves a specified blackboard value.
+  rpc GetBlackboardValue(GetBlackboardValueRequest) returns (BlackboardValue) {
+    option (google.api.http) = {
+      get: "/api/executive/blackboard/values/{operation}/{scope}/{key}"
+    };
+  }
+
+  // List all available entries on the blackboard.
+  rpc ListBlackboardValues(ListBlackboardValuesRequest)
+      returns (ListBlackboardValuesResponse) {
+    option (google.api.http) = {
+      // Retrieves all values in the given operation and scope.
+      // You can append ?view=FULL to also retrieve all value protos in the
+      // response, otherwise (and if explicitly passing ?view?ANY_TYPEURL_ONLY)
+      // only the type_url field of the value Any protos is populated.
+      get: "/api/executive/blackboard/values/{operation}/{scope}"
+      additional_bindings {
+        // Retrieves all values in the given operation's PROCESS_TREE scope.
+        // You can append ?view=FULL to also retrieve all value protos in the
+        // response, otherwise (and if explicitly passing
+        // ?view?ANY_TYPEURL_ONLY) only the type_url field of the value Any
+        // protos is populated.
+        get: "/api/executive/blackboard/values/{operation}"
+      }
+    };
+  }
+
+  // Update a specific value on the blackboard.
+  rpc UpdateBlackboardValue(UpdateBlackboardValueRequest)
+      returns (BlackboardValue) {
+    option (google.api.http) = {
+      put: "/api/executive/blackboard/values/{operation}/{scope}/{key}"
+      body: "value"
+    };
+  }
+
+  // Delete a specific value on the blackboard.
+  rpc DeleteBlackboardValue(DeleteBlackboardValueRequest)
+      returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/api/executive/blackboard/values/{operation}/{scope}/{key}"
+    };
+  }
+}
+
+message GetBlackboardValueRequest {
+  string key = 1;
+
+  // A blackboard key is scoped based on where it is defined, use:
+  // "PROCESS_TREE" for an item in the process tree. For example to
+  // retrieve the return value of a skill that just ran. This is the default for
+  // most use cases. This is the default, if scope is not set.
+  // "SYSTEM_TREE" for an item within the system tree.
+  // "GLOBAL" for global items, e.g., inflows.
+  optional string scope = 2;
+
+  string operation_name = 3;
+}
+
+message ListBlackboardValuesRequest {
+  // Limit the request to a specific scope. Will return all blackboard values,
+  // if not set.
+  optional string scope = 1;
+  string operation_name = 2;
+
+  enum View {
+    DEFAULT = 0;  // Currently this corresponds to ANY_TYPEURL_ONLY
+    FULL = 1;
+    ANY_TYPEURL_ONLY = 2;
+  }
+  View view = 3;
+}
+
+message ListBlackboardValuesResponse {
+  repeated BlackboardValue values = 2;
+
+  reserved "value_infos";
+  reserved 1;
+}
+
+message UpdateBlackboardValueRequest {
+  BlackboardValue value = 1;
+}
+
+message DeleteBlackboardValueRequest {
+  string key = 1;
+  string scope = 2;
+  string operation_name = 3;
+}
