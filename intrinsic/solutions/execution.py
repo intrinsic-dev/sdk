@@ -26,6 +26,8 @@ from typing import Any, List, Optional, Union, cast
 from google.longrunning import operations_pb2
 import grpc
 from intrinsic.executive.proto import behavior_tree_pb2
+from intrinsic.executive.proto import blackboard_service_pb2
+from intrinsic.executive.proto import blackboard_service_pb2_grpc
 from intrinsic.executive.proto import executive_execution_mode_pb2
 from intrinsic.executive.proto import executive_service_pb2
 from intrinsic.executive.proto import executive_service_pb2_grpc
@@ -224,6 +226,7 @@ class Executive:
     """Represents the mode of execution for running a process."""
 
   _stub: executive_service_pb2_grpc.ExecutiveServiceStub
+  _blackboard_stub: blackboard_service_pb2_grpc.ExecutiveBlackboardStub
   _error_loader: error_processing.ErrorsLoader
   _simulation: Optional[simulation_mod.Simulation]
   _polling_interval_in_seconds: float
@@ -232,6 +235,7 @@ class Executive:
   def __init__(
       self,
       stub: executive_service_pb2_grpc.ExecutiveServiceStub,
+      blackboard_stub: blackboard_service_pb2_grpc.ExecutiveBlackboardStub,
       error_loader: error_processing.ErrorsLoader,
       simulation: Optional[simulation_mod.Simulation] = None,
       polling_interval_in_seconds: float = _DEFAULT_POLLING_INTERVAL_IN_SECONDS,
@@ -248,6 +252,7 @@ class Executive:
         the operation state in blocking calls such as Executive.suspend().
     """
     self._stub = stub
+    self._blackboard_stub = blackboard_stub
     self._error_loader = error_loader
     self._simulation = simulation
     self._polling_interval_in_seconds = polling_interval_in_seconds
@@ -274,8 +279,12 @@ class Executive:
       A newly created instance of the Executive wrapper class.
     """
     stub = executive_service_pb2_grpc.ExecutiveServiceStub(grpc_channel)
+    blackboard_stub = blackboard_service_pb2_grpc.ExecutiveBlackboardStub(
+        grpc_channel
+    )
     return cls(
         stub,
+        blackboard_stub,
         error_loader,
         simulation,
         polling_interval_in_seconds,
@@ -836,6 +845,85 @@ class Executive:
     error_summaries.print_info(print_level)
     return error_summaries
 
+  def is_value_available(self, value: blackboard_value.BlackboardValue) -> bool:
+    """Checks whether a value is available on the blackboard.
+
+    Args:
+      value: check availability for this value
+
+    Returns:
+      True if a value has been set
+      False otherwise
+    """
+    scope = value.scope() if value.scope() is not None else _PROCESS_TREE_SCOPE
+    available_entries = self._list_blackboard_values(scope=scope)
+    return any(
+        filter(
+            lambda x: x.key == value.value_access_path(),
+            available_entries.values,
+        )
+    )
+
+  def get_value(self, value: blackboard_value.BlackboardValue) -> Any:
+    """Gets the actual data written for the specified value on the blackboard.
+
+    Args:
+      value: the value to get actual data for
+
+    Returns:
+      Value as read from the blackboard
+
+    Raises:
+      ValueNotAvailable error in case the value has not yet been resolved
+      ValueError if the received value is not of the expected type based on the
+        return value description of the skill
+    """
+    if not value.is_toplevel_value:
+      raise solutions_errors.InvalidArgumentError(
+          f"BlackboardValue with path {value.value_access_path()} is not a"
+          " toplevel value. Requesting sub-fields of a blackboard value is not"
+          " supported. Use the toplevel blackboard value to request its"
+          " contents from the blackboard."
+      )
+
+    try:
+      any_value = self._get_blackboard_value(
+          value.value_access_path(), value.scope()
+      ).value
+    except grpc.RpcError as e:
+      rpc_call = cast(grpc.Call, e)
+      if rpc_call.code() == grpc.StatusCode.NOT_FOUND:
+        raise solutions_errors.NotFoundError(
+            "Could not find blackboard value for key"
+            f" {value.value_access_path()} in scope {value.scope()} in the"
+            " blackboard."
+        ) from e
+      raise
+
+    blackboard_message = value.value_type()
+
+    if blackboard_message.DESCRIPTOR.full_name != any_value.TypeName():
+      raise ValueError(
+          "Received value does not match expected type. Got"
+          f" {any_value.TypeName()} but expected"
+          f" {blackboard_message.DESCRIPTOR.full_name}."
+      )
+    any_value.Unpack(blackboard_message)
+    return blackboard_message
+
+  def await_value(self, value: blackboard_value.BlackboardValue) -> None:
+    """Blocks until a key is available on the blackboard.
+
+    While the key is available await_value will always return immediately until
+    the key is removed. Changes in value are not reflected.
+
+    Args:
+      value: wait for this value to be available on the blackboard
+    """
+    while not self.is_value_available(value):
+      time.sleep(self._polling_interval_in_seconds)
+    return
+
   @error_handling.retry_on_grpc_unavailable
   def _delete_with_retry(self) -> None:
     operation_name = self.operation.name
@@ -919,3 +1007,23 @@ class Executive:
   @error_handling.retry_on_grpc_unavailable
   def _create_with_retry(self, request) -> None:
     self._operation = Operation(self._stub, self._stub.CreateOperation(request))
+
+  @error_handling.retry_on_grpc_unavailable
+  def _list_blackboard_values(
+      self, scope: Optional[str]
+  ) -> blackboard_service_pb2.ListBlackboardValuesResponse:
+    return self._blackboard_stub.ListBlackboardValues(
+        blackboard_service_pb2.ListBlackboardValuesRequest(
+            operation_name=self.operation.name, scope=scope
+        )
+    )
+
+  @error_handling.retry_on_grpc_unavailable
+  def _get_blackboard_value(
+      self, key: str, scope: Optional[str]
+  ) -> blackboard_service_pb2.BlackboardValue:
+    return self._blackboard_stub.GetBlackboardValue(
+        blackboard_service_pb2.GetBlackboardValueRequest(
+            operation_name=self.operation.name, scope=scope, key=key
+        )
+    )

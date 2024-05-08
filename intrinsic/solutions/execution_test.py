@@ -13,6 +13,8 @@ from google.protobuf import any_pb2
 from google.protobuf import text_format
 import grpc
 from intrinsic.executive.proto import behavior_tree_pb2
+from intrinsic.executive.proto import blackboard_service_pb2
+from intrinsic.executive.proto import blackboard_service_pb2_grpc
 from intrinsic.executive.proto import executive_execution_mode_pb2
 from intrinsic.executive.proto import executive_service_pb2
 from intrinsic.executive.proto import executive_service_pb2_grpc
@@ -67,9 +69,13 @@ class ExecutiveTest(parameterized.TestCase):
     self._executive_service_stub: (
         executive_service_pb2_grpc.ExecutiveServiceStub
     ) = mock.MagicMock()
+    self._blackboard_stub: (
+        blackboard_service_pb2_grpc.ExecutiveBlackboardStub
+    ) = mock.MagicMock()
     self._simulation: simulation_mod.Simulation = mock.MagicMock()
     self._executive: execution.Executive = execution.Executive(
         self._executive_service_stub,
+        self._blackboard_stub,
         self._errors,
         self._simulation,
     )
@@ -1001,6 +1007,348 @@ class ExecutiveTest(parameterized.TestCase):
 
     with self.assertRaises(execution.ExecutionFailedError):
       self._executive.block_until_completed()
+
+  def test_get_value_works(self):
+    """Tests if executive.get_value() calls GetBlackboardValue of the executive service."""
+
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+
+    response = blackboard_service_pb2.BlackboardValue()
+    value = test_skill_params_pb2.TestMessage(my_double=1.1)
+    proto_any = any_pb2.Any()
+    proto_any.Pack(value)
+    response.key = 'foo'
+    response.scope = execution._PROCESS_TREE_SCOPE
+    response.value.CopyFrom(proto_any)
+
+    self._blackboard_stub.GetBlackboardValue.return_value = response
+
+    test_value = blackboard_value.BlackboardValue(
+        {}, 'foo', test_skill_params_pb2.TestMessage, None
+    )
+    self.assertEqual(self._executive.get_value(test_value), value)
+    self._blackboard_stub.GetBlackboardValue.assert_called_once_with(
+        blackboard_service_pb2.GetBlackboardValueRequest(
+            operation_name=_OPERATION_NAME, key='foo'
+        )
+    )
+
+  def test_get_value_fails_on_unavailable_error(self):
+    """Tests if executive.get_value() translates UNAVAILABLE error correctly."""
+
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+
+    self._blackboard_stub.GetBlackboardValue.side_effect = _GrpcError(
+        grpc.StatusCode.UNAVAILABLE
+    )
+
+    test_value = blackboard_value.BlackboardValue({}, 'foo', None, None)
+    with self.assertRaises(_GrpcError) as context:
+      self._executive.get_value(test_value)
+
+    self.assertEqual(context.exception.code(), grpc.StatusCode.UNAVAILABLE)
+    for _ in range(6):  # Will retry 5 times.
+      self._blackboard_stub.GetBlackboardValue.assert_called_with(
+          blackboard_service_pb2.GetBlackboardValueRequest(
+              operation_name=_OPERATION_NAME, key='foo'
+          )
+      )
+
+  def test_get_value_fails_on_grpc_error(self):
+    """Tests if executive.get_value() forwards other grpc errors correctly."""
+
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+
+    self._blackboard_stub.GetBlackboardValue.side_effect = _GrpcError(
+        grpc.StatusCode.UNKNOWN
+    )
+
+    test_value = blackboard_value.BlackboardValue({}, 'foo', None, None)
+    with self.assertRaises(_GrpcError):
+      self._executive.get_value(test_value)
+    self._blackboard_stub.GetBlackboardValue.assert_called_once_with(
+        blackboard_service_pb2.GetBlackboardValueRequest(
+            operation_name=_OPERATION_NAME, key='foo'
+        )
+    )
+
+  def test_get_value_by_scope_works(self):
+    """Tests if executive.get_value() calls GetBlackboardValue with given scope."""
+
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+
+    response = blackboard_service_pb2.BlackboardValue()
+    value = test_skill_params_pb2.TestMessage(my_double=1.1)
+    proto_any = any_pb2.Any()
+    proto_any.Pack(value)
+    response.key = 'process'
+    response.scope = 'some_scope'
+    response.operation_name = _OPERATION_NAME
+    response.value.CopyFrom(proto_any)
+
+    self._blackboard_stub.GetBlackboardValue.return_value = response
+
+    test_value = blackboard_value.BlackboardValue(
+        {},
+        'process',
+        test_skill_params_pb2.TestMessage,
+        None,
+        scope='some_scope',
+    )
+    self.assertEqual(self._executive.get_value(test_value), value)
+    self._blackboard_stub.GetBlackboardValue.assert_called_once_with(
+        blackboard_service_pb2.GetBlackboardValueRequest(
+            operation_name=_OPERATION_NAME, key='process', scope='some_scope'
+        )
+    )
+
+  def test_get_value_fails_on_value_not_found(self):
+    """Tests if executive.get_value() raises NotFoundError when value is not on blackboard."""
+
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+
+    self._blackboard_stub.GetBlackboardValue.side_effect = _GrpcError(
+        grpc.StatusCode.NOT_FOUND
+    )
+
+    test_value = blackboard_value.BlackboardValue({}, 'unknown_key', None, None)
+    with self.assertRaises(solutions_errors.NotFoundError):
+      self._executive.get_value(test_value)
+    self._blackboard_stub.GetBlackboardValue.assert_called_once_with(
+        blackboard_service_pb2.GetBlackboardValueRequest(
+            operation_name=_OPERATION_NAME, key='unknown_key'
+        )
+    )
+
+  def test_is_value_available_works(self):
+    """Tests if executive.is_value_available() returns whether the value is available."""
+
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+
+    response = blackboard_service_pb2.ListBlackboardValuesResponse()
+    response.values.add(
+        operation_name=_OPERATION_NAME,
+        key='foo',
+        scope=execution._PROCESS_TREE_SCOPE,
+        value=any_pb2.Any(
+            type_url='type.googleapis.com/intrinsic_proto.test_data.TestMessage'
+        ),
+    )
+    self._blackboard_stub.ListBlackboardValues.return_value = response
+
+    test_value = blackboard_value.BlackboardValue({}, 'foo', None, None)
+    self.assertEqual(self._executive.is_value_available(test_value), True)
+
+    self._blackboard_stub.ListBlackboardValues.assert_called_once_with(
+        blackboard_service_pb2.ListBlackboardValuesRequest(
+            operation_name=_OPERATION_NAME, scope=execution._PROCESS_TREE_SCOPE
+        )
+    )
+
+  def test_is_value_available_by_scope_works(self):
+    """Tests if executive.is_value_available() returns respecting the scope."""
+
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+
+    response = blackboard_service_pb2.ListBlackboardValuesResponse()
+    response.values.add(
+        operation_name=_OPERATION_NAME,
+        key='foo',
+        scope='some_scope',
+        value=any_pb2.Any(
+            type_url='type.googleapis.com/intrinsic_proto.test_data.TestMessage'
+        ),
+    )
+    self._blackboard_stub.ListBlackboardValues.return_value = response
+
+    test_value = blackboard_value.BlackboardValue(
+        {}, 'foo', None, None, scope='some_scope'
+    )
+    self.assertEqual(self._executive.is_value_available(test_value), True)
+
+    self._blackboard_stub.ListBlackboardValues.assert_called_once_with(
+        blackboard_service_pb2.ListBlackboardValuesRequest(
+            operation_name=_OPERATION_NAME, scope='some_scope'
+        )
+    )
+
+  def test_is_value_available_works_if_not_available(self):
+    """Tests if executive.is_value_available() returns whether the value is available."""
+
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+
+    response = blackboard_service_pb2.ListBlackboardValuesResponse()
+    response.values.add(
+        operation_name=_OPERATION_NAME,
+        key='foo',
+        scope=execution._PROCESS_TREE_SCOPE,
+        value=any_pb2.Any(
+            type_url='type.googleapis.com/intrinsic_proto.test_data.TestMessage'
+        ),
+    )
+    self._blackboard_stub.ListBlackboardValues.return_value = response
+
+    test_value = blackboard_value.BlackboardValue({}, 'bar', None, None)
+    self.assertEqual(self._executive.is_value_available(test_value), False)
+    self._blackboard_stub.ListBlackboardValues.assert_called_once_with(
+        blackboard_service_pb2.ListBlackboardValuesRequest(
+            operation_name=_OPERATION_NAME, scope=execution._PROCESS_TREE_SCOPE
+        )
+    )
+
+  def test_is_value_available_fails_on_unavailable_error(self):
+    """Tests if executive.is_value_available() translates UNAVAILABLE error correctly."""
+
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+
+    self._blackboard_stub.ListBlackboardValues.side_effect = _GrpcError(
+        grpc.StatusCode.UNAVAILABLE
+    )
+
+    test_value = blackboard_value.BlackboardValue({}, 'foo', None, None)
+    with self.assertRaises(_GrpcError) as context:
+      self._executive.is_value_available(test_value)
+    self.assertEqual(context.exception.code(), grpc.StatusCode.UNAVAILABLE)
+    for _ in range(6):  # Will retry 5 times.
+      self._blackboard_stub.ListBlackboardValues.assert_called_with(
+          blackboard_service_pb2.ListBlackboardValuesRequest(
+              operation_name=_OPERATION_NAME,
+              scope=execution._PROCESS_TREE_SCOPE,
+          )
+      )
+
+  def test_is_value_available_fails_on_grpc_error(self):
+    """Tests if executive.is_value_available() forwards other grpc errors correctly."""
+
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+
+    self._blackboard_stub.ListBlackboardValues.side_effect = _GrpcError(
+        grpc.StatusCode.UNKNOWN
+    )
+
+    test_value = blackboard_value.BlackboardValue({}, 'foo', None, None)
+    with self.assertRaises(_GrpcError):
+      self._executive.is_value_available(test_value)
+    self._blackboard_stub.ListBlackboardValues.assert_called_once_with(
+        blackboard_service_pb2.ListBlackboardValuesRequest(
+            operation_name=_OPERATION_NAME, scope=execution._PROCESS_TREE_SCOPE
+        )
+    )
+
+  def test_await_value_works(self):
+    """Tests if executive.await_value() returns once the value is available."""
+
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+
+    empty_blackboard = blackboard_service_pb2.ListBlackboardValuesResponse()
+    value_added = blackboard_service_pb2.ListBlackboardValuesResponse()
+    value_added.values.add(
+        operation_name=_OPERATION_NAME,
+        key='foo',
+        scope=execution._PROCESS_TREE_SCOPE,
+        value=any_pb2.Any(
+            type_url='type.googleapis.com/intrinsic_proto.test_data.TestMessage'
+        ),
+    )
+    self._blackboard_stub.ListBlackboardValues.side_effect = [
+        empty_blackboard,
+        empty_blackboard,
+        value_added,
+    ]
+
+    test_value = blackboard_value.BlackboardValue({}, 'foo', None, None)
+    self._executive.await_value(test_value)
+
+    self._blackboard_stub.ListBlackboardValues.assert_called_with(
+        blackboard_service_pb2.ListBlackboardValuesRequest(
+            operation_name=_OPERATION_NAME, scope=execution._PROCESS_TREE_SCOPE
+        )
+    )
+
+  def test_await_value_by_scope_works(self):
+    """Tests if executive.await_value() returns once the value is available in scope."""
+
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+
+    empty_blackboard = blackboard_service_pb2.ListBlackboardValuesResponse()
+    value_added = blackboard_service_pb2.ListBlackboardValuesResponse()
+    value_added.values.add(
+        operation_name=_OPERATION_NAME,
+        key='foo',
+        scope='some_scope',
+        value=any_pb2.Any(
+            type_url='type.googleapis.com/intrinsic_proto.test_data.TestMessage'
+        ),
+    )
+    self._blackboard_stub.ListBlackboardValues.side_effect = [
+        empty_blackboard,
+        empty_blackboard,
+        value_added,
+    ]
+
+    test_value = blackboard_value.BlackboardValue(
+        {}, 'foo', None, None, scope='some_scope'
+    )
+    self._executive.await_value(test_value)
+
+    self._blackboard_stub.ListBlackboardValues.assert_called_with(
+        blackboard_service_pb2.ListBlackboardValuesRequest(
+            operation_name=_OPERATION_NAME, scope='some_scope'
+        ),
+    )
+
+  def test_await_value_fails_on_unavailable_error(self):
+    """Tests if executive.await_value() translates UNAVAILABLE error correctly."""
+
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+
+    self._blackboard_stub.ListBlackboardValues.side_effect = _GrpcError(
+        grpc.StatusCode.UNAVAILABLE
+    )
+
+    test_value = blackboard_value.BlackboardValue({}, 'foo', None, None)
+    with self.assertRaises(_GrpcError) as context:
+      self._executive.await_value(test_value)
+    self.assertEqual(context.exception.code(), grpc.StatusCode.UNAVAILABLE)
+    for _ in range(6):  # Will retry 5 times.
+      self._blackboard_stub.ListBlackboardValues.assert_called_with(
+          blackboard_service_pb2.ListBlackboardValuesRequest(
+              operation_name=_OPERATION_NAME,
+              scope=execution._PROCESS_TREE_SCOPE,
+          )
+      )
+
+  def test_await_value_fails_on_grpc_error(self):
+    """Tests if executive.await_value() forwards other grpc errors correctly."""
+
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+
+    self._blackboard_stub.ListBlackboardValues.side_effect = _GrpcError(
+        grpc.StatusCode.UNKNOWN
+    )
+
+    test_value = blackboard_value.BlackboardValue({}, 'foo', None, None)
+    with self.assertRaises(_GrpcError):
+      self._executive.await_value(test_value)
+    self._blackboard_stub.ListBlackboardValues.assert_called_once_with(
+        blackboard_service_pb2.ListBlackboardValuesRequest(
+            operation_name=_OPERATION_NAME, scope=execution._PROCESS_TREE_SCOPE
+        )
+    )
 
   @parameterized.named_parameters(
       dict(
