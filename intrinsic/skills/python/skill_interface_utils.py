@@ -59,7 +59,6 @@ def preview_to_execute_request(
 
 def preview_to_execute_context(
     context: skill_interface.PreviewContext,
-    pub_sub_instance: skill_pubsub.SkillPubSubInstance,
     resource_handles: dict[str, resource_handle_pb2.ResourceHandle],
 ) -> skill_interface.ExecuteContext:
   """Converts a PreviewContext to an ExecuteContext."""
