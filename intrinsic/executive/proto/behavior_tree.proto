@@ -563,7 +563,9 @@ message BehaviorTree {
   optional State state = 7 [(output_only) = true];
 
   intrinsic_proto.skills.Skill description = 4;
-  string return_value_expression = 5;
+  oneof return_value_type {
+    string return_value_expression = 5;
+  }
 
   // User provided data that is treated opaquely by the executive.
   // The data is assumed to be small (all data combined in the order of
