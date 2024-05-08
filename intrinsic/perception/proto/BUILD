@@ -3,7 +3,7 @@
 # This package contains public protos that are exposed to clients of Intrinsic perception.
 
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
-load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
+load("//bazel:go_macros.bzl", "go_proto_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -152,14 +152,6 @@ go_proto_library(
     deps = [":camera_drivers_proto"],
 )
 
-go_grpc_library(
-    name = "camera_drivers_go_grpc_proto",
-    srcs = [":camera_drivers_proto"],
-    deps = [
-        ":camera_drivers_go_proto",
-    ],
-)
-
 proto_library(
     name = "camera_identifier_proto",
     srcs = ["camera_identifier.proto"],
@@ -183,15 +175,6 @@ go_proto_library(
     name = "camera_identifier_go_proto",
     go_deps = [":camera_drivers_go_proto"],
     deps = [":camera_identifier_proto"],
-)
-
-go_grpc_library(
-    name = "camera_identifier_go_grpc_proto",
-    srcs = [":camera_identifier_proto"],
-    deps = [
-        ":camera_drivers_go_proto",
-        ":camera_identifier_go_proto",
-    ],
 )
 
 proto_library(
@@ -322,15 +305,6 @@ go_proto_library(
     name = "camera_settings_go_proto",
     go_deps = ["//intrinsic/hardware/proto:settings_go_proto"],
     deps = [":camera_settings_proto"],
-)
-
-go_grpc_library(
-    name = "camera_settings_go_grpc_proto",
-    srcs = [":camera_settings_proto"],
-    deps = [
-        ":camera_settings_go_proto",
-        "//intrinsic/hardware/proto:settings_go_proto",
-    ],
 )
 
 py_proto_library(
