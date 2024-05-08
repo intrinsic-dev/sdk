@@ -7,7 +7,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"go.uber.org/multierr"
 	"intrinsic/tools/inctl/util/orgutil"
 	"intrinsic/tools/inctl/util/viperutil"
 )
@@ -29,17 +28,17 @@ var revokeCmd = &cobra.Command{
 
 func revokeCredentialsE(cmd *cobra.Command, _ []string) error {
 	isRevokeAll := revokeParams.GetBool(keyRevokeAll)
-	projectName := revokeParams.GetString(orgutil.KeyProject)
-	if !isRevokeAll && projectName == "" {
-		return fmt.Errorf("either --%s or --%s needs to be specified", orgutil.KeyProject, keyRevokeAll)
+	credName, isOrg := getConfigurationName()
+	if !isRevokeAll && credName == "" {
+		return fmt.Errorf("either --%s or --%s needs to be specified", orgutil.KeyOrganization, keyRevokeAll)
 	}
 
 	isBatch := revokeParams.GetBool(keyBatch)
 
 	rw := newReadWriterForCmd(cmd)
-	if projectName == "" && isRevokeAll {
+	if credName == "" && isRevokeAll {
 		if !isBatch {
-			resp, err := userPrompt(rw, "Are you sure you want to remove all projects?", 1, "yes", "NO")
+			resp, err := userPrompt(rw, "Are you sure you want to remove all authorizations?", 1, "yes", "NO")
 			if err != nil {
 				// this error means something terrible happened with terminal, aborting is really only option
 				return fmt.Errorf("cannot continue: %w", err)
@@ -48,32 +47,32 @@ func revokeCredentialsE(cmd *cobra.Command, _ []string) error {
 				return fmt.Errorf("aborted by user")
 			}
 		}
-		return removeAllProjects()
-	} else if authStore.HasConfiguration(projectName) {
-		if !isBatch {
-			prompt := fmt.Sprintf("Are you sure you want to revoke all credentials for '%s'", projectName)
-			resp, err := userPrompt(rw, prompt, 1, "yes", "NO")
-			if err != nil {
-				return err
-			} else if resp != "yes" {
-				return fmt.Errorf("aborted by user")
-			}
-		}
-		return authStore.RemoveConfiguration(projectName)
-	} else {
-		return fmt.Errorf("cannot find configuration for %s", projectName)
+		return authStore.RemoveAllKnownCredentials()
 	}
+	if !isBatch {
+		prompt := fmt.Sprintf("Are you sure you want to revoke all credentials for '%s'", credName)
+		resp, err := userPrompt(rw, prompt, 1, "yes", "NO")
+		if err != nil {
+			return err
+		} else if resp != "yes" {
+			return fmt.Errorf("aborted by user")
+		}
+	}
+	if isOrg {
+		return authStore.RemoveOrganization(credName)
+	}
+	return authStore.RemoveConfiguration(credName)
 }
 
-func removeAllProjects() error {
-	configurations, err := authStore.ListConfigurations()
-	if err != nil {
-		return err
+func getConfigurationName() (name string, isOrg bool) {
+	if revokeParams.IsSet(orgutil.KeyOrganization) {
+		return revokeParams.GetString(orgutil.KeyOrganization), true
 	}
-	for _, configuration := range configurations {
-		err = multierr.Append(err, authStore.RemoveConfiguration(configuration))
+	if revokeParams.IsSet(orgutil.KeyProject) {
+		return revokeParams.GetString(orgutil.KeyProject), false
 	}
-	return err
+
+	return "", false
 }
 
 func init() {
@@ -82,9 +81,11 @@ func init() {
 	flags := revokeCmd.Flags()
 
 	flags.StringP(orgutil.KeyProject, keyProjectShort, "", "Project to revoke credentials for")
-	flags.Bool(keyRevokeAll, false, "Revokes all credentials for given project. If project is omitted, removes all known credentials")
+	flags.StringP(orgutil.KeyOrganization, "", "", "Name of the Intrinsic organization to remove credentials for")
+	flags.Bool(keyRevokeAll, false, fmt.Sprintf("Revokes all existing credentials. If --%s is omitted, removes all known credentials", orgutil.KeyOrganization))
 	flags.Bool(keyBatch, false, "Suppresses command prompts and assume Yes or default as an answer. Use with shell scripts.")
 
-	revokeParams = viperutil.BindToViper(flags, viperutil.BindToListEnv(orgutil.KeyProject))
+	flags.MarkHidden(orgutil.KeyProject)
 
+	revokeParams = viperutil.BindToViper(flags, viperutil.BindToListEnv(orgutil.KeyProject))
 }

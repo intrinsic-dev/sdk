@@ -7,12 +7,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	log "github.com/golang/glog"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -324,7 +326,7 @@ func (s *Store) RemoveConfiguration(name string) error {
 	if err != nil {
 		return fmt.Errorf("cannot remove configuration: %w", err)
 	}
-	return os.RemoveAll(filename)
+	return os.Remove(filename)
 }
 
 // AuthorizeContext retrieves the default credentials for the given project and adds authorization
@@ -441,6 +443,10 @@ func (s *Store) ListOrgs() ([]string, error) {
 	if err != nil {
 		panic(fmt.Errorf("invalid glob pattern, programmer error: %w", err))
 	}
+	if len(matches) == 0 {
+		// this is valid response, there are no organizations found.
+		return nil, nil
+	}
 
 	result := make([]string, 0, len(matches))
 	for _, match := range matches {
@@ -449,4 +455,97 @@ func (s *Store) ListOrgs() ([]string, error) {
 	}
 
 	return result, nil
+}
+
+// RemoveOrganization removes the named organization from the store and its
+// associated project if no other organization references it. Reference check
+// is done to ensure users belonging to multiple organizations in single
+// multi-tenancy project don't lose project credentials when removing
+// only one organization.
+func (s *Store) RemoveOrganization(name string) error {
+	info, err := s.ReadOrgInfo(name)
+	if err != nil {
+		return fmt.Errorf("organization not found: %w", err)
+	}
+
+	associatedProject := info.Project
+	deleteProject := true
+
+	orgs, err := s.ListOrgs()
+	if err != nil {
+		return err
+	}
+
+	for _, orgName := range orgs {
+		if orgName == name {
+			continue
+		}
+		orgInfo, err := s.ReadOrgInfo(orgName)
+		if err != nil {
+			// we should not hit this unless some "data race" happened
+			continue
+		}
+		if orgInfo.Project == associatedProject {
+			deleteProject = false
+		}
+	}
+
+	filename, err := s.orgFilename(name)
+	if err != nil {
+		return err
+	}
+	err = os.Remove(filename)
+	if err != nil {
+		return fmt.Errorf("cannot remove organization: %w", err)
+	}
+
+	if deleteProject {
+		// we are going to delete project only if there is only one organization
+		// using it. If there are more than one, we are leaving project intact
+		err = s.RemoveConfiguration(associatedProject)
+		if err != nil {
+			// failure to remove project is not considered failure to remove org.
+			log.Warningf("cannot remove project configuration: %s", err)
+		}
+	}
+
+	return nil
+}
+
+// RemoveAllKnownCredentials removes all known organizations and projects
+// from authorization store. It operates on filesystem and does not attempt
+// to read credentials. Use for full removal of credentials.
+func (s *Store) RemoveAllKnownCredentials() error {
+	location, err := s.getStoreLocation()
+	if err != nil {
+		return err
+	}
+	err = filepath.WalkDir(location, s.deleteFiles)
+	if err != nil {
+		return err
+	}
+	location, err = s.orgStoreLocation()
+	if err != nil {
+		return err
+	}
+
+	return filepath.WalkDir(location, s.deleteFiles)
+}
+
+func (s *Store) deleteFiles(path string, de fs.DirEntry, err error) error {
+	if err != nil {
+		if de == nil || de.IsDir() {
+			return fs.SkipDir
+		}
+		return err
+	}
+
+	// we are retaining directory structure.
+	if !de.IsDir() {
+		if err = os.Remove(path); err != nil {
+			// if we fail to remove a file, we just move on.
+			log.Warningf("cannot remove %s: %s", path, err)
+		}
+	}
+	return nil
 }

@@ -45,8 +45,8 @@ var loginParams *viper.Viper
 
 var loginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Logs in user into project",
-	Long:  "Logs in user into project to allow interactions with solutions.",
+	Short: "Logs in user into Flowstate",
+	Long:  "Logs in user into Flowstate to allow interactions with solutions.",
 	Args:  cobra.NoArgs,
 	RunE:  loginCmdE,
 
@@ -197,6 +197,7 @@ func init() {
 	flags.Bool(keyBatch, false, "Suppresses command prompts and assume Yes or default as an answer. Use with shell scripts.")
 	flags.StringP(keyPortal, "", "portal.intrinsic.ai", "Hostname of the intrinsic portal to authenticate with.")
 	flags.MarkHidden(keyPortal)
+	flags.MarkHidden(orgutil.KeyProject)
 
 	loginParams = viperutil.BindToViper(flags, viperutil.BindToListEnv(orgutil.KeyProject, orgutil.KeyOrganization))
 }

@@ -6,6 +6,8 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -322,6 +324,195 @@ func TestStore_AuthorizeContext(t *testing.T) {
 			gotOutgoingMetadata, _ := metadata.FromOutgoingContext(got)
 			if diff := cmp.Diff(tc.wantOutgoingMetadata, gotOutgoingMetadata); diff != "" {
 				t.Errorf("AuthorizeContext(%v) has unexpected metadata (-want +got): %v", tc.projectName, diff)
+			}
+		})
+	}
+}
+
+func TestStore_RemoveOrganization(t *testing.T) {
+	type fields struct {
+		projects []ProjectConfiguration
+		orgs     []OrgInfo
+	}
+	type args struct {
+		name string
+	}
+	type wants struct {
+		projects []string
+		orgs     []string
+		wantErr  bool
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		wants  wants
+	}{
+		{
+			name: "single-organization",
+			fields: fields{
+				orgs: []OrgInfo{
+					{Organization: "first-org", Project: "first-project"},
+				},
+				projects: []ProjectConfiguration{
+					{Name: "first-project"},
+				},
+			},
+			args:  args{name: "first-org"},
+			wants: wants{wantErr: false},
+		},
+		{
+			name: "shared-project-not-removed",
+			fields: fields{orgs: []OrgInfo{
+				{Organization: "first-org", Project: "first-project"},
+				{Organization: "second-org", Project: "first-project"},
+			}, projects: []ProjectConfiguration{{Name: "first-project"}},
+			},
+			args: args{name: "first-org"},
+			wants: wants{
+				projects: []string{"first-project"},
+				orgs:     []string{"second-org"},
+				wantErr:  false,
+			},
+		},
+		{
+			name: "fail-remove-non-existent",
+			fields: fields{
+				orgs: []OrgInfo{
+					{Organization: "first-org", Project: "first-project"},
+				},
+				projects: []ProjectConfiguration{
+					{Name: "first-project"},
+				},
+			},
+			args: args{name: "second-org"},
+			wants: wants{
+				projects: []string{"first-project"},
+				orgs:     []string{"first-org"},
+				wantErr:  true,
+			},
+		},
+		{
+			name: "ignore-missing-project",
+			fields: fields{
+				orgs: []OrgInfo{
+					{Organization: "first-org", Project: "first-project"},
+				},
+				projects: []ProjectConfiguration{
+					{Name: "second-project"},
+				},
+			},
+			args: args{name: "first-org"},
+			wants: wants{
+				projects: []string{"second-project"},
+				wantErr:  false,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newStoreForTest(t)
+
+			for _, project := range tt.fields.projects {
+				_, err := s.WriteConfiguration(&project)
+				if err != nil {
+					t.Errorf("cannot write project %v: %s", project, err)
+				}
+			}
+
+			for _, org := range tt.fields.orgs {
+				if err := s.WriteOrgInfo(&org); err != nil {
+					t.Errorf("cannot write organization %v: %s", org, err)
+				}
+			}
+
+			if err := s.RemoveOrganization(tt.args.name); (err != nil) != tt.wants.wantErr {
+				t.Errorf("RemoveOrganization() error = %v, wantErr %v", err, tt.wants.wantErr)
+			}
+
+			projects, err := s.ListConfigurations()
+			if err != nil {
+				t.Errorf("unexpected error listing projects: %s", err)
+			}
+			slices.Sort(projects)
+			slices.Sort(tt.wants.projects)
+			orgs, err := s.ListOrgs()
+			if err != nil {
+				t.Errorf("unexpected error listing orgs: %s", err)
+			}
+			slices.Sort(orgs)
+			slices.Sort(tt.wants.orgs)
+			if diff := cmp.Diff(projects, tt.wants.projects); diff != "" {
+				t.Errorf("unexpected projects: %q", diff)
+			}
+			if diff := cmp.Diff(orgs, tt.wants.orgs); diff != "" {
+				t.Errorf("unexpected organizations: %q", diff)
+			}
+		})
+	}
+}
+
+func TestStore_RemoveAllKnownCredentials(t *testing.T) {
+	type fields struct {
+		projects []ProjectConfiguration
+		orgs     []OrgInfo
+	}
+	type args struct {
+		name string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "single-organization",
+			fields: fields{
+				orgs: []OrgInfo{
+					{Organization: "first-org", Project: "first-project"},
+				},
+				projects: []ProjectConfiguration{
+					{Name: "first-project"},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newStoreForTest(t)
+
+			for _, project := range tt.fields.projects {
+				_, err := s.WriteConfiguration(&project)
+				if err != nil {
+					t.Errorf("cannot write project %v: %s", project, err)
+				}
+			}
+
+			for _, org := range tt.fields.orgs {
+				if err := s.WriteOrgInfo(&org); err != nil {
+					t.Errorf("cannot write organization %v: %s", org, err)
+				}
+			}
+
+			if err := s.RemoveAllKnownCredentials(); (err != nil) != tt.wantErr {
+				t.Errorf("RemoveOrganization() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			projects, err := s.ListConfigurations()
+			if err != nil {
+				t.Errorf("unexpected error listing projects: %s", err)
+			}
+			if len(projects) != 0 {
+				t.Errorf("unexpected projects found: %q", strings.Join(projects, ", "))
+			}
+
+			orgs, err := s.ListOrgs()
+			if err != nil {
+				t.Errorf("unexpected error listing orgs: %s", err)
+			}
+			if len(orgs) != 0 {
+				t.Errorf("unexpected organizations found: %q", strings.Join(orgs, ", "))
 			}
 		})
 	}
