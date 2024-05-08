@@ -404,7 +404,7 @@ message UpdateEntityPropertiesRequest {
   string world_id = 1;
 
   // The entity to be updated.
-  EntityReference entity = 2;
+  ObjectReferenceWithEntityFilter entity = 2;
 
   // DEPRECATED. Use 'UpdateCollisionSettingsRequest' instead
   CollisionAction collision_action = 5 [deprecated = true];
