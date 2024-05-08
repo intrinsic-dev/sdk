@@ -359,6 +359,10 @@ message KinematicObjectComponent {
   // In rare cases this can be empty, when there is no chain that the World
   // knows how to solve inside the Object.
   repeated IkSolver ik_solvers = 11;
+
+  // If set true then it indicates that the kinematics of this object have been
+  // updated.
+  optional bool are_kinematics_updated = 12;
 }
 
 // High-level world container. An Object is part of exactly one world, has
