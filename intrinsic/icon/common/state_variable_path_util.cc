@@ -9,6 +9,7 @@
 #include "absl/algorithm/container.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/types/span.h"
 #include "intrinsic/icon/common/state_variable_path_constants.h"
 
 namespace intrinsic::icon {

@@ -5,6 +5,8 @@
 #include <string>
 #include <utility>
 
+#include "intrinsic/icon/proto/types.pb.h"
+
 namespace intrinsic::icon {
 
 SlotPartMap SlotPartMapFromProto(
