@@ -2,14 +2,11 @@
 
 #include "intrinsic/icon/control/safety/safety_messages_utils.h"
 
-#include <algorithm>
 #include <bitset>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <string>
-#include <type_traits>
-#include <vector>
 
 #include "intrinsic/icon/control/safety/extern/safety_status_generated.h"
 #include "intrinsic/icon/control/safety/safety_messages_generated.h"
@@ -26,6 +23,19 @@ flatbuffers::DetachedBuffer BuildSafetyStatusMessage(
       builder, mode_of_safe_operation, estop_button_status,
       enable_button_status, requested_behavior));
   return builder.Release();
+}
+
+void SetSafetyStatusMessage(
+    const ::intrinsic::safety::messages::ModeOfSafeOperation
+        mode_of_safe_operation,
+    const ::intrinsic::safety::messages::ButtonStatus estop_button_status,
+    const ::intrinsic::safety::messages::ButtonStatus enable_button_status,
+    const ::intrinsic::safety::messages::RequestedBehavior requested_behavior,
+    ::intrinsic::safety::messages::SafetyStatusMessage& message) {
+  message.mutate_mode_of_safe_operation(mode_of_safe_operation);
+  message.mutate_estop_button_status(estop_button_status);
+  message.mutate_enable_button_status(enable_button_status);
+  message.mutate_requested_behavior(requested_behavior);
 }
 
 ModeOfSafeOperation ExtractModeOfSafeOperation(
