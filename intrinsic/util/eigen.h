@@ -70,18 +70,6 @@ inline void VectorNdToRepeatedDouble(
   eigen_details::ToRepeatedDouble(values, output);
 }
 
-template <int N>
-inline void VectorNdWithMaxSizeToRepeatedDouble(
-    const eigenmath::VectorNdWithMaxSize<N>& values,
-    google::protobuf::RepeatedField<double>* output) {
-  eigen_details::ToRepeatedDouble(values, output);
-}
-
-// Convert a VectorXd to a VectorNd
-inline eigenmath::VectorNd VectorXdToVectorNd(eigenmath::VectorXd values) {
-  return eigen_details::ConvertVector<eigenmath::VectorNd>(values);
-}
-
 // Convert a std vector to vectorXd
 inline eigenmath::VectorXd VectorToVectorXd(const std::vector<double>& values) {
   return eigen_details::ConvertVector<eigenmath::VectorXd>(values);
