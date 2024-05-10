@@ -10,6 +10,7 @@
 
 #include "absl/log/check.h"
 #include "intrinsic/icon/testing/realtime_annotations.h"
+#include "intrinsic/icon/utils/duration.h"
 #include "intrinsic/icon/utils/log_internal.h"
 
 namespace intrinsic {
@@ -101,4 +102,19 @@ namespace {
 const auto kUnused = Clock::Now();
 
 }  // namespace
+
+namespace icon {
+
+Time FindNextCycleEnd(Time now, Time end, Duration period) {
+  CHECK_GT(period.count(), 0) << "Period must be greater than 0.";
+
+  // If we haven't reached the end, return the next end.
+  if (now < end) return end + period;
+
+  // Calculate how many cycles we missed.
+  auto missed_cycles = (now - end) / period;
+  return end + period * (missed_cycles + 1);
+}
+
+}  // namespace icon
 }  // namespace intrinsic

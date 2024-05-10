@@ -191,4 +191,13 @@ static inline ostream& operator<<(ostream& os, const ::intrinsic::Time& t) {
 }  // namespace chrono
 }  // namespace std
 
+namespace intrinsic::icon {
+
+// Finds the end of the next cycle based on the current time and the end of the
+// previous cycle. Returns the smallest Time greater than now and end that
+// verifies: result = end + period * N.
+Time FindNextCycleEnd(Time now, Time end, Duration period);
+
+}  // namespace intrinsic::icon
+
 #endif  // INTRINSIC_ICON_UTILS_CLOCK_H_
