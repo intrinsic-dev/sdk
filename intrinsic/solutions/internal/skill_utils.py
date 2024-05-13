@@ -71,6 +71,7 @@ class ParameterInformation:
   default: Any
   doc_string: List[str]
   message_full_name: Optional[str]
+  enum_full_name: Optional[str]
 
 
 # This must map according to:
@@ -1178,7 +1179,7 @@ def _gen_class_docstring(
   return "\n".join(docstring)
 
 
-def append_used_message_full_names(
+def append_used_proto_full_names(
     skill_name: str,
     params: list[ParameterInformation],
     docstring: list[str],
@@ -1205,6 +1206,17 @@ def append_used_message_full_names(
   if message_full_names:
     docstring.append("\nThis method accepts the following proto messages:")
     for name in sorted(message_full_names):
+      # Expect 80 chars width, subtract 4 for leading spaces in list.
+      wrapped_lines = textwrap.wrap(f"{skill_name}.{name}", 76)
+      docstring.append(f"  - {wrapped_lines[0]}")
+      docstring.extend(f"    {line}" for line in wrapped_lines[1:])
+
+  enum_full_names = {
+      p.enum_full_name for p in params if p.enum_full_name is not None
+  }
+  if enum_full_names:
+    docstring.append("\nThis method accepts the following proto enums:")
+    for name in sorted(enum_full_names):
       # Expect 80 chars width, subtract 4 for leading spaces in list.
       wrapped_lines = textwrap.wrap(f"{skill_name}.{name}", 76)
       docstring.append(f"  - {wrapped_lines[0]}")
@@ -1237,7 +1249,7 @@ def _gen_init_docstring(
       param_defaults, field_doc_strings
   )
 
-  append_used_message_full_names(skill_name, message_fields, docstring)
+  append_used_proto_full_names(skill_name, message_fields, docstring)
 
   if message_fields:
     docstring.append("\nFields:")
@@ -1778,6 +1790,7 @@ def extract_docstring_from_message(
     doc_string = ""
     if field.full_name in comments:
       doc_string = comments[field.full_name]
+
     params.append(
         ParameterInformation(
             has_default=have_default,
@@ -1785,7 +1798,14 @@ def extract_docstring_from_message(
             default=default_value,
             doc_string=[doc_string],
             message_full_name=(
-                field.message_type.full_name if field.message_type else None
+                field.message_type.full_name
+                if field.message_type is not None
+                else None
+            ),
+            enum_full_name=(
+                field.enum_type.full_name
+                if field.enum_type is not None
+                else None
             ),
         )
     )

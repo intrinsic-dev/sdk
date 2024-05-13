@@ -326,6 +326,7 @@ def _gen_init_docstring(
             default=None,
             doc_string=["Blackboard key where to store the return value"],
             message_full_name=None,
+            enum_full_name=None,
         )
     )
     param_names.append("return_value_key")
@@ -359,10 +360,11 @@ def _gen_init_docstring(
             default=None,
             doc_string=slot_docstring,
             message_full_name=None,
+            enum_full_name=None,
         )
     )
 
-  skill_utils.append_used_message_full_names(info.skill_name, params, docstring)
+  skill_utils.append_used_proto_full_names(info.skill_name, params, docstring)
 
   if not info.skill_proto.resource_selectors:
     docstring.append("\nThis skill requires no resources.")

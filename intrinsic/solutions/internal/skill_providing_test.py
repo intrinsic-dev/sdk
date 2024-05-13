@@ -1241,6 +1241,9 @@ This method accepts the following proto messages:
   - my_skill.intrinsic_proto.test_data.TestMessage.StringInt32MapEntry
   - my_skill.intrinsic_proto.test_data.TestMessage.StringMessageMapEntry
 
+This method accepts the following proto enums:
+  - my_skill.intrinsic_proto.test_data.TestMessage.TestEnum
+
 Args:
     a:
         Resource with capability some-type-a
@@ -1859,6 +1862,9 @@ This method accepts the following proto messages:
   - my_skill.intrinsic_proto.test_data.TestMessage.SomeType
   - my_skill.intrinsic_proto.test_data.TestMessage.StringInt32MapEntry
   - my_skill.intrinsic_proto.test_data.TestMessage.StringMessageMapEntry
+
+This method accepts the following proto enums:
+  - my_skill.intrinsic_proto.test_data.TestMessage.TestEnum
 
 Fields:
     enum_v:
