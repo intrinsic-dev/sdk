@@ -7,10 +7,11 @@ from __future__ import annotations
 import collections
 import dataclasses
 import datetime
+import enum
 import inspect
 import textwrap
 import time
-from typing import AbstractSet, Any, Callable, Container, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import AbstractSet, Any, Callable, Container, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, Union, cast
 import warnings
 
 from google.protobuf import descriptor
@@ -78,8 +79,6 @@ _PYTHONIC_SCALAR_FIELD_TYPE = {
     descriptor.FieldDescriptor.TYPE_BOOL: bool,
     descriptor.FieldDescriptor.TYPE_BYTES: bytes,
     descriptor.FieldDescriptor.TYPE_DOUBLE: float,
-    # NB: In Python Protobuf enums are just ints with generated constants
-    descriptor.FieldDescriptor.TYPE_ENUM: int,
     descriptor.FieldDescriptor.TYPE_FIXED32: int,
     descriptor.FieldDescriptor.TYPE_FIXED64: int,
     descriptor.FieldDescriptor.TYPE_FLOAT: float,
@@ -98,7 +97,6 @@ _PYTHONIC_SCALAR_DEFAULT_VALUE = {
     descriptor.FieldDescriptor.TYPE_BOOL: False,
     descriptor.FieldDescriptor.TYPE_BYTES: b"",
     descriptor.FieldDescriptor.TYPE_DOUBLE: 0.0,
-    descriptor.FieldDescriptor.TYPE_ENUM: 0,
     descriptor.FieldDescriptor.TYPE_FIXED32: 0,
     descriptor.FieldDescriptor.TYPE_FIXED64: 0,
     descriptor.FieldDescriptor.TYPE_FLOAT: 0.0,
@@ -134,6 +132,7 @@ _MESSAGE_NAME_TO_PYTHONIC_TYPE = {
 def repeated_pythonic_field_type(
     field_descriptor: descriptor.FieldDescriptor,
     wrapper_classes: dict[str, Type[MessageWrapper]],
+    enum_classes: dict[str, Type[enum.IntEnum]],
 ) -> Type[Sequence[Any]]:
   """Returns a 'pythonic' type based on the field_descriptor.
 
@@ -143,6 +142,7 @@ def repeated_pythonic_field_type(
     field_descriptor: The Protobuf descriptor for the field
     wrapper_classes: Map from proto message names to corresponding message
       wrapper classes.
+    enum_classes: Map from full proto enum names to corresponding enum classes.
 
   Returns:
     The Python type of the field.
@@ -161,12 +161,16 @@ def repeated_pythonic_field_type(
       ]
     return Sequence[wrapper_classes[field_descriptor.message_type.full_name]]
 
+  if field_descriptor.type == descriptor.FieldDescriptor.TYPE_ENUM:
+    return Sequence[enum_classes[field_descriptor.enum_type.full_name]]
+
   return Sequence[_PYTHONIC_SCALAR_FIELD_TYPE[field_descriptor.type]]
 
 
 def pythonic_field_type(
     field_descriptor: descriptor.FieldDescriptor,
     wrapper_classes: dict[str, Type[MessageWrapper]],
+    enum_classes: dict[str, Type[enum.IntEnum]],
 ) -> Type[Any]:
   """Returns a 'pythonic' type based on the field_descriptor.
 
@@ -176,6 +180,7 @@ def pythonic_field_type(
     field_descriptor: The Protobuf descriptor for the field
     wrapper_classes: Map from proto message names to corresponding message
       wrapper classes.
+    enum_classes: Map from full proto enum names to corresponding enum classes.
 
   Returns:
     The Python type of the field.
@@ -184,7 +189,10 @@ def pythonic_field_type(
     message_full_name = field_descriptor.message_type.full_name
     if message_full_name in _MESSAGE_NAME_TO_PYTHONIC_TYPE:
       return _MESSAGE_NAME_TO_PYTHONIC_TYPE[message_full_name]
-    return wrapper_classes[field_descriptor.message_type.full_name]
+    return wrapper_classes[message_full_name]
+
+  if field_descriptor.type == descriptor.FieldDescriptor.TYPE_ENUM:
+    return enum_classes[field_descriptor.enum_type.full_name]
 
   return _PYTHONIC_SCALAR_FIELD_TYPE[field_descriptor.type]
 
@@ -460,6 +468,32 @@ def pythonic_to_proto_message(
   )
 
 
+def _pythonic_to_proto_enum_value(
+    field_value: Any, field_enum_type: descriptor.EnumDescriptor
+) -> int:
+  """Converts an enum value to a proto enum value (=int).
+
+  Args:
+    field_value: The value to be converted.
+    field_enum_type: The Protobuf descriptor for the enum.
+
+  Returns:
+    The given value as an int.
+
+  Raises:
+    TypeError if the given value is not an int or int-like.
+  """
+  # This also catches instances of IntEnum which is a subclass of int.
+  if isinstance(field_value, int):
+    return field_value
+
+  raise TypeError(
+      f"Value '{field_value}' is of type {type(field_value)}. Must be"
+      " convertible to an 'int' representing a value of the enum"
+      f" {field_enum_type.full_name}"
+  )
+
+
 def pythonic_field_default_value(
     field_value: Any, field_descriptor: descriptor.FieldDescriptor
 ) -> Any:
@@ -562,6 +596,7 @@ def set_fields_in_msg(
     field_desc = field_descriptor_map[field_name]
     field_type = field_desc.type
     field_message_type = field_desc.message_type
+    field_enum_type = field_desc.enum_type
     if (
         field_descriptor_map[field_name].label
         == descriptor.FieldDescriptor.LABEL_REPEATED
@@ -612,6 +647,8 @@ def set_fields_in_msg(
           ):
             if field_message_type is not None:
               repeated_field.add()
+            elif field_enum_type is not None:
+              repeated_field.append(0)
             else:
               repeated_field.append(_PYTHONIC_SCALAR_DEFAULT_VALUE[field_type])
 
@@ -620,6 +657,11 @@ def set_fields_in_msg(
                 pythonic_to_proto_message(
                     value, field_message_type
                 ).SerializeToString()
+            )
+
+          elif field_enum_type is not None:
+            repeated_field.append(
+                _pythonic_to_proto_enum_value(value, field_enum_type)
             )
 
           elif field_type in _PYTHONIC_SCALAR_FIELD_TYPE and isinstance(
@@ -640,6 +682,9 @@ def set_fields_in_msg(
               arg_value, field_message_type
           ).SerializeToString()
       )
+    elif field_type == descriptor.FieldDescriptor.TYPE_ENUM:
+      enum_value = _pythonic_to_proto_enum_value(arg_value, field_enum_type)
+      setattr(msg, field_name, enum_value)
     elif field_type in _PYTHONIC_SCALAR_FIELD_TYPE and isinstance(
         arg_value, _PYTHONIC_SCALAR_FIELD_TYPE[field_type]
     ):
@@ -655,54 +700,6 @@ def set_fields_in_msg(
       )
     params_set.append(field_name)
   return params_set
-
-
-def _unset_non_oneofs(
-    msg: message.Message,
-) -> Dict[str, descriptor.FieldDescriptor]:
-  """Returns a dictionary of non-oneof fields in the message.
-
-  Args:
-    msg: A Protobuf message.
-
-  Returns:
-    The unset fields, keyed by field name.
-  """
-  unset_non_oneofs = {}
-  for field in msg.DESCRIPTOR.fields:
-    if field.containing_oneof is not None:
-      continue
-
-    # NB: cannot be optional, they're always present, so HasField is useless for
-    # them; it seems to always return false.
-    if field.label == descriptor.FieldDescriptor.LABEL_REPEATED:
-      continue
-
-    # Check for optional and message fields that they are, indeed, set
-    if field.type == descriptor.FieldDescriptor.TYPE_MESSAGE and msg.HasField(
-        field.name
-    ):
-      continue
-
-    unset_non_oneofs[field.name] = field
-  return unset_non_oneofs
-
-
-def _unset_oneofs(msg: message.Message) -> List[descriptor.OneofDescriptor]:
-  """Returns a list of unset oneofs in the message.
-
-  Args:
-    msg: A Protobuf message.
-
-  Returns:
-    The unset oneofs.
-  """
-  unset_oneofs = []
-  for oneof in msg.DESCRIPTOR.oneofs:
-    if msg.WhichOneof(oneof.name) is None:
-      unset_oneofs.append(oneof)
-
-  return unset_oneofs
 
 
 def check_missing_fields_in_msg(
@@ -848,7 +845,8 @@ def get_field_classes_to_alias(
     collected_classes: List[
         Tuple[str, Type[message.Message], descriptor.FieldDescriptor]
     ],
-):
+    collected_enums: dict[str, descriptor.EnumDescriptor],
+) -> None:
   """Gets classes which should be aliased as top-level members.
 
   This checks param_descriptor for fields which specify sub-messages.
@@ -859,15 +857,17 @@ def get_field_classes_to_alias(
     message_classes: mapping from type name to message class for all messages in
       the class's hermetic descriptor pool.
     collected_classes: List containing all collected classes up to this point.
-
-  Returns:
-    For each message class type of sub-message fields a tuple with the nested
-    class attribute name (proto message short name), message class, and field
-    descriptor.
+      The items are tuples of 1) nested class attribute name (proto message
+      short name), 2) message class and 3) field descriptor.
+    collected_enums: Map from full proto enum names to enum descriptors,
+      containing all collected enums up to this point.
   """
 
   for field in param_descriptor.fields:
-    if (
+    if field.enum_type is not None:
+      enum_type = cast(descriptor.EnumDescriptor, field.enum_type)
+      collected_enums[enum_type.full_name] = enum_type
+    elif (
         field.message_type is not None
         and field.message_type.full_name in message_classes
         and (
@@ -894,7 +894,10 @@ def get_field_classes_to_alias(
             field,
         ))
         get_field_classes_to_alias(
-            field.message_type, message_classes, collected_classes
+            field.message_type,
+            message_classes,
+            collected_classes,
+            collected_enums,
         )
 
 
@@ -1072,7 +1075,7 @@ def _gen_wrapper_class(
   Returns:
     A new type for a MessageWrapper sub-class.
   """
-  type_class = type(
+  return type(
       # E.g.: 'Pose'
       wrapped_type.DESCRIPTOR.name,
       (MessageWrapper,),
@@ -1086,19 +1089,13 @@ def _gen_wrapper_class(
       },
   )
 
-  msg = wrapped_type()
-  for enum_type in msg.DESCRIPTOR.enum_types:
-    for value in enum_type.values:
-      setattr(type_class, value.name, value.number)
-
-  return type_class
-
 
 def _gen_init_fun(
     wrapped_type: Type[message.Message],
     skill_name: str,
     type_name: str,
     wrapper_classes: dict[str, Type[MessageWrapper]],
+    enum_classes: dict[str, Type[enum.IntEnum]],
     field_doc_strings: Dict[str, str],
 ) -> Callable[[Any, Any], None]:
   """Generates custom __init__ class method with proper auto-completion info.
@@ -1109,6 +1106,8 @@ def _gen_init_fun(
     type_name: Type name of the object to wrap.
     wrapper_classes: Map from proto message names to corresponding message
       wrapper classes.
+    enum_classes: Map from full proto enum names to corresponding enum wrapper
+      classes.
     field_doc_strings: dict mapping from field name to doc string comment.
 
   Returns:
@@ -1131,7 +1130,7 @@ def _gen_init_fun(
           inspect.Parameter.POSITIONAL_OR_KEYWORD,
           annotation="MessageWrapper_" + type_name,
       )
-  ] + _gen_init_params(wrapped_type, wrapper_classes)
+  ] + _gen_init_params(wrapped_type, wrapper_classes, enum_classes)
   new_init_fun.__signature__ = inspect.Signature(params)
   new_init_fun.__annotations__ = collections.OrderedDict(
       [(p.name, p.annotation) for p in params]
@@ -1261,6 +1260,7 @@ def _gen_init_docstring(
 def _gen_init_params(
     wrapped_type: Type[message.Message],
     wrapper_classes: dict[str, Type[MessageWrapper]],
+    enum_classes: dict[str, Type[enum.IntEnum]],
 ) -> List[inspect.Parameter]:
   """Create argument typing information for a given message.
 
@@ -1268,13 +1268,15 @@ def _gen_init_params(
     wrapped_type: Message to be wrapped.
     wrapper_classes: Map from proto message names to corresponding message
       wrapper classes.
+    enum_classes: Map from full proto enum names to corresponding enum wrapper
+      classes.
 
   Returns:
     List of extracted parameters with typing information.
   """
   defaults = wrapped_type()
   param_info = extract_parameter_information_from_message(
-      defaults, None, wrapper_classes
+      defaults, None, wrapper_classes, enum_classes
   )
   params = [p for p, _ in param_info]
 
@@ -1335,28 +1337,66 @@ def _gen_wrapper_namespace_class(
   )
 
 
+def _add_enum_value_shortcuts(
+    *, add_to_class: Type[Any], enum_class: Type[enum.IntEnum]
+) -> None:
+  """Adds enum shortcuts to the namespace of the given parent class.
+
+  Adds shortcuts for all the values of the given enum to the namespace of the
+  given parent class.
+
+  Args:
+    add_to_class: Class to add the enum shortcuts to.
+    enum_class: Enum class to add the shortcuts for.
+  """
+  for enum_value in enum_class:
+    if hasattr(add_to_class, enum_value.name):
+      print(
+          "Name collision for enum value"
+          f" {add_to_class.__name__}.{enum_value.name}. Enum"
+          f" {enum_class.__qualname__} is not the only one with a value called"
+          f" {enum_value.name} in its package."
+      )
+    else:
+      setattr(add_to_class, enum_value.name, enum_value)
+
+
 def _attach_wrapper_class(
     parent_name: str,
     relative_name: str,
     parent_class: Type[Any],
-    wrapper_class: Type[MessageWrapper],
+    wrapper_class_to_attach: Type[MessageWrapper | enum.IntEnum],
     skill_name: str,
     skill_package: str,
 ) -> None:
   """Attaches the given wrapper class as a nested class under a skill class.
 
-  E.g. the wrapper class corresponding to the message 'intrinsic_proto.foo.Bar'
-  will be attached as:
+  Attaches the given message or enum wrapper class as a nested class under a
+  skill class according to its full proto type name.
+
+  This method essentially implements an insertion operation into a prefix tree.
+  The prefixes are the parts of the full proto type name corresponding to the
+  class that is to be attached. The root node of the tree is the skill class,
+  inner nodes can be message wrapper namespace classes or message wrapper
+  classes, leaf nodes can be message wrapper classes or enum wrapper classes.
+
+  E.g. the message/enum wrapper class corresponding to the message or enum
+  'intrinsic_proto.foo.Bar.Baz' will be attached as:
     skill class
-      -> namespace class 'intrinsic_proto'
-      -> namespace class 'foo'
-      -> wrapper class 'Bar'
+      -> namespace class 'intrinsic_proto' (created on the fly)
+      -> namespace class 'foo' (created on the fly)
+      -> namespace class 'Bar' (created on the fly)
+         OR message wrapper class 'Bar' (if the parent skill uses 'Bar')
+      -> message/enum wrapper class 'Baz'
+  If the parent skill uses 'Bar' and there is a message wrapper class for it,
+  'Bar' must be attached before 'Baz' so that no namespace class gets created
+  for 'Bar'.
 
   Args:
     parent_name: Full name of the parent class.
     relative_name: Current path relative to parent_name under which to attach.
     parent_class: Current parent under which to attach.
-    wrapper_class: Wrapper class to attach.
+    wrapper_class_to_attach: Wrapper class to attach.
     skill_name: Name of the parent skill.
     skill_package: Package name of the parent skill.
   """
@@ -1367,7 +1407,20 @@ def _attach_wrapper_class(
           f"Internal error: Parent class {parent_name} already has a nested"
           f" class {relative_name}. Wrong attachment order?"
       )
-    setattr(parent_class, relative_name, wrapper_class)
+    setattr(parent_class, relative_name, wrapper_class_to_attach)
+
+    # Add enum shortcuts inlined into the parent namespace, analogous to how the
+    # underlying proto classes provide access to enum values (see
+    # https://protobuf.dev/reference/python/python-generated/#enum).
+    # For example, this makes
+    #   move_robot.intrinsic_proto.MyEnum.MY_ENUM_VALUE_ONE
+    # available as
+    #   move_robot.intrinsic_proto.MY_ENUM_VALUE_ONE
+    if issubclass(wrapper_class_to_attach, enum.IntEnum):
+      _add_enum_value_shortcuts(
+          add_to_class=parent_class, enum_class=wrapper_class_to_attach
+      )
+
     return
 
   prefix = relative_name.split(_PROTO_PACKAGE_SEPARATOR)[0]
@@ -1384,17 +1437,29 @@ def _attach_wrapper_class(
     setattr(parent_class, prefix, child_class)
   else:
     # In this case, 'child_class' is a namespace class or a message wrapper
-    # class that serves as a namespace for a nested proto message.
+    # class that serves as a namespace for a nested proto message or enum.
     child_class = getattr(parent_class, prefix)
 
   _attach_wrapper_class(
       child_name,
       relative_name.removeprefix(prefix).lstrip("."),
       child_class,
-      wrapper_class,
+      wrapper_class_to_attach,
       skill_name,
       skill_package,
   )
+
+
+def _gen_enum_class(
+    enum_descriptor: descriptor.EnumDescriptor,
+    skill_name: str,
+    skill_package: str,
+) -> Type[enum.IntEnum]:
+  enum_values = {value.name: value.number for value in enum_descriptor.values}
+  enum_class = enum.IntEnum(enum_descriptor.name, enum_values)
+  enum_class.__qualname__ = skill_name + "." + enum_descriptor.full_name
+  enum_class.__module__ = module_for_generated_skill(skill_package)
+  return enum_class
 
 
 class _ClassPropertyReturningWrapperClassWithWarning:
@@ -1431,12 +1496,12 @@ def update_message_class_modules(
     cls: Type[Any],
     skill_name: str,
     skill_package: str,
-    enum_types: List[descriptor.EnumDescriptor],
-    nested_classes: List[
-        Tuple[str, Type[message.Message], descriptor.FieldDescriptor]
+    nested_classes: list[
+        tuple[str, Type[message.Message], descriptor.FieldDescriptor]
     ],
-    field_doc_strings: Dict[str, str],
-) -> dict[str, Type[MessageWrapper]]:
+    enum_descriptors: dict[str, descriptor.EnumDescriptor],
+    field_doc_strings: dict[str, str],
+) -> tuple[dict[str, Type[MessageWrapper]], dict[str, Type[enum.IntEnum]]]:
   """Updates given class with type aliases.
 
   Creates aliases (members) in the given cls for the given nested classes.
@@ -1445,28 +1510,20 @@ def update_message_class_modules(
     cls: class to modify
     skill_name: Name of the skill to correspoding to 'cls'.
     skill_package: Package name of the skill to correspoding to 'cls'.
-    enum_types: Top-level enum classes whose values should be aliased to
-      attributes of the message class.
-    nested_classes: classes to be aliased
+    nested_classes: Message classes to be attached to the skill class.
+    enum_descriptors: Map from full proto enum names to enum descriptors,
+      containing enums for which to attach enum classes to the skill class.
     field_doc_strings: dict mapping from field name to doc string comment.
 
   Returns:
-    Map from proto message names to corresponding message wrapper classes.
+    A tuple of 1) a map from proto message names to corresponding message
+    wrapper classes and 2) a map from full proto enum names to corresponding
+    enum classes.
   """
-  for enum_type in enum_types:
-    for enum_value in enum_type.values:
-      value_name = enum_value.name
-      if (
-          hasattr(cls, value_name)
-          and getattr(cls, value_name) != enum_value.number
-      ):
-        print(
-            f"Duplicate definition of enum value {value_name}. "
-            f"Enum {enum_type.full_name} is not the only one with a value "
-            f"called {value_name}"
-        )
-      else:
-        setattr(cls, value_name, enum_value.number)
+  enum_classes: dict[str, Type[enum.IntEnum]] = {
+      enum_full_name: _gen_enum_class(enum_desc, skill_name, skill_package)
+      for enum_full_name, enum_desc in enum_descriptors.items()
+  }
 
   wrapper_classes: dict[str, Type[MessageWrapper]] = {}
   for _, message_type, field in nested_classes:
@@ -1491,6 +1548,7 @@ def update_message_class_modules(
         skill_name,
         message_full_name,
         wrapper_classes,
+        enum_classes,
         field_doc_strings,
     )
 
@@ -1528,7 +1586,31 @@ def update_message_class_modules(
       )
       message_names_done.add(message_name)
 
-  return wrapper_classes
+  for enum_full_name, enum_class in enum_classes.items():
+    _attach_wrapper_class(
+        "",
+        enum_full_name,
+        cls,
+        enum_class,
+        skill_name,
+        skill_package,
+    )
+
+  # Add special enum shortcuts for enums that are nested directly within the
+  # params message of the skill. For example, make
+  #   move_robot.intrinsic_proto.MoveRobotParams.MyEnum.MY_ENUM_VALUE_ONE
+  # available as
+  #   move_robot.MY_ENUM_VALUE_ONE
+  skill_proto = cls.info
+  if skill_proto.HasField("parameter_description"):
+    parameter_message_full_name = (
+        skill_proto.parameter_description.parameter_message_full_name
+    )
+    for enum_full_name, enum_class in enum_classes.items():
+      if enum_full_name.startswith(parameter_message_full_name):
+        _add_enum_value_shortcuts(add_to_class=cls, enum_class=enum_class)
+
+  return wrapper_classes, enum_classes
 
 
 def deconflict_param_and_resources(
@@ -1577,7 +1659,8 @@ def extract_parameter_information_from_message(
     param_defaults: message.Message,
     skill_params: Optional[skill_parameters.SkillParameters],
     wrapper_classes: dict[str, Type[MessageWrapper]],
-) -> List[Tuple[inspect.Parameter, str]]:
+    enum_classes: dict[str, Type[enum.IntEnum]],
+) -> list[tuple[inspect.Parameter, str]]:
   """Extracts signature information from message and SkillParameters.
 
   Args:
@@ -1585,6 +1668,8 @@ def extract_parameter_information_from_message(
     skill_params: Utility class to inspect the skill's parameters.
     wrapper_classes: Map from proto message names to corresponding message
       wrapper classes.
+    enum_classes: Map from full proto enum names to corresponding enum wrapper
+      classes.
 
   Returns:
     List of extracted parameters together with the corresponding field name.
@@ -1609,14 +1694,16 @@ def extract_parameter_information_from_message(
         else:
           default_value = map_field_default
       else:
-        field_type = repeated_pythonic_field_type(field, wrapper_classes)
+        field_type = repeated_pythonic_field_type(
+            field, wrapper_classes, enum_classes
+        )
         repeated_field_default = getattr(param_defaults, field.name)
         default_value = [
             pythonic_field_default_value(value, field)
             for value in repeated_field_default
         ]
     else:
-      field_type = pythonic_field_type(field, wrapper_classes)
+      field_type = pythonic_field_type(field, wrapper_classes, enum_classes)
       if skill_params and skill_params.has_default_value(field.name):
         default_value = pythonic_field_default_value(
             getattr(param_defaults, field.name), field

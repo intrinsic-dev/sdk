@@ -11,6 +11,12 @@ import "intrinsic/motion_planning/proto/motion_target.proto";
 import "intrinsic/world/proto/collision_settings.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 
+enum GlobalEnum {
+  GLOBAL_ENUM_UNSPECIFIED = 0;
+  GLOBAL_ENUM_ONE = 1;
+  GLOBAL_ENUM_TWO = 2;
+}
+
 message SubMessage {
   string name = 1;
 }
@@ -77,6 +83,18 @@ message TestMessage {
 
 message TestMessageWrapped {
   TestMessage test_message = 1;
+}
+
+message VariousEnumsMessage {
+  enum VariousEnumsEnum {
+    VARIOUS_ENUMS_ENUM_UNSPECIFIED = 0;
+    VARIOUS_ENUMS_ENUM_ONE = 1;
+    VARIOUS_ENUMS_ENUM_TWO = 2;
+  }
+
+  TestMessage.TestEnum test_enum = 1;
+  GlobalEnum global_enum = 2;
+  VariousEnumsEnum various_enums_enum = 3;
 }
 
 message ResourceConflict {

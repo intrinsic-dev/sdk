@@ -3,6 +3,7 @@
 """Tests for intrinsic.executive.workcell.public.workcell."""
 
 import datetime
+import enum
 import inspect
 import textwrap
 from unittest import mock
@@ -1128,7 +1129,9 @@ class SkillsTest(parameterized.TestCase):
         'foo:'
         ' intrinsic.solutions.skills'
         '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo, '
-        'enum_v: int, '
+        'enum_v:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum, '
         'executive_test_message:'
         ' intrinsic.solutions.skills'
         '.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage, '
@@ -1179,7 +1182,9 @@ class SkillsTest(parameterized.TestCase):
         ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.Pose,'
         ' foo:'
         ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo,'
-        ' enum_v: int, executive_test_message:'
+        ' enum_v:'
+        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum,'
+        ' executive_test_message:'
         ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage,'
         ' non_unique_field_name:'
         ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType,'
@@ -1999,23 +2004,125 @@ Fields:
         self, test_message_wrapper.wrapped_message, expected_test_message
     )
 
-  def test_top_level_enum_values(self):
-    """If the skill parameter proto defines any enums, the values of those enums should become constants on the skill wrapper class."""
+  def test_enum_wrapper_class(self):
     skill_info = self._utils.create_test_skill_info(
         skill_id='ai.intrinsic.my_skill',
-        parameter_defaults=_DEFAULT_TEST_MESSAGE,
+        parameter_defaults=test_skill_params_pb2.VariousEnumsMessage(),
     )
     skills = skill_providing.Skills(
         self._utils.create_skill_registry_for_skill_info(skill_info),
         self._utils.create_empty_resource_registry(),
     )
 
-    self.assertTrue(hasattr(skills.ai.intrinsic.my_skill, 'ONE'))
-    self.assertEqual(getattr(skills.ai.intrinsic.my_skill, 'ONE'), 1)
-    self.assertTrue(hasattr(skills.ai.intrinsic.my_skill, 'THREE'))
-    self.assertEqual(getattr(skills.ai.intrinsic.my_skill, 'THREE'), 3)
-    self.assertTrue(hasattr(skills.ai.intrinsic.my_skill, 'FIVE'))
-    self.assertEqual(getattr(skills.ai.intrinsic.my_skill, 'FIVE'), 5)
+    my_skill = skills.ai.intrinsic.my_skill
+
+    global_enum = my_skill.intrinsic_proto.test_data.GlobalEnum
+    self.assertTrue(issubclass(global_enum, enum.IntEnum))
+    self.assertEqual(global_enum.__name__, 'GlobalEnum')
+    self.assertEqual(
+        global_enum.__qualname__,
+        'my_skill.intrinsic_proto.test_data.GlobalEnum',
+    )
+    self.assertEqual(
+        global_enum.__module__,
+        'intrinsic.solutions.skills.ai.intrinsic',
+    )
+
+    test_enum = my_skill.intrinsic_proto.test_data.TestMessage.TestEnum
+    self.assertTrue(issubclass(test_enum, enum.IntEnum))
+    self.assertEqual(test_enum.__name__, 'TestEnum')
+    self.assertEqual(
+        test_enum.__qualname__,
+        'my_skill.intrinsic_proto.test_data.TestMessage.TestEnum',
+    )
+    self.assertEqual(
+        test_enum.__module__,
+        'intrinsic.solutions.skills.ai.intrinsic',
+    )
+
+  def test_enum_values(self):
+    skill_info = self._utils.create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=test_skill_params_pb2.VariousEnumsMessage(),
+    )
+    skills = skill_providing.Skills(
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
+    )
+
+    my_skill = skills.ai.intrinsic.my_skill
+
+    # Test global enum.
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.GlobalEnum.GLOBAL_ENUM_UNSPECIFIED, 0
+    )
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.GlobalEnum.GLOBAL_ENUM_ONE, 1
+    )
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.GlobalEnum.GLOBAL_ENUM_TWO, 2
+    )
+
+    # Test global enum shortcuts.
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.GLOBAL_ENUM_UNSPECIFIED, 0
+    )
+    self.assertEqual(my_skill.intrinsic_proto.test_data.GLOBAL_ENUM_ONE, 1)
+    self.assertEqual(my_skill.intrinsic_proto.test_data.GLOBAL_ENUM_TWO, 2)
+
+    # Test enum which is nested in a message.
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.TestMessage.TestEnum.UNKNOWN, 0
+    )
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.TestMessage.TestEnum.ONE, 1
+    )
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.TestMessage.TestEnum.THREE, 3
+    )
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.TestMessage.TestEnum.FIVE, 5
+    )
+
+    # Test shortcuts for an enum which is nested in a message.
+    self.assertEqual(my_skill.intrinsic_proto.test_data.TestMessage.UNKNOWN, 0)
+    self.assertEqual(my_skill.intrinsic_proto.test_data.TestMessage.ONE, 1)
+    self.assertEqual(my_skill.intrinsic_proto.test_data.TestMessage.THREE, 3)
+    self.assertEqual(my_skill.intrinsic_proto.test_data.TestMessage.FIVE, 5)
+
+    # Test enum which is nested in the skills param message.
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.VariousEnumsMessage.VariousEnumsEnum.VARIOUS_ENUMS_ENUM_UNSPECIFIED,
+        0,
+    )
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.VariousEnumsMessage.VariousEnumsEnum.VARIOUS_ENUMS_ENUM_ONE,
+        1,
+    )
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.VariousEnumsMessage.VariousEnumsEnum.VARIOUS_ENUMS_ENUM_TWO,
+        2,
+    )
+
+    # Test shortcuts for enum which is nested in the skills param message.
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.VariousEnumsMessage.VARIOUS_ENUMS_ENUM_UNSPECIFIED,
+        0,
+    )
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.VariousEnumsMessage.VARIOUS_ENUMS_ENUM_ONE,
+        1,
+    )
+    self.assertEqual(
+        my_skill.intrinsic_proto.test_data.VariousEnumsMessage.VARIOUS_ENUMS_ENUM_TWO,
+        2,
+    )
+
+    # Test special shortcuts directly on skill class for enum which is nested in
+    # the skills param message.
+    self.assertEqual(my_skill.VARIOUS_ENUMS_ENUM_UNSPECIFIED, 0)
+    self.assertEqual(my_skill.VARIOUS_ENUMS_ENUM_ONE, 1)
+    self.assertEqual(my_skill.VARIOUS_ENUMS_ENUM_TWO, 2)
 
 
 if __name__ == '__main__':

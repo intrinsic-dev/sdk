@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import collections
+import enum
 import inspect
 import re
 import textwrap
@@ -394,6 +395,7 @@ def _gen_init_params(
     info: provided.SkillInfo,
     compatible_resources: dict[str, provided.ResourceList],
     wrapper_classes: dict[str, Type[skill_utils.MessageWrapper]],
+    enum_classes: dict[str, Type[enum.IntEnum]],
 ) -> list[inspect.Parameter]:
   """Create argument typing information for a given skill info.
 
@@ -408,6 +410,7 @@ def _gen_init_params(
       for resource parameters.
     wrapper_classes: Map from proto message names to corresponding message
       wrapper classes.
+    enum_classes: Map from full enum names to corresponding enum classes.
 
   Returns:
     A dict mapping from field name to pythonic type.
@@ -433,7 +436,7 @@ def _gen_init_params(
         param_defaults, _get_descriptor(info.skill_proto.parameter_description)
     )
     param_info = skill_utils.extract_parameter_information_from_message(
-        param_defaults, skill_params, wrapper_classes
+        param_defaults, skill_params, wrapper_classes, enum_classes
     )
     if param_info:
       params, param_names = map(list, zip(*param_info))
@@ -479,6 +482,7 @@ def _gen_init_fun(
     info: provided.SkillInfo,
     compatible_resources: dict[str, provided.ResourceList],
     wrapper_classes: dict[str, Type[skill_utils.MessageWrapper]],
+    enum_classes: dict[str, Type[enum.IntEnum]],
 ) -> Callable[[Any, Any], "GeneratedSkill"]:
   """Generate custom __init__ class method with proper auto-completion info.
 
@@ -489,6 +493,7 @@ def _gen_init_fun(
       for resource parameters.
     wrapper_classes: Map from proto message names to corresponding message
       wrapper classes.
+    enum_classes: Map from full enum names to corresponding enum classes.
 
   Returns:
     A function suitable to be used as __init__ function for a GeneratedSkill
@@ -517,7 +522,9 @@ def _gen_init_fun(
           inspect.Parameter.POSITIONAL_OR_KEYWORD,
           annotation="Skill_" + info.skill_name,
       )
-  ] + _gen_init_params(info, compatible_resources, wrapper_classes)
+  ] + _gen_init_params(
+      info, compatible_resources, wrapper_classes, enum_classes
+  )
   new_init_fun.__signature__ = inspect.Signature(params)
   new_init_fun.__annotations__ = collections.OrderedDict(
       [(p.name, p.annotation) for p in params]
@@ -548,12 +555,14 @@ def gen_skill_class(
     A new type for a GeneratedSkill sub-class.
   """
   nested_classes = []
-  enum_types = []
+  enum_descriptors = {}
   if info.skill_proto.HasField("parameter_description"):
     skill_utils.get_field_classes_to_alias(
-        info.parameter_descriptor(), info.message_classes, nested_classes
+        info.parameter_descriptor(),
+        info.message_classes,
+        nested_classes,
+        enum_descriptors,
     )
-    enum_types = info.parameter_descriptor().enum_types
 
   type_class = type(
       # E.g.: 'move_robot'
@@ -574,16 +583,18 @@ def gen_skill_class(
       },
   )
 
-  wrapper_classes = skill_utils.update_message_class_modules(
+  wrapper_classes, enum_classes = skill_utils.update_message_class_modules(
       type_class,
       info.skill_name,
       info.package_name,
-      enum_types,
       nested_classes,
+      enum_descriptors,
       dict(info.skill_proto.parameter_description.parameter_field_comments),
   )
 
-  init_fun = _gen_init_fun(info, compatible_resources, wrapper_classes)
+  init_fun = _gen_init_fun(
+      info, compatible_resources, wrapper_classes, enum_classes
+  )
   type_class.__init__ = init_fun
 
   return type_class
