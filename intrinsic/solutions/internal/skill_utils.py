@@ -11,6 +11,7 @@ import inspect
 import textwrap
 import time
 from typing import AbstractSet, Any, Callable, Container, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, Union
+import warnings
 
 from google.protobuf import descriptor
 from google.protobuf import descriptor_pb2
@@ -1396,6 +1397,36 @@ def _attach_wrapper_class(
   )
 
 
+class _ClassPropertyReturningWrapperClassWithWarning:
+  """Class property returning a given message wrapper class.
+
+  Instances of this class can be used as class properties returning a given
+  message wrapper class while emitting a deprecation warning.
+  """
+
+  def __init__(
+      self,
+      skill_name: str,
+      message_name: str,
+      full_message_name: str,
+      wrapper_class: Type[MessageWrapper],
+  ):
+    self._skill_name = skill_name
+    self._message_name = message_name
+    self._full_message_name = full_message_name
+    self._wrapper_class = wrapper_class
+
+  def __get__(self, instance, owner):
+    warnings.warn(
+        f'The shortcut notation "{self._skill_name}.{self._message_name}"'
+        " is deprecated and will be removed after June 2024. Please use"
+        f' "{self._skill_name}.{self._full_message_name}" instead.',
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return self._wrapper_class
+
+
 def update_message_class_modules(
     cls: Type[Any],
     skill_name: str,
@@ -1478,13 +1509,24 @@ def update_message_class_modules(
   # Create my_skill.<message name> shortcuts. Iterate in 'nested_classes' order
   # for backwards compatibility and also to ensure that the shortcuts are
   # deterministic in case of name collisions.
+  message_names_done = set()
   for _, _, field in nested_classes:
     if field.message_type.full_name not in wrapper_classes:
       continue
     wrapper_class = wrapper_classes[field.message_type.full_name]
     message_name = wrapper_class.wrapped_type.DESCRIPTOR.name
-    if not hasattr(cls, message_name):
-      setattr(cls, message_name, wrapper_class)
+    if message_name not in message_names_done:
+      setattr(
+          cls,
+          message_name,
+          _ClassPropertyReturningWrapperClassWithWarning(
+              skill_name,
+              message_name,
+              field.message_type.full_name,
+              wrapper_class,
+          ),
+      )
+      message_names_done.add(message_name)
 
   return wrapper_classes
 

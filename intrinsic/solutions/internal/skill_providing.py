@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from typing import Any, Iterable, Type, Union
+import warnings
 
 from intrinsic.resources.client import resource_registry_client
 from intrinsic.skills.client import skill_registry_client
@@ -236,7 +237,20 @@ class Skills(providers.SkillProvider):
           self._skills_by_name[name],
           self._compatible_resources_by_name[name],
       )
-    return self._skill_type_classes_by_name[name]
+    skill_class = self._skill_type_classes_by_name[name]
+    # Do not warn for "global skills" with an empty package name. Those will
+    # remain accessible as `skills.global_skill`.
+    if skill_class.skill_info.package_name:
+      warnings.warn(
+          f'The shortcut notation "skills.{skill_class.skill_info.skill_name}"'
+          " is deprecated and will be removed after June 2024. Please use the"
+          " full skill id instead, e.g., by using a custom shortcut"
+          f' "{skill_class.skill_info.skill_name} ='
+          f' skills.{skill_class.skill_info.id}".',
+          DeprecationWarning,
+          stacklevel=2,
+      )
+    return skill_class
 
   def __dir__(self) -> list[str]:
     return sorted(self._skill_packages.keys() | self._skills_by_name.keys())
