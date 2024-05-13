@@ -7,14 +7,20 @@ package intrinsic_proto.icon;
 import "intrinsic/icon/equipment/force_control_settings.proto";
 
 message Icon2PositionPart {
-  string part_name = 1;
-  string world_robot_collection_name = 3;
+  string part_name = 1 [deprecated = true];
+  string world_robot_collection_name = 3 [deprecated = true];
+
+  // Object names by part name.
+  map<string, string> object_names = 4;
+
   reserved 2;
   reserved "connection_config";
 }
 
 message Icon2GripperPart {
-  string part_name = 1;
+  string part_name = 1 [deprecated = true];
+  repeated string part_names = 4;
+
   reserved 2, 3;
   reserved "connection_config", "world_robot_collection_name";
 }
@@ -27,20 +33,27 @@ message Icon2AdioPart {
   }
 
   oneof target {
-    IconTarget icon_target = 3;
+    IconTarget icon_target = 3 [deprecated = true];
   }
+  repeated string icon_parts = 6;
 }
 
 message Icon2ForceTorqueSensorPart {
-  string part_name = 1;
+  string part_name = 1 [deprecated = true];
+  // Parameters used for all force control skills.
+  ForceControlSettings force_control_settings = 4 [deprecated = true];
+
+  // Force control settings by part name.
+  map<string, ForceControlSettings> settings = 5;
+
   reserved 2, 3;
   reserved "connection_config", "world_robot_collection_name";
-  // Parameters used for all force control skills.
-  ForceControlSettings force_control_settings = 4;
 }
 
 message Icon2RangefinderPart {
-  string part_name = 1;
+  string part_name = 1 [deprecated = true];
+  repeated string part_names = 4;
+
   reserved 2, 3;
   reserved "connection_config", "world_robot_collection_name";
 }
