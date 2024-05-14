@@ -92,21 +92,21 @@ def non_module_deps():
         sha256 = "4daad402bc0913e05b83d0bded9dd699738935e6d59d1424c99c944d6e0c2897",
     )
 
-def _non_module_deps_impl(ctx):  # @unused
-    non_module_deps()
-
-    # When included from WORKSPACE, we need repo_mapping for local_config_python
     http_archive(
         name = "pybind11_abseil",
         sha256 = "1496b112e86416e2dcf288569a3e7b64f3537f0b18132224f492266e9ff76c44",
         strip_prefix = "pybind11_abseil-202402.0",
         urls = ["https://github.com/pybind/pybind11_abseil/archive/refs/tags/v202402.0.tar.gz"],
     )
+
     http_archive(
         name = "pybind11_protobuf",
-        sha256 = "abf2d5704d9fb2c5e66e6333667bf5f92aaaac74c05d704a84a7478d91dc6663",
-        strip_prefix = "pybind11_protobuf-5baa2dc9d93e3b608cde86dfa4b8c63aeab4ac78",
-        urls = ["https://github.com/pybind/pybind11_protobuf/archive/5baa2dc9d93e3b608cde86dfa4b8c63aeab4ac78.tar.gz"],  #  Jun 19, 2023
+        sha256 = "59c5fbb6dfe1427d41217eb58386f16940b6c8d6ff63407a72566daa4f343f59",
+        strip_prefix = "pybind11_protobuf-b4a2e87a10cd5f6309e4ff67c040a470d7ec2373",
+        urls = ["https://github.com/pybind/pybind11_protobuf/archive/b4a2e87a10cd5f6309e4ff67c040a470d7ec2373.tar.gz"],  #  Feb 23, 2024
     )
+
+def _non_module_deps_impl(ctx):  # @unused
+    non_module_deps()
 
 non_module_deps_ext = module_extension(implementation = _non_module_deps_impl)
