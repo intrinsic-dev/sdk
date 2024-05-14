@@ -90,32 +90,6 @@ class SkillParametersTest(parameterized.TestCase):
         skill_params.get_required_field_names(), expected_required_fields
     )
 
-  def test_optional_fields_of_message_with_many_optional(self):
-    # The member function below should only list built-in types with the
-    # 'optional' flag, 'repeated' fields and sub-message.
-    descriptor_proto = descriptor_pb2.DescriptorProto()
-    _MESSAGE_WITHOUT_DEFAULTS.DESCRIPTOR.CopyToProto(descriptor_proto)
-    skill_params = skill_parameters.SkillParameters(
-        default_message=_MESSAGE_WITHOUT_DEFAULTS,
-        descriptor_proto=descriptor_proto,
-    )
-    self.assertCountEqual(
-        skill_params.get_optional_field_names(),
-        [
-            'enum_v',
-            'my_double',
-            'my_float',
-            'my_int32',
-            'my_int64',
-            'my_uint32',
-            'my_uint64',
-            'my_bool',
-            'my_string',
-            'optional_sub_message',
-            'foo',
-        ],
-    )
-
   @parameterized.named_parameters(
       ('double_default', 'my_double'),
       ('float_default', 'my_float'),

@@ -59,25 +59,6 @@ class SkillParameters:
     # has a default value.
     return is_optional and self._default_message.HasField(field_proto.name)
 
-  def _is_field_optional(
-      self, field_proto: descriptor_pb2.FieldDescriptorProto
-  ) -> bool:
-    """Returns True, if the field proto belongs to an optional field.
-
-    Args:
-      field_proto: The field descriptor of the field which should be checked.
-    """
-    is_optional = field_proto.proto3_optional
-
-    if field_proto.HasField(_ONEOF_INDEX) and not is_optional:
-      # A oneof field is not considered optional.
-      return False
-    elif field_proto.label == descriptor.FieldDescriptor.LABEL_REPEATED:
-      # Repeated fields are considered required but have always a default value.
-      return False
-
-    return is_optional and not self._default_message.HasField(field_proto.name)
-
   def _get_field_proto(
       self, field_name: str
   ) -> descriptor_pb2.FieldDescriptorProto:
@@ -145,23 +126,6 @@ class SkillParameters:
         field_proto.name
         for field_proto in self._descriptor_proto.field
         if self._is_field_required(field_proto)
-    ]
-
-  def get_optional_field_names(self) -> List[str]:
-    """Returns all fields which are optional.
-
-    This function is intended to be used to create a signature for a skill.
-    Fields returned by this function will be annotated as typing.Optional.
-    They are nullable, i.e. are not necessary to execute the function and they
-    provide no default value.
-
-    Optional fields are those proto fields which have a user specified
-    'optional' flag and which have no default value assigned.
-    """
-    return [
-        field_proto.name
-        for field_proto in self._descriptor_proto.field
-        if self._is_field_optional(field_proto)
     ]
 
   def message_has_optional_field(
