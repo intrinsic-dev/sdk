@@ -1,0 +1,69 @@
+# Copyright 2023 Intrinsic Innovation LLC
+
+diff --git a/bazel/grpc_build_system.bzl b/bazel/grpc_build_system.bzl
+index d85b08a6be..8c79e147d0 100644
+--- a/bazel/grpc_build_system.bzl
++++ b/bazel/grpc_build_system.bzl
+@@ -31,8 +31,6 @@ load("//bazel:cc_grpc_library.bzl", "cc_grpc_library")
+ load("//bazel:copts.bzl", "GRPC_DEFAULT_COPTS")
+ load("//bazel:experiments.bzl", "EXPERIMENTS")
+ load("@upb//bazel:upb_proto_library.bzl", "upb_proto_library", "upb_proto_reflection_library")
+-load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
+-load("@build_bazel_rules_apple//apple/testing/default_runner:ios_test_runner.bzl", "ios_test_runner")
+ 
+ # The set of pollers to test against if a test exercises polling
+ POLLERS = ["epoll1", "poll"]
+@@ -243,10 +241,6 @@ def ios_cc_test(
+     test_lib_ios = name + "_test_lib_ios"
+     ios_tags = tags + ["manual", "ios_cc_test"]
+     test_runner = "ios_x86_64_sim_runner_" + name
+-    ios_test_runner(
+-        name = test_runner,
+-        device_type = "iPhone X",
+-    )
+     if not any([t for t in tags if t.startswith("no_test_ios")]):
+         native.objc_library(
+             name = test_lib_ios,
+@@ -259,15 +253,6 @@ def ios_cc_test(
+             testonly = 1,
+         )
+         ios_test_deps = [":" + test_lib_ios]
+-        ios_unit_test(
+-            name = name + "_on_ios",
+-            size = kwargs.get("size"),
+-            data = kwargs.get("data"),
+-            tags = ios_tags,
+-            minimum_os_version = "9.0",
+-            runner = test_runner,
+-            deps = ios_test_deps,
+-        )
+ 
+ def expand_tests(name, srcs, deps, tags, args, exclude_pollers, uses_polling, uses_event_engine, flaky):
+     """Common logic used to parameterize tests for every poller and EventEngine and experiment.
+diff --git a/bazel/grpc_extra_deps.bzl b/bazel/grpc_extra_deps.bzl
+index 4d8afa3131..65de89d169 100644
+--- a/bazel/grpc_extra_deps.bzl
++++ b/bazel/grpc_extra_deps.bzl
+@@ -14,8 +14,8 @@
+ """Loads the dependencies necessary for the external repositories defined in grpc_deps.bzl."""
+ 
+ load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+-load("@build_bazel_apple_support//lib:repositories.bzl", "apple_support_dependencies")
+-load("@build_bazel_rules_apple//apple:repositories.bzl", "apple_rules_dependencies")
++#load("@build_bazel_apple_support//lib:repositories.bzl", "apple_support_dependencies")
++#load("@build_bazel_rules_apple//apple:repositories.bzl", "apple_rules_dependencies")
+ load("@com_envoyproxy_protoc_gen_validate//:dependencies.bzl", "go_third_party")
+ load("@com_google_googleapis//:repository_rules.bzl", "switched_rules_by_language")
+ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+@@ -60,9 +60,9 @@ def grpc_extra_deps(ignore_version_differences = False):
+     # needed for building C++ xDS protos
+     go_third_party()
+ 
+-    apple_rules_dependencies(ignore_version_differences = ignore_version_differences)
++    #apple_rules_dependencies(ignore_version_differences = ignore_version_differences)
+ 
+-    apple_support_dependencies()
++    #apple_support_dependencies()
+ 
+     # Initialize Google APIs with only C++ and Python targets
+     switched_rules_by_language(

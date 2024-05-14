@@ -135,6 +135,10 @@ def intrinsic_sdks_deps_0():
         sha256 = "2dc7254fc975bb40efcab799273c9330d7ed11f4b3263dcbf7328f5c6b067d3e",  # v3.23.1
         strip_prefix = "protobuf-2dca62f7296e5b49d729f7384f975cecb38382a0",  # v3.23.1
         urls = ["https://github.com/protocolbuffers/protobuf/archive/2dca62f7296e5b49d729f7384f975cecb38382a0.zip"],  # v3.23.1
+        patch_args = ["-p1"],
+        patches = [
+            Label("//intrinsic/production/external/patches:0012-Remove-exec-tools.patch"),
+        ],
     )
 
     # gRPC
@@ -147,6 +151,7 @@ def intrinsic_sdks_deps_0():
             Label("//intrinsic/production/external/patches:0005-Remove-competing-go-deps.patch"),
             Label("//intrinsic/production/external/patches:0007-Also-generate-pyi-files-grpc.patch"),
             Label("//intrinsic/production/external/patches:0011-Public-grpc_library-attr.patch"),
+            Label("//intrinsic/production/external/patches:0013-Remove-protobuf-ios-support.patch"),
         ],
         sha256 = "194dcaae20b7bcd9fc4fc9a1e091215207842ddb9a1df01419c7c55d3077979b",  # v1.56.0
         strip_prefix = "grpc-6e85620c7e258df79666a4743f862f2f82701c2d",  # v1.56.0
