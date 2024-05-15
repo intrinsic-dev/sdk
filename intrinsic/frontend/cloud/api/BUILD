@@ -48,27 +48,6 @@ go_grpc_library(
 )
 
 proto_library(
-    name = "projectdiscovery_api_proto",
-    srcs = ["projectdiscovery_api.proto"],
-    deps = [
-        "@com_google_protobuf//:empty_proto",
-    ],
-)
-
-go_proto_library(
-    name = "projectdiscovery_api_go_proto",
-    deps = [":projectdiscovery_api_proto"],
-)
-
-go_grpc_library(
-    name = "projectdiscovery_api_go_grpc_proto",
-    srcs = [":projectdiscovery_api_proto"],
-    deps = [
-        ":projectdiscovery_api_go_proto",
-    ],
-)
-
-proto_library(
     name = "solutiondiscovery_api_proto",
     srcs = ["solutiondiscovery_api.proto"],
     deps = [":clusterdiscovery_api_proto"],
