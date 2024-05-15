@@ -16,6 +16,7 @@ type ConfigureData struct {
 	Replace     bool   `json:"replace"`
 	AutoUpdate  bool   `json:"auto_update"`
 	DisplayName string `json:"display_name"`
+	Location    string `json:"location"`
 	// CreatedByTest is only used for automated testing, and contains the ID of the test that is
 	// registering this device. It is used to label the resources (in particular the Robot CR) so we
 	// can clean it up.
