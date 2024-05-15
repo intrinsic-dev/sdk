@@ -7,18 +7,53 @@ from typing import List
 from google.protobuf import descriptor
 from google.protobuf import descriptor_pb2
 from google.protobuf import message
+from intrinsic.skills.proto import skills_pb2
 
 # This field can be used to determine if a field is a 'oneof'.
 _ONEOF_INDEX = "oneof_index"
 
 
+def _get_descriptor(
+    parameter_description: skills_pb2.ParameterDescription,
+) -> descriptor_pb2.DescriptorProto:
+  """Pulls the parameter descriptor out of the descriptor fileset.
+
+  Args:
+    parameter_description: The skill's parameter description proto.
+
+  Returns:
+    A proto descriptor of the skill's parameter.
+
+  Raises:
+    AttributeError: a descriptor matching the parameter's full message name
+      cannot be found in the descriptor fileset.
+  """
+
+  full_name = parameter_description.parameter_message_full_name
+  package, name = full_name.rsplit(".", 1)
+  for file in parameter_description.parameter_descriptor_fileset.file:
+    if file.package != package:
+      continue
+    for msg in file.message_type:
+      if msg.name != name:
+        continue
+      return msg
+  raise AttributeError(
+      f"Could not extract descriptor named {full_name} from "
+      "parameter description"
+  )
+
+
 class SkillParameters:
   """A utility class which allows to inspect different skill parameters."""
+
+  _default_message: message.Message
+  _descriptor_proto: descriptor_pb2.DescriptorProto
 
   def __init__(
       self,
       default_message: message.Message,
-      descriptor_proto: descriptor_pb2.DescriptorProto,
+      parameter_description: skills_pb2.ParameterDescription,
   ):
     """Creates an instance of the SkillParameters class.
 
@@ -26,12 +61,16 @@ class SkillParameters:
       default_message: A message which contains default parameters in all
         non-empty proto3 optional fields. Non-empty `repeated` and `oneof`
         fields are also considered default parameters.
-      descriptor_proto: The proto descriptor of skill parameters.
+      parameter_description: The skill's parameter description.
     """
 
     self._default_message = default_message
-    self._descriptor_proto = descriptor_pb2.DescriptorProto()
-    self._descriptor_proto.CopyFrom(descriptor_proto)
+    # We need the descriptor *proto* (descriptor_pb2.DescriptorProto and
+    # friends) and not just its Python representation (
+    # 'default_message.DESCRIPTOR' of type google.protobuf.descriptor.Descriptor
+    # and friends). For example, in the Python representation we cannot reliably
+    # check for the presence of the 'optional' keyword on message fields.
+    self._descriptor_proto = _get_descriptor(parameter_description)
 
   def _is_field_required(
       self, field_proto: descriptor_pb2.FieldDescriptorProto

@@ -77,22 +77,28 @@ py_test(
 py_library(
     name = "skill_parameters",
     srcs = ["skill_parameters.py"],
-    deps = ["@com_google_protobuf//:protobuf_python"],
+    deps = [
+        "//intrinsic/skills/proto:skills_py_pb2",
+        "@com_google_protobuf//:protobuf_python",
+    ],
 )
 
 py_test(
     name = "skill_parameters_test",
     srcs = ["skill_parameters_test.py"],
+    data = [
+        "//intrinsic/solutions/testing:test_skill_params_proto_descriptors",
+    ],
     srcs_version = "PY3",
     deps = [
         ":skill_parameters",
         "//intrinsic/math/python:data_types",
         "//intrinsic/math/python:proto_conversion",
         "//intrinsic/skills/proto:skills_py_pb2",
+        "//intrinsic/solutions/testing:skill_test_utils",
         "//intrinsic/solutions/testing:test_skill_params_py_pb2",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
-        "@com_google_protobuf//:protobuf_python",
     ],
 )
 

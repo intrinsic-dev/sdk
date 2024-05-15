@@ -208,37 +208,6 @@ class SkillInfoImpl(provided.SkillInfo):
     )
 
 
-def _get_descriptor(
-    parameter_description: skills_pb2.ParameterDescription,
-) -> descriptor_pb2.DescriptorProto:
-  """Pulls the parameter descriptor out of the descriptor fileset.
-
-  Args:
-    parameter_description: The skill's parameter description proto.
-
-  Returns:
-    A proto descriptor of the skill's parameter.
-
-  Raises:
-    AttributeError: a descriptor matching the parameter's full message name
-      cannot be found in the descriptor fileset.
-  """
-
-  full_name = parameter_description.parameter_message_full_name
-  package, name = full_name.rsplit(".", 1)
-  for file in parameter_description.parameter_descriptor_fileset.file:
-    if file.package != package:
-      continue
-    for msg in file.message_type:
-      if msg.name != name:
-        continue
-      return msg
-  raise AttributeError(
-      f"Could not extract descriptor named {full_name} from "
-      "parameter description"
-  )
-
-
 def _gen_class_docstring(info: provided.SkillInfo) -> str:
   """Generates the class docstring for a skill class.
 
@@ -302,7 +271,7 @@ def _gen_init_docstring(
       )
 
     skill_params = skill_parameters.SkillParameters(
-        param_defaults, _get_descriptor(info.skill_proto.parameter_description)
+        param_defaults, info.skill_proto.parameter_description
     )
     params = skill_utils.extract_docstring_from_message(
         param_defaults,
@@ -435,7 +404,7 @@ def _gen_init_params(
     # Extract those fields from the default parameter proto which may contain
     # actual default values.
     skill_params = skill_parameters.SkillParameters(
-        param_defaults, _get_descriptor(info.skill_proto.parameter_description)
+        param_defaults, info.skill_proto.parameter_description
     )
     param_info = skill_utils.extract_parameter_information_from_message(
         param_defaults, skill_params, wrapper_classes, enum_classes
@@ -810,8 +779,7 @@ class GeneratedSkill(provided.SkillBase):
       # If we have a default message, validate the composed parameters.
       if default_message:
         skill_params = skill_parameters.SkillParameters(
-            default_message,
-            _get_descriptor(self._info.skill_proto.parameter_description),
+            default_message, self._info.skill_proto.parameter_description
         )
         skill_utils.check_missing_fields_in_msg(
             skill_params,

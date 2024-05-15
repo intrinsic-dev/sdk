@@ -4,11 +4,11 @@
 
 from absl.testing import absltest
 from absl.testing import parameterized
-from google.protobuf import descriptor_pb2
 from intrinsic.math.python import data_types
 from intrinsic.math.python import proto_conversion as math_proto_conversion
 from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions.internal import skill_parameters
+from intrinsic.solutions.testing import skill_test_utils
 from intrinsic.solutions.testing import test_skill_params_pb2
 
 _MESSAGE_WITHOUT_DEFAULTS = test_skill_params_pb2.TestMessage()
@@ -36,6 +36,13 @@ _MESSAGE_WITH_DEFAULT_VALUES = test_skill_params_pb2.TestMessage(
 
 
 class SkillParametersTest(parameterized.TestCase):
+
+  def setUp(self):
+    super().setUp()
+
+    self._utils = skill_test_utils.SkillTestUtils(
+        'testing/test_skill_params_proto_descriptors_transitive_set_sci.proto.bin'
+    )
 
   @parameterized.named_parameters(
       (
@@ -81,11 +88,14 @@ class SkillParametersTest(parameterized.TestCase):
       ),
   )
   def test_required_fields(self, test_message, expected_required_fields):
-    descriptor_proto = descriptor_pb2.DescriptorProto()
-    test_message.DESCRIPTOR.CopyToProto(descriptor_proto)
-    skill_params = skill_parameters.SkillParameters(
-        default_message=test_message, descriptor_proto=descriptor_proto
+    skill_info = self._utils.create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill', parameter_defaults=test_message
     )
+    skill_params = skill_parameters.SkillParameters(
+        default_message=test_message,
+        parameter_description=skill_info.parameter_description,
+    )
+
     self.assertCountEqual(
         skill_params.get_required_field_names(), expected_required_fields
     )
@@ -101,12 +111,15 @@ class SkillParametersTest(parameterized.TestCase):
       ('oneof_default', 'my_oneof_double'),
   )
   def test_field_with_defaults(self, field_with_default):
-    descriptor_proto = descriptor_pb2.DescriptorProto()
-    _MESSAGE_WITH_DEFAULT_VALUES.DESCRIPTOR.CopyToProto(descriptor_proto)
+    skill_info = self._utils.create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=_MESSAGE_WITH_DEFAULT_VALUES,
+    )
     skill_params = skill_parameters.SkillParameters(
         default_message=_MESSAGE_WITH_DEFAULT_VALUES,
-        descriptor_proto=descriptor_proto,
+        parameter_description=skill_info.parameter_description,
     )
+
     self.assertTrue(skill_params.has_default_value(field_with_default))
 
   @parameterized.named_parameters(
@@ -115,20 +128,24 @@ class SkillParametersTest(parameterized.TestCase):
       ('no_default', 'optional_sub_message'),
   )
   def test_field_without_defaults(self, field_without_default):
-    descriptor_proto = descriptor_pb2.DescriptorProto()
-    _MESSAGE_WITH_DEFAULT_VALUES.DESCRIPTOR.CopyToProto(descriptor_proto)
+    skill_info = self._utils.create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=_MESSAGE_WITH_DEFAULT_VALUES,
+    )
     skill_params = skill_parameters.SkillParameters(
         default_message=_MESSAGE_WITH_DEFAULT_VALUES,
-        descriptor_proto=descriptor_proto,
+        parameter_description=skill_info.parameter_description,
     )
     self.assertFalse(skill_params.has_default_value(field_without_default))
 
   def test_is_optional_with_default_raises(self):
-    descriptor_proto = descriptor_pb2.DescriptorProto()
-    _MESSAGE_WITH_DEFAULT_VALUES.DESCRIPTOR.CopyToProto(descriptor_proto)
+    skill_info = self._utils.create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=_MESSAGE_WITH_DEFAULT_VALUES,
+    )
     skill_params = skill_parameters.SkillParameters(
         default_message=_MESSAGE_WITH_DEFAULT_VALUES,
-        descriptor_proto=descriptor_proto,
+        parameter_description=skill_info.parameter_description,
     )
     with self.assertRaises(NameError):
       skill_params.has_default_value('n/a')
@@ -138,11 +155,15 @@ class SkillParametersTest(parameterized.TestCase):
       ('my_string_missing_in_test_message', 'my_string'),
   )
   def test_missing_fields(self, field_name):
-    descriptor_proto = descriptor_pb2.DescriptorProto()
-    _MESSAGE_WITH_DEFAULT_VALUES.DESCRIPTOR.CopyToProto(descriptor_proto)
-    skill_params = skill_parameters.SkillParameters(
-        _MESSAGE_WITH_DEFAULT_VALUES, descriptor_proto=descriptor_proto
+    skill_info = self._utils.create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=_MESSAGE_WITH_DEFAULT_VALUES,
     )
+    skill_params = skill_parameters.SkillParameters(
+        default_message=_MESSAGE_WITH_DEFAULT_VALUES,
+        parameter_description=skill_info.parameter_description,
+    )
+
     self.assertFalse(
         skill_params.message_has_optional_field(
             field_name, _MESSAGE_WITHOUT_DEFAULTS
@@ -156,11 +177,15 @@ class SkillParametersTest(parameterized.TestCase):
       ('non_optional_missing', 'sub_message', _MESSAGE_WITHOUT_DEFAULTS),
   )
   def test_existing_fields(self, field_name, test_message):
-    descriptor_proto = descriptor_pb2.DescriptorProto()
-    _MESSAGE_WITH_DEFAULT_VALUES.DESCRIPTOR.CopyToProto(descriptor_proto)
-    skill_params = skill_parameters.SkillParameters(
-        _MESSAGE_WITH_DEFAULT_VALUES, descriptor_proto=descriptor_proto
+    skill_info = self._utils.create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=_MESSAGE_WITH_DEFAULT_VALUES,
     )
+    skill_params = skill_parameters.SkillParameters(
+        default_message=_MESSAGE_WITH_DEFAULT_VALUES,
+        parameter_description=skill_info.parameter_description,
+    )
+
     self.assertTrue(
         skill_params.message_has_optional_field(field_name, test_message)
     )
