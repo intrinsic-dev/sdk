@@ -89,8 +89,12 @@ Thread::Thread() = default;
 
 Thread::~Thread() {
   if (Joinable()) {
-    char thread_name[kMaxNameLen];
-    pthread_getname_np(thread_impl_.native_handle(), thread_name, kMaxNameLen);
+    char thread_name[kMaxNameLen] = "unknown";
+    int res = pthread_getname_np(thread_impl_.native_handle(), thread_name,
+                                 kMaxNameLen);
+    if (res != 0) {
+      LOG(WARNING) << "Failed to get thread name.";
+    }
     LOG(FATAL)
         << "The joinable thread '" << thread_name
         << "' is about to be destructed, but has not been joined! This will "
