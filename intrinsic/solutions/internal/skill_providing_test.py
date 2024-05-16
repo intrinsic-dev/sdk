@@ -1957,26 +1957,66 @@ Fields:
   def test_message_wrapper_signature(self):
     skill_info = self._utils.create_test_skill_info(
         skill_id='ai.intrinsic.my_skill',
-        parameter_defaults=test_skill_params_pb2.TestMessage(),
+        parameter_defaults=test_skill_params_pb2.TestMessageWrapped(),
     )
+
+    # pyformat: disable
+    expected_signature = (
+        '(*, '
+        'my_double: float, '
+        'my_float: float, '
+        'my_int32: int, '
+        'my_int64: int, '
+        'my_uint32: int, '
+        'my_uint64: int, '
+        'my_bool: bool, '
+        'my_string: str, '
+        'sub_message:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'optional_sub_message:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'my_required_int32: int, '
+        'my_oneof_double: float, '
+        'my_oneof_sub_message:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'pose:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
+        'foo:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo, '
+        'enum_v:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum, '
+        'executive_test_message:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage, '
+        'non_unique_field_name:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType, '
+        'my_repeated_doubles: Sequence[float] = [], '
+        'repeated_submessages:'
+        ' Sequence[intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = [], '
+        'string_int32_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
+        'int32_string_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
+        'string_message_map: dict[typing.Union[str, int, bool], typing.Any] = {})'
+    )
+    # pyformat: enable
+
     skills = skill_providing.Skills(
         self._utils.create_skill_registry_for_skill_info(skill_info),
         self._utils.create_empty_resource_registry(),
     )
 
+    my_skill = skills.ai.intrinsic.my_skill
     signature = inspect.signature(
-        skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage
+        my_skill.intrinsic_proto.test_data.TestMessage
     )
-    self.assertSignature(signature, '(*, name: str)')
-
-    signature = inspect.signature(
-        skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType
-    )
-    self.assertSignature(
-        signature,
-        '(*, non_unique_field_name:'
-        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.AnotherType)',
-    )
+    self.assertSignature(signature, expected_signature)
 
   def test_message_wrapper_params(self):
     skill_info = self._utils.create_test_skill_info(
