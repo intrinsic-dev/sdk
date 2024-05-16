@@ -84,6 +84,9 @@ message Skill {
   // <package_name>.<name>.<version>
   string id_version = 11;
 
+  // Whether the skill is sideloaded into the solution.
+  bool sideloaded = 15;
+
   // Description information for the parameters of this Skill.
   ParameterDescription parameter_description = 6;
 
