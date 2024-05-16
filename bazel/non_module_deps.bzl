@@ -30,15 +30,6 @@ def non_module_deps():
     )
 
     http_archive(
-        name = "com_google_googleapis",
-        urls = [
-            "https://github.com/googleapis/googleapis/archive/d9250048e9b9df4d8a0ce67b8ccf84e0aab0d50e.tar.gz",
-        ],
-        sha256 = "eaef89b65424505b2802ca13b6e0bdc5d302e0c477c78a4e41ecefbebed2c03e",
-        strip_prefix = "googleapis-d9250048e9b9df4d8a0ce67b8ccf84e0aab0d50e",
-    )
-
-    http_archive(
         name = "com_github_google_flatbuffers",
         urls = [
             "https://github.com/google/flatbuffers/archive/refs/tags/v23.3.3.tar.gz",

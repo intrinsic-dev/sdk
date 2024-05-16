@@ -101,6 +101,16 @@ def intrinsic_sdks_deps_0():
 
     maybe(
         http_archive,
+        name = "com_google_googleapis",
+        urls = [
+            "https://github.com/googleapis/googleapis/archive/1c8d509c574aeab7478be1bfd4f2e8f0931cfead.tar.gz",
+        ],
+        sha256 = "b854ae17ddb933c249530f743db8d78df80905dfb42681255564a1d1921dfc3c",
+        strip_prefix = "googleapis-1c8d509c574aeab7478be1bfd4f2e8f0931cfead",
+    )
+
+    maybe(
+        http_archive,
         name = "rules_oci",
         sha256 = "686f871f9697e08877b85ea6c16c8d48f911bf466c3aeaf108ca0ab2603c7306",
         strip_prefix = "rules_oci-1.5.1",
