@@ -1,0 +1,21 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.world;
+
+import "intrinsic/math/proto/vector3.proto";
+
+// Component indicating how the owning Entity (or the object/collection
+// represented by the owning entity) should expect to remove spawned products
+// from simulation.
+message OutfeedComponent {
+  // The product that will be removed by this outfeed. If empty, then the
+  // outfeed removes all products.
+  string product_part_name = 1;
+
+  // The extents of the axis-aligned bounding box that define the volume for
+  // this outfeed. Defaults to a 1m x 1m x 1m box. Must have positie values to
+  // provide a valid volume for detecting products to remove.
+  intrinsic_proto.Vector3 bounds = 2;
+}
