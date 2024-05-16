@@ -18,6 +18,7 @@ import "intrinsic/world/proto/gripper_component.proto";
 import "intrinsic/world/proto/kinematics_component.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 import "intrinsic/world/proto/object_world_updates.proto";
+import "intrinsic/world/proto/outfeed_component.proto";
 import "intrinsic/world/proto/physics_component.proto";
 import "intrinsic/world/proto/robot_payload.proto";
 import "intrinsic/world/proto/sensor_component.proto";
@@ -279,6 +280,10 @@ message ObjectComponent {
   // Properties for how this object spawns objects in simulation. Will not be
   // set if this object is not a spawner resource.
   intrinsic_proto.world.SpawnerComponent spawner_component = 6;
+
+  // Properties for how this object removes products in simulation. Will not be
+  // set if this object is not an outfeed resource.
+  intrinsic_proto.world.OutfeedComponent outfeed_component = 8;
 
   // Configuration properties for this object if it is a gripper. Will not be
   // set if the object is not a gripper resource.

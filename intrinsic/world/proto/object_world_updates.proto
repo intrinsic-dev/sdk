@@ -13,6 +13,7 @@ import "intrinsic/world/proto/collision_settings.proto";
 import "intrinsic/world/proto/geometry_component.proto";
 import "intrinsic/world/proto/gripper_component.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
+import "intrinsic/world/proto/outfeed_component.proto";
 import "intrinsic/world/proto/physics_component.proto";
 import "intrinsic/world/proto/robot_payload.proto";
 import "intrinsic/world/proto/simulation_component.proto";
@@ -387,6 +388,10 @@ message UpdateObjectPropertiesRequest {
   // If set, updates the object's spawner component to the given one. Returns an
   // error if the object did not have a spawner component previously.
   intrinsic_proto.world.SpawnerComponent spawner_component = 6;
+
+  // If set, updates the object's outfeed component to the given one. Returns an
+  // error if the object did not have an outfeed component previously.
+  intrinsic_proto.world.OutfeedComponent outfeed_component = 8;
 
   // If set, updates the object's gripper component to the given one. Returns an
   // error if the object did not have a gripper component previously.
