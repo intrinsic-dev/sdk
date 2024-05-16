@@ -9,6 +9,11 @@ package(default_visibility = ["//visibility:public"])
 exports_files(glob(["content_mirror/*"]))
 
 bzl_library(
+    name = "go_macros",
+    srcs = ["go_macros.bzl"],
+)
+
+bzl_library(
     name = "label",
     srcs = ["label.bzl"],
 )
