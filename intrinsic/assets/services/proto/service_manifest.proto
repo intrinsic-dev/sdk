@@ -10,6 +10,7 @@ import "intrinsic/assets/proto/asset_tag.proto";
 import "intrinsic/assets/proto/documentation.proto";
 import "intrinsic/assets/proto/id.proto";
 import "intrinsic/assets/proto/vendor.proto";
+import "intrinsic/assets/services/proto/service_http_config.proto";
 import "intrinsic/kubernetes/workcell_spec/proto/image.proto";
 
 message ServiceMetadata {
@@ -32,6 +33,11 @@ message ServiceDef {
   ServicePodSpec real_spec = 2;
   // The pod spec to be used in simulated environments.
   ServicePodSpec sim_spec = 3;
+  // The HTTP configuration for this service. If provided (including empty
+  // config), an HTTP route to the service will be set up. It may handle HTTP
+  // traffic at this route by serving HTTP responses at the HTTP port available
+  // from `RuntimeContext` (`/etc/intrinsic/runtime_config.pb`).
+  ServiceHttpConfig http_config = 4;
 }
 
 message ServicePodSpec {

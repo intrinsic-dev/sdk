@@ -11,6 +11,7 @@ proto_library(
     name = "service_manifest_proto",
     srcs = ["service_manifest.proto"],
     deps = [
+        ":service_http_config_proto",
         "//intrinsic/assets/proto:asset_tag_proto",
         "//intrinsic/assets/proto:documentation_proto",
         "//intrinsic/assets/proto:id_proto",
@@ -24,6 +25,7 @@ proto_library(
 go_proto_library(
     name = "service_manifest_go_proto",
     go_deps = [
+        ":service_http_config_go_proto",
         "//intrinsic/assets/proto:asset_tag_go_proto",
         "//intrinsic/assets/proto:documentation_go_proto",
         "//intrinsic/assets/proto:id_go_proto",
@@ -36,4 +38,19 @@ go_proto_library(
 py_proto_library(
     name = "service_manifest_py_pb2",
     deps = [":service_manifest_proto"],
+)
+
+proto_library(
+    name = "service_http_config_proto",
+    srcs = ["service_http_config.proto"],
+)
+
+go_proto_library(
+    name = "service_http_config_go_proto",
+    deps = [":service_http_config_proto"],
+)
+
+py_proto_library(
+    name = "service_http_config_py_pb2",
+    deps = [":service_http_config_proto"],
 )
