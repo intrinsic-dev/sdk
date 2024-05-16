@@ -8,10 +8,6 @@ common --enable_bzlmod=false
 common               --experimental_downloader_config=bazel/content_mirror/permissive.cfg
 common:strict_mirror --experimental_downloader_config=bazel/content_mirror/strict.cfg
 
-# C++ toolchain
-# Recommended by https://github.com/bazel-contrib/toolchains_llvm/blob/0.7.2/README.md
-build --incompatible_enable_cc_toolchain_resolution
-
 # Static linking to workaround OpenCV symbol lookup errors: https://github.com/bazelbuild/rules_foreign_cc/issues/1164
 build --dynamic_mode=off
 
