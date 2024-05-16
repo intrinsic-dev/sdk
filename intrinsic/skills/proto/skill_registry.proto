@@ -31,6 +31,40 @@ message GetSkillResponse {
   intrinsic_proto.skills.Skill skill = 1;
 }
 
+message ListSkillsRequest {
+  // Upper limit for the returned page size, i.e. the service might return fewer
+  // results.
+  //
+  // Default behavior: returns a page size of 20. A page_size of 0 will result
+  // in default behavior.
+  //
+  // Maximum value is 200. If this is exceeded, returns 200.
+  //
+  // Negative values are invalid and will result in an INVALID_ARGUMENT error.
+  int32 page_size = 1;
+
+  // If the page token is empty, up to `page_size` first elements of the
+  // collection will be returned. On subsequent requests, set the
+  // `next_page_token` obtained from the previous call to retrieve the next
+  // page.
+  string page_token = 2;
+
+  // A filter expression to filter the returned skills.
+  //
+  // The format of the filter expression follows the specification outlined in
+  // https://google.aip.dev/160. Only the following field are supported:
+  //   * `sideloaded`
+  string filter = 3;
+}
+
+message ListSkillsResponse {
+  // Skills matching the request.
+  repeated intrinsic_proto.skills.Skill skills = 1;
+
+  // Pass this token to the subsequent list requests in to obtain the next page.
+  string next_page_token = 2;
+}
+
 service SkillRegistry {
 
   // Returns skill implementations matching the given request.
@@ -38,4 +72,7 @@ service SkillRegistry {
 
   // Returns information about the requested Skill.
   rpc GetSkill(GetSkillRequest) returns (GetSkillResponse) {}
+
+  // Lists all of the skills currently installed.
+  rpc ListSkills(ListSkillsRequest) returns (ListSkillsResponse) {}
 }
