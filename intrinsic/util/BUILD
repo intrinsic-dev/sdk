@@ -1,6 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 load("@rules_python//python:defs.bzl", "py_library")
+load("//bazel:go_macros.bzl", "go_library")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -111,5 +112,13 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
         "@com_google_protobuf//:protobuf",
+    ],
+)
+
+go_library(
+    name = "runfiles",
+    srcs = ["runfiles.go"],
+    deps = [
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
     ],
 )
