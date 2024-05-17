@@ -20,12 +20,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	apb "intrinsic/executive/proto/annotations_go_proto"
 	btpb "intrinsic/executive/proto/behavior_tree_go_proto"
 	execgrpcpb "intrinsic/executive/proto/executive_service_go_grpc_proto"
 	rmdpb "intrinsic/executive/proto/run_metadata_go_proto"
 	skillregistrygrpcpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
+	srpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
 	skillspb "intrinsic/skills/proto/skills_go_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
@@ -205,12 +205,24 @@ func setBT(ctx context.Context, conn *grpc.ClientConn, bt *btpb.BehaviorTree) er
 
 func getSkills(ctx context.Context, conn *grpc.ClientConn) ([]*skillspb.Skill, error) {
 	client := skillregistrygrpcpb.NewSkillRegistryClient(conn)
-	resp, err := client.GetSkills(ctx, &emptypb.Empty{})
-	if err != nil {
-		return nil, fmt.Errorf("could not list skills: %w", err)
+	var (
+		skills        []*skillspb.Skill
+		nextPageToken string
+	)
+	for {
+		resp, err := client.ListSkills(ctx, &srpb.ListSkillsRequest{
+			PageToken: nextPageToken,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("could not list skills: %w", err)
+		}
+		skills = append(skills, resp.GetSkills()...)
+		nextPageToken = resp.GetNextPageToken()
+		if nextPageToken == "" {
+			break
+		}
 	}
-
-	return resp.GetSkills(), nil
+	return skills, nil
 }
 
 var processCmd = orgutil.WrapCmd(&cobra.Command{
