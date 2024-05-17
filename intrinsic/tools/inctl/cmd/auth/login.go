@@ -121,7 +121,7 @@ func queryProjectForAPIKey(ctx context.Context, apiKey string) (string, error) {
 			fmt.Printf("Could not find the project for this token. Please restart the login process and make sure to provide the exact key shown by the portal.\n")
 			return "", fmt.Errorf("validate token")
 		}
-		return "", fmt.Errorf("request to list clusters failed: %w", err)
+		return "", err
 	}
 
 	return resp.GetProject(), nil
@@ -160,7 +160,7 @@ func loginCmdE(cmd *cobra.Command, _ []string) (err error) {
 	if projectName == "" {
 		projectName, err = queryProject(cmd.Context(), apiKey)
 		if err != nil {
-			return err
+			return fmt.Errorf("query project: %w", err)
 		}
 		if err := authStore.WriteOrgInfo(&auth.OrgInfo{Organization: orgName, Project: projectName}); err != nil {
 			return fmt.Errorf("store org info: %w", err)
