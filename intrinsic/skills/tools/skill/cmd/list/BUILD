@@ -47,8 +47,8 @@ go_library(
     srcs = ["list.go"],
     deps = [
         "//intrinsic/assets:cmdutils",
-        "//intrinsic/assets:idutils",
         "//intrinsic/skills/proto:skill_registry_go_grpc_proto",
+        "//intrinsic/skills/proto:skills_go_proto",
         "//intrinsic/skills/tools/skill/cmd",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/skills/tools/skill/cmd:listutil",
@@ -57,6 +57,5 @@ go_library(
         "//intrinsic/tools/inctl/util:printer",
         "@com_github_pkg_errors//:go_default_library",
         "@com_github_spf13_cobra//:go_default_library",
-        "@org_golang_google_protobuf//types/known/emptypb",
     ],
 )

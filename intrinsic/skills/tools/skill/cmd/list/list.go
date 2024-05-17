@@ -10,10 +10,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	"intrinsic/assets/cmdutils"
-	"intrinsic/assets/idutils"
 	skillregistrygrpcpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
+	skillregistrypb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
+	spb "intrinsic/skills/proto/skills_go_proto"
 	skillCmd "intrinsic/skills/tools/skill/cmd"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/listutil"
@@ -36,35 +36,40 @@ var (
 )
 
 type listSkillsParams struct {
-	cluster     string
-	filter      string
-	printer     printer.Printer
-	projectName string
-	orgName     string
-	serverAddr  string
+	filter   string
+	printer  printer.Printer
+	pageSize int32 // This can be set in tests to verify pagination behavior.
 }
 
-func listSkills(ctx context.Context, params *listSkillsParams) error {
-	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
-		Address:  params.serverAddr,
-		Cluster:  params.cluster,
-		CredName: params.projectName,
-		CredOrg:  params.orgName,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create client connection: %v", err)
-	}
-	defer conn.Close()
-
-	client := skillregistrygrpcpb.NewSkillRegistryClient(conn)
-	resp, err := client.GetSkills(ctx, &emptypb.Empty{})
-	if err != nil {
-		return fmt.Errorf("could not list skills: %w", err)
+func listSkills(ctx context.Context, client skillregistrygrpcpb.SkillRegistryClient, params *listSkillsParams) error {
+	filter := ""
+	if params.filter == sideloadedFilter {
+		filter = sideloadedFilter
+	} else if params.filter == releasedFilter {
+		filter = fmt.Sprintf("-%s", sideloadedFilter)
 	}
 
-	skills := listutil.SkillDescriptionsFromSkills(resp.GetSkills())
-	filteredSkills := applyFilter(skills, params.filter)
-	params.printer.Print(filteredSkills)
+	var (
+		skills        []*spb.Skill
+		nextPageToken string
+	)
+	for {
+		resp, err := client.ListSkills(ctx, &skillregistrypb.ListSkillsRequest{
+			Filter:    filter,
+			PageSize:  params.pageSize,
+			PageToken: nextPageToken,
+		})
+		if err != nil {
+			return errors.Wrap(err, "could not list skills")
+		}
+		skills = append(skills, resp.GetSkills()...)
+		nextPageToken = resp.GetNextPageToken()
+		if nextPageToken == "" {
+			break
+		}
+	}
+
+	params.printer.Print(listutil.SkillDescriptionsFromSkills(skills))
 
 	return nil
 }
@@ -83,6 +88,7 @@ $ inctl skill list --project my-project --cluster my-cluster
 `,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
+		ctx := cmd.Context()
 		project := cmdFlags.GetFlagProject()
 		org := cmdFlags.GetFlagOrganization()
 		cluster, solution, err := cmdFlags.GetFlagsListClusterSolution()
@@ -91,18 +97,18 @@ $ inctl skill list --project my-project --cluster my-cluster
 		}
 
 		if solution != "" {
-			ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
+			getClusterNameCtx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
 				CredName: project,
 				CredOrg:  org,
 			})
 			if err != nil {
-				return errors.Wrapf(err, "could not create connection")
+				return errors.Wrap(err, "could not create connection")
 			}
 			defer conn.Close()
 
-			cluster, err = solutionutil.GetClusterNameFromSolution(ctx, conn, solution)
+			cluster, err = solutionutil.GetClusterNameFromSolution(getClusterNameCtx, conn, solution)
 			if err != nil {
-				return errors.Wrapf(err, "could not resolve solution to cluster")
+				return errors.Wrap(err, "could not resolve solution to cluster")
 			}
 		}
 		prtr, err := printer.NewPrinter(root.FlagOutput)
@@ -110,12 +116,20 @@ $ inctl skill list --project my-project --cluster my-cluster
 			return err
 		}
 
-		err = listSkills(cmd.Context(), &listSkillsParams{
-			cluster:     cluster,
-			filter:      cmdFlags.GetString(keyFilter),
-			printer:     prtr,
-			projectName: project,
-			orgName:     org,
+		registryCtx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
+			Cluster:  cluster,
+			CredName: project,
+			CredOrg:  org,
+		})
+		if err != nil {
+			return errors.Wrap(err, "failed to create client connection")
+		}
+		defer conn.Close()
+
+		client := skillregistrygrpcpb.NewSkillRegistryClient(conn)
+		err = listSkills(registryCtx, client, &listSkillsParams{
+			filter:  cmdFlags.GetString(keyFilter),
+			printer: prtr,
 		})
 		if err != nil {
 			return err
@@ -133,23 +147,4 @@ func init() {
 	cmdFlags.AddFlagsProjectOrg()
 
 	cmdFlags.OptionalString(keyFilter, "", fmt.Sprintf("Filter skills by the way they where loaded into the solution. One of: %s.", strings.Join(filterOptions, ", ")))
-}
-
-func applyFilter(skills *listutil.SkillDescriptions, filter string) *listutil.SkillDescriptions {
-	if filter == "" {
-		return skills
-	}
-
-	filteredSkills := listutil.SkillDescriptions{Skills: []listutil.SkillDescription{}}
-	for _, skill := range skills.Skills {
-		version, err := idutils.VersionFrom(skill.IDVersion)
-		if err != nil {
-			continue
-		}
-		if filter == sideloadedFilter && idutils.IsUnreleasedVersion(version) ||
-			filter == releasedFilter && !idutils.IsUnreleasedVersion(version) {
-			filteredSkills.Skills = append(filteredSkills.Skills, skill)
-		}
-	}
-	return &filteredSkills
 }
