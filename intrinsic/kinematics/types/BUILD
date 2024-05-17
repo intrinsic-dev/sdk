@@ -23,6 +23,22 @@ cc_library(
     deps = [":state_rn"],
 )
 
+cc_library(
+    name = "to_fixed_string",
+    srcs = ["to_fixed_string.cc"],
+    hdrs = ["to_fixed_string.h"],
+    deps = [
+        ":cartesian_limits",
+        ":joint_limits",
+        ":state_rn",
+        "//intrinsic/eigenmath",
+        "//intrinsic/icon/utils:fixed_str_cat",
+        "//intrinsic/icon/utils:fixed_string",
+        "//intrinsic/math:pose3",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 proto_library(
     name = "joint_limits_proto",
     srcs = ["joint_limits.proto"],

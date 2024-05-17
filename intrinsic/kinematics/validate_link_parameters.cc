@@ -3,10 +3,9 @@
 #include "intrinsic/kinematics/validate_link_parameters.h"
 
 #include "Eigen/Eigenvalues"
-#include "absl/status/status.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "intrinsic/eigenmath/types.h"
+#include "intrinsic/icon/utils/realtime_status.h"
+#include "intrinsic/kinematics/types/to_fixed_string.h"
 #include "intrinsic/kinematics/types/to_string.h"
 
 namespace intrinsic::kinematics {
@@ -21,31 +20,31 @@ bool IsSymmetric(const eigenmath::Matrix3d& matrix,
 
 }  // namespace
 
-absl::Status ValidateMass(double mass_kg) {
+icon::RealtimeStatus ValidateMass(double mass_kg) {
   if (mass_kg <= 0) {
-    return absl::FailedPreconditionError(absl::StrCat(
+    return icon::FailedPreconditionError(icon::RealtimeStatus::StrCat(
         "The mass should be > 0.0, but got ", mass_kg, " kg instead."));
   }
-  return absl::OkStatus();
+  return icon::OkStatus();
 }
 
-absl::Status ValidateInertia(const eigenmath::Matrix3d& inertia) {
+icon::RealtimeStatus ValidateInertia(const eigenmath::Matrix3d& inertia) {
   // The link inertia tensor should be density realizable. In other words,
   // the inertia tensor expressed at the center of gravity should be positive
   // definite (symmetric and with positive eigenvalues) and its eigenvalues
   // fulfill the triangle inequalities.
   if (!IsSymmetric(inertia)) {
-    return absl::FailedPreconditionError(
-        absl::StrCat("Inertia tensor is not symmetric. Got ", "[[ ",
-                     eigenmath::ToString(inertia.row(0)), "],[ ",
-                     eigenmath::ToString(inertia.row(1)), "],[ ",
-                     eigenmath::ToString(inertia.row(2)), "]]."));
+    return icon::FailedPreconditionError(icon::RealtimeStatus::StrCat(
+        "Inertia tensor is not symmetric. Got ", "[[ ",
+        eigenmath::ToFixedString(inertia.row(0)), "],[ ",
+        eigenmath::ToFixedString(inertia.row(1)), "],[ ",
+        eigenmath::ToFixedString(inertia.row(2)), "]]."));
   }
 
   Eigen::EigenSolver<eigenmath::Matrix3d> eigen_solver(inertia);
   const eigenmath::Vector3d& eigenvalues = eigen_solver.eigenvalues().real();
   if ((eigenvalues.array() <= 0.0).any()) {
-    return absl::FailedPreconditionError(absl::StrCat(
+    return icon::FailedPreconditionError(icon::RealtimeStatus::StrCat(
         "Inertia tensor of link is not positive definite. All of its "
         "eigenvalues should be > 0.0, "
         "but got ",
@@ -54,13 +53,13 @@ absl::Status ValidateInertia(const eigenmath::Matrix3d& inertia) {
 
   for (int i = 0; i < 3; ++i) {
     if (eigenvalues.sum() < 2.0 * eigenvalues[i]) {
-      return absl::FailedPreconditionError(
-          absl::StrCat("The eigenvalues of the inertia tensor do not satisfy "
-                       "the triangle inequality: ",
-                       eigenvalues.sum(), " is not larger or equal than ",
-                       2.0 * eigenvalues[i], "."));
+      return icon::FailedPreconditionError(icon::RealtimeStatus::StrCat(
+          "The eigenvalues of the inertia tensor do not satisfy "
+          "the triangle inequality: ",
+          eigenvalues.sum(), " is not larger or equal than ",
+          2.0 * eigenvalues[i], "."));
     }
   }
-  return absl::OkStatus();
+  return icon::OkStatus();
 }
 }  // namespace intrinsic::kinematics

@@ -8,10 +8,9 @@ cc_library(
     hdrs = ["validate_link_parameters.h"],
     deps = [
         "//intrinsic/eigenmath",
+        "//intrinsic/icon/utils:realtime_status",
+        "//intrinsic/kinematics/types:to_fixed_string",
         "//intrinsic/kinematics/types:to_string",
         "@com_gitlab_libeigen_eigen//:eigen",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:string_view",
     ],
 )
