@@ -70,3 +70,28 @@ message CollisionSettings {
   optional double collision_check_spacing = 4
       [(intrinsic_proto.skills.skill_parameter_metadata).unit = "radians"];
 }
+
+// Contains debug information related to the collision checking performed for a
+// given configuration.
+message CollisionCheckingDebugInformation {
+  // Represents a margin violation between an object and a collection of other
+  // objects. The right side can be a collection of objects because we merge
+  // static geometries together to perform collision checking. At that point we
+  // don't know which of the static entities is in collision.
+  message Collision {
+    // The object or entity that in collision/margin violation.
+    ObjectOrEntityReference left = 1;
+
+    // The object(s) or entitie (s) that are in collision/margin violation with
+    // the left object.
+    repeated ObjectOrEntityReference right = 2;
+
+    // The desired margin that has been violated. That is, the distance between
+    // the left object and one of the right objects is smaller than this value.
+    double desired_margin = 3;
+  }
+
+  // The margin violations that have been discovered. Note that there may be
+  // more collisions, since we return early.
+  repeated Collision collisions = 1;
+}
