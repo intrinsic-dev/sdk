@@ -67,8 +67,12 @@ message ListSkillsResponse {
 
 service SkillRegistry {
 
-  // Returns skill implementations matching the given request.
-  rpc GetSkills(google.protobuf.Empty) returns (GetSkillsResponse) {}
+  // Deprecated: Use `ListSkills` instead. Important: `ListSkills` is always
+  //   paginated. If you require all skills in the registry (behavior of
+  //   `GetSkills`) paginate through all pages.
+  rpc GetSkills(google.protobuf.Empty) returns (GetSkillsResponse) {
+    option deprecated = true;
+  }
 
   // Returns information about the requested Skill.
   rpc GetSkill(GetSkillRequest) returns (GetSkillResponse) {}
