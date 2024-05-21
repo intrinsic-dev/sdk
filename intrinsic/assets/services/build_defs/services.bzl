@@ -1,7 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 """
-Blaze rules for service types.
+Bazel rules for service types.
 """
 
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
