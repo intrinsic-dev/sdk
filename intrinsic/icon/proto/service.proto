@@ -3,6 +3,13 @@
 syntax = "proto3";
 
 // This file defines the ICON Application Layer GRPC service.
+//
+// Most users should *not* interact with this service directly, but rather use
+// one of the client libraries:
+//
+// * C++: intrinsic/icon/cc_client/
+// * Python: intrinsic/icon/python/
+// * Golang: intrinsic/icon/go/
 
 package intrinsic_proto.icon;
 
@@ -35,6 +42,8 @@ message GetActionSignatureByNameResponse {
 message GetConfigRequest {}
 // GetConfig() response.
 message GetConfigResponse {
+  // Static (for the duration of the ICON server's lifetime) data about the
+  // parts on this server.
   repeated PartConfig part_configs = 1;
 
   // This is the frequency at which ICON's control loop is running.
@@ -47,14 +56,20 @@ message GetStatusRequest {}
 // GetStatus() response.
 message GetStatusResponse {
   message SessionStatus {
+    // The Parts claimed by this Session for write access. No other Session can
+    // claim any of the Parts in this group.
     PartGroup part_group = 1;
+    // A list of the actions in this Session. Note that this includes *all*
+    // actions that a user has added and not removed. In particular, the list is
+    // not limited to the *running* actions.
     repeated int64 action_ids = 2;
   }
+  // The current status (i.e. dynamic data, as opposed to the static data in
+  // `PartConfig`) for all Parts on this server.
   map<string, intrinsic_proto.icon.PartStatus> part_status = 1;
   // Information about all currently active Sessions.
   map<uint64, SessionStatus> sessions = 2;
-  // The current speed override value, see SetSpeedOverride for more
-  // details.
+  // The current speed override value, see SetSpeedOverride for more details.
   double current_speed_override = 3;
   // The current status of the safety system.
   intrinsic_proto.icon.SafetyStatus safety_status = 4;
@@ -91,7 +106,11 @@ message IsActionCompatibleRequest {
   // Action type to check for compatibility.
   string action_type_name = 1;
   oneof slot_data {
+    // If this is set, ICON checks for compatibility with this exact SlotPartMap
+    // (i.e. specific parts assigned to specific slots of `action_type_name`).
     SlotPartMap slot_part_map = 3;
+    // If this is set, ICON checks whether `part_name` is compatible with *any*
+    // of the slots for `action_type_name`.
     string part_name = 4;
   }
   reserved 2;
@@ -99,8 +118,8 @@ message IsActionCompatibleRequest {
 }
 // IsActionCompatible() response.
 message IsActionCompatibleResponse {
-  // True iff the action type named `action_type_name` can be commanded for the
-  // part or SlotPartMap.
+  // True iff the action type named `action_type_name` is compatible with the
+  // part or SlotPartMap from the request.
   bool is_compatible = 1;
 }
 
@@ -115,7 +134,8 @@ message ListActionSignaturesResponse {
 // ListCompatibleParts() request.
 message ListCompatiblePartsRequest {
   // List of action types to get compatible parts for. A part is considered
-  // compatible if it is compatible with every action type in the list.
+  // compatible if it is compatible with at least one slot of every action type
+  // in the list.
   repeated string action_type_names = 1;
 }
 // ListCompatibleParts() response.
@@ -144,41 +164,51 @@ message ListPartsResponse {
 // applied.
 message OpenSessionRequest {
   message InitialSessionData {
-    // A list of parts to allocate for this session. Parts allocated by a
-    // session cannot be allocated by other sessions until they are freed. All
-    // parts allocated by a session are freed when the session ends.
+    // A list of parts to allocate for this session. Parts that are in use by
+    // one session cannot be allocated by any other sessions until they are
+    // freed. All parts allocated by a session are freed when the session ends.
     PartList allocate_parts = 1;
-    // If ICON has not finished opening the session by this deadline, it will
-    // return an error.
+    // If ICON cannot open the session by this deadline, it returns an error.
     google.protobuf.Timestamp deadline = 2;
   }
-  // Initial data for opening a session that must be sent with the first
-  // OpenSessionRequest. If this field specified in later requests or
-  // unspecified in the initial request, the session is closed and an error is
-  // returned in the call status.
+  // Initial data for opening a session that must be sent *only* with the first
+  // OpenSessionRequest.
+  //
+  // That is, ICON closes the session and returns an error if
+  // * the first OpenSessionRequest for a session *lacks* `initial_session_data`
+  // * any OpenSessionRequest *but* the first contains `initial_session_data`
   InitialSessionData initial_session_data = 1;
 
   message ClearAllActions {}
 
   oneof action_request {
-    // Adds the actions and reactions in the ActionsAndReactions to the
-    // existing action state machine on the server. The entire
-    // ActionsAndReactions is added, or none of the ActionsAndReactions is
-    // added. An ActionsAndReactions will never be partially applied. If the
-    // entire ActionsAndReactions is not applied, then an error is returned.
+    // ICON adds the actions and reactions in the ActionsAndReactions to the
+    // existing action state machine on the server.
     //
-    // For example, if any action_instance_id or  reaction_instance_id specified
-    // by the ActionsAndReactions is already in use then none of the
-    // ActionsAndReactions will be added. If any Reaction refers to an
-    // action_instance_id that does not already exist, or is not in this
-    // ActionsAndReactions, then none of the ActionsAndReactions will be added.
+    // Adding actions and reactions is a transaction and can have one of two
+    // results:
+    // 1. Success: The action state machine now contains all of the new actions
+    //             and reactions
+    // 2. Failure: The action state machine contains the same actions and
+    //             reactions as before, and ICON returns an error
+    //
+    // Examples of problems that can cause a failure:
+    // * Any action_instance_id or reaction_instance_id in the
+    //   ActionsAndReactions proto is already in use
+    // * Any Reaction refers to an action_instance_id that is not present in
+    //   either the existing action state machine or the ActionsAndReactions
+    //   proto
     ActionsAndReactions add_actions_and_reactions = 5;
-    // Removes the actions and reactions referred to by the ActionAndReactionIds
-    // from the action state machine on the server. If any action id or reaction
-    // id specified in the ActionAndReactionIds does not exist, then the
-    // existing action set is unmodified, and an error is returned.
+    // ICON removes the actions and reactions in the ActionAndReactionIds proto
+    // from the action state machine on the server.
+    //
+    // If any action id or reaction ID in the ActionAndReactionIds proto does
+    // not exist, then ICON does not modify the action state machine and returns
+    // an error.
     ActionAndReactionIds remove_action_and_reaction_ids = 6;
-    // If set removes all existing actions and reactions.
+    // ICON removes all existing actions and reactions. If any action is
+    // currently running, ICON stops that action.
+    // After this, the safety action is active for all parts.
     ClearAllActions clear_all_actions_reactions = 7;
   }
 
@@ -186,20 +216,25 @@ message OpenSessionRequest {
   message StartActionsRequestData {
     // Actions to start. Those actions must not have overlapping part sets.
     repeated int64 action_instance_ids = 1;
-    // If true, all active actions are stopped. Otherwise they continue
-    // to run, unless they are preempted by an action in `action_instance_ids`
-    // that has an overlapping part set.
+    // If true, ICON stops all active actions before starting the actions in
+    // `action_instance_ids` (if any). This means callers can use this flag with
+    // an empty `action_instance_ids` to stop all actions.
+    //
+    // If false, all active actions continue to run, unless one of the actions
+    // in `action_instance_ids` uses an overlapping set of parts. In that case,
+    // the newly-started action takes precedence, and ICON stops the action that
+    // was using the same parts before.
     bool stop_active_actions = 2;
   }
 
-  // If specified, starts the action instances in `action_instance_ids`. Note
-  // this does not need to be specified in the first request sent, and may be
-  // specified by multiple Requests over the course of a single session. For
-  // example, a client may wish to start a new action in response to a
-  // non-real-time reaction.
+  // If present, ICON starts the requested action instances.
+  // Note that this is truly optional, and multiple requests over the course of
+  // a single session can start actions. For example, a client may wish to start
+  // a new action in response to a non-real-time reaction, or to data from an
+  // outside service.
   optional StartActionsRequestData start_actions_request = 12;
 
-  // If specified, ICON will tag all logs coming from parts used by this session
+  // If specified, ICON tags all logs coming from parts used by this session
   // with this context.
   intrinsic_proto.data_logger.Context log_context = 11;
 
@@ -208,18 +243,23 @@ message OpenSessionRequest {
 }
 // OpenSession() response.
 message OpenSessionResponse {
-  // Returns an aborted error if the session should end. May return other
+  // Contains an aborted error if the session should end. May contain other
   // errors for non-session ending failures.
   google.rpc.Status status = 1;
 
   message InitialSessionData {
-    // The unique identifier for the session. This can be used to watch
-    // reactions corresponding to this session.
+    // The unique identifier for the session. Callers can use this with related
+    // requests to further interact with the session:
+    // * GetStatus (to find the list of actions that exist in this session)
+    // * WatchReactions
+    // * OpenWriteStream
+    // * GetLatestStreamingOutput
+    // * GetPlannedTrajectory
     int64 session_id = 1;
   }
 
-  // Contains information regarding session initialization, will only be sent in
-  // response to the first request.
+  // Contains information regarding session initialization. ICON sends this
+  // *only* in response to the first request.
   InitialSessionData initial_session_data = 2;
 
   message ActionResponse {}
@@ -232,16 +272,16 @@ message OpenSessionResponse {
 
 message WatchReactionsRequest {
   // The unique identifier of the action session. This should be the session id
-  // returned in the `initial_session_data` in the OpenSession response.
+  // returned in the `initial_session_data` of an OpenSession response.
   int64 session_id = 1;
 }
 
-// The reaction event will be empty for the first message sent to the client.
 message WatchReactionsResponse {
   // The time when the Reaction occurred.
   google.protobuf.Timestamp timestamp = 1;
 
-  // The reaction that occurred.
+  // The reaction that occurred. This is empty for the first message sent to the
+  // client.
   ReactionEvent reaction_event = 2;
 }
 
@@ -255,15 +295,14 @@ message AddStreamRequest {
 
 // OpenWriteStream() request.
 //
-//
 // In the initial message, the client must write `session_id` and
-// `add_write_stream` in the first message to set up the stream.
+// `add_write_stream` to set up the stream.
 //
 // Subsequent calls must set the `write_value` field to send a value to the
 // corresponding stream.
 message OpenWriteStreamRequest {
   // Adds a write stream.
-  // This field must be set in the first message and unset in subsequent ones.
+  // Callers must set this field *only* in the first message.
   AddStreamRequest add_write_stream = 1;
 
   // The ID of the session this stream belongs to.
@@ -290,8 +329,8 @@ message OpenWriteStreamResponse {
   // that write operation.
   //
   // Note that an OK status means that the value was *written* but does not
-  // guarantee that the message has been received or consumed by the underlying
-  // implementation of the corresponding action.
+  // guarantee that the corresponding action has received or processed the
+  // message.
   google.rpc.Status write_value_response = 2;
 }
 
@@ -335,7 +374,7 @@ message GetPartPropertiesRequest {}
 
 // The value of a single part property. These can be scalar boolean or double
 // values.
-// If a part needs to expose more complex data as a property, it will use
+// If a part needs to expose more complex data as a property, it uses
 // multiple values. You can read and write multiple values atomically using the
 // GetPartProperties and SetPartProperties methods.
 message PartPropertyValue {
@@ -357,12 +396,15 @@ message GetPartPropertiesResponse {
   // 2. The control timestamp may advance slower or faster than wall time,
   //    especially in simulation.
   google.protobuf.Duration timestamp_control = 1;
-  // Wall timestamp when the property values were collected.
+  // Wall timestamp when the property values were collected. This is helpful for
+  // cross-referencing with other Intrinsic services.
   google.protobuf.Timestamp timestamp_wall = 2;
+  // These values are all from the same instant in time.
   map<string, PartPropertyValues> part_properties_by_part_name = 3;
 }
 
 message SetPartPropertiesRequest {
+  // ICON applies all of these properties at the same time.
   map<string, PartPropertyValues> part_properties_by_part_name = 1;
 }
 
@@ -370,7 +412,7 @@ message SetPartPropertiesResponse {}
 
 service IconApi {
   // Gets details of an action type by name. The response's `action_signature`
-  // field will be unset if the requested action type is not found.
+  // field is unset if the requested action type is not found.
   rpc GetActionSignatureByName(GetActionSignatureByNameRequest)
       returns (GetActionSignatureByNameResponse);
 
@@ -379,7 +421,7 @@ service IconApi {
   rpc GetConfig(GetConfigRequest) returns (GetConfigResponse);
 
   // Gets a snapshot of the server's status, including part-specific status info
-  // for all parts. (e.g. a robot arm might report its joint angles).
+  // for all parts. For instance, a robot arm might report its joint angles.
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
 
   // Reports whether an action is compatible with a part or a group of parts.
@@ -391,47 +433,112 @@ service IconApi {
       returns (ListActionSignaturesResponse);
 
   // Lists all parts that are compatible with a list of action types. Each
-  // returned part is compatible with all listed action types. If the list of
-  // action types is empty, returns all parts.
+  // returned part is compatible with all listed action types.
+  // If the list of action types is empty, returns all parts.
   rpc ListCompatibleParts(ListCompatiblePartsRequest)
       returns (ListCompatiblePartsResponse);
 
   // Lists all available parts.
   rpc ListParts(ListPartsRequest) returns (ListPartsResponse);
 
-  // Starts an action session, the parts associated with this session will
-  // remain stopped until a starting action is specified for the part in the
-  // request or an action for the part becomes active due to a reaction. A new
-  // action session starts with a clean slate of actions. The only actions that
-  // will be created initially are those specified in the initial
-  // `OpenSessionRequest`. Multiple action sessions may be active a time,
-  // but any given part can only be associated with one session at a time.
+  // Starts an action session. This is the main entrypoint into the ICON APIs.
+  // ICON allows users to interact with a realtime control system using a few
+  // key abstractions:
+  // * Parts: Each part is a collection of sensors and actuators that form a
+  //          logical unit. Each part offers a number of feature interfaces that
+  //          Actions can interact with.
+  //   Examples include:
+  //   * A robot arm
+  //   * A gripper
+  //   * A laser rangefinder sensor
+  // * Actions: An action is a building block of realtime control behavior. Each
+  //   action has a number of "slots" that each connect to a feature interface
+  //   on a part. Actions can also
+  //   * accept zero or more streaming inputs (see `OpenWriteStream`)
+  //   * publish a single optional streaming output (see
+  //   `GetLatestStreamingOutput`)
+  //   * report state variables, which can trigger reactions
+  // * Reactions: Users can set up custom reactions that trigger based on the
+  //   state variables of a running action. ICON evaluates reactions in hard
+  //   realtime. That is, there is no delay between detecting that a reaction
+  //   _should_ trigger and the desired effect.
+  //   Reactions can affect the ICON server in several ways:
+  //   * Notify gRPC clients of the reaction (see `WatchReactions` below).
+  //   * Start a different action ("if the rangefinder reports a distance below
+  //     0.1m, stop moving and close the gripper").
+  //   * Trigger a signal on the running action, so that it can change its
+  //     behavior.
+  //
+  // Each session can claim zero or more parts. A session without parts can not
+  // run actions, but can still register reactions based on part status. Parts
+  // claimed by one session are claimed until that session ends. Users can start
+  // multiple sessions, but only one session can claim each part at a time.
+  //
+  // The parts that a session claims remain stopped until
+  // * the user explicitly starts an action, or
+  // * a reaction triggers the start of an action
+  //
+  // A new action session starts with only the actions in the initial
+  // `OpenSessionRequest`.
   //
   // The client can signal the end of a session by indicating that writes are
-  // done using the grpc::ClientReaderWriter. When writes are done, the server
-  // will end the session and return the calls finishing status.
+  // done using the grpc::ClientReaderWriter (aka "half-closing" the stream).
+  // ICON then ends the session and returns the final status. This includes
+  // terminating any ongoing `WatchReactions` and `OpenWriteStream` calls for
+  // the same session.
   //
   // If an action session ends for any reason, including the client or server
-  // dropping the call, or a request to end the session, the server will stop
-  // all parts associated with the session and clear the existing action
-  // state machine, removing all existing actions and reactions.
+  // dropping the call, or a request to end the session, the server discards the
+  // session, including all actions and reactions. This stops all parts
+  // associated with the session and activates their safety actions.
   //
-  // Returns an `OpenSessionResponse` in response to each
-  // `OpenSessionRequest` and whenever a reaction occurs.
+  // Publishes an `OpenSessionResponse` when
+  // * ICON finishes processing an incoming `OpenSessionRequest`
+  // * a reaction occurs
   rpc OpenSession(stream OpenSessionRequest)
       returns (stream OpenSessionResponse);
 
-  // Opens a write stream scoped to the originating action session.
+  // Opens a write stream for one action of a given session.
+  //
+  // Each write stream can send streaming input values to its action. Callers
+  // can find information about the streaming inputs offered by an action by
+  // calling `ListActionSignatures()` and inspecting the signature of an action
+  // type.
+  // The signature's `streaming_input_infos` field includes:
+  // * The name of the input.
+  // * A description that explains how the action reacts to input values.
+  // * The proto message type name of the input.
+  // * A FileDescriptorSet with detailed information about the input's message
+  //   type, including all sub-messages. If the client does not have the
+  //   information about the proto in question itself, it can use this
+  //   FileDescriptorSet for introspection, and determine the structure of the
+  //   proto message that way.
+  //
+  // Note that ICON may terminate an `OpenWriteStream` request if the
+  // corresponding session ends for any reason (whether that is a server-side
+  // error or the caller deliberately ending a session).
   rpc OpenWriteStream(stream OpenWriteStreamRequest)
       returns (stream OpenWriteStreamResponse);
 
-  // Requests the latest streaming output value for a given Action. Make sure to
+  // Requests the latest streaming output value for a given action. Make sure to
   // set the gRPC deadline if you do not want the request to block for too long!
   //
-  // Blocks until an initial value is written (or the request deadline expires),
-  // but returns an error immediately if the corresponding Action does not exist
-  // at all. May also return an error immediately if a different instance of the
-  // same Action type is active at the time it is called.
+  // Similar to streaming _inputs_ (see `OpenWriteStream()` above), callers
+  // can find information about the streaming output (if any) offered by an
+  // action by calling `ListActionSignatures()` and inspecting the signature of
+  // an action type. The signature's `streaming_output_info` field includes:
+  // * The name of the output.
+  // * A description that explains when and how the action populates the output.
+  // * The proto message type name of the output.
+  // * A FileDescriptorSet with detailed information about the output's message
+  //   type, including all sub-messages. If the client does not have the
+  //   information about the proto in question itself, it can use this
+  //   FileDescriptorSet for introspection, and determine the structure of the
+  //   proto message that way.
+  //
+  // Blocks until the action writes the first streaming output (or the request
+  // deadline expires), but returns an error immediately if the corresponding
+  // action does not exist at all.
   rpc GetLatestStreamingOutput(GetLatestStreamingOutputRequest)
       returns (GetLatestStreamingOutputResponse);
 
@@ -442,32 +549,46 @@ service IconApi {
   rpc GetPlannedTrajectory(GetPlannedTrajectoryRequest)
       returns (stream GetPlannedTrajectoryResponse);
 
-  // Watches reactions that occur during the action session. The server will
-  // stop sending responses and end the call when the associated action session
-  // ends. The action session must have started prior to making a request. When
-  // the server finishes setting up the reaction watcher, it will send a single
-  // WatchReactionsResponse to indicate readiness.
-  // For each session, only one WatchReactions stream can be open at a time;
-  // otherwise, this returns kUnavailable.
+  // Watches reactions that occur during a particular action session.
+  //
+  // The server stops sending responses and ends the stream when the associated
+  // action session ends.
+  // One can only call `WatchReactions` while there is an active OpenSession
+  // stream with the same session ID.
+  //
+  // When the server finishes setting up the reaction watcher, it sends a
+  // single, empty WatchReactionsResponse to indicate readiness.
+  //
+  // There can be only one WatchReactions stream per session at a time.
+  // Any additional WatchReactions requests return kUnavailable.
   rpc WatchReactions(WatchReactionsRequest)
       returns (stream WatchReactionsResponse);
 
-  // Enables all parts on the server, which performs all steps necessary to get
-  // the parts ready to receive commands.
+  // Enables all parts on the server, which performs all steps
+  // necessary to get the parts ready to receive commands.
+  //
+  // Deprecated. There is no need to call this – ICON automatically enables when
+  // appropriate. While ICON is not enabled, callers cannot start sessions, and
+  // the server terminates any sessions that were started when it was still
+  // enabled.
   rpc Enable(EnableRequest) returns (EnableResponse) {
     option deprecated = true;
   }
 
   // Disables all parts on the server. Ends all currently-active sessions.
+  //
+  // Deprecated. Please file a bug if you encounter a situation where you must
+  // forcibly end sessions that you do not own yourself.
   rpc Disable(DisableRequest) returns (DisableResponse) {
     option deprecated = true;
   }
 
-  // Clears all faults.
+  // Clears all faults. If successful, ICON automatically enables all parts
+  // after this finishes.
   // Returns `OkStatus` if faults were successfully cleared.
-  // Returns `ResourceExhausted` when a fatal fault is being cleared, which is
-  // not completed yet and involves a process restart, indicating that the
-  // client should retry until receiving `OkStatus`.
+  // Returns `ResourceExhausted` when a fatal fault is being cleared,
+  // which is not completed yet and involves a process restart. In this case,
+  // the client should retry until receiving `OkStatus`.
   rpc ClearFaults(ClearFaultsRequest) returns (ClearFaultsResponse);
 
   // Returns the operational status of the server.
@@ -477,14 +598,15 @@ service IconApi {
   // Requests restarting the entire server.
   rpc RestartServer(google.protobuf.Empty) returns (google.protobuf.Empty);
 
-  // Updates the speed override value. Illegal values (not between 0 and 1)
-  // will be rejected.
-  // The speed override value acts as a multiplier to the "nominal" velocity
-  // of compatible actions.
-  // If an action is compatible, it will adjust its motion (even during
-  // execution) accordingly when the speed override changes. For example,
-  // setting a speed override value of 0.1 means that all compatible actions
-  // move at 10% of their original velocity.
+  // Updates the speed override value. The speed override factor must be between
+  // 0 and 1. That is, no "fast-forward" or "rewind", but "pausing" with an
+  // override factor of 0 is possible.
+  //
+  // The speed override value acts as a multiplier to the "nominal" velocity of
+  // compatible actions. If an action is compatible, it will adjust its motion
+  // (even during execution) accordingly when the speed override changes. For
+  // example, setting a speed override value of 0.1 means that all compatible
+  // actions move at 10% of their original velocity.
   //
   // Note that actions may not apply the new value instantaneously. This is
   // because instantaneous changes in velocity would violate acceleration and
@@ -497,9 +619,9 @@ service IconApi {
   rpc GetSpeedOverride(GetSpeedOverrideRequest)
       returns (GetSpeedOverrideResponse);
 
-  // Configure the logging mode. The logging mode defines which robot-status
-  // logs are logged to the cloud. ICON logs only to the cloud if a session is
-  // active. Pusub is not influenced by this setting.
+  // Configures the logging mode. The logging mode defines which robot-status
+  // logs are logged to the cloud. ICON only logs to the cloud if a session is
+  // active. Pubsub and local logging are not influenced by this setting.
   rpc SetLoggingMode(SetLoggingModeRequest) returns (SetLoggingModeResponse);
 
   // Returns the current logging mode.
