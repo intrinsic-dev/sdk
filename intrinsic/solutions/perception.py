@@ -3,11 +3,13 @@
 """Camera access within the workcell API."""
 
 import datetime
+import enum
 import math
 from typing import Mapping, Optional, Tuple, cast
 
 import grpc
 from intrinsic.perception.proto import camera_config_pb2
+from intrinsic.perception.proto import image_buffer_pb2
 from intrinsic.perception.python.camera import data_classes
 from intrinsic.perception.service.proto import camera_server_pb2
 from intrinsic.perception.service.proto import camera_server_pb2_grpc
@@ -16,6 +18,7 @@ from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.solutions import camera_utils
 from intrinsic.solutions import deployments
 from intrinsic.solutions import execution
+from intrinsic.solutions import utils
 from intrinsic.util.grpc import connection
 from intrinsic.util.grpc import error_handling
 from intrinsic.util.grpc import interceptor
@@ -52,6 +55,15 @@ def _get_camera_config(
   if not config.contents.Unpack(camera_config):
     return None
   return camera_config
+
+
+@utils.protoenum(
+    proto_enum_type=image_buffer_pb2.Encoding,
+    unspecified_proto_enum_map_to_none=image_buffer_pb2.Encoding.ENCODING_UNSPECIFIED,
+    strip_prefix='ENCODING_',
+)
+class ImageEncoding(enum.Enum):
+  """Represents the encoding of an image."""
 
 
 class Camera:
@@ -108,6 +120,7 @@ class Camera:
           seconds=_MAX_FRAME_WAIT_TIME_SECONDS
       ),
       skip_undistortion: bool = False,
+      encoding: Optional[ImageEncoding] = None,
   ) -> camera_utils.Frame:
     """Performs grpc request to retrieve a frame from the camera.
 
@@ -118,6 +131,8 @@ class Camera:
     Args:
       timeout: Timeout duration for GetFrame() service calls.
       skip_undistortion: If set to true the returned frame will be distorted.
+      encoding: The encoding of the image (UNSPECIFIED, PNG, JPEG, WEPB). If not
+        set defaults to uncompressed.
 
     Returns:
       The acquired frame.
@@ -138,7 +153,11 @@ class Camera:
     if not self._handle:
       self._reinitialize_from_resources(deadline)
 
-    get_frame_func = lambda: self._get_frame(deadline, skip_undistortion)
+    get_frame_func = lambda: self._get_frame(
+        deadline,
+        skip_undistortion,
+        encoding,
+    )
     try:
       response = get_frame_func()
     except grpc.RpcError as e:
@@ -265,6 +284,7 @@ class Camera:
       self,
       deadline: datetime.datetime,
       skip_undistortion: bool,
+      encoding: Optional[ImageEncoding] = None,
   ) -> camera_server_pb2.GetFrameResponse:
     """Grabs and returns frame from camera service."""
     timeout = deadline - datetime.datetime.now()
@@ -275,6 +295,8 @@ class Camera:
     request.timeout.FromTimedelta(timeout)
     if skip_undistortion:
       request.post_processing.skip_undistortion = True
+    if encoding is not None:
+      request.post_processing.image_encoding = encoding.value
     response, _ = self._stub.GetFrame.with_call(
         request, timeout=timeout.seconds
     )
