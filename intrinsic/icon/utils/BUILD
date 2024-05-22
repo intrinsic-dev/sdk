@@ -153,7 +153,6 @@ cc_test(
         "//intrinsic/icon/release:source_location",
         "//intrinsic/util/testing:gtest_wrapper",
         "//intrinsic/util/thread",
-        "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
     ],
 )

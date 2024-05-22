@@ -10,7 +10,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "intrinsic/icon/release/source_location.h"
 #include "intrinsic/icon/utils/log_internal.h"
@@ -80,6 +79,7 @@ TEST(IconUtilsLogTest, Throttles) {
 
 TEST(IconUtilsLogTest, DefaultLoggerDoesNotAllocate) {
   GlobalLogContext::SetThreadLocalLogSink(nullptr);
+  RtLogInitForThisThread();
   double d = 0.5;
   std::string s = "text";
   INTRINSIC_RT_LOG(INFO) << "dof:" << 3 << " d:" << d;
@@ -92,6 +92,7 @@ TEST(IconUtilsLogTest, DefaultLoggerDoesNotAllocate) {
 
 TEST(IconUtilsLogTest, DefaultLoggerIsThreadSafe) {
   GlobalLogContext::SetThreadLocalLogSink(nullptr);
+  RtLogInitForThisThread();
   auto worker = []() {
     for (int i = 0; i < 10; ++i) {
       std::string s = "text";
