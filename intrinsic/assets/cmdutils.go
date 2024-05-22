@@ -75,6 +75,13 @@ const (
 	// KeySkipDirectUpload is boolean flag controlling direct upload behavior
 	KeySkipDirectUpload = "skip_direct_upload"
 
+	// Flags copied from orgutil for consistency
+
+	// KeyProject is used as central flag name for passing a project name to inctl.
+	KeyProject = orgutil.KeyProject
+	// KeyOrganization is used as central flag name for passing an organization name to inctl.
+	KeyOrganization = orgutil.KeyOrganization
+
 	envPrefix = "intrinsic"
 
 	gcpEndpointsURLFormat = "dns:///www.endpoints.%s.cloud.goog:443"
@@ -271,22 +278,22 @@ func (cf *CmdFlags) AddFlagsProjectOrg() {
 
 // AddFlagProject adds a flag for the GCP project.
 func (cf *CmdFlags) AddFlagProject() {
-	cf.RequiredEnvString(orgutil.KeyProject, "", "The Google Cloud Platform (GCP) project to use.")
+	cf.RequiredEnvString(KeyProject, "", "The Google Cloud Platform (GCP) project to use.")
 }
 
 // AddFlagProjectOptional adds an optional flag for the GCP project.
 func (cf *CmdFlags) AddFlagProjectOptional() {
-	cf.OptionalEnvString(orgutil.KeyProject, "", "The Google Cloud Platform (GCP) project to use.")
+	cf.OptionalEnvString(KeyProject, "", "The Google Cloud Platform (GCP) project to use.")
 }
 
 // GetFlagProject gets the value of the project flag added by AddFlagProject.
 func (cf *CmdFlags) GetFlagProject() string {
-	return cf.GetString(orgutil.KeyProject)
+	return cf.GetString(KeyProject)
 }
 
 // GetFlagOrganization gets the value of the project flag added by AddFlagProject.
 func (cf *CmdFlags) GetFlagOrganization() string {
-	return cf.GetString(orgutil.KeyOrganization)
+	return cf.GetString(KeyOrganization)
 }
 
 // AddFlagRegistry adds a flag for the registry when side-loading an asset.
@@ -601,4 +608,15 @@ func (cf *CmdFlags) CreateRegistryOpts(ctx context.Context) imageutils.RegistryO
 		opts.BasicAuth = *auth
 	}
 	return opts
+}
+
+// MarkHidden marks all flags in the list as hidden for the given command
+func (cf *CmdFlags) MarkHidden(flagsToHide ...string) {
+	flags := cf.cmd.PersistentFlags()
+	for _, flagName := range flagsToHide {
+		flag := flags.Lookup(flagName)
+		if flag != nil {
+			flag.Hidden = true
+		}
+	}
 }
