@@ -113,6 +113,7 @@ proto_library(
     deps = [
         ":image_buffer_proto",
         "//intrinsic/math/proto:pose_proto",
+        "@com_google_protobuf//:any_proto",
     ],
 )
 
