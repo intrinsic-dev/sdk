@@ -270,13 +270,8 @@ def _gen_init_docstring(
           param_defaults
       )
 
-    skill_params = skill_parameters.SkillParameters(
-        param_defaults, info.skill_proto.parameter_description
-    )
     params = skill_utils.extract_docstring_from_message(
-        param_defaults,
-        dict(info.skill_proto.parameter_description.parameter_field_comments),
-        skill_params,
+        param_defaults, info.skill_proto.parameter_description
     )
     param_names = [p.name for p in params]
 
@@ -403,11 +398,11 @@ def _gen_init_params(
 
     # Extract those fields from the default parameter proto which may contain
     # actual default values.
-    skill_params = skill_parameters.SkillParameters(
-        param_defaults, info.skill_proto.parameter_description
-    )
     param_info = skill_utils.extract_parameter_information_from_message(
-        param_defaults, skill_params, wrapper_classes, enum_classes
+        param_defaults,
+        info.skill_proto.parameter_description,
+        wrapper_classes,
+        enum_classes,
     )
     if param_info:
       params, param_names = map(list, zip(*param_info))
@@ -558,9 +553,9 @@ def gen_skill_class(
       type_class,
       info.skill_name,
       info.package_name,
+      info.skill_proto.parameter_description,
       nested_classes,
       enum_descriptors,
-      dict(info.skill_proto.parameter_description.parameter_field_comments),
   )
 
   init_fun = _gen_init_fun(

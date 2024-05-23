@@ -23,11 +23,13 @@ _MESSAGE_WITH_DEFAULT_VALUES = test_skill_params_pb2.TestMessage(
     my_bool=False,
     my_string='bar',
     sub_message=test_skill_params_pb2.SubMessage(name='baz'),
+    optional_sub_message=test_skill_params_pb2.SubMessage(name='quz'),
     my_repeated_doubles=[-5, 10],
     repeated_submessages=[
         test_skill_params_pb2.SubMessage(name='foo'),
         test_skill_params_pb2.SubMessage(name='bar'),
     ],
+    my_required_int32=42,
     my_oneof_double=1.1,
     pose=math_proto_conversion.pose_to_proto(data_types.Pose3()),
     int32_string_map={1: 'foo'},
@@ -75,6 +77,7 @@ class SkillParametersTest(parameterized.TestCase):
               'my_bool',
               'my_string',
               'sub_message',
+              'optional_sub_message',
               'string_int32_map',
               'int32_string_map',
               'string_message_map',
@@ -99,56 +102,6 @@ class SkillParametersTest(parameterized.TestCase):
     self.assertCountEqual(
         skill_params.get_required_field_names(), expected_required_fields
     )
-
-  @parameterized.named_parameters(
-      ('double_default', 'my_double'),
-      ('float_default', 'my_float'),
-      ('int32_default', 'my_int32'),
-      ('int64_default', 'my_int64'),
-      ('uint32_default', 'my_uint32'),
-      ('bool_default', 'my_bool'),
-      ('string_default', 'my_string'),
-      ('oneof_default', 'my_oneof_double'),
-  )
-  def test_field_with_defaults(self, field_with_default):
-    skill_info = self._utils.create_test_skill_info(
-        skill_id='ai.intrinsic.my_skill',
-        parameter_defaults=_MESSAGE_WITH_DEFAULT_VALUES,
-    )
-    skill_params = skill_parameters.SkillParameters(
-        default_message=_MESSAGE_WITH_DEFAULT_VALUES,
-        parameter_description=skill_info.parameter_description,
-    )
-
-    self.assertTrue(skill_params.has_default_value(field_with_default))
-
-  @parameterized.named_parameters(
-      ('non_opt', 'sub_message'),
-      ('non_opt_built_in', 'sub_message'),
-      ('no_default', 'optional_sub_message'),
-  )
-  def test_field_without_defaults(self, field_without_default):
-    skill_info = self._utils.create_test_skill_info(
-        skill_id='ai.intrinsic.my_skill',
-        parameter_defaults=_MESSAGE_WITH_DEFAULT_VALUES,
-    )
-    skill_params = skill_parameters.SkillParameters(
-        default_message=_MESSAGE_WITH_DEFAULT_VALUES,
-        parameter_description=skill_info.parameter_description,
-    )
-    self.assertFalse(skill_params.has_default_value(field_without_default))
-
-  def test_is_optional_with_default_raises(self):
-    skill_info = self._utils.create_test_skill_info(
-        skill_id='ai.intrinsic.my_skill',
-        parameter_defaults=_MESSAGE_WITH_DEFAULT_VALUES,
-    )
-    skill_params = skill_parameters.SkillParameters(
-        default_message=_MESSAGE_WITH_DEFAULT_VALUES,
-        parameter_description=skill_info.parameter_description,
-    )
-    with self.assertRaises(NameError):
-      skill_params.has_default_value('n/a')
 
   @parameterized.named_parameters(
       ('my_double_is_missing_in_test_message', 'my_double'),
@@ -179,15 +132,118 @@ class SkillParametersTest(parameterized.TestCase):
   def test_existing_fields(self, field_name, test_message):
     skill_info = self._utils.create_test_skill_info(
         skill_id='ai.intrinsic.my_skill',
-        parameter_defaults=_MESSAGE_WITH_DEFAULT_VALUES,
+        parameter_defaults=test_message,
     )
     skill_params = skill_parameters.SkillParameters(
-        default_message=_MESSAGE_WITH_DEFAULT_VALUES,
+        default_message=test_message,
         parameter_description=skill_info.parameter_description,
     )
 
     self.assertTrue(
         skill_params.message_has_optional_field(field_name, test_message)
+    )
+
+  @parameterized.named_parameters(
+      (
+          'primitive_field',
+          'my_required_int32',
+          _MESSAGE_WITHOUT_DEFAULTS,
+          False,
+      ),
+      (
+          'optional_primitive_field',
+          'my_double',
+          _MESSAGE_WITHOUT_DEFAULTS,
+          True,
+      ),
+      (
+          'primitive_field_with_default_value',
+          'my_required_int32',
+          _MESSAGE_WITH_DEFAULT_VALUES,
+          False,
+      ),
+      (
+          'optional_primitive_field_with_default_value',
+          'my_double',
+          _MESSAGE_WITH_DEFAULT_VALUES,
+          False,
+      ),
+      (
+          'message_field',
+          'sub_message',
+          _MESSAGE_WITHOUT_DEFAULTS,
+          False,
+      ),
+      (
+          'optional_message_field',
+          'optional_sub_message',
+          _MESSAGE_WITHOUT_DEFAULTS,
+          True,
+      ),
+      (
+          'message_field_with_default_value',
+          'sub_message',
+          _MESSAGE_WITH_DEFAULT_VALUES,
+          False,
+      ),
+      (
+          'optional_message_field_with_default_value',
+          'optional_sub_message',
+          _MESSAGE_WITH_DEFAULT_VALUES,
+          False,
+      ),
+      (
+          'oneof_field',
+          'my_oneof_double',
+          _MESSAGE_WITHOUT_DEFAULTS,
+          True,
+      ),
+      (
+          'oneof_field_with_default_value',
+          'my_oneof_double',
+          _MESSAGE_WITH_DEFAULT_VALUES,
+          True,
+      ),
+      (
+          'repeated_field',
+          'my_repeated_doubles',
+          _MESSAGE_WITHOUT_DEFAULTS,
+          False,
+      ),
+      (
+          'repeated_field_with_default_value',
+          'my_repeated_doubles',
+          _MESSAGE_WITH_DEFAULT_VALUES,
+          False,
+      ),
+      (
+          'map_field',
+          'int32_string_map',
+          _MESSAGE_WITHOUT_DEFAULTS,
+          False,
+      ),
+      (
+          'map_field_with_default_value',
+          'int32_string_map',
+          _MESSAGE_WITH_DEFAULT_VALUES,
+          False,
+      ),
+  )
+  def test_is_optional_in_python_signature(
+      self, field_name, test_message, expected_result
+  ):
+    skill_info = self._utils.create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=test_message,
+    )
+    skill_params = skill_parameters.SkillParameters(
+        default_message=test_message,
+        parameter_description=skill_info.parameter_description,
+    )
+
+    self.assertEqual(
+        skill_params.is_optional_in_python_signature(field_name),
+        expected_result,
     )
 
 

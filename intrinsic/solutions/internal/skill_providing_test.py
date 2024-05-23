@@ -1110,7 +1110,7 @@ class SkillsTest(parameterized.TestCase):
         'intrinsic.solutions.skills',
     )
 
-  def test_skill_signature(self):
+  def test_skill_signature_without_default_values(self):
     skill_info = self._utils.create_test_skill_info(
         skill_id='ai.intrinsic.my_skill',
         parameter_defaults=test_skill_params_pb2.TestMessage(),
@@ -1120,44 +1120,42 @@ class SkillsTest(parameterized.TestCase):
     # pyformat: disable
     expected_signature = (
         '(*, '
-        'my_double: float, '
-        'my_float: float, '
-        'my_int32: int, '
-        'my_int64: int, '
-        'my_uint32: int, '
-        'my_uint64: int, '
-        'my_bool: bool, '
-        'my_string: str, '
         'sub_message:'
         ' intrinsic.solutions.skills'
         '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
-        'optional_sub_message:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
         'my_required_int32: int, '
-        'my_oneof_double: float, '
-        'my_oneof_sub_message:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
         'pose:'
         ' intrinsic.solutions.skills'
         '.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
-        'foo:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo, '
-        'enum_v:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum, '
         'executive_test_message:'
         ' intrinsic.solutions.skills'
         '.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage, '
         'non_unique_field_name:'
         ' intrinsic.solutions.skills'
         '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType, '
+        'my_double: Optional[float] = None, '
+        'my_float: Optional[float] = None, '
+        'my_int32: Optional[int] = None, '
+        'my_int64: Optional[int] = None, '
+        'my_uint32: Optional[int] = None, '
+        'my_uint64: Optional[int] = None, '
+        'my_bool: Optional[bool] = None, '
+        'my_string: Optional[str] = None, '
+        'optional_sub_message:'
+        ' Optional[intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = None, '
         'my_repeated_doubles: Sequence[float] = [], '
         'repeated_submessages:'
         ' Sequence[intrinsic.solutions.skills'
         '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = [], '
+        'my_oneof_double: Optional[float] = None, '
+        'my_oneof_sub_message:'
+        ' Optional[intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = None, '
+        'foo: Optional[intrinsic.solutions.skills.ai'
+        '.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo] = None, '
+        'enum_v: Optional[intrinsic.solutions.skills.ai'
+        '.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum] = None, '
         'string_int32_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
         'int32_string_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
         'string_message_map: dict[typing.Union[str, int, bool], typing.Any] = {})'
@@ -1188,32 +1186,60 @@ class SkillsTest(parameterized.TestCase):
     signature = inspect.signature(my_skill.__init__)
 
     expected_signature = (
-        '(*, sub_message:'
-        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage,'
-        ' my_required_int32: int, my_oneof_sub_message:'
-        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage,'
-        ' pose:'
-        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.Pose,'
-        ' executive_test_message:'
-        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage,'
-        ' non_unique_field_name:'
-        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType,'
-        ' my_double: float = 2.5, my_float: float = -1.5, my_int32: int = 5,'
-        ' my_int64: int = 9, my_uint32: int = 11, my_uint64: int = 21, my_bool:'
-        " bool = False, my_string: str = 'bar', optional_sub_message:"
-        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage'
-        ' = name: "quz"\n, my_repeated_doubles: Sequence[float] = [-5.5, 10.5],'
-        ' repeated_submessages:'
-        ' Sequence[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage]'
-        ' = [name: "foo"\n, name: "bar"\n], my_oneof_double: float = 1.5, foo:'
-        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo'
-        ' = bar {\n  test: "test"\n}\n, enum_v:'
-        ' intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum'
-        ' = 3, string_int32_map: dict[typing.Union[str, int, bool], typing.Any]'
-        " = {'foo': 1}, int32_string_map: dict[typing.Union[str, int, bool],"
-        " typing.Any] = {3: 'foobar'}, string_message_map:"
-        " dict[typing.Union[str, int, bool], typing.Any] = {'bar':"
-        ' int32_value: 1\n})'
+        '(*, '
+        'my_double: float = 2.5, '
+        'my_float: float = -1.5, '
+        'my_int32: int = 5, '
+        'my_int64: int = 9, '
+        'my_uint32: int = 11, '
+        'my_uint64: int = 21, '
+        'my_bool: bool = False, '
+        "my_string: str = 'bar', "
+        'sub_message:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage = name:'
+        ' "baz"\n, '
+        'optional_sub_message:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage'
+        ' = name: "quz"\n, '
+        'my_repeated_doubles: Sequence[float] = [-5.5, 10.5], '
+        'repeated_submessages:'
+        ' Sequence[intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage]'
+        ' = [name: "foo"\n, name: "bar"\n], '
+        'my_required_int32: int = 42, '
+        'my_oneof_double: Optional[float] = 1.5, '
+        'my_oneof_sub_message:'
+        ' Optional[intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = None, '
+        'pose:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.Pose = Pose3('
+        'Rotation3(Quaternion([0.5, 0.5, 0.5, 0.5])),array([0., 0., 0.])), '
+        'foo:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo'
+        ' = bar {\n  test: "test"\n}\n, '
+        'enum_v:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum'
+        ' = 3, '
+        'string_int32_map: dict[typing.Union[str, int, bool], typing.Any] ='
+        " {'foo': 1}, "
+        'int32_string_map: dict[typing.Union[str, int, bool], typing.Any]'
+        " = {3: 'foobar'}, "
+        'string_message_map: dict[typing.Union[str, int, bool], typing.Any]'
+        " = {'bar': int32_value: 1\n}, "
+        'executive_test_message:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage ='
+        ' int32_value: 123\n, '
+        'non_unique_field_name:'
+        ' intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType'
+        ' = non_unique_field_name {\n}\n'
+        ')'
     )
     self.assertSignature(signature, expected_signature)
 
@@ -1264,25 +1290,17 @@ Args:
         Resource with capability some-type-a
     b:
         Resource with capability some-type-b
-    executive_test_message:
-        Mockup comment
     my_oneof_sub_message:
         Mockup comment
-    my_required_int32:
-        Mockup comment
-    non_unique_field_name:
-        Mockup comment
-    pose:
-        Mockup comment
     return_value_key:
-        Blackboard key where to store the return value"""
-    docstring += """
-    sub_message:
-        Mockup comment"""
-    docstring += """
+        Blackboard key where to store the return value
     enum_v:
         Mockup comment
         Default value: 3
+    executive_test_message:
+        Mockup comment
+        Default value: int32_value: 123
+
     foo:
         Mockup comment
         Default value: bar {
@@ -1313,6 +1331,9 @@ Args:
     my_repeated_doubles:
         Mockup comment
         Default value: [-5.5, 10.5]
+    my_required_int32:
+        Mockup comment
+        Default value: 42
     my_string:
         Mockup comment
         Default value: bar
@@ -1322,10 +1343,18 @@ Args:
     my_uint64:
         Mockup comment
         Default value: 21
+    non_unique_field_name:
+        Mockup comment
+        Default value: non_unique_field_name {
+}
+
     optional_sub_message:
         Mockup comment
         Default value: name: "quz"
 
+    pose:
+        Mockup comment
+        Default value: Pose3(Rotation3([0.5i + 0.5j + 0.5k + 0.5]),[0. 0. 0.])
     repeated_submessages:
         Mockup comment
         Default value: [name: "foo"
@@ -1337,7 +1366,13 @@ Args:
     string_message_map:
         Mockup comment
         Default value: {'bar': int32_value: 1
-}
+}"""
+    docstring += """
+    sub_message:
+        Mockup comment
+        Default value: name: "baz"
+"""
+    docstring += """
 
 Returns:
     enum_v:
@@ -1963,44 +1998,42 @@ Fields:
     # pyformat: disable
     expected_signature = (
         '(*, '
-        'my_double: float, '
-        'my_float: float, '
-        'my_int32: int, '
-        'my_int64: int, '
-        'my_uint32: int, '
-        'my_uint64: int, '
-        'my_bool: bool, '
-        'my_string: str, '
         'sub_message:'
         ' intrinsic.solutions.skills'
         '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
-        'optional_sub_message:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
         'my_required_int32: int, '
-        'my_oneof_double: float, '
-        'my_oneof_sub_message:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
         'pose:'
         ' intrinsic.solutions.skills'
         '.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
-        'foo:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo, '
-        'enum_v:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum, '
         'executive_test_message:'
         ' intrinsic.solutions.skills'
         '.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage, '
         'non_unique_field_name:'
         ' intrinsic.solutions.skills'
         '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType, '
+        'my_double: Optional[float] = None, '
+        'my_float: Optional[float] = None, '
+        'my_int32: Optional[int] = None, '
+        'my_int64: Optional[int] = None, '
+        'my_uint32: Optional[int] = None, '
+        'my_uint64: Optional[int] = None, '
+        'my_bool: Optional[bool] = None, '
+        'my_string: Optional[str] = None, '
+        'optional_sub_message:'
+        ' Optional[intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = None, '
         'my_repeated_doubles: Sequence[float] = [], '
         'repeated_submessages:'
         ' Sequence[intrinsic.solutions.skills'
         '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = [], '
+        'my_oneof_double: Optional[float] = None, '
+        'my_oneof_sub_message:'
+        ' Optional[intrinsic.solutions.skills'
+        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = None, '
+        'foo: Optional[intrinsic.solutions.skills.ai'
+        '.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo] = None, '
+        'enum_v: Optional[intrinsic.solutions.skills.ai'
+        '.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum] = None, '
         'string_int32_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
         'int32_string_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
         'string_message_map: dict[typing.Union[str, int, bool], typing.Any] = {})'

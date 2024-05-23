@@ -1094,22 +1094,22 @@ def _gen_wrapper_class(
 def _gen_init_fun(
     wrapped_type: Type[message.Message],
     skill_name: str,
+    parameter_description: skills_pb2.ParameterDescription,
     type_name: str,
     wrapper_classes: dict[str, Type[MessageWrapper]],
     enum_classes: dict[str, Type[enum.IntEnum]],
-    field_doc_strings: Dict[str, str],
 ) -> Callable[[Any, Any], None]:
   """Generates custom __init__ class method with proper auto-completion info.
 
   Args:
     wrapped_type: Message to wrap.
     skill_name: Name of the parent skill.
+    parameter_description: The skill's parameter description.
     type_name: Type name of the object to wrap.
     wrapper_classes: Map from proto message names to corresponding message
       wrapper classes.
     enum_classes: Map from full proto enum names to corresponding enum wrapper
       classes.
-    field_doc_strings: dict mapping from field name to doc string comment.
 
   Returns:
     A function suitable to be used as __init__ function for a MessageWrapper
@@ -1131,13 +1131,15 @@ def _gen_init_fun(
           inspect.Parameter.POSITIONAL_OR_KEYWORD,
           annotation="MessageWrapper_" + type_name,
       )
-  ] + _gen_init_params(wrapped_type, wrapper_classes, enum_classes)
+  ] + _gen_init_params(
+      wrapped_type, wrapper_classes, enum_classes, parameter_description
+  )
   new_init_fun.__signature__ = inspect.Signature(params)
   new_init_fun.__annotations__ = collections.OrderedDict(
       [(p.name, p.annotation) for p in params]
   )
   new_init_fun.__doc__ = _gen_init_docstring(
-      wrapped_type, skill_name, field_doc_strings
+      wrapped_type, skill_name, parameter_description
   )
   return new_init_fun
 
@@ -1226,14 +1228,14 @@ def append_used_proto_full_names(
 def _gen_init_docstring(
     wrapped_type: Type[message.Message],
     skill_name: str,
-    field_doc_strings: Dict[str, str],
+    parameter_description: skills_pb2.ParameterDescription,
 ) -> str:
   """Generates the __init__ docstring for a message wrapper class.
 
   Args:
     wrapped_type: Message to wrap.
     skill_name: Name of the parent skill.
-    field_doc_strings: Dict mapping from field name to doc string comment.
+    parameter_description: The skill's parameter description.
 
   Returns:
     Python documentation string.
@@ -1246,7 +1248,7 @@ def _gen_init_docstring(
   ]
 
   message_fields = extract_docstring_from_message(
-      param_defaults, field_doc_strings
+      param_defaults, parameter_description
   )
 
   append_used_proto_full_names(skill_name, message_fields, docstring)
@@ -1273,6 +1275,7 @@ def _gen_init_params(
     wrapped_type: Type[message.Message],
     wrapper_classes: dict[str, Type[MessageWrapper]],
     enum_classes: dict[str, Type[enum.IntEnum]],
+    parameter_description: skills_pb2.ParameterDescription,
 ) -> List[inspect.Parameter]:
   """Create argument typing information for a given message.
 
@@ -1282,13 +1285,14 @@ def _gen_init_params(
       wrapper classes.
     enum_classes: Map from full proto enum names to corresponding enum wrapper
       classes.
+    parameter_description: The skill's parameter description.
 
   Returns:
     List of extracted parameters with typing information.
   """
   defaults = wrapped_type()
   param_info = extract_parameter_information_from_message(
-      defaults, None, wrapper_classes, enum_classes
+      defaults, parameter_description, wrapper_classes, enum_classes
   )
   params = [p for p, _ in param_info]
 
@@ -1508,11 +1512,11 @@ def update_message_class_modules(
     cls: Type[Any],
     skill_name: str,
     skill_package: str,
+    parameter_description: skills_pb2.ParameterDescription,
     nested_classes: list[
         tuple[str, Type[message.Message], descriptor.FieldDescriptor]
     ],
     enum_descriptors: dict[str, descriptor.EnumDescriptor],
-    field_doc_strings: dict[str, str],
 ) -> tuple[dict[str, Type[MessageWrapper]], dict[str, Type[enum.IntEnum]]]:
   """Updates given class with type aliases.
 
@@ -1522,10 +1526,10 @@ def update_message_class_modules(
     cls: class to modify
     skill_name: Name of the skill to correspoding to 'cls'.
     skill_package: Package name of the skill to correspoding to 'cls'.
+    parameter_description: The skill's parameter description.
     nested_classes: Message classes to be attached to the skill class.
     enum_descriptors: Map from full proto enum names to enum descriptors,
       containing enums for which to attach enum classes to the skill class.
-    field_doc_strings: dict mapping from field name to doc string comment.
 
   Returns:
     A tuple of 1) a map from proto message names to corresponding message
@@ -1547,7 +1551,7 @@ def update_message_class_modules(
           message_type,
           skill_name,
           skill_package,
-          field_doc_strings,
+          dict(parameter_description.parameter_field_comments),
       )
       wrapper_classes[field.message_type.full_name] = wrapper_class
 
@@ -1558,10 +1562,10 @@ def update_message_class_modules(
     wrapper_class.__init__ = _gen_init_fun(
         wrapper_class.wrapped_type,
         skill_name,
+        parameter_description,
         message_full_name,
         wrapper_classes,
         enum_classes,
-        field_doc_strings,
     )
 
   # Attach message classes to skill class in sorted order to ensure that nested
@@ -1669,6 +1673,7 @@ def deconflict_param_and_resources(
 
 def _extract_field_type_from_message_field(
     field: descriptor.FieldDescriptor,
+    skill_params: skill_parameters.SkillParameters,
     wrapper_classes: dict[str, Type[MessageWrapper]],
     enum_classes: dict[str, Type[enum.IntEnum]],
 ) -> Type[Any]:
@@ -1679,6 +1684,7 @@ def _extract_field_type_from_message_field(
 
   Args:
     field: The field for which to extract the Pythonic type.
+    skill_params: Utility class to inspect the skill's parameters.
     wrapper_classes: Map from proto message names to corresponding message
       wrapper classes.
     enum_classes: Map from full proto enum names to corresponding enum wrapper
@@ -1687,31 +1693,41 @@ def _extract_field_type_from_message_field(
   Returns:
     The Pythonic type of the given field.
   """
-  if field.label == descriptor.FieldDescriptor.LABEL_REPEATED:
-    if (
-        field.type == descriptor.FieldDescriptor.TYPE_MESSAGE
-        and field.message_type.GetOptions().map_entry
-    ):
-      return dict[Union[str, int, bool], Any]
-    else:
-      return repeated_pythonic_field_type(field, wrapper_classes, enum_classes)
+  if skill_params.is_map_field(field.name):
+    field_type = dict[Union[str, int, bool], Any]
+  elif skill_params.is_repeated_field(field.name):
+    field_type = repeated_pythonic_field_type(
+        field, wrapper_classes, enum_classes
+    )
   else:
-    return pythonic_field_type(field, wrapper_classes, enum_classes)
+    # Singular field (possibly optional or in a oneof).
+    field_type = pythonic_field_type(field, wrapper_classes, enum_classes)
+
+  if skill_params.is_optional_in_python_signature(field.name):
+    field_type = Optional[field_type]  # pytype: disable=invalid-annotation
+
+  return field_type
 
 
 def _extract_default_value_from_message_field(
     field: descriptor.FieldDescriptor,
     param_defaults: message.Message,
-    skill_params: Optional[skill_parameters.SkillParameters],
+    skill_params: skill_parameters.SkillParameters,
 ) -> tuple[bool, Any]:
   """Extracts the pythonic default value of the given field.
 
   Extracts the default value of the given message field to be used in the Python
   signature of a skill or message wrapper class.
 
+  This method is the authority for whether we indicate to a user that a skill
+  parameter is required and should be passed explicitly to the skill. If the
+  Python signature has a default value, the parameter is considered an optional
+  skill parameter and can be omitted.
+
   Args:
     field: The field for which to extract the Pythonic type.
-    param_defaults: The message filled with default parameters.
+    param_defaults: The skill's default parameter values or - for message
+      wrapper classes - an instance of the default message.
     skill_params: Utility class to inspect the skill's parameters.
 
   Returns:
@@ -1720,46 +1736,81 @@ def _extract_default_value_from_message_field(
     <default_value> can be None, i.e., the boolean is necessary to distinguish
     between 'no default value' and 'default value is None'.
   """
-  if field.label == descriptor.FieldDescriptor.LABEL_REPEATED:
-    if (
-        field.type == descriptor.FieldDescriptor.TYPE_MESSAGE
-        and field.message_type.GetOptions().map_entry
-    ):
-      map_field_default = getattr(param_defaults, field.name)
-      value_type = field.message_type.fields_by_name["value"]
-      if value_type.type == descriptor.FieldDescriptor.TYPE_MESSAGE:
-        return True, {
-            k: pythonic_field_default_value(v, value_type)
-            for (k, v) in map_field_default.items()
-        }
-      else:
-        return True, map_field_default
+  if skill_params.is_map_field(field.name):
+    # Map fields always are an optional skill parameter and have a default value
+    # (either user-provided or {}).
+    map_field_default = getattr(param_defaults, field.name)
+    value_type = field.message_type.fields_by_name["value"]
+    if value_type.type == descriptor.FieldDescriptor.TYPE_MESSAGE:
+      return True, {
+          k: pythonic_field_default_value(v, value_type)
+          for (k, v) in map_field_default.items()
+      }
     else:
-      repeated_field_default = getattr(param_defaults, field.name)
-      return True, [
-          pythonic_field_default_value(value, field)
-          for value in repeated_field_default
-      ]
+      return True, map_field_default
+  elif skill_params.is_repeated_field(field.name):
+    # Repeated fields always are an optional skill parameter and have a default
+    # value (either user-provided or []).
+    repeated_field_default = getattr(param_defaults, field.name)
+    return True, [
+        pythonic_field_default_value(value, field)
+        for value in repeated_field_default
+    ]
   else:
-    if skill_params and skill_params.has_default_value(field.name):
-      return True, pythonic_field_default_value(
-          getattr(param_defaults, field.name), field
-      )
+    # Singular fields
+    if skill_params.is_oneof_field(
+        field.name
+    ) or skill_params.field_is_marked_optional(field.name):
+      # 'optional' and 'oneof' fields always are an optional skill parameter.
+      # There either is a user-provided default value or the default value is
+      # None to indicate that the parameter can be omitted.
+      if param_defaults.HasField(field.name):
+        return True, pythonic_field_default_value(
+            getattr(param_defaults, field.name), field
+        )
+      else:
+        return True, None
+    else:
+      # Fields that are not 'optional' or 'oneof' are optional skill parameters
+      # if there is a user-provided default value.
+      if field.type == descriptor.FieldDescriptor.TYPE_MESSAGE:
+        # For singular message fields we have reliable presence information for
+        # the default value.
+        if param_defaults.HasField(field.name):
+          return True, pythonic_field_default_value(
+              getattr(param_defaults, field.name), field
+          )
+      else:
+        # For singular primitive fields we do not have reliable field presence
+        # information for the default value. We do a best effort check: If the
+        # default message has the proto default value we assume that no default
+        # value is set.
+        primitive_field_default = param_defaults.DESCRIPTOR.fields_by_name[
+            field.name
+        ].default_value
+        default_value = getattr(param_defaults, field.name)
+        if default_value != primitive_field_default:
+          return True, pythonic_field_default_value(default_value, field)
 
+  # Field is a required skill parameter and has no default value.
   return False, None
 
 
 def extract_parameter_information_from_message(
     param_defaults: message.Message,
-    skill_params: Optional[skill_parameters.SkillParameters],
+    parameter_description: skills_pb2.ParameterDescription,
     wrapper_classes: dict[str, Type[MessageWrapper]],
     enum_classes: dict[str, Type[enum.IntEnum]],
 ) -> list[tuple[inspect.Parameter, str]]:
-  """Extracts signature information from message and SkillParameters.
+  """Extracts signature parameters for the fields of the given message.
+
+  Extracts signature parameters for the fields of the given message to be used
+  in the Python signature of a skill or message wrapper class.
 
   Args:
-    param_defaults: The message filled with default parameters.
-    skill_params: Utility class to inspect the skill's parameters.
+    param_defaults: The skill's default parameter values or - for message
+      wrapper classes - an instance of the default message.
+    parameter_description: The skill's parameter description.
     wrapper_classes: Map from proto message names to corresponding message
       wrapper classes.
     enum_classes: Map from full proto enum names to corresponding enum wrapper
@@ -1770,9 +1821,13 @@ def extract_parameter_information_from_message(
   """
   params: List[Tuple[inspect.Parameter, str]] = []
 
+  skill_params = skill_parameters.SkillParameters(
+      param_defaults, parameter_description
+  )
+
   for field in param_defaults.DESCRIPTOR.fields:
     field_type = _extract_field_type_from_message_field(
-        field, wrapper_classes, enum_classes
+        field, skill_params, wrapper_classes, enum_classes
     )
     has_default_value, default_value = (
         _extract_default_value_from_message_field(
@@ -1797,15 +1852,16 @@ def extract_parameter_information_from_message(
 
 def extract_docstring_from_message(
     defaults: message.Message,
-    comments: Dict[str, str],
-    skill_params: Optional[skill_parameters.SkillParameters] = None,
+    parameter_description: skills_pb2.ParameterDescription,
 ) -> List[ParameterInformation]:
-  """Extracts docstring information from message and SkillParameters.
+  """Extracts docstring information for the fields of the given message.
+
+  To be used for generating the __init__ docstring of a skill or message wrapper
+  class.
 
   Args:
     defaults: The message filled with default parameters.
-    comments: Dict mapping from field name to doc string comment.
-    skill_params: Utility class to inspect the skill's parameters.
+    parameter_description: The skill's parameter description.
 
   Returns:
     List containing a ParameterInformation object describing for each field
@@ -1813,15 +1869,18 @@ def extract_docstring_from_message(
     value and the doc string.
   """
   params: List[ParameterInformation] = []
+  skill_params = skill_parameters.SkillParameters(
+      defaults, parameter_description
+  )
+  comments = dict(parameter_description.parameter_field_comments)
 
   for field in defaults.DESCRIPTOR.fields:
     has_default_value, default_value = (
         _extract_default_value_from_message_field(field, defaults, skill_params)
     )
 
-    # Do not display default values of empty lists/dicts in docstring.
-    # pylint: disable-next=g-explicit-bool-comparison
-    if has_default_value and (default_value == [] or default_value == {}):
+    # Do not display default values of empty lists/dicts and None in docstring.
+    if has_default_value and default_value in [[], {}, None]:
       has_default_value = False
       default_value = None
 
