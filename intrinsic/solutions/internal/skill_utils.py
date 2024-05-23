@@ -1667,6 +1667,88 @@ def deconflict_param_and_resources(
   return try_slot
 
 
+def _extract_field_type_from_message_field(
+    field: descriptor.FieldDescriptor,
+    wrapper_classes: dict[str, Type[MessageWrapper]],
+    enum_classes: dict[str, Type[enum.IntEnum]],
+) -> Type[Any]:
+  """Extracts the pythonic type of the given field.
+
+  Extracts the type of the given message field to be used in the Python
+  signature of a skill or message wrapper class.
+
+  Args:
+    field: The field for which to extract the Pythonic type.
+    wrapper_classes: Map from proto message names to corresponding message
+      wrapper classes.
+    enum_classes: Map from full proto enum names to corresponding enum wrapper
+      classes.
+
+  Returns:
+    The Pythonic type of the given field.
+  """
+  if field.label == descriptor.FieldDescriptor.LABEL_REPEATED:
+    if (
+        field.type == descriptor.FieldDescriptor.TYPE_MESSAGE
+        and field.message_type.GetOptions().map_entry
+    ):
+      return dict[Union[str, int, bool], Any]
+    else:
+      return repeated_pythonic_field_type(field, wrapper_classes, enum_classes)
+  else:
+    return pythonic_field_type(field, wrapper_classes, enum_classes)
+
+
+def _extract_default_value_from_message_field(
+    field: descriptor.FieldDescriptor,
+    param_defaults: message.Message,
+    skill_params: Optional[skill_parameters.SkillParameters],
+) -> tuple[bool, Any]:
+  """Extracts the pythonic default value of the given field.
+
+  Extracts the default value of the given message field to be used in the Python
+  signature of a skill or message wrapper class.
+
+  Args:
+    field: The field for which to extract the Pythonic type.
+    param_defaults: The message filled with default parameters.
+    skill_params: Utility class to inspect the skill's parameters.
+
+  Returns:
+    A tuple (<has_default_value>, <default_value>) of a boolean indicating
+    whether a default value is present and the default value itself.
+    <default_value> can be None, i.e., the boolean is necessary to distinguish
+    between 'no default value' and 'default value is None'.
+  """
+  if field.label == descriptor.FieldDescriptor.LABEL_REPEATED:
+    if (
+        field.type == descriptor.FieldDescriptor.TYPE_MESSAGE
+        and field.message_type.GetOptions().map_entry
+    ):
+      map_field_default = getattr(param_defaults, field.name)
+      value_type = field.message_type.fields_by_name["value"]
+      if value_type.type == descriptor.FieldDescriptor.TYPE_MESSAGE:
+        return True, {
+            k: pythonic_field_default_value(v, value_type)
+            for (k, v) in map_field_default.items()
+        }
+      else:
+        return True, map_field_default
+    else:
+      repeated_field_default = getattr(param_defaults, field.name)
+      return True, [
+          pythonic_field_default_value(value, field)
+          for value in repeated_field_default
+      ]
+  else:
+    if skill_params and skill_params.has_default_value(field.name):
+      return True, pythonic_field_default_value(
+          getattr(param_defaults, field.name), field
+      )
+
+  return False, None
+
+
 def extract_parameter_information_from_message(
     param_defaults: message.Message,
     skill_params: Optional[skill_parameters.SkillParameters],
@@ -1689,44 +1771,23 @@ def extract_parameter_information_from_message(
   params: List[Tuple[inspect.Parameter, str]] = []
 
   for field in param_defaults.DESCRIPTOR.fields:
-    default_value = inspect.Parameter.empty
-    if field.label == descriptor.FieldDescriptor.LABEL_REPEATED:
-      if (
-          field.type == descriptor.FieldDescriptor.TYPE_MESSAGE
-          and field.message_type.GetOptions().map_entry
-      ):
-        field_type = dict[Union[str, int, bool], Any]
-        map_field_default = getattr(param_defaults, field.name)
-        value_type = field.message_type.fields_by_name["value"]
-        if value_type.type == descriptor.FieldDescriptor.TYPE_MESSAGE:
-          default_value = {
-              k: pythonic_field_default_value(v, value_type)
-              for (k, v) in map_field_default.items()
-          }
-        else:
-          default_value = map_field_default
-      else:
-        field_type = repeated_pythonic_field_type(
-            field, wrapper_classes, enum_classes
+    field_type = _extract_field_type_from_message_field(
+        field, wrapper_classes, enum_classes
+    )
+    has_default_value, default_value = (
+        _extract_default_value_from_message_field(
+            field, param_defaults, skill_params
         )
-        repeated_field_default = getattr(param_defaults, field.name)
-        default_value = [
-            pythonic_field_default_value(value, field)
-            for value in repeated_field_default
-        ]
-    else:
-      field_type = pythonic_field_type(field, wrapper_classes, enum_classes)
-      if skill_params and skill_params.has_default_value(field.name):
-        default_value = pythonic_field_default_value(
-            getattr(param_defaults, field.name), field
-        )
+    )
 
     params.append((
         inspect.Parameter(
             field.name,
             inspect.Parameter.KEYWORD_ONLY,
             annotation=field_type,
-            default=default_value,
+            default=(
+                default_value if has_default_value else inspect.Parameter.empty
+            ),
         ),
         field.name,
     ))
@@ -1754,38 +1815,15 @@ def extract_docstring_from_message(
   params: List[ParameterInformation] = []
 
   for field in defaults.DESCRIPTOR.fields:
-    default_value = None
-    have_default = False
-    if field.label == descriptor.FieldDescriptor.LABEL_REPEATED:
-      if (
-          field.type == descriptor.FieldDescriptor.TYPE_MESSAGE
-          and field.message_type.GetOptions().map_entry
-      ):
-        map_field_default = getattr(defaults, field.name)
-        value_type = field.message_type.fields_by_name["value"]
-        if value_type.type == descriptor.FieldDescriptor.TYPE_MESSAGE:
-          default_value = {
-              k: pythonic_field_default_value(v, value_type)
-              for (k, v) in sorted(map_field_default.items())
-          }
-        else:
-          default_value = map_field_default
-        if map_field_default:
-          have_default = True
+    has_default_value, default_value = (
+        _extract_default_value_from_message_field(field, defaults, skill_params)
+    )
 
-      else:
-        repeated_field_default = getattr(defaults, field.name)
-        default_value = [
-            pythonic_field_default_value(value, field)
-            for value in repeated_field_default
-        ]
-        if repeated_field_default:
-          have_default = True
-    elif skill_params and skill_params.has_default_value(field.name):
-      have_default = True
-      default_value = pythonic_field_default_value(
-          getattr(defaults, field.name), field
-      )
+    # Do not display default values of empty lists/dicts in docstring.
+    # pylint: disable-next=g-explicit-bool-comparison
+    if has_default_value and (default_value == [] or default_value == {}):
+      has_default_value = False
+      default_value = None
 
     doc_string = ""
     if field.full_name in comments:
@@ -1793,7 +1831,7 @@ def extract_docstring_from_message(
 
     params.append(
         ParameterInformation(
-            has_default=have_default,
+            has_default=has_default_value,
             name=field.name,
             default=default_value,
             doc_string=[doc_string],
