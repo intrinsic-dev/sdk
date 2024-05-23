@@ -5,9 +5,11 @@
 
 #include <string>
 #include <string_view>
+#include <type_traits>
 
 #include "absl/base/attributes.h"
 #include "absl/strings/str_cat.h"
+#include "google/protobuf/message.h"
 
 namespace intrinsic {
 
@@ -28,6 +30,20 @@ inline std::string_view StripTypeUrlPrefix(
     return type_url;
   }
   return type_url.substr(pos + 1);
+}
+
+template <typename M, typename = std::enable_if_t<
+                          std::is_base_of_v<google::protobuf::Message, M>>>
+inline std::string AddTypeUrlPrefix() {
+  return AddTypeUrlPrefix(M::descriptor()->full_name());
+}
+
+inline std::string AddTypeUrlPrefix(const google::protobuf::Message& m) {
+  return AddTypeUrlPrefix(m.GetDescriptor()->full_name());
+}
+
+inline std::string AddTypeUrlPrefix(const google::protobuf::Message* m) {
+  return AddTypeUrlPrefix(m->GetDescriptor()->full_name());
 }
 
 }  // namespace intrinsic

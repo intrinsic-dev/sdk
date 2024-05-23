@@ -24,6 +24,23 @@ TEST(TypeUrl, AddPrefixIdempotent) {
   EXPECT_EQ(AddTypeUrlPrefix(type_url), type_url);
 }
 
+TEST(TypeUrl, AddPrefixType) {
+  EXPECT_EQ(AddTypeUrlPrefix<google::protobuf::Int64Value>(),
+            "type.googleapis.com/google.protobuf.Int64Value");
+}
+
+TEST(TypeUrl, AddPrefixMessageReference) {
+  google::protobuf::Int64Value m;
+  EXPECT_EQ(AddTypeUrlPrefix(m),
+            "type.googleapis.com/google.protobuf.Int64Value");
+}
+
+TEST(TypeUrl, AddPrefixMessagePointer) {
+  google::protobuf::Int64Value m;
+  EXPECT_EQ(AddTypeUrlPrefix(&m),
+            "type.googleapis.com/google.protobuf.Int64Value");
+}
+
 TEST(TypeUrl, StripPrefix) {
   EXPECT_EQ(
       StripTypeUrlPrefix("type.googleapis.com/google.protobuf.Int64Value"),
