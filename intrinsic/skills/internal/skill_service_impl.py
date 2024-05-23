@@ -20,6 +20,7 @@ from google.rpc import status_pb2
 import grpc
 from intrinsic.assets import id_utils
 from intrinsic.geometry.service import geometry_service_pb2_grpc
+from intrinsic.logging.proto import context_pb2
 from intrinsic.motion_planning import motion_planner_client
 from intrinsic.motion_planning.proto import motion_planner_service_pb2_grpc
 from intrinsic.skills.internal import default_parameters
@@ -173,7 +174,10 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       )
     except Exception as err:  # pylint: disable=broad-except
       error_status = _handle_skill_error(
-          err=err, skill_id=skill_runtime_data.skill_id, op_name='get_footprint'
+          err=err,
+          skill_id=skill_runtime_data.skill_id,
+          op_name='get_footprint',
+          log_context=footprint_request.context,
       )
 
       _abort_with_status(
@@ -330,7 +334,7 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
 
       return skill_service_pb2.ExecuteResult(result=result_any)
 
-    operation.start(op=execute, op_name='execute')
+    operation.start(op=execute, op_name='execute', log_context=request.context)
 
     return operation.operation
 
@@ -423,7 +427,7 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
           result=result_any, expected_states=skill_context.world_updates
       )
 
-    operation.start(op=preview, op_name='preview')
+    operation.start(op=preview, op_name='preview', log_context=request.context)
 
     return operation.operation
 
@@ -828,12 +832,14 @@ class _SkillOperation:
       self,
       op: Callable[[], proto_message.Message],
       op_name: str,
+      log_context: Optional[context_pb2.Context] = None,
   ) -> None:
     """Starts executing the skill operation.
 
     Args:
       op: The operation callable. It should return a proto result.
       op_name: A name to describe the operation.
+      log_context: Data logger context to add to ExtendedStatus.
 
     Raises:
       OperationAlreadyStartedError: If an operation has already started.
@@ -845,7 +851,7 @@ class _SkillOperation:
         )
       self._started = True
 
-    self._pool.submit(self._execute, op, op_name)
+    self._pool.submit(self._execute, op, op_name, log_context=log_context)
 
   def request_cancellation(self) -> None:
     """Requests cancellation of the operation.
@@ -892,13 +898,17 @@ class _SkillOperation:
     return self.operation
 
   def _execute(
-      self, op: Callable[[], proto_message.Message], op_name: str
+      self,
+      op: Callable[[], proto_message.Message],
+      op_name: str,
+      log_context: Optional[context_pb2.Context],
   ) -> None:
     """Executes the skill operation.
 
     Args:
       op: The operation callable. It should return a proto result.
       op_name: A name to describe the operation.
+      log_context: Data logger context to add to ExtendedStatus.
     """
     result = None
     error_status = None
@@ -908,7 +918,10 @@ class _SkillOperation:
     # possible and catch anything that could occur.
     except Exception as err:  # pylint: disable=broad-except
       error_status = _handle_skill_error(
-          err=err, skill_id=self._runtime_data.skill_id, op_name=op_name
+          err=err,
+          skill_id=self._runtime_data.skill_id,
+          op_name=op_name,
+          log_context=log_context,
       )
 
     if error_status is not None:
@@ -946,7 +959,10 @@ def _skill_error_to_code_and_action(
 
 
 def _handle_skill_error(
-    err: Exception, skill_id: str, op_name: str
+    err: Exception,
+    skill_id: str,
+    op_name: str,
+    log_context: Optional[context_pb2.Context],
 ) -> status_pb2.Status:
   """Handles an error raised by a skill."""
   code, action = _skill_error_to_code_and_action(err)
@@ -955,8 +971,15 @@ def _handle_skill_error(
 
   details = []
   if isinstance(err, status_exception.ExtendedStatusError):
+    es_proto = cast(status_exception.ExtendedStatusError, err).proto
+    if log_context is not None:
+      # If the extended status has no log context set, yet, add it
+      if not es_proto.HasField(
+          'related_to'
+      ) or not es_proto.related_to.HasField('log_context'):
+        es_proto.related_to.log_context.CopyFrom(log_context)
     status_any = any_pb2.Any()
-    status_any.Pack(cast(status_exception.ExtendedStatusError, err).proto)
+    status_any.Pack(es_proto)
     details.append(status_any)
 
   return status_pb2.Status(

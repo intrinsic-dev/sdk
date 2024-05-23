@@ -8,10 +8,8 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/flat_hash_map.h"
 #include "absl/functional/any_invocable.h"
 #include "absl/log/log.h"
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -42,7 +40,8 @@
 #include "intrinsic/skills/proto/error.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
-#include "intrinsic/util/proto/merge.h"
+#include "intrinsic/util/proto/type_url.h"
+#include "intrinsic/util/status/extended_status.pb.h"
 #include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/status/status_macros_grpc.h"
@@ -517,12 +516,37 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
 
   INTR_RETURN_IF_ERROR_GRPC(operation->Start(
       [skill = std::move(skill), skill_request = std::move(skill_request),
-       skill_context = std::move(skill_context)]()
+       skill_context = std::move(skill_context), request = *request]()
           -> absl::StatusOr<
               std::unique_ptr<intrinsic_proto::skills::ExecuteResult>> {
+        // Create a StatusBuilder policy that adds the log context received with
+        // the ExecuteRequest, but only if the user has set an ExtendedStatus at
+        // all and did not yet set a log context themselves.
+        auto conditionally_add_log_context = [request](absl::Status status) {
+          intrinsic_proto::status::ExtendedStatus es;
+          std::optional<absl::Cord> extended_status_payload =
+              status.GetPayload(AddTypeUrlPrefix(es));
+          if (!extended_status_payload) {
+            return status;
+          }
+          // This should not happen, but since we cannot control the data a
+          // skill developer could put anything. Hence, if we fail to interpret
+          // the data just return as-is.
+          if (!es.ParseFromCord(*extended_status_payload)) {
+            return status;
+          }
+          if (es.has_related_to() && es.related_to().has_log_context()) {
+            return status;
+          }
+          *es.mutable_related_to()->mutable_log_context() = request.context();
+          status.SetPayload(AddTypeUrlPrefix(es), es.SerializeAsCord());
+          return status;
+        };
+
         INTR_ASSIGN_OR_RETURN(
             std::unique_ptr<::google::protobuf::Message> skill_result,
-            skill->Execute(*skill_request, *skill_context));
+            skill->Execute(*skill_request, *skill_context),
+            _.With(std::move(conditionally_add_log_context)));
 
         auto result =
             std::make_unique<intrinsic_proto::skills::ExecuteResult>();
