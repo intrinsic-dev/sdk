@@ -46,6 +46,16 @@ message ExtendedStatus {
     // images, links etc.
   }
 
+  message Relations {
+    message BehaviorTreeNodeReference {
+      string tree_id = 1;
+      uint32 node_id = 2;
+    }
+    optional BehaviorTreeNodeReference behavior_tree_node = 1;
+  }
+
+  optional Relations related_to = 6;
+
   // Internal report only available to developers/owners of the component. It is
   // the responsibility of the emitter of the extended status to determine when
   // to include an internal report. A criterion could be, for example, that the
