@@ -33,3 +33,13 @@ func (i *Info) LastSeen() (time.Time, error) {
 func (i *Info) RollbackAvailable() bool {
 	return i.RollbackOS != "" && i.RollbackBase != ""
 }
+
+// OSUpdateDone returns true when the OS is in a deployed state
+func (i *Info) OSUpdateDone() bool {
+	return i.OSState == "Deployed"
+}
+
+// UpdateDone returns true when the system is in a deployed state
+func (i *Info) UpdateDone() bool {
+	return i.State == "Deployed"
+}
