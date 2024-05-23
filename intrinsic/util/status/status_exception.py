@@ -166,7 +166,7 @@ class ExtendedStatusError(Exception):
     Returns:
       self
     """
-    self._extended_status.log_context.CopyFrom(context)
+    self._extended_status.related_to.log_context.CopyFrom(context)
     return self
 
   def emit_traceback_to_internal_report(self) -> ExtendedStatusError:

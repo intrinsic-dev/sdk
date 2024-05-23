@@ -154,10 +154,11 @@ func TestExtendedStatus(t *testing.T) {
 			&estpb.ExtendedStatus{
 				StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 2342},
-				LogContext: &ctxpb.Context{
-					ExecutiveSessionId:    1,
-					ExecutivePlanId:       2,
-					ExecutivePlanActionId: 3}}},
+				RelatedTo: &estpb.ExtendedStatus_Relations{
+					LogContext: &ctxpb.Context{
+						ExecutiveSessionId:    1,
+						ExecutivePlanId:       2,
+						ExecutivePlanActionId: 3}}}},
 	}
 
 	for _, test := range tests {

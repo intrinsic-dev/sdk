@@ -200,7 +200,9 @@ class StatusExceptionTest(absltest.TestCase):
         status_code=extended_status_pb2.StatusCode(
             component="ai.testing.my_component", code=123
         ),
-        log_context=log_context,
+        related_to=extended_status_pb2.ExtendedStatus.Relations(
+            log_context=log_context,
+        ),
     )
 
     compare.assertProto2Equal(self, error.proto, expected_status)

@@ -52,6 +52,7 @@ message ExtendedStatus {
       uint32 node_id = 2;
     }
     optional BehaviorTreeNodeReference behavior_tree_node = 1;
+    optional intrinsic_proto.data_logger.Context log_context = 2;
   }
 
   optional Relations related_to = 6;
@@ -65,6 +66,4 @@ message ExtendedStatus {
   // This report is available to external users, e.g., callers of a component
   // even if they are from a different org.
   optional Report external_report = 11;
-
-  optional intrinsic_proto.data_logger.Context log_context = 20;
 }

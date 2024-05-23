@@ -74,7 +74,7 @@ func New(component string, code uint32, info *Info) *ExtendedStatus {
 		p.Context = append(p.Context, context.Proto())
 	}
 	if info.LogContext != nil {
-		p.LogContext = info.LogContext
+		p.RelatedTo = &estpb.ExtendedStatus_Relations{LogContext: info.LogContext}
 	}
 	return &ExtendedStatus{s: p}
 }
