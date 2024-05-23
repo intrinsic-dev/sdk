@@ -58,9 +58,10 @@ func (res *ListSolutionDescriptionsResponse) MarshalJSON() ([]byte, error) {
 
 // String converts a ListSolutionDescriptionsResponse to a string
 func (res *ListSolutionDescriptionsResponse) String() string {
-	const formatString = "%-60s %s"
-	lines := []string{}
-	lines = append(lines, fmt.Sprintf(formatString, "Name", "State"))
+	const formatString = "%-50s %-15s %-50s"
+	lines := []string{
+		fmt.Sprintf(formatString, "Name", "State", "ID"),
+	}
 	for _, c := range res.m.GetSolutions() {
 		name := c.GetDisplayName()
 		if name == "" {
@@ -74,7 +75,7 @@ func (res *ListSolutionDescriptionsResponse) String() string {
 
 		lines = append(
 			lines,
-			fmt.Sprintf(formatString, name, statusStr))
+			fmt.Sprintf(formatString, name, statusStr, c.GetName()))
 	}
 	return strings.Join(lines, "\n")
 }
