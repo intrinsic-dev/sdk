@@ -12,6 +12,7 @@ import "intrinsic/executive/proto/behavior_call.proto";
 import "intrinsic/executive/proto/domain.proto";
 import "intrinsic/executive/proto/executive_execution_mode.proto";
 import "intrinsic/skills/proto/skills.proto";
+import "intrinsic/util/status/extended_status.proto";
 
 // Message to encode an entire Behavior Tree.
 // Example: says "Good morning" in the morning, "Good day" otherwise
@@ -80,6 +81,21 @@ message BehaviorTree {
       }
     }
 
+    // Matches an ExtendedStatus stored in the blackboard.
+    message ExtendedStatusMatch {
+      // The blackboard key where the ExtendedStatus is stored. This must have
+      // previously been set using the on_failure decorator to emit an extended
+      // status.
+      string blackboard_key = 1;
+
+      oneof match_type {
+        // Match a specific status code. If component is empty or code is zero
+        // it is ignored for the match, e.g., enabling to match any error of a
+        // specific component.
+        intrinsic_proto.status.StatusCode status_code = 2;
+      }
+    }
+
     message LogicalCompound {
       repeated Condition conditions = 1;
     }
@@ -91,6 +107,7 @@ message BehaviorTree {
       LogicalCompound all_of = 4;
       LogicalCompound any_of = 5;
       Condition not = 6;
+      ExtendedStatusMatch status_match = 10;
     }
 
     // This is only set by the executive on retrieval. It is ignored when
@@ -445,6 +462,31 @@ message BehaviorTree {
       optional Breakpoint.Type breakpoint = 3;
 
       optional ExecutionSettings execution_settings = 4;
+
+      // Specification what to do on failure of the node
+      message FailureSettings {
+        // If the node fails, emit an extended status under the given blackboard
+        // key. If child nodes, or invoked services/skills, etc. emitted an
+        // extended status, they are added as context (in this node's extended
+        // status proto). If the node succeeds the entry is not modified.
+        message ExtendedStatusSettings {
+          string to_blackboard_key = 1;
+
+          // An optional extended status to emit. If the extended status is
+          // given, it is emitted to the given blackboard key and children’s
+          // extended statuses (if any) are added to context. If the field is
+          // not set, a propagated extended status is emitted to the given
+          // blackboard key, or if multiple extended statuses are propagated a
+          // collector status is auto-generated with these statuses as context.
+          optional intrinsic_proto.status.ExtendedStatus extended_status = 2;
+        }
+
+        // Emit extended status available for this node (on failure) to the
+        // given blackboard key. This can then be used, for example, as a
+        // condition (ExtendedStatusMatch).
+        ExtendedStatusSettings emit_extended_status = 1;
+      }
+      optional FailureSettings on_failure = 5;
     }
 
     oneof node_type {

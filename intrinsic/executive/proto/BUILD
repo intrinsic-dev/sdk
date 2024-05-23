@@ -284,6 +284,7 @@ proto_library(
         ":domain_proto",
         ":executive_execution_mode_proto",
         "//intrinsic/skills/proto:skills_proto",
+        "//intrinsic/util/status:extended_status_proto",
         "@com_google_protobuf//:any_proto",
     ],
 )
@@ -309,6 +310,7 @@ go_proto_library(
         "//intrinsic/executive/proto:executive_execution_mode_go_proto",
         "//intrinsic/executive/proto:world_query_go_proto",
         "//intrinsic/skills/proto:skills_go_proto",
+        "//intrinsic/util/status:extended_status_go_proto",
     ],
     deps = [":behavior_tree_proto"],
 )
