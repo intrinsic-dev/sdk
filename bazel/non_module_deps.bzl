@@ -67,12 +67,11 @@ def non_module_deps():
         strip_prefix = "cel-cpp-037873163975964a80a188ad7f936cb4f37f0684",
         sha256 = "d56e8c15b55240c92143ee3ed717956c67961a24f97711ca410030de92633288",
     )
-
     http_archive(
         name = "com_google_riegeli",
-        url = "https://github.com/google/riegeli/archive/1d90cec619f9b9660ff2db6eb3e35f5ea65dddb2.tar.gz",  # 2024-04-04
-        strip_prefix = "riegeli-1d90cec619f9b9660ff2db6eb3e35f5ea65dddb2",
-        sha256 = "2304f64a246181b94083cdbc86d69c4b93346c196f93b2c5f05a93767bec793d",
+        url = "https://github.com/google/riegeli/archive/e04f8e30376c6132cc4854915e42bd9ed9cddfcc.tar.gz",  # 2024-05-14
+        strip_prefix = "riegeli-e04f8e30376c6132cc4854915e42bd9ed9cddfcc",
+        sha256 = "f09a2e5db9b3d6906dd07fb2309bc91fabb1c832edc9a40580842f833fff74ce",
     )
 
     XLS_COMMIT = "507b33b5bdd696adb7933a6617b65c70e46d4703"  # 2024-03-06
