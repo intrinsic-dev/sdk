@@ -23,7 +23,6 @@ from intrinsic.solutions import cel
 from intrinsic.solutions import provided
 from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
-from intrinsic.solutions.internal import skill_parameters
 from intrinsic.solutions.internal import skill_utils
 
 # Typing aliases
@@ -770,17 +769,6 @@ class GeneratedSkill(provided.SkillBase):
 
       params_set = skill_utils.set_fields_in_msg(self._param_message, fields)
       params_set.extend(self._blackboard_params.keys())
-
-      # If we have a default message, validate the composed parameters.
-      if default_message:
-        skill_params = skill_parameters.SkillParameters(
-            default_message, self._info.skill_proto.parameter_description
-        )
-        skill_utils.check_missing_fields_in_msg(
-            skill_params,
-            self._param_message,
-            set.union(set(fields.keys()), set(self._blackboard_params.keys())),
-        )
 
     return params_set
 

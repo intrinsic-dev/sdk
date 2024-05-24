@@ -150,7 +150,6 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":actions",
-        ":skill_parameters",
         ":skill_utils",
         "//intrinsic/executive/proto:behavior_call_py_pb2",
         "//intrinsic/skills/proto:skills_py_pb2",

@@ -2,7 +2,7 @@
 
 """Utility functions for handling skill parameters."""
 
-from typing import List, Optional
+from typing import Optional
 
 from google.protobuf import descriptor
 from google.protobuf import descriptor_pb2
@@ -148,29 +148,6 @@ class SkillParameters:
         parameter_description, default_message.DESCRIPTOR.full_name
     )
 
-  def _is_field_required(
-      self, field_proto: descriptor_pb2.FieldDescriptorProto
-  ) -> bool:
-    """Returns True, if the field proto belongs to a required field.
-
-    Args:
-      field_proto: The field descriptor of the field which should be checked.
-    """
-    if _is_oneof_field(field_proto):
-      return False
-    elif _is_repeated_or_map_field(field_proto):
-      # Repeated fields are considered required. If no clear user defined
-      # default is specified, we return an empty list.
-      return True
-    elif not _field_is_marked_optional(field_proto):
-      # The field has no optional flag.
-      # We can only check this after ruling out protos and repeated fields.
-      return True
-
-    return _field_is_marked_optional(
-        field_proto
-    ) and self._default_message.HasField(field_proto.name)
-
   def _get_field_proto(
       self, field_name: str
   ) -> descriptor_pb2.FieldDescriptorProto:
@@ -293,51 +270,3 @@ class SkillParameters:
     return _field_is_marked_optional(
         field_proto
     ) and not self._default_message.HasField(field_proto.name)
-
-  def get_required_field_names(self) -> List[str]:
-    """Returns all fields which must contain a parameter.
-
-    This function is intended to be used to create a signature for a skill.
-    Fields returned by this function will receive no special typing annotation.
-    This is the reason why this function does not return 'oneof' entries. They
-    are required in the signature but they need a special typing.Union
-    annotation.
-
-    Required fields are:
-      * repeated fields
-      * fields without optional keyword (user declared proto3 optional)
-
-    Note: Fields which belong to a oneof are not returned as required fields.
-          They require special handling.
-    """
-    return [
-        field_proto.name
-        for field_proto in self._descriptor_proto.field
-        if self._is_field_required(field_proto)
-    ]
-
-  def message_has_optional_field(
-      self, field_name: str, test_message: message.Message
-  ) -> bool:
-    """Returns True, if the field is present if required.
-
-    A field is required if it is optional in the default message and actually
-    provides an optional value.
-
-    Important: The function is only a temporary bandaid and will be replaced
-               with server side parameter checks. Client code should not try to
-               do parameter validation on skills.
-
-    Args:
-      field_name: The name of the field which should be checked in the message.
-      test_message: The message whose field will be checked.
-
-    Raises:
-      NameError: if the request field name cannot be found.
-    """
-    field_proto = self._get_field_proto(field_name)
-    if _field_is_marked_optional(
-        field_proto
-    ) and self._default_message.HasField(field_proto.name):
-      return test_message.HasField(field_name)
-    return True

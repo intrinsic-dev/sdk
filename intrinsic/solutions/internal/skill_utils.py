@@ -11,7 +11,7 @@ import enum
 import inspect
 import textwrap
 import time
-from typing import AbstractSet, Any, Callable, Container, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, Union, cast
+from typing import Any, Callable, Container, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, Union, cast
 import warnings
 
 from google.protobuf import descriptor
@@ -701,34 +701,6 @@ def set_fields_in_msg(
       )
     params_set.append(field_name)
   return params_set
-
-
-def check_missing_fields_in_msg(
-    skill_params: skill_parameters.SkillParameters,
-    msg: message.Message,
-    fields: AbstractSet[str],
-) -> None:
-  """Verifies that all required fields in the input message are set.
-
-  Args:
-    skill_params: The helper class to inspect skill parameters.
-    msg: The message to check.
-    fields: A set of field names.
-
-  Raises:
-    KeyError: if any singular field is unset, unless another field in the same
-      containing oneof is set.
-  """
-  for required_field_name in skill_params.get_required_field_names():
-    if (
-        required_field_name not in fields
-        and not skill_params.message_has_optional_field(
-            required_field_name, msg
-        )
-    ):
-      raise KeyError(
-          f"Skill parameter argument '{required_field_name}' is missing"
-      )
 
 
 # Workaround for compatibility with different protobuf versions to prevent
