@@ -17,6 +17,7 @@ require (
 	github.com/bazelbuild/remote-apis-sdks v0.0.0-20230919142202-aa1c266ae342
 	github.com/bazelbuild/rules_go v0.43.0
 	github.com/cenkalti/backoff/v4 v4.2.1
+	github.com/dsnet/compress v0.0.1
 	github.com/fsouza/fake-gcs-server v1.47.4
 	github.com/gobuffalo/flect v1.0.2
 	github.com/golang-jwt/jwt/v4 v4.4.2
