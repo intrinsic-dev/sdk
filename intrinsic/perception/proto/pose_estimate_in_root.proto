@@ -1,0 +1,26 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "intrinsic/math/proto/pose.proto";
+
+// A pose estimate in the root frame for skill APIs.
+message PoseEstimateInRoot {
+  // Pose of the object relative to the root object.
+  intrinsic_proto.Pose root_t_target = 1;
+
+  // Between 0..1.
+  double score = 2;
+
+  // Class id of the estimate.
+  string id = 3;
+
+  // Visibility score for the pose. Between 0..1. The visibility score indicates
+  // the proportion of the object that is visible, signifying their
+  // foreground presence. It helps in prioritizing the selection of parts
+  // during, for example, the picking process. It is defined as:
+  // Visible pixels / (Visible pixels + Occluded pixels)
+  optional float visibility_score = 4;
+}
