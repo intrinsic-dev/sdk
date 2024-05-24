@@ -877,6 +877,25 @@ class SkillsTest(parameterized.TestCase):
 
     compare.assertProto2Equal(self, expected_parameters, actual_parameters)
 
+  def test_gen_skill_with_return_value_key(self):
+    skill_info = self._utils.create_test_skill_info_with_return_value(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=test_skill_params_pb2.SubMessage(),
+    )
+    skills = skill_providing.Skills(
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
+    )
+    my_skill = skills.ai.intrinsic.my_skill
+
+    self.assertRegex(my_skill().proto.return_value_name, '^my_skill_.*$')
+    self.assertRegex(
+        my_skill(return_value_key=None).proto.return_value_name, '^my_skill_.*$'
+    )
+    self.assertEqual(
+        my_skill(return_value_key='foo').proto.return_value_name, 'foo'
+    )
+
   def test_gen_skill_fails_for_set_instead_of_dict(self):
     skill_registry, skill_registry_stub = (
         _create_skill_registry_with_mock_stub()
@@ -1111,7 +1130,7 @@ class SkillsTest(parameterized.TestCase):
     )
 
   def test_skill_signature_without_default_values(self):
-    skill_info = self._utils.create_test_skill_info(
+    skill_info = self._utils.create_test_skill_info_with_return_value(
         skill_id='ai.intrinsic.my_skill',
         parameter_defaults=test_skill_params_pb2.TestMessage(),
     )
@@ -1158,7 +1177,8 @@ class SkillsTest(parameterized.TestCase):
         '.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum] = None, '
         'string_int32_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
         'int32_string_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
-        'string_message_map: dict[typing.Union[str, int, bool], typing.Any] = {})'
+        'string_message_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
+        'return_value_key: Optional[str] = None)'
     )
     # pyformat: enable
 

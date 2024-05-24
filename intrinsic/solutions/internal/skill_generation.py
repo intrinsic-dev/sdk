@@ -9,7 +9,7 @@ import enum
 import inspect
 import re
 import textwrap
-from typing import Any, Callable, Set, Type
+from typing import Any, Callable, Optional, Set, Type
 import uuid
 
 from google.protobuf import descriptor
@@ -433,7 +433,8 @@ def _gen_init_params(
         inspect.Parameter(
             "return_value_key",
             inspect.Parameter.KEYWORD_ONLY,
-            annotation=str,
+            default=None,
+            annotation=Optional[str],
         )
     )
 
@@ -786,7 +787,8 @@ class GeneratedSkill(provided.SkillBase):
       TypeError: if passing a value that satisfy the slot's type requirements
     """
     if "return_value_key" in kwargs:
-      self._return_value_key = kwargs["return_value_key"]
+      if kwargs["return_value_key"] is not None:
+        self._return_value_key = kwargs["return_value_key"]
       return ["return_value_key"]
     return []
 
