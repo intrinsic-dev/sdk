@@ -30,9 +30,11 @@ exports_files(
     srcs = [
         "BUILD",
         "BUILD.eigen",
+        "BUILD.highwayhash",
         "BUILD.libarchive",
         "BUILD.sysroot",
         "BUILD.workspace_root",
+        "BUILD.zstd",
         "LICENSE",
         "README.md",
         "WORKSPACE",

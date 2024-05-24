@@ -225,6 +225,44 @@ def intrinsic_sdks_deps_0():
         ],
     )
 
+    # Brotli compression library.
+    maybe(
+        http_archive,
+        name = "org_brotli",
+        sha256 = "9d7ec775e67cdb3d0328f63f314b381d57f0f985499bbf2e55b15138a3621b19",
+        strip_prefix = "brotli-1.1.0",
+        urls = ["https://github.com/google/brotli/archive/v1.1.0.zip"],
+    )
+
+    # Zstd compression library.
+    maybe(
+        http_archive,
+        name = "net_zstd",
+        build_file = Label("//intrinsic/production/external:BUILD.zstd"),
+        sha256 = "3b1c3b46e416d36931efd34663122d7f51b550c87f74de2d38249516fe7d8be5",
+        strip_prefix = "zstd-1.5.6",
+        urls = ["https://github.com/facebook/zstd/archive/v1.5.6.zip"],
+    )
+
+    # Snappy compression library.
+    maybe(
+        http_archive,
+        name = "snappy",
+        sha256 = "7ee7540b23ae04df961af24309a55484e7016106e979f83323536a1322cedf1b",
+        strip_prefix = "snappy-1.2.0",
+        urls = ["https://github.com/google/snappy/archive/1.2.0.zip"],  # 2024-04-05
+    )
+
+    # HighwayHash hash function.
+    maybe(
+        http_archive,
+        name = "highwayhash",
+        build_file = Label("//intrinsic/production/external:BUILD.highwayhash"),
+        sha256 = "8be5e0af6ede048c54c8355e0d7bb87305531021d19b1f6334d5c16edb290c81",
+        strip_prefix = "highwayhash-5ad3bf8444cfc663b11bf367baaa31f36e7ff7c8",
+        urls = ["https://github.com/google/highwayhash/archive/5ad3bf8444cfc663b11bf367baaa31f36e7ff7c8.zip"],  # 2024-05-24
+    )
+
     # C++ rules for Bazel.
     maybe(
         http_archive,
