@@ -22,4 +22,5 @@ message Geometry {
     // generated renderable and does not have to be maintained.
     Renderable generated_renderable = 3;
   }
+
 }
