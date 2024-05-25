@@ -562,9 +562,18 @@ func (cf *CmdFlags) authOpt() remote.Option {
 
 // CreateRegistryOpts creates registry options for processing images.
 func (cf *CmdFlags) CreateRegistryOpts(ctx context.Context) imageutils.RegistryOptions {
+	return cf.CreateRegistryOptsWithTransferer(
+		ctx,
+		imagetransfer.RemoteTransferer(remote.WithContext(ctx), cf.authOpt()),
+		cf.GetFlagRegistry(),
+	)
+}
+
+// CreateRegistryOptsWithTransferer creates registry options for processing images.
+func (cf *CmdFlags) CreateRegistryOptsWithTransferer(ctx context.Context, transferer imagetransfer.Transferer, registry string) imageutils.RegistryOptions {
 	opts := imageutils.RegistryOptions{
-		Transferer: imagetransfer.RemoteTransferer(remote.WithContext(ctx), cf.authOpt()),
-		URI:        cf.GetFlagRegistry(),
+		Transferer: transferer,
+		URI:        registry,
 	}
 	if auth := cf.createBasicAuth(); auth != nil {
 		opts.BasicAuth = *auth

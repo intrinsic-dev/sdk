@@ -15,6 +15,9 @@ import (
 
 	"intrinsic/assets/cmdutils"
 
+	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/v1/google"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -209,6 +212,18 @@ func UseInsecureCredentials(address string) bool {
 		}
 	}
 	return port != 443
+}
+
+// RemoteOpt returns the remote option to use for the given flags.
+func RemoteOpt(flags *cmdutils.CmdFlags) (remote.Option, error) {
+	authUser, authPwd := flags.GetFlagsRegistryAuthUserPassword()
+	if len(authUser) != 0 && len(authPwd) != 0 {
+		return remote.WithAuth(authn.FromConfig(authn.AuthConfig{
+			Username: authUser,
+			Password: authPwd,
+		})), nil
+	}
+	return remote.WithAuthFromKeychain(google.Keychain), nil
 }
 
 func resolveCatalogAddress(ctx context.Context, opts DialCatalogOptions) (string, error) {

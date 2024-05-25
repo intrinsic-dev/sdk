@@ -7,15 +7,18 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 	"intrinsic/assets/bundleio"
 	"intrinsic/assets/clientutils"
 	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/idutils"
+	"intrinsic/assets/imagetransfer"
 	installergrpcpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/skills/tools/resource/cmd/bundleimages"
+	"intrinsic/skills/tools/skill/cmd/directupload"
 )
 
 // GetCommand returns a command to install (sideload) the service bundle.
@@ -46,8 +49,31 @@ func GetCommand() *cobra.Command {
 			}
 			defer conn.Close()
 
+			// Determine the image transferer to use. Default to direct injection into the cluster.
+			registry := flags.GetFlagRegistry()
+			remoteOpt, err := clientutils.RemoteOpt(flags)
+			if err != nil {
+				return err
+			}
+			transfer := imagetransfer.RemoteTransferer(remote.WithContext(ctx), remoteOpt)
+			if !flags.GetFlagSkipDirectUpload() {
+				opts := []directupload.Option{
+					directupload.WithDiscovery(directupload.NewFromConnection(conn)),
+					directupload.WithOutput(cmd.OutOrStdout()),
+				}
+				if registry != "" {
+					// User set external registry, so we can use it as fail-over.
+					opts = append(opts, directupload.WithFailOver(transfer))
+				} else {
+					// Fake name that ends in .local in order to indicate that this is local, directly
+					// uploaded image.
+					registry = "direct.upload.local"
+				}
+				transfer = directupload.NewTransferer(ctx, opts...)
+			}
+
 			opts := bundleio.ProcessServiceOpts{
-				ImageProcessor: bundleimages.CreateImageProcessor(flags.CreateRegistryOpts(ctx)),
+				ImageProcessor: bundleimages.CreateImageProcessor(flags.CreateRegistryOptsWithTransferer(ctx, transfer, registry)),
 			}
 			manifest, err := bundleio.ProcessService(target, opts)
 			if err != nil {
@@ -95,6 +121,7 @@ func GetCommand() *cobra.Command {
 	flags.AddFlagsProjectOrg()
 	flags.AddFlagRegistry()
 	flags.AddFlagsRegistryAuthUserPassword()
+	flags.AddFlagSkipDirectUpload("service")
 
 	return cmd
 }

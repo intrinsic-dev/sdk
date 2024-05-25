@@ -7,9 +7,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/google/go-containerregistry/pkg/authn"
-	"github.com/google/go-containerregistry/pkg/v1/google"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/pborman/uuid"
 	"github.com/spf13/cobra"
 	"intrinsic/assets/clientutils"
@@ -26,17 +23,6 @@ import (
 )
 
 var cmdFlags = cmdutils.NewCmdFlags()
-
-func remoteOpt() remote.Option {
-	authUser, authPwd := cmdFlags.GetFlagsRegistryAuthUserPassword()
-	if len(authUser) != 0 && len(authPwd) != 0 {
-		return remote.WithAuth(authn.FromConfig(authn.AuthConfig{
-			Username: authUser,
-			Password: authPwd,
-		}))
-	}
-	return remote.WithAuthFromKeychain(google.Keychain)
-}
 
 var installCmd = &cobra.Command{
 	Use:   "install --type=TYPE TARGET",
@@ -77,7 +63,11 @@ $ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --soluti
 		flagRegistry := cmdFlags.GetFlagRegistry()
 
 		// Upload skill, directly, to workcell, with fail-over legacy transfer if possible
-		transfer := imagetransfer.RemoteTransferer(remoteOpt())
+		remoteOpt, err := clientutils.RemoteOpt(cmdFlags)
+		if err != nil {
+			return err
+		}
+		transfer := imagetransfer.RemoteTransferer(remoteOpt)
 		// if --type=image we are going to skip direct injection as image is already
 		// available in the repository and as such push is essentially no-op. Given
 		// than underlying code requires image inspection, command have to have
@@ -92,8 +82,8 @@ $ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --soluti
 				directupload.WithOutput(command.OutOrStdout()),
 			}
 			if flagRegistry != "" {
-				// user set external registry, we can use it as fail-over
-				opts = append(opts, directupload.WithFailOver(imagetransfer.RemoteTransferer(remoteOpt())))
+				// User set external registry, so we can use it as fail-over.
+				opts = append(opts, directupload.WithFailOver(transfer))
 			} else {
 				// Fake name that ends in .local in order to indicate that this is local, directly uploaded
 				// image.
