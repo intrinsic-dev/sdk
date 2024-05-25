@@ -17,6 +17,7 @@ go_binary(
         "//intrinsic/tools/inctl/cmd/device",
         "//intrinsic/tools/inctl/cmd/notebook",
         "//intrinsic/tools/inctl/cmd/process",
+        "//intrinsic/tools/inctl/cmd/slogs",
         "//intrinsic/tools/inctl/cmd/solution",
         "//intrinsic/tools/inctl/cmd/version",
     ],

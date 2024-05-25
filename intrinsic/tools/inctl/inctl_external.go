@@ -12,6 +12,7 @@ import (
 	_ "intrinsic/tools/inctl/cmd/process"
 	"intrinsic/tools/inctl/cmd/root"
 	_ "intrinsic/tools/inctl/cmd/skill"
+	_ "intrinsic/tools/inctl/cmd/slogs"
 	_ "intrinsic/tools/inctl/cmd/solution"
 	_ "intrinsic/tools/inctl/cmd/version"
 )
