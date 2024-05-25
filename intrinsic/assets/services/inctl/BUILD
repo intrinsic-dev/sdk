@@ -20,12 +20,11 @@ go_library(
     srcs = ["install.go"],
     deps = [
         "//intrinsic/assets:bundleio",
+        "//intrinsic/assets:clientutils",
         "//intrinsic/assets:cmdutils",
         "//intrinsic/assets:idutils",
         "//intrinsic/kubernetes/workcell_spec/proto:installer_go_grpc_proto",
         "//intrinsic/skills/tools/resource/cmd:bundleimages",
-        "//intrinsic/skills/tools/skill/cmd:dialerutil",
-        "//intrinsic/skills/tools/skill/cmd:solutionutil",
         "@com_github_spf13_cobra//:go_default_library",
         "@org_golang_google_protobuf//proto",
     ],
@@ -35,11 +34,10 @@ go_library(
     name = "list",
     srcs = ["list.go"],
     deps = [
+        "//intrinsic/assets:clientutils",
         "//intrinsic/assets:cmdutils",
         "//intrinsic/assets:idutils",
         "//intrinsic/resources/proto:resource_registry_go_grpc_proto",
-        "//intrinsic/skills/tools/skill/cmd:dialerutil",
-        "//intrinsic/skills/tools/skill/cmd:solutionutil",
         "@com_github_spf13_cobra//:go_default_library",
     ],
 )

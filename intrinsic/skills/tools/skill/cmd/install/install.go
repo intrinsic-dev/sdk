@@ -4,7 +4,6 @@
 package install
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/pborman/uuid"
 	"github.com/spf13/cobra"
+	"intrinsic/assets/clientutils"
 	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/idutils"
 	"intrinsic/assets/imagetransfer"
@@ -20,12 +20,9 @@ import (
 	imagepb "intrinsic/kubernetes/workcell_spec/proto/image_go_proto"
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd"
-	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/directupload"
 	"intrinsic/skills/tools/skill/cmd/registry"
-	"intrinsic/skills/tools/skill/cmd/solutionutil"
 	"intrinsic/skills/tools/skill/cmd/waitforskill"
-	"intrinsic/tools/inctl/auth"
 )
 
 var cmdFlags = cmdutils.NewCmdFlags()
@@ -45,15 +42,15 @@ var installCmd = &cobra.Command{
 	Use:   "install --type=TYPE TARGET",
 	Short: "Install a skill",
 	Example: `Build a skill, upload it to a container registry, and install the skill
-$ inctl skill install --type=build //abc:skill.tar --registry=gcr.io/my-registry --context=minikube
+$ inctl skill install --type=build //abc:skill.tar --registry=gcr.io/my-registry --cluster=my_cluster
 
 Upload skill image to a container registry, and install the skill
-$ inctl skill install --type=archive abc/skill.tar --registry=gcr.io/my-registry --context=minikube
+$ inctl skill install --type=archive abc/skill.tar --registry=gcr.io/my-registry --cluster=my_cluster
 
 Install skill using an image that has already been pushed to the container registry
-$ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --context=minikube
+$ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --cluster=my_cluster
 
-Use the solution flag to automatically resolve the context (requires the solution to run)
+Use the solution flag to automatically resolve the cluster (requires the solution to run)
 $ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution=my-solution
 `,
 	Args: cobra.ExactArgs(1),
@@ -62,6 +59,7 @@ $ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --soluti
 		"start",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
+		ctx := command.Context()
 		target := args[0]
 
 		timeout, timeoutStr, err := cmdFlags.GetFlagSideloadStartTimeout()
@@ -69,26 +67,13 @@ $ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --soluti
 			return err
 		}
 
-		installerAddress := cmdFlags.GetNormalizedInstallerAddress()
-		project := cmdFlags.GetFlagProject()
-
-		cluster, err := discoverClusterFromSolution(command.Context(), installerAddress, project)
+		ctx, conn, address, err := clientutils.DialClusterFromInctl(ctx, cmdFlags)
 		if err != nil {
-			return fmt.Errorf("cannot resolve target context: %w", err)
+			return err
 		}
-
-		// Install the skill to the registry
-		ctx, conn, err := dialerutil.DialConnectionCtx(command.Context(), dialerutil.DialInfoParams{
-			Address:  installerAddress,
-			Cluster:  cluster,
-			CredName: project,
-		})
-		if err != nil {
-			return fmt.Errorf("could not establish connection: %w", err)
-		}
-		// long living connection to workcell
 		defer conn.Close()
 
+		// Install the skill to the registry
 		flagRegistry := cmdFlags.GetFlagRegistry()
 
 		// Upload skill, directly, to workcell, with fail-over legacy transfer if possible
@@ -110,15 +95,15 @@ $ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --soluti
 				// user set external registry, we can use it as fail-over
 				opts = append(opts, directupload.WithFailOver(imagetransfer.RemoteTransferer(remoteOpt())))
 			} else {
-				// we are going to fabricate a name which ends in .local in order to
-				// indicate that this is local, directly injected, image.
-				flagRegistry = fmt.Sprintf("%s.local", cluster)
+				// Fake name that ends in .local in order to indicate that this is local, directly uploaded
+				// image.
+				flagRegistry = "direct.upload.local"
 			}
 			transfer = directupload.NewTransferer(ctx, opts...)
 		}
 
-		authUser, authPwd := cmdFlags.GetFlagsRegistryAuthUserPassword()
 		log.Printf("Publishing skill image as %q", target)
+		authUser, authPwd := cmdFlags.GetFlagsRegistryAuthUserPassword()
 		imgpb, installerParams, err := registry.PushSkill(target, registry.PushOptions{
 			AuthUser:   authUser,
 			AuthPwd:    authPwd,
@@ -138,27 +123,24 @@ $ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --soluti
 		if err != nil {
 			return fmt.Errorf("could not parse name from ID: %w", err)
 		}
+		// No deterministic data is available for generating the sideloaded version here. Use a random
+		// string instead to keep the version unique. Ideally we would probably use the digest of the
+		// skill image or similar.
 		version, err := idutils.UnreleasedVersion(idutils.UnreleasedAssetKindSideloaded, []byte(uuid.New()))
 		if err != nil {
 			return fmt.Errorf("could not create version: %v", err)
 		}
-		skillIDVersion, err := idutils.IDVersionFrom(pkg, name, version)
+		idVersion, err := idutils.IDVersionFrom(pkg, name, version)
 		if err != nil {
 			return fmt.Errorf("could not create id_version: %w", err)
 		}
-		log.Printf("Installing skill %q using the installer service at %q", skillIDVersion, installerAddress)
+		log.Printf("Installing skill %q", idVersion)
+
 		installerCtx := ctx
-		if dialerutil.UseInsecureCredentials(installerAddress) {
-			// This returns a valid context at all times. We only log any errors here because we will also
-			// install without authorization. This may mean that some features (namely persistence) will
-			// not work as expected.
-			if installerCtx, err = auth.NewStore().AuthorizeContext(ctx, project); err != nil {
-				log.Printf("Warning: Could not find authentication information. Some features (such as persistence) may not work correctly. Try running 'inctl auth login --project %s' to authenticate.", project)
-			}
-		}
+
 		err = imageutils.InstallContainer(installerCtx,
 			&imageutils.InstallContainerParams{
-				Address:    installerAddress,
+				Address:    address,
 				Connection: conn,
 				Request: &installerpb.InstallContainerAddonRequest{
 					Id:      installerParams.SkillID,
@@ -183,7 +165,7 @@ $ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --soluti
 			&waitforskill.Params{
 				Connection:     conn,
 				SkillID:        installerParams.SkillID,
-				SkillIDVersion: skillIDVersion,
+				SkillIDVersion: idVersion,
 				WaitDuration:   timeout,
 			})
 		if err != nil {
@@ -194,42 +176,15 @@ $ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --soluti
 	},
 }
 
-func discoverClusterFromSolution(ctx context.Context, addr, project string) (string, error) {
-	org := cmdFlags.GetFlagOrganization()
-	k8sContext, solution := cmdFlags.GetFlagsSideloadContextSolution()
-	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
-		Address:  addr,
-		CredName: project,
-		CredOrg:  org,
-	})
-	if err != nil {
-		return "", fmt.Errorf("could not create connection: %w", err)
-	}
-
-	defer conn.Close()
-
-	cluster, err := solutionutil.GetClusterNameFromSolutionOrDefault(
-		ctx,
-		conn,
-		solution,
-		k8sContext,
-	)
-	if err != nil {
-		return "", fmt.Errorf("could not resolve solution to cluster: %w", err)
-	}
-
-	return cluster, nil
-}
-
 func init() {
 	cmd.SkillCmd.AddCommand(installCmd)
 	cmdFlags.SetCommand(installCmd)
 
-	cmdFlags.AddFlagInstallerAddress()
+	cmdFlags.AddFlagsAddressClusterSolution()
 	cmdFlags.AddFlagsProjectOrg()
 	cmdFlags.AddFlagRegistry()
 	cmdFlags.AddFlagsRegistryAuthUserPassword()
-	cmdFlags.AddFlagsSideloadContextSolution("skill")
 	cmdFlags.AddFlagSideloadStartTimeout("skill")
 	cmdFlags.AddFlagSideloadStartType()
+	cmdFlags.AddFlagSkipDirectUpload("skill")
 }

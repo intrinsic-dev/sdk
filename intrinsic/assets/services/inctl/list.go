@@ -7,12 +7,11 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"intrinsic/assets/clientutils"
 	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/idutils"
 	rrgrpcpb "intrinsic/resources/proto/resource_registry_go_grpc_proto"
 	rrpb "intrinsic/resources/proto/resource_registry_go_grpc_proto"
-	"intrinsic/skills/tools/skill/cmd/dialerutil"
-	"intrinsic/skills/tools/skill/cmd/solutionutil"
 )
 
 // GetCommand returns the command to list installed services in a cluster.
@@ -30,39 +29,13 @@ func GetCommand() *cobra.Command {
 			$ inctl solution list --project my_project --filter "running_on_hw,running_in_sim" --output json
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			project := flags.GetFlagProject()
-			org := flags.GetFlagOrganization()
+			ctx := cmd.Context()
 
-			cluster, solution, err := flags.GetFlagsListClusterSolution()
+			ctx, conn, _, err := clientutils.DialClusterFromInctl(ctx, flags)
 			if err != nil {
-				return fmt.Errorf("could not get flags (ie. address, cluster, solution): %v", err)
+				return err
 			}
-
-			if solution != "" {
-				// attempt to get cluster name from solution id
-				ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
-					CredName: project,
-					CredOrg:  org,
-				})
-				if err != nil {
-					return fmt.Errorf("could not create connection options for list services: %v", err)
-				}
-				defer conn.Close()
-
-				cluster, err = solutionutil.GetClusterNameFromSolution(ctx, conn, solution)
-				if err != nil {
-					return fmt.Errorf("could not get cluster name from solution: %v", err)
-				}
-			}
-
-			ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
-				Cluster:  cluster,
-				CredName: project,
-				CredOrg:  org,
-			})
-			if err != nil {
-				return fmt.Errorf("could not create connection options for listing services: %v", err)
-			}
+			defer conn.Close()
 
 			var pageToken string
 			for {
@@ -91,8 +64,8 @@ func GetCommand() *cobra.Command {
 	}
 
 	flags.SetCommand(cmd)
+	flags.AddFlagsAddressClusterSolution()
 	flags.AddFlagsProjectOrg()
-	flags.AddFlagsListClusterSolution("service")
 
 	return cmd
 }

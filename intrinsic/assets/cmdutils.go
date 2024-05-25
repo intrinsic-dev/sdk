@@ -54,9 +54,15 @@ const (
 	// KeyOrgPrivate is the name of the org-private flag.
 	KeyOrgPrivate = "org_private"
 	// KeyRegistry is the name of the registry flag.
+	// KeyOrganization is used as central flag name for passing an organization name to inctl.
+	KeyOrganization = orgutil.KeyOrganization
+	// KeyProject is used as central flag name for passing a project name to inctl.
+	KeyProject  = orgutil.KeyProject
 	KeyRegistry = "registry"
 	// KeyReleaseNotes is the name of the release notes flag.
 	KeyReleaseNotes = "release_notes"
+	// KeySkipDirectUpload is boolean flag controlling direct upload behavior
+	KeySkipDirectUpload = "skip_direct_upload"
 	// KeySolution is the name of the solution flag.
 	KeySolution = "solution"
 	// KeyType is the name of the type flag.
@@ -71,16 +77,6 @@ const (
 	KeyVendor = "vendor"
 	// KeyVersion is the name of the version flag.
 	KeyVersion = "version"
-
-	// KeySkipDirectUpload is boolean flag controlling direct upload behavior
-	KeySkipDirectUpload = "skip_direct_upload"
-
-	// Flags copied from orgutil for consistency
-
-	// KeyProject is used as central flag name for passing a project name to inctl.
-	KeyProject = orgutil.KeyProject
-	// KeyOrganization is used as central flag name for passing an organization name to inctl.
-	KeyOrganization = orgutil.KeyOrganization
 
 	envPrefix = "intrinsic"
 
@@ -197,47 +193,29 @@ func (cf *CmdFlags) GetFlagInstallerAddress() string {
 	return cf.GetString(KeyInstallerAddress)
 }
 
-// GetNormalizedInstallerAddress gets the normalized installer address based
-// on --project, --org, --solution and --installer_address flags specified
-// on command line. It tries to avoid returning default value of the
-// --installer_address flag if user sets --solution flag.
-func (cf *CmdFlags) GetNormalizedInstallerAddress() string {
-	installerAddress := cf.GetString(KeyInstallerAddress)
-	if cf.IsSet(KeyInstallerAddress) {
-		// user set this on cmd line, we honor their choice.
-		return installerAddress
-	}
-
-	solution := cf.GetString(KeySolution)
-	project := cf.GetFlagProject()
-	if solution != "" && project != "" {
-		// user selected either `--project` or `--org` and `--solution`
-		// but didn't set `--installer_address`, we are not going to contact
-		// local minikube (as this is highly probably 3P anyway).
-		return fmt.Sprintf(gcpEndpointsURLFormat, project)
-	}
-	// fallback in case we have some weirdness in command flags.
-	return installerAddress
-}
-
-// AddFlagsListClusterSolution  adds flags for the cluster and solution when listing assets.
-func (cf *CmdFlags) AddFlagsListClusterSolution(assetType string) {
-	cf.OptionalString(KeyCluster, "", fmt.Sprintf("The Kubernetes cluster from which the %ss should be read.", assetType))
-	cf.OptionalEnvString(KeySolution, "", fmt.Sprintf("The solution from which the %ss should be listed. Needs to run on a cluster.", assetType))
+// AddFlagsAddressClusterSolution adds flags for the address, cluster, and solution when installing
+// or working with installed assets.
+func (cf *CmdFlags) AddFlagsAddressClusterSolution() {
+	cf.OptionalString(KeyAddress, "", "Internal flag to directly set the API server address.")
+	cf.OptionalString(KeyCluster, "", "The target Kubernetes cluster.")
+	cf.OptionalEnvString(KeySolution, "", "The target solution. Must be deployed.")
 
 	cf.cmd.MarkFlagsMutuallyExclusive(KeyCluster, KeySolution)
 }
 
-// GetFlagsListClusterSolution gets the values of the cluster and solution flags added by
-// AddFlagsListClusterSolution.
-func (cf *CmdFlags) GetFlagsListClusterSolution() (string, string, error) {
+// GetFlagsAddressClusterSolution gets the values of the address, cluster, and solution flags added
+// by AddFlagsAddressClusterSolution.
+func (cf *CmdFlags) GetFlagsAddressClusterSolution() (string, string, string, error) {
+	address := cf.GetString(KeyAddress)
 	cluster := cf.GetString(KeyCluster)
 	solution := cf.GetString(KeySolution)
-	if cluster == "" && solution == "" {
-		return "", "", fmt.Errorf("One of `--%s` or `--%s` needs to be set", KeyCluster, KeySolution)
+
+	var err error
+	if address == "" && cluster == "" && solution == "" {
+		err = fmt.Errorf("at least one of `--%s`, `--%s` or `--%s` must be set", KeyAddress, KeyCluster, KeySolution)
 	}
 
-	return cluster, solution, nil
+	return address, cluster, solution, err
 }
 
 // AddFlagsManifest adds flags for specifying a manifest.
@@ -359,22 +337,6 @@ func (cf *CmdFlags) GetFlagSideloadContext() string {
 	return cf.GetString(KeyContext)
 }
 
-// AddFlagsSideloadContextSolution adds flags for the context and solution when side-loading an
-// asset.
-func (cf *CmdFlags) AddFlagsSideloadContextSolution(assetType string) {
-	cf.OptionalEnvString(KeyContext, "", fmt.Sprintf("The Kubernetes cluster to use. Required unless %s is set or using localhost for %s.", KeySolution, KeyInstallerAddress))
-
-	cf.OptionalEnvString(KeySolution, "", fmt.Sprintf(`The solution into which the %s is loaded. Needs to run on a cluster.
-Required unless %s is set.`, assetType, KeyContext))
-	cf.cmd.MarkFlagsMutuallyExclusive(KeyContext, KeySolution)
-}
-
-// GetFlagsSideloadContextSolution gets the values of the context and solution flags added by
-// AddFlagsSideloadContextSolution.
-func (cf *CmdFlags) GetFlagsSideloadContextSolution() (string, string) {
-	return cf.GetString(KeyContext), cf.GetString(KeySolution)
-}
-
 // AddFlagSideloadStartType adds a flag for the type when starting an asset.
 func (cf *CmdFlags) AddFlagSideloadStartType() {
 	cf.RequiredString(KeyType, fmt.Sprintf(
@@ -436,6 +398,21 @@ func (cf *CmdFlags) GetFlagSideloadStartTimeout() (time.Duration, string, error)
 	return timeout, timeoutStr, nil
 }
 
+// AddFlagSkipDirectUpload adds a flag for disabling direct upload to workcells
+func (cf *CmdFlags) AddFlagSkipDirectUpload(assetType string) {
+	usage := fmt.Sprintf("Skips direct upload of %s to workcell. Requires "+
+		"external repository. (default false)\nCan be defined via the %s_%s "+
+		"environment variable.", assetType, envPrefix, strings.ToUpper(KeySkipDirectUpload))
+	cf.OptionalBool(KeySkipDirectUpload, false, usage)
+	cf.cmd.PersistentFlags().Lookup(KeySkipDirectUpload).Hidden = true
+	cf.viperLocal.BindEnv(KeySkipDirectUpload)
+}
+
+// GetFlagSkipDirectUpload gets the value of the flag added by AddFlagSkipDirectUpload
+func (cf *CmdFlags) GetFlagSkipDirectUpload() bool {
+	return cf.GetBool(KeySkipDirectUpload)
+}
+
 // AddFlagVendor adds a flag for the asset vendor.
 func (cf *CmdFlags) AddFlagVendor(assetType string) {
 	cf.RequiredString(KeyVendor, fmt.Sprintf("The %s vendor.", assetType))
@@ -454,21 +431,6 @@ func (cf *CmdFlags) AddFlagVersion(assetType string) {
 // GetFlagVersion gets the value of the version flag added by AddFlagVersion.
 func (cf *CmdFlags) GetFlagVersion() string {
 	return cf.GetString(KeyVersion)
-}
-
-// AddFlagSkipDirectUpload adds a flag for disabling direct upload to workcells
-func (cf *CmdFlags) AddFlagSkipDirectUpload(assetType string) {
-	usage := fmt.Sprintf("Skips direct upload of %s to workcell. Requires "+
-		"external repository. (default false)\nCan be defined via the %s_%s "+
-		"environment variable.", assetType, envPrefix, strings.ToUpper(KeySkipDirectUpload))
-	cf.OptionalBool(KeySkipDirectUpload, false, usage)
-	cf.cmd.PersistentFlags().Lookup(KeySkipDirectUpload).Hidden = true
-	cf.viperLocal.BindEnv(KeySkipDirectUpload)
-}
-
-// GetFlagSkipDirectUpload gets the value of the flag added by AddFlagSkipDirectUpload
-func (cf *CmdFlags) GetFlagSkipDirectUpload() bool {
-	return cf.GetBool(KeySkipDirectUpload)
 }
 
 // String adds a new string flag.

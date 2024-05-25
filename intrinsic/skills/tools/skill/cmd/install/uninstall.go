@@ -10,13 +10,12 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/spf13/cobra"
+	"intrinsic/assets/clientutils"
 	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/imagetransfer"
 	"intrinsic/assets/imageutils"
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd"
-	"intrinsic/skills/tools/skill/cmd/dialerutil"
-	"intrinsic/skills/tools/skill/cmd/solutionutil"
 )
 
 var cmdFlags = cmdutils.NewCmdFlags()
@@ -48,55 +47,28 @@ $ inctl skill uninstall --type=id skill
 		"unload",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
+		ctx := command.Context()
 		target := args[0]
+
 		targetType := imageutils.TargetType(cmdFlags.GetFlagSideloadStopType())
 		if targetType != imageutils.Build && targetType != imageutils.Archive && targetType != imageutils.Image && targetType != imageutils.ID && targetType != imageutils.Name {
 			return fmt.Errorf("type must be one of (%s, %s, %s, %s, %s)", imageutils.Build, imageutils.Archive, imageutils.Image, imageutils.ID, imageutils.Name)
 		}
 
-		context, solution := cmdFlags.GetFlagsSideloadContextSolution()
-		installerAddress := cmdFlags.GetNormalizedInstallerAddress()
-		project := cmdFlags.GetFlagProject()
-		org := cmdFlags.GetFlagOrganization()
+		ctx, conn, address, err := clientutils.DialClusterFromInctl(ctx, cmdFlags)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
 
 		skillID, err := imageutils.SkillIDFromTarget(target, imageutils.TargetType(targetType), imagetransfer.RemoteTransferer(remote.WithAuthFromKeychain(google.Keychain)))
 		if err != nil {
 			return fmt.Errorf("could not get skill ID: %v", err)
 		}
 
-		ctx, conn, err := dialerutil.DialConnectionCtx(command.Context(), dialerutil.DialInfoParams{
-			Address:  installerAddress,
-			CredName: project,
-			CredOrg:  org,
-		})
-		if err != nil {
-			return fmt.Errorf("could not create connection: %w", err)
-		}
-		defer conn.Close()
-
-		cluster, err := solutionutil.GetClusterNameFromSolutionOrDefault(
-			ctx,
-			conn,
-			solution,
-			context,
-		)
-		if err != nil {
-			return fmt.Errorf("could not resolve solution to cluster: %s", err)
-		}
-
-		// Remove the skill from the registry
-		ctx, conn, err = dialerutil.DialConnectionCtx(command.Context(), dialerutil.DialInfoParams{
-			Address:  installerAddress,
-			Cluster:  cluster,
-			CredName: project,
-		})
-		if err != nil {
-			return fmt.Errorf("could not remove the skill: %w", err)
-		}
-
-		log.Printf("Removing skill %q using the installer service at %q", skillID, installerAddress)
+		log.Printf("Removing skill %q", skillID)
 		if err := imageutils.RemoveContainer(ctx, &imageutils.RemoveContainerParams{
-			Address:    installerAddress,
+			Address:    address,
 			Connection: conn,
 			Request: &installerpb.RemoveContainerAddonRequest{
 				Id:   skillID,
@@ -115,8 +87,7 @@ func init() {
 	cmd.SkillCmd.AddCommand(uninstallCmd)
 	cmdFlags.SetCommand(uninstallCmd)
 
-	cmdFlags.AddFlagInstallerAddress()
+	cmdFlags.AddFlagsAddressClusterSolution()
 	cmdFlags.AddFlagsProjectOrg()
-	cmdFlags.AddFlagsSideloadContextSolution("skill")
 	cmdFlags.AddFlagSideloadStopType("skill")
 }

@@ -10,14 +10,13 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"intrinsic/assets/clientutils"
 	"intrinsic/assets/cmdutils"
 	skillregistrygrpcpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
 	skillregistrypb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
 	spb "intrinsic/skills/proto/skills_go_proto"
 	skillCmd "intrinsic/skills/tools/skill/cmd"
-	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/listutil"
-	"intrinsic/skills/tools/skill/cmd/solutionutil"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/printer"
 )
@@ -89,45 +88,20 @@ $ inctl skill list --project my-project --cluster my-cluster
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		ctx := cmd.Context()
-		project := cmdFlags.GetFlagProject()
-		org := cmdFlags.GetFlagOrganization()
-		cluster, solution, err := cmdFlags.GetFlagsListClusterSolution()
+
+		ctx, conn, _, err := clientutils.DialClusterFromInctl(ctx, cmdFlags)
 		if err != nil {
 			return err
 		}
+		defer conn.Close()
 
-		if solution != "" {
-			getClusterNameCtx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
-				CredName: project,
-				CredOrg:  org,
-			})
-			if err != nil {
-				return errors.Wrap(err, "could not create connection")
-			}
-			defer conn.Close()
-
-			cluster, err = solutionutil.GetClusterNameFromSolution(getClusterNameCtx, conn, solution)
-			if err != nil {
-				return errors.Wrap(err, "could not resolve solution to cluster")
-			}
-		}
 		prtr, err := printer.NewPrinter(root.FlagOutput)
 		if err != nil {
 			return err
 		}
 
-		registryCtx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
-			Cluster:  cluster,
-			CredName: project,
-			CredOrg:  org,
-		})
-		if err != nil {
-			return errors.Wrap(err, "failed to create client connection")
-		}
-		defer conn.Close()
-
 		client := skillregistrygrpcpb.NewSkillRegistryClient(conn)
-		err = listSkills(registryCtx, client, &listSkillsParams{
+		err = listSkills(ctx, client, &listSkillsParams{
 			filter:  cmdFlags.GetString(keyFilter),
 			printer: prtr,
 		})
@@ -143,7 +117,7 @@ func init() {
 	skillCmd.SkillCmd.AddCommand(listCmd)
 	cmdFlags.SetCommand(listCmd)
 
-	cmdFlags.AddFlagsListClusterSolution("skill")
+	cmdFlags.AddFlagsAddressClusterSolution()
 	cmdFlags.AddFlagsProjectOrg()
 
 	cmdFlags.OptionalString(keyFilter, "", fmt.Sprintf("Filter skills by the way they where loaded into the solution. One of: %s.", strings.Join(filterOptions, ", ")))

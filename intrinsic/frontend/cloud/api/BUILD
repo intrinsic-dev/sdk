@@ -5,6 +5,7 @@ load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_pro
 load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 
 package(default_visibility = [
+    "//intrinsic/assets:__subpackages__",
     "//intrinsic/frontend:__subpackages__",
     "//intrinsic/kubernetes:__subpackages__",
     "//intrinsic/skills/tools/skill:__subpackages__",
