@@ -71,12 +71,12 @@ message DownsamplingOptions {
 //
 // Will return a cache session token to retrieve the LogItems.
 message LoadCloudLogItemsRequest {
-  message LoadCloudLogItemsQuery {
+  message Query {
     LogSource log_source = 1;
     DownsamplingOptions downsampling_options = 2;
   }
 
-  LoadCloudLogItemsQuery load_query = 1;
+  Query load_query = 1;
   google.protobuf.Timestamp start_time = 2;
   google.protobuf.Timestamp end_time = 3;
 
@@ -113,14 +113,14 @@ message LoadCloudLogItemsResponse {
 }
 
 message GetCloudLogItemsRequest {
-  message GetCloudLogItemsQuery {
+  message Query {
     LogSource log_source = 1;
     google.protobuf.Timestamp start_time = 2;
     google.protobuf.Timestamp end_time = 3;
   }
 
   oneof query {
-    GetCloudLogItemsQuery get_query = 1;
+    Query get_query = 1;
     bytes cursor = 2;  // Generally used for pagination.
   }
 
