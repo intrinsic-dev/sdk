@@ -61,3 +61,27 @@ cc_library(
         "@com_google_absl//absl/time",
     ],
 )
+
+cc_library(
+    name = "rt_queue_multi_writer",
+    hdrs = ["rt_queue_multi_writer.h"],
+    deps = [
+        ":rt_queue",
+        "//intrinsic/icon/utils:realtime_guard",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+cc_test(
+    name = "rt_queue_multi_writer_test",
+    srcs = ["rt_queue_multi_writer_test.cc"],
+    deps = [
+        ":rt_queue",
+        ":rt_queue_multi_writer",
+        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/thread",
+        "@com_google_absl//absl/status",
+    ],
+)
