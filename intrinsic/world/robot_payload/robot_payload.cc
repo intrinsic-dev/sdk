@@ -2,9 +2,6 @@
 
 #include "intrinsic/world/robot_payload/robot_payload.h"
 
-#include <cstdlib>
-#include <ostream>
-
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "intrinsic/eigenmath/types.h"
@@ -15,25 +12,6 @@
 #include "intrinsic/world/proto/robot_payload.pb.h"
 
 namespace intrinsic {
-
-namespace {
-
-constexpr double kMassEpsilon = 1e-9;
-
-bool MassAlmostEqual(double x, double y) {
-  return std::abs(x - y) < kMassEpsilon;
-}
-
-}  // namespace
-
-RobotPayload::RobotPayload()
-    : mass_kg_(0.0),
-      tip_t_cog_(Pose3d::Identity()),
-      inertia_in_cog_(eigenmath::Matrix3d::Zero()) {}
-
-RobotPayload::RobotPayload(double mass, const Pose3d& tip_t_cog,
-                           const eigenmath::Matrix3d& inertia)
-    : mass_kg_(mass), tip_t_cog_(tip_t_cog), inertia_in_cog_(inertia) {}
 
 absl::Status RobotPayload::SetMass(double mass_kg) {
   // Allow a zero mass for robots without payload.
@@ -67,19 +45,6 @@ absl::StatusOr<RobotPayload> RobotPayload::Create(
   INTR_RETURN_IF_ERROR(payload.SetInertia(inertia));
 
   return payload;
-}
-
-bool RobotPayload::operator==(const RobotPayload& other) const {
-  return MassAlmostEqual(mass_kg_, other.mass_kg_) &&
-         tip_t_cog_.isApprox(other.tip_t_cog_) &&
-         inertia_in_cog_.isApprox(other.inertia_in_cog_);
-}
-
-std::ostream& operator<<(std::ostream& os, const RobotPayload& payload) {
-  os << "Payload: mass: " << payload.mass()
-     << " tip_t_cog: " << payload.tip_t_cog()
-     << " inertia: " << payload.inertia();
-  return os;
 }
 
 absl::StatusOr<RobotPayload> FromProto(
