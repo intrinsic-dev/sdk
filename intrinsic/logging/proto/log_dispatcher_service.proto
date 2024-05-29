@@ -9,6 +9,8 @@ import "google/protobuf/timestamp.proto";
 import "intrinsic/logging/proto/blob.proto";
 import "intrinsic/logging/proto/log_item.proto";
 
+/// PutLogItems.
+
 // A batch of LogItems to be sent to the LogDispatcher, to be PUT into storage
 // on the cloud.
 message PutLogItemsRequest {
@@ -30,6 +32,8 @@ message PutLogItemsResponse {
 
   // log items in request == (log_items_ingested + log_items_dropped)
 }
+
+/// PutBlob.
 
 // A single blob to be sent to the LogDispatcher, to be PUT into storage
 // on the cloud.
@@ -65,6 +69,105 @@ message DownsamplingOptions {
     uint32 keep_every_n_items = 2;
   }
 }
+
+/// List methods.
+
+// A request to list workcells that hold cloud LogItems or cloud blobs.
+message ListWorkcellsRequest {
+  message Query {
+    optional string match_glob = 1;  // Filter results by glob pattern.
+  }
+
+  oneof query {
+    Query list_query = 1;
+    bytes cursor = 2;  // Used for pagination.
+  }
+
+  // Limits for the number of results per page.
+  optional uint32 max_num_results = 3;  // Defaults to 1000.
+
+  string organization_id = 4;
+}
+
+message ListWorkcellsResponse {
+  string organization_id = 1;
+
+  repeated string workcells = 2;
+
+  // Opaque cursor to the next page of results.
+  // If empty, no next page exists.
+  optional bytes next_page_cursor = 3;
+}
+
+// A request to list event sources that hold cloud LogItems.
+message ListLogEventSourcesRequest {
+  message Query {
+    string workcell_name = 1;
+    optional string match_glob = 2;  // Filter results by glob pattern.
+  }
+
+  oneof query {
+    Query list_query = 1;
+    bytes cursor = 2;  // Used for pagination.
+  }
+
+  // Limits for the number of results per page.
+  optional uint32 max_num_results = 3;  // Defaults to 1000.
+
+  string organization_id = 4;
+}
+
+message ListLogEventSourcesResponse {
+  string workcell_name = 1;
+  string organization_id = 2;
+
+  repeated string event_sources = 3;
+
+  // Opaque cursor to the next page of results.
+  // If empty, no next page exists.
+  optional bytes next_page_cursor = 4;
+}
+
+// A request to list the batches of LogItems that have been put into the cloud.
+message ListLogBatchesRequest {
+  // This query will cause any log batches with times overlapping with the start
+  // and end time to be returned.
+  message Query {
+    LogSource log_source = 1;
+    google.protobuf.Timestamp start_time = 2;
+    google.protobuf.Timestamp end_time = 3;
+  }
+
+  oneof query {
+    Query list_query = 1;
+    bytes cursor = 2;  // Used for pagination.
+  }
+
+  // Limits for the number of results per page.
+  optional uint32 max_num_results = 3;  // Defaults to 1000.
+
+  string organization_id = 4;
+}
+
+message ListLogBatchesResponse {
+  message LogBatch {
+    string file_name = 1;
+    double byte_size = 2;
+    google.protobuf.Timestamp start_time = 3;
+    google.protobuf.Timestamp end_time = 4;
+  }
+
+  LogSource log_source = 1;
+  string organization_id = 2;
+
+  repeated LogBatch batches = 3;
+
+  // Opaque cursor to the next page of results.
+  // If empty, no next page exists.
+  optional bytes next_page_cursor = 4;
+}
+
+/// LoadCloudLogItems.
 
 // A request to load one batch of LogItems into the cloud cache, for later
 // retrieval using GetCloudLogItems.
@@ -111,6 +214,8 @@ message LoadCloudLogItemsResponse {
   bytes cursor = 6;  // Opaque cursor to the first log in range, spanning the
                      // entire load range, to be used for GetCloudLogItems.
 }
+
+/// GetCloudLogItems.
 
 message GetCloudLogItemsRequest {
   message Query {
@@ -164,6 +269,16 @@ service LogDispatcher {
 
   // Put one Blob to the cloud.
   rpc PutBlob(PutBlobRequest) returns (google.protobuf.Empty) {}
+
+  // List the workcells that hold cloud LogItems or cloud blobs.
+  rpc ListWorkcells(ListWorkcellsRequest) returns (ListWorkcellsResponse) {}
+
+  // List the event sources that hold cloud LogItems.
+  rpc ListLogEventSources(ListLogEventSourcesRequest)
+      returns (ListLogEventSourcesResponse) {}
+
+  // List the LogItem batches that exist in the cloud.
+  rpc ListLogBatches(ListLogBatchesRequest) returns (ListLogBatchesResponse) {}
 
   // Load a batch of LogItems into the cloud cache and get a cache token to
   // retrieve the LogItems later.
