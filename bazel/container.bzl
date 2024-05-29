@@ -78,10 +78,14 @@ def container_image(
         **kwargs
     )
 
+    tag = "%s:latest" % name
+    package = native.package_name()
+    if package:
+        tag = "%s/%s" % (package, tag)
     oci_tarball(
         name = "_%s_tarball" % name,
         image = name,
-        repo_tags = ["%s/%s:latest" % (native.package_name(), name)],
+        repo_tags = [tag],
         visibility = kwargs.get("visibility"),
         testonly = kwargs.get("testonly"),
     )
