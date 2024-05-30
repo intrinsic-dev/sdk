@@ -177,6 +177,7 @@ message CheckCollisionsResponse {
 // such as kinematics and collision checking. It is used by skills such as
 // `Move Robot` and is available by thid party skills and services.
 service MotionPlannerService {
+
   // Plans a trajectory that fulfills the defined motion specification in the
   // MotionPlannerRequest. Requests are cached in a volatile cache, if the
   // service encounters identical requests it will return previously cached
