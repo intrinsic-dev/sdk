@@ -27,9 +27,18 @@ class Subscription {
 
   absl::string_view TopicName() const { return topic_name_; }
 
+  // To handle complex cases, such as when unsubscribing from a Python topic,
+  // the shutdown sequence may need to be done in delicate ordering to avoid the
+  // potential for deadlock. The Python GIL needs to be acquired when the
+  // callback is deleted, but the GIL needs to be released when the actual
+  // Zenoh subscription is destroyed, due to internal mutex contention in the
+  // callback thread pool.  Exposing the Unsubscribe() function allows a pybind
+  // holder type to do this in the correct order.
+  void Unsubscribe();
+
  private:
-  std::string topic_name_ = {};
-  std::unique_ptr<SubscriptionData> subscription_data_ = {};
+  std::string topic_name_;
+  std::unique_ptr<SubscriptionData> subscription_data_;
 };
 
 }  // namespace intrinsic

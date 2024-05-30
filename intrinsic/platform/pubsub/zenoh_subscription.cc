@@ -31,11 +31,14 @@ Subscription &Subscription::operator=(Subscription &&other) {
   return *this;
 }
 
-Subscription::~Subscription() {
+Subscription::~Subscription() { Unsubscribe(); }
+
+void Subscription::Unsubscribe() {
   if (!topic_name_.empty()) {
     Zenoh().imw_destroy_subscription(
         subscription_data_->prefixed_name.c_str(), zenoh_static_callback,
         subscription_data_->callback_functor.get());
+    topic_name_.clear();
   }
 }
 

@@ -28,7 +28,7 @@ namespace pubsub {
 
 namespace {
 
-absl::StatusOr<Subscription> PySubscriptionWithConfig(
+absl::StatusOr<Subscription> CreateSubscriptionWithConfig(
     PubSub* self, absl::string_view topic, const TopicConfig& config,
     const google::protobuf::Message& exemplar, pybind11::object msg_callback,
     pybind11::object err_callback) {
@@ -82,14 +82,36 @@ absl::StatusOr<Subscription> PySubscriptionWithConfig(
                                   std::move(error_callback));
 }
 
-absl::StatusOr<Subscription> PySubscription(
+absl::StatusOr<Subscription> CreateSubscription(
     PubSub* self, absl::string_view topic,
     const google::protobuf::Message& exemplar, pybind11::object msg_callback,
     pybind11::object err_callback) {
-  return PySubscriptionWithConfig(self, topic, TopicConfig{}, exemplar,
-                                  std::move(msg_callback),
-                                  std::move(err_callback));
+  return CreateSubscriptionWithConfig(self, topic, TopicConfig{}, exemplar,
+                                      std::move(msg_callback),
+                                      std::move(err_callback));
 }
+
+struct PySubscriptionDeleter {
+  void operator()(Subscription* s) {
+    // To avoid deadlock, the call to Zenoh.imw_destroy_subscription() needs to
+    // happen with the GIL released. Otherwise, the GIL and the internal
+    // callback mutex are potentially locked in opposite order by this thread
+    // and the Zenoh callback thread pool, which can deadlock, especially on
+    // high-frequency topics.
+    {
+      pybind11::gil_scoped_release release_gil;
+      s->Unsubscribe();
+    }
+
+    // The Python GIL will be re-acquired now that the previous scoped_release
+    // has disappeared. With the re-acquired GIL, we can safely delete the
+    // subscription_data_ struct in Subscription, which contains the Python
+    // callback object. A deadlock can no longer occur, because a message
+    // callback will no longer occur because the remainder of the destruction
+    // call chain is holding the GIL.
+    delete s;
+  }
+};
 
 }  // namespace
 
@@ -116,11 +138,11 @@ PYBIND11_MODULE(pubsub, m) {
       // https://pybind11.readthedocs.io/en/stable/classes.html#overloaded-methods
       .def("CreatePublisher", &PubSub::CreatePublisher, pybind11::arg("topic"),
            pybind11::arg("config") = TopicConfig{})
-      .def("CreateSubscription", &PySubscriptionWithConfig,
+      .def("CreateSubscription", &CreateSubscriptionWithConfig,
            pybind11::arg("topic"), pybind11::arg("config"),
            pybind11::arg("exemplar"), pybind11::arg("msg_callback") = nullptr,
            pybind11::arg("error_callback") = nullptr)
-      .def("CreateSubscription", &PySubscription, pybind11::arg("topic"),
+      .def("CreateSubscription", &CreateSubscription, pybind11::arg("topic"),
            pybind11::arg("exemplar"), pybind11::arg("msg_callback") = nullptr,
            pybind11::arg("error_callback") = nullptr);
 
@@ -131,7 +153,13 @@ PYBIND11_MODULE(pubsub, m) {
            pybind11::arg("message"))
       .def("TopicName", &Publisher::TopicName);
 
-  pybind11::class_<Subscription>(m, "Subscription")
+  // The python GIL does not need to be locked during the entire destructor
+  // of this class. Instead, the custom deleter provided during its
+  // construction will acquite the GIL only during the deletion of the
+  // SubscriptionData object, which holds the Python callback.
+  pybind11::class_<Subscription,
+                   std::unique_ptr<Subscription, PySubscriptionDeleter>>(
+      m, "Subscription")
       .def("TopicName", &Subscription::TopicName);
 }
 
