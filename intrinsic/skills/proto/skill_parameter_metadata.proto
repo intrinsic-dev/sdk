@@ -29,6 +29,11 @@ message SkillParameterMetadata {
   // ensures that people working with generated code for the parameter proto
   // always have access to unit information.
   string unit = 1;
+
+  // Designator for a field that holds an Icon2PositionPart reference. This
+  // can be used to designate a particular field in the UI that should be used
+  // to select a part name.
+  bool is_icon2_position_part = 2;
 }
 
 extend google.protobuf.FieldOptions {
