@@ -547,7 +547,7 @@ $ inctl skill create com.my_org.my_move --proto_package com.my_org`,
 		"to the skills package (=the package portion of the given skill ID).")
 	createCmd.Flags().StringVar(&flagSDKRepository, "sdk_repository", "", "(optional) Git repository from which "+
 		"to fetch the Intrinsic SDK, e.g., "+
-		"\"https://intrinsic.googlesource.com/xfa-prod-happy-hippo/intrinsic_sdks.git\". Only required if "+
+		"\"https://github.com/intrinsic-dev/sdk.git\". Only required if "+
 		"workspace_root is not yet a Bazel workspace.")
 	createCmd.Flags().StringVar(&flagSDKVersion, "sdk_version", "", "(optional) Version of the "+
 		"Intrinsic SDK to fetch. Only required if workspace_root is not yet a Bazel workspace.")

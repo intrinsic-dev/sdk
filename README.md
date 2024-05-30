@@ -9,7 +9,7 @@ The Intrinsic SDK is a collection of application programming interfaces
 robotic solutions from concept to deployment.
 
 In addition to this
-[SDK repository](https://github.com/intrinsic-dev/intrinsic_sdks), there is a
+[SDK repository](https://github.com/intrinsic-dev/sdk), there is a
 companion repository with
 [examples](https://github.com/intrinsic-dev/sdk-examples) and a dev container
 [project template](https://github.com/intrinsic-dev/project-template).
