@@ -1,6 +1,6 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-package slogs
+package logs
 
 import (
 	"context"

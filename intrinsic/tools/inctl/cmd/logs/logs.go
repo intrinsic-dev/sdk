@@ -1,7 +1,7 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-// Package slogs defines a command for working with solution logs.
-package slogs
+// Package logs defines a command for working with various logs.
+package logs
 
 import (
 	"fmt"
@@ -36,8 +36,9 @@ const (
 
 var (
 	showLogs = &cobra.Command{
-		Use:        "slogs",
-		Example:    "inctl slogs --org ORGANIZATION --solution SOLUTION-ID --follow --service NAME",
+		Use:        "logs",
+		Aliases:    []string{"slogs"},
+		Example:    "inctl logs --org ORGANIZATION --solution SOLUTION-ID --follow --service NAME",
 		Short:      "Prints logs from the solution",
 		Long:       "Prints resource logs (skill or service) from the instance running in given solution.",
 		Args:       cobra.ExactArgs(1),
