@@ -142,13 +142,9 @@ def intrinsic_sdks_deps_0():
     maybe(
         http_archive,
         name = "com_google_protobuf",
-        sha256 = "2dc7254fc975bb40efcab799273c9330d7ed11f4b3263dcbf7328f5c6b067d3e",  # v3.23.1
-        strip_prefix = "protobuf-2dca62f7296e5b49d729f7384f975cecb38382a0",  # v3.23.1
-        urls = ["https://github.com/protocolbuffers/protobuf/archive/2dca62f7296e5b49d729f7384f975cecb38382a0.zip"],  # v3.23.1
-        patch_args = ["-p1"],
-        patches = [
-            Label("//intrinsic/production/external/patches:0012-Remove-exec-tools.patch"),
-        ],
+        sha256 = "2ea80fa37de3da2ed1b503cde35bdf8dd66913370a6cf66fca7d47006596c4d9",  # v3.24.4
+        strip_prefix = "protobuf-7789b3ac85248ad75631a1919071fa268e466210",  # v3.24.4
+        urls = ["https://github.com/protocolbuffers/protobuf/archive/7789b3ac85248ad75631a1919071fa268e466210.zip"],  # v3.24.4
     )
 
     # gRPC
@@ -170,7 +166,7 @@ def intrinsic_sdks_deps_0():
 
     # Dependency of Protobuf and gRPC, explicitly pinned here so that we don't get the definition
     # from protobuf_deps() which applies a patch that does not build in our WORKSPACE. See
-    # https://github.com/protocolbuffers/protobuf/blob/2dca62f7296e5b49d729f7384f975cecb38382a0/protobuf_deps.bzl#L156
+    # https://github.com/protocolbuffers/protobuf/blob/7789b3ac85248ad75631a1919071fa268e466210/protobuf_deps.bzl#L154
     # Here we use a copy of gRPC's definition, see
     # https://github.com/grpc/grpc/blob/0bf4a618b17a3f0ed61c22364913c7f66fc1c61a/bazel/grpc_deps.bzl#L393-L402
     maybe(

@@ -6,6 +6,5 @@ exports_files([
     "0005-Remove-competing-go-deps.patch",
     "0007-Also-generate-pyi-files-grpc.patch",
     "0011-Public-grpc_library-attr.patch",
-    "0012-Remove-exec-tools.patch",
     "0013-Remove-protobuf-ios-support.patch",
 ])
