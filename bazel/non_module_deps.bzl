@@ -89,6 +89,21 @@ def non_module_deps():
         urls = ["https://github.com/pybind/pybind11_abseil/archive/refs/tags/v202402.0.tar.gz"],
     )
 
+    # Eigen math library.
+    # Repository name should be com_gitlab_libeigen_eigen to serve
+    # as transitive dependency for com_google_ceres_solver
+    # BCR version is 2 years behind, so we use a specific commit and http_archive.
+    EIGEN_COMMIT = "38b9cc263bbaeb03ce408a4e26084543a6c0dedb"  # 2024-05-30
+    http_archive(
+        name = "com_gitlab_libeigen_eigen",
+        build_file = Label("//intrinsic/production/external:BUILD.eigen"),
+        sha256 = "136102d1241eb73f0ed3e1f47830707d1e40016ef61ed2d682c1398392879401",
+        strip_prefix = "eigen-%s" % EIGEN_COMMIT,
+        urls = [
+            "https://gitlab.com/libeigen/eigen/-/archive/%s/eigen-%s.zip" % (EIGEN_COMMIT, EIGEN_COMMIT),
+        ],
+    )
+
 def _non_module_deps_impl(ctx):  # @unused
     non_module_deps()
 

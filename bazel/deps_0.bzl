@@ -275,20 +275,6 @@ def intrinsic_sdks_deps_0():
         ],
     )
 
-    # Eigen math library.
-    # Repository name should be com_gitlab_libeigen_eigen to serve
-    # as transitive dependency for com_google_ceres_solver
-    maybe(
-        http_archive,
-        name = "com_gitlab_libeigen_eigen",
-        build_file = Label("//intrinsic/production/external:BUILD.eigen"),
-        sha256 = "1ccaabbfe870f60af3d6a519c53e09f3dcf630207321dffa553564a8e75c4fc8",
-        strip_prefix = "eigen-3.4.0",
-        urls = [
-            "https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip",
-        ],
-    )
-
     maybe(
         http_archive,
         name = "com_google_absl_py",
