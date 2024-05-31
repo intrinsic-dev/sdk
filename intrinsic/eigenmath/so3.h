@@ -75,8 +75,8 @@ class SO3 {
     bool is_normalized = IsNormalizedQuaternion(quaternion_normalized);
     if (!is_normalized) {
       return absl::InvalidArgumentError(
-          absl::StrCat("Cannot create rotation from quaternion. ",
-                       ExplainUnNormalizedQuaternion(quaternion)));
+          "Cannot create rotation from quaternion. " +
+          ExplainUnNormalizedQuaternion(quaternion));
     }
     return SO3(quaternion_normalized, /*do_normalize=*/false);
   }

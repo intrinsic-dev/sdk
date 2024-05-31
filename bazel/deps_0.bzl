@@ -284,10 +284,10 @@ def intrinsic_sdks_deps_0():
     maybe(
         http_archive,
         name = "com_google_absl",
-        sha256 = "59d2976af9d6ecf001a81a35749a6e551a335b949d34918cfade07737b9d93c5",
-        strip_prefix = "abseil-cpp-20230802.0",
+        integrity = "sha256-czcmuMOm05pBINfkXqi0GkNM2s3kAculAPFCNsSbOdw=",
+        strip_prefix = "abseil-cpp-20240116.2",
         urls = [
-            "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.0.tar.gz",
+            "https://github.com/abseil/abseil-cpp/releases/download/20240116.2/abseil-cpp-20240116.2.tar.gz",
         ],
     )
 
