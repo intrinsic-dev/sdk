@@ -327,6 +327,14 @@ def intrinsic_sdks_deps_0():
         urls = ["https://github.com/pybind/pybind11/archive/v2.11.1.zip"],  #  Jul 17, 2023
     )
 
+    maybe(
+        http_archive,
+        name = "pybind11_protobuf",
+        sha256 = "21189abd098528fd3986dcec349ef61ae5506d29d0c51c7a13d6f9dfcc17c676",
+        strip_prefix = "pybind11_protobuf-1d7a7296604537db5f6ace2ddafd1d08c967ec63",
+        urls = ["https://github.com/pybind/pybind11_protobuf/archive/1d7a7296604537db5f6ace2ddafd1d08c967ec63.tar.gz"],  #  Jun 19, 2023
+    )
+
     # Bazel skylib
     maybe(
         http_archive,

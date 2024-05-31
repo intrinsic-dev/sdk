@@ -89,13 +89,6 @@ def non_module_deps():
         urls = ["https://github.com/pybind/pybind11_abseil/archive/refs/tags/v202402.0.tar.gz"],
     )
 
-    http_archive(
-        name = "pybind11_protobuf",
-        sha256 = "59c5fbb6dfe1427d41217eb58386f16940b6c8d6ff63407a72566daa4f343f59",
-        strip_prefix = "pybind11_protobuf-b4a2e87a10cd5f6309e4ff67c040a470d7ec2373",
-        urls = ["https://github.com/pybind/pybind11_protobuf/archive/b4a2e87a10cd5f6309e4ff67c040a470d7ec2373.tar.gz"],  #  Feb 23, 2024
-    )
-
 def _non_module_deps_impl(ctx):  # @unused
     non_module_deps()
 
