@@ -113,7 +113,8 @@ message ResourceInstance {
 
   // The handle containing connection information and resource capabilitiies.
   ResourceHandle resource_handle = 11;
-  reserved 5;
+  reserved 5, 10, 12;
+  reserved "scene_object", "world_fragment";
 }
 
 message ListResourceInstanceRequest {
