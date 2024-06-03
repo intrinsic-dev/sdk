@@ -36,6 +36,7 @@
 #include "intrinsic/world/objects/object_world_ids.h"
 #include "intrinsic/world/objects/transform_node.h"
 #include "intrinsic/world/objects/world_object.h"
+#include "intrinsic/world/proto/collision_settings.pb.h"
 #include "intrinsic/world/proto/object_world_refs.pb.h"
 #include "intrinsic/world/proto/object_world_service.grpc.pb.h"
 #include "intrinsic/world/proto/object_world_service.pb.h"
@@ -700,6 +701,17 @@ absl::Status ObjectWorldClient::ReparentObjectToFinalEntity(
     const WorldObject& object, const KinematicObject& new_parent) {
   return ReparentObject(object, new_parent,
                         ObjectEntityFilter().IncludeFinalEntity());
+}
+
+absl::StatusOr<intrinsic_proto::world::CollisionSettings>
+ObjectWorldClient::GetCollisionSettings() const {
+  grpc::ClientContext ctx;
+  intrinsic_proto::world::GetCollisionSettingsRequest request;
+  request.set_world_id(world_id_);
+  intrinsic_proto::world::CollisionSettings response;
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      object_world_service_->GetCollisionSettings(&ctx, request, &response)));
+  return response;
 }
 
 namespace {

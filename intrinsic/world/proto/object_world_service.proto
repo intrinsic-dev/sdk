@@ -78,6 +78,11 @@ service ObjectWorldService {
   // These methods operate on properties that affect all objects and entities of
   // a given world.
 
+  // Returns the current collision settings for the given world.
+  rpc GetCollisionSettings(GetCollisionSettingsRequest)
+      returns (CollisionSettings) {
+  }
+
   // Updates the collision settings used for the given world. This will override
   // the previous settings and will not attempt to merge anything.
   rpc UpdateCollisionSettings(UpdateCollisionSettingsRequest) returns (World) {
@@ -610,6 +615,11 @@ message ListWorldsRequest {}
 message ListWorldsResponse {
   // The requested worlds.
   repeated WorldMetadata world_metadatas = 1;
+}
+
+message GetCollisionSettingsRequest {
+  // The id of the world to get the collision settings for
+  string world_id = 1;
 }
 
 message ObjectFullPath {

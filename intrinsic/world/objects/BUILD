@@ -126,6 +126,7 @@ cc_library(
         "//intrinsic/util:eigen",
         "//intrinsic/util/status:status_conversion_grpc",
         "//intrinsic/util/status:status_macros",
+        "//intrinsic/world/proto:collision_settings_cc_proto",
         "//intrinsic/world/proto:geometry_component_cc_proto",
         "//intrinsic/world/proto:object_world_refs_cc_proto",
         "//intrinsic/world/proto:object_world_service_cc_grpc_proto",

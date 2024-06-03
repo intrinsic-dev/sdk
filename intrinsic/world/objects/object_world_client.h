@@ -24,6 +24,7 @@
 #include "intrinsic/world/objects/object_world_ids.h"
 #include "intrinsic/world/objects/transform_node.h"
 #include "intrinsic/world/objects/world_object.h"
+#include "intrinsic/world/proto/collision_settings.pb.h"
 #include "intrinsic/world/proto/geometry_component.pb.h"
 #include "intrinsic/world/proto/object_world_refs.pb.h"
 #include "intrinsic/world/proto/object_world_service.grpc.pb.h"
@@ -294,6 +295,10 @@ class ObjectWorldClient {
   // final entity cannot be determined uniquely, an error will be returned.
   absl::Status ReparentObjectToFinalEntity(const WorldObject& object,
                                            const KinematicObject& new_parent);
+
+  // Returns the current collision settings for the world.
+  absl::StatusOr<intrinsic_proto::world::CollisionSettings>
+  GetCollisionSettings() const;
 
   // Disables collision detection between all pairs (a, b) of entities where a
   // is a entity of 'object_a' and b is a entity of 'object_b'.
