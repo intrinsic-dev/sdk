@@ -126,3 +126,15 @@ message JointMotionTargetSkill {
 message CollisionSettingsSkill {
   optional intrinsic_proto.world.CollisionSettings param_collision_settings = 1;
 }
+
+message CombinedSkillParams {
+  GlobalEnum global_enum = 1;
+
+  TestMessage test_message = 2;
+
+  VariousEnumsMessage various_enums_message = 3;
+
+  ObjectReferenceSkill object_reference_skill = 4;
+
+  CartesianMotionTargetSkill cartesian_motion_target_skill = 5;
+}

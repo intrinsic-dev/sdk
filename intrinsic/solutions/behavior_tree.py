@@ -3463,104 +3463,93 @@ class BehaviorTree:
           return file.package + '.' + file.message_type[0].name
       return None
 
+    self._description = skills_pb2.Skill(id=skill_id)
+    self._description.display_name = display_name
+
     pseudo_file = skill_id.replace('.', '_')
     if parameter_proto_schema:
       param_descriptor_set = proto_builder.compile(
           pseudo_file + '_params.proto', parameter_proto_schema
       )
+      param_full_name = ''
+      if parameter_message_full_name:
+        param_full_name = parameter_message_full_name
+      else:
+        param_full_name = get_name_from_set(
+            param_descriptor_set, pseudo_file + '_params.proto'
+        )
+      pd = skills_pb2.ParameterDescription(
+          parameter_message_full_name=param_full_name
+      )
+      pd.parameter_descriptor_fileset.CopyFrom(param_descriptor_set)
+      self._description.parameter_description.CopyFrom(pd)
     else:
       raise solutions_errors.InvalidArgumentError(
           'initialize_pbt requires parameter_proto_schema to be given.'
       )
+
     if return_value_proto_schema:
       return_descriptor_set = proto_builder.compile(
           pseudo_file + '_return.proto', return_value_proto_schema
       )
-    else:
-      raise solutions_errors.InvalidArgumentError(
-          'initialize_pbt requires return_value_proto_schema to be given.'
+      return_full_name = ''
+      if return_value_message_full_name:
+        return_full_name = return_value_message_full_name
+      else:
+        return_full_name = get_name_from_set(
+            return_descriptor_set, pseudo_file + '_return.proto'
+        )
+      rd = skills_pb2.ReturnValueDescription(
+          return_value_message_full_name=return_full_name
       )
+      rd.descriptor_fileset.CopyFrom(return_descriptor_set)
+      self._description.return_value_description.CopyFrom(rd)
 
-    param_full_name = get_name_from_set(
-        param_descriptor_set, pseudo_file + '_params.proto'
-    )
-    return_full_name = get_name_from_set(
-        return_descriptor_set, pseudo_file + '_return.proto'
-    )
-    if parameter_message_full_name:
-      param_full_name = parameter_message_full_name
-    if return_value_message_full_name:
-      return_full_name = return_value_message_full_name
-
-    pd = skills_pb2.ParameterDescription(
-        parameter_message_full_name=param_full_name
-    )
-    pd.parameter_descriptor_fileset.CopyFrom(param_descriptor_set)
-    rd = skills_pb2.ReturnValueDescription(
-        return_value_message_full_name=return_full_name
-    )
-    rd.descriptor_fileset.CopyFrom(return_descriptor_set)
-    self._description = skills_pb2.Skill(id=skill_id)
-    self._description.parameter_description.CopyFrom(pd)
-    self._description.return_value_description.CopyFrom(rd)
-    self._description.display_name = display_name
-
-  def initialize_pbt_with_known_types(
+  def initialize_pbt_with_protos(
       self,
       *,
       skill_id: str,
       display_name: str,
-      parameter_descriptor: descriptor.Descriptor,
-      parameter_dependencies: list[descriptor.FileDescriptor] | None = None,
-      return_value_descriptor: descriptor.Descriptor | None = None,
-      return_value_dependencies: list[descriptor.FileDescriptor] | None = None,
+      parameter_proto: Optional[type[AnyType]] = None,
+      return_value_proto: Optional[type[AnyType]] = None,
   ):
     """Initializes a behavior tree to be a parameterizable behavior tree.
 
-    Unlike `initialize_pbt`, this method can be used to define PBTs with
-    already-compiled protos, as well as protos that have dependencies on
-    other custom protos.
+    Unlike `initialize_pbt`, this method is used to define PBTs with
+    already-compiled protos that can have dependencies on other custom protos.
+
+    The passed in protos must be compiled python protos that have a DESCRIPTOR
+    property.
 
     Args:
       skill_id: The skill id that this PBT registers under.
       display_name: The name to display the PBT with.
-      parameter_descriptor: The message descriptor for the parameter message of
-        this PBT. (For example, my_pbt_pb2.InputMessage.DESCRIPTOR)
-      parameter_dependencies: A list of file descriptors that contain all
-        message decsriptors for all transitive dependencies of the parameter
-        decsriptor. For example, if parameter descriptor depends on message A,
-        and message A depends on messages B and C, the file descriptors here
-        should include messages B, C, D.
-      return_value_descriptor: The message descriptor for the return value of
-        this PBT, if one exists.
-      return_value_dependencies: A list of file descriptors that contain all
-        message descriptors for the transitive dependencies of the given return
-        value descriptor.
+      parameter_proto: The compiled proto message type for the parameters. (For
+        example, `my_pbt_pb2.InputMessage`)
+      return_value_proto: The compile proto message type for the return value.
     """
 
-    pd = skills_pb2.ParameterDescription(
-        parameter_message_full_name=parameter_descriptor.full_name
-    )
-    parameter_file_descriptor_set = _merge_file_descriptor_set(
-        parameter_descriptor, parameter_dependencies
-    )
-    pd.parameter_descriptor_fileset.CopyFrom(parameter_file_descriptor_set)
+    self._description = skills_pb2.Skill(id=skill_id)
+    self._description.display_name = display_name
 
-    rd = None
-    if return_value_descriptor:
-      rd = skills_pb2.ReturnValueDescription(
-          return_value_message_full_name=return_value_descriptor.full_name,
+    if parameter_proto:
+      parameter_message_name, parameter_file_descriptor_set = (
+          _build_file_descriptor_set(parameter_proto)
       )
-      return_value_file_descriptor_set = _merge_file_descriptor_set(
-          return_value_descriptor, return_value_dependencies
+      pd = skills_pb2.ParameterDescription(
+          parameter_message_full_name=parameter_message_name
+      )
+      pd.parameter_descriptor_fileset.CopyFrom(parameter_file_descriptor_set)
+      self._description.parameter_description.CopyFrom(pd)
+    if return_value_proto:
+      return_value_message_name, return_value_file_descriptor_set = (
+          _build_file_descriptor_set(return_value_proto)
+      )
+      rd = skills_pb2.ReturnValueDescription(
+          return_value_message_full_name=return_value_message_name
       )
       rd.descriptor_fileset.CopyFrom(return_value_file_descriptor_set)
-
-    self._description = skills_pb2.Skill(id=skill_id)
-    self._description.parameter_description.CopyFrom(pd)
-    if rd:
       self._description.return_value_description.CopyFrom(rd)
-    self._description.display_name = display_name
 
   @property
   def params(self) -> blackboard_value.BlackboardValue:
@@ -3598,21 +3587,63 @@ class BehaviorTree:
     return ipython.display_if_ipython(self.dot_graph())
 
 
-def _merge_file_descriptor_set(
-    msg_descriptor: descriptor.Descriptor,
-    file_descriptors: list[descriptor.FileDescriptor] | None = None,
+def _add_to_transitive_file_descriptor_set(
+    fd: descriptor.FileDescriptor,
+    fd_set: descriptor_pb2.FileDescriptorSet,
+    added_files: set[str],
 ) -> descriptor_pb2.FileDescriptorSet:
-  """Merges file descriptors from various given descriptors."""
+  """Adds fd to the FileDescriptorSet proto given by fd_set.
+
+  fd and all of its transitive dependencies will be added unless already present
+  in added_files.
+
+  Args:
+    fd: The FileDescriptor to add
+    fd_set: The FileDescriptorSet proto to add fd to.
+    added_files: Set of files already in fd_set. Updated from any files added by
+      this call recursively.
+
+  Returns:
+    fd_set
+  """
+  if fd.name in added_files:
+    return fd_set
+
+  fd_proto = descriptor_pb2.FileDescriptorProto()
+  fd.CopyToProto(fd_proto)
+  fd_set.file.append(fd_proto)
+  added_files.add(fd.name)
+
+  for dep in fd.dependencies:
+    _add_to_transitive_file_descriptor_set(dep, fd_set, added_files)
+
+  return fd_set
+
+
+def _build_file_descriptor_set(
+    msg: type[AnyType],
+) -> tuple[str, descriptor_pb2.FileDescriptorSet]:
+  """Build a FileDescriptorSet proto from a given proto class.
+
+  The given proto must have a DESCRIPTOR property. This is usually the case,
+  when it is generated by the build system and imported.
+
+  Args:
+    msg: The proto message to generate a descriptor set for.
+
+  Returns:
+    A tuple that contains the full name of the message and the FileDescriptorSet
+    proto with the extracted transitive file descriptor set.
+  """
+
+  if not hasattr(msg, 'DESCRIPTOR'):
+    raise AttributeError(
+        'Passed message does not have a DESCRIPTOR. Ensure that the proto is'
+        ' build and imported correctly.'
+    )
+
   fds = descriptor_pb2.FileDescriptorSet()
+  added_files = set()
+  _add_to_transitive_file_descriptor_set(msg.DESCRIPTOR.file, fds, added_files)
 
-  fd = descriptor_pb2.FileDescriptorProto()
-  msg_descriptor.file.CopyToProto(fd)
-  fds.file.append(fd)
-
-  if file_descriptors:
-    for file_descriptor in file_descriptors:
-      fd = descriptor_pb2.FileDescriptorProto()
-      file_descriptor.CopyToProto(fd)
-      fds.file.append(fd)
-
-  return fds
+  return msg.DESCRIPTOR.full_name, fds

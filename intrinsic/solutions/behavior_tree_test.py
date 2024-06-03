@@ -8,16 +8,21 @@ from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
+from google.protobuf import descriptor_pb2
 from google.protobuf import text_format
 from intrinsic.executive.proto import any_with_assignments_pb2
 from intrinsic.executive.proto import behavior_tree_pb2
+from intrinsic.executive.proto import proto_builder_pb2
 from intrinsic.executive.proto import test_message_pb2
 from intrinsic.executive.proto import world_query_pb2
 from intrinsic.solutions import behavior_tree as bt
 from intrinsic.solutions import blackboard_value
 from intrinsic.solutions import errors as solutions_errors
+from intrinsic.solutions import proto_building
 from intrinsic.solutions.internal import behavior_call
 from intrinsic.solutions.testing import compare
+from intrinsic.solutions.testing import skill_test_utils
+from intrinsic.solutions.testing import test_skill_params_pb2
 from intrinsic.world.proto import object_world_refs_pb2
 from intrinsic.world.proto import object_world_service_pb2
 from intrinsic.world.python import object_world_resources
@@ -51,6 +56,172 @@ class BehaviorTreeBreakpointTypeTest(absltest.TestCase):
         behavior_tree_pb2.BehaviorTree.Breakpoint.AFTER
     )
     self.assertEqual(after, bt.BreakpointType.AFTER)
+
+
+class BehaviorTreeMadeParametrizableTest(absltest.TestCase):
+  """Test functions of BehaviorTrees initialized as PBTs."""
+
+  def test_initialize_pbt_from_schema(self):
+    bt1 = bt.BehaviorTree('test')
+
+    proto_builder_stub: proto_builder_pb2.ProtoBuilderStub = mock.MagicMock()
+    proto_builder = proto_building.ProtoBuilder(proto_builder_stub)
+
+    # No need to fill these completely. This test only verifies the file
+    # descriptor sets correctly arrive in the behavior tree proto.
+    param_desc_set = descriptor_pb2.FileDescriptorSet(
+        file=[descriptor_pb2.FileDescriptorProto(name='alpha_params.proto')]
+    )
+    return_value_desc_set = descriptor_pb2.FileDescriptorSet(
+        file=[descriptor_pb2.FileDescriptorProto(name='alpha_return.proto')]
+    )
+    proto_builder_stub.Compile.side_effect = [
+        proto_builder_pb2.ProtoCompileResponse(
+            file_descriptor_set=param_desc_set
+        ),
+        proto_builder_pb2.ProtoCompileResponse(
+            file_descriptor_set=return_value_desc_set
+        ),
+    ]
+
+    parameter_proto_schema = """
+          syntax = "proto3";
+
+          message Parameters {
+            string value = 1;
+          }
+        """
+    return_value_proto_schema = """
+          syntax = "proto3";
+
+          package my_skill;
+
+          message ReturnValue {
+            repeated int32 bar = 1;
+          }
+        """
+
+    bt1.initialize_pbt(
+        skill_id='alpha',
+        display_name='Alpha',
+        parameter_proto_schema=parameter_proto_schema,
+        return_value_proto_schema=return_value_proto_schema,
+        proto_builder=proto_builder,
+        parameter_message_full_name='Parameters',
+        return_value_message_full_name='my_skill.ReturnValue',
+    )
+
+    self.assertEqual(
+        proto_builder_stub.Compile.call_args_list,
+        [
+            mock.call(
+                proto_builder_pb2.ProtoCompileRequest(
+                    proto_filename='alpha_params.proto',
+                    proto_schema=parameter_proto_schema,
+                )
+            ),
+            mock.call(
+                proto_builder_pb2.ProtoCompileRequest(
+                    proto_filename='alpha_return.proto',
+                    proto_schema=return_value_proto_schema,
+                )
+            ),
+        ],
+    )
+
+    bt1.set_root(bt.Sequence())  # Empty root.
+    bt1_proto = bt1.proto
+
+    self.assertEqual(bt1_proto.description.display_name, 'Alpha')
+    parameter_description = bt1_proto.description.parameter_description
+    self.assertEqual(
+        parameter_description.parameter_message_full_name,
+        'Parameters',
+    )
+    self.assertEqual(
+        parameter_description.parameter_descriptor_fileset, param_desc_set
+    )
+    return_value_description = bt1_proto.description.return_value_description
+    self.assertEqual(
+        return_value_description.return_value_message_full_name,
+        'my_skill.ReturnValue',
+    )
+    self.assertEqual(
+        return_value_description.descriptor_fileset,
+        return_value_desc_set,
+    )
+
+  def test_initialize_pbt_with_known_types(self):
+    bt1 = bt.BehaviorTree('test')
+
+    bt1.initialize_pbt_with_protos(
+        skill_id='alpha',
+        display_name='Alpha',
+        parameter_proto=test_message_pb2.TestMessage,
+    )
+    bt1.set_root(bt.Sequence())  # Empty root.
+    bt1_proto = bt1.proto
+
+    # Spot check a few attributes of the generated proto.
+    self.assertEqual(bt1_proto.description.display_name, 'Alpha')
+    parameter_description = bt1_proto.description.parameter_description
+    self.assertEqual(
+        parameter_description.parameter_message_full_name,
+        'intrinsic_proto.executive.TestMessage',
+    )
+    self.assertLen(
+        parameter_description.parameter_descriptor_fileset.file,
+        3,
+    )
+
+  def test_initialize_pbt_with_custom_proto_dependencies(self):
+    bt1 = bt.BehaviorTree('test')
+
+    bt1.initialize_pbt_with_protos(
+        skill_id='alpha',
+        display_name='Alpha',
+        parameter_proto=test_skill_params_pb2.CombinedSkillParams,
+    )
+    bt1.set_root(bt.Sequence())  # Empty root.
+    bt1_proto = bt1.proto
+
+    # Spot check a few attributes of the generated proto.
+    self.assertEqual(bt1_proto.description.display_name, 'Alpha')
+    parameter_description = bt1_proto.description.parameter_description
+    self.assertEqual(
+        parameter_description.parameter_message_full_name,
+        'intrinsic_proto.test_data.CombinedSkillParams',
+    )
+
+    # Verify the transitive file descriptor set has been recovered in full
+    expected_fd_set = skill_test_utils._get_test_message_file_descriptor_set(
+        'testing/test_skill_params_proto_descriptors_transitive_set_sci.proto.bin'
+    )
+    descriptors_by_name = {
+        file.name: file
+        for file in parameter_description.parameter_descriptor_fileset.file
+    }
+    expected_descriptors_by_name = {
+        file.name: file for file in expected_fd_set.file
+    }
+    self.assertEqual(
+        expected_descriptors_by_name.keys(), descriptors_by_name.keys()
+    )
+
+    for fd_name, fd in descriptors_by_name.items():
+      expected_fd = expected_descriptors_by_name[fd_name]
+      compare.assertProto2Equal(
+          self,
+          fd,
+          expected_fd,
+          ignored_fields=[
+              'source_code_info',
+              'message_type.field.json_name',
+              'message_type.nested_type.field.json_name',
+              'message_type.nested_type.nested_type.field.json_name',
+              'extension.json_name',
+          ],
+      )
 
 
 class BehaviorTreeTest(parameterized.TestCase):
