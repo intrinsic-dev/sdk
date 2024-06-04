@@ -27,14 +27,14 @@ class StringErrorCollector : public google::protobuf::io::ErrorCollector {
   StringErrorCollector() = default;
   ~StringErrorCollector() override = default;
 
-  void AddError(int line, google::protobuf::io::ColumnNumber column,
-                const std::string& message) override {
+  void RecordError(int line, google::protobuf::io::ColumnNumber column,
+                   absl::string_view message) override {
     absl::StrAppend(&errors_, "line ", line, " column ", column, ": ", message,
                     "\n");
   }
 
-  void AddWarning(int line, google::protobuf::io::ColumnNumber column,
-                  const std::string& message) override {
+  void RecordWarning(int line, google::protobuf::io::ColumnNumber column,
+                     absl::string_view message) override {
     absl::StrAppend(&warnings_, "Warning line ", line, " column ", column, ": ",
                     message, "\n");
   }
