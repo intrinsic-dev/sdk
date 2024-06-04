@@ -36,8 +36,6 @@ static LazyRE2 kIdVersionExpr = {
 
 static LazyRE2 kLabelExpr = {R"(^[a-z]([a-z0-9-]*[a-z0-9])*$)"};
 
-static LazyRE2 kUnreleasedVersionExpr = {R"(\+(?:sideloaded|inlined))"};
-
 // Verifies that the specified string matches the specified regex pattern.
 absl::Status ValidateMatch(absl::string_view str, const RE2 *re) {
   if (!RE2::FullMatch(str, *re)) {
@@ -227,10 +225,6 @@ bool IsVersion(absl::string_view version) {
   return ValidateVersion(version).ok();
 }
 
-bool IsUnreleasedVersion(absl::string_view version) {
-  return ValidateUnreleasedVersion(version).ok();
-}
-
 absl::Status ValidateId(absl::string_view id) {
   return ValidateMatch(id, kIdExpr.get());
 }
@@ -249,15 +243,6 @@ absl::Status ValidatePackage(absl::string_view package) {
 
 absl::Status ValidateVersion(absl::string_view version) {
   return ValidateMatch(version, kVersionExpr.get());
-}
-
-absl::Status ValidateUnreleasedVersion(absl::string_view version) {
-  if (!ValidateVersion(version).ok() ||
-      !RE2::PartialMatch(version, *kUnreleasedVersionExpr)) {
-    return absl::InvalidArgumentError(
-        absl::StrFormat("'%s' is not a valid unreleased version.", version));
-  }
-  return absl::OkStatus();
 }
 
 std::string ParentFromPackage(absl::string_view package) {

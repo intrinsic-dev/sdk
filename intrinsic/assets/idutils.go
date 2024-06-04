@@ -343,6 +343,9 @@ func IsVersion(version string) bool {
 //
 // A valid unreleased version is formatted as described by semver.org with build metadata matching
 // the reserved prefix for unreleased assets.
+//
+// Deprecated: New assets are not marked as unreleased on their version and this will return false
+// even if they are unreleased.
 func IsUnreleasedVersion(version string) bool {
 	return IsVersion(version) && nonReleasedVersionRegex.MatchString(version)
 }
@@ -417,18 +420,6 @@ func ValidatePackage(pkg string) error {
 func ValidateVersion(version string) error {
 	if !IsVersion(version) {
 		return fmt.Errorf("%q is not a valid version", version)
-	}
-	return nil
-}
-
-// ValidateUnreleasedVersion validates an unreleased version.
-//
-// An unreleased version is formatted as described in IsUnreleasedVersion.
-//
-// Returns an error if `version` is not valid or not unreleased.
-func ValidateUnreleasedVersion(version string) error {
-	if !IsUnreleasedVersion(version) {
-		return fmt.Errorf("%q is not a valid unreleased version", version)
 	}
 	return nil
 }
