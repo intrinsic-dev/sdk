@@ -4,6 +4,7 @@
 package install
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"log"
 
@@ -62,7 +63,7 @@ func GetCommand() *cobra.Command {
 					directupload.WithOutput(cmd.OutOrStdout()),
 				}
 				if registry != "" {
-					// User set external registry, so we can use it as fail-over.
+					// User set external registry, so we can use it as failover.
 					opts = append(opts, directupload.WithFailOver(transfer))
 				} else {
 					// Fake name that ends in .local in order to indicate that this is local, directly
@@ -80,20 +81,13 @@ func GetCommand() *cobra.Command {
 				return fmt.Errorf("could not read bundle file %q: %v", target, err)
 			}
 
-			manifestBytes, err := proto.Marshal(manifest)
+			pkg := manifest.GetMetadata().GetId().GetPackage()
+			name := manifest.GetMetadata().GetId().GetName()
+			manifestBytes, err := proto.MarshalOptions{Deterministic: true}.Marshal(manifest)
 			if err != nil {
 				return fmt.Errorf("could not marshal manifest: %v", err)
 			}
-
-			pkg := manifest.GetMetadata().GetId().GetPackage()
-			name := manifest.GetMetadata().GetId().GetName()
-			// No deterministic data is available for generating the sideloaded version here. Use a random
-			// string instead to keep the version unique. Ideally we would probably use the digest of the
-			// skill image or similar.
-			version, err := idutils.UnreleasedVersion(idutils.UnreleasedAssetKindSideloaded, manifestBytes)
-			if err != nil {
-				return fmt.Errorf("could not create version: %v", err)
-			}
+			version := fmt.Sprintf("0.0.1+%x", sha256.Sum256(manifestBytes))
 			idVersion, err := idutils.IDVersionFrom(pkg, name, version)
 			if err != nil {
 				return fmt.Errorf("could not create id_version: %w", err)

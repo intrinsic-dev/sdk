@@ -116,10 +116,7 @@ $ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --soluti
 		// No deterministic data is available for generating the sideloaded version here. Use a random
 		// string instead to keep the version unique. Ideally we would probably use the digest of the
 		// skill image or similar.
-		version, err := idutils.UnreleasedVersion(idutils.UnreleasedAssetKindSideloaded, []byte(uuid.New()))
-		if err != nil {
-			return fmt.Errorf("could not create version: %v", err)
-		}
+		version := fmt.Sprintf("0.0.1+%s", uuid.New())
 		idVersion, err := idutils.IDVersionFrom(pkg, name, version)
 		if err != nil {
 			return fmt.Errorf("could not create id_version: %w", err)
