@@ -3,12 +3,15 @@
 """Workspace dependencies needed for the Intrinsic SDKs as a 3rd-party consumer (part 1)."""
 
 load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
+load("@bazel_features//:deps.bzl", "bazel_features_deps")
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies")
+load("@rules_proto//proto:toolchains.bzl", "rules_proto_toolchains")
 load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
 load("@toolchains_llvm//toolchain:deps.bzl", "bazel_toolchain_dependencies")
 load("@toolchains_llvm//toolchain:rules.bzl", "llvm_toolchain")
@@ -28,7 +31,11 @@ def intrinsic_sdks_deps_1(register_go_toolchain = True):
             hermetic and fails if a toolchain is already registered.
     """
 
+    bazel_features_deps()
+
     # Protobuf
+    rules_proto_dependencies()
+    rules_proto_toolchains()
     protobuf_deps()
 
     # Go rules and toolchain (first part)
