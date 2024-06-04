@@ -53,14 +53,6 @@ def non_module_deps():
         strip_prefix = "opentelemetry-cpp-1.13.0",
     )
 
-    # GMock matchers for protocol buffers
-    http_archive(
-        name = "com_github_inazarenko_protobuf_matchers",
-        sha256 = "a3bf4c3effbe0a8ef1021c3a55dbcc0449f838c363c9d1cb4b3dd3530d139fe2",
-        strip_prefix = "protobuf-matchers-57d98500ef05ed21b953a8b10eef877a5664feb4",
-        url = "https://github.com/inazarenko/protobuf-matchers/archive/57d98500ef05ed21b953a8b10eef877a5664feb4.tar.gz",
-    )
-
     http_archive(
         name = "com_google_cel_cpp",
         url = "https://github.com/google/cel-cpp/archive/037873163975964a80a188ad7f936cb4f37f0684.tar.gz",  # 2024-01-29

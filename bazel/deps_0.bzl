@@ -336,3 +336,11 @@ def intrinsic_sdks_deps_0():
         strip_prefix = "rules_foreign_cc-0.10.1",
         url = "https://github.com/bazelbuild/rules_foreign_cc/releases/download/0.10.1/rules_foreign_cc-0.10.1.tar.gz",
     )
+
+    # GMock matchers for protocol buffers
+    http_archive(
+        name = "com_github_inazarenko_protobuf_matchers",
+        sha256 = "a3bf4c3effbe0a8ef1021c3a55dbcc0449f838c363c9d1cb4b3dd3530d139fe2",
+        strip_prefix = "protobuf-matchers-57d98500ef05ed21b953a8b10eef877a5664feb4",
+        url = "https://github.com/inazarenko/protobuf-matchers/archive/57d98500ef05ed21b953a8b10eef877a5664feb4.tar.gz",
+    )
