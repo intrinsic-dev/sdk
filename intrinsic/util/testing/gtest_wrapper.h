@@ -19,6 +19,7 @@ using ::protobuf_matchers::EquivToProto;
 using ::protobuf_matchers::internal::ProtoCompare;
 using ::protobuf_matchers::internal::ProtoComparison;
 using ::protobuf_matchers::proto::Approximately;
+using ::protobuf_matchers::proto::IgnoringRepeatedFieldOrdering;
 using ::protobuf_matchers::proto::Partially;
 using ::protobuf_matchers::proto::WhenDeserialized;
 }  // namespace testing
