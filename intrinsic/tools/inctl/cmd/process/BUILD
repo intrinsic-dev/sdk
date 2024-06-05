@@ -11,10 +11,6 @@ go_library(
         "process_get.go",
         "process_set.go",
     ],
-    visibility = [
-        "//intrinsic/skills/tools:__subpackages__",
-        "//intrinsic/tools/inctl:__subpackages__",
-    ],
     deps = [
         "//intrinsic/executive/proto:annotations_go_proto",
         "//intrinsic/executive/proto:behavior_tree_go_proto",
