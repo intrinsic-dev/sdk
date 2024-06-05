@@ -74,13 +74,6 @@ def non_module_deps():
         sha256 = "4daad402bc0913e05b83d0bded9dd699738935e6d59d1424c99c944d6e0c2897",
     )
 
-    http_archive(
-        name = "pybind11_abseil",
-        sha256 = "1496b112e86416e2dcf288569a3e7b64f3537f0b18132224f492266e9ff76c44",
-        strip_prefix = "pybind11_abseil-202402.0",
-        urls = ["https://github.com/pybind/pybind11_abseil/archive/refs/tags/v202402.0.tar.gz"],
-    )
-
     # Eigen math library.
     # Repository name should be com_gitlab_libeigen_eigen to serve
     # as transitive dependency for com_google_ceres_solver

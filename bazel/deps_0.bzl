@@ -319,6 +319,14 @@ def intrinsic_sdks_deps_0():
 
     maybe(
         http_archive,
+        name = "pybind11_abseil",
+        sha256 = "1496b112e86416e2dcf288569a3e7b64f3537f0b18132224f492266e9ff76c44",
+        strip_prefix = "pybind11_abseil-202402.0",
+        urls = ["https://github.com/pybind/pybind11_abseil/archive/refs/tags/v202402.0.tar.gz"],
+    )
+
+    maybe(
+        http_archive,
         name = "pybind11_protobuf",
         sha256 = "21189abd098528fd3986dcec349ef61ae5506d29d0c51c7a13d6f9dfcc17c676",
         strip_prefix = "pybind11_protobuf-1d7a7296604537db5f6ace2ddafd1d08c967ec63",
