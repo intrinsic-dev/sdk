@@ -59,12 +59,6 @@ def non_module_deps():
         strip_prefix = "cel-cpp-037873163975964a80a188ad7f936cb4f37f0684",
         sha256 = "d56e8c15b55240c92143ee3ed717956c67961a24f97711ca410030de92633288",
     )
-    http_archive(
-        name = "com_google_riegeli",
-        url = "https://github.com/google/riegeli/archive/15923d86939bf95cd0530bfa57cc4bbfcb61f444.tar.gz",  # 2024-05-14
-        strip_prefix = "riegeli-15923d86939bf95cd0530bfa57cc4bbfcb61f444",
-        sha256 = "cccbbf1c63d4677663796d44634e0bffc76718a4b8f1e6e02d30d4bfb62afbb2",
-    )
 
     # Eigen math library.
     # Repository name should be com_gitlab_libeigen_eigen to serve
