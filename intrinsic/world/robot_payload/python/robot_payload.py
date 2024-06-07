@@ -78,6 +78,12 @@ class RobotPayload:
         and np.allclose(self.inertia, other.inertia)
     )
 
+  def __str__(self):
+    return (
+        f'RobotPayload(mass={self.mass}, tip_t_cog={self.tip_t_cog},'
+        f' inertia={self.inertia})'
+    )
+
 
 def payload_from_proto(
     proto: robot_payload_pb2.RobotPayload,

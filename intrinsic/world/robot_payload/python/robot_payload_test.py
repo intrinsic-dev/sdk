@@ -173,6 +173,19 @@ class RobotPayloadTest(parameterized.TestCase):
 
     self.assertNotEqual(payload, 1.0)
 
+  def test_to_string(self):
+    payload = robot_payload.RobotPayload.create(
+        mass=1.0,
+        tip_t_cog=data_types.Pose3(translation=[1.0, 2.0, 3.0]),
+        inertia=np.eye(3) * 2.0,
+    )
+
+    self.assertEqual(
+        str(payload),
+        'RobotPayload(mass=1.0, tip_t_cog=Pose3(Rotation3([0i + 0j + 0k +'
+        ' 1]),[1. 2. 3.]), inertia=[[2. 0. 0.]\n [0. 2. 0.]\n [0. 0. 2.]])',
+    )
+
 
 if __name__ == '__main__':
   absltest.main()
