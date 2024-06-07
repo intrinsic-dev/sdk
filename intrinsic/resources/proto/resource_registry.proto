@@ -18,6 +18,9 @@ service ResourceRegistry {
   rpc ListSceneObjects(ListSceneObjectsRequest)
       returns (ListSceneObjectsResponse);
 
+  // Lists all of the resources currently installed in the cluster.
+  rpc ListResources(ListResourcesRequest) returns (ListResourcesResponse);
+
   // Lists all resource instances in the currently deployed app.
   rpc ListResourceInstances(ListResourceInstanceRequest)
       returns (ListResourceInstanceResponse) {}
@@ -92,6 +95,41 @@ message SceneObject {
 
 message ListSceneObjectsResponse {
   repeated SceneObject scene_objects = 1;
+
+  // Pass this token to the subsequent list requests in to obtain the next page.
+  string next_page_token = 2;
+}
+
+message ListResourcesRequest {
+  // Upper limit for the returned page size, i.e. the service might return fewer
+  // results.
+  //
+  // Default behavior: returns a page size of 20. A page_size of 0 will result
+  // in default behavior.
+  //
+  // Maximum value is 200. If this is exceeded, returns 200.
+  int64 page_size = 1;
+
+  // If the page token is empty, up to `page_size` first elements of the
+  // collection will be returned. On subsequent requests, set the
+  // `next_page_token` obtained from the previous call to retrieve the next
+  // page.
+  string page_token = 2;
+
+  // The type of view to return. Defaults to ASSET_VIEW_TYPE_BASIC.
+  //
+  // The DETAIL view returns the fields noted in the AssetViewType definition as
+  // well as the family field.
+  intrinsic_proto.catalog.AssetViewType view = 3;
+}
+
+message Resource {
+  // The common metadata for the asset.
+  intrinsic_proto.assets.Metadata metadata = 1;
+}
+
+message ListResourcesResponse {
+  repeated Resource resources = 1;
 
   // Pass this token to the subsequent list requests in to obtain the next page.
   string next_page_token = 2;
