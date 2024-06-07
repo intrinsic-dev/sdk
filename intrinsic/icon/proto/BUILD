@@ -43,6 +43,7 @@ proto_library(
         ":streaming_output_proto",
         ":types_proto",
         "//intrinsic/logging/proto:context_proto",
+        "//intrinsic/world/proto:robot_payload_proto",
         "@com_google_googleapis//google/rpc:status_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:duration_proto",

@@ -25,6 +25,7 @@ import "intrinsic/icon/proto/safety_status.proto";
 import "intrinsic/icon/proto/streaming_output.proto";
 import "intrinsic/icon/proto/types.proto";
 import "intrinsic/logging/proto/context.proto";
+import "intrinsic/world/proto/robot_payload.proto";
 
 // GetActionSignatureByName() request.
 message GetActionSignatureByNameRequest {
@@ -410,6 +411,29 @@ message SetPartPropertiesRequest {
 
 message SetPartPropertiesResponse {}
 
+message SetPayloadRequest {
+  // The name of the part to set the payload for.
+  string part_name = 1;
+  // The name of the payload to set.
+  string payload_name = 2;
+  // The payload to set.
+  world.RobotPayload payload = 3;
+}
+
+message SetPayloadResponse {}
+
+message GetPayloadRequest {
+  // The name of the part containing the payload.
+  string part_name = 1;
+  // The name of the payload.
+  string payload_name = 2;
+}
+
+message GetPayloadResponse {
+  // The payload.
+  world.RobotPayload payload = 1;
+}
+
 service IconApi {
   // Gets details of an action type by name. The response's `action_signature`
   // field is unset if the requested action type is not found.
@@ -638,4 +662,12 @@ service IconApi {
   // same time.
   rpc SetPartProperties(SetPartPropertiesRequest)
       returns (SetPartPropertiesResponse);
+
+  // Sets a payload on a part. Fails if the part does not exist or the payload
+  // contains invalid values.
+  rpc SetPayload(SetPayloadRequest) returns (SetPayloadResponse) {}
+
+  // Gets a payload stored in a part. Fails if the part does not exist or the
+  // requested payload is not set.
+  rpc GetPayload(GetPayloadRequest) returns (GetPayloadResponse) {}
 }
