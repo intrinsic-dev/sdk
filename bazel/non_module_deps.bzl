@@ -66,14 +66,6 @@ def non_module_deps():
         sha256 = "cccbbf1c63d4677663796d44634e0bffc76718a4b8f1e6e02d30d4bfb62afbb2",
     )
 
-    XLS_COMMIT = "507b33b5bdd696adb7933a6617b65c70e46d4703"  # 2024-03-06
-    http_file(
-        name = "com_google_xls_strong_int_h",
-        downloaded_file_path = "strong_int.h",
-        urls = ["https://raw.githubusercontent.com/google/xls/%s/xls/common/strong_int.h" % XLS_COMMIT],
-        sha256 = "4daad402bc0913e05b83d0bded9dd699738935e6d59d1424c99c944d6e0c2897",
-    )
-
     # Eigen math library.
     # Repository name should be com_gitlab_libeigen_eigen to serve
     # as transitive dependency for com_google_ceres_solver
@@ -87,6 +79,18 @@ def non_module_deps():
         urls = [
             "https://gitlab.com/libeigen/eigen/-/archive/%s/eigen-%s.zip" % (EIGEN_COMMIT, EIGEN_COMMIT),
         ],
+    )
+
+    ################################
+    # Google OSS replacement files #
+    ################################
+
+    XLS_COMMIT = "507b33b5bdd696adb7933a6617b65c70e46d4703"  # 2024-03-06
+    http_file(
+        name = "com_google_xls_strong_int_h",
+        downloaded_file_path = "strong_int.h",
+        urls = ["https://raw.githubusercontent.com/google/xls/%s/xls/common/strong_int.h" % XLS_COMMIT],
+        sha256 = "4daad402bc0913e05b83d0bded9dd699738935e6d59d1424c99c944d6e0c2897",
     )
 
 def _non_module_deps_impl(ctx):  # @unused
