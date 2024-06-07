@@ -41,6 +41,7 @@ py_library(
         "//intrinsic/solutions:deployments",
         "//intrinsic/util/grpc:connection",
         "//intrinsic/util/grpc:interceptor",
+        "//intrinsic/world/robot_payload/python:robot_payload",
         requirement("grpcio"),
         "@com_google_absl_py//absl/logging",
         "@com_google_googleapis//google/rpc:code_py_proto",
@@ -118,9 +119,12 @@ py_test(
         "//intrinsic/icon/proto:service_py_pb2",
         "//intrinsic/icon/proto:types_py_pb2",
         "//intrinsic/logging/proto:context_py_pb2",
+        "//intrinsic/math/python:data_types",
         "//intrinsic/util/grpc:connection",
+        "//intrinsic/world/robot_payload/python:robot_payload",
         requirement("grpcio"),
         "@com_google_absl_py//absl/testing:absltest",
+        requirement("numpy"),
     ],
 )
 

@@ -113,6 +113,7 @@ cc_library(
         "//intrinsic/util/grpc:channel_interface",
         "//intrinsic/util/status:status_conversion_grpc",
         "//intrinsic/util/status:status_macros",
+        "//intrinsic/world/robot_payload",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log",

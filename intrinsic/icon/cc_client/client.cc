@@ -28,6 +28,7 @@
 #include "intrinsic/util/proto_time.h"
 #include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_macros.h"
+#include "intrinsic/world/robot_payload/robot_payload.h"
 
 namespace intrinsic {
 namespace icon {

@@ -26,6 +26,7 @@ from intrinsic.logging.proto import context_pb2
 from intrinsic.solutions import deployments
 from intrinsic.util.grpc import connection
 from intrinsic.util.grpc import interceptor
+from intrinsic.world.robot_payload.python import robot_payload
 
 # Type forwarding, to enable instantiating these without loading the respective
 # modules in client code. We believe that wrapping all class definitions in a

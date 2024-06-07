@@ -23,6 +23,7 @@
 #include "intrinsic/icon/proto/service.pb.h"
 #include "intrinsic/icon/proto/types.pb.h"
 #include "intrinsic/util/grpc/channel_interface.h"
+#include "intrinsic/world/robot_payload/robot_payload.h"
 
 // This header defines the ICON Application Layer C++ client library, which is a
 // thin wrapper around the ICON Application Layer GRPC Service.
