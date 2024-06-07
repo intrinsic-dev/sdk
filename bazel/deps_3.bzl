@@ -3,6 +3,7 @@
 """Workspace dependencies needed for the Intrinsic SDKs as a 3rd-party consumer (part 3)."""
 
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "install_deps")
+load("@npm//:repositories.bzl", "npm_repositories")
 
 def intrinsic_sdks_deps_3():
     """Loads workspace dependencies needed for the Intrinsic SDKs.
@@ -12,3 +13,6 @@ def intrinsic_sdks_deps_3():
 
     # Python pip dependencies
     install_deps()
+
+    # Flatbuffers
+    npm_repositories()

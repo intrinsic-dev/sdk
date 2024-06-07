@@ -29,14 +29,6 @@ def non_module_deps():
         ],
     )
 
-    http_archive(
-        name = "com_github_google_flatbuffers",
-        urls = [
-            "https://github.com/google/flatbuffers/archive/refs/tags/v23.3.3.tar.gz",
-        ],
-        sha256 = "8aff985da30aaab37edf8e5b02fda33ed4cbdd962699a8e2af98fdef306f4e4d",
-        strip_prefix = "flatbuffers-23.3.3",
-    )
     http_jar(
         name = "firestore_emulator",
         sha256 = "1f08a8f7133edf2e7b355db0da162654df2b0967610d3de2f12b8ce07c493f5f",

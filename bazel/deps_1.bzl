@@ -3,6 +3,9 @@
 """Workspace dependencies needed for the Intrinsic SDKs as a 3rd-party consumer (part 1)."""
 
 load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
+load("@aspect_rules_js//js:repositories.bzl", "rules_js_dependencies")
+load("@aspect_rules_js//npm:npm_import.bzl", "pnpm_repository")
+load("@aspect_rules_ts//ts:repositories.bzl", "rules_ts_dependencies")
 load("@bazel_features//:deps.bzl", "bazel_features_deps")
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
@@ -98,3 +101,14 @@ def intrinsic_sdks_deps_1(register_go_toolchain = True):
 
     # Rules Foreign CC
     rules_foreign_cc_dependencies()
+
+    # Flatbuffers
+    rules_js_dependencies()
+    pnpm_repository(name = "pnpm")
+    rules_ts_dependencies(
+        # Since rules_ts doesn't always have the newest integrity hashes, we
+        # compute it manually here.
+        #   $ curl --silent https://registry.npmjs.org/typescript/5.3.3 | jq ._integrity
+        ts_integrity = "sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==",
+        ts_version_from = "@com_github_google_flatbuffers//:package.json",
+    )

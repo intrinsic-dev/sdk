@@ -361,6 +361,27 @@ def intrinsic_sdks_deps_0():
         url = "https://github.com/bazelbuild/rules_foreign_cc/releases/download/0.10.1/rules_foreign_cc-0.10.1.tar.gz",
     )
 
+    # Used by com_github_google_flatbuffers
+    http_archive(
+        name = "aspect_rules_js",
+        sha256 = "76a04ef2120ee00231d85d1ff012ede23963733339ad8db81f590791a031f643",
+        strip_prefix = "rules_js-1.34.1",
+        url = "https://github.com/aspect-build/rules_js/releases/download/v1.34.1/rules_js-v1.34.1.tar.gz",
+    )
+    http_archive(
+        name = "aspect_rules_ts",
+        sha256 = "4c3f34fff9f96ffc9c26635d8235a32a23a6797324486c7d23c1dfa477e8b451",
+        strip_prefix = "rules_ts-1.4.5",
+        url = "https://github.com/aspect-build/rules_ts/releases/download/v1.4.5/rules_ts-v1.4.5.tar.gz",
+    )
+
+    http_archive(
+        name = "com_github_google_flatbuffers",
+        urls = ["https://github.com/google/flatbuffers/archive/refs/tags/v24.3.7.tar.gz"],
+        integrity = "sha256-v/+dIVD8/4j4ROjGCLArKg6UySrqObBMBiR4NGQwR4Q=",
+        strip_prefix = "flatbuffers-24.3.7",
+    )
+
     # GMock matchers for protocol buffers
     http_archive(
         name = "com_github_inazarenko_protobuf_matchers",

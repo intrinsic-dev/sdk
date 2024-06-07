@@ -2,9 +2,11 @@
 
 """Workspace dependencies needed for the Intrinsic SDKs as a 3rd-party consumer (part 2)."""
 
+load("@aspect_rules_js//npm:npm_import.bzl", "npm_translate_lock")
 load("@com_github_grpc_grpc//bazel:grpc_extra_deps.bzl", "grpc_extra_deps")
 load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
 load("@local_config_python//:defs.bzl", "interpreter")
+load("@rules_nodejs//nodejs:repositories.bzl", "DEFAULT_NODE_VERSION", "nodejs_register_toolchains")
 load("@rules_oci//oci:dependencies.bzl", "rules_oci_dependencies")
 load("@rules_oci//oci:repositories.bzl", "LATEST_CRANE_VERSION", "oci_register_toolchains")
 load("@rules_python//python:pip.bzl", "pip_parse")
@@ -38,3 +40,19 @@ def intrinsic_sdks_deps_2():
         crane_version = LATEST_CRANE_VERSION,
     )
     extension_for_rules_oci()
+
+    # Flatbuffers
+    nodejs_register_toolchains(
+        name = "nodejs",
+        node_version = DEFAULT_NODE_VERSION,
+    )
+
+    npm_translate_lock(
+        name = "npm",
+        npmrc = "@com_github_google_flatbuffers//:.npmrc",
+        pnpm_lock = "@com_github_google_flatbuffers//:pnpm-lock.yaml",
+        # Set this to True when the lock file needs to be updated, commit the
+        # changes, then set to False again.
+        update_pnpm_lock = False,
+        verify_node_modules_ignored = "@com_github_google_flatbuffers//:.bazelignore",
+    )
