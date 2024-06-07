@@ -7,4 +7,5 @@ exports_files([
     "0007-Also-generate-pyi-files-grpc.patch",
     "0011-Public-grpc_library-attr.patch",
     "0013-Remove-protobuf-ios-support.patch",
+    "0014-libarchive-build.patch",
 ])

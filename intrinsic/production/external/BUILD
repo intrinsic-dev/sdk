@@ -31,7 +31,6 @@ exports_files(
         "BUILD",
         "BUILD.eigen",
         "BUILD.highwayhash",
-        "BUILD.libarchive",
         "BUILD.sysroot",
         "BUILD.workspace_root",
         "BUILD.zstd",
