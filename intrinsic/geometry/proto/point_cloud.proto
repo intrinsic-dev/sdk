@@ -1,0 +1,20 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.geometry;
+
+// A point cloud representing points in 3d space.
+message PointCloud {
+  // The points in the cloud.
+  // This array is always of size 3*N, N being the number of points, and the
+  // format is [x0, y0, z0, x1, y1, z1, ...].
+  repeated double points = 1 [packed = true];
+
+  // The normals in the cloud.
+  // This array may be of size 0 if no normals are provided. Otherwise, it is
+  // always of size 3*N, N being the number of points, and the format is
+  // [x0, y0, z0, x1, y1, z1, ...].
+  // The point indices correspond to those of the points field.
+  repeated double normals = 2 [packed = true];
+}
