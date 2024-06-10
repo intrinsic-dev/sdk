@@ -195,7 +195,7 @@ func SharedOrg(orgName string) bool {
 // multiple projects. This undoes the "cleaning" applied by PreRunOrganization when using WrapCmd().
 func QualifiedOrg(projectName, orgName string) string {
 	if orgName == "" {
-		return fmt.Sprintf("defaultorg@%s", projectName)
+		return fmt.Sprintf("intrinsic@%s", projectName)
 	}
 	if SharedOrg(orgName) {
 		orgName = fmt.Sprintf("%s@%s", orgName, projectName)

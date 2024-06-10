@@ -108,7 +108,7 @@ func TestWrapCmd(t *testing.T) {
 	t.Run("org-complex", func(t *testing.T) {
 		// This one cannot be run in parallel as it touches the authStore
 		authStore = authtest.NewStoreForTest(t)
-		authStore.WriteOrgInfo(&auth.OrgInfo{Project: "example-project", Organization: "defaultorg@example-project"})
+		authStore.WriteOrgInfo(&auth.OrgInfo{Project: "example-project", Organization: "intrinsic@example-project"})
 
 		vi := viper.New()
 		cmd := WrapCmd(&cobra.Command{
@@ -120,13 +120,13 @@ func TestWrapCmd(t *testing.T) {
 					t.Errorf("Expected project to be example-project. Got: %q", projectName)
 				}
 
-				if orgName != "defaultorg" {
-					t.Errorf("Expect org to be defaultorg. Instead got: %q", orgName)
+				if orgName != "intrinsic" {
+					t.Errorf("Expect org to be intrinsic. Instead got: %q", orgName)
 				}
 			},
 		}, vi)
 
-		cmd.SetArgs([]string{"--org=defaultorg@example-project"})
+		cmd.SetArgs([]string{"--org=intrinsic@example-project"})
 		if err := cmd.Execute(); err != nil {
 			t.Errorf("Unexpected error during test-run: %v", err)
 		}
@@ -143,7 +143,7 @@ func TestWrapCmd(t *testing.T) {
 			},
 		}, vi)
 
-		cmd.SetArgs([]string{"--org=defaultorg@example-project"})
+		cmd.SetArgs([]string{"--org=intrinsic@example-project"})
 		// We expect an error here!
 		if err := cmd.Execute(); err != nil {
 			var orgErr *ErrOrgNotFound
