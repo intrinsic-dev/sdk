@@ -4,9 +4,9 @@
 package bundleimages
 
 import (
-	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -33,17 +33,25 @@ func CreateImageProcessor(reg imageutils.RegistryOptions) bundleio.ImageProcesso
 		if err != nil {
 			return nil, fmt.Errorf("unable to get tag for image: %v", err)
 		}
-		// Read the file into an internal buffer, since PushArchive will
-		// attempt to read the buffer more than once and tar files don't have a
-		// way to seek backwards (tape only ran one direction after all).  If
-		// this becomes problematic due to massive image sizes, a temporary
-		// file could be used here instead.
-		b, err := io.ReadAll(r)
+
+		// We write the file out to a temp file to avoid having to read its entire
+		// contents into memory. Some images can be >1GB and cause out-of-memory
+		// issues when read into a byte buffer. Note that having some buffer is
+		// necessary as PushArchive will attempt to read the buffer more than once
+		// and tar files don't have a way to seek backwards (tape only ran one
+		// direction after all). In the future we might consider using memory for
+		// smaller images to minimize disk usage.
+		f, err := os.CreateTemp(os.TempDir(), "image-processor-")
 		if err != nil {
-			return nil, fmt.Errorf("unable to read from tar: %v", err)
+			return nil, fmt.Errorf("could not create temp file %q: %v", f.Name(), err)
 		}
+		defer os.Remove(f.Name())
+		if _, err := io.Copy(f, r); err != nil {
+			return nil, fmt.Errorf("could not write image to temp file %q: %v", f.Name(), err)
+		}
+
 		opener := func() (io.ReadCloser, error) {
-			return io.NopCloser(bytes.NewBuffer(b)), nil
+			return os.Open(f.Name())
 		}
 		return imageutils.PushArchive(opener, opts, reg)
 	}
