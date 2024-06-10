@@ -15,6 +15,8 @@
 #include "intrinsic/world/objects/transform_node.h"
 #include "intrinsic/world/proto/object_world_refs.pb.h"
 #include "intrinsic/world/proto/object_world_service.pb.h"
+#include "intrinsic/world/proto/outfeed_component.pb.h"
+#include "intrinsic/world/proto/spawner_component.pb.h"
 
 namespace intrinsic {
 namespace world {
@@ -85,6 +87,16 @@ class WorldObject : public TransformNode {
   // Returns all immediate child frames of this object, excluding ones that are
   // attached indirectly to this object via another frame.
   std::vector<Frame> ChildFrames() const;
+
+  // Returns the spawner component corresponding to this world object. This is
+  // only set if the object was added to the world as a spawner.
+  std::optional<const intrinsic_proto::world::SpawnerComponent*>
+  GetSpawnerComponent() const;
+
+  // Returns the outfeed component corresponding to this world object. This is
+  // only set if the object was added to the world as an outfeed.
+  std::optional<const intrinsic_proto::world::OutfeedComponent*>
+  GetOutfeedComponent() const;
 
   // Returns a reference to this object as an ObjectReference. If you need a
   // more a more general reference to a frame *or* object, see

@@ -68,6 +68,8 @@ cc_library(
         "//intrinsic/util/status:status_macros",
         "//intrinsic/world/proto:object_world_refs_cc_proto",
         "//intrinsic/world/proto:object_world_service_cc_proto",
+        "//intrinsic/world/proto:outfeed_component_cc_proto",
+        "//intrinsic/world/proto:spawner_component_cc_proto",
         "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",

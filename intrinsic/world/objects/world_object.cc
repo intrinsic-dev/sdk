@@ -167,6 +167,26 @@ std::vector<Frame> WorldObject::ChildFrames() const {
   return result;
 }
 
+std::optional<const intrinsic_proto::world::SpawnerComponent*>
+WorldObject::GetSpawnerComponent() const {
+  const intrinsic_proto::world::ObjectComponent& proto =
+      GetData().Proto().object_component();
+  if (proto.has_spawner_component()) {
+    return &proto.spawner_component();
+  }
+  return std::nullopt;
+}
+
+std::optional<const intrinsic_proto::world::OutfeedComponent*>
+WorldObject::GetOutfeedComponent() const {
+  const intrinsic_proto::world::ObjectComponent& proto =
+      GetData().Proto().object_component();
+  if (proto.has_outfeed_component()) {
+    return &proto.outfeed_component();
+  }
+  return std::nullopt;
+}
+
 intrinsic_proto::world::ObjectReference WorldObject::ObjectReference() const {
   intrinsic_proto::world::ObjectReference result;
   result.mutable_by_name()->set_object_name(GetData().Proto().name());
