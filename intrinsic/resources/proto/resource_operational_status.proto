@@ -24,7 +24,7 @@ message OperationalStatus {
 
   // [Optional] A human-readable explanation for the current operational state.
   // For example, this can be used to provide details for why the operational
-  // state is `FAULTED` or `UNKNOWN`. It can be left empty for `DISABLED` and
-  // `ENABLED` states.
+  // state is `FAULTED` or `UNSPECIFIED`. It can be left empty for `DISABLED`
+  // and `ENABLED` states.
   string explanation = 2;
 }
