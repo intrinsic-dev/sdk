@@ -58,35 +58,19 @@ message GenericSafetyLimitsConfig {
 message GenericSimpleGripperConfig {}
 message GenericAdioConfig {
   message AnalogInputConfig {
-    // The size of the analog input block (i.e. the number of fields).
-    int64 block_size = 2;
     // An analog input block has an array of fields, each with an associated
     // unit. This repeated field contains the unit names for each such field, in
     // order.
     repeated string units = 1;
-    // Optional list of signal names. If provided, its size must match
-    // `block_size`.
-    repeated string signal_names = 3;
   }
 
-  message DigitalInputOutputConfig {
-    // The size of the digital input/output block (i.e. the number of signals).
-    int64 block_size = 1;
-    // Optional list of signal names. If provided, its size must match
-    // `block_size`.
-    repeated string signal_names = 2;
-  }
-
-  // Map from analog input block name to an AnalogInputConfig proto (see above).
+  // Map from analog input block name to an AnalogInputConfig proto (see
+  // above).
   map<string, AnalogInputConfig> analog_input_blocks = 1;
-  // Map from digital input block name to a DigitalInputOutputConfig proto (see
-  // above).
-  map<string, DigitalInputOutputConfig> digital_input_blocks = 4;
-  // Map from digital output block name to a DigitalInputOutputConfig proto (see
-  // above).
-  map<string, DigitalInputOutputConfig> digital_output_blocks = 5;
-
-  reserved 2, 3;
+  // Map from digital input block name to the number of bits in that block.
+  map<string, int64> digital_input_block_sizes = 2;
+  // Map from digital output block name to the number of bits in that block.
+  map<string, int64> digital_output_block_sizes = 3;
 }
 message GenericRangeFinderConfig {
   intrinsic_proto.Pose pose_in_tcp_frame = 1;
