@@ -208,6 +208,13 @@ cc_test(
 )
 
 cc_library(
+    name = "shutdown_signals",
+    srcs = ["shutdown_signals.cc"],
+    hdrs = ["shutdown_signals.h"],
+    deps = ["@com_google_absl//absl/strings:string_view"],
+)
+
+cc_library(
     name = "current_cycle",
     hdrs = ["current_cycle.h"],
 )
