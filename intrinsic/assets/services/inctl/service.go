@@ -18,7 +18,6 @@ var serviceCmd = &cobra.Command{
 }
 
 func init() {
-
 	serviceCmd.AddCommand(install.GetCommand())
 	serviceCmd.AddCommand(list.GetCommand())
 
