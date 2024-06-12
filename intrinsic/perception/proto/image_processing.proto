@@ -5,8 +5,8 @@ syntax = "proto3";
 package intrinsic_proto.perception;
 
 // Parameters for modification of image intensity I according to the function
-// f(I) = a*I + b. Applied to each color channel separately.
-message AffineRgbCorrection {
+// f(I) = a*I + b. Applied to each channel separately.
+message AffineCorrection {
   // Slope of the affine modification function. Valid values are from
   // [-255,255].
   double a = 1;
@@ -35,14 +35,14 @@ message ImageProcessing {
     // Controls the settings for adaptive histogram equalization by CLAHE.
     HistogramEqualizationClahe histogram_equalization_clahe = 2;
 
-    // Controls if gamma correction is to be performed on the acquired RGB frame
-    // before pose estimation. Gamma values have to be larger than zero, with
-    // gamma < 1 making the image brighter and gamma > 1 making the image
-    // darker.
-    double gamma_rgb_correction = 3;
+    // Controls if gamma correction is to be performed on the acquired gray or
+    // RGB frame before pose estimation. Gamma values have to be larger than
+    // zero, with gamma < 1 making the image brighter and gamma > 1 making the
+    // image darker.
+    double gamma_correction = 3;
 
     // Controls the affine intensity correction to be applied to
     // the acquired frame before pose estimation.
-    AffineRgbCorrection affine_rgb_correction = 4;
+    AffineCorrection affine_correction = 4;
   }
 }
