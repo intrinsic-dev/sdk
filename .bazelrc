@@ -67,3 +67,5 @@ build --define absl=1
 
 # Avoid building grpc with xDS support to reduce build time
 build --define=grpc_no_xds=true
+
+build:intrinsic -c opt
