@@ -9,6 +9,7 @@ go_library(
     srcs = ["info.go"],
     visibility = [
         "//intrinsic/frontend/cloud/api:__pkg__",
+        "//intrinsic/kubernetes/inversion:__pkg__",
         "//intrinsic/tools/inctl/cmd/cluster:__pkg__",
     ],
 )
