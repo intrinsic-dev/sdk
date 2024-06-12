@@ -2,7 +2,7 @@
 
 """This file contains basic unit tests for label.bzl"""
 
-load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
+load("//third_party/bazel_rules/rules_testing/lib:unittest.bzl", "asserts", "unittest")
 load(":label.bzl", "absolute_label", "parse_label")
 
 def _absolute_label_test_impl(ctx):
