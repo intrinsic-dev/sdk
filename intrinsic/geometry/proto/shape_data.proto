@@ -15,7 +15,4 @@ message ShapeData {
   // This is a 4x4 affine transform from the reference frame to this shape.
   intrinsic_proto.Matrixd ref_t_shape_aff = 4;
 
-  // A set of labels to apply to the shape if adding to the world.
-  repeated string label = 1;
-
 }
