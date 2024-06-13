@@ -32,20 +32,33 @@ var (
 	nonReleasedVersionRegex = regexp.MustCompile("\\+(?:sideloaded|inlined)")
 )
 
-// getNamedMatch extracts the named group from a match of a string on a regex pattern.
-func getNamedMatch(str string, re *regexp.Regexp, group string) (string, error) {
+// getNamedMatches extracts named groups from a match of a string on a regex pattern.
+func getNamedMatches(str string, re *regexp.Regexp, requested []string) (map[string]string, error) {
 	groups := re.SubexpNames()
 	submatches := re.FindStringSubmatch(str)
 	if submatches == nil {
-		return "", fmt.Errorf("%q is not a valid %s", str, groups[1])
+		return nil, fmt.Errorf("%q is not a valid %s", str, groups[1])
 	}
 
-	groupIdx := slices.Index(groups, group)
-	if groupIdx == -1 {
-		return "", fmt.Errorf("unknown group: %q (groups: %v)", group, groups)
+	result := make(map[string]string)
+	for _, group := range requested {
+		idx := slices.Index(groups, group)
+		if idx == -1 {
+			return nil, fmt.Errorf("unknown group: %q (groups: %v)", group, groups)
+		}
+		result[group] = submatches[idx]
 	}
 
-	return submatches[groupIdx], nil
+	return result, nil
+}
+
+// getNamedMatch extracts the named group from a match of a string on a regex pattern.
+func getNamedMatch(str string, re *regexp.Regexp, group string) (string, error) {
+	matches, err := getNamedMatches(str, re, []string{group})
+	if err != nil {
+		return "", err
+	}
+	return matches[group], nil
 }
 
 // IDVersionParts provides access to all of the parts of an id_version.
@@ -221,6 +234,31 @@ func IDVersionProtoFrom(pkg string, name string, version string) (*idpb.IdVersio
 	}
 
 	return &idpb.IdVersion{Id: id, Version: version}, nil
+}
+
+// IDOrIDVersionProtoFrom creates an IdVersion proto with an optionally empty
+// version string from a candidate input.
+func IDOrIDVersionProtoFrom(str string) (*idpb.IdVersion, error) {
+	matches, err := getNamedMatches(str, idVersionRegex, []string{"name", "package", "version"})
+	if err == nil {
+		return &idpb.IdVersion{
+			Id: &idpb.Id{
+				Name:    matches["name"],
+				Package: matches["package"],
+			},
+			Version: matches["version"],
+		}, nil
+	}
+	matches, err = getNamedMatches(str, idRegex, []string{"name", "package"})
+	if err == nil {
+		return &idpb.IdVersion{
+			Id: &idpb.Id{
+				Name:    matches["name"],
+				Package: matches["package"],
+			},
+		}, nil
+	}
+	return nil, fmt.Errorf("%q is not a valid id or id_version", str)
 }
 
 // IDVersionFromProto creates an id_version string from an IdVersion proto message.
