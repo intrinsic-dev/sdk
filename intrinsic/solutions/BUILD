@@ -48,6 +48,7 @@ py_test(
     deps = [
         ":behavior_tree",
         ":blackboard_value",
+        ":cel",
         ":errors",
         ":proto_building",
         "//intrinsic/executive/proto:any_with_assignments_py_pb2",

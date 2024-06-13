@@ -17,6 +17,7 @@ from intrinsic.executive.proto import test_message_pb2
 from intrinsic.executive.proto import world_query_pb2
 from intrinsic.solutions import behavior_tree as bt
 from intrinsic.solutions import blackboard_value
+from intrinsic.solutions import cel
 from intrinsic.solutions import errors as solutions_errors
 from intrinsic.solutions import proto_building
 from intrinsic.solutions.internal import behavior_call
@@ -3640,6 +3641,13 @@ class BehaviorTreeBlackboardConditionTest(absltest.TestCase):
   def test_init(self):
     """Tests if BehaviorTree.Blackboard is correctly constructed."""
     condition = bt.Blackboard('result.accepted')
+    condition_proto = behavior_tree_pb2.BehaviorTree.Condition()
+    condition_proto.blackboard.cel_expression = 'result.accepted'
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
+
+  def test_init_from_cel_expression(self):
+    """Tests if BehaviorTree.Blackboard is correctly constructed."""
+    condition = bt.Blackboard(cel.CelExpression('result.accepted'))
     condition_proto = behavior_tree_pb2.BehaviorTree.Condition()
     condition_proto.blackboard.cel_expression = 'result.accepted'
     compare.assertProto2Equal(self, condition.proto, condition_proto)

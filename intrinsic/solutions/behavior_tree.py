@@ -17,6 +17,7 @@ executive.run() method.
 import abc
 import collections
 import enum
+import textwrap
 from typing import Any as AnyType, Callable, Iterable, List, Mapping, Optional, Sequence as SequenceType, Tuple, Union
 import uuid
 
@@ -851,21 +852,32 @@ class Blackboard(Condition):
   Attributes:
     proto: The proto representation of the node.
     condition_type: A string label of the condition type.
-    cel_expression: string containing a CEL expression evaluated on the
-      blackboard.
+    cel_expression: string containing a CEL expression for evaluation.
   """
 
-  def __init__(self, cel_expression: str | cel.CelExpression):
-    self.cel_expression: str = str(cel_expression)
+  _cel_expression: str
+
+  def __init__(self, cel_expression: Union[str, cel.CelExpression]):
+    self._cel_expression: str = str(cel_expression)
+
+  @property
+  def cel_expression(self) -> Optional[str]:
+    return self._cel_expression
+
+  @cel_expression.setter
+  def cel_expression(self, expression: str):
+    self._cel_expression = expression
 
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
-    return f'{type(self).__name__}({self.cel_expression})'
+    expr = str(self._cel_expression)
+    expr = textwrap.shorten(expr, width=80)
+    return f'{type(self).__name__}({expr})'
 
   @property
   def proto(self) -> behavior_tree_pb2.BehaviorTree.Condition:
     proto_object = behavior_tree_pb2.BehaviorTree.Condition()
-    proto_object.blackboard.cel_expression = self.cel_expression
+    proto_object.blackboard.cel_expression = self._cel_expression
     return proto_object
 
   @property
@@ -877,7 +889,27 @@ class Blackboard(Condition):
       cls,
       proto_object: behavior_tree_pb2.BehaviorTree.Condition.BlackboardExpression,
   ) -> 'Blackboard':
-    return cls(proto_object.cel_expression)
+    if proto_object.HasField('cel_expression'):
+      return cls(proto_object.cel_expression)
+    else:
+      if proto_object.ByteSize() != 0:
+        print(
+            'Warning: Possible data loss when creating a blackboard/cel'
+            ' condition from proto. If the BehaviorTree was created by the'
+            ' frontend, conditions are currently not loadable from the proto.'
+        )
+        ipython.display_html_or_print_msg(
+            (
+                '<span style="{_CSS_INTERRUPTED_STYLE}">Warning: Possible data'
+                ' loss when creating a blackboard/cel condition from proto. If'
+                ' the BehaviorTree was created by the frontend, conditions are'
+                ' currently not loadable from the proto.</span>'
+            ),
+            'Warning: Possible data loss when creating a blackboard/cel'
+            ' condition from proto. If the BehaviorTree was created by the'
+            ' frontend, conditions are currently not loadable from the proto.',
+        )
+      return cls('')
 
 
 class CompoundCondition(Condition):
