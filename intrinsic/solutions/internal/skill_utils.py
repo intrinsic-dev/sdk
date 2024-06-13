@@ -812,26 +812,23 @@ def _get_nested_classes(
       _get_nested_classes(nested_type, type_name, additional_msg_classes)
 
 
-def get_field_classes_to_alias(
+def collect_message_classes_to_wrap(
     param_descriptor: descriptor.Descriptor,
-    message_classes: Dict[str, Type[message.Message]],
-    collected_classes: List[
-        Tuple[str, Type[message.Message], descriptor.FieldDescriptor]
-    ],
+    message_classes: dict[str, Type[message.Message]],
+    collected_classes: dict[str, Type[message.Message]],
     collected_enums: dict[str, descriptor.EnumDescriptor],
 ) -> None:
-  """Gets classes which should be aliased as top-level members.
+  """Collects message classes for which wrapper classes should be generated.
 
-  This checks param_descriptor for fields which specify sub-messages.
-  These are to be aliased at the enclosing class scope for easy access.
+  Recursively collects all message types and enums which are used by the
+  fields of the message specified by 'param_descriptor'.
 
   Args:
     param_descriptor: parameter proto descriptor
-    message_classes: mapping from type name to message class for all messages in
-      the class's hermetic descriptor pool.
-    collected_classes: List containing all collected classes up to this point.
-      The items are tuples of 1) nested class attribute name (proto message
-      short name), 2) message class and 3) field descriptor.
+    message_classes: Mapping from full proto message name to message class for
+      all messages in the skill's hermetic descriptor pool.
+    collected_classes: Subset of classes from 'message_classes' which have been
+      collected up to this point.
     collected_enums: Map from full proto enum names to enum descriptors,
       containing all collected enums up to this point.
   """
@@ -844,29 +841,16 @@ def get_field_classes_to_alias(
         field.message_type is not None
         and field.message_type.full_name in message_classes
         and (
-            # Do not alias auto-generated map *Entry classes
+            # Do not wrap auto-generated map *Entry classes
             field.type != descriptor.FieldDescriptor.TYPE_MESSAGE
             or not field.message_type.GetOptions().map_entry
         )
     ):
-      nested_class_attr_name = message_classes[
-          field.message_type.full_name
-      ].__name__
-      found = [
-          elem
-          for elem in collected_classes
-          if (
-              elem[0] == nested_class_attr_name
-              and elem[2].full_name == field.full_name
-          )
-      ]
-      if not any(found):
-        collected_classes.append((
-            nested_class_attr_name,
-            message_classes[field.message_type.full_name],
-            field,
-        ))
-        get_field_classes_to_alias(
+      if field.message_type.full_name not in collected_classes:
+        collected_classes[field.message_type.full_name] = message_classes[
+            field.message_type.full_name
+        ]
+        collect_message_classes_to_wrap(
             field.message_type,
             message_classes,
             collected_classes,
@@ -1485,10 +1469,8 @@ def update_message_class_modules(
     skill_name: str,
     skill_package: str,
     parameter_description: skills_pb2.ParameterDescription,
-    nested_classes: list[
-        tuple[str, Type[message.Message], descriptor.FieldDescriptor]
-    ],
-    enum_descriptors: dict[str, descriptor.EnumDescriptor],
+    message_classes_to_wrap: dict[str, Type[message.Message]],
+    enum_descriptors_to_wrap: dict[str, descriptor.EnumDescriptor],
 ) -> tuple[dict[str, Type[MessageWrapper]], dict[str, Type[enum.IntEnum]]]:
   """Updates given class with type aliases.
 
@@ -1499,9 +1481,12 @@ def update_message_class_modules(
     skill_name: Name of the skill to correspoding to 'cls'.
     skill_package: Package name of the skill to correspoding to 'cls'.
     parameter_description: The skill's parameter description.
-    nested_classes: Message classes to be attached to the skill class.
-    enum_descriptors: Map from full proto enum names to enum descriptors,
-      containing enums for which to attach enum classes to the skill class.
+    message_classes_to_wrap: Map from full proto message names to message
+      classes, containing the message classes for which to generate wrapper
+      classes under the skill class.
+    enum_descriptors_to_wrap: Map from full proto enum names to enum
+      descriptors, containing enums for which to generate enum classes under the
+      skill class.
 
   Returns:
     A tuple of 1) a map from proto message names to corresponding message
@@ -1510,22 +1495,21 @@ def update_message_class_modules(
   """
   enum_classes: dict[str, Type[enum.IntEnum]] = {
       enum_full_name: _gen_enum_class(enum_desc, skill_name, skill_package)
-      for enum_full_name, enum_desc in enum_descriptors.items()
+      for enum_full_name, enum_desc in enum_descriptors_to_wrap.items()
   }
 
   wrapper_classes: dict[str, Type[MessageWrapper]] = {}
-  for _, message_type, field in nested_classes:
-    if field.message_type.full_name in _MESSAGE_NAME_TO_PYTHONIC_TYPE:
+  for message_full_name, message_type in message_classes_to_wrap.items():
+    if message_full_name in _MESSAGE_NAME_TO_PYTHONIC_TYPE:
       continue
 
-    if field.message_type.full_name not in wrapper_classes:
-      wrapper_class = _gen_wrapper_class(
-          message_type,
-          skill_name,
-          skill_package,
-          dict(parameter_description.parameter_field_comments),
-      )
-      wrapper_classes[field.message_type.full_name] = wrapper_class
+    wrapper_class = _gen_wrapper_class(
+        message_type,
+        skill_name,
+        skill_package,
+        dict(parameter_description.parameter_field_comments),
+    )
+    wrapper_classes[message_full_name] = wrapper_class
 
   # The init function of a wrapper class may reference any other wrapper class
   # (proto definitions can be recursive!). So we can only generate the init
@@ -1552,14 +1536,11 @@ def update_message_class_modules(
         "", message_full_name, cls, wrapper_class, skill_name, skill_package
     )
 
-  # Create my_skill.<message name> shortcuts. Iterate in 'nested_classes' order
-  # for backwards compatibility and also to ensure that the shortcuts are
-  # deterministic in case of name collisions.
+  # Create my_skill.<message name> shortcuts. Note that iteration over a dict is
+  # in insertion order by default, so the shortcuts are deterministic in case of
+  # name collisions.
   message_names_done = set()
-  for _, _, field in nested_classes:
-    if field.message_type.full_name not in wrapper_classes:
-      continue
-    wrapper_class = wrapper_classes[field.message_type.full_name]
+  for message_full_name, wrapper_class in wrapper_classes.items():
     message_name = wrapper_class.wrapped_type.DESCRIPTOR.name
     if message_name not in message_names_done:
       setattr(
@@ -1568,7 +1549,7 @@ def update_message_class_modules(
           _ClassPropertyReturningWrapperClassWithWarning(
               skill_name,
               message_name,
-              field.message_type.full_name,
+              message_full_name,
               wrapper_class,
           ),
       )

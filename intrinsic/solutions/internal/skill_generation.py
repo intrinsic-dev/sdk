@@ -520,14 +520,14 @@ def gen_skill_class(
   Returns:
     A new type for a GeneratedSkill sub-class.
   """
-  nested_classes = []
-  enum_descriptors = {}
+  message_classes_to_wrap = {}
+  enum_descriptors_to_wrap = {}
   if info.skill_proto.HasField("parameter_description"):
-    skill_utils.get_field_classes_to_alias(
+    skill_utils.collect_message_classes_to_wrap(
         info.parameter_descriptor(),
         info.message_classes,
-        nested_classes,
-        enum_descriptors,
+        message_classes_to_wrap,
+        enum_descriptors_to_wrap,
     )
 
   type_class = type(
@@ -554,8 +554,8 @@ def gen_skill_class(
       info.skill_name,
       info.package_name,
       info.skill_proto.parameter_description,
-      nested_classes,
-      enum_descriptors,
+      message_classes_to_wrap,
+      enum_descriptors_to_wrap,
   )
 
   init_fun = _gen_init_fun(
