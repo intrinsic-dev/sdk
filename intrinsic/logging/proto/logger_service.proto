@@ -45,12 +45,6 @@ message LogOptions {
 
   // If set to 'true', logs are retained on disk via timescaledb.
   optional bool retain_on_disk = 6;
-
-  // Signifies whether the buffer should be retained on disk. This is useful for
-  // cases when the data needs to be persisted across logger restarts. This also
-  // means that performance will be impacted as log items are written and read
-  // from disk, so only use this for event_sources that are not high throughput.
-  optional bool retain_buffer_on_disk = 7;
 }
 
 message ListLogSourcesResponse {
