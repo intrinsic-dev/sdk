@@ -6,6 +6,7 @@ from absl.testing import absltest
 from absl.testing import parameterized
 import hypothesis
 from hypothesis.extra import numpy as np_strategies
+from intrinsic.icon.proto import cart_space_pb2
 from intrinsic.math.proto import array_pb2
 from intrinsic.math.proto import matrix_pb2
 from intrinsic.math.proto import point_pb2
@@ -212,6 +213,14 @@ class ProtoConversionTest(parameterized.TestCase):
     )
     # We expect bit-wise equality
     self.assertEqual(result_proto, pose_proto)
+
+  def test_wrench_from_proto(self):
+    wrench_proto = cart_space_pb2.Wrench(x=1, y=2, z=3, rx=4, ry=5, rz=6)
+
+    wrench = proto_conversion.wrench_from_proto(wrench_proto)
+
+    np.testing.assert_array_equal(wrench.force, [1, 2, 3])
+    np.testing.assert_array_equal(wrench.torque, [4, 5, 6])
 
   ndarray_from_matrix_proto_test_cases = [
       dict(

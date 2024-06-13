@@ -13,6 +13,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":data_types",
+        "//intrinsic/icon/proto:cart_space_py_pb2",
         "//intrinsic/math/proto:array_py_pb2",
         "//intrinsic/math/proto:matrix_py_pb2",
         "//intrinsic/math/proto:point_py_pb2",

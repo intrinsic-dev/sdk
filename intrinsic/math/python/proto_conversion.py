@@ -4,6 +4,7 @@
 
 import sys
 
+from intrinsic.icon.proto import cart_space_pb2
 from intrinsic.math.proto import array_pb2
 from intrinsic.math.proto import matrix_pb2
 from intrinsic.math.proto import point_pb2
@@ -185,6 +186,12 @@ def pose_to_proto(pose: data_types.Pose3) -> pose_pb2.Pose:
     quat = quat.normalize()
   msg.orientation.CopyFrom(quaternion_to_proto(quat))
   return msg
+
+
+def wrench_from_proto(wrench: cart_space_pb2.Wrench) -> data_types.Wrench:
+  return data_types.Wrench(
+      [wrench.x, wrench.y, wrench.z], [wrench.rx, wrench.ry, wrench.rz]
+  )
 
 
 # Maps between Array.ScalarType and the corresponding numpy dtype.
