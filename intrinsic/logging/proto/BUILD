@@ -24,6 +24,7 @@ proto_library(
         "//intrinsic/perception/proto:hand_eye_calibration",
         "//intrinsic/perception/proto:pose_estimation_result",
         "//intrinsic/skills/proto:skill_service_proto",
+        "//intrinsic/util/status:extended_status_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:timestamp_proto",
     ],

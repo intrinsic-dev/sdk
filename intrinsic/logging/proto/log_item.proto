@@ -10,6 +10,7 @@ import "intrinsic/executive/proto/executive_state.proto";
 import "intrinsic/icon/proto/cart_space.proto";
 import "intrinsic/icon/proto/joint_space.proto";
 import "intrinsic/icon/proto/part_status.proto";
+import "intrinsic/util/status/extended_status.proto";
 
 import "intrinsic/logging/errors/proto/error_report.proto";
 import "intrinsic/logging/proto/blob.proto";
@@ -81,7 +82,7 @@ message LogItem {
 
       // ===== General =====
       google.protobuf.Any any = 1;
-      intrinsic_proto.error.ErrorReport error_report = 23;
+      intrinsic_proto.error.ErrorReport error_report = 23 [deprecated = true];
 
       // ===== Skills =====
       intrinsic_proto.skills.PreviewRequest skills_preview_request = 48;
@@ -100,6 +101,7 @@ message LogItem {
 
       // ===== Executive =====
       intrinsic_proto.executive.ExecutiveState executive_state = 13;
+      intrinsic_proto.status.ExtendedStatus executive_process_status = 54;
 
       // ===== Perception =====
       intrinsic_proto.perception.PoseEstimationResult pose_estimation_result =
