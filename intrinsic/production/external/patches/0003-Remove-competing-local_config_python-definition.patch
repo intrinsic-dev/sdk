@@ -14,7 +14,6 @@ index 0a809bf525..17ec465f23 100644
 --- a/bazel/grpc_python_deps.bzl
 +++ b/bazel/grpc_python_deps.bzl
 @@ -28,7 +28,7 @@ def grpc_python_deps():
-             patch_args = ["-p1"],
          )
 
 -    python_configure(name = "local_config_python")
@@ -22,6 +21,7 @@ index 0a809bf525..17ec465f23 100644
 
      native.bind(
          name = "python_headers",
+         actual = "@local_config_python//:python_headers",
 --
 2.41.0.585.gd2178a4bd4-goog
 

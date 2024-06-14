@@ -72,6 +72,10 @@ def intrinsic_sdks_deps_1(register_go_toolchain = True):
         name = "local_config_python",
         python_version = "3.11",
     )
+    python_register_toolchains(
+        name = "system_python",
+        python_version = "3.11",
+    )
     py_repositories()
 
     # Required bazel-lib dependencies

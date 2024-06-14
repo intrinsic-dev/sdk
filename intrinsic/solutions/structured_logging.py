@@ -212,7 +212,7 @@ class PartStatusSource(DataSource):
         part_status = _get_part_status(log_item, self._part_name)
         item = json_format.MessageToDict(
             payload_accessor(part_status),
-            including_default_value_fields=True,
+            always_print_fields_with_no_presence=True,
             preserving_proto_field_name=True,
         )
         item['time_s'] = part_status.timestamp_ns * 1e-9
@@ -391,7 +391,7 @@ class StreamingOutputSource(DataSource):
     )[::every_n]:
       item = json_format.MessageToDict(
           log_item,
-          including_default_value_fields=True,
+          always_print_fields_with_no_presence=True,
           preserving_proto_field_name=True,
       )
       item['time_s'] = timestamp

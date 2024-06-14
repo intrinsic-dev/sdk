@@ -150,9 +150,13 @@ def intrinsic_sdks_deps_0():
     maybe(
         http_archive,
         name = "com_google_protobuf",
-        sha256 = "2ea80fa37de3da2ed1b503cde35bdf8dd66913370a6cf66fca7d47006596c4d9",  # v3.24.4
-        strip_prefix = "protobuf-7789b3ac85248ad75631a1919071fa268e466210",  # v3.24.4
-        urls = ["https://github.com/protocolbuffers/protobuf/archive/7789b3ac85248ad75631a1919071fa268e466210.zip"],  # v3.24.4
+        patch_args = ["-p1"],
+        patches = [
+            Label("//intrinsic/production/external/patches:0015-Upgrade-protobuf-rules-python.patch"),
+        ],
+        integrity = "sha256-4yEAqAE4cNJP/Dfa1ngaYeXQyZUBvLBNOcNAocRKjmM=",
+        strip_prefix = "protobuf-26.0",
+        urls = ["https://github.com/protocolbuffers/protobuf/releases/download/v26.0/protobuf-26.0.tar.gz"],
     )
 
     # gRPC
@@ -163,30 +167,13 @@ def intrinsic_sdks_deps_0():
         patches = [
             Label("//intrinsic/production/external/patches:0003-Remove-competing-local_config_python-definition.patch"),
             Label("//intrinsic/production/external/patches:0005-Remove-competing-go-deps.patch"),
-            Label("//intrinsic/production/external/patches:0007-Also-generate-pyi-files-grpc.patch"),
             Label("//intrinsic/production/external/patches:0011-Public-grpc_library-attr.patch"),
-            Label("//intrinsic/production/external/patches:0013-Remove-protobuf-ios-support.patch"),
+            Label("//intrinsic/production/external/patches:0016-Add-cpp-20-compat-grpc.patch"),
+            Label("//intrinsic/production/external/patches:0017-Fix-py-grpc-library.patch"),
         ],
-        sha256 = "194dcaae20b7bcd9fc4fc9a1e091215207842ddb9a1df01419c7c55d3077979b",  # v1.56.0
-        strip_prefix = "grpc-6e85620c7e258df79666a4743f862f2f82701c2d",  # v1.56.0
-        urls = ["https://github.com/grpc/grpc/archive/6e85620c7e258df79666a4743f862f2f82701c2d.zip"],  # v1.56.0
-    )
-
-    # Dependency of Protobuf and gRPC, explicitly pinned here so that we don't get the definition
-    # from protobuf_deps() which applies a patch that does not build in our WORKSPACE. See
-    # https://github.com/protocolbuffers/protobuf/blob/7789b3ac85248ad75631a1919071fa268e466210/protobuf_deps.bzl#L154
-    # Here we use a copy of gRPC's definition, see
-    # https://github.com/grpc/grpc/blob/0bf4a618b17a3f0ed61c22364913c7f66fc1c61a/bazel/grpc_deps.bzl#L393-L402
-    maybe(
-        http_archive,
-        name = "upb",
-        sha256 = "7d19f2ac9c1e508a86a272913d9aa67c8147827f949035828910bb05d9f2cf03",  # Commit from May 16, 2023
-        strip_prefix = "upb-61a97efa24a5ce01fb8cc73c9d1e6e7060f8ea98",  # Commit from May 16, 2023
-        urls = [
-            # https://github.com/protocolbuffers/upb/commits/23.x
-            "https://storage.googleapis.com/grpc-bazel-mirror/github.com/protocolbuffers/upb/archive/61a97efa24a5ce01fb8cc73c9d1e6e7060f8ea98.tar.gz",  # Commit from May 16, 2023
-            "https://github.com/protocolbuffers/upb/archive/61a97efa24a5ce01fb8cc73c9d1e6e7060f8ea98.tar.gz",  # Commit from May 16, 2023
-        ],
+        integrity = "sha256-yfmubk1vQEZO6ZWL5AaAh4ge1qo34w0OZNQO17453QE=",
+        strip_prefix = "grpc-1.62.1",
+        urls = ["https://github.com/grpc/grpc/archive/refs/tags/v1.62.1.tar.gz"],
     )
 
     # GoogleTest/GoogleMock framework. Used by most unit-tests.
