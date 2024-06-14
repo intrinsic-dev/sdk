@@ -96,7 +96,7 @@ blob_payload <
     log_options = (
         structured_logging.StructuredLogs.LogOptions()
         .set_event_source(event_source)
-        .set_max_buffer_size(10)
+        .set_max_buffer_byte_size(10)
     )
     logs = structured_logging.StructuredLogs(stub)
 
@@ -111,7 +111,7 @@ blob_payload <
     self.assertEqual(
         stub.SetLogOptions.call_args.args[0]
         .log_options[event_source]
-        .max_buffer_size,
+        .max_buffer_byte_size,
         10,
     )
     # Receives the expected return value
@@ -119,7 +119,7 @@ blob_payload <
 
   def test_get_log_options(self):
     stub = mock.MagicMock()
-    log_options = logger_service_pb2.LogOptions(max_buffer_size=10)
+    log_options = logger_service_pb2.LogOptions(max_buffer_byte_size=10)
     response = logger_service_pb2.GetLogOptionsResponse(log_options=log_options)
     stub.GetLogOptions.return_value = response
     logs = structured_logging.StructuredLogs(stub)
@@ -135,7 +135,7 @@ blob_payload <
     # At least receives expected response type
     self.assertEqual(type(result), structured_logging.StructuredLogs.LogOptions)
     # Receives the expected buffer size
-    self.assertEqual(result.log_options.max_buffer_size, 10)
+    self.assertEqual(result.log_options.max_buffer_byte_size, 10)
 
   def test_peek(self):
     stub = mock.MagicMock()

@@ -644,10 +644,10 @@ class StructuredLogs:
       self._log_options.sync_active = sync_active
       return self
 
-    def set_max_buffer_size(
-        self, max_buffer_size: int
+    def set_max_buffer_byte_size(
+        self, max_buffer_byte_size: int
     ) -> 'StructuredLogs.LogOptions':
-      self._log_options.max_buffer_size = max_buffer_size
+      self._log_options.max_buffer_byte_size = max_buffer_byte_size
       return self
 
     def set_token_bucket_options(
@@ -743,7 +743,7 @@ class StructuredLogs:
         self.LogOptions()
         .set_event_source(ret.event_source)
         .set_sync_active(ret.sync_active)
-        .set_max_buffer_size(ret.max_buffer_size)
+        .set_max_buffer_byte_size(ret.max_buffer_byte_size)
         .set_token_bucket_options(
             ret.logging_budget.refresh,
             ret.logging_budget.burst,

@@ -29,8 +29,8 @@ message LogOptions {
   // If set to 'true', logs are synced to the cloud.
   optional bool sync_active = 2;
 
-  // The size of the on-prem buffer for LogItems.
-  optional int32 max_buffer_size = 3;
+  // The maximum byte size of the on-prem buffer for LogItems.
+  optional int32 max_buffer_byte_size = 3;
 
   // The token bucket options for rate limiting on the Log() rpc of the data
   // logger.
