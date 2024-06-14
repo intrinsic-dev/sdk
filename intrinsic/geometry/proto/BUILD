@@ -3,7 +3,6 @@
 """ Intrinsic package geometry/proto. """
 
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
-load("//bazel:go_macros.bzl", "go_proto_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -146,34 +145,6 @@ cc_proto_library(
 py_proto_library(
     name = "renderable_py_pb2",
     deps = [":renderable_proto"],
-)
-
-proto_library(
-    name = "shape_data_proto",
-    srcs = ["shape_data.proto"],
-    deps = [
-        "//intrinsic/geometry/service:geometry_storage_refs_proto",
-        "//intrinsic/math/proto:matrix_proto",
-    ],
-)
-
-cc_proto_library(
-    name = "shape_data_cc_proto",
-    deps = [":shape_data_proto"],
-)
-
-py_proto_library(
-    name = "shape_data_py_pb2",
-    deps = [":shape_data_proto"],
-)
-
-go_proto_library(
-    name = "shape_data_go_proto",
-    go_deps = [
-        "//intrinsic/geometry/service:geometry_storage_refs_go_proto",
-        "//intrinsic/math/proto:matrix_go_proto",
-    ],
-    deps = [":shape_data_proto"],
 )
 
 proto_library(

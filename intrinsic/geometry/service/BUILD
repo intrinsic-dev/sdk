@@ -85,3 +85,36 @@ cc_grpc_library(
     grpc_only = True,
     deps = [":geometry_service_cc_proto"],
 )
+
+proto_library(
+    name = "transformed_geometry_storage_refs_proto",
+    srcs = ["transformed_geometry_storage_refs.proto"],
+    deps = [
+        ":geometry_storage_refs_proto",
+        "//intrinsic/math/proto:matrix_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "transformed_geometry_storage_refs_cc_proto",
+    deps = [":transformed_geometry_storage_refs_proto"],
+)
+
+py_proto_library(
+    name = "transformed_geometry_storage_refs_py_pb2",
+    deps = [":transformed_geometry_storage_refs_proto"],
+)
+
+go_proto_library(
+    name = "transformed_geometry_storage_refs_go_proto",
+    go_deps = [
+        ":geometry_storage_refs_go_proto",
+        "//intrinsic/math/proto:matrix_go_proto",
+    ],
+    deps = [":transformed_geometry_storage_refs_proto"],
+)
+
+exports_files(
+    srcs = ["geomservice.yaml"],
+    visibility = ["//intrinsic:__subpackages__"],
+)

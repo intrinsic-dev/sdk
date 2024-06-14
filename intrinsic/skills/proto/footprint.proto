@@ -4,7 +4,7 @@ syntax = "proto3";
 
 package intrinsic_proto.skills;
 
-import "intrinsic/geometry/proto/shape_data.proto";
+import "intrinsic/geometry/service/transformed_geometry_storage_refs.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 
 // A footprint contains zero or more reservations that must be held when
@@ -77,7 +77,7 @@ message VolumeReservation {
 
   // The volume must be expressed using on of the following:
   oneof volume_oneof {
-    intrinsic_proto.geometry.ShapeData shape = 4;
+    intrinsic_proto.geometry.TransformedGeometryStorageRefs shape = 4;
   }
 }
 

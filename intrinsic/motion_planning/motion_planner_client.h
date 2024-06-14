@@ -12,7 +12,7 @@
 #include "absl/strings/string_view.h"
 #include "google/protobuf/empty.pb.h"
 #include "intrinsic/eigenmath/types.h"
-#include "intrinsic/geometry/proto/shape_data.pb.h"
+#include "intrinsic/geometry/service/transformed_geometry_storage_refs.pb.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/math/pose3.h"
 #include "intrinsic/motion_planning/proto/motion_planner_config.pb.h"
@@ -60,7 +60,8 @@ class MotionPlannerClient {
   // trajectory.
   struct PlanTrajectoryResult {
     intrinsic_proto::icon::JointTrajectoryPVA trajectory;
-    std::vector<intrinsic_proto::geometry::ShapeData> swept_volume;
+    std::vector<intrinsic_proto::geometry::TransformedGeometryStorageRefs>
+        swept_volume;
   };
 
   // Plans a trajectory for a given motion planning problem and robot.
