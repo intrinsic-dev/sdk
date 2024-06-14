@@ -162,7 +162,7 @@ def pythonic_field_type(
 
 
 def _field_to_string_vector(
-    field_value: Union[Sequence[str], skills_pb2.StringVector],
+    field_value: Sequence[str],
 ) -> skills_pb2.StringVector:
   """Converts the field_value to skills_pb2.StringVector."""
   if isinstance(field_value, list) and all(
@@ -171,15 +171,11 @@ def _field_to_string_vector(
     field_message = skills_pb2.StringVector()
     field_message.values.extend(field_value)
     return field_message
-  elif isinstance(field_value, skills_pb2.StringVector):
-    return field_value
   raise TypeError(f"Value {field_value} not a list of strings")
 
 
 def _field_to_vector_nd_array(
-    field_value: Union[
-        Sequence[skills_pb2.VectorNdValue], skills_pb2.VectorNdArray
-    ],
+    field_value: Sequence[skills_pb2.VectorNdValue],
 ) -> skills_pb2.VectorNdArray:
   """Converts the field_value to skills_pb2.VectorNdArray."""
   if isinstance(field_value, list) and all(
@@ -188,18 +184,14 @@ def _field_to_vector_nd_array(
     field_message = skills_pb2.VectorNdArray()
     field_message.array.extend(field_value)
     return field_message
-  elif isinstance(field_value, skills_pb2.VectorNdArray):
-    return field_value
   raise TypeError(f"Value {field_value} is not convertible to a VectorNdArray")
 
 
 def _field_to_vector_nd_value(
-    field_value: Union[skills_pb2.VectorNdValue, Sequence[float]],
+    field_value: Sequence[float],
 ) -> skills_pb2.VectorNdValue:
   """Converts the field_value to skills_pb2.VectorNdValue."""
-  if isinstance(field_value, skills_pb2.VectorNdValue):
-    return field_value
-  elif isinstance(field_value, list) and all(
+  if isinstance(field_value, list) and all(
       isinstance(s, float) for s in field_value
   ):
     field_message = skills_pb2.VectorNdValue()
@@ -216,15 +208,14 @@ def _field_to_pose_3d(field_value: data_types.Pose3) -> pose_pb2.Pose:
 
 
 def _field_to_object_reference(
-    field_value: Union[
-        object_world_resources.WorldObject,
-        object_world_refs_pb2.ObjectReference,
-    ],
+    # This needs to accept 'TransformNode' (and not 'WorldObject') to be
+    # compatible with the world path notation. E.g., we want to be able to pass
+    # 'world.my_object' to a skill parameter of type 'ObjectReference', and
+    # 'world.__getattr__()' will return a 'WorldObject' as a 'TransformNode'.
+    field_value: object_world_resources.TransformNode,
 ) -> object_world_refs_pb2.ObjectReference:
   """Converts a field_value to object_world_refs_pb2.ObjectReference."""
-  if isinstance(field_value, object_world_refs_pb2.ObjectReference):
-    return field_value
-  elif isinstance(field_value, object_world_resources.WorldObject):
+  if isinstance(field_value, object_world_resources.WorldObject):
     return field_value.reference
   raise TypeError(
       f"Value: {field_value} is not convertible to an ObjectReference."
@@ -232,14 +223,14 @@ def _field_to_object_reference(
 
 
 def _field_to_frame_reference(
-    field_value: Union[
-        object_world_resources.Frame, object_world_refs_pb2.FrameReference
-    ],
+    # This needs to accept 'TransformNode' (and not 'Frame') to be compatible
+    # with the world path notation. E.g., we want to be able to pass
+    # 'world.my_global_frame' to a skill parameter of type 'FrameReference', and
+    # 'world.__getattr__()' will return a 'Frame' as a 'TransformNode'.
+    field_value: object_world_resources.TransformNode,
 ) -> object_world_refs_pb2.FrameReference:
   """Converts a field_value to object_world_refs_pb2.FrameReference."""
-  if isinstance(field_value, object_world_refs_pb2.FrameReference):
-    return field_value
-  elif isinstance(field_value, object_world_resources.Frame):
+  if isinstance(field_value, object_world_resources.Frame):
     return field_value.reference
   raise TypeError(
       f"Value: {field_value} is not convertible to an FrameReference."
@@ -247,16 +238,9 @@ def _field_to_frame_reference(
 
 
 def _field_to_transform_node_reference(
-    field_value: Union[
-        object_world_resources.WorldObject,
-        object_world_resources.Frame,
-        object_world_refs_pb2.TransformNodeReference,
-    ],
+    field_value: object_world_resources.TransformNode,
 ) -> object_world_refs_pb2.TransformNodeReference:
   """Converts a field_value to TransformNodeReference.
-
-  The object_world_refs_pb2.TransformNodeReference either contains an
-  id or a TransformNodeReferenceByName.
 
   Args:
     field_value: The value that should be converted.
@@ -264,11 +248,7 @@ def _field_to_transform_node_reference(
   Returns:
     A TransformNodeReference with an object or frame reference.
   """
-  if isinstance(field_value, object_world_refs_pb2.TransformNodeReference):
-    return field_value
-  elif isinstance(field_value, object_world_resources.WorldObject):
-    return object_world_refs_pb2.TransformNodeReference(id=field_value.id)
-  elif isinstance(field_value, object_world_resources.Frame):
+  if isinstance(field_value, object_world_resources.TransformNode):
     return object_world_refs_pb2.TransformNodeReference(id=field_value.id)
   raise TypeError(
       f"Value: {field_value} is not convertible to a TransformNodeReference."
@@ -328,12 +308,11 @@ def _field_to_collision_settings(
 
 
 def _field_to_duration(
-    field_value: Union[datetime.timedelta, float, int, duration_pb2.Duration],
+    field_value: Union[datetime.timedelta, float, int],
 ) -> duration_pb2.Duration:
   """Create a Duration object from various inputs.
 
-  This will transform datetime.timedelta and ints/floats while also accepting an
-  already created Duration object.
+  This will transform datetime.timedelta and ints/floats.
 
   Args:
     field_value: The value to transform to duration_pb2.Duration. If it is a
@@ -345,9 +324,7 @@ def _field_to_duration(
   Raises:
     TypeError if the field_value is not one of the expected types.
   """
-  if isinstance(field_value, duration_pb2.Duration):
-    return field_value
-  elif isinstance(field_value, datetime.timedelta):
+  if isinstance(field_value, datetime.timedelta):
     duration_proto = duration_pb2.Duration()
     duration_proto.FromTimedelta(field_value)
     return duration_proto
@@ -362,12 +339,12 @@ def _field_to_duration(
     duration_proto.nanos = int(d * 1e9)
     return duration_proto
   raise TypeError(
-      "Expected value of type int, float, datetime.timedelta or"
-      f" duration_pb2.Duration, got {type(field_value)}"
+      "Expected value of type int, float or datetime.timedelta, got"
+      f" {type(field_value)}"
   )
 
 
-_PYTHONIC_MESSAGE_FIELD_TYPE = {
+_PYTHONIC_TO_MESSAGE_AUTO_CONVERSIONS = {
     skills_pb2.StringVector.DESCRIPTOR.full_name: _field_to_string_vector,
     skills_pb2.VectorNdArray.DESCRIPTOR.full_name: _field_to_vector_nd_array,
     skills_pb2.VectorNdValue.DESCRIPTOR.full_name: _field_to_vector_nd_value,
@@ -422,8 +399,8 @@ def pythonic_to_proto_message(
   if isinstance(field_value, MessageWrapper):
     return field_value.wrapped_message
   # Provide implicit conversion for some non-message types.
-  if message_descriptor.full_name in _PYTHONIC_MESSAGE_FIELD_TYPE:
-    return _PYTHONIC_MESSAGE_FIELD_TYPE[message_descriptor.full_name](
+  if message_descriptor.full_name in _PYTHONIC_TO_MESSAGE_AUTO_CONVERSIONS:
+    return _PYTHONIC_TO_MESSAGE_AUTO_CONVERSIONS[message_descriptor.full_name](
         field_value
     )
   raise TypeError(
