@@ -2,10 +2,10 @@
 
 """Pose estimator access within the workcell API."""
 
+import dataclasses
 import datetime
 from typing import Dict, List, Optional
 
-from intrinsic.perception.proto import pose_estimator_id_pb2
 from intrinsic.resources.client import resource_registry_client
 from intrinsic.solutions import ipython
 from intrinsic.util.grpc import error_handling
@@ -17,6 +17,17 @@ _CSS_FAILURE_STYLE = (
 )
 _LAST_RESULT_TIMEOUT_SECONDS = 5
 _POSE_ESTIMATOR_RESOURCE_FAMILY_ID = 'perception_model'
+
+
+@dataclasses.dataclass(frozen=True)
+class PoseEstimatorId:
+  """Wrapper for a PoseEstimatorId proto.
+
+  Attributes:
+    id: Id of the pose estimator.
+  """
+
+  id: str
 
 
 class PoseEstimators:
@@ -39,9 +50,7 @@ class PoseEstimators:
     self._resource_registry = resource_registry
 
   @error_handling.retry_on_grpc_unavailable
-  def _get_pose_estimators(
-      self,
-  ) -> Dict[str, pose_estimator_id_pb2.PoseEstimatorId]:
+  def _get_pose_estimators(self) -> Dict[str, PoseEstimatorId]:
     """Query pose estimators.
 
     Returns:
@@ -56,15 +65,11 @@ class PoseEstimators:
         )
     )
     return {
-        resource_instance.name: pose_estimator_id_pb2.PoseEstimatorId(
-            id=resource_instance.name
-        )
+        resource_instance.name: PoseEstimatorId(id=resource_instance.name)
         for resource_instance in pose_estimator_resources
     }
 
-  def __getattr__(
-      self, pose_estimator_id: str
-  ) -> pose_estimator_id_pb2.PoseEstimatorId:
+  def __getattr__(self, pose_estimator_id: str) -> PoseEstimatorId:
     """Returns the id of the pose estimator.
 
     Args:
@@ -94,9 +99,7 @@ class PoseEstimators:
     """Lists all pose estimators by key (sorted)."""
     return sorted(list(self._get_pose_estimators().keys()))
 
-  def __getitem__(
-      self, pose_estimator_id: str
-  ) -> pose_estimator_id_pb2.PoseEstimatorId:
+  def __getitem__(self, pose_estimator_id: str) -> PoseEstimatorId:
     """Returns the id of the pose estimator.
 
     Args:

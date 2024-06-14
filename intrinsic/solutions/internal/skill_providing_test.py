@@ -1378,6 +1378,20 @@ class SkillsTest(parameterized.TestCase):
               # pyformat: enable
           ),
       },
+      {
+          'testcase_name': 'PoseEstimatorSkill',
+          'parameter_defaults': test_skill_params_pb2.PoseEstimatorSkill(),
+          'expected_signature': (
+              # pyformat: disable
+              '(*, '
+              'pose_estimator: Union[intrinsic.solutions.pose_estimation.PoseEstimatorId, '
+              'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.perception.PoseEstimatorId, '
+              'intrinsic.solutions.blackboard_value.BlackboardValue, '
+              'intrinsic.solutions.cel.CelExpression, '
+              'NoneType] = None)'
+              # pyformat: enable
+          ),
+      },
   )
   def test_skill_signature_for_types_with_auto_conversion(
       self, parameter_defaults, expected_signature

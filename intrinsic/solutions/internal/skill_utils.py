@@ -27,10 +27,12 @@ from intrinsic.math.proto import pose_pb2
 from intrinsic.math.python import data_types
 from intrinsic.math.python import proto_conversion as math_proto_conversion
 from intrinsic.motion_planning.proto import motion_target_pb2
+from intrinsic.perception.proto import pose_estimator_id_pb2
 from intrinsic.skills.client import skill_registry_client
 from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions import blackboard_value
 from intrinsic.solutions import cel
+from intrinsic.solutions import pose_estimation
 from intrinsic.solutions import provided
 from intrinsic.solutions import utils
 from intrinsic.solutions import worlds
@@ -347,6 +349,14 @@ def _field_to_duration(
   )
 
 
+def _field_to_pose_estimator_id(
+    field_value: pose_estimation.PoseEstimatorId,
+) -> pose_estimator_id_pb2.PoseEstimatorId:
+  if isinstance(field_value, pose_estimation.PoseEstimatorId):
+    return pose_estimator_id_pb2.PoseEstimatorId(id=field_value.id)
+  raise TypeError(f"Cannot convert {field_value} to PoseEstimatorId.")
+
+
 @dataclasses.dataclass
 class _AutoConversion:
   """Encapsulates an auto-conversion function together with metadata about it.
@@ -408,6 +418,9 @@ _PYTHONIC_TO_MESSAGE_AUTO_CONVERSIONS = {
     ),
     object_world_refs_pb2.ObjectReference.DESCRIPTOR.full_name: _AutoConversion(
         _field_to_object_reference
+    ),
+    pose_estimator_id_pb2.PoseEstimatorId.DESCRIPTOR.full_name: _AutoConversion(
+        _field_to_pose_estimator_id
     ),
 }
 

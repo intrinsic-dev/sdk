@@ -369,7 +369,6 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":ipython",
-        "//intrinsic/perception/proto:pose_estimator_id_py_pb2",
         "//intrinsic/resources/client:resource_registry_client",
         "//intrinsic/util/grpc:error_handling",
     ],
