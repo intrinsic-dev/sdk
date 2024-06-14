@@ -45,35 +45,19 @@ absl::StatusOr<Subscription> CreateSubscriptionWithConfig(
   SubscriptionErrorCallback error_callback = {};
 
   if (msg_callback && !msg_callback.is_none()) {
-    // Shared pointer to a function that wraps the python callback.
-    auto locked_msg_callback =
-        std::make_shared<std::function<void(const google::protobuf::Message&)>>(
-            [msg_callback](const google::protobuf::Message& msg) {
-              // Create a copy to hand over ownership to the Python callback.
-              // If we just pass a pointer, it's easy for the Python callback to
-              // hold onto the reference to it for too long (e.g. by copying it
-              // out of the callback).
-              auto copy = absl::WrapUnique(msg.New());
-              copy->CopyFrom(msg);
-              pybind11::gil_scoped_acquire gil;
-              msg_callback(*copy);
-            });
-    message_callback = [locked_msg_callback = std::move(locked_msg_callback)](
-                           const google::protobuf::Message& message) {
-      (*locked_msg_callback)(message);
+    message_callback = [py_msg_cb = std::move(msg_callback)](
+                           const google::protobuf::Message& msg) {
+      pybind11::gil_scoped_acquire gil;
+      // This will create a copy in the py proto caster
+      py_msg_cb(msg);
     };
   }
 
   if (err_callback && !err_callback.is_none()) {
-    auto locked_error_callback =
-        std::make_shared<std::function<void(absl::string_view, absl::Status)>>(
-            [err_callback](absl::string_view packet, absl::Status error) {
-              pybind11::gil_scoped_acquire gil;
-              err_callback(packet, pybind11::google::DoNotThrowStatus(error));
-            });
-    error_callback = [locked_error_callback = std::move(locked_error_callback)](
+    error_callback = [py_err_cb = std::move(err_callback)](
                          absl::string_view packet, absl::Status error) {
-      (*locked_error_callback)(packet, error);
+      pybind11::gil_scoped_acquire gil;
+      py_err_cb(packet, pybind11::google::DoNotThrowStatus(error));
     };
   }
 
