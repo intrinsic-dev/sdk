@@ -38,7 +38,7 @@ var cmdFlags = cmdutils.NewCmdFlags()
 var (
 	buildCommand    = "bazel"
 	buildConfigArgs = []string{
-		"-c", "opt",
+		"--config", "intrinsic",
 	}
 )
 
