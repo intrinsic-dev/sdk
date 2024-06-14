@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package intrinsic_proto.executive;
 
+import "google/protobuf/timestamp.proto";
 import "intrinsic/executive/proto/behavior_tree.proto";
 import "intrinsic/executive/proto/executive_execution_mode.proto";
 import "intrinsic/logging/proto/context.proto";
@@ -51,6 +52,9 @@ message RunMetadata {
   // specific node of a sub-behavior tree of the loaded behavior tree.
   optional string start_tree_id = 24;
   optional uint32 start_node_id = 25;
+
+  // This field is set when the operation is started. It is a timestamp in UTC.
+  optional google.protobuf.Timestamp start_time = 26;
 
   // This context is set when getting the operation info via the service.  It
   // contains the session ID and possibly the ID of the current runnable. It

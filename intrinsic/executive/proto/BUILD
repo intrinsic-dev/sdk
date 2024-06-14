@@ -124,6 +124,7 @@ proto_library(
         ":behavior_tree_proto",
         ":executive_execution_mode_proto",
         "//intrinsic/logging/proto:context_proto",
+        "@com_google_protobuf//:timestamp_proto",
     ],
 )
 
