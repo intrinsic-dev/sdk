@@ -19,6 +19,7 @@ proto_library(
         "//intrinsic/motion_planning/proto:motion_target_proto",
         "//intrinsic/world/proto:collision_settings_proto",
         "//intrinsic/world/proto:object_world_refs_proto",
+        "@com_google_protobuf//:duration_proto",
     ],
 )
 

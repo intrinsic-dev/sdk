@@ -1177,7 +1177,8 @@ class SkillsTest(parameterized.TestCase):
         'my_required_int32: Union[int, '
         'intrinsic.solutions.blackboard_value.BlackboardValue, '
         'intrinsic.solutions.cel.CelExpression], '
-        'pose: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
+        'pose: Union[intrinsic.math.python.pose3.Pose3, '
+        'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
         'intrinsic.solutions.blackboard_value.BlackboardValue, '
         'intrinsic.solutions.cel.CelExpression], '
         'executive_test_message: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage, '
@@ -1273,6 +1274,129 @@ class SkillsTest(parameterized.TestCase):
     signature = inspect.signature(my_skill.__init__)
     self.assertSignature(signature, expected_signature)
 
+  @parameterized.named_parameters(
+      {
+          'testcase_name': 'PoseSkill',
+          'parameter_defaults': test_skill_params_pb2.PoseSkill(),
+          'expected_signature': (
+              # pyformat: disable
+              '(*, '
+              'param_pose: Union[intrinsic.math.python.pose3.Pose3, '
+              'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
+              'intrinsic.solutions.blackboard_value.BlackboardValue, '
+              'intrinsic.solutions.cel.CelExpression, '
+              'NoneType] = None)'
+              # pyformat: enable
+          ),
+      },
+      {
+          'testcase_name': 'JointMotionTargetSkill',
+          'parameter_defaults': test_skill_params_pb2.JointMotionTargetSkill(),
+          'expected_signature': (
+              # pyformat: disable
+              '(*, '
+              'param_joint_motion_target: Union[intrinsic.world.python.object_world_resources.JointConfiguration, '
+              'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.icon.JointVec, '
+              'intrinsic.solutions.blackboard_value.BlackboardValue, '
+              'intrinsic.solutions.cel.CelExpression, '
+              'NoneType] = None)'
+              # pyformat: enable
+          ),
+      },
+      {
+          'testcase_name': 'CollisionSettingsSkill',
+          'parameter_defaults': test_skill_params_pb2.CollisionSettingsSkill(),
+          'expected_signature': (
+              # pyformat: disable
+              '(*, '
+              'param_collision_settings: Union[intrinsic.solutions.worlds.CollisionSettings, '
+              'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.world.CollisionSettings, '
+              'intrinsic.solutions.blackboard_value.BlackboardValue, '
+              'intrinsic.solutions.cel.CelExpression, '
+              'NoneType] = None)'
+              # pyformat: enable
+          ),
+      },
+      {
+          'testcase_name': 'CartesianMotionTargetSkill',
+          'parameter_defaults': (
+              test_skill_params_pb2.CartesianMotionTargetSkill()
+          ),
+          'expected_signature': (
+              # pyformat: disable
+              '(*, '
+              'target: Union[intrinsic.solutions.worlds.CartesianMotionTarget, '
+              'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.motion_planning.CartesianMotionTarget, '
+              'intrinsic.solutions.blackboard_value.BlackboardValue, '
+              'intrinsic.solutions.cel.CelExpression, '
+              'NoneType] = None)'
+              # pyformat: enable
+          ),
+      },
+      {
+          'testcase_name': 'DurationSkill',
+          'parameter_defaults': test_skill_params_pb2.DurationSkill(),
+          'expected_signature': (
+              # pyformat: disable
+              '(*, '
+              'param_duration: Union[datetime.timedelta, '
+              'float, '
+              'int, '
+              'intrinsic.solutions.skills.ai.intrinsic.my_skill.google.protobuf.Duration, '
+              'intrinsic.solutions.blackboard_value.BlackboardValue, '
+              'intrinsic.solutions.cel.CelExpression, '
+              'NoneType] = None)'
+              # pyformat: enable
+          ),
+      },
+      {
+          'testcase_name': 'ObjectReferenceSkill',
+          'parameter_defaults': test_skill_params_pb2.ObjectReferenceSkill(),
+          'expected_signature': (
+              # pyformat: disable
+              '(*, '
+              'param_object: Union[intrinsic.world.python.object_world_resources.TransformNode, '
+              'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.world.ObjectReference, '
+              'intrinsic.solutions.blackboard_value.BlackboardValue, '
+              'intrinsic.solutions.cel.CelExpression, '
+              'NoneType] = None, '
+              'param_frame: Union[intrinsic.world.python.object_world_resources.TransformNode, '
+              'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.world.FrameReference, '
+              'intrinsic.solutions.blackboard_value.BlackboardValue, '
+              'intrinsic.solutions.cel.CelExpression, '
+              'NoneType] = None, '
+              'param_transform_node: Union[intrinsic.world.python.object_world_resources.TransformNode, '
+              'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.world.TransformNodeReference, '
+              'intrinsic.solutions.blackboard_value.BlackboardValue, '
+              'intrinsic.solutions.cel.CelExpression, '
+              'NoneType] = None, '
+              'param_object_or_entity: Union[intrinsic.world.python.object_world_resources.WorldObject, '
+              'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.world.ObjectOrEntityReference, '
+              'intrinsic.solutions.blackboard_value.BlackboardValue, '
+              'intrinsic.solutions.cel.CelExpression, '
+              'NoneType] = None)'
+              # pyformat: enable
+          ),
+      },
+  )
+  def test_skill_signature_for_types_with_auto_conversion(
+      self, parameter_defaults, expected_signature
+  ):
+    skill_info = self._utils.create_test_skill_info(
+        skill_id='ai.intrinsic.my_skill',
+        parameter_defaults=parameter_defaults,
+    )
+
+    skills = skill_providing.Skills(
+        self._utils.create_skill_registry_for_skill_info(skill_info),
+        self._utils.create_empty_resource_registry(),
+    )
+
+    my_skill = skills.ai.intrinsic.my_skill
+
+    signature = inspect.signature(my_skill)
+    self.assertSignature(signature, expected_signature)
+
   def test_skill_signature_with_default_value(self):
     parameter_defaults = _DEFAULT_TEST_MESSAGE
 
@@ -1343,7 +1467,8 @@ class SkillsTest(parameterized.TestCase):
         'intrinsic.solutions.blackboard_value.BlackboardValue, '
         'intrinsic.solutions.cel.CelExpression, '
         'NoneType] = None, '
-        'pose: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
+        'pose: Union[intrinsic.math.python.pose3.Pose3, '
+        'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
         'intrinsic.solutions.blackboard_value.BlackboardValue, '
         'intrinsic.solutions.cel.CelExpression] = Pose3(Rotation3(Quaternion([0.5, '
         '0.5, '
@@ -2140,7 +2265,8 @@ Fields:
         'my_required_int32: Union[int, '
         'intrinsic.solutions.blackboard_value.BlackboardValue, '
         'intrinsic.solutions.cel.CelExpression], '
-        'pose: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
+        'pose: Union[intrinsic.math.python.pose3.Pose3, '
+        'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
         'intrinsic.solutions.blackboard_value.BlackboardValue, '
         'intrinsic.solutions.cel.CelExpression], '
         'executive_test_message: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage, '

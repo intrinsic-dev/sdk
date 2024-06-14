@@ -11,7 +11,8 @@ import enum
 import inspect
 import textwrap
 import time
-from typing import Any, Callable, Container, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, Union, cast
+import typing
+from typing import Any, Callable, Container, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, Union
 import warnings
 
 from google.protobuf import descriptor
@@ -121,15 +122,6 @@ _MESSAGE_NAME_TO_PYTHON_VALUE = {
     "intrinsic_proto.Pose": math_proto_conversion.pose_from_proto,
 }
 
-_MESSAGE_NAME_TO_PYTHONIC_TYPE = {
-    "intrinsic_proto.skills.StringVector": Sequence[str],
-    "intrinsic_proto.skills.VectorNdArray": Sequence[skills_pb2.VectorNdValue],
-    "intrinsic_proto.skills.VectorNdValue": Sequence[float],
-    duration_pb2.Duration.DESCRIPTOR.full_name: Union[
-        int, float, datetime.timedelta, duration_pb2.Duration
-    ],
-}
-
 
 def pythonic_field_type(
     field_descriptor: descriptor.FieldDescriptor,
@@ -148,12 +140,23 @@ def pythonic_field_type(
 
   Returns:
     The Python type of the field.
+
+  Raises:
+    KeyError: If the auto-converted types cannot be determined.
   """
   if field_descriptor.type == descriptor.FieldDescriptor.TYPE_MESSAGE:
     message_full_name = field_descriptor.message_type.full_name
-    if message_full_name in _MESSAGE_NAME_TO_PYTHONIC_TYPE:
-      return _MESSAGE_NAME_TO_PYTHONIC_TYPE[message_full_name]
-    return wrapper_classes[message_full_name]
+    result_type = wrapper_classes[message_full_name]
+
+    # If we have an auto-conversion function for this message, add the
+    # corresponding Pythonic types.
+    if message_full_name in _PYTHONIC_TO_MESSAGE_AUTO_CONVERSIONS:
+      auto_converted_types = _PYTHONIC_TO_MESSAGE_AUTO_CONVERSIONS[
+          message_full_name
+      ].converted_types
+      result_type = Union[auto_converted_types, result_type]
+
+    return result_type
 
   if field_descriptor.type == descriptor.FieldDescriptor.TYPE_ENUM:
     return enum_classes[field_descriptor.enum_type.full_name]
@@ -344,29 +347,66 @@ def _field_to_duration(
   )
 
 
+@dataclasses.dataclass
+class _AutoConversion:
+  """Encapsulates an auto-conversion function together with metadata about it.
+
+  Attributes:
+    field_to_message: A function that converts a Pythonic field value to a
+      corresponding message. Must have a parameter called 'field_value' with a
+      type annotation indicating the types that can be converted.
+    converted_types: The Python types that can be converted to a message. Either
+      a single type (e.g. "int") or a Union of multiple types (e.g. "Union[int,
+      str]").
+  """
+
+  field_to_message: Callable[[Any], message.Message]
+  converted_types: Type[Any] = dataclasses.field(init=False)
+
+  def __post_init__(self):
+    type_hints = typing.get_type_hints(self.field_to_message)
+    if "field_value" not in type_hints:
+      raise KeyError(
+          f"Auto-conversion function {self.field_to_message.__name__} must have"
+          " a parameter called 'field_value' with a type annotation indicating"
+          " the types that can be converted",
+      )
+    self.converted_types = type_hints["field_value"]
+
+
 _PYTHONIC_TO_MESSAGE_AUTO_CONVERSIONS = {
-    skills_pb2.StringVector.DESCRIPTOR.full_name: _field_to_string_vector,
-    skills_pb2.VectorNdArray.DESCRIPTOR.full_name: _field_to_vector_nd_array,
-    skills_pb2.VectorNdValue.DESCRIPTOR.full_name: _field_to_vector_nd_value,
-    pose_pb2.Pose.DESCRIPTOR.full_name: _field_to_pose_3d,
-    joint_space_pb2.JointVec.DESCRIPTOR.full_name: _field_to_joint_vec_target,
+    skills_pb2.StringVector.DESCRIPTOR.full_name: _AutoConversion(
+        _field_to_string_vector
+    ),
+    skills_pb2.VectorNdArray.DESCRIPTOR.full_name: _AutoConversion(
+        _field_to_vector_nd_array
+    ),
+    skills_pb2.VectorNdValue.DESCRIPTOR.full_name: _AutoConversion(
+        _field_to_vector_nd_value
+    ),
+    pose_pb2.Pose.DESCRIPTOR.full_name: _AutoConversion(_field_to_pose_3d),
+    joint_space_pb2.JointVec.DESCRIPTOR.full_name: _AutoConversion(
+        _field_to_joint_vec_target
+    ),
     collision_settings_pb2.CollisionSettings.DESCRIPTOR.full_name: (
-        _field_to_collision_settings
+        _AutoConversion(_field_to_collision_settings)
     ),
     collision_settings_pb2.ObjectOrEntityReference.DESCRIPTOR.full_name: (
-        _field_to_object_or_entity_reference
+        _AutoConversion(_field_to_object_or_entity_reference)
     ),
     motion_target_pb2.CartesianMotionTarget.DESCRIPTOR.full_name: (
-        _field_to_motion_planning_cartesian_motion_target
+        _AutoConversion(_field_to_motion_planning_cartesian_motion_target)
     ),
-    duration_pb2.Duration.DESCRIPTOR.full_name: _field_to_duration,
-    object_world_refs_pb2.FrameReference.DESCRIPTOR.full_name: (
+    duration_pb2.Duration.DESCRIPTOR.full_name: _AutoConversion(
+        _field_to_duration
+    ),
+    object_world_refs_pb2.FrameReference.DESCRIPTOR.full_name: _AutoConversion(
         _field_to_frame_reference
     ),
     object_world_refs_pb2.TransformNodeReference.DESCRIPTOR.full_name: (
-        _field_to_transform_node_reference
+        _AutoConversion(_field_to_transform_node_reference)
     ),
-    object_world_refs_pb2.ObjectReference.DESCRIPTOR.full_name: (
+    object_world_refs_pb2.ObjectReference.DESCRIPTOR.full_name: _AutoConversion(
         _field_to_object_reference
     ),
 }
@@ -400,9 +440,9 @@ def pythonic_to_proto_message(
     return field_value.wrapped_message
   # Provide implicit conversion for some non-message types.
   if message_descriptor.full_name in _PYTHONIC_TO_MESSAGE_AUTO_CONVERSIONS:
-    return _PYTHONIC_TO_MESSAGE_AUTO_CONVERSIONS[message_descriptor.full_name](
-        field_value
-    )
+    return _PYTHONIC_TO_MESSAGE_AUTO_CONVERSIONS[
+        message_descriptor.full_name
+    ].field_to_message(field_value)
   raise TypeError(
       "Type of value {} is of type {}. Must be convertible to message type {}"
       .format(field_value, type(field_value), message_descriptor.full_name)
@@ -775,7 +815,7 @@ def collect_message_classes_to_wrap(
 
   for field in param_descriptor.fields:
     if field.enum_type is not None:
-      enum_type = cast(descriptor.EnumDescriptor, field.enum_type)
+      enum_type = typing.cast(descriptor.EnumDescriptor, field.enum_type)
       collected_enums[enum_type.full_name] = enum_type
     elif (
         field.message_type is not None
@@ -1450,9 +1490,6 @@ def update_message_class_modules(
 
   wrapper_classes: dict[str, Type[MessageWrapper]] = {}
   for message_full_name, message_type in message_classes_to_wrap.items():
-    if message_full_name in _MESSAGE_NAME_TO_PYTHONIC_TYPE:
-      continue
-
     wrapper_class = _gen_wrapper_class(
         message_type,
         skill_name,
