@@ -117,6 +117,7 @@ py_library(
         "//intrinsic/skills/proto:skills_py_pb2",
         "//intrinsic/solutions:blackboard_value",
         "//intrinsic/solutions:cel",
+        "//intrinsic/solutions:provided",
         "//intrinsic/solutions:utils",
         "//intrinsic/solutions:worlds",
         "//intrinsic/util/proto:descriptors_py",

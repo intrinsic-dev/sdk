@@ -30,6 +30,7 @@ from intrinsic.skills.client import skill_registry_client
 from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions import blackboard_value
 from intrinsic.solutions import cel
+from intrinsic.solutions import provided
 from intrinsic.solutions import utils
 from intrinsic.solutions import worlds
 from intrinsic.solutions.internal import skill_parameters
@@ -128,44 +129,6 @@ _MESSAGE_NAME_TO_PYTHONIC_TYPE = {
         int, float, datetime.timedelta, duration_pb2.Duration
     ],
 }
-
-
-def repeated_pythonic_field_type(
-    field_descriptor: descriptor.FieldDescriptor,
-    wrapper_classes: dict[str, Type[MessageWrapper]],
-    enum_classes: dict[str, Type[enum.IntEnum]],
-) -> Type[Sequence[Any]]:
-  """Returns a 'pythonic' type based on the field_descriptor.
-
-  Can be a Protobuf message for types for which we provide no native conversion.
-
-  Args:
-    field_descriptor: The Protobuf descriptor for the field
-    wrapper_classes: Map from proto message names to corresponding message
-      wrapper classes.
-    enum_classes: Map from full proto enum names to corresponding enum classes.
-
-  Returns:
-    The Python type of the field.
-  """
-  if field_descriptor.type == descriptor.FieldDescriptor.TYPE_MESSAGE:
-    if field_descriptor.message_type.GetOptions().map_entry:
-      raise TypeError("Cannot get repeated pythonic type for proto map as list")
-    if (
-        field_descriptor.message_type.full_name
-        in _MESSAGE_NAME_TO_PYTHONIC_TYPE
-    ):
-      return Sequence[
-          _MESSAGE_NAME_TO_PYTHONIC_TYPE[
-              field_descriptor.message_type.full_name
-          ]
-      ]
-    return Sequence[wrapper_classes[field_descriptor.message_type.full_name]]
-
-  if field_descriptor.type == descriptor.FieldDescriptor.TYPE_ENUM:
-    return Sequence[enum_classes[field_descriptor.enum_type.full_name]]
-
-  return Sequence[_PYTHONIC_SCALAR_FIELD_TYPE[field_descriptor.type]]
 
 
 def pythonic_field_type(
@@ -840,18 +803,28 @@ def collect_message_classes_to_wrap(
     elif (
         field.message_type is not None
         and field.message_type.full_name in message_classes
-        and (
-            # Do not wrap auto-generated map *Entry classes
-            field.type != descriptor.FieldDescriptor.TYPE_MESSAGE
-            or not field.message_type.GetOptions().map_entry
-        )
     ):
-      if field.message_type.full_name not in collected_classes:
-        collected_classes[field.message_type.full_name] = message_classes[
-            field.message_type.full_name
+      if field.message_type.GetOptions().map_entry:
+        # The field is a map and 'field.message_type' is an auto-generated entry
+        # type (see https://protobuf.dev/programming-guides/proto3/#backwards).
+        # Since map keys cannot have a message type, we only consider the type
+        # of the map's values for collection.
+        map_value_field = field.message_type.fields_by_name["value"]
+        if map_value_field.message_type is not None:
+          message_full_name = map_value_field.message_type.full_name
+          message_descriptor = map_value_field.message_type
+        else:
+          continue
+      else:
+        message_full_name = field.message_type.full_name
+        message_descriptor = field.message_type
+
+      if message_full_name not in collected_classes:
+        collected_classes[message_full_name] = message_classes[
+            message_full_name
         ]
         collect_message_classes_to_wrap(
-            field.message_type,
+            message_descriptor,
             message_classes,
             collected_classes,
             collected_enums,
@@ -1647,17 +1620,36 @@ def _extract_field_type_from_message_field(
     The Pythonic type of the given field.
   """
   if skill_params.is_map_field(field.name):
-    field_type = dict[Union[str, int, bool], Any]
-  elif skill_params.is_repeated_field(field.name):
-    field_type = repeated_pythonic_field_type(
-        field, wrapper_classes, enum_classes
+    # Under the hood, map fields are repeated fields whose type is an
+    # auto-generated message type with two fields called 'key' and 'value'.
+    # See https://protobuf.dev/programming-guides/proto3/#backwards.
+    key_type = pythonic_field_type(
+        field.message_type.fields_by_name["key"], wrapper_classes, enum_classes
     )
+    value_type = pythonic_field_type(
+        field.message_type.fields_by_name["value"],
+        wrapper_classes,
+        enum_classes,
+    )
+    field_type = Union[dict[key_type, value_type], provided.ParamAssignment]
+  elif skill_params.is_repeated_field(field.name):
+    field_type = Union[
+        Sequence[
+            Union[
+                pythonic_field_type(field, wrapper_classes, enum_classes),
+                provided.ParamAssignment,
+            ]
+        ],
+        provided.ParamAssignment,
+    ]
   else:
     # Singular field (possibly optional or in a oneof).
-    field_type = pythonic_field_type(field, wrapper_classes, enum_classes)
-
-  if skill_params.is_optional_in_python_signature(field.name):
-    field_type = Optional[field_type]  # pytype: disable=invalid-annotation
+    field_type = Union[
+        pythonic_field_type(field, wrapper_classes, enum_classes),
+        provided.ParamAssignment,
+    ]
+    if skill_params.is_optional_in_python_signature(field.name):
+      field_type = Optional[field_type]
 
   return field_type
 

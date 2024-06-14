@@ -69,7 +69,11 @@ message TestMessage {
 
   map<string, int32> string_int32_map = 28;
   map<int32, string> int32_string_map = 29;
-  map<string, intrinsic_proto.executive.TestMessage> string_message_map = 30;
+
+  message MessageMapValue {
+    string value = 1;
+  }
+  map<string, MessageMapValue> string_message_map = 30;
 
   intrinsic_proto.executive.TestMessage executive_test_message = 27;
 

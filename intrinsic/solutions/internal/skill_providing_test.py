@@ -82,7 +82,9 @@ _DEFAULT_TEST_MESSAGE = test_skill_params_pb2.TestMessage(
     enum_v=test_skill_params_pb2.TestMessage.THREE,
     string_int32_map={'foo': 1},
     int32_string_map={3: 'foobar'},
-    string_message_map={'bar': test_message_pb2.TestMessage(int32_value=1)},
+    string_message_map={
+        'bar': test_skill_params_pb2.TestMessage.MessageMapValue(value='baz')
+    },
     executive_test_message=test_message_pb2.TestMessage(int32_value=123),
     non_unique_field_name=test_skill_params_pb2.TestMessage.SomeType(
         non_unique_field_name=test_skill_params_pb2.TestMessage.AnotherType()
@@ -111,7 +113,21 @@ class SkillsTest(parameterized.TestCase):
 
   def assertSignature(self, actual, expected):
     actual = str(actual)
-    self.assertEqual(actual, expected)
+    # Insert newlines after commas, else the diff printed by assertEqual is
+    # unreadable. We don't need to assert on newlines in the signature exactly.
+    actual_with_newlines = actual.replace(',', ',\n')
+    expected_with_newlines = expected.replace(',', ',\n')
+    self.assertEqual(
+        actual_with_newlines,
+        expected_with_newlines,
+        # In case of failure print code for updating the test. Not a great
+        # solution, but our signatures can be very long and this can save
+        # **a lot** of time when making signature changes.
+        'Signature not as expected. If you made changes and want to update the '
+        "test expectation you can use the following code:\n\n'"
+        + actual.replace('\n', '\\n').replace(', ', ", '\n'")
+        + "'\n\nSignature not as expected. Diff with inserted newlines:\n\n",
+    )
 
   @parameterized.parameters(
       {'parameter': {'my_double': 2}},
@@ -490,7 +506,7 @@ class SkillsTest(parameterized.TestCase):
         'executive_test_message=int32_value: 123\n, '
         'string_int32_map={"foo": 1}, '
         "int32_string_map={3: 'foobar'}, "
-        'string_message_map={"bar": int32_value: 1\n}, '
+        'string_message_map={"bar": value: "baz"\n}, '
         'non_unique_field_name=non_unique_field_name {\n}\n, '
         'a={handle: "some-name"})'
     )
@@ -825,14 +841,22 @@ class SkillsTest(parameterized.TestCase):
     skills = skill_providing.Skills(skill_registry, resource_registry)
 
     expected_parameters = test_skill_params_pb2.TestMessage(
-        string_message_map={'foo': test_message_pb2.TestMessage(int32_value=1)}
+        string_message_map={
+            'foo': test_skill_params_pb2.TestMessage.MessageMapValue(
+                value='bar'
+            )
+        }
     )
 
     my_skill = skills.ai.intrinsic.my_skill
 
     skill = my_skill(
         string_message_map={
-            'foo': my_skill.intrinsic_proto.executive.TestMessage(int32_value=1)
+            'foo': (
+                my_skill.intrinsic_proto.test_data.TestMessage.MessageMapValue(
+                    value='bar'
+                )
+            )
         }
     )
 
@@ -865,11 +889,19 @@ class SkillsTest(parameterized.TestCase):
     skills = skill_providing.Skills(skill_registry, resource_registry)
 
     expected_parameters = test_skill_params_pb2.TestMessage(
-        string_message_map={'foo': test_message_pb2.TestMessage(int32_value=1)}
+        string_message_map={
+            'foo': test_skill_params_pb2.TestMessage.MessageMapValue(
+                value='bar'
+            )
+        }
     )
 
     skill = skills.ai.intrinsic.my_skill(
-        string_message_map={'foo': test_message_pb2.TestMessage(int32_value=1)}
+        string_message_map={
+            'foo': test_skill_params_pb2.TestMessage.MessageMapValue(
+                value='bar'
+            )
+        }
     )
 
     actual_parameters = test_skill_params_pb2.TestMessage()
@@ -1139,45 +1171,95 @@ class SkillsTest(parameterized.TestCase):
     # pyformat: disable
     expected_signature = (
         '(*, '
-        'sub_message:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
-        'my_required_int32: int, '
-        'pose:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
-        'executive_test_message:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage, '
-        'non_unique_field_name:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType, '
-        'my_double: Optional[float] = None, '
-        'my_float: Optional[float] = None, '
-        'my_int32: Optional[int] = None, '
-        'my_int64: Optional[int] = None, '
-        'my_uint32: Optional[int] = None, '
-        'my_uint64: Optional[int] = None, '
-        'my_bool: Optional[bool] = None, '
-        'my_string: Optional[str] = None, '
-        'optional_sub_message:'
-        ' Optional[intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = None, '
-        'my_repeated_doubles: Sequence[float] = [], '
-        'repeated_submessages:'
-        ' Sequence[intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = [], '
-        'my_oneof_double: Optional[float] = None, '
-        'my_oneof_sub_message:'
-        ' Optional[intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = None, '
-        'foo: Optional[intrinsic.solutions.skills.ai'
-        '.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo] = None, '
-        'enum_v: Optional[intrinsic.solutions.skills.ai'
-        '.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum] = None, '
-        'string_int32_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
-        'int32_string_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
-        'string_message_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
+        'sub_message: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression], '
+        'my_required_int32: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression], '
+        'pose: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression], '
+        'executive_test_message: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression], '
+        'non_unique_field_name: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression], '
+        'my_double: Union[float, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_float: Union[float, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_int32: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_int64: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_uint32: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_uint64: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_bool: Union[bool, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_string: Union[str, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'optional_sub_message: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_repeated_doubles: Union[Sequence[Union[float, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression]], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = [], '
+        'repeated_submessages: Union[Sequence[Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression]], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = [], '
+        'my_oneof_double: Union[float, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_oneof_sub_message: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'foo: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'enum_v: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'string_int32_map: Union[dict[str, '
+        'int], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = {}, '
+        'int32_string_map: Union[dict[int, '
+        'str], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = {}, '
+        'string_message_map: Union[dict[str, '
+        'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.MessageMapValue], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = {}, '
         'return_value_key: Optional[str] = None)'
     )
     # pyformat: enable
@@ -1205,62 +1287,96 @@ class SkillsTest(parameterized.TestCase):
     my_skill = skills.ai.intrinsic.my_skill()
     signature = inspect.signature(my_skill.__init__)
 
+    # pyformat: disable
     expected_signature = (
         '(*, '
-        'my_double: float = 2.5, '
-        'my_float: float = -1.5, '
-        'my_int32: int = 5, '
-        'my_int64: int = 9, '
-        'my_uint32: int = 11, '
-        'my_uint64: int = 21, '
-        'my_bool: bool = False, '
-        "my_string: str = 'bar', "
-        'sub_message:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage = name:'
-        ' "baz"\n, '
-        'optional_sub_message:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage'
-        ' = name: "quz"\n, '
-        'my_repeated_doubles: Sequence[float] = [-5.5, 10.5], '
-        'repeated_submessages:'
-        ' Sequence[intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage]'
-        ' = [name: "foo"\n, name: "bar"\n], '
-        'my_required_int32: int = 42, '
-        'my_oneof_double: Optional[float] = 1.5, '
-        'my_oneof_sub_message:'
-        ' Optional[intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = None, '
-        'pose:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.Pose = Pose3('
-        'Rotation3(Quaternion([0.5, 0.5, 0.5, 0.5])),array([0., 0., 0.])), '
-        'foo:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo'
-        ' = bar {\n  test: "test"\n}\n, '
-        'enum_v:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum'
-        ' = 3, '
-        'string_int32_map: dict[typing.Union[str, int, bool], typing.Any] ='
-        " {'foo': 1}, "
-        'int32_string_map: dict[typing.Union[str, int, bool], typing.Any]'
-        " = {3: 'foobar'}, "
-        'string_message_map: dict[typing.Union[str, int, bool], typing.Any]'
-        " = {'bar': int32_value: 1\n}, "
-        'executive_test_message:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage ='
-        ' int32_value: 123\n, '
-        'non_unique_field_name:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType'
-        ' = non_unique_field_name {\n}\n'
-        ')'
+        'my_double: Union[float, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = 2.5, '
+        'my_float: Union[float, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = -1.5, '
+        'my_int32: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = 5, '
+        'my_int64: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = 9, '
+        'my_uint32: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = 11, '
+        'my_uint64: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = 21, '
+        'my_bool: Union[bool, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = False, '
+        'my_string: Union[str, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        "intrinsic.solutions.cel.CelExpression] = 'bar', "
+        'sub_message: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = name: "baz"\n, '
+        'optional_sub_message: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = name: "quz"\n, '
+        'my_repeated_doubles: Union[Sequence[Union[float, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression]], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = [-5.5, '
+        '10.5], '
+        'repeated_submessages: Union[Sequence[Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression]], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = [name: "foo"\n, '
+        'name: "bar"\n], '
+        'my_required_int32: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = 42, '
+        'my_oneof_double: Union[float, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = 1.5, '
+        'my_oneof_sub_message: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'pose: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = Pose3(Rotation3(Quaternion([0.5, '
+        '0.5, '
+        '0.5, '
+        '0.5])),array([0., '
+        '0., '
+        '0.])), '
+        'foo: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = bar {\n  test: "test"\n}\n, '
+        'enum_v: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = 3, '
+        'string_int32_map: Union[dict[str, '
+        'int], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        "intrinsic.solutions.cel.CelExpression] = {'foo': 1}, "
+        'int32_string_map: Union[dict[int, '
+        'str], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        "intrinsic.solutions.cel.CelExpression] = {3: 'foobar'}, "
+        'string_message_map: Union[dict[str, '
+        'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.MessageMapValue], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        "intrinsic.solutions.cel.CelExpression] = {'bar': value: \"baz\"\n}, "
+        'executive_test_message: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = int32_value: 123\n, '
+        'non_unique_field_name: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = non_unique_field_name {\n}\n)'
     )
+    # pyformat: enable
     self.assertSignature(signature, expected_signature)
 
   def test_skill_class_docstring(self):
@@ -1385,7 +1501,7 @@ Args:
         Default value: {'foo': 1}
     string_message_map:
         Mockup comment
-        Default value: {'bar': int32_value: 1
+        Default value: {'bar': value: "baz"
 }"""
     docstring += """
     sub_message:
@@ -1481,7 +1597,7 @@ Returns:
         'executive_test_message=int32_value: 123\n, '
         'string_int32_map={"foo": 1}, '
         "int32_string_map={3: 'foobar'}, "
-        'string_message_map={"bar": int32_value: 1\n}, '
+        'string_message_map={"bar": value: "baz"\n}, '
         'non_unique_field_name=non_unique_field_name {\n}\n, '
         'a={handle: "resource_a"}, '
         'b={handle: "resource_b"})'
@@ -2018,45 +2134,95 @@ Fields:
     # pyformat: disable
     expected_signature = (
         '(*, '
-        'sub_message:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
-        'my_required_int32: int, '
-        'pose:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
-        'executive_test_message:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage, '
-        'non_unique_field_name:'
-        ' intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType, '
-        'my_double: Optional[float] = None, '
-        'my_float: Optional[float] = None, '
-        'my_int32: Optional[int] = None, '
-        'my_int64: Optional[int] = None, '
-        'my_uint32: Optional[int] = None, '
-        'my_uint64: Optional[int] = None, '
-        'my_bool: Optional[bool] = None, '
-        'my_string: Optional[str] = None, '
-        'optional_sub_message:'
-        ' Optional[intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = None, '
-        'my_repeated_doubles: Sequence[float] = [], '
-        'repeated_submessages:'
-        ' Sequence[intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = [], '
-        'my_oneof_double: Optional[float] = None, '
-        'my_oneof_sub_message:'
-        ' Optional[intrinsic.solutions.skills'
-        '.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage] = None, '
-        'foo: Optional[intrinsic.solutions.skills.ai'
-        '.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo] = None, '
-        'enum_v: Optional[intrinsic.solutions.skills.ai'
-        '.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum] = None, '
-        'string_int32_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
-        'int32_string_map: dict[typing.Union[str, int, bool], typing.Any] = {}, '
-        'string_message_map: dict[typing.Union[str, int, bool], typing.Any] = {})'
+        'sub_message: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression], '
+        'my_required_int32: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression], '
+        'pose: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.Pose, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression], '
+        'executive_test_message: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.executive.TestMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression], '
+        'non_unique_field_name: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.SomeType, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression], '
+        'my_double: Union[float, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_float: Union[float, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_int32: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_int64: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_uint32: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_uint64: Union[int, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_bool: Union[bool, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_string: Union[str, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'optional_sub_message: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_repeated_doubles: Union[Sequence[Union[float, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression]], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = [], '
+        'repeated_submessages: Union[Sequence[Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression]], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = [], '
+        'my_oneof_double: Union[float, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'my_oneof_sub_message: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.SubMessage, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'foo: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.Foo, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'enum_v: Union[intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.TestEnum, '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression, '
+        'NoneType] = None, '
+        'string_int32_map: Union[dict[str, '
+        'int], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = {}, '
+        'int32_string_map: Union[dict[int, '
+        'str], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = {}, '
+        'string_message_map: Union[dict[str, '
+        'intrinsic.solutions.skills.ai.intrinsic.my_skill.intrinsic_proto.test_data.TestMessage.MessageMapValue], '
+        'intrinsic.solutions.blackboard_value.BlackboardValue, '
+        'intrinsic.solutions.cel.CelExpression] = {})'
     )
     # pyformat: enable
 

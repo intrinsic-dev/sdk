@@ -12,8 +12,14 @@ from google.protobuf import message
 from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions import blackboard_value
+from intrinsic.solutions import cel
 from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
+
+# Union of types that can be used to set a skill parameter dynamically from the
+# blackboard. This type alias is useful to keep the signatures of skill and
+# message wrapper classes concise.
+ParamAssignment = Union[blackboard_value.BlackboardValue, cel.CelExpression]
 
 
 class ResourceHandle:

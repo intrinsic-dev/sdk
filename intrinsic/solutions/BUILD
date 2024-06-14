@@ -456,6 +456,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":blackboard_value",
+        ":cel",
         ":utils",
         "//intrinsic/resources/proto:resource_handle_py_pb2",
         "//intrinsic/skills/proto:skills_py_pb2",
