@@ -25,6 +25,7 @@
 #include "grpcpp/grpcpp.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/assets/id_utils.h"
+#include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
@@ -108,6 +109,53 @@ std::string ErrorToSkillAction(absl::Status status) {
   ::google::rpc::Status rpc_status =
       HandleSkillErrorGoogleRpc(status, skill_id, op_name);
   return ToGrpcStatus(rpc_status);
+}
+
+// Updates the extended status error in the following ways:
+// - if component not set, sets skill id
+// - if component set that doesn't match skill ID wraps ES
+// - if log_context provided and non set already set it
+// To be used as StatusBuilder policy.
+absl::Status UpdateExtendedStatusOnError(
+    absl::Status status, const std::string& skill_id,
+    std::optional<intrinsic_proto::data_logger::Context> log_context) {
+  intrinsic_proto::status::ExtendedStatus es;
+  std::optional<absl::Cord> extended_status_payload =
+      status.GetPayload(AddTypeUrlPrefix(es));
+  if (!extended_status_payload) {
+    return status;
+  }
+  // This should not happen, but since we cannot control the data a skill
+  // developer could put anything. Hence, if we fail to interpret the data just
+  // return as-is.
+  if (!es.ParseFromCord(*extended_status_payload)) {
+    return status;
+  }
+
+  if (!es.has_status_code() || es.status_code().component().empty()) {
+    // Set component since it wasn't set before
+    es.mutable_status_code()->set_component(skill_id);
+  } else if (es.status_code().component() != skill_id) {
+    // this may be a case of a skill author simply returning an error
+    // previously received from, e.g., a service. This should not be the
+    // skill's status, but we also cannot just overwrite it. Wrap this
+    // into a new extended status.
+    intrinsic_proto::status::ExtendedStatus new_es;
+    new_es.mutable_status_code()->set_component(skill_id);
+    *new_es.add_context() = std::move(es);
+    es = std::move(new_es);
+  }  // else: it's the expected component ID, don't do anything
+
+  // If no log context has been set explicitly, update it
+  if (log_context &&
+      (!es.has_related_to() || !es.related_to().has_log_context())) {
+    *es.mutable_related_to()->mutable_log_context() = *log_context;
+  }
+
+  // Update the extended status with the modified version
+  status.SetPayload(AddTypeUrlPrefix(es), es.SerializeAsCord());
+
+  return status;
 }
 
 }  // namespace
@@ -515,38 +563,22 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
       world::ObjectWorldClient(request->world_id(), object_world_service_));
 
   INTR_RETURN_IF_ERROR_GRPC(operation->Start(
-      [skill = std::move(skill), skill_request = std::move(skill_request),
+      [skill = std::move(skill),
+       skill_id = std::string(operation->runtime_data().GetId()),
+       skill_request = std::move(skill_request),
        skill_context = std::move(skill_context), request = *request]()
           -> absl::StatusOr<
               std::unique_ptr<intrinsic_proto::skills::ExecuteResult>> {
-        // Create a StatusBuilder policy that adds the log context received with
-        // the ExecuteRequest, but only if the user has set an ExtendedStatus at
-        // all and did not yet set a log context themselves.
-        auto conditionally_add_log_context = [request](absl::Status status) {
-          intrinsic_proto::status::ExtendedStatus es;
-          std::optional<absl::Cord> extended_status_payload =
-              status.GetPayload(AddTypeUrlPrefix(es));
-          if (!extended_status_payload) {
-            return status;
-          }
-          // This should not happen, but since we cannot control the data a
-          // skill developer could put anything. Hence, if we fail to interpret
-          // the data just return as-is.
-          if (!es.ParseFromCord(*extended_status_payload)) {
-            return status;
-          }
-          if (es.has_related_to() && es.related_to().has_log_context()) {
-            return status;
-          }
-          *es.mutable_related_to()->mutable_log_context() = request.context();
-          status.SetPayload(AddTypeUrlPrefix(es), es.SerializeAsCord());
-          return status;
-        };
-
         INTR_ASSIGN_OR_RETURN(
             std::unique_ptr<::google::protobuf::Message> skill_result,
             skill->Execute(*skill_request, *skill_context),
-            _.With(std::move(conditionally_add_log_context)));
+            _.With([request, skill_id](absl::Status status) {
+              std::optional<intrinsic_proto::data_logger::Context> log_context;
+              if (request.has_context()) {
+                log_context = request.context();
+              }
+              return UpdateExtendedStatusOnError(status, skill_id, log_context);
+            }));
 
         auto result =
             std::make_unique<intrinsic_proto::skills::ExecuteResult>();

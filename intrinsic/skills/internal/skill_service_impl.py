@@ -40,6 +40,7 @@ from intrinsic.skills.python import proto_utils
 from intrinsic.skills.python import skill_canceller
 from intrinsic.skills.python import skill_interface as skl
 from intrinsic.skills.python import skill_logging_context
+from intrinsic.util.status import extended_status_pb2
 from intrinsic.util.status import status_exception
 from intrinsic.world.proto import object_world_service_pb2_grpc
 from intrinsic.world.python import object_world_client
@@ -972,12 +973,32 @@ def _handle_skill_error(
   details = []
   if isinstance(err, status_exception.ExtendedStatusError):
     es_proto = cast(status_exception.ExtendedStatusError, err).proto
+
+    # Always overwrite the component. We do not give a skill author freedom to
+    # choose this field.
+    if (
+        not es_proto.HasField('status_code')
+        or not es_proto.status_code.component
+    ):
+      es_proto.status_code.component = skill_id
+    elif es_proto.status_code.component != skill_id:
+      # this may be a case of a skill author simply returning an error
+      # previously received from, e.g., a service. This should not be the
+      # skill's status, but we also cannot just overwrite it. Wrap this into a
+      # new extended status.
+      new_es_proto = extended_status_pb2.ExtendedStatus(
+          status_code=extended_status_pb2.StatusCode(component=skill_id)
+      )
+      new_es_proto.context.add().CopyFrom(es_proto)
+      es_proto = new_es_proto
+
     if log_context is not None:
       # If the extended status has no log context set, yet, add it
       if not es_proto.HasField(
           'related_to'
       ) or not es_proto.related_to.HasField('log_context'):
         es_proto.related_to.log_context.CopyFrom(log_context)
+
     status_any = any_pb2.Any()
     status_any.Pack(es_proto)
     details.append(status_any)
