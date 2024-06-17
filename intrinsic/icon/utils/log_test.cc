@@ -110,5 +110,74 @@ TEST(IconUtilsLogTest, DefaultLoggerIsThreadSafe) {
   worker2_thread.Join();
 }
 
+TEST(IconUtilsLogTest, LogFirstWorks) {
+  auto unique_logger = std::make_unique<FakeLogger>();
+  auto* logger = unique_logger.get();
+  GlobalLogContext::SetThreadLocalLogSink(std::move(unique_logger));
+  EXPECT_THAT(logger->messages_, IsEmpty());
+  for (int i = 0; i < 10; ++i) {
+    INTRINSIC_RT_LOG_FIRST(WARNING) << "logged " << i;
+  }
+  auto location = INTRINSIC_LOC;
+  std::string expected_line_number = absl::StrCat(":", location.line() - 2);
+  EXPECT_EQ(logger->messages_.size(), 1);
+  EXPECT_THAT(
+      logger->text_,
+      ElementsAre(AllOf(StartsWith("W"), HasSubstr(expected_line_number),
+                        HasSubstr("log_test.cc"), HasSubstr("logged 0"))));
+}
+
+TEST(IconUtilsLogTest, LogFirstDoesNotAllocate) {
+  GlobalLogContext::SetThreadLocalLogSink(nullptr);
+  RtLogInitForThisThread();
+  double d = 0.5;
+  std::string s = "text";
+  INTRINSIC_RT_LOG_FIRST(INFO) << "dof:" << 3 << " d:" << d;
+  INTRINSIC_RT_LOG_FIRST(ERROR) << "error: " << s;
+  INTRINSIC_RT_LOG_FIRST(WARNING) << "logged1";
+  for (int i = 0; i < 2000; ++i) {
+    INTRINSIC_RT_LOG_FIRST(WARNING) << "rarely logged i:" << i;
+  }
+}
+
+TEST(IconUtilsLogTest, LogFirstNWorks) {
+  auto unique_logger = std::make_unique<FakeLogger>();
+  auto* logger = unique_logger.get();
+  GlobalLogContext::SetThreadLocalLogSink(std::move(unique_logger));
+  EXPECT_THAT(logger->messages_, IsEmpty());
+  for (int i = 0; i < 10; ++i) {
+    INTRINSIC_RT_LOG_FIRST_N(WARNING, 5) << "logged " << i;
+  }
+
+  EXPECT_EQ(logger->messages_.size(), 5);
+  auto location = INTRINSIC_LOC;
+  std::string expected_line_number = absl::StrCat(":", location.line() - 4);
+  EXPECT_THAT(
+      logger->text_,
+      ElementsAre(AllOf(StartsWith("W"), HasSubstr(expected_line_number),
+                        HasSubstr("log_test.cc"), HasSubstr("logged 0")),
+                  AllOf(StartsWith("W"), HasSubstr(expected_line_number),
+                        HasSubstr("log_test.cc"), HasSubstr("logged 1")),
+                  AllOf(StartsWith("W"), HasSubstr(expected_line_number),
+                        HasSubstr("log_test.cc"), HasSubstr("logged 2")),
+                  AllOf(StartsWith("W"), HasSubstr(expected_line_number),
+                        HasSubstr("log_test.cc"), HasSubstr("logged 3")),
+                  AllOf(StartsWith("W"), HasSubstr(expected_line_number),
+                        HasSubstr("log_test.cc"), HasSubstr("logged 4"))));
+}
+
+TEST(IconUtilsLogTest, LogFirstNDoesNotAllocate) {
+  GlobalLogContext::SetThreadLocalLogSink(nullptr);
+  RtLogInitForThisThread();
+  double d = 0.5;
+  std::string s = "text";
+  INTRINSIC_RT_LOG_FIRST_N(INFO, 5) << "dof:" << 3 << " d:" << d;
+  INTRINSIC_RT_LOG_FIRST_N(ERROR, 5) << "error: " << s;
+  INTRINSIC_RT_LOG_FIRST_N(WARNING, 5) << "logged1";
+  for (int i = 0; i < 2000; ++i) {
+    INTRINSIC_RT_LOG_FIRST_N(WARNING, 5) << "rarely logged i:" << i;
+  }
+}
+
 }  // namespace
 }  // namespace intrinsic::icon

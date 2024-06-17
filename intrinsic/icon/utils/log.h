@@ -71,6 +71,18 @@ void RtLogInitForThisThread();
           INTRINSIC_LOC)
 // NOLINTEND(readability/braces)
 
+// Logs the message the first N times this macro instance is called.
+// NOLINTBEGIN(readability/braces)
+#define INTRINSIC_RT_LOG_FIRST_N(SEVERITY, N)                         \
+  if (static size_t COUNTER_##__LINE__ = 0; COUNTER_##__LINE__++ < N) \
+  ::intrinsic::icon::internal::LogClient() +=                         \
+      ::intrinsic::icon::internal::LogEntryBuilder::Create(           \
+          ::intrinsic::icon::LogPriority::SEVERITY, INTRINSIC_LOC)
+// NOLINTEND(readability/braces)
+
+// Logs the first time it is called.
+#define INTRINSIC_RT_LOG_FIRST(SEVERITY) INTRINSIC_RT_LOG_FIRST_N(SEVERITY, 1)
+
 // Documentation for developers of logging:
 // Filtering is implemented similar to absl/log/internal/conditions.h
 // Also, the if clause will error if prefixes (like intrinsic::) are used,
