@@ -144,6 +144,58 @@ go_proto_library(
 )
 
 proto_library(
+    name = "accel_proto",
+    srcs = ["accel.proto"],
+    deps = [
+        ":vector3_proto",
+    ],
+)
+
+py_proto_library(
+    name = "accel_py_pb2",
+    deps = [":accel_proto"],
+)
+
+go_proto_library(
+    name = "accel_go_proto",
+    go_deps = [
+        ":vector3_go_proto",
+    ],
+    deps = [":accel_proto"],
+)
+
+cc_proto_library(
+    name = "accel_cc_proto",
+    deps = [":accel_proto"],
+)
+
+proto_library(
+    name = "twist_proto",
+    srcs = ["twist.proto"],
+    deps = [
+        ":vector3_proto",
+    ],
+)
+
+py_proto_library(
+    name = "twist_py_pb2",
+    deps = [":twist_proto"],
+)
+
+go_proto_library(
+    name = "twist_go_proto",
+    go_deps = [
+        ":vector3_go_proto",
+    ],
+    deps = [":twist_proto"],
+)
+
+cc_proto_library(
+    name = "twist_cc_proto",
+    deps = [":twist_proto"],
+)
+
+proto_library(
     name = "vector2_proto",
     srcs = ["vector2.proto"],
 )
