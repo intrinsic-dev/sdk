@@ -659,6 +659,22 @@ class StructuredLogs:
       self._log_options.logging_budget.CopyFrom(param)
       return self
 
+    def set_priority(self, priority: int) -> 'StructuredLogs.LogOptions':
+      self._log_options.priority = priority
+      return self
+
+    def set_retain_on_disk(
+        self, retain_on_disk: bool
+    ) -> 'StructuredLogs.LogOptions':
+      self._log_options.retain_on_disk = retain_on_disk
+      return self
+
+    def set_retain_buffer_on_disk(
+        self, retain_buffer_on_disk: bool
+    ) -> 'StructuredLogs.LogOptions':
+      self._log_options.retain_buffer_on_disk = retain_buffer_on_disk
+      return self
+
     @property
     def log_options(self) -> logger_service_pb2.LogOptions:
       return self._log_options
@@ -748,6 +764,9 @@ class StructuredLogs:
             ret.logging_budget.refresh,
             ret.logging_budget.burst,
         )
+        .set_priority(ret.priority)
+        .set_retain_on_disk(ret.retain_on_disk)
+        .set_retain_buffer_on_disk(ret.retain_buffer_on_disk)
     )
 
   @error_handling.retry_on_grpc_unavailable
