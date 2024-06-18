@@ -64,7 +64,8 @@ enum AddonType {
   ADDON_TYPE_SKILL = 1;
   ADDON_TYPE_SKILL_BUNDLE = 2;
   ADDON_TYPE_ICON_HARDWARE_MODULE = 3;
-  ADDON_TYPE_RESOURCE_INSTANCE = 4;
+
+  reserved 4;
 }
 
 message IconHardwareModuleOptions {
@@ -122,7 +123,8 @@ message InstallContainerAddonRequest {
     IconHardwareModuleOptions icon_hardware_module_options = 4;
   }
 
-  reserved "image";
+  reserved 5;
+  reserved "image", "resource_instance_options";
 }
 
 message RemoveContainerAddonRequest {
