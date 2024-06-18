@@ -36,15 +36,27 @@ message LogOptions {
   // logger.
   optional TokenBucketOptions logging_budget = 4;
 
-  // Priority denotes value of items in the `event_source`. Higher priority
-  // event sources are prioritized for upload. For upload, this can potentially
-  // lead to starvation as we don't upload lower priority items until all higher
-  // priority items are uploaded. This is an int32 parameter. Larger the value,
-  // higher the priority.
+  // Priority denotes value of items in the `event_source`.
+  //
+  // Higher priority event sources are prioritized for upload. For upload, this
+  // can potentially lead to starvation as we don't upload lower priority items
+  // until all higher priority items are uploaded.
+  //
+  // Larger the value, higher the priority.
   optional int32 priority = 5;
 
-  // If set to 'true', logs are retained on disk via timescaledb.
+  // If set to `true`, logs are retained on disk via timescaledb.
   optional bool retain_on_disk = 6;
+
+  // If set to `true`, the mem buffer is written to and restored from disk.
+  //
+  // This is useful for cases when the data needs to be persisted across logger
+  // pod restarts.
+  //
+  // This also means that performance will be impacted as log items
+  // are written and read from disk, so only use this for event_sources that are
+  // not high throughput.
+  optional bool retain_buffer_on_disk = 7;
 }
 
 message ListLogSourcesResponse {
