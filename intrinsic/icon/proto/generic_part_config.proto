@@ -112,6 +112,9 @@ message GenericMoveOkConfig {
 message GenericProcessWrenchConfig {
   // Empty for now.
 }
+message GenericPayloadConfig {
+  // Empty for now.
+}
 
 // Bundles all FeatureInterface-specific config values into a single message.
 message GenericPartConfig {
@@ -146,4 +149,5 @@ message GenericPartConfig {
   optional GenericMoveOkConfig move_ok_config = 20;
   optional GenericInertialMeasurementUnitConfig imu_config = 21;
   optional GenericProcessWrenchConfig process_wrench_config = 23;
+  optional GenericPayloadConfig payload_config = 24;
 }
