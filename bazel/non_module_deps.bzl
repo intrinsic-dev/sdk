@@ -36,16 +36,6 @@ def non_module_deps():
     )
 
     http_archive(
-        name = "io_opentelemetry_cpp",
-        urls = [
-            "https://storage.googleapis.com/cloud-cpp-community-archive/io_opentelemetry_cpp/v1.13.0.tar.gz",
-            "https://github.com/open-telemetry/opentelemetry-cpp/archive/v1.13.0.tar.gz",
-        ],
-        sha256 = "7735cc56507149686e6019e06f588317099d4522480be5f38a2a09ec69af1706",
-        strip_prefix = "opentelemetry-cpp-1.13.0",
-    )
-
-    http_archive(
         name = "com_google_cel_cpp",
         url = "https://github.com/google/cel-cpp/archive/037873163975964a80a188ad7f936cb4f37f0684.tar.gz",  # 2024-01-29
         strip_prefix = "cel-cpp-037873163975964a80a188ad7f936cb4f37f0684",
