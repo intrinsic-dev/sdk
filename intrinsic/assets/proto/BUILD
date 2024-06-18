@@ -1,7 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
-load("//bazel:go_macros.bzl", "go_proto_library")
+load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 
 proto_library(
     name = "asset_tag_proto",
@@ -190,4 +190,48 @@ go_proto_library(
     name = "view_go_proto",
     visibility = ["//intrinsic:__subpackages__"],
     deps = [":view_proto"],
+)
+
+proto_library(
+    name = "asset_deployment_proto",
+    srcs = ["asset_deployment.proto"],
+    visibility = [
+        "//intrinsic/kubernetes/api_relay:__subpackages__",
+        "//intrinsic/world/service:__subpackages__",
+    ],
+    deps = [
+        ":asset_type_proto",
+        ":id_proto",
+        "//intrinsic/math/proto:pose_proto",
+        "//intrinsic/world/proto:object_world_refs_proto",
+        "@com_google_googleapis//google/longrunning:operations_proto",
+        "@com_google_protobuf//:any_proto",
+    ],
+)
+
+go_proto_library(
+    name = "asset_deployment_go_proto",
+    go_deps = [
+        ":asset_type_go_proto",
+        ":id_go_proto",
+        "@com_google_cloud_go_longrunning//autogen/longrunningpb",
+        "//intrinsic/math/proto:pose_go_proto",
+        "//intrinsic/world/proto:object_world_refs_go_proto",
+    ],
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":asset_deployment_proto"],
+)
+
+go_grpc_library(
+    name = "asset_deployment_go_grpc_proto",
+    srcs = [":asset_deployment_proto"],
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [
+        ":asset_type_go_proto",
+        ":id_go_proto",
+        "//intrinsic/math/proto:pose_go_proto",
+        "//intrinsic/world/proto:object_world_refs_go_proto",
+        "@com_google_cloud_go_longrunning//autogen/longrunningpb",
+        "@org_golang_google_protobuf//types/known/anypb",
+    ],
 )

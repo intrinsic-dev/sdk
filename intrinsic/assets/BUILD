@@ -140,3 +140,14 @@ go_library(
         "@org_golang_google_protobuf//types/known/anypb",
     ],
 )
+
+go_library(
+    name = "version",
+    srcs = ["version.go"],
+    deps = [
+        ":idutils",
+        "//intrinsic/assets/proto:id_go_proto",
+        "//intrinsic/resources/proto:resource_registry_go_grpc_proto",
+        "@org_golang_google_protobuf//proto",
+    ],
+)

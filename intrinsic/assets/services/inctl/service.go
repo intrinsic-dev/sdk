@@ -5,6 +5,8 @@ package service
 
 import (
 	"github.com/spf13/cobra"
+	"intrinsic/assets/services/inctl/add"
+	deletecmd "intrinsic/assets/services/inctl/delete"
 	"intrinsic/assets/services/inctl/install"
 	"intrinsic/assets/services/inctl/list"
 	"intrinsic/tools/inctl/cmd/root"
@@ -18,6 +20,8 @@ var serviceCmd = &cobra.Command{
 }
 
 func init() {
+	serviceCmd.AddCommand(add.GetCommand())
+	serviceCmd.AddCommand(deletecmd.GetCommand())
 	serviceCmd.AddCommand(install.GetCommand())
 	serviceCmd.AddCommand(list.GetCommand())
 

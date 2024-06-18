@@ -8,7 +8,6 @@ import "google/longrunning/operations.proto";
 import "google/protobuf/any.proto";
 import "intrinsic/assets/proto/asset_type.proto";
 import "intrinsic/assets/proto/id.proto";
-import "intrinsic/config/proto/common.proto";
 import "intrinsic/math/proto/pose.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 
@@ -76,9 +75,6 @@ message ResourceConfiguration {
   // Optional resource-specific runtime configuration.
   optional google.protobuf.Any configuration = 1;
 
-  // Optional files for the resource.
-  optional intrinsic_proto.config.DataFiles data_files = 2;
-
   // Hostname on which the service should be run.
   optional string scheduled_node_hostname = 3;
 
@@ -114,9 +110,6 @@ message ResourceInstanceConfiguration {
 
   // Optional resource instance specific runtime configuration.
   optional google.protobuf.Any configuration = 2;
-
-  // Optional file resources.
-  optional intrinsic_proto.config.DataFiles data_files = 3;
 
   // Optional parent where to attach the new resource instance to.
   // This may only be specified if the resource type associated with this
