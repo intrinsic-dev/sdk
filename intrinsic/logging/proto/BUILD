@@ -63,7 +63,7 @@ proto_library(
 proto_library(
     name = "flowstate_event",
     srcs = ["flowstate_event.proto"],
-    visibility = ["//intrinsic/production:__subpackages__"],
+    visibility = ["//visibility:private"],
 )
 
 cc_proto_library(
