@@ -116,11 +116,12 @@ message LogItem {
       intrinsic_proto.icon.Wrench icon_ft_wrench = 17;
       intrinsic_proto.icon.RobotStatus icon_robot_status = 27;
     }
-    reserved 2, 4, 5, 6, 9, 12, 15, 19, 24, 25, 28, 38, 41;
+    reserved 2, 4, 5, 6, 9, 12, 15, 19, 24, 25, 28, 38, 40, 41;
     reserved "optimization_measurement";
     reserved "skills_footprint_request";
     reserved "skills_device_signal";
     reserved "lfd_step";
+    reserved "sle_step_log";
   }
 
   // Any structured data associated with this event.
