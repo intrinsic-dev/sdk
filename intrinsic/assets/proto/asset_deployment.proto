@@ -1,0 +1,195 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.assets;
+
+import "google/longrunning/operations.proto";
+import "google/protobuf/any.proto";
+import "intrinsic/assets/proto/asset_type.proto";
+import "intrinsic/assets/proto/id.proto";
+import "intrinsic/config/proto/common.proto";
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/world/proto/object_world_refs.proto";
+
+// Service to manage the deployment of assets, specifically, resource instances
+// and skills.
+service AssetDeploymentService {
+
+  // Creates a new resource instance from a resource type present in the
+  // resource catalog.
+  // On success the `response` field of `Operation` is set to
+  // `CreateResourceFromCatalogResponse`.
+  // On failure, any changes applied to the workcell are reverted.
+  rpc CreateResourceFromCatalog(CreateResourceFromCatalogRequest)
+      returns (google.longrunning.Operation) {}
+
+  // Deletes a previously added resource.
+  // The world object corresponding to the resource instance is also deleted
+  // including any attached frames.
+  rpc DeleteResource(DeleteResourceRequest)
+      returns (google.longrunning.Operation) {
+    option (google.longrunning.operation_info) = {
+      response_type: "google.protobuf.Empty"
+    };
+  }
+
+  // Update an existing resource instance with a different resource
+  // configuration or the resource type version.
+  // On success, `response` field of `Operation` is set to
+  // `Resource`.
+  rpc UpdateResource(UpdateResourceRequest)
+      returns (google.longrunning.Operation) {
+    option (google.longrunning.operation_info) = {
+      response_type: "Resource"
+    };
+  }
+
+  // Installs a skill from the skill catalog.
+  // On success, the `response` field of `Operation` is set to
+  // `CreateSkillFromCatalogResponse`.
+  rpc CreateSkillFromCatalog(CreateSkillFromCatalogRequest)
+      returns (google.longrunning.Operation) {}
+
+  // Deletes a previously installed skill.
+  // On success, `response` field of `Operation` is set to
+  // `DeleteSkillResponse`.
+  rpc DeleteSkill(DeleteSkillRequest) returns (google.longrunning.Operation) {}
+
+  // Gets the latest state of a long-running operation.  Clients can use this
+  // method to poll the operation result, similar to `GetOperation` in
+  // `google.longrunning.Operations` service:
+  // https://github.com/googleapis/googleapis/blob/master/google/longrunning/operations.proto
+  rpc GetOperation(google.longrunning.GetOperationRequest)
+      returns (google.longrunning.Operation) {}
+
+  // Lists operations that match the specified filter in the request, similar to
+  // `ListOperations` in `google.longrunning.Operations` service:
+  // https://github.com/googleapis/googleapis/blob/master/google/longrunning/operations.proto
+  // - `name` should be one of: `skill`, `resource`.
+  // - `filter` should be one of: `add`, `delete`, `replace`.
+  rpc ListOperations(google.longrunning.ListOperationsRequest)
+      returns (google.longrunning.ListOperationsResponse) {}
+}
+
+message ResourceConfiguration {
+  // Optional resource-specific runtime configuration.
+  optional google.protobuf.Any configuration = 1;
+
+  // Optional files for the resource.
+  optional intrinsic_proto.config.DataFiles data_files = 2;
+
+  // Hostname on which the service should be run.
+  optional string scheduled_node_hostname = 3;
+
+  // Optional parent where to attach the new resource instance to.
+  // This may only be specified if the resource type associated with this
+  // resource instance specifies a `world_fragment`. Otherwise, specifying
+  // `parent` is an error.
+  optional intrinsic_proto.world.ObjectReferenceWithEntityFilter parent = 4;
+
+  // Optional pose relative to the attached parent.
+  // This may only be specified if the resource type associated with this
+  // resource instance specifies a `world_fragment`. Otherwise, specifying
+  // `parent_t_this` is an error.
+  optional intrinsic_proto.Pose parent_t_this = 5;
+}
+
+message Resource {
+  // Name of the resource.
+  string name = 1;
+
+  // Versioned identifier for the backing asset.
+  IdVersion id_version = 2;
+
+  // Configuration for the resource.
+  ResourceConfiguration configuration = 3;
+}
+
+// Configuration for the resource instance.
+message ResourceInstanceConfiguration {
+  // User provided name for the resource instance. This should be unique within
+  // the resource set.
+  string name = 1;
+
+  // Optional resource instance specific runtime configuration.
+  optional google.protobuf.Any configuration = 2;
+
+  // Optional file resources.
+  optional intrinsic_proto.config.DataFiles data_files = 3;
+
+  // Optional parent where to attach the new resource instance to.
+  // This may only be specified if the resource type associated with this
+  // resource instance specifies a `world_fragment`. Otherwise, specifying
+  // `parent` is an error.
+  optional intrinsic_proto.world.ObjectReferenceWithEntityFilter parent = 4;
+
+  // Optional pose relative to the attached parent.
+  // This may only be specified if the resource type associated with this
+  // resource instance specifies a `world_fragment`. Otherwise, specifying
+  // `parent_t_this` is an error.
+  optional intrinsic_proto.Pose parent_t_this = 5;
+}
+
+message CreateResourceFromCatalogRequest {
+  // Versioned type identifier for the resource type that would be used to
+  // create the resource instance. The resource type should be present in the
+  // catalog.
+  string type_id_version = 1;
+
+  // Configuration for the resource instance.
+  ResourceInstanceConfiguration configuration = 2;
+
+  // Asset type of the resource instance to be created.
+  AssetType asset_type = 3;
+}
+
+message CreateResourceFromCatalogResponse {
+  // Name of the resource instance that was installed.
+  string name = 1;
+}
+
+message DeleteResourceRequest {
+  enum DeletionStrategy {
+    // Unknown strategy. This is considered an error and the resource instance
+    // would not be deleted.
+    UNKNOWN = 0;
+    // Only delete the resource instance specified in the request.
+    DELETE_INSTANCE_ONLY = 1;
+    // Delete the resource instance specified in the request and recursively
+    // delete all the sub-children in the kinematics chain.
+    RECURSIVE_DELETE = 2;
+  }
+
+  // Name of the resource instance to delete.
+  string name = 1;
+
+  // Deletion strategy to use.
+  DeletionStrategy deletion_strategy = 2;
+}
+
+message UpdateResourceRequest {
+  // Resource to update.
+  Resource resource = 1;
+}
+
+message CreateSkillFromCatalogRequest {
+  // Versioned identifier of the skill to be installed. The skill should be
+  // present in the catalog.
+  string id_version = 1;
+}
+
+message CreateSkillFromCatalogResponse {
+  // Identifier of the skill that was installed.
+  string skill_id = 1;
+}
+
+message DeleteSkillRequest {
+  // Identifier of the skill to be deleted.
+  string skill_id = 1;
+}
+
+message DeleteSkillResponse {
+  // Identifier of the skill that was deleted.
+  string skill_id = 1;
+}
