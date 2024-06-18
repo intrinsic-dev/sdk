@@ -11,7 +11,7 @@ package(
 bzl_library(
     name = "services_bzl",
     srcs = ["services.bzl"],
-    visibility = ["//intrinsic/config:__pkg__"],
+    visibility = ["//visibility:private"],
     deps = [
         "@bazel_skylib//rules:common_settings",
     ],
