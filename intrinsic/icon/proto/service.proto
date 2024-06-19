@@ -430,8 +430,8 @@ message GetPayloadRequest {
 }
 
 message GetPayloadResponse {
-  // The payload.
-  world.RobotPayload payload = 1;
+  // The payload. Empty if no payload is set.
+  optional world.RobotPayload payload = 1;
 }
 
 service IconApi {
@@ -668,6 +668,6 @@ service IconApi {
   rpc SetPayload(SetPayloadRequest) returns (SetPayloadResponse) {}
 
   // Gets a payload stored in a part. Fails if the part does not exist or the
-  // requested payload is not set.
+  // requested payload does not exist.
   rpc GetPayload(GetPayloadRequest) returns (GetPayloadResponse) {}
 }

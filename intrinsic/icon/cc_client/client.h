@@ -4,6 +4,7 @@
 #define INTRINSIC_ICON_CC_CLIENT_CLIENT_H_
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
