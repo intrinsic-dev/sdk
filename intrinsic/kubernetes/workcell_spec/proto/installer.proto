@@ -6,6 +6,7 @@ package intrinsic_proto.workcell_spec.v1;
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "intrinsic/assets/proto/id.proto";
 import "intrinsic/assets/services/proto/service_manifest.proto";
 import "intrinsic/kubernetes/workcell_spec/proto/image.proto";
 

@@ -28,6 +28,7 @@ proto_library(
     srcs = ["installer.proto"],
     deps = [
         ":image_proto",
+        "//intrinsic/assets/proto:id_proto",
         "//intrinsic/assets/services/proto:service_manifest_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:empty_proto",
