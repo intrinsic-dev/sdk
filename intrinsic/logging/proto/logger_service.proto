@@ -6,6 +6,7 @@ package intrinsic_proto.data_logger;
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "intrinsic/logging/proto/bag_metadata.proto";
 import "intrinsic/logging/proto/log_item.proto";
 
 message LogRequest {
@@ -172,10 +173,39 @@ message SyncResponse {
   repeated string throttled_event_sources = 2;
 }
 
+message CreateLocalRecordingRequest {
+  // A time range used to select from the LogItems available in the TimescaleDB
+  // rolling buffer.
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+
+  // A human-readable description of the recording, to make it easier to
+  // identify in the frontend.
+  string description = 3;
+}
+
+message CreateLocalRecordingResponse {
+  // The metadata of the newly-created recording.
+  intrinsic_proto.data_logger.BagMetadata bag = 1;
+}
+
+message ListLocalRecordingsRequest {
+  // Optionally allow users to specify a starting bound for the recording list.
+  optional google.protobuf.Timestamp start_time = 1;
+
+  // Optionally allow users to specify an ending bound for the recording list.
+  optional google.protobuf.Timestamp end_time = 2;
+}
+
+message ListLocalRecordingsResponse {
+  repeated intrinsic_proto.data_logger.BagMetadata bags = 1;
+}
+
 // Service to:
 // - Persistently store structured logging data on-prem
 // - Retrieve stored structued logging data on-prem
 // - Upload stored to the cloud
+// - Create on-prem recordings to await (potentially slow) upload to the cloud
 //
 // Data is buffered locally on disk and uploaded to the cloud in the background
 // on a per-event-source basis when any of the following conditions are met:
@@ -228,4 +258,19 @@ service DataLogger {
   // `Log` call. Each event source will have a global throttle on user-requested
   // flushes.
   rpc SyncAndRotateLogs(SyncRequest) returns (SyncResponse) {}
+
+  // Creates a local recording from structured logging data.
+  //
+  // The data will be copied to its own table for safekeeping, to ensure
+  // that it does not get deleted from the rolling-buffer TimescaleDB tables if
+  // the upload process is very slow due to limited internet connectivity.
+  rpc CreateLocalRecording(CreateLocalRecordingRequest)
+      returns (CreateLocalRecordingResponse) {}
+
+  // List recordings stored locally.
+  //
+  // This RPC is intended to be used by the frontend to display a list of
+  // local recordings and their upload progress.
+  rpc ListLocalRecordings(ListLocalRecordingsRequest)
+      returns (ListLocalRecordingsResponse) {}
 }

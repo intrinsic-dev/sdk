@@ -101,6 +101,7 @@ proto_library(
     name = "logger_service",
     srcs = ["logger_service.proto"],
     deps = [
+        ":bag_metadata_proto",
         ":log_item_proto",
         "@com_google_protobuf//:empty_proto",
         "@com_google_protobuf//:timestamp_proto",
@@ -193,4 +194,22 @@ py_grpc_library(
     srcs = [":log_dispatcher_service"],
     grpc_library = requirement("grpcio"),
     deps = [":log_dispatcher_service_py_pb2"],
+)
+
+proto_library(
+    name = "bag_metadata_proto",
+    srcs = ["bag_metadata.proto"],
+    deps = [
+        "@com_google_protobuf//:timestamp_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "bag_metadata_cc_proto",
+    deps = [":bag_metadata_proto"],
+)
+
+py_proto_library(
+    name = "bag_metadata_proto_py_pb2",
+    deps = [":bag_metadata_proto"],
 )

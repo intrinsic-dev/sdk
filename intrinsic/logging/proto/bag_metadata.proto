@@ -1,0 +1,113 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.data_logger;
+
+import "google/protobuf/timestamp.proto";
+
+// Status to indicate an event source inputs upload progress.
+message EventSourceStatus {
+  enum EventSourceStatusEnum {
+    UNSET = 0;
+    INITIALIZED = 1;
+    INPUTS_UPLOADING = 2;
+    // reserved 3;
+    INPUTS_UPLOADED = 4;
+    UNCOMPLETABLE = 5;
+    FAILED = 6;
+  }
+
+  EventSourceStatusEnum status = 1;  // Unidirectional transitions only.
+  optional string reason = 2;        // For UNCOMPLETABLE or FAILED.
+}
+
+// Metadata to distinguish an event source.
+message EventSourceMetadata {
+  string event_source = 1;  // Sanitized.
+
+  EventSourceStatus status = 2;
+
+  // Time range of the logged items.
+  google.protobuf.Timestamp first_log_time = 3;
+  google.protobuf.Timestamp last_log_time = 4;
+
+  // Total number of log items in the event source.
+  uint64 num_log_items = 5;
+
+  // Type information Intrinsic protos/data and ROS message types, respectively.
+  //
+  // Used as hints for translation/verification.
+  optional string intrinsic_typename = 6;
+  optional string ros_typename = 7;
+
+  // Total number of bytes of all messages from this event source
+  uint64 num_bytes = 8;
+
+  // Total number of uploaded bytes (for creating detailed progress messages)
+  uint64 uploaded_bytes = 9;
+
+  // Total number of uploaded items (for creating detailed progress messages)
+  uint64 uploaded_log_items = 10;
+}
+
+// Status to indicate overall bag input upload progress.
+message BagStatus {
+  enum BagStatusEnum {
+    UNSET = 0;
+    INITIALIZED = 1;
+    INPUTS_UPLOADING = 2;
+    INPUTS_UPLOADED = 3;
+    COMPLETED = 4;
+    UNCOMPLETABLE = 5;
+    FAILED = 6;
+  }
+
+  BagStatusEnum status = 1;  // Unidirectional transitions only.
+
+  // Optional reason for UNCOMPLETABLE or FAILED.
+  //
+  // Used for terminal statuses, if an incomplete bag (with missing log items
+  // or event sources) is available.
+  optional string reason = 2;
+}
+
+// Metadata reporting the status and information about a bag.
+message BagMetadata {
+  // Unique identifier of the bag.
+  string bag_id = 1;
+
+  BagStatus status = 2;
+
+  // Recorded time range.
+  //
+  // Union of first and last log times of any event source is always a subset
+  // of this.
+  google.protobuf.Timestamp start_time = 4;
+  google.protobuf.Timestamp end_time = 5;
+
+  string organization_id = 6;
+  string workcell_name = 7;  // The cluster the logs originated from.
+
+  // Event source metadata as claimed by on-prem via registration.
+  repeated EventSourceMetadata event_sources = 8;
+
+  // Human-readable description of the contents of the bag
+  optional string description = 9;
+
+  // If known, the name of the solution running when the bag was created.
+  optional string solution_name = 10;
+}
+
+// Reference to a bag file stored on the cloud.
+// Only populated if bag was generated.
+message BagFileReference {
+  string file_path = 1;
+  uint64 file_byte_size = 2;
+
+  google.protobuf.Timestamp completion_time = 3;
+  google.protobuf.Timestamp expiry_time = 4;  // File expiry
+
+  // Actual event source metadata that were used to create the bag.
+  repeated EventSourceMetadata event_sources = 5;
+}
