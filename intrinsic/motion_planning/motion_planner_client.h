@@ -62,6 +62,10 @@ class MotionPlannerClient {
     intrinsic_proto::icon::JointTrajectoryPVA trajectory;
     std::vector<intrinsic_proto::geometry::TransformedGeometryStorageRefs>
         swept_volume;
+    // If the motion is locked based on the request, this is the id of the
+    // motion for loading later. Note this field is not set if this response is
+    // from loading a locked motion.
+    std::optional<std::string> lock_motion_id;
   };
 
   // Plans a trajectory for a given motion planning problem and robot.

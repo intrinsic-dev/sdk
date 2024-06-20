@@ -85,6 +85,9 @@ MotionPlannerClient::PlanTrajectory(
   result.swept_volume.insert(result.swept_volume.begin(),
                              response.swept_volume().begin(),
                              response.swept_volume().end());
+  result.lock_motion_id = response.has_lock_motion_id()
+                              ? std::optional(response.lock_motion_id())
+                              : std::nullopt;
 
   return result;
 }
