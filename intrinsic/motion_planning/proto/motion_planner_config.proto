@@ -22,7 +22,8 @@ message MotionPlannerConfiguration {
 // Contains lock motion specific configurations.
 message LockMotionConfiguration {
   message SaveMotionCommand {
-    string motion_id = 1;
+    reserved 1;
+    reserved "motion_id";
   }
   message LoadMotionCommand {
     string motion_id = 1;
