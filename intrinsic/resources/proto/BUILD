@@ -103,9 +103,6 @@ py_proto_library(
 
 go_proto_library(
     name = "runtime_context_go_proto",
-    go_deps = [
-        ":resource_registry_go_proto",
-    ],
     deps = [":runtime_context_proto"],
 )
 
