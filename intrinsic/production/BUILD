@@ -2,11 +2,8 @@
 
 load("//bazel:go_macros.bzl", "go_library")
 
-package(default_visibility = [
-    "//visibility:public",
-])
-
 go_library(
     name = "intrinsic",
     srcs = ["init.go"],
+    visibility = ["//intrinsic:public_api_users"],
 )
