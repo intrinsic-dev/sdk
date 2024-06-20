@@ -85,7 +85,9 @@ go_library(
         "//intrinsic/assets:clientutils",
         "//intrinsic/assets:cmdutils",
         "//intrinsic/assets:idutils",
+        "//intrinsic/assets:version",
         "//intrinsic/kubernetes/workcell_spec/proto:installer_go_grpc_proto",
+        "//intrinsic/resources/proto:resource_registry_go_grpc_proto",
         "@com_github_spf13_cobra//:go_default_library",
     ],
 )
