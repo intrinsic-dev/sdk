@@ -12,6 +12,7 @@ go_library(
         ":delete",
         ":install",
         ":list",
+        ":uninstall",
         "//intrinsic/tools/inctl/cmd:root",
         "@com_github_spf13_cobra//:go_default_library",
     ],
@@ -73,6 +74,18 @@ go_library(
         "//intrinsic/assets:cmdutils",
         "//intrinsic/assets:idutils",
         "//intrinsic/resources/proto:resource_registry_go_grpc_proto",
+        "@com_github_spf13_cobra//:go_default_library",
+    ],
+)
+
+go_library(
+    name = "uninstall",
+    srcs = ["uninstall.go"],
+    deps = [
+        "//intrinsic/assets:clientutils",
+        "//intrinsic/assets:cmdutils",
+        "//intrinsic/assets:idutils",
+        "//intrinsic/kubernetes/workcell_spec/proto:installer_go_grpc_proto",
         "@com_github_spf13_cobra//:go_default_library",
     ],
 )

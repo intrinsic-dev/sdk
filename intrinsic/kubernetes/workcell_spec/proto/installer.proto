@@ -153,6 +153,11 @@ message InstallServiceResponse {
   string id_version = 1;
 }
 
+message UninstallServiceRequest {
+  // Versioned ID of the installed service.
+  intrinsic_proto.assets.IdVersion id_version = 1;
+}
+
 service InstallerService {
 
   // Returns information about the currently running (if any) workcell spec.
@@ -176,4 +181,7 @@ service InstallerService {
   // Installs a service into the cluster to be added as a instance at a time.
   rpc InstallService(InstallServiceRequest) returns (InstallServiceResponse) {}
 
+  // Uninstalls a service from the cluster.
+  rpc UninstallService(UninstallServiceRequest)
+      returns (google.protobuf.Empty) {}
 }
