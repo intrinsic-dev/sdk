@@ -7,7 +7,9 @@ package intrinsic_proto.gripper;
 import "intrinsic/hardware/proto/settings.proto";
 
 message PinchGripperCommand {
-  // (Optional) command id to disambiguate status messages.
+  // Command id to disambiguate status messages.
+  // If not set, the command may return earlier before the gripper has reached
+  // the desired position.
   int64 command_id = 4;
   // Command options for desired position of grip joint.
   oneof position_command_options {
