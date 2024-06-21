@@ -16,7 +16,7 @@ exports_files(
         "BUILD",
         "settings.proto",
     ],
-    visibility = ["//intrinsic/production:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 proto_library(

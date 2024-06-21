@@ -27,7 +27,7 @@ exports_files(
         "untar_test.cc",
         # go/keep-sorted end
     ],
-    visibility = ["//intrinsic/production:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 go_library(

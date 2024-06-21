@@ -16,7 +16,7 @@ exports_files(
         "generic_gripper.proto",
         # go/keep-sorted end
     ],
-    visibility = ["//intrinsic/production:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 proto_library(
