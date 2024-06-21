@@ -1,0 +1,23 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+/*
+  An axis-aligned image-space bounding box.
+*/
+message ImageAlignedBoundingBox {
+  /* The (row, col) center of the bounding box, in pixels. */
+  repeated float center = 1;
+
+  /* The height of the bounding box, in pixels. Must be non-negative. */
+  float height = 2;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the bounding box
+  estimate. */
+  float quality = 3;
+
+  /* The width of the bounding box, in pixels. Must be non-negative. */
+  float width = 4;
+}

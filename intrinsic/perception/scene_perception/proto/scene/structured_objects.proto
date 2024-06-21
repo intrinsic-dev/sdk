@@ -1,0 +1,76 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "google/protobuf/any.proto";
+import "intrinsic/perception/scene_perception/proto/scene/structured_faces.proto";
+import "intrinsic/perception/scene_perception/proto/scene/structured_features.proto";
+
+/*
+  A collection of objects in a scene.
+
+  Note: We represent objects as a distinct message, rather than as a repeated
+  list of StructuredObject in the StructuredScene message, to distinguish
+  between scenes that have no objects (StructuredObjects with empty `objects`
+  list) and scenes that do not represent objects (StructuredScene with null
+  `objects` field value).
+
+  StructuredObjects is an element of a StructuredScene.
+*/
+message StructuredObjects {
+  repeated StructuredObject objects = 1;
+}
+
+/*
+  Represents an object in a scene, along with its features, metadata and
+  optionally faces and parts.
+
+  All R3 representations must share a common reference frame.
+
+  StructuredObject is an element of a StructuredScene.
+*/
+message StructuredObject {
+  /* The object's category label. */
+  string category = 1;
+
+  /* The detection confidence, as a value in [0, 1]. This value is intended to
+  be a heuristic measure of the evidence that this Object represents a detection
+  of a true object in the world.
+
+  A confidence of 0 corresponds to no evidence for the existence of the detected
+  object. It does not correspond to either:
+    a) perfect evidence that the detection is false, or
+    b) perfect evidence for the absence of the object.
+
+  A confidence of 1 corresponds to perfect evidence that the detection is true.
+
+  Detection confidence is separate from the quality of the feature estimates
+  that this Object may include. For example, we can have low confidence that we
+  have detected an actual object, but be highly confident in the accuracy of our
+  estimated pose, assuming the detection is true (and vice-versa). */
+  float confidence = 2;
+
+  /* A collection of faces on the object, if they are represented. A "face" is a
+  subdivision of the surface of the object. */
+  StructuredFaces faces = 3;
+
+  /* A collection of object-level features. */
+  StructuredFeatures features = 4;
+
+  /* A UUID to identify the object instance (in the world) to which this Object
+  corresponds. */
+  string instance_id = 5;
+
+  /* A collection of metadata associated with the object. */
+  repeated google.protobuf.Any metadata = 6;
+
+  /* A collection of parts of the object, if they are represented. A "part" is a
+  subdivision of the volume of the object. */
+  StructuredObjects parts = 7;
+
+  /* An integer that uniquely identifies, relative to the object instance, the
+  object's current "state" (i.e., within a tracking context). */
+  uint64 state_id = 8;
+}

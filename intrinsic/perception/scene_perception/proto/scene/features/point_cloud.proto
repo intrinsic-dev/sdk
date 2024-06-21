@@ -1,0 +1,30 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "intrinsic/math/proto/array.proto";
+import "intrinsic/perception/scene_perception/proto/common/r3.proto";
+
+/*
+  A point cloud with optional color information.
+*/
+message PointCloud {
+  /* A uint8 array (either H x W x 3 or N x 3, see `points`) of values in
+  [0, 255] representing the RGB color of each point in `points`. */
+  intrinsic_proto.Array colors = 1;
+
+  /* A float array of (x, y, z) situated points in the workspace frame, in
+  meters. The points can be either structured (H x W x 3, i.e., associated with
+  an image) or unstructured (N x 3, i.e., a flat list of points). */
+  intrinsic_proto.SituatedPoints points = 2;
+
+  /* A float array (either H x W or N-length, see `points`) of values in [0, 1]
+  that represent a unitless "quality" of each point estimate. */
+  intrinsic_proto.Array qualities = 3;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the point cloud
+  estimate as a whole. */
+  float quality = 4;
+}

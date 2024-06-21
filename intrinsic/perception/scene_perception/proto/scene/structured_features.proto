@@ -1,0 +1,91 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "intrinsic/perception/scene_perception/proto/scene/features/centroid.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/damage.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/fill_level.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/graspability_map.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/image_aligned_bounding_box.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/image_keypoints.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/mask.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/mesh.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/point_cloud.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/pose.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/principal_axes.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/r3_bounding_box.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/r3_keypoints.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/r3_segmented_plane.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/twist.proto";
+import "intrinsic/perception/scene_perception/proto/scene/features/visibility.proto";
+
+/*
+  A collection of features of a single entity.
+
+  Each instance can represent a subset of available features, with the remaining
+  left as null.
+
+  All R3 features (e.g., `point_cloud`, `pose`) must share a common reference
+  frame.
+
+  StructuredFeatures is an element of a StructuredScene.
+*/
+message StructuredFeatures {
+  /* An image-space amodal mask. */
+  AmodalMask amodal_mask = 1;
+
+  /* The centroid of an entity. */
+  Centroid centroid = 2;
+
+  /* Information about (potential) damage to an entity. */
+  Damage damage = 3;
+
+  /* For containers, the fraction of the container that is filled. */
+  FillLevel fill_level = 4;
+
+  /* An image-space map of per-pixel graspability scores. */
+  GraspabilityMap graspability_map = 5;
+
+  /* An axis-aligned image-space bounding box. */
+  ImageAlignedBoundingBox image_aligned_bounding_box = 6;
+
+  /* A set of image-space keypoint locations, in pixels. */
+  ImageKeypoints image_keypoints = 7;
+
+  /* An image-space modal mask. */
+  ModalMask modal_mask = 8;
+
+  /* An image-space mask with information about visibility and occlusion.
+
+  NOTE: This is redundant with `amodal_mask` and `modal_mask`. */
+  OcclusionMask occlusion_mask = 9;
+
+  /* A point cloud of an entity. */
+  PointCloud point_cloud = 10;
+
+  /* A triangle mesh representation of an entity. */
+  Mesh mesh = 11;
+
+  /* The 6DoF pose of an entity. */
+  Pose pose = 12;
+
+  /* The principal axes of an entity. */
+  PrincipalAxes principal_axes = 13;
+
+  /* A 3D oriented bounding box. */
+  R3BoundingBox r3_bounding_box = 14;
+
+  /* A set of R3 keypoint locations, in meters. */
+  R3Keypoints r3_keypoints = 15;
+
+  /* A 3D segmented plane. */
+  R3SegmentedPlane r3_segmented_plane = 16;
+
+  /* The 6DoF twist of an entity. */
+  Twist twist = 17;
+
+  /* The visibility of an entity. */
+  Visibility visibility = 18;
+}

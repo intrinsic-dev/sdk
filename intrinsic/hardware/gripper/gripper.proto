@@ -1,0 +1,66 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.gripper;
+
+import "intrinsic/hardware/proto/settings.proto";
+
+message PinchGripperCommand {
+  // (Optional) command id to disambiguate status messages.
+  int64 command_id = 4;
+  // Command options for desired position of grip joint.
+  oneof position_command_options {
+    // Desired position of grip joint in SI units.
+    double position = 1;
+
+    // Desired position of grip joint in percentage.
+    double position_percentage = 11;
+  }
+
+  // Command options for velocity of grip joint.
+  oneof velocity_command_options {
+    // Velocity of grip joint in SI units.
+    double velocity = 2;
+
+    // Velocity of grip joint in percentage.
+    double velocity_percentage = 12;
+  }
+
+  // Command options for desired or maximum applied effort to apply on grip
+  // joint.
+  oneof effort_command_options {
+    // Desired or maximum applied effort to apply on grip joint in SI units.
+    double effort = 3;
+
+    // Desired or maximum applied effort to apply on grip joint in percentage.
+    double effort_percentage = 13;
+  }
+}
+
+message PinchGripperStatus {
+  // Current position of the grip joint.
+  double position = 1;
+
+  // Grip joint is currently in motion.
+  bool in_motion = 2;
+
+  // Current position matches desired position.
+  bool position_reached = 3;
+
+  // Whether or not gripper is enabled.
+  bool gripper_enabled = 4;
+
+  // Requested position.
+  double position_requested = 5;
+
+  // (Optional) command id to disambiguate status messages.
+  int64 command_id = 6;
+
+  // Whether an object was detected by the gripper. The object detection may not
+  // work correctly for very thin objects. In those cases, an object can be
+  // considered detected if the gripper fingers reached the desired position. In
+  // short, for thin objects the following object detection logic may be more
+  // robust: `object_detected` OR `position_reached`.
+  bool object_detected = 7;
+}

@@ -1,0 +1,37 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "intrinsic/math/proto/array.proto";
+import "intrinsic/perception/scene_perception/proto/common/r3.proto";
+
+/*
+  A set of 3D keypoint locations, in meters.
+*/
+message R3Keypoints {
+  /* An N x <num tags> boolean array indicating whether each keypoint is tagged
+  with each tag. I.e., has_tag[3, 4] indicates whether the keypoint with index 3
+  is tagged with tag_names[4]. */
+  intrinsic_proto.Array has_tag = 1;
+
+  /* An N x 3 float array of the (x, y, z) surface normal vector for each point
+  in the workspace frame. */
+  intrinsic_proto.Array normals = 2;
+
+  /* An N x 3 float array of situated keypoint locations in the workspace frame,
+  in meters. */
+  intrinsic_proto.SituatedPoints points = 3;
+
+  /* An N-length list of values in [0, 1] that represent a unitless "quality" of
+  each keypoint location estimate. */
+  repeated float qualities = 4;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the keypoint
+  location estimates as a whole. */
+  float quality = 5;
+
+  /* The names of the keypoint tags referenced by `has_tag`. */
+  repeated string tag_names = 6;
+}

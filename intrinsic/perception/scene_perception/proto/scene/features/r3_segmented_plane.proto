@@ -1,0 +1,25 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "intrinsic/perception/scene_perception/proto/common/r3.proto";
+
+/*
+  A segmented 3D plane, defined by its pose and its x- and y-lengths.
+*/
+message R3SegmentedPlane {
+  /* The situated pose of the plane in the workspace frame, such that the plane
+  is centered at its frame's origin, its frame's x- and y-axes are in-plane, and
+  its frame's z-axis points along the plane normal. */
+  intrinsic_proto.SituatedPose workspace_t_plane = 1;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the plane
+  estimate. */
+  float quality = 2;
+
+  /* A two-element list representing the length of each (x, y) side of the
+  plane, in meters. */
+  repeated float size = 3;
+}

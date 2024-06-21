@@ -1,0 +1,31 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+/*
+  Container for an error. The error is stored in a potentially
+  language-specific format in the `error` oneof, along with a fallback type +
+  message that can be used by the receiver if it can't handle the actual error
+  message.
+*/
+message ErrorContainer {
+  string type = 1;
+  string message = 2;
+
+  oneof error {
+    PythonError python = 3;
+  }
+}
+
+/*
+  A python-specific error message.
+*/
+message PythonError {
+  /* A pickled Exception object. */
+  bytes serialized_error = 1;
+
+  /* The exception's YAML-serialized traceback (via tblib). */
+  bytes serialized_traceback = 2;
+}

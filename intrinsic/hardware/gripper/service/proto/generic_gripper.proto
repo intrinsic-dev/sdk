@@ -1,0 +1,82 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.gripper;
+
+message GraspRequest {}
+message GraspResponse {}
+
+message ReleaseRequest {
+  // Whether to enable blow-off operation after triggering release.
+  // Mainly relevant for suction grippers. Other grippers should ignore this
+  // flag, if set, and not raise an error.
+  bool enable_blowoff = 1;
+}
+message ReleaseResponse {}
+
+message GrippingIndicatedRequest {}
+message GrippingIndicatedResponse {
+  bool indicated = 1;
+}
+
+message CommandRequest {
+  // Command options for desired position of grip joint.
+  // The units of measurement are International System of Units (SI):
+  // https://en.wikipedia.org/wiki/International_System_of_Units
+  oneof position_command_options {
+    // Desired position of grip joint in SI units.
+    double position = 1;
+
+    // Desired position of grip joint in percentage.
+    double position_percentage = 2;
+  }
+
+  // Command options for velocity of grip joint.
+  oneof velocity_command_options {
+    // Velocity of grip joint in SI units.
+    double velocity = 3;
+
+    // Velocity of grip joint in percentage.
+    double velocity_percentage = 4;
+  }
+
+  // Command options for desired or maximum applied effort to apply on grip
+  // joint.
+  oneof effort_command_options {
+    // Desired or maximum applied effort to apply on grip joint in SI units.
+    double effort = 5;
+
+    // Desired or maximum applied effort to apply on grip joint in percentage.
+    double effort_percentage = 6;
+  }
+}
+
+message CommandResponse {
+  // Current position of the grip joint.
+  double position = 1;
+
+  // Current position matches desired position.
+  bool position_reached = 2;
+}
+
+// Generic Gripper service independent of the actual gripper.
+// Every gripper, whether a pinch, suction or variable pinch, should implement
+// this service with reasonable defaults. This allows the gripper to be used
+// in a larger set of applictions.
+service GenericGripper {
+  // Trigger grasp command.
+  rpc Grasp(GraspRequest) returns (GraspResponse) {}
+
+  // Trigger release command.
+  rpc Release(ReleaseRequest) returns (ReleaseResponse) {}
+
+  // Command the gripper to execute a specific action.
+  // May not be supported by all grippers. For example, DIO suction and pinch
+  // grippers only support `Grasp` and `Release` control commands.
+  rpc Command(CommandRequest) returns (CommandResponse) {}
+
+  // Check if the gripper is currently gripping an object.
+  rpc GrippingIndicated(GrippingIndicatedRequest)
+      returns (GrippingIndicatedResponse) {}
+}

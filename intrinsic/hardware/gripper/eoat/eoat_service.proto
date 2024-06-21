@@ -1,0 +1,78 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.eoat;
+
+import "google/protobuf/any.proto";
+import "intrinsic/hardware/gripper/eoat/gripper_config.proto";
+
+message GpioServiceEndpoint {
+  // Generally, this is the ingress service
+  string grpc_address = 1;
+  // Name of the gpio service to connect to (e.g. as named in the build rule)
+  string gpio_service_name = 2;
+}
+
+message GpioServiceConfig {
+  oneof srv {
+    // Simply connect to an already configured gpio service endpoint.
+    GpioServiceEndpoint endpoint = 1;
+    // Bring up the GPIO service (e.g. opuca) that would communicate with the
+    // gripper driver and configure it. The gripper service would then
+    // communicate with this GPIO service.
+    google.protobuf.Any config = 2;
+  }
+}
+
+// Congfigurations for specific grippers should be added here
+message GripperConfig {
+  oneof gripper_config {
+    PinchGripperConfig pinch = 1;
+    SuctionGripperConfig suction = 2;
+  }
+  GpioServiceConfig gpio_service = 3;
+}
+
+message GraspRequest {}
+message GraspResponse {}
+
+message ReleaseRequest {}
+message ReleaseResponse {}
+
+message BlowOffRequest {
+  // Whether to turn on blow off or turn it off
+  bool turn_on = 1;
+}
+message BlowOffResponse {}
+
+message GrippingIndicatedRequest {}
+message GrippingIndicatedResponse {
+  // `indicated` is set to true if all the desired values for the signals in
+  // `SignalConfig gripping_indicated` match the read values.
+  bool indicated = 1;
+}
+
+// Pinch Gripper service
+service PinchGripper {
+  // Trigger grasp by closing the fingers
+  rpc Grasp(GraspRequest) returns (GraspResponse) {}
+  // Trigger release by opening the fingers
+  rpc Release(ReleaseRequest) returns (ReleaseResponse) {}
+  // Check if grasp was successful
+  rpc GrippingIndicated(GrippingIndicatedRequest)
+      returns (GrippingIndicatedResponse) {}
+}
+
+// Suction Gripper service
+service SuctionGripper {
+  // Trigger grasp by turning the suction on
+  rpc Grasp(GraspRequest) returns (GraspResponse) {}
+  // Trigger release by turning the suction off
+  rpc Release(ReleaseRequest) returns (ReleaseResponse) {}
+  // Trigger suction blow off by turning it on or off
+  rpc BlowOff(BlowOffRequest) returns (BlowOffResponse) {}
+  // Check if grasp was successful
+  rpc GrippingIndicated(GrippingIndicatedRequest)
+      returns (GrippingIndicatedResponse) {}
+}

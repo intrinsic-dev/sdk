@@ -1,0 +1,43 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "google/protobuf/any.proto";
+import "intrinsic/perception/scene_perception/proto/scene/structured_features.proto";
+
+/*
+  A collection of faces of an object.
+
+  Note: We represent faces as a distinct message, rather than as a repeated
+  list of StructuredFace in the StructuredObject message, to distinguish between
+  objects that have no faces (StructuredFaces with empty `faces` list) and
+  objects that do not represent faces (StructuredObject with null `faces` field
+  value).
+
+  StructuredFaces is an element of a StructuredScene.
+*/
+message StructuredFaces {
+  repeated StructuredFace faces = 1;
+}
+
+/*
+  Represents a face of an object, along with its features and metadata.
+
+  A face is a subdivision of the surface of an object.
+
+  All R3 representations must share a common reference frame.
+
+  StructuredFace is an element of a StructuredScene.
+*/
+message StructuredFace {
+  /* The faces's category label. */
+  string category = 1;
+
+  /* A collection of face-level features. */
+  StructuredFeatures features = 2;
+
+  /* A collection of metadata associated with the face. */
+  repeated google.protobuf.Any metadata = 3;
+}

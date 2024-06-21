@@ -1,0 +1,23 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "intrinsic/perception/scene_perception/proto/scene/pickled_scene.proto";
+import "intrinsic/perception/scene_perception/proto/scene/structured_scene.proto";
+
+/*
+  Container for transporting a scene in one of the supported transport formats.
+
+  The scene is represented in exactly one of the possible formats.
+  StructuredScene is cross-language and cross-code base compatible, while
+  PickledScene may be preferable for communication between senders and receivers
+  that are all based in the same python code base.
+*/
+message SceneContainer {
+  oneof scene {
+    StructuredScene structured = 1;
+    PickledScene pickled = 2;
+  }
+}

@@ -1,0 +1,19 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.perception;
+
+import "intrinsic/perception/proto/frame.proto";
+import "intrinsic/perception/scene_perception/proto/common/r3.proto";
+
+/*
+  A Frame with the associated camera's extrinsics.
+*/
+message SituatedFrame {
+  /* The frame. */
+  Frame frame = 1;
+
+  /* The extrinsics of the associated camera. */
+  intrinsic_proto.SituatedPose extrinsics = 2;
+}

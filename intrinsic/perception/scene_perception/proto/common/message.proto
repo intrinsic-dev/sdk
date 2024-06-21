@@ -1,0 +1,17 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+/*
+  Information about a proto message type.
+*/
+message MessageType {
+  /* The full name of the message type (including its namespace). */
+  string name = 1;
+
+  /* Optional metadata about the type (e.g., a language-specific target class
+  for representing the message). */
+  map<string, string> metadata = 2;
+}

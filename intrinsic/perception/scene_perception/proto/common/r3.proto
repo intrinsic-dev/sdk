@@ -1,0 +1,84 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+import "intrinsic/math/proto/array.proto";
+import "intrinsic/math/proto/point.proto";
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/math/proto/quaternion.proto";
+import "intrinsic/math/proto/twist.proto";
+import "intrinsic/world/proto/object_world_refs.proto";
+
+/*
+  A pose with information about its frames.
+*/
+message SituatedPose {
+  /* The pose of the target in the reference frame. */
+  intrinsic_proto.Pose ref_t_target = 1;
+
+  /* The target's situation. The pose is in the reference node's frame. */
+  Situation situation = 2;
+}
+
+/*
+  A 3D point with information about its reference frame.
+*/
+message SituatedPoint {
+  /* The (x, y, z) point. */
+  intrinsic_proto.Point point = 1;
+
+  /* The point's situation. The point is in the reference node's frame. */
+  Situation situation = 2;
+}
+
+/*
+  A set of 3D points with information about their reference frame.
+*/
+message SituatedPoints {
+  /* An N1 x ... x Nn x 3 float array of (x, y, z) points. */
+  intrinsic_proto.Array points = 1;
+
+  /* The points' situation. The points are in the reference node's frame. */
+  Situation situation = 2;
+}
+
+/*
+  A rotation with information about the frame that it rotates.
+*/
+message SituatedQuaternion {
+  /* The quaternion representing the rotation. */
+  intrinsic_proto.Quaternion quaternion = 1;
+
+  /* The rotation's situation. The rotation rotates the reference node's
+  frame. */
+  Situation situation = 2;
+}
+
+/*
+  A twist with information about its reference frame.
+*/
+message SituatedTwist {
+  /* The twist. */
+  intrinsic_proto.Twist twist = 1;
+
+  /* The twist's situation. The twist is in the reference node's frame. */
+  Situation situation = 2;
+}
+
+/*
+  Specifies how a target is situated in a world.
+*/
+message Situation {
+  /* The reference frame's node reference. */
+  intrinsic_proto.world.TransformNodeReference ref_node = 1;
+
+  /* The target frame's node reference, or omitted if the target is not
+  represented in the world. */
+  optional intrinsic_proto.world.TransformNodeReference target_node = 2;
+
+  /* ID of the world associated with the target, or omitted to use a default
+  world id. */
+  optional string world_id = 3;
+}

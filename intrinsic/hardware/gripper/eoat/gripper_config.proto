@@ -1,0 +1,35 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.eoat;
+
+import "intrinsic/hardware/gpio/signal.proto";
+
+message SignalConfig {
+  // `oneof` is used to allow for future handling of more types
+  oneof type {
+    // Map of signal names to bool values. E.g. {"/signal/name", true}.
+    // For actuation (e.g. grasp, release, etc.), the bool values
+    // are written to the port address.
+    // For sensing (e.g. gripping_indicated), the bool values are matched
+    // against the current values.
+    gpio.SignalValueSet value_set = 1;
+  }
+}
+
+message PinchGripperConfig {
+  SignalConfig grasp = 2;
+  SignalConfig release = 3;
+  SignalConfig gripping_indicated = 4;
+}
+
+message SuctionGripperConfig {
+  SignalConfig grasp = 2;
+  SignalConfig release = 3;
+  // Turn on blow off
+  SignalConfig blowoff_on = 4;
+  // Turn off blow off
+  SignalConfig blowoff_off = 6;
+  SignalConfig gripping_indicated = 5;
+}

@@ -1,0 +1,38 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "intrinsic/perception/scene_perception/proto/common/r3.proto";
+
+/*
+  The principal axes of an object.
+*/
+message PrincipalAxes {
+  /* A float in (0, 1] representing the ratio of the lengths of the second to
+  the first principal axes (i.e., treating the axes as if they describe an
+  ellipsoid).
+
+  See https://en.wikipedia.org/wiki/Spheroid#Aspect_ratio for discussion of
+  aspect ratio and eccentricity as applied to ellipsoids. */
+  float aspect_ratio_2_1 = 1;
+
+  /* A float in (0, 1] representing the ratio of the lengths of the third to the
+  first principal axes (i.e., treating the axes as if they describe an
+  ellipsoid).
+
+  See https://en.wikipedia.org/wiki/Spheroid#Aspect_ratio for discussion of
+  aspect ratio and eccentricity as applied to ellipsoids. */
+  float aspect_ratio_3_1 = 2;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the principal
+  axes estimate. */
+  float quality = 3;
+
+  /* A situated rotation that specifies the directions of the principal axes in
+  the workspace frame. When represented as rotated axes, the x-axis is the
+  first, the y-axis is the second, and the z-axis is the third principal
+  axis. */
+  intrinsic_proto.SituatedQuaternion rotation = 4;
+}

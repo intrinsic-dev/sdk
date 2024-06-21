@@ -1,0 +1,42 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+import "intrinsic/perception/scene_perception/proto/common/camera.proto";
+import "intrinsic/perception/scene_perception/proto/scene/structured_features.proto";
+import "intrinsic/perception/scene_perception/proto/scene/structured_objects.proto";
+
+/*
+  The state of some part of the environment at some time.
+
+  All R3 representations must share a common reference frame.
+
+  StructuredScene represents scene elements as a structured hierarchy of protos.
+*/
+message StructuredScene {
+  /* A collection of scene-level features. */
+  StructuredFeatures features = 1;
+
+  /* A collection of metadata associated with the scene. */
+  repeated google.protobuf.Any metadata = 2;
+
+  /* A collection of objects in the scene, if they are represented. */
+  StructuredObjects objects = 3;
+
+  /* The point in time represented by the scene. */
+  google.protobuf.Timestamp timestamp = 4;
+
+  /* A UUID to identify the scene. */
+  string uuid = 5;
+
+  /* A sample "view" into the physical scene.
+
+  This field is intended -only- as a visualization of the scene that was
+  estimated. *DO NOT* assume that the features represented in the scene are
+  derived from this view. */
+  intrinsic_proto.perception.SituatedFrame view = 6;
+}

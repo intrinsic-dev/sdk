@@ -1,0 +1,109 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.grasping;
+
+import "intrinsic/icon/proto/cart_space.proto";
+import "intrinsic/kinematics/types/joint_limits.proto";
+
+message GraspRankersParams {
+  reserved 1;
+
+  // Parameters for height based ranker.
+  optional HeightRankerParams height_ranker_params = 2;
+
+  // Parameters for IK-collision checker.
+  optional IkCollisionCheckerParams ik_collision_checker_params = 3;
+
+  // Parameters for visibility based ranker.
+  optional VisibilityRankerParams visibility_ranker_params = 4;
+
+  // Parameters for TopDownGraspRanker.
+  optional TopDownGraspRankerParams top_down_grasp_ranker_params = 5;
+
+  // Parameters for StraightLineChecker.
+  optional StraightLineCheckerParams straight_line_checker_params = 6;
+
+  // Parameters for diversity grasp ranker.
+  optional DiversityRankerParams diversity_ranker_params = 8;
+
+  // Weights for the rankers. Weight values have to be non-negative.
+  // If the map is empty and a visibility ranker is used, then the visibility
+  // ranker's weight is set to 10, and others set to 1; if the map is empty
+  // and no visibility rankers are used, then all weights are 1.
+  map<string, float> ranker_weights = 7;
+}
+
+message DiversityRankerParams {
+  // The score to return if a grasp is too close to a recently
+  // failed grasp. Defaults to 0.001 when unspecified.
+  // Set this to 0 will effectively cause the grasp to be filtered.
+  optional float min_score = 1;
+
+  //  The translation distance used to decide
+  //  whether a grasp G1 is too close to a grasp G2 in `target_grasps`. If
+  //  `dist(G1,G2) < distance_threshold`, return a score of `min_score`.
+  // Defaults to 0.01.
+  optional float distance_threshold_in_meters = 2;
+
+  // Similar to distance_threshold, but only used to check
+  // the distance in the z axis. dist(G1_z, G2_z)) <
+  // distance_threshold_z must be true for returning
+  // `min_score` for a grasp.
+  // Defaults to +inf.
+  optional float distance_threshold_z_in_meters = 3;
+}
+
+message IkCollisionCheckerParams {
+  // Joint limits used in grasp/pregrasp pose IK checks.
+  optional intrinsic_proto.JointLimitsUpdate joint_limits = 1;
+
+  // Whether to check collisions at grasp pose.
+  // If `eoat_name` is provided when constructing `IkCollisionChecker`,
+  // then `check_collision_at_grasp_pose=False` only disables collisions
+  // between gripper and the target object, and `True` enables all collisions.
+  // If `eoat_name` is not provided, then `check_collision_at_grasp_pose=False`
+  // disables all collisions, `True` enables all collisions.`
+  optional bool check_collision_at_grasp_pose = 2;
+
+  // Whether to require grasp pose to have same kinematic branch as starting
+  // robot joint positions.
+  optional bool require_same_branch_ik = 3;
+
+  // Passed to `MotionPlannerClient.compute_ik`.
+  // This has to be 1 if `require_same_branch_ik` is set to True.
+  optional int32 max_num_solutions = 4;
+}
+
+message StraightLineCheckerParams {
+  // Cartesian limits used in checking trajectory between pregrasp and grasp.
+  optional intrinsic_proto.icon.CartesianLimits cartesian_limits = 1;
+}
+
+message HeightRankerParams {
+  // Minimum expected height (in meters) of an object when grasping, expressed
+  // in root frame.
+  float min_grasp_height = 1;
+  // Maximum expected height (in meters) of an object when grasping, expressed
+  // in root frame.
+  float max_grasp_height = 2;
+}
+
+message VisibilityRankerParams {
+  // Use visibility as a metric to rank grasps.
+  bool use_visibility_ranker = 1;
+  // Minimum detection visibility in range [0,1] for a grasp to be considered
+  // valid.
+  float visibility_threshold = 2;
+}
+
+message TopDownGraspRankerParams {
+  // Used to filter out grasps based on how "top down" their approaching
+  // directions are. Grasps whose normalized top-down value is less
+  // than this will have a score of 0. E.g., When this is 0.5, all horizontal
+  // and bottom-up pointed grasps are scored 0; if 0.75, then all grasps lower
+  // than 45 degrees top-down are scored 0. See `TopDownGraspRanker` for
+  // details.
+  float top_down_score_threshold = 1;
+}

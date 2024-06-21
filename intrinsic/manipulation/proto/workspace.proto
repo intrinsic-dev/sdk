@@ -1,0 +1,24 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.manipulation;
+
+import "intrinsic/geometry/proto/oriented_bounding_box.proto";
+import "intrinsic/world/proto/object_world_refs.proto";
+
+// An oriented 3-D bounding box in a specific frame.
+message OrientedBoundingBoxWorkspace {
+  geometry.OrientedBoundingBox3 bounding_box = 1;
+  // Default to robot base frame if None.
+  optional intrinsic_proto.world.TransformNodeReference reference_frame = 2;
+}
+
+// A collection of oriented bounding boxes that represents a workspace. E.g., a
+// grasp workspace.
+message UnionOfBoxWorkspace {
+  string name = 1;
+  // Maps from the name of bounding box (e.g., "conveyor_zone_1") to the
+  // bounding box.
+  map<string, OrientedBoundingBoxWorkspace> bounding_boxes = 2;
+}

@@ -1,0 +1,20 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "intrinsic/perception/scene_perception/proto/common/r3.proto";
+
+/*
+  The centroid of an entity.
+*/
+message Centroid {
+  /* The situated position of the object's centroid in the workspace frame, in
+  meters. */
+  intrinsic_proto.SituatedPoint position = 1;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the centroid
+  estimate. */
+  float quality = 2;
+}

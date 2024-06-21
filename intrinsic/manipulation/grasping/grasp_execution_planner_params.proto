@@ -1,0 +1,42 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.grasping;
+
+import "intrinsic/motion_planning/proto/motion_specification.proto";
+
+message GraspExecutionPlannerParams {
+  // The robot to execute a grasp.
+  string robot_name = 1;
+  // The timeout in second for the path planning. If not set, use default value
+  // set in MotionPlannerService.
+  optional int64 path_planning_time_out_in_sec = 2;
+  // If True, the robot moves from starting position to grasp position via
+  // pregrasp position in a single trajectory. Default to False.
+  optional bool blend_pregrasp_and_grasp_trajs = 3;
+  // The path constraints applied to the motion segment from start to the
+  // pregrasp pose.
+  optional intrinsic_proto.motion_planning.PathConstraint
+      pregrasp_motion_path_constraints = 4;
+  // The path constraints applied to the motion segment from the pregrasp pose
+  // to the grasp pose.
+  optional intrinsic_proto.motion_planning.PathConstraint
+      grasp_motion_path_constraints = 5;
+  // The path constraints applied to the motion segment from the grasp pose to
+  // the postgrasp pose.
+  optional intrinsic_proto.motion_planning.PathConstraint
+      postgrasp_motion_path_constraints = 6;
+  // The DynamicCartesianLimits applied to the motion segment from start to the
+  // pregrasp pose.
+  optional intrinsic_proto.motion_planning.DynamicCartesianLimits
+      pregrasp_motion_dynamic_cartesian_limits = 7;
+  // The DynamicCartesianLimits applied to the motion segment from the pregrasp
+  // pose to the grasp pose.
+  optional intrinsic_proto.motion_planning.DynamicCartesianLimits
+      grasp_motion_dynamic_cartesian_limits = 8;
+  // The DynamicCartesianLimits applied to the motion segment from the grasp
+  // pose to the postgrasp pose.
+  optional intrinsic_proto.motion_planning.DynamicCartesianLimits
+      postgrasp_motion_dynamic_cartesian_limits = 9;
+}

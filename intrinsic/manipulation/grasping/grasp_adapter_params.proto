@@ -1,0 +1,17 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.grasping;
+
+message GraspAdaptersParams {
+  // Parameters for top-down adapter.
+  optional TopDownAdapterParams top_down_adapter_params = 1;
+}
+
+message TopDownAdapterParams {
+  optional float target_angle_in_radians = 1;
+  optional float max_tilt_angle_in_radians = 2;
+  optional string append_to_grasp_id = 3;
+  optional bool replace_adapted_grasps = 4;
+}

@@ -1,0 +1,24 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "intrinsic/perception/scene_perception/proto/common/r3.proto";
+
+/*
+  An oriented 3D bounding box.
+*/
+message R3BoundingBox {
+  /* The situated pose of the box in the workspace frame. The origin of the box
+  frame is its geometric center. */
+  intrinsic_proto.SituatedPose workspace_t_box = 1;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the bounding box
+  estimate. */
+  float quality = 2;
+
+  /* A three-element list representing the length of each (x, y, z) side of the
+  bounding box, in meters. */
+  repeated float size = 3;
+}

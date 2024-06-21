@@ -1,0 +1,18 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+/*
+  The fraction of a container that is filled.
+*/
+message FillLevel {
+  /* A value in [0, 1] that represents the fraction of the container that is
+  filled. */
+  float fill_level = 1;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the fill-level
+  estimate. */
+  float quality = 2;
+}

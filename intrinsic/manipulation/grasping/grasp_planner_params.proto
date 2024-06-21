@@ -1,0 +1,72 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.grasping;
+
+import "intrinsic/manipulation/grasping/grasp.proto";
+import "intrinsic/manipulation/grasping/grasp_adapter_params.proto";
+import "intrinsic/manipulation/grasping/grasp_ranker_params.proto";
+import "intrinsic/manipulation/proto/workspace.proto";
+import "intrinsic/world/proto/object_world_refs.proto";
+
+message GraspPlannerParams {
+  oneof params {
+    BaseGraspPlannerParams base_grasp_planner_params = 1;
+    MockGraspPlannerParams mock_grasp_planner_params = 2;
+  }
+}
+
+// Parameters to construct a MockGraspPlanner
+message MockGraspPlannerParams {
+  optional intrinsic_proto.grasping.GraspPlan plan_to_return = 1;
+}
+
+// Parameters to construct a BaseGraspPlanner
+message BaseGraspPlannerParams {
+  repeated intrinsic_proto.grasping.PoseBasedGraspInfo grasp_infos = 1;
+
+  // Maximum number of grasps to return.
+  optional int64 max_num_grasps = 2;
+
+  // Grasp frame z-axis offset in its positive direction. Used to locally adjust
+  // the grasp point. E.g., 0.02 means grasp is 2cm further along the z-axis
+  // (usually means it's 2cm deeper into the object or closer to the object).
+  optional float grasp_frame_z_offset_m = 3;
+
+  // The distance between grasp and pregrasp frames.
+  optional float retract_dist_m = 4;
+
+  // This is the product name defined in the product document (also see
+  // `object_world_client.create_object_from_product_part()`.)
+  // It is used as the `object_category` to be grasped, and for obtaining
+  // object specific parameters in `plan_grasp_constants`.
+  string product_part_name = 5;
+
+  // The tool frame to use for the grasp.
+  intrinsic_proto.world.TransformNodeReference tool_frame = 6;
+
+  // The robot to perform this grasp.
+  string robot_name = 7;
+
+  // Ranker specific parameters.
+  optional intrinsic_proto.grasping.GraspRankersParams rankers_params = 8;
+
+  // The name of the gripper object in world, e.g., `picobot_gripper`.
+  // Used to disable collisions between gripper and the target object. This
+  // needs to be the root entity of the gripper, *not* the tool frame.
+  // If unspecified, then either all collisions are disabled or all are enabled
+  // depending on `IkCollisionCheckerParams.check_collision_at_grasp_pose`.
+  optional string eoat_name = 9;
+
+  // Use this to specify target picking zone and perform zone-based grasp
+  // planning. This is only used if `objects` is empty
+  optional intrinsic_proto.manipulation.OrientedBoundingBoxWorkspace
+      grasp_bbox_zone = 10;
+
+  // Adapter specific parameters.
+  optional intrinsic_proto.grasping.GraspAdaptersParams adapters_params = 11;
+
+  // The maximum number of recently executed grasps to consider in planning.
+  optional int32 max_num_recent_grasps = 12;
+}

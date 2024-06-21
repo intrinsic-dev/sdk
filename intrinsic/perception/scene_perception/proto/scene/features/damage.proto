@@ -1,0 +1,17 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+/*
+  Information about (potential) damage to an entity.
+*/
+message Damage {
+  /* The probability (in [0, 1]) that the entity is damaged. */
+  float damage_probability = 1;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the damage
+  estimate. */
+  float quality = 2;
+}

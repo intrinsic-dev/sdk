@@ -1,0 +1,29 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "intrinsic/math/proto/array.proto";
+import "intrinsic/perception/scene_perception/proto/common/r3.proto";
+
+/*
+  A triangle mesh representation of an entity.
+*/
+message Mesh {
+  /* A <num faces> x 3 float array of the vertex indices associated with each
+  mesh face. */
+  intrinsic_proto.Array faces = 1;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the mesh estimate
+  as a whole. */
+  float quality = 2;
+
+  /* An <num vertices>-length float array of values in [0, 1] that represent a
+  unitless "quality" of each estimated vertex. */
+  intrinsic_proto.Array vertex_qualities = 3;
+
+  /* A <num vertices> x 3 float array of the (x, y, z) situated position of each
+  vertex in the workspace frame, in meters. */
+  intrinsic_proto.SituatedPoints vertices = 4;
+}

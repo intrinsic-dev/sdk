@@ -1,0 +1,135 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.grasping.service;
+
+import "google/protobuf/empty.proto";
+import "intrinsic/icon/proto/joint_space.proto";
+import "intrinsic/manipulation/grasping/grasp.proto";
+import "intrinsic/manipulation/grasping/grasp_execution_planner_params.proto";
+import "intrinsic/manipulation/grasping/grasp_planner_params.proto";
+import "intrinsic/manipulation/proto/workspace.proto";
+
+// Parameters to plan grasps by the GraspPlannerService
+message GPSPlanGraspsParams {
+  // The world used to plan grasps.
+  string world_id = 1;
+
+  // The ID of the grasp workspace.
+  string workspace_id = 2;
+
+  // A list of annotated grasp targets.
+  repeated intrinsic_proto.grasping.GraspTarget grasp_targets = 3;
+
+  // The start robot joint positions when executing this grasp.
+  intrinsic_proto.icon.JointVec start_robot_joint_positions = 4;
+}
+
+// Parameters to plan a grasp execution by the GraspPlannerService
+message GPSPlanGraspExecutionParams {
+  // Grasp to plan.
+  intrinsic_proto.grasping.Grasp grasp = 1;
+
+  // The world used to plan the grasp execution.
+  string world_id = 2;
+
+  // The start robot joint positions when executing this grasp.
+  intrinsic_proto.icon.JointVec start_robot_joint_positions = 4;
+}
+
+// The parameters to start continuous grasp planning.
+message GPSContinuousPlanningParams {
+  // The parameters to run continuous grasp planning.
+  GPSPlanGraspsParams plan_grasps_params = 1;
+}
+
+message ScenePerceptionInfo {
+  // Name of the scene perceiver for this planner.
+  string scene_perceiver_name = 1;
+  // The zone estimates the field of view of the camera.
+  // The robot needs to be out of this region before we perceive a scene.
+  intrinsic_proto.manipulation.OrientedBoundingBoxWorkspace camera_space = 2;
+  // The robot to check.
+  string robot_name = 3;
+}
+
+// A request to register a grasp planner with a given id.
+message RegisterGraspPlannerRequest {
+  // The ID of the planner. This ID will be used later to plan grasps.
+  // If the planner with the same ID is already registered, the service will
+  // return a failure unless `overwrite` is set to True.
+  string planner_id = 1;
+
+  // The parameters to construct a grasp planner.
+  intrinsic_proto.grasping.GraspPlannerParams grasp_planner_params = 2;
+
+  // The parameters to construct a grasp execution planner.
+  intrinsic_proto.grasping.GraspExecutionPlannerParams
+      grasp_execution_planner_params = 5;
+
+  // Information to get a scene for grasp planning. If not set, do not perceive
+  // a scene before planning grasps.
+  optional ScenePerceptionInfo scene_perception_info = 3;
+
+  // The parameters to start continuous grasp planning.
+  optional GPSContinuousPlanningParams continuous_planning_params = 4;
+}
+
+message RegisterGraspPlannerResponse {
+  // True if a grasp planner is successfully registered.
+  bool success = 1;
+  // Any message to help debugging.
+  optional string debug_message = 2;
+}
+
+// A request to plan grasps with the given planner.
+message PlanGraspsRequest {
+  // The planner to use for planning. Must be already registered.
+  string planner_id = 1;
+  // The parameters for grasp planning.
+  GPSPlanGraspsParams plan_grasps_params = 2;
+}
+
+message NotifyGraspResultsRequest {
+  // The planner to send the result. Must be already registered.
+  string planner_id = 1;
+  // The grasps that have been executed.
+  repeated intrinsic_proto.grasping.AttemptedGrasp executed_grasps = 2;
+}
+
+message PlanGraspExecutionRequest {
+  // The planner to use for planning. Must be already registered.
+  string planner_id = 7;
+  // The parameters for grasp execution planning.
+  GPSPlanGraspExecutionParams plan_grasp_execution_params = 8;
+  reserved 1, 2, 3, 4, 5, 6;
+}
+
+message GraspPlannerServiceConfig {
+  // The ingress address for connecting to all services.
+  string ingress_address = 1;
+  // The list of scene perception resource instance names to use as scene
+  // perceivers.
+  repeated string scene_perception_resource_instance_names = 2;
+  // The cache size limit per each group. See `PlanGraspsCache`.
+  int64 max_cache_size_per_group = 3;
+}
+
+service GraspPlannerService {
+  // Construct and register a grasp planner
+  rpc RegisterGraspPlanner(RegisterGraspPlannerRequest)
+      returns (RegisterGraspPlannerResponse) {}
+  // Stop all grasp planning and remove all grasp planners.
+  rpc RemoveAllGraspPlanners(google.protobuf.Empty)
+      returns (google.protobuf.Empty) {}
+  // Plan grasps
+  rpc PlanGrasps(PlanGraspsRequest)
+      returns (intrinsic_proto.grasping.GraspPlan) {}
+  // Notify grasp results
+  rpc NotifyGraspResults(NotifyGraspResultsRequest)
+      returns (google.protobuf.Empty) {}
+  // Plan grasp execution
+  rpc PlanGraspExecution(PlanGraspExecutionRequest)
+      returns (intrinsic_proto.grasping.GraspExecutionPlanningResult) {}
+}

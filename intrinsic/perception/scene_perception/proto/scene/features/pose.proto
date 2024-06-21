@@ -1,0 +1,19 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "intrinsic/perception/scene_perception/proto/common/r3.proto";
+
+/*
+  The 6DoF pose of an object.
+*/
+message Pose {
+  /* A value in [0, 1] that represents a unitless "quality" of the pose
+  estimate. */
+  float quality = 1;
+
+  /* The situated pose of the object in the workspace frame. */
+  intrinsic_proto.SituatedPose workspace_t_obj = 2;
+}
