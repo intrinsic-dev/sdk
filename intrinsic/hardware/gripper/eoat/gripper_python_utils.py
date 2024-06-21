@@ -440,8 +440,10 @@ class AdaptivePinchGripper(Gripper):
       if command.HasField("position"):
         gripper_closure_position = command.position
       if command.HasField("position_percentage"):
-        gripper_joint_position = command.position_percentage * (
-            joint_limit_upper - joint_limit_lower
+        gripper_joint_position = (
+            command.position_percentage
+            / 100.0
+            * (joint_limit_upper - joint_limit_lower)
         )
 
     if gripper_closure_position is not None:
