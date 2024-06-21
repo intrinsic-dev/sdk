@@ -3,6 +3,7 @@
 #ifndef INTRINSIC_UTIL_AGGREGATE_TYPE_H_
 #define INTRINSIC_UTIL_AGGREGATE_TYPE_H_
 
+#include <optional>
 #include <set>
 #include <tuple>
 #include <type_traits>
