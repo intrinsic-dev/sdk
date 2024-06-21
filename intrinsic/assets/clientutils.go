@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+
 	"intrinsic/assets/cmdutils"
 
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -358,6 +359,13 @@ func dialInfoCtx(ctx context.Context, params dialInfoParams) (context.Context, *
 	)
 
 	return ctx, &finalOpts, params.Address, nil
+}
+
+// AuthInsecureConn returns a context with authentication information if the address is insecure.
+func AuthInsecureConn(ctx context.Context, address string, project string) context.Context {
+	authCtx := ctx
+
+	return authCtx
 }
 
 func resolveClusterAddress(address string, project string) (string, error) {

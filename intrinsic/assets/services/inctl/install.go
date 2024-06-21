@@ -44,7 +44,7 @@ func GetCommand() *cobra.Command {
 			ctx := cmd.Context()
 			target := args[0]
 
-			ctx, conn, _, err := clientutils.DialClusterFromInctl(ctx, flags)
+			ctx, conn, address, err := clientutils.DialClusterFromInctl(ctx, flags)
 			if err != nil {
 				return err
 			}
@@ -95,9 +95,10 @@ func GetCommand() *cobra.Command {
 			log.Printf("Installing service %q", idVersion)
 
 			client := installergrpcpb.NewInstallerServiceClient(conn)
-			installerCtx := ctx
+			authCtx := clientutils.AuthInsecureConn(ctx, address, flags.GetFlagProject())
 
-			resp, err := client.InstallService(installerCtx, &installerpb.InstallServiceRequest{
+			// This needs an authorized context to pull from the catalog if not available.
+			resp, err := client.InstallService(authCtx, &installerpb.InstallServiceRequest{
 				Manifest: manifest,
 				Version:  version,
 			})

@@ -70,6 +70,7 @@ $ inctl service delete --project=my_project --cluster=some_cluster my_instance
 
 	flags.SetCommand(cmd)
 	flags.AddFlagsAddressClusterSolution()
+	flags.AddFlagsProjectOrg()
 
 	return cmd
 }

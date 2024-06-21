@@ -67,7 +67,7 @@ $ inctl service add ai.intrinsic.basler_camera \
 				}
 			}
 
-			ctx, conn, _, err := clientutils.DialClusterFromInctl(ctx, flags)
+			ctx, conn, address, err := clientutils.DialClusterFromInctl(ctx, flags)
 			if err != nil {
 				return fmt.Errorf("could not create connection to cluster: %w", err)
 			}
@@ -83,7 +83,10 @@ $ inctl service add ai.intrinsic.basler_camera \
 
 			log.Printf("Requesting %q be added as a service instance", name)
 			client := adgrpcpb.NewAssetDeploymentServiceClient(conn)
-			op, err := client.CreateResourceFromCatalog(ctx, &adpb.CreateResourceFromCatalogRequest{
+			authCtx := clientutils.AuthInsecureConn(ctx, address, flags.GetFlagProject())
+
+			// This needs an authorized context to pull from the catalog if not available.
+			op, err := client.CreateResourceFromCatalog(authCtx, &adpb.CreateResourceFromCatalogRequest{
 				TypeIdVersion: idVersion,
 				Configuration: &adpb.ResourceInstanceConfiguration{
 					Name:          name,
@@ -117,6 +120,7 @@ $ inctl service add ai.intrinsic.basler_camera \
 
 	flags.SetCommand(cmd)
 	flags.AddFlagsAddressClusterSolution()
+	flags.AddFlagsProjectOrg()
 	flags.OptionalString(keyConfig, "", "The filename of a binary-serialized Any proto containing this services's configuration.")
 	flags.OptionalString(keyName, "", "The name of this service instance.")
 
