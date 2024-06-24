@@ -110,7 +110,7 @@ func makeOrgNotFound(inner error, org string) error {
 }
 
 // PreRunOrganization provides the organization/project flag handling as PersistentPreRunE of a cobra command.
-// This is done automatically with the wrap function.
+// This is done automatically with the WrapCmd() function.
 func PreRunOrganization(cmd *cobra.Command, vipr *viper.Viper) error {
 	projectFlag := cmd.PersistentFlags().Lookup(KeyProject)
 	orgFlag := cmd.PersistentFlags().Lookup(KeyOrganization)
