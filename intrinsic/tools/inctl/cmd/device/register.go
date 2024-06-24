@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"intrinsic/frontend/cloud/devicemanager/shared"
 	"intrinsic/tools/inctl/cmd/device/projectclient"
@@ -94,7 +95,8 @@ func waitForConfigDownload(ctx context.Context, client projectclient.AuthedClien
 				return fmt.Errorf("the IPC did not reach cloud infrastructure.\nPlease make sure the IPC has a stable internet connection and retry")
 			}
 
-			return fmt.Errorf("get config status: %w", err)
+			// This could be a transient network error or a 5xx error from nginx.
+			log.WarningContextf(ctx, "Unexpected error while waiting for download, retrying: %v", err)
 		}
 		if downloaded, ok := status["downloaded"]; ok {
 			if downloaded.(bool) {
@@ -115,7 +117,8 @@ func waitForStatusAvailable(ctx context.Context, client projectclient.AuthedClie
 				return fmt.Errorf("the IPC failed to initialize.\nPlease make sure the IPC has as stable internet connection")
 			}
 
-			return fmt.Errorf("get status: %w", err)
+			// This could be a transient network error.
+			log.WarningContextf(ctx, "Unexpected error while getting status, retrying: %v", err)
 		}
 		resp.Body.Close()
 
@@ -127,7 +130,8 @@ func waitForStatusAvailable(ctx context.Context, client projectclient.AuthedClie
 		// StatusBadGateway is expected when the control plane isn't up yet.
 		// StatusNotFound is expected when a worker node isn't up yet.
 		if resp.StatusCode != http.StatusBadGateway && resp.StatusCode != http.StatusNotFound {
-			return fmt.Errorf("IPC did not offer status. http code: %v", resp.StatusCode)
+			// This could be a transient nginx 5xx error.
+			log.WarningContextf(ctx, "Unexpected error while getting status, retrying: %d", resp.StatusCode)
 		}
 
 		fmt.Printf(".")
@@ -249,7 +253,7 @@ var registerCmd = &cobra.Command{
 		}
 		if !noWait {
 			if err := waitForCluster(cmd.Context(), client, clusterName, deviceID, hostname); err != nil {
-				return fmt.Errorf("failed to wait for config download: %w", err)
+				return fmt.Errorf("wait for device: %w", err)
 			}
 		}
 
