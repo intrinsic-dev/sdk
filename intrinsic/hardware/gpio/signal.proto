@@ -58,6 +58,13 @@ message SignalDescription {
   // represents the index of the corresponding bit.
   string signal_name = 1;
 
+  // An alternative name used to reference signals using the GPIOService API.
+  //
+  // Some GPIO service implementations allow signals to be referenced by an
+  // additional ID (e.g., OpcuaGPIOService). Those implementations should
+  // populate this field with that additional ID.
+  optional string alternate_signal_name = 8;
+
   // If true, then callers can read the value of this signal.
   bool can_read = 2;
 
