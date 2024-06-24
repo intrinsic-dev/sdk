@@ -10,6 +10,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/cord.h"
 #include "google/protobuf/any.pb.h"
+#include "google/rpc/status.pb.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/skills/proto/error.pb.h"
 #include "intrinsic/util/proto/type_url.h"

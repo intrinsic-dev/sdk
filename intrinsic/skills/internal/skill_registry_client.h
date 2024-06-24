@@ -14,6 +14,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "grpcpp/grpcpp.h"
+#include "grpcpp/impl/channel_interface.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/internal/proto/behavior_tree_registry_internal.grpc.pb.h"
 #include "intrinsic/skills/internal/proto/skill_registry_internal.grpc.pb.h"

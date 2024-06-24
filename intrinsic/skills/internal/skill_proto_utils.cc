@@ -25,7 +25,6 @@
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/skill_manifest.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
-#include "intrinsic/util/proto/descriptors.h"
 #include "intrinsic/util/proto/source_code_info_view.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "re2/re2.h"
