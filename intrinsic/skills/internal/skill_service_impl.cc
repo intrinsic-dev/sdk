@@ -2,6 +2,7 @@
 
 #include "intrinsic/skills/internal/skill_service_impl.h"
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -122,14 +123,21 @@ absl::Status UpdateExtendedStatusOnError(
   intrinsic_proto::status::ExtendedStatus es;
   std::optional<absl::Cord> extended_status_payload =
       status.GetPayload(AddTypeUrlPrefix(es));
-  if (!extended_status_payload) {
-    return status;
-  }
-  // This should not happen, but since we cannot control the data a skill
-  // developer could put anything. Hence, if we fail to interpret the data just
-  // return as-is.
-  if (!es.ParseFromCord(*extended_status_payload)) {
-    return status;
+  if (extended_status_payload) {
+    // This should not happen, but since we cannot control the data a skill
+    // developer could put anything. Hence, if we fail to interpret the data
+    // just return as-is.
+    if (!es.ParseFromCord(*extended_status_payload)) {
+      LOG(WARNING) << "Skill " << skill_id
+                   << " issued an invalid extended status payload";
+      return status;
+    }
+  } else {
+    // Fallback conversion to extended status if non given
+    es.mutable_status_code()->set_code(static_cast<uint32_t>(status.code()));
+    es.set_title(absl::StrFormat("Skill failed (generic code %s)",
+                                 absl::StatusCodeToString(status.code())));
+    es.mutable_external_report()->set_message(status.message());
   }
 
   if (!es.has_status_code() || es.status_code().component().empty()) {

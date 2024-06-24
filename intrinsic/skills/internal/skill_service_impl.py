@@ -971,37 +971,48 @@ def _handle_skill_error(
   logging.exception(message)
 
   details = []
+
+  es_proto = extended_status_pb2.ExtendedStatus()
+
   if isinstance(err, status_exception.ExtendedStatusError):
     es_proto = cast(status_exception.ExtendedStatusError, err).proto
+  else:
+    # Convert the error to an extended status
+    es_proto = extended_status_pb2.ExtendedStatus(
+        status_code=extended_status_pb2.StatusCode(
+            component=skill_id, code=status.StatusCodeAsInt(code)
+        ),
+        title=f'Skill {action} {op_name}',
+        external_report=extended_status_pb2.ExtendedStatus.Report(
+            message=str(err)
+        ),
+    )
 
-    # Always overwrite the component. We do not give a skill author freedom to
-    # choose this field.
-    if (
-        not es_proto.HasField('status_code')
-        or not es_proto.status_code.component
+  # Always overwrite the component. We do not give a skill author freedom to
+  # choose this field.
+  if not es_proto.HasField('status_code') or not es_proto.status_code.component:
+    es_proto.status_code.component = skill_id
+  elif es_proto.status_code.component != skill_id:
+    # this may be a case of a skill author simply returning an error
+    # previously received from, e.g., a service. This should not be the
+    # skill's status, but we also cannot just overwrite it. Wrap this into a
+    # new extended status.
+    new_es_proto = extended_status_pb2.ExtendedStatus(
+        status_code=extended_status_pb2.StatusCode(component=skill_id)
+    )
+    new_es_proto.context.add().CopyFrom(es_proto)
+    es_proto = new_es_proto
+
+  if log_context is not None:
+    # If the extended status has no log context set, yet, add it
+    if not es_proto.HasField('related_to') or not es_proto.related_to.HasField(
+        'log_context'
     ):
-      es_proto.status_code.component = skill_id
-    elif es_proto.status_code.component != skill_id:
-      # this may be a case of a skill author simply returning an error
-      # previously received from, e.g., a service. This should not be the
-      # skill's status, but we also cannot just overwrite it. Wrap this into a
-      # new extended status.
-      new_es_proto = extended_status_pb2.ExtendedStatus(
-          status_code=extended_status_pb2.StatusCode(component=skill_id)
-      )
-      new_es_proto.context.add().CopyFrom(es_proto)
-      es_proto = new_es_proto
+      es_proto.related_to.log_context.CopyFrom(log_context)
 
-    if log_context is not None:
-      # If the extended status has no log context set, yet, add it
-      if not es_proto.HasField(
-          'related_to'
-      ) or not es_proto.related_to.HasField('log_context'):
-        es_proto.related_to.log_context.CopyFrom(log_context)
-
-    status_any = any_pb2.Any()
-    status_any.Pack(es_proto)
-    details.append(status_any)
+  status_any = any_pb2.Any()
+  status_any.Pack(es_proto)
+  details.append(status_any)
 
   return status_pb2.Status(
       code=status.StatusCodeAsInt(code),
