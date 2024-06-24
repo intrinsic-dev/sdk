@@ -13,6 +13,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "intrinsic/icon/proto/types.pb.h"
 
 namespace intrinsic {

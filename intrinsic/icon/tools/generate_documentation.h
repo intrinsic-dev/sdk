@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "absl/status/statusor.h"
+#include "absl/types/span.h"
 #include "intrinsic/icon/proto/types.pb.h"
 
 namespace intrinsic {
