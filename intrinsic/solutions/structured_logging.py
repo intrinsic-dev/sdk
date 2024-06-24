@@ -781,7 +781,8 @@ class StructuredLogs:
     Args:
       event_source: The topic to read.
       seconds_to_read: Only considers recent logs within this timeframe
-      max_num_items: Return at most this many items.
+      max_num_items: Return at most this many items from the start of the time
+        range.
 
     Returns:
       Log items from the given event source
@@ -812,7 +813,8 @@ class StructuredLogs:
       event_source: The topic to read.
       start_time: Beginning of window to query data for.
       end_time: End of window to query data for.
-      max_num_items: Return at most this many items.
+      max_num_items: Return at most this many items from the start of the time
+        range.
 
     Returns:
       Log items from the given event source within the specified time range.
