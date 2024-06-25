@@ -207,4 +207,5 @@ service MotionPlannerService {
   // PlanTrajectory uses caching to speed up repeated similar planning calls.
   // Clear cache for PlanTrajectory.
   rpc ClearCache(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
 }
