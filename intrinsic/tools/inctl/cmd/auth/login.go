@@ -162,6 +162,8 @@ func loginCmdE(cmd *cobra.Command, _ []string) (err error) {
 		if err != nil {
 			return fmt.Errorf("query project: %w", err)
 		}
+	}
+	if orgName != "" {
 		if err := authStore.WriteOrgInfo(&auth.OrgInfo{Organization: orgName, Project: projectName}); err != nil {
 			return fmt.Errorf("store org info: %w", err)
 		}

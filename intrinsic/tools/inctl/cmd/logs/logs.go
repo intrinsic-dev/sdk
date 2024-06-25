@@ -167,7 +167,7 @@ func init() {
 
 	// inctl logs --(org|project) --solution [--address] --follow --(service|skill|resource) (manifest|id)
 
-	cmdFlags.AddFlagsProjectOrg()
+	cmdFlags.AddFlagProjectOptional()
 
 	cmdFlags.OptionalEnvString(cmdutils.KeySolution, "", "Solution ID from which logs will be read.")
 	cmdFlags.OptionalEnvString(cmdutils.KeyContext, "", fmt.Sprintf("The Kubernetes cluster to use or localhost if used with --%s", cmdutils.KeyAddress))
