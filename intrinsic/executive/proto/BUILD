@@ -6,7 +6,7 @@ load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_pro
 load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 load("//intrinsic/util/proto/build_defs:descriptor_set.bzl", "proto_source_code_info_transitive_descriptor_set")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//intrinsic:public_api_users"])
 
 # behavior_call
 proto_library(
