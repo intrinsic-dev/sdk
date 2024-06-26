@@ -43,6 +43,9 @@ message DigitalBlock {
 
 // Output values to set on the device.
 message SetDigitalOutputs {
+  // Maps from the name of the output block to the values to set.
+  // The name must match the name of a DigitalOutputBlock in the
+  // GenericAdioConfig.
   map<string, DigitalBlock> digital_outputs = 1;
 }
 
