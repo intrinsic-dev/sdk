@@ -298,6 +298,7 @@ message BehaviorTree {
     optional State state = 1 [(output_only) = true];
 
     oneof task_type {
+      // Call a skill or Parameterizable Behavior Tree.
       intrinsic_proto.executive.BehaviorCall call_behavior = 3;
     }
 
