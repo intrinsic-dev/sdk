@@ -1,0 +1,96 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.stubs_test;
+
+import "google/protobuf/duration.proto";
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/world/proto/object_world_refs.proto";
+
+message EmptyMessage {}
+
+message BasicParams {
+  optional double my_double = 1;
+  optional int32 my_int = 2;
+  optional bool my_bool = 3;
+  optional string my_string = 4;
+
+  double required_double = 5;
+  repeated double repeated_double = 6;
+
+  EmptyMessage required_message = 7;
+  optional EmptyMessage optional_message = 8;
+  repeated EmptyMessage repeated_message = 9;
+
+  map<string, int32> string_int_map = 10;
+  map<string, EmptyMessage> string_message_map = 11;
+
+  enum MyEnum {
+    MY_ENUM_UNSPECIFIED = 0;
+    MY_ENUM_FIRST_VALUE = 1;
+    MY_ENUM_SECOND_VALUE = 2;
+  }
+
+  MyEnum my_enum = 13;
+}
+
+// Message with fields for which we support auto-conversion from Python types to
+// the corresponding proto types. This only covers some example types and is not
+// intended to be exhaustive.
+message AutoConversionParams {
+  google.protobuf.Duration duration = 1;
+  intrinsic_proto.Pose pose = 2;
+  world.ObjectReference object_reference = 3;
+}
+
+message NestedBasicParams {
+  BasicParams basic_params = 1;
+}
+
+message OuterMessage {
+  message NestedMessage {}
+}
+
+message AnotherOuterMessage {
+  message AnotherNestedMessage {}
+}
+
+message VariousMessageParams {
+  // Use outer message but not nested message.
+  OuterMessage.NestedMessage nested_message = 1;
+
+  // Use outer and nested message.
+  AnotherOuterMessage another_outer_message = 4;
+  AnotherOuterMessage.AnotherNestedMessage another_nested_message = 5;
+
+  EmptyMessage empty_message = 2;
+  intrinsic_proto.Pose pose_message = 3;
+}
+
+enum GlobalEnum {
+  GLOBAL_ENUM_UNSPECIFIED = 0;
+  GLOBAL_ENUM_FIRST_VALUE = 1;
+  GLOBAL_ENUM_SECOND_VALUE = 2;
+}
+
+// Message not used by skill directly, only nested enum is used.
+message UnusedMessage {
+  enum UsedEnum {
+    USED_ENUM_UNSPECIFIED = 0;
+    USED_ENUM_FIRST_VALUE = 1;
+    USED_ENUM_SECOND_VALUE = 2;
+  }
+}
+
+message ParamsWithVariousEnums {
+  enum ParamsEnum {
+    LOCAL_ENUM_UNSPECIFIED = 0;
+    LOCAL_ENUM_FIRST_VALUE = 1;
+    LOCAL_ENUM_SECOND_VALUE = 2;
+  }
+
+  GlobalEnum global_enum = 1;
+  ParamsEnum params_enum = 2;
+  UnusedMessage.UsedEnum used_enum = 3;
+}

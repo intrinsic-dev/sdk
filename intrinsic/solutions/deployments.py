@@ -46,6 +46,7 @@ from intrinsic.solutions import userconfig
 from intrinsic.solutions import worlds
 from intrinsic.solutions.internal import resources as resources_mod
 from intrinsic.solutions.internal import skill_providing
+from intrinsic.solutions.internal import stubs
 from intrinsic.util.grpc import error_handling
 
 
@@ -315,6 +316,30 @@ class Solution:
 
   def update_skills(self) -> None:
     self.skills.update()
+
+  def generate_stubs(self, output_path: str) -> None:
+    """Generates type stubs for all available skill classes in the solution.
+
+    The generated stubs can be provided to an IDE or type checker to get proper
+    language and type support when working with the auto-generated skill classes
+    of the solution building library. Usage examples:
+      - VS Code: The given 'output_path' should match the value of the
+        'python.analysis.stubPath' setting. After generating the stubs, a
+        restart of the Python language server is usually required.
+      - mypy: The given 'output_path' should be included in the $MYPYPATH
+        environment variable.
+
+    The generated stubs are specific to a solution. They match the skills
+    installed in the solution at their respective version. Hence the stubs need
+    to be updated when the skills in the solution change or when connecting to a
+    different solution.
+
+    Args:
+      output_path: The root directory into which the stubs shall be written.
+        E.g., the file '<output_path>/intrinsic-stubs/solutions/providers.pyi'
+        will be generated.
+    """
+    stubs.generate(output_path, self.skills, sys.stdout)
 
 
 def connect(

@@ -3,7 +3,12 @@
 # Solution building Python libraries.
 
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
+load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load(
+    "//intrinsic/util/proto/build_defs:descriptor_set.bzl",
+    "proto_source_code_info_transitive_descriptor_set",
+)
 
 package(default_visibility = [
     "//intrinsic/solutions:__subpackages__",
@@ -211,5 +216,55 @@ py_test(
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
         "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_library(
+    name = "stubs",
+    srcs = ["stubs.py"],
+    deps = [
+        ":skill_generation",
+        ":skill_utils",
+        requirement("black"),
+        "//intrinsic/math/python:data_types",
+        "//intrinsic/solutions:provided",
+        "//intrinsic/solutions:providers",
+        requirement("typing-extensions"),
+    ],
+)
+
+proto_library(
+    name = "stubs_test_proto",
+    srcs = ["stubs_test.proto"],
+    deps = [
+        "//intrinsic/math/proto:pose_proto",
+        "//intrinsic/world/proto:object_world_refs_proto",
+        "@com_google_protobuf//:duration_proto",
+    ],
+)
+
+py_proto_library(
+    name = "stubs_test_py_pb2",
+    deps = [":stubs_test_proto"],
+)
+
+proto_source_code_info_transitive_descriptor_set(
+    name = "stubs_test_proto_descriptors",
+    deps = [":stubs_test_proto"],
+)
+
+py_test(
+    name = "stubs_test",
+    srcs = ["stubs_test.py"],
+    data = [
+        ":stubs_test_proto_descriptors",
+    ],
+    srcs_version = "PY3",
+    deps = [
+        ":skill_providing",
+        ":stubs",
+        ":stubs_test_py_pb2",
+        "//intrinsic/solutions/testing:skill_test_utils",
+        "@com_google_absl_py//absl/testing:absltest",
     ],
 )

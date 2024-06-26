@@ -134,6 +134,7 @@ py_library(
         "//intrinsic/skills/client:skill_registry_client",
         "//intrinsic/solutions/internal:resources",
         "//intrinsic/solutions/internal:skill_providing",
+        "//intrinsic/solutions/internal:stubs",
         "//intrinsic/util/grpc:error_handling",
         requirement("grpcio"),
         "@com_google_protobuf//:protobuf_python",
