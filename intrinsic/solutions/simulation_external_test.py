@@ -31,16 +31,6 @@ class SimulationTest(absltest.TestCase):
         simulation_service_pb2.ResetSimulationRequest()
     )
 
-  def test_get_realtime_factor(self):
-    self.simulation_service_stub.GetRealtimeFactor.return_value = 2
-
-    result = self.simulation.get_realtime_factor()
-
-    self.simulation_service_stub.GetRealtimeFactor.assert_called_once_with(
-        empty_pb2.Empty()
-    )
-    self.assertEqual(result, 2)
-
 
 if __name__ == '__main__':
   absltest.main()

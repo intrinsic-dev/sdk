@@ -17,11 +17,6 @@ service SimulationService {
   // affected components such as ICON are in a working state.
   rpc ResetSimulation(ResetSimulationRequest) returns (google.protobuf.Empty) {
   }
-
-  // Returns the ratio of simulation to real clock time, i.e. the time elapsed
-  // in the sim world within a unit timespan on the real clock.
-  rpc GetRealtimeFactor(google.protobuf.Empty)
-      returns (google.protobuf.DoubleValue) {}
 }
 
 // Request for resetting the current simulation.

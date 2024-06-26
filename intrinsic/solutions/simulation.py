@@ -11,7 +11,6 @@ Typical usage example:
   simulation.reset()
 """
 
-from google.protobuf import empty_pb2
 import grpc
 from intrinsic.math.python import proto_conversion
 from intrinsic.simulation.service.proto import simulation_service_pb2
@@ -77,20 +76,3 @@ class Simulation:
     """
     request = simulation_service_pb2.ResetSimulationRequest()
     self._call_simulation_service_reset(request)
-
-  @error_handling.retry_on_grpc_unavailable
-  def _call_simulation_service_get_realtime_factor(self):
-    return self._simulation_service.GetRealtimeFactor(empty_pb2.Empty())
-
-  @error_handling.retry_on_grpc_unavailable
-  def get_realtime_factor(self) -> float:
-    """Gets the simulation realtime factor.
-
-    If a simulation is actively running, returns the ratio of simulation to real
-    time, i.e. the time elapsed in the sim world within a unit timespan on the
-    real clock.
-
-    Returns:
-      float Realtime factor
-    """
-    return self._call_simulation_service_get_realtime_factor()

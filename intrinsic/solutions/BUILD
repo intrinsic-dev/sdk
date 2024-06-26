@@ -435,7 +435,6 @@ py_library(
         "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
         "//intrinsic/world/python:object_world_resources",
         requirement("grpcio"),
-        "@com_google_protobuf//:protobuf_python",
     ],
 )
 
