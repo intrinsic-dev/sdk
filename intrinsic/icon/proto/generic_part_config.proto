@@ -131,6 +131,9 @@ message GenericProcessWrenchConfig {
 message GenericPayloadConfig {
   // Empty for now.
 }
+message GenericPayloadStateConfig {
+  // Empty for now.
+}
 
 // Bundles all FeatureInterface-specific config values into a single message.
 message GenericPartConfig {
@@ -166,4 +169,5 @@ message GenericPartConfig {
   optional GenericInertialMeasurementUnitConfig imu_config = 21;
   optional GenericProcessWrenchConfig process_wrench_config = 23;
   optional GenericPayloadConfig payload_config = 24;
+  optional GenericPayloadStateConfig payload_state_config = 25;
 }
