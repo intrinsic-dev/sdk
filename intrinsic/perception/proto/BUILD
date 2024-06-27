@@ -5,7 +5,7 @@
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 load("//bazel:go_macros.bzl", "go_proto_library")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//intrinsic:public_api_users"])
 
 proto_library(
     name = "camera_params_proto",
