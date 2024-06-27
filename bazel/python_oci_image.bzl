@@ -39,7 +39,7 @@ def python_oci_image(
         name = name + "_tar_manifest",
         srcs = [":" + name + "_tar_manifest_raw"],
         outs = [name + "_tar_manifest.spec"],
-        cmd = "sed -e 's/^..\\///' $< | sed -e 's/ external\\///g' >$@",
+        cmd = "sed -e 's/^\\.\\.\\///' $< | sed -e 's/ external\\///g' >$@",
     )
 
     # One layer with only the python interpreter.
