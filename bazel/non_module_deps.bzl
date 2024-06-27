@@ -29,12 +29,6 @@ def non_module_deps():
         ],
     )
 
-    http_jar(
-        name = "firestore_emulator",
-        sha256 = "1f08a8f7133edf2e7b355db0da162654df2b0967610d3de2f12b8ce07c493f5f",
-        urls = ["https://storage.googleapis.com/firebase-preview-drop/emulator/cloud-firestore-emulator-v1.18.2.jar"],
-    )
-
     http_archive(
         name = "com_google_cel_cpp",
         url = "https://github.com/google/cel-cpp/archive/037873163975964a80a188ad7f936cb4f37f0684.tar.gz",  # 2024-01-29
@@ -55,6 +49,13 @@ def non_module_deps():
         urls = [
             "https://gitlab.com/libeigen/eigen/-/archive/%s/eigen-%s.zip" % (EIGEN_COMMIT, EIGEN_COMMIT),
         ],
+    )
+
+    http_archive(
+        name = "io_opencensus_cpp",
+        sha256 = "e3857e1267cb6329a7b23209ce8a2108b8f264e4adf336776323fb163fa23f9a",
+        strip_prefix = "opencensus-cpp-50eb5de762e5f87e206c011a4f930adb1a1775b1",
+        url = "https://github.com/census-instrumentation/opencensus-cpp/archive/50eb5de762e5f87e206c011a4f930adb1a1775b1.tar.gz",  # 2024-03-25
     )
 
     ################################
