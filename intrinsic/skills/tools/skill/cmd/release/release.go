@@ -21,6 +21,7 @@ import (
 	"intrinsic/assets/idutils"
 	"intrinsic/assets/imagetransfer"
 	"intrinsic/assets/imageutils"
+	skillcataloggrpcpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillcatalogpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillmanifestpb "intrinsic/skills/proto/skill_manifest_go_proto"
 	skillCmd "intrinsic/skills/tools/skill/cmd"
@@ -122,7 +123,14 @@ func namePackageFromID(skillID string) (string, string, error) {
 }
 
 func release(cmd *cobra.Command, conn *grpc.ClientConn, req *skillcatalogpb.CreateSkillRequest, idVersion string) error {
-	return status.Errorf(codes.Unimplemented, "releasing skills is not yet supported")
+	client := skillcataloggrpcpb.NewSkillCatalogClient(conn)
+	if _, err := client.CreateSkill(cmd.Context(), req); err != nil {
+		if s, ok := status.FromError(err); ok && cmdFlags.GetFlagIgnoreExisting() && s.Code() == codes.AlreadyExists {
+			log.Printf("skipping release: skill %q already exists in the catalog", idVersion)
+			return nil
+		}
+		return fmt.Errorf("could not release the skill :%w", err)
+	}
 
 	log.Printf("finished releasing the skill")
 

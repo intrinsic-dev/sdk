@@ -11,6 +11,7 @@ go_library(
         ":root",
         "//intrinsic/skills/tools/skill/cmd",
         "//intrinsic/skills/tools/skill/cmd/create",
+        "//intrinsic/skills/tools/skill/cmd/defaults:cleardefault",
         "//intrinsic/skills/tools/skill/cmd/install",
         "//intrinsic/skills/tools/skill/cmd/install:uninstall",
         "//intrinsic/skills/tools/skill/cmd/list",
