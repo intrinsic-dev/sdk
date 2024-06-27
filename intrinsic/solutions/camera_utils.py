@@ -18,6 +18,7 @@ class Frame:
   Attributes:
     rgb8u: Color image. Optional.
     depth32f: Depth image. Optional.
+    gray8u: Grayscale image. Optional.
     acquisition_time: Timestamp when this frame was taken.
     camera_params: Intrinsic and distortion parameters.
   """
@@ -31,9 +32,14 @@ class Frame:
     self.rgb8u = None
     if frame.rgb8u and frame.rgb8u.data:
       self.rgb8u = image_utils.deserialize_image_buffer(frame.rgb8u)
+
     self.depth32f = None
     if frame.depth32f and frame.depth32f.data:
       self.depth32f = image_utils.deserialize_image_buffer(frame.depth32f)
+
+    self.gray8u = None
+    if frame.gray8u and frame.gray8u.data:
+      self.gray8u = image_utils.deserialize_image_buffer(frame.gray8u)
     self.acquisition_time = frame.acquisition_time
     self.camera_params = frame.camera_params
 
