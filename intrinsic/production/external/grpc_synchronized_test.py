@@ -22,10 +22,10 @@ def parse_args():
 
 def main():
   args = parse_args()
-  integrity = "sha256-yfmubk1vQEZO6ZWL5AaAh4ge1qo34w0OZNQO17453QE="
+  integrity = "sha256-MRmOz27Ip5sMQqkEQd3OhY5frmkMLjANXQip9F1xNt8="
   assert f'integrity = "{integrity}"' in args.deps_0.read_text()
-  assert "grpcio==1.62.1" in args.requirements_in.read_text()
-  assert "grpcio==1.62.1" in args.requirements_txt.read_text()
+  assert "grpcio==1.63.0" in args.requirements_in.read_text()
+  assert "grpcio==1.63.0" in args.requirements_txt.read_text()
 
 
 if __name__ == "__main__":

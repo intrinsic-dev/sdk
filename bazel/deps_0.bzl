@@ -167,13 +167,11 @@ def intrinsic_sdks_deps_0():
         patches = [
             Label("//intrinsic/production/external/patches:0003-Remove-competing-local_config_python-definition.patch"),
             Label("//intrinsic/production/external/patches:0005-Remove-competing-go-deps.patch"),
-            Label("//intrinsic/production/external/patches:0011-Public-grpc_library-attr.patch"),
-            Label("//intrinsic/production/external/patches:0016-Add-cpp-20-compat-grpc.patch"),
             Label("//intrinsic/production/external/patches:0017-Fix-py-grpc-library.patch"),
         ],
-        integrity = "sha256-yfmubk1vQEZO6ZWL5AaAh4ge1qo34w0OZNQO17453QE=",
-        strip_prefix = "grpc-1.62.1",
-        urls = ["https://github.com/grpc/grpc/archive/refs/tags/v1.62.1.tar.gz"],
+        integrity = "sha256-MRmOz27Ip5sMQqkEQd3OhY5frmkMLjANXQip9F1xNt8=",
+        strip_prefix = "grpc-1.63.1",
+        urls = ["https://github.com/grpc/grpc/archive/refs/tags/v1.63.1.tar.gz"],
     )
 
     # GoogleTest/GoogleMock framework. Used by most unit-tests.
