@@ -120,6 +120,9 @@ message CreateCameraResponse {
 }
 
 message CaptureRequest {
+  reserved 5;
+  reserved "stream_fps";
+
   // Handle for the camera to capture from
   string camera_handle = 1;
 
@@ -143,9 +146,6 @@ message CaptureRequest {
   // whether the image should be undistorted, cropped, resized and encoding
   // formats.
   optional FramePostProcessing post_processing = 4;
-
-  // Optional. For streaming `Capture` requests, sets the requested fps.
-  optional float stream_fps = 5;
 }
 
 message CaptureResponse {
