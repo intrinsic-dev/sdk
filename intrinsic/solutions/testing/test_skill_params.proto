@@ -12,6 +12,7 @@ import "intrinsic/motion_planning/proto/motion_target.proto";
 import "intrinsic/perception/proto/pose_estimator_id.proto";
 import "intrinsic/world/proto/collision_settings.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
+import "intrinsic/world/proto/robot_payload.proto";
 
 enum GlobalEnum {
   GLOBAL_ENUM_UNSPECIFIED = 0;
@@ -143,6 +144,10 @@ message CollisionSettingsSkill {
 
 message PoseEstimatorSkill {
   optional intrinsic_proto.perception.PoseEstimatorId pose_estimator = 1;
+}
+
+message RobotPayloadSkill {
+  optional intrinsic_proto.world.RobotPayload payload = 1;
 }
 
 message CombinedSkillParams {

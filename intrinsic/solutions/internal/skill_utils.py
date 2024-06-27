@@ -40,7 +40,9 @@ from intrinsic.solutions.internal import skill_parameters
 from intrinsic.util.proto import descriptors
 from intrinsic.world.proto import collision_settings_pb2
 from intrinsic.world.proto import object_world_refs_pb2
+from intrinsic.world.proto import robot_payload_pb2
 from intrinsic.world.python import object_world_resources
+from intrinsic.world.robot_payload.python import robot_payload
 
 _PYTHON_PACKAGE_SEPARATOR = "."
 _PROTO_PACKAGE_SEPARATOR = "."
@@ -357,6 +359,15 @@ def _field_to_pose_estimator_id(
   raise TypeError(f"Cannot convert {field_value} to PoseEstimatorId.")
 
 
+def _field_to_robot_payload(
+    field_value: robot_payload.RobotPayload,
+) -> robot_payload_pb2.RobotPayload:
+  """Converts the field_value to robot_payload_pb2.RobotPayload."""
+  if not isinstance(field_value, robot_payload.RobotPayload):
+    raise TypeError(f"Value {field_value} not a RobotPayload")
+  return robot_payload.payload_to_proto(field_value)
+
+
 @dataclasses.dataclass
 class _AutoConversion:
   """Encapsulates an auto-conversion function together with metadata about it.
@@ -421,6 +432,9 @@ _PYTHONIC_TO_MESSAGE_AUTO_CONVERSIONS = {
     ),
     pose_estimator_id_pb2.PoseEstimatorId.DESCRIPTOR.full_name: _AutoConversion(
         _field_to_pose_estimator_id
+    ),
+    robot_payload_pb2.RobotPayload.DESCRIPTOR.full_name: _AutoConversion(
+        _field_to_robot_payload
     ),
 }
 
