@@ -29,16 +29,17 @@ var (
 	rollbackFlag bool
 )
 
-// Client helps run auth'ed requests for a specific cluster
-type Client struct {
+// client helps run auth'ed requests for a specific cluster
+type client struct {
 	client      *http.Client
-	url         url.URL
 	tokenSource *auth.ProjectToken
 	cluster     string
+	project     string
+	org         string
 }
 
-// Do wraps http.Client.Do with Auth
-func (c *Client) Do(req *http.Request) (*http.Response, error) {
+// do wraps http.Client.Do with Auth
+func (c *client) do(req *http.Request) (*http.Response, error) {
 	req, err := c.tokenSource.HTTPAuthorization(req)
 	if err != nil {
 		return nil, fmt.Errorf("auth token for %q %s: %w", req.Method, req.URL.String(), err)
@@ -46,26 +47,13 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	return c.client.Do(req)
 }
 
-// Req returns an http request for subpath
-//
-// Note: empty subpath just queries the root path
-func (c *Client) Req(ctx context.Context, method, subpath string, body io.Reader) (*http.Request, error) {
-	url := c.url
-	url.Path = filepath.Join(url.Path, subpath)
+// runReq runs a |method| request with url and returns the response/error
+func (c *client) runReq(ctx context.Context, method string, url url.URL, body io.Reader) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, method, url.String(), body)
 	if err != nil {
 		return nil, fmt.Errorf("create %q request for %s: %w", method, url.String(), err)
 	}
-	return req, nil
-}
-
-// runReq runs a |method| request with path and returns the response/error
-func (c *Client) runReq(ctx context.Context, method, subpath string, body io.Reader) ([]byte, error) {
-	req, err := c.Req(ctx, method, subpath, body)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.Do(req)
+	resp, err := c.do(req)
 	if err != nil {
 		return nil, fmt.Errorf("%q request for %s: %w", req.Method, req.URL.String(), err)
 	}
@@ -82,9 +70,12 @@ func (c *Client) runReq(ctx context.Context, method, subpath string, body io.Rea
 	return rb, nil
 }
 
-// Status queries the update status of a cluster
-func (c *Client) Status(ctx context.Context) (*info.Info, error) {
-	b, err := c.runReq(ctx, http.MethodGet, "/state", nil)
+// status queries the update status of a cluster
+func (c *client) status(ctx context.Context) (*info.Info, error) {
+	v := url.Values{}
+	v.Set("cluster", c.cluster)
+	u := newClusterUpdateURL(c.project, "/state", v)
+	b, err := c.runReq(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -95,8 +86,8 @@ func (c *Client) Status(ctx context.Context) (*info.Info, error) {
 	return ui, nil
 }
 
-// SetMode runs a request to set the update mode
-func (c *Client) SetMode(ctx context.Context, mode string) error {
+// setMode runs a request to set the update mode
+func (c *client) setMode(ctx context.Context, mode string) error {
 	bs := &messages.ModeRequest{
 		Mode: mode,
 	}
@@ -104,22 +95,28 @@ func (c *Client) SetMode(ctx context.Context, mode string) error {
 	if err != nil {
 		return fmt.Errorf("marshal mode request: %w", err)
 	}
-	_, err = c.runReq(ctx, http.MethodPost, "/setmode", bytes.NewReader(body))
+	v := url.Values{}
+	v.Set("cluster", c.cluster)
+	u := newClusterUpdateURL(c.project, "/setmode", v)
+	_, err = c.runReq(ctx, http.MethodPost, u, bytes.NewReader(body))
 	return err
 }
 
-// GetMode runs a request to read the update mode
-func (c *Client) GetMode(ctx context.Context) (string, error) {
-	ui, err := c.Status(ctx)
+// getMode runs a request to read the update mode
+func (c *client) getMode(ctx context.Context) (string, error) {
+	ui, err := c.status(ctx)
 	if err != nil {
 		return "", fmt.Errorf("cluster status: %w", err)
 	}
 	return ui.Mode, nil
 }
 
-// ClusterProjectTarget queries the update target for a cluster in a project
-func (c *Client) ClusterProjectTarget(ctx context.Context) (*messages.ClusterProjectTargetResponse, error) {
-	b, err := c.runReq(ctx, http.MethodGet, "/projecttarget", nil)
+// clusterProjectTarget queries the update target for a cluster in a project
+func (c *client) clusterProjectTarget(ctx context.Context) (*messages.ClusterProjectTargetResponse, error) {
+	v := url.Values{}
+	v.Set("cluster", c.cluster)
+	u := newClusterUpdateURL(c.project, "/projecttarget", v)
+	b, err := c.runReq(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -130,44 +127,56 @@ func (c *Client) ClusterProjectTarget(ctx context.Context) (*messages.ClusterPro
 	return r, nil
 }
 
-// Run runs an update if one is pending
-func (c *Client) Run(ctx context.Context) ([]byte, error) {
-	return c.runReq(ctx, http.MethodPost, "/run", nil)
+// run runs an update if one is pending
+func (c *client) run(ctx context.Context, rollback bool) error {
+	v := url.Values{}
+	v.Set("cluster", c.cluster)
+	if rollback {
+		v.Set("rollback", "y")
+	}
+	u := newClusterUpdateURL(c.project, "/run", v)
+	_, err := c.runReq(ctx, http.MethodPost, u, nil)
+	return err
 }
 
-func forCluster(project, cluster string, rollback bool) (Client, error) {
+func newTokenSource(project string) (*auth.ProjectToken, error) {
 	configuration, err := auth.NewStore().GetConfiguration(project)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return Client{}, &dialerutil.ErrCredentialsNotFound{
+			return nil, &dialerutil.ErrCredentialsNotFound{
 				CredentialName: project,
 				Err:            err,
 			}
 		}
-		return Client{}, fmt.Errorf("get configuration for project %q: %w", project, err)
+		return nil, fmt.Errorf("get configuration for project %q: %w", project, err)
 	}
-
 	token, err := configuration.GetDefaultCredentials()
 	if err != nil {
-		return Client{}, fmt.Errorf("get default credentials for project %q: %w", project, err)
+		return nil, fmt.Errorf("get default credentials for project %q: %w", project, err)
 	}
+	return token, nil
+}
 
-	// cluster is a query parameter for clusterupdate
-	v := url.Values{}
-	v.Set("cluster", cluster)
-	if rollback {
-		v.Set("rollback", "y")
+func newClusterUpdateURL(project string, subPath string, values url.Values) url.URL {
+	return url.URL{
+		Scheme:   "https",
+		Host:     fmt.Sprintf("www.endpoints.%s.cloud.goog", project),
+		Path:     filepath.Join("/api/clusterupdate/", subPath),
+		RawQuery: values.Encode(),
 	}
+}
 
-	return Client{
-		client: http.DefaultClient,
-		url: url.URL{
-			Scheme:   "https",
-			Host:     fmt.Sprintf("www.endpoints.%s.cloud.goog", project),
-			Path:     "/api/clusterupdate/",
-			RawQuery: v.Encode(),
-		},
-		tokenSource: token,
+func newClient(org, project, cluster string) (client, error) {
+	ts, err := newTokenSource(project)
+	if err != nil {
+		return client{}, err
+	}
+	return client{
+		client:      http.DefaultClient,
+		tokenSource: ts,
+		cluster:     cluster,
+		project:     project,
+		org:         org,
 	}, nil
 }
 
@@ -189,20 +198,21 @@ var modeCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
-		c, err := forCluster(projectName, clusterName, false)
+		orgName := ClusterCmdViper.GetString(orgutil.KeyOrganization)
+		c, err := newClient(orgName, projectName, clusterName)
 		if err != nil {
 			return fmt.Errorf("cluster upgrade client: %w", err)
 		}
 		switch len(args) {
 		case 0:
-			mode, err := c.GetMode(ctx)
+			mode, err := c.getMode(ctx)
 			if err != nil {
 				return fmt.Errorf("get cluster upgrade mode:\n%w", err)
 			}
 			fmt.Printf("update mechanism mode: %s\n", mode)
 			return nil
 		case 1:
-			if err := c.SetMode(ctx, args[0]); err != nil {
+			if err := c.setMode(ctx, args[0]); err != nil {
 				return fmt.Errorf("set cluster upgrade mode:\n%w", err)
 			}
 			return nil
@@ -233,11 +243,12 @@ var showTargetCmd = &cobra.Command{
 		ctx := cmd.Context()
 
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
-		c, err := forCluster(projectName, clusterName, false)
+		orgName := ClusterCmdViper.GetString(orgutil.KeyOrganization)
+		c, err := newClient(orgName, projectName, clusterName)
 		if err != nil {
 			return fmt.Errorf("cluster upgrade client:\n%w", err)
 		}
-		r, err := c.ClusterProjectTarget(ctx)
+		r, err := c.clusterProjectTarget(ctx)
 		if err != nil {
 			return fmt.Errorf("cluster status:\n%w", err)
 		}
@@ -266,16 +277,19 @@ var runCmd = &cobra.Command{
 		ctx := cmd.Context()
 
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
-		c, err := forCluster(projectName, clusterName, rollbackFlag)
+		orgName := ClusterCmdViper.GetString(orgutil.KeyOrganization)
+		qOrgName := orgutil.QualifiedOrg(projectName, orgName)
+		c, err := newClient(orgName, projectName, clusterName)
 		if err != nil {
 			return fmt.Errorf("cluster upgrade client:\n%w", err)
 		}
-		_, err = c.Run(ctx)
+		err = c.run(ctx, rollbackFlag)
 		if err != nil {
 			return fmt.Errorf("cluster upgrade run:\n%w", err)
 		}
-		fmt.Printf("update for cluster %q in %q kicked off successfully.\n", clusterName, projectName)
-		fmt.Printf("monitor running `inctl cluster upgrade --project %s --cluster %s\n`", projectName, clusterName)
+
+		fmt.Printf("update for cluster %q in %q kicked off successfully.\n", clusterName, qOrgName)
+		fmt.Printf("monitor running `inctl cluster upgrade --org %s --cluster %s\n`", qOrgName, clusterName)
 		return nil
 	},
 }
@@ -290,11 +304,12 @@ var clusterUpgradeCmd = &cobra.Command{
 		ctx := cmd.Context()
 
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
-		c, err := forCluster(projectName, clusterName, false)
+		orgName := ClusterCmdViper.GetString(orgutil.KeyOrganization)
+		c, err := newClient(orgName, projectName, clusterName)
 		if err != nil {
 			return fmt.Errorf("cluster upgrade client:\n%w", err)
 		}
-		ui, err := c.Status(ctx)
+		ui, err := c.status(ctx)
 		if err != nil {
 			return fmt.Errorf("cluster status:\n%w", err)
 		}
