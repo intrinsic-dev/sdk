@@ -15,6 +15,7 @@ import "intrinsic/util/status/extended_status.proto";
 import "intrinsic/logging/errors/proto/error_report.proto";
 import "intrinsic/logging/proto/blob.proto";
 import "intrinsic/logging/proto/context.proto";
+import "intrinsic/logging/proto/critical_event_log.proto";
 import "intrinsic/perception/proto/frame.proto";
 import "intrinsic/perception/proto/hand_eye_calibration.proto";
 import "intrinsic/perception/proto/pose_estimation_result.proto";
@@ -22,7 +23,7 @@ import "intrinsic/perception/proto/pose_estimation_result.proto";
 import "intrinsic/skills/proto/skill_service.proto";
 
 // Represents an event. Payload can be structured data and/or blobs.
-// Next tag: 29
+// Next tag: 57
 message LogItem {
   // Type-agnostic information about an event.
   // For metadata that needs to be propagated through the gRPC call stack, use

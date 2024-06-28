@@ -13,6 +13,7 @@ proto_library(
     deps = [
         ":blob_proto",
         ":context_proto",
+        ":critical_event_log",
         ":flowstate_event",
         "//intrinsic/executive/proto:executive_state_proto",
         "//intrinsic/icon/proto:cart_space_proto",
@@ -58,6 +59,21 @@ py_proto_library(
 proto_library(
     name = "context_proto",
     srcs = ["context.proto"],
+)
+
+proto_library(
+    name = "critical_event_log",
+    srcs = ["critical_event_log.proto"],
+)
+
+cc_proto_library(
+    name = "critical_event_log_cc_proto",
+    deps = [":critical_event_log"],
+)
+
+py_proto_library(
+    name = "critical_event_log_py_pb2",
+    deps = [":critical_event_log"],
 )
 
 proto_library(

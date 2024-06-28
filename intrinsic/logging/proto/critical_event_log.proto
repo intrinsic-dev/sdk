@@ -1,0 +1,42 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.data_logger;
+
+// CriticalEventLog is a log message that describes a text event message that is
+// being sent via the structured logging system. This allows us to upload event
+// logs to the cloud when fluent-bit is not able to upload them in operational
+// environments. See go/intrinsic-production-data-handling for more details.
+message CriticalEventLog {
+  // Enum describing the logging level of the log message.
+  enum Level {
+    UNKNOWN = 0;
+    DEBUG = 1;
+    INFO = 2;
+    WARN = 3;
+    ERROR = 4;
+    FATAL = 5;
+  }
+
+  // The logging level of the log message.
+  Level level = 1;
+
+  // The name of the component that is sending the log message.
+  string source_component = 2;
+
+  // The body of the log message.
+  string msg = 3;
+
+  // The file that the log message was logged from. This helps identify the
+  // source of the log message.
+  optional string file = 4;
+
+  // The function that the log message was logged from. This helps identify the
+  // source of the log message.
+  optional string function = 5;
+
+  // The line number that the log message was logged from. This helps identify
+  // the source of the log message.
+  optional uint32 line = 6;
+}
