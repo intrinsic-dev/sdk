@@ -10,10 +10,10 @@ import "google/protobuf/timestamp.proto";
 message EventSourceStatus {
   enum EventSourceStatusEnum {
     UNSET = 0;
-    INITIALIZED = 1;
-    INPUTS_UPLOADING = 2;
+    UPLOAD_PENDING = 1;
+    UPLOADING = 2;
     // reserved 3;
-    INPUTS_UPLOADED = 4;
+    UPLOADED = 4;
     UNCOMPLETABLE = 5;
     FAILED = 6;
   }
@@ -55,9 +55,9 @@ message EventSourceMetadata {
 message BagStatus {
   enum BagStatusEnum {
     UNSET = 0;
-    INITIALIZED = 1;
-    INPUTS_UPLOADING = 2;
-    INPUTS_UPLOADED = 3;
+    UPLOAD_PENDING = 1;
+    UPLOADING = 2;
+    UPLOADED = 3;
     COMPLETED = 4;
     UNCOMPLETABLE = 5;
     FAILED = 6;
