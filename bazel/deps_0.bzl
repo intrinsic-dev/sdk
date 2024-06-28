@@ -250,18 +250,18 @@ def intrinsic_sdks_deps_0():
     maybe(
         http_archive,
         name = "pybind11_bazel",
-        sha256 = "e2ba5f81f3bf6a3fc0417448d49389cc7950bebe48c42c33dfeb4dd59859b9a4",
-        strip_prefix = "pybind11_bazel-2.11.1.bzl.2",
-        urls = ["https://github.com/pybind/pybind11_bazel/archive/refs/tags/v2.11.1.bzl.2.tar.gz"],
+        sha256 = "dc14a960672babf6da2f283079a5b5c13e404a940ea7cdb8297b71f8f31643a5",
+        strip_prefix = "pybind11_bazel-2.12.0",
+        urls = ["https://github.com/pybind/pybind11_bazel/archive/refs/tags/v2.12.0.tar.gz"],
     )
 
     maybe(
         http_archive,
         name = "pybind11",
-        build_file = "@pybind11_bazel//:pybind11.BUILD",
-        sha256 = "b011a730c8845bfc265f0f81ee4e5e9e1d354df390836d2a25880e123d021f89",
-        strip_prefix = "pybind11-2.11.1",
-        urls = ["https://github.com/pybind/pybind11/archive/v2.11.1.zip"],  #  Jul 17, 2023
+        build_file = "@pybind11_bazel//:pybind11-BUILD.bazel",
+        sha256 = "411f77380c43798506b39ec594fc7f2b532a13c4db674fcf2b1ca344efaefb68",
+        strip_prefix = "pybind11-2.12.0",
+        urls = ["https://github.com/pybind/pybind11/archive/v2.12.0.zip"],
     )
 
     maybe(
