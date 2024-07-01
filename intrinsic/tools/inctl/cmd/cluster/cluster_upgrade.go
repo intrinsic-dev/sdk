@@ -3,7 +3,6 @@
 package cluster
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -16,7 +15,12 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 
+	fmpb "google.golang.org/protobuf/types/known/fieldmaskpb"
+	clustermanagergrpcpb "intrinsic/frontend/cloud/api/clustermanager_api_go_grpc_proto"
+
+	clustermanagercpb "intrinsic/frontend/cloud/api/clustermanager_api_go_grpc_proto"
 	"intrinsic/frontend/cloud/devicemanager/info"
 	"intrinsic/frontend/cloud/devicemanager/messages"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
@@ -36,6 +40,8 @@ type client struct {
 	cluster     string
 	project     string
 	org         string
+	grpcConn    *grpc.ClientConn
+	grpcClient  clustermanagergrpcpb.ClustersServiceClient
 }
 
 // do wraps http.Client.Do with Auth
@@ -88,27 +94,67 @@ func (c *client) status(ctx context.Context) (*info.Info, error) {
 
 // setMode runs a request to set the update mode
 func (c *client) setMode(ctx context.Context, mode string) error {
-	bs := &messages.ModeRequest{
-		Mode: mode,
+	pbm := encodeUpdateMode(mode)
+	if pbm == clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_UNSPECIFIED {
+		return fmt.Errorf("invalid mode: %s", mode)
 	}
-	body, err := json.Marshal(bs)
+	req := clustermanagercpb.UpdateClusterRequest{
+		Project: c.project,
+		Org:     c.org,
+		Cluster: &clustermanagercpb.Cluster{
+			ClusterName: c.cluster,
+			UpdateMode:  pbm,
+		},
+		UpdateMask: &fmpb.FieldMask{Paths: []string{"update_mode"}},
+	}
+	_, err := c.grpcClient.UpdateCluster(ctx, &req)
 	if err != nil {
-		return fmt.Errorf("marshal mode request: %w", err)
+		return fmt.Errorf("update cluster: %w", err)
 	}
-	v := url.Values{}
-	v.Set("cluster", c.cluster)
-	u := newClusterUpdateURL(c.project, "/setmode", v)
-	_, err = c.runReq(ctx, http.MethodPost, u, bytes.NewReader(body))
-	return err
+	return nil
+}
+
+// encodeUpdateMode encodes a mode string to a proto definition
+func encodeUpdateMode(mode string) clustermanagercpb.PlatformUpdateMode {
+	switch mode {
+	case "off":
+		return clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_OFF
+	case "on":
+		return clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_ON
+	case "automatic":
+		return clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_AUTOMATIC
+	default:
+		return clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_UNSPECIFIED
+	}
+}
+
+// decodeUpdateMode decodes a mode proto definition into a string
+func decodeUpdateMode(mode clustermanagercpb.PlatformUpdateMode) string {
+	switch mode {
+	case clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_OFF:
+		return "off"
+	case clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_ON:
+		return "on"
+	case clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_AUTOMATIC:
+		return "automatic"
+	default:
+		return "unknown"
+	}
 }
 
 // getMode runs a request to read the update mode
 func (c *client) getMode(ctx context.Context) (string, error) {
-	ui, err := c.status(ctx)
+	req := clustermanagercpb.GetClusterRequest{
+		Project:   c.project,
+		Org:       c.org,
+		ClusterId: c.cluster,
+	}
+	cluster, err := c.grpcClient.GetCluster(ctx, &req)
 	if err != nil {
 		return "", fmt.Errorf("cluster status: %w", err)
 	}
-	return ui.Mode, nil
+	mode := cluster.GetUpdateMode()
+	return decodeUpdateMode(mode), nil
 }
 
 // clusterProjectTarget queries the update target for a cluster in a project
@@ -139,6 +185,13 @@ func (c *client) run(ctx context.Context, rollback bool) error {
 	return err
 }
 
+func (c *client) close() error {
+	if c.grpcConn != nil {
+		return c.grpcConn.Close()
+	}
+	return nil
+}
+
 func newTokenSource(project string) (*auth.ProjectToken, error) {
 	configuration, err := auth.NewStore().GetConfiguration(project)
 	if err != nil {
@@ -166,17 +219,28 @@ func newClusterUpdateURL(project string, subPath string, values url.Values) url.
 	}
 }
 
-func newClient(org, project, cluster string) (client, error) {
+func newClient(ctx context.Context, org, project, cluster string) (context.Context, client, error) {
 	ts, err := newTokenSource(project)
 	if err != nil {
-		return client{}, err
+		return nil, client{}, err
 	}
-	return client{
+	params := dialerutil.DialInfoParams{
+		Cluster:  cluster,
+		CredName: project,
+		CredOrg:  org,
+	}
+	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, params)
+	if err != nil {
+		return nil, client{}, fmt.Errorf("create grpc client: %w", err)
+	}
+	return ctx, client{
 		client:      http.DefaultClient,
 		tokenSource: ts,
 		cluster:     cluster,
 		project:     project,
 		org:         org,
+		grpcConn:    conn,
+		grpcClient:  clustermanagergrpcpb.NewClustersServiceClient(conn),
 	}, nil
 }
 
@@ -199,10 +263,11 @@ var modeCmd = &cobra.Command{
 		ctx := cmd.Context()
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
 		orgName := ClusterCmdViper.GetString(orgutil.KeyOrganization)
-		c, err := newClient(orgName, projectName, clusterName)
+		ctx, c, err := newClient(ctx, orgName, projectName, clusterName)
 		if err != nil {
 			return fmt.Errorf("cluster upgrade client: %w", err)
 		}
+		defer c.close()
 		switch len(args) {
 		case 0:
 			mode, err := c.getMode(ctx)
@@ -244,10 +309,11 @@ var showTargetCmd = &cobra.Command{
 
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
 		orgName := ClusterCmdViper.GetString(orgutil.KeyOrganization)
-		c, err := newClient(orgName, projectName, clusterName)
+		ctx, c, err := newClient(ctx, orgName, projectName, clusterName)
 		if err != nil {
 			return fmt.Errorf("cluster upgrade client:\n%w", err)
 		}
+		defer c.close()
 		r, err := c.clusterProjectTarget(ctx)
 		if err != nil {
 			return fmt.Errorf("cluster status:\n%w", err)
@@ -279,10 +345,11 @@ var runCmd = &cobra.Command{
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
 		orgName := ClusterCmdViper.GetString(orgutil.KeyOrganization)
 		qOrgName := orgutil.QualifiedOrg(projectName, orgName)
-		c, err := newClient(orgName, projectName, clusterName)
+		ctx, c, err := newClient(ctx, orgName, projectName, clusterName)
 		if err != nil {
 			return fmt.Errorf("cluster upgrade client:\n%w", err)
 		}
+		defer c.close()
 		err = c.run(ctx, rollbackFlag)
 		if err != nil {
 			return fmt.Errorf("cluster upgrade run:\n%w", err)
@@ -305,10 +372,11 @@ var clusterUpgradeCmd = &cobra.Command{
 
 		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
 		orgName := ClusterCmdViper.GetString(orgutil.KeyOrganization)
-		c, err := newClient(orgName, projectName, clusterName)
+		ctx, c, err := newClient(ctx, orgName, projectName, clusterName)
 		if err != nil {
 			return fmt.Errorf("cluster upgrade client:\n%w", err)
 		}
+		defer c.close()
 		ui, err := c.status(ctx)
 		if err != nil {
 			return fmt.Errorf("cluster status:\n%w", err)

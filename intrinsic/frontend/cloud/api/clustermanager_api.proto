@@ -1,0 +1,565 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.frontend.v1;
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/longrunning/operations.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "intrinsic/frontend/cloud/api/clusterdeletion_api.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+// Clusterwide states that describe the overall state of the cluster.
+//
+// Note: for now, this is just about online behavior. In time, registration and
+// update modes will be folded into this as well.
+enum ClusterState {
+  CLUSTER_STATE_UNSPECIFIED = 0;
+  CLUSTER_STATE_OFFLINE = 1;
+  CLUSTER_STATE_ENABLED = 2;
+}
+
+// Modes that the update system can be in
+enum PlatformUpdateMode {
+  PLATFORM_UPDATE_MODE_UNSPECIFIED = 0;
+  PLATFORM_UPDATE_MODE_OFF = 1;
+  PLATFORM_UPDATE_MODE_ON = 2;
+  PLATFORM_UPDATE_MODE_AUTOMATIC = 3;
+}
+
+enum UpdateState {
+  UPDATE_STATE_UNSPECIFIED = 0;
+  UPDATE_STATE_UPDATING = 1;
+  UPDATE_STATE_PENDING = 2;
+  UPDATE_STATE_FAULT = 3;
+  UPDATE_STATE_DEPLOYED = 4;
+}
+
+// This is the publicly accessible subset of the intrinsic_proto.config.Cluster
+// object.
+//
+// next number is 22
+message Cluster {
+  // name shown to admins - globally unique
+  string cluster_name = 1;
+  // preferred display name
+  string display_name = 2;
+  string region = 3;
+  string frontend_url = 4;
+  string jupyter_url = 5;
+  string k8s_context = 6;
+  string project = 7;
+  string location = 14;  // used for ui only
+  string platform_version = 15;
+  bool can_do_real = 8;
+  bool has_gpu = 13;
+  bool rollback_available = 18;
+  bool update_available = 20;
+  ClusterState cluster_state = 19;
+  PlatformUpdateMode update_mode = 16;  // whether updates are on/off/automatic
+  UpdateState update_state = 17;  // update status (running/pending/fault/...)
+  repeated IPCNode ipc_nodes = 21;
+  // removed fields:
+  reserved 10, 11, 12;
+  reserved "is_public", "is_mine", "is_shared";
+}
+
+message IPCNode {
+  // node name
+  string name = 1;
+  string os_version = 2;
+  ClusterState cluster_state = 3;
+  bool is_control_plane = 4;
+}
+
+message ListClustersRequest {
+  string project = 1 [(google.api.field_behavior) = REQUIRED];
+  string org = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // by default, we filter out dev and test images, but setting
+  // show_all to true will show those as well
+  bool show_all = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message ListClustersResponse {
+  repeated Cluster clusters = 2;
+  string next_page_token = 3;
+}
+
+message UpdateClusterRequest {
+  string project = 1 [(google.api.field_behavior) = REQUIRED];
+  string org = 2 [(google.api.field_behavior) = REQUIRED];
+  Cluster cluster = 4 [(google.api.field_behavior) = REQUIRED];
+
+  google.protobuf.FieldMask update_mask = 5;
+}
+
+message UpdateClusterResponse {
+  Cluster cluster = 1;
+}
+
+message GetClusterRequest {
+  string project = 1 [(google.api.field_behavior) = REQUIRED];
+  string org = 2 [(google.api.field_behavior) = REQUIRED];
+
+  string cluster_id = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+message SchedulePlatformUpdateRequest {
+  string project = 1 [(google.api.field_behavior) = REQUIRED];
+  string org = 2 [(google.api.field_behavior) = REQUIRED];
+  string cluster_id = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Which type of update to execute e.g. forward, rollback, etc
+  enum UpdateType {
+    UPDATE_TYPE_UNSPECIFIED = 0;
+    UPDATE_TYPE_FORWARD = 1;
+    UPDATE_TYPE_ROLLBACK = 2;
+  }
+
+  UpdateType update_type = 4 [(google.api.field_behavior) = REQUIRED];
+}
+
+message SchedulePlatformUpdateResponse {
+  // The name of a google.longrunning.Operation that can be used to track the
+  // progress of the update.
+  string operation_name = 1;
+}
+
+// This message is shared between the CreateCluster and AddDevice rpcs.
+// It describes the device that needs to be registered during the operation and
+// will later also describe operations that are specific to this IPC/node, not
+// the cluster. Once it is supported, this will be extended to allow things like
+// setting the hostname(networking) or nodeid (k8s).
+message PendingDeviceDescription {
+  // The device id (node-$UUID) of the device that needs to be registered.
+  string device_id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message CreateClusterInfo {
+  PendingDeviceDescription pending = 1 [(google.api.field_behavior) = REQUIRED];
+  // The technical id of the cluster (name for computers/inctl)
+  string cluster_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string region = 3 [(google.api.field_behavior) = OPTIONAL];
+  // Set to true, to automatically delete an old cluster on collision.
+  bool replace = 4 [(google.api.field_behavior) = OPTIONAL];
+  // Set to true, to hide the cluster from other people in the org.
+  bool private_device = 5 [(google.api.field_behavior) = OPTIONAL];
+  // The name of the cluster for humans
+  string display_name = 6 [(google.api.field_behavior) = REQUIRED];
+  string location = 7 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message CreateClusterRequest {
+  string project = 1 [(google.api.field_behavior) = REQUIRED];
+  string org = 2 [(google.api.field_behavior) = REQUIRED];
+  CreateClusterInfo cluster_info = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+message CreateClusterResponse {}
+
+message AddDeviceInfo {
+  PendingDeviceDescription pending = 1 [(google.api.field_behavior) = REQUIRED];
+  // Set the node+hostname identity for this worker node.
+  string device_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message AddDeviceRequest {
+  string project = 1 [(google.api.field_behavior) = REQUIRED];
+  string org = 2 [(google.api.field_behavior) = REQUIRED];
+  // The cluster the device should be added to.
+  string cluster_id = 3 [(google.api.field_behavior) = REQUIRED];
+  AddDeviceInfo device_info = 4 [(google.api.field_behavior) = REQUIRED];
+}
+
+message AddDeviceResponse {}
+
+message CreateOperationMetadata {
+  enum CreateOperationProgress {
+    CREATE_OPERATION_PROGRESS_UNSPECIFIED = 0;
+    CREATE_OPERATION_PROGRESS_NEW = 1;
+    CREATE_OPERATION_PROGRESS_INITIALIZING = 2;
+    CREATE_OPERATION_PROGRESS_DONE = 3;
+
+    CREATE_OPERATION_PROGRESS_UPDATING = 4;
+    CREATE_OPERATION_PROGRESS_SETUP_CLUSTER = 5;
+  }
+  CreateOperationProgress progress = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// NameserverConfig represents the DNS servers in the simple way
+// I.e. addresses and search domains are separate lists.
+// It doesn't provide a systemd-resolved style routing by domain.
+message NameserverConfig {
+  // The search domains the IPC should use
+  repeated string search = 1;
+  // A list of namesevers (primary... fallbacks)
+  repeated string addresses = 2;
+}
+
+// IntOSInterfaceConfig represents the configuration of a single on-prem
+// interface.
+message IntOSInterfaceConfig {
+  // Enable automatic configuration via DHCP for IPv4
+  bool dhcp4 = 1 [(google.api.field_behavior) = OPTIONAL];
+  // Standard gateway for IPv4 (mostly useful when dhcp4=false)
+  string gateway4 = 2 [(google.api.field_behavior) = OPTIONAL];
+  // Enable automatic configuration via DHCP for IPv6
+  bool dhcp6 = 3 [(google.api.field_behavior) = OPTIONAL];
+  // Standard gateway for IPv6 (mostly useful when dhcp6=false)
+  string gateway6 = 4 [(google.api.field_behavior) = OPTIONAL];
+  // Network interface MTU
+  int32 mtu = 5 [(google.api.field_behavior) = OPTIONAL];
+  NameserverConfig nameservers = 6 [(google.api.field_behavior) = OPTIONAL];
+  // IP addresses with subnet in CIDR format (192.168.178.1/24)
+  // These will be configured with no dhcp,
+  // or added to dhcp auto-configured addresses.
+  repeated string addresses = 7 [(google.api.field_behavior) = OPTIONAL];
+  // Configure interface for realtime communication (with the robot)
+  bool realtime = 8 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// IntOSNetworkConfig represents the full network configuration for a device
+message IntOSNetworkConfig {
+  // The configuration is a map of interface names to that interface's config.
+  map<string, IntOSInterfaceConfig> interfaces = 1
+      [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetNetworkConfigRequest {
+  string project = 1 [(google.api.field_behavior) = REQUIRED];
+  string org = 2 [(google.api.field_behavior) = REQUIRED];
+  string cluster = 3 [(google.api.field_behavior) = REQUIRED];
+  string device = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message UpdateNetworkConfigRequest {
+  string project = 1 [(google.api.field_behavior) = REQUIRED];
+  string org = 2 [(google.api.field_behavior) = REQUIRED];
+  string cluster = 3 [(google.api.field_behavior) = REQUIRED];
+  string device = 4 [(google.api.field_behavior) = OPTIONAL];
+  IntOSNetworkConfig config = 5 [(google.api.field_behavior) = REQUIRED];
+}
+
+message UpdateNetworkConfigResponse {
+  IntOSNetworkConfig config = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message UpdateNetworkConfigMetadata {}
+
+// This represents the current status of an interface as read from the OS.
+// It should never make sense to store this, and it will only ever be used
+// in read-only APIs from the OS.
+// Optional fields will generally depend on the UP state.
+// If it's up, they should all be filled. If the interface is down, they are
+// empty or don't make sense.
+message IntOSInterfaceStatus {
+  // Whether the device is currently configured as "UP".
+  // This generally means it's usable, but might not have a proper IP/subnet.
+  bool up = 1 [(google.api.field_behavior) = REQUIRED];
+  // The mac address of this device.
+  // While this exists in the on-prem representation, we don't use it.
+  // Blank it for now, since the google linters call it out as privacy
+  // sensitive.
+  reserved 2;
+  reserved "mac_address";
+  // The configured MTU on the device.
+  // Should match configuration or auto-detection.
+  int32 mtu = 3 [(google.api.field_behavior) = OPTIONAL];
+  // List of IP addresses configured on the device. Can be from DHCP or static.
+  repeated string addresses = 4 [(google.api.field_behavior) = OPTIONAL];
+  // The configured link speed. This is generally a function of configuration
+  // and the device at the other end of the ethernet cable.
+  int64 link_speed = 5 [(google.api.field_behavior) = OPTIONAL];
+  // Whether this device is setup as realtime capable by IntrinsicOS.
+  bool realtime = 6 [(google.api.field_behavior) = OPTIONAL];
+  // This will be True when the device senses a carrier.
+  // This necessarily means that the ethernet cable is plugged in on both ends.
+  // Depending on the other end, this can also require that it's turned on.
+  // I.e. a UR being off (or unpowered) can lead to no-carrier.
+  bool has_carrier = 7 [(google.api.field_behavior) = REQUIRED];
+}
+
+// The image type specifies which features (like SSH server) are compiled into
+// the image.
+// It does not contain information about e.g. realtime capability, this is given
+// via the board.
+enum IntOSImageType {
+  IMAGE_TYPE_UNKNOWN = 0;
+
+  // Dev images add debugging tools (like the SSH server) to prod images.
+  IMAGE_TYPE_DEV = 1;
+
+  // Test images come with further debugging tools and allow local login.
+  IMAGE_TYPE_TEST = 2;
+
+  IMAGE_TYPE_PROD = 3;
+}
+
+// This represents a "full" status report by the OS.
+// The information should be "fresh" and represent the current hardware state.
+// This will only ever be used in read-only RPCs.
+// Most of this is unsanitized and should be consumed by more high-level APIs.
+message IntOSStatus {
+  // The node's name. This is used as technical ID everywhere a "device" is
+  // required in addition to a cluster to identify a singular computer.
+  string node_name = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The current *real* detected state of the network configuration.
+  // This will list all "real" (i.e. not k8s virtualization or VPN) network
+  // interfaces. Whether they are configured or not.
+  // The keys are the interface names as required for configuration.
+  map<string, IntOSInterfaceStatus> interfaces = 2
+      [(google.api.field_behavior) = REQUIRED];
+
+  // The hostname of this device which is used for general network activity
+  // like dhcp/mDNS resolution.
+  string hostname = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // The build ID of the IntrinsicOS version on this device.
+  string build_id = 4 [(google.api.field_behavior) = REQUIRED];
+
+  // The image type of IntrinsicOS on this device, e.g. test or dev
+  IntOSImageType image_type = 5 [(google.api.field_behavior) = REQUIRED];
+
+  // The board of the IntrinsicOS variant on this device. e.g. realtime or xfa.
+  string board = 6 [(google.api.field_behavior) = REQUIRED];
+
+  // A quick description of an encountered network issue on the device.
+  // These issues are focused on cloud connectivity.
+  // When the status is queried from the cloud, this should be empty/missing.
+  repeated string network_issues = 9 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message GetStatusRequest {
+  string project = 1 [(google.api.field_behavior) = REQUIRED];
+  string org = 2 [(google.api.field_behavior) = REQUIRED];
+  string cluster_id = 3 [(google.api.field_behavior) = REQUIRED];
+  string device_id = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message PingFromDeviceParams {
+  // The target specifies the machine to ping.
+  // This can be a hostname, but should be an IP address.
+  string target = 1 [(google.api.field_behavior) = REQUIRED];
+  // Timeout of the ping. Will be clamped to milliseconds.
+  // Even on longer timeout, a max of 4 pings are sent.
+  google.protobuf.Duration timeout = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message PingFromDeviceRequest {
+  string project = 1 [(google.api.field_behavior) = REQUIRED];
+  string org = 2 [(google.api.field_behavior) = REQUIRED];
+  string cluster_id = 3 [(google.api.field_behavior) = REQUIRED];
+  string device_id = 4 [(google.api.field_behavior) = REQUIRED];
+  PingFromDeviceParams params = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+message PingFromDeviceResponse {
+  bool success = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteOperationMetadata {}
+
+// ClustersService holds a set of methods to interact with clusters.
+service ClustersService {
+
+  // ListClusters returns a list of clusters based on the provided filter.
+  rpc ListClusters(ListClustersRequest) returns (ListClustersResponse) {
+    option (google.api.http) = {
+      get: "/v1/project/{project}/org/{org}/clusters"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      operation_id: "ListClusters"
+    };
+  }
+
+  // GetCluster returns a specific cluster.
+  rpc GetCluster(GetClusterRequest) returns (Cluster) {
+    option (google.api.http) = {
+      get: "/v1/project/{project}/org/{org}/clusters/{cluster_id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      operation_id: "GetCluster"
+    };
+  }
+
+  // UpdateCluster changes fields of a cluster object and returns the changed
+  // cluster.
+  rpc UpdateCluster(UpdateClusterRequest) returns (UpdateClusterResponse) {
+    option (google.api.http) = {
+      patch: "/v1/project/{project}/org/{org}/clusters/{cluster.cluster_name}"
+      body: "cluster"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      operation_id: "UpdateCluster"
+    };
+  }
+
+  // SchedulePlatformUpdateRequest triggers and update request for a cluster
+  rpc SchedulePlatformUpdate(SchedulePlatformUpdateRequest)
+      returns (SchedulePlatformUpdateResponse) {
+    option (google.api.http) = {
+      post: "/v1/project/{project}/org/{org}/clusters/{cluster_id}:scheduleUpdate"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      operation_id: "SchedulePlatformUpdate"
+    };
+  }
+
+  // CreateCluster allows to add a new cluster.
+  // This requires a device to become the control-plane.
+  // Note: Don't rely on the return value of this or AddDevice for now.
+  // They will change to be in line with https://google.aip.dev/151
+  rpc CreateCluster(CreateClusterRequest)
+      returns (google.longrunning.Operation) {
+    option (google.longrunning.operation_info) = {
+      response_type: "Cluster"
+      metadata_type: "CreateOperationMetadata"
+    };
+    option (google.api.http) = {
+      post: "/v1/project/{project}/org/{org}/clusters"
+      body: "cluster_info"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      operation_id: "CreateCluster"
+    };
+  }
+
+  // AddDevice allows to add a worker node to an existing cluster.
+  rpc AddDevice(AddDeviceRequest) returns (AddDeviceResponse) {
+    option (google.api.http) = {
+      post: "/v1/project/{project}/org/{org}/clusters/{cluster_id}:addDevice"
+      body: "device_info"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      operation_id: "AddDevice"
+    };
+  }
+
+  // GetNetworkConfig retrieves the network configuration of a device.
+  rpc GetNetworkConfig(GetNetworkConfigRequest) returns (IntOSNetworkConfig) {
+    option (google.api.http) = {
+      get: "/v1/project/{project}/org/{org}/clusters/{cluster}/devices/{device}/config/network"
+      additional_bindings {
+        get: "/v1/project/{project}/org/{org}/clusters/{cluster}/config/network"
+      }
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      operation_id: "GetNetworkConfig"
+    };
+  }
+
+  // UpdateCluster changes fields of a cluster object and returns the changed
+  // cluster.
+  rpc UpdateNetworkConfig(UpdateNetworkConfigRequest)
+      returns (google.longrunning.Operation) {
+    option (google.longrunning.operation_info) = {
+      response_type: "UpdateNetworkConfigResponse"
+      metadata_type: "UpdateNetworkConfigMetadata"
+    };
+    option (google.api.http) = {
+      post: "/v1/project/{project}/org/{org}/clusters/{cluster}/devices/{device}/config/network"
+      body: "config"
+      additional_bindings {
+        post: "/v1/project/{project}/org/{org}/clusters/{cluster}/config/network"
+        body: "config"
+      }
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      operation_id: "UpdateNetworkConfig"
+    };
+  }
+
+  // GetStatus retrieves the status of a device.
+  rpc GetStatus(GetStatusRequest) returns (IntOSStatus) {
+    option (google.api.http) = {
+      get: "/v1/project/{project}/org/{org}/clusters/{cluster_id}/status"
+      additional_bindings {
+        get: "/v1/project/{project}/org/{org}/clusters/{cluster_id}/devices/{device_id}/status"
+      }
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      operation_id: "GetStatus"
+    };
+  }
+
+  // PingFromDevice retrieves the status of a device.
+  rpc PingFromDevice(PingFromDeviceRequest) returns (PingFromDeviceResponse) {
+    option (google.api.http) = {
+      post: "/v1/project/{project}/org/{org}/clusters/{cluster_id}:ping"
+      body: "params"
+      additional_bindings {
+        post: "/v1/project/{project}/org/{org}/clusters/{cluster_id}/devices/{device_id}:ping"
+        body: "params"
+      }
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      operation_id: "PingFromDevice"
+    };
+  }
+
+  // DeleteCluster allows to delete an existing cluster.
+  rpc DeleteCluster(DeleteClusterRequest)
+      returns (google.longrunning.Operation) {
+    option (google.longrunning.operation_info) = {
+      response_type: "google.protobuf.Empty"
+      metadata_type: "DeleteOperationMetadata"
+    };
+    option (google.api.http) = {
+      // The proper path (http.MethodDelete instead of custom verb) collides
+      // with the solutions service :(
+      // v1 will have to use this for now. Once we have a v2, we can re-map.
+      post: "/v1/project/{project}/org/{org}/clusters/{cluster_name}:delete"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      operation_id: "DeleteCluster"
+    };
+  }
+
+  //  ---------------google.longrunning.Operations------------------------------
+  // Lists operations that match the specified filter in the request. If the
+  // server doesn't support this method, it returns `UNIMPLEMENTED`.
+  // At this point, this is unimplemented for ClustersService.
+  rpc ListOperations(google.longrunning.ListOperationsRequest)
+      returns (google.longrunning.ListOperationsResponse) {
+    option (google.api.http) = {
+      get: "/v1/project/*/org/*/clusterOperations"
+    };
+  }
+
+  // Gets the latest state of a long-running operation.  Clients can use this
+  // method to poll the operation result at intervals as recommended by the API
+  // service.
+  rpc GetOperation(google.longrunning.GetOperationRequest)
+      returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      get: "/v1/project/*/org/*/clusterOperations/{name=*}"
+    };
+  }
+
+  // Deletes a long-running operation. This method indicates that the client is
+  // no longer interested in the operation result. It does not cancel the
+  // operation. If the server doesn't support this method, it returns
+  // `google.rpc.Code.UNIMPLEMENTED`.
+  // At this point, this is unimplemented for ClustersService.
+  rpc DeleteOperation(google.longrunning.DeleteOperationRequest)
+      returns (google.protobuf.Empty) {}
+
+  // Starts asynchronous cancellation on a long-running operation.  The server
+  // makes a best effort to cancel the operation, but success is not
+  // guaranteed.
+  // * CreateCluster does not implement this
+  // * NetworkConfiguration will
+  rpc CancelOperation(google.longrunning.CancelOperationRequest)
+      returns (google.protobuf.Empty) {}
+
+  // At this point, this is unimplemented for ClustersService.
+  rpc WaitOperation(google.longrunning.WaitOperationRequest)
+      returns (google.longrunning.Operation);
+}

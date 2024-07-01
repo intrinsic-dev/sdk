@@ -13,6 +13,43 @@ package(default_visibility = [
     "//intrinsic/tools/inctl:__subpackages__",
 ])
 
+proto_library(
+    name = "clustermanager_api_proto",
+    srcs = ["clustermanager_api.proto"],
+    deps = [
+        ":clusterdeletion_api_proto",
+        "@com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-openapiv2/options:options_proto",
+        "@com_google_googleapis//google/api:annotations_proto",
+        "@com_google_googleapis//google/api:field_behavior_proto",
+        "@com_google_googleapis//google/longrunning:operations_proto",
+        "@com_google_protobuf//:duration_proto",
+        "@com_google_protobuf//:empty_proto",
+        "@com_google_protobuf//:field_mask_proto",
+    ],
+)
+
+go_proto_library(
+    name = "clustermanager_api_go_proto",
+    go_deps = [
+        ":clusterdeletion_api_go_proto",
+        "@org_golang_google_genproto_googleapis_api//annotations",
+        "@com_google_cloud_go_longrunning//autogen/longrunningpb",
+        "@com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-openapiv2/options:options_go_proto",
+    ],
+    deps = [":clustermanager_api_proto"],
+)
+
+go_grpc_library(
+    name = "clustermanager_api_go_grpc_proto",
+    srcs = [":clustermanager_api_proto"],
+    deps = [
+        ":clusterdeletion_api_go_grpc_proto",
+        "@com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-openapiv2/options:options_go_proto",
+        "@com_google_cloud_go_longrunning//autogen/longrunningpb",
+        "@org_golang_google_genproto_googleapis_api//annotations",
+    ],
+)
+
 go_proto_library(
     name = "orgdiscovery_api_go_proto",
     deps = [
