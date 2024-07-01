@@ -4,6 +4,16 @@ load("@rules_python//python:defs.bzl", "py_test")
 
 package(default_visibility = ["//visibility:public"])
 
+exports_files(
+    srcs = [
+        "intrinsic.bazelrc",
+        "intrinsic.bazelversion",
+    ],
+    visibility = [
+        "//intrinsic/tools/inctl/cmd/bazel/templates:__pkg__",
+    ],
+)
+
 py_test(
     name = "grpc_synchronized_py_test",
     size = "small",
@@ -24,30 +34,4 @@ py_test(
     main = "grpc_synchronized_test.py",
     python_version = "PY3",
     srcs_version = "PY3",
-)
-
-exports_files(
-    srcs = [
-        "BUILD",
-        "BUILD.eigen",
-        "BUILD.highwayhash",
-        "BUILD.sysroot",
-        "BUILD.workspace_root",
-        "BUILD.zstd",
-        "LICENSE",
-        "README.md",
-        "WORKSPACE",
-        "copy.bara.sky",
-        "extension_for_com_google_googleapis.bzl",
-        "extension_for_rules_oci.bzl",
-        "go.mod",
-        "go.sum",
-        "grpc_synchronized_test.py",
-        "intrinsic.bazelrc",
-        "intrinsic.bazelversion",
-        "intrinsic.gitignore",
-        "non_module_deps.bzl",
-        "requirements.in",
-        "requirements.txt",
-    ],
 )
