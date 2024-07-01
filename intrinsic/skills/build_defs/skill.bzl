@@ -363,6 +363,7 @@ def cc_skill(
             That target should be used instead.  This and the proto argument
             will be removed soon""",
         )
+
     skill_service_config_name = "_%s_skill_service_config" % name
     _skill_service_config_manifest(
         name = skill_service_config_name,
@@ -461,6 +462,7 @@ def py_skill(
             That target should be used instead.  This and the proto argument
             will be removed soon""",
         )
+
     skill_service_config_name = "_%s_skill_service_config" % name
     _skill_service_config_manifest(
         name = skill_service_config_name,
