@@ -15,7 +15,7 @@
 
 namespace intrinsic {
 
-google::rpc::Status SaveStatusAsRpcStatus(const absl::Status& status) {
+google::rpc::Status ToGoogleRpcStatus(const absl::Status& status) {
   google::rpc::Status ret;
   ret.set_code(static_cast<int>(status.code()));
   ret.set_message(status.message());
@@ -35,7 +35,7 @@ google::rpc::Status SaveStatusAsRpcStatus(const absl::Status& status) {
   return ret;
 }
 
-absl::Status MakeStatusFromRpcStatus(const google::rpc::Status& status) {
+absl::Status ToAbslStatus(const google::rpc::Status& status) {
   if (status.code() == 0) return absl::OkStatus();
   absl::Status ret(static_cast<absl::StatusCode>(status.code()),
                    status.message());
@@ -45,8 +45,8 @@ absl::Status MakeStatusFromRpcStatus(const google::rpc::Status& status) {
   return ret;
 }
 
-absl::Status MakeStatusFromRpcStatusWithPayloads(
-    const google::rpc::Status& status, const absl::Status& copy_payloads_from) {
+absl::Status ToAbslStatusWithPayloads(const google::rpc::Status& status,
+                                      const absl::Status& copy_payloads_from) {
   if (status.code() == 0) return absl::OkStatus();
 
   absl::Status ret(static_cast<absl::StatusCode>(status.code()),

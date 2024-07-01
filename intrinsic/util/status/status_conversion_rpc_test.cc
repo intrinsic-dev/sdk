@@ -21,25 +21,25 @@ using ::testing::Optional;
 using ::testing::ResultOf;
 using ::testing::SizeIs;
 
-TEST(MakeStatusFromRpcStatus, CodeAndMessageStored) {
+TEST(ToAbslStatus, CodeAndMessageStored) {
   google::rpc::Status rpc_status;
   rpc_status.set_code(google::rpc::Code::DEADLINE_EXCEEDED);
   rpc_status.set_message("Oh no!");
 
-  absl::Status absl_status = MakeStatusFromRpcStatus(rpc_status);
+  absl::Status absl_status = ToAbslStatus(rpc_status);
   EXPECT_EQ(absl_status.code(), absl::StatusCode::kDeadlineExceeded);
   EXPECT_EQ(absl_status.message(), "Oh no!");
 }
 
-TEST(SaveStatusAsRpcStatus, CodeAndMessageStored) {
+TEST(ToGoogleRpcStatus, CodeAndMessageStored) {
   auto absl_status = absl::DeadlineExceededError("Oh no!");
 
-  google::rpc::Status rpc_status = SaveStatusAsRpcStatus(absl_status);
+  google::rpc::Status rpc_status = ToGoogleRpcStatus(absl_status);
   EXPECT_EQ(rpc_status.message(), "Oh no!");
   EXPECT_EQ(rpc_status.code(), google::rpc::Code::DEADLINE_EXCEEDED);
 }
 
-TEST(SaveStatusAsRpcStatus, TypeUrlPrefix) {
+TEST(ToGoogleRpcStatus, TypeUrlPrefix) {
   auto absl_status = absl::DeadlineExceededError("Oh no!");
 
   google::protobuf::Int64Value custom_payload;
@@ -48,11 +48,11 @@ TEST(SaveStatusAsRpcStatus, TypeUrlPrefix) {
       AddTypeUrlPrefix(google::protobuf::Int64Value::descriptor()->full_name()),
       custom_payload.SerializeAsCord());
 
-  google::rpc::Status rpc_status = SaveStatusAsRpcStatus(absl_status);
+  google::rpc::Status rpc_status = ToGoogleRpcStatus(absl_status);
   EXPECT_THAT(rpc_status.details(), SizeIs(1));
 }
 
-TEST(MakeStatusFromRpcStatus, TypeUrlPrefixRemoved) {
+TEST(ToAbslStatus, TypeUrlPrefixRemoved) {
   google::protobuf::Int64Value custom_payload;
   custom_payload.set_value(123);
 
@@ -61,7 +61,7 @@ TEST(MakeStatusFromRpcStatus, TypeUrlPrefixRemoved) {
   rpc_status.set_message("Oh no!");
   rpc_status.add_details()->PackFrom(custom_payload);
 
-  absl::Status absl_status = MakeStatusFromRpcStatus(rpc_status);
+  absl::Status absl_status = ToAbslStatus(rpc_status);
   EXPECT_THAT(
       absl_status,
       AllOf(ResultOf([](const absl::Status& status) { return status.code(); },
