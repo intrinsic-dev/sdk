@@ -5,6 +5,7 @@
 
 #include <atomic>
 
+#include "absl/base/thread_annotations.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
@@ -84,24 +85,28 @@ class RealtimePromise {
     promise.is_ready_ = nullptr;
     return *this;
   };
+
   ~RealtimePromise<T>() {
     if (is_ready_ == nullptr) {
       // Destructing uninitialized promise.
       return;
     }
-    // Signal the destruction of the promise to the future.
-    auto post_error = is_destroyed_->Post();
-    if (!post_error.ok()) {
-      INTRINSIC_RT_LOG(ERROR)
-          << "Failed to signal promise destruction: " << post_error.message();
-    }
     // Signal the cancellation to the future, just in case it is or will be
     // waiting for it.
-    post_error = is_cancel_acknowledged_->Post();
+    auto post_error = is_cancel_acknowledged_->Post();
     if (!post_error.ok()) {
       INTRINSIC_RT_LOG(ERROR) << "Failed to signal cancel acknowledgement: "
                               << post_error.message();
     }
+    // Signal the destruction of the promise to the future.
+    post_error = is_destroyed_->Post();
+    if (!post_error.ok()) {
+      INTRINSIC_RT_LOG(ERROR)
+          << "Failed to signal promise destruction: " << post_error.message();
+    }
+    // The call to is_destroyed_->Post(); must be the last call to any member
+    // pointer since the future might be waiting to destruct the pointers'
+    // memory!
   }
 
   // Sets the value of the promise, which will make the future become ready.
@@ -335,7 +340,8 @@ class NonRealtimeFuture {
  private:
   // Non thread-safe implementation for cancelling the future.
   // Called in cases where the `synchronization_mutex_` is already held.
-  INTRINSIC_NON_REALTIME_ONLY absl::Status UnprotectedCancel() {
+  INTRINSIC_NON_REALTIME_ONLY absl::Status UnprotectedCancel()
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(synchronization_mutex_) {
     bool was_cancelled =
         is_cancelled_.exchange(true, std::memory_order_relaxed);
     if (!was_cancelled) {
