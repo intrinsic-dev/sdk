@@ -204,6 +204,10 @@ message NameserverConfig {
 // IntOSInterfaceConfig represents the configuration of a single on-prem
 // interface.
 message IntOSInterfaceConfig {
+  enum EtherType {
+    ETHER_TYPE_UNSPECIFIED = 0;
+    ETHER_TYPE_ETHERCAT = 1;
+  }
   // Enable automatic configuration via DHCP for IPv4
   bool dhcp4 = 1 [(google.api.field_behavior) = OPTIONAL];
   // Standard gateway for IPv4 (mostly useful when dhcp4=false)
@@ -221,6 +225,10 @@ message IntOSInterfaceConfig {
   repeated string addresses = 7 [(google.api.field_behavior) = OPTIONAL];
   // Configure interface for realtime communication (with the robot)
   bool realtime = 8 [(google.api.field_behavior) = OPTIONAL];
+  // If the interface should transmits EtherCAT it needs special handling (e.g.
+  // a different device driver).
+  // This can be extended if other protocols need special handling as well.
+  EtherType ether_type = 9 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // IntOSNetworkConfig represents the full network configuration for a device
