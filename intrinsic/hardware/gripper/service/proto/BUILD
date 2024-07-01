@@ -9,16 +9,6 @@ load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_pro
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(
-    [
-        # go/keep-sorted start
-        "BUILD",
-        "generic_gripper.proto",
-        # go/keep-sorted end
-    ],
-    visibility = ["//visibility:public"],
-)
-
 proto_library(
     name = "generic_gripper_proto",
     srcs = ["generic_gripper.proto"],
