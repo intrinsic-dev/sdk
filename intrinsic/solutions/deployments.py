@@ -446,10 +446,10 @@ def connect_to_selected_solution(
   # either None or userconfig.SELECTED_SOLUTION_TYPE_REMOTE. For backward
   # compatibility we treat both cases equally.
 
-  selected_project = config.get(userconfig.SELECTED_PROJECT, None)
-  if selected_project is None:
+  selected_org = config.get(userconfig.SELECTED_ORGANIZATION, None)
+  if selected_org is None:
     raise solution_errors.NotFoundError(
-        _NO_SOLUTION_SELECTED_ERROR + " No project selected."
+        _NO_SOLUTION_SELECTED_ERROR + " No organization selected."
     )
 
   selected_solution = config.get(userconfig.SELECTED_SOLUTION, None)
@@ -458,16 +458,7 @@ def connect_to_selected_solution(
         _NO_SOLUTION_SELECTED_ERROR + " No solution selected."
     )
 
-  cluster = _get_cluster_from_solution(selected_project, selected_solution)
-  channel = dialerutil.create_channel(
-      dialerutil.CreateChannelParams(
-          project_name=selected_project,
-          cluster=cluster,
-      ),
-      grpc_options=_GRPC_OPTIONS,
-  )
-
-  return connect(grpc_channel=channel, options=options)
+  return connect(org=selected_org, solution=selected_solution, options=options)
 
 
 def create_grpc_channel(

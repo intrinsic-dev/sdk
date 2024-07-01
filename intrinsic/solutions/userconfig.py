@@ -11,7 +11,7 @@ _CONFIG_FOLDER = "intrinsic"
 _CONFIG_FILE = "user.config"
 
 SELECTED_SOLUTION_TYPE = "selectedSolutionType"
-SELECTED_PROJECT = "selectedProject"
+SELECTED_ORGANIZATION = "selectedOrganization"
 SELECTED_SOLUTION = "selectedSolution"
 
 # Allowed values for SELECTED_SOLUTION_TYPE

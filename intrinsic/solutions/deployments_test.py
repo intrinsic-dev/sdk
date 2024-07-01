@@ -177,7 +177,7 @@ class DeploymentsTest(absltest.TestCase):
         )
     }
     with self.assertRaisesRegex(
-        solutions_errors.NotFoundError, "solution selection.*No project"
+        solutions_errors.NotFoundError, "solution selection.*No organization"
     ):
       deployments.connect_to_selected_solution()
 
@@ -185,7 +185,7 @@ class DeploymentsTest(absltest.TestCase):
         userconfig.SELECTED_SOLUTION_TYPE: (
             userconfig.SELECTED_SOLUTION_TYPE_REMOTE
         ),
-        userconfig.SELECTED_PROJECT: "test-project",
+        userconfig.SELECTED_ORGANIZATION: "test-org",
     }
     with self.assertRaisesRegex(
         solutions_errors.NotFoundError, "solution selection.*No solution"
@@ -216,6 +216,7 @@ class DeploymentsTest(absltest.TestCase):
     )
 
   @mock.patch.object(userconfig, "read")
+  @mock.patch.object(auth, "read_org_info")
   @mock.patch.object(deployments, "_get_cluster_from_solution")
   @mock.patch.object(dialerutil, "create_channel")
   @mock.patch.object(deployments.Solution, "for_channel")
@@ -224,27 +225,35 @@ class DeploymentsTest(absltest.TestCase):
       mock_for_channel: mock.MagicMock,
       mock_create_channel: mock.MagicMock,
       mock_get_cluster_from_solution: mock.MagicMock,
+      mock_read_org_info: mock.MagicMock,
       mock_userconfig_read: mock.MagicMock,
   ):
     mock_userconfig_read.return_value = {
-        "selectedProject": "test-project",
+        "selectedOrganization": "test-org",
         "selectedSolution": "test-solution",
     }
+    mock_read_org_info.return_value = auth.OrgInfo(
+        organization="test-org", project="test-project"
+    )
     mock_get_cluster_from_solution.return_value = "test-cluster"
     mock_create_channel.return_value = grpc.insecure_channel("localhost:1234")
     mock_for_channel.return_value = None
 
     deployments.connect_to_selected_solution()
 
+    mock_read_org_info.assert_called_with("test-org")
     mock_get_cluster_from_solution.assert_called_with(
         "test-project", "test-solution"
     )
     mock_create_channel.assert_called_with(
         dialerutil.CreateChannelParams(
-            project_name="test-project", cluster="test-cluster"
+            project_name="test-project",
+            cluster="test-cluster",
+            organization_name="test-org",
         ),
         grpc_options=deployments._GRPC_OPTIONS,
     )
+    self.assertTrue(mock_for_channel.called)
 
   def test_get_solution_status_with_retry_raises(self):
     class FakeGrpcError(grpc.RpcError):
