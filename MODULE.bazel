@@ -33,6 +33,7 @@ use_repo(
     "com_github_golang_glog",
     "com_github_google_go_containerregistry",
     "com_github_google_subcommands",
+    "com_github_grpc_ecosystem_grpc_gateway_v2",
     "com_github_pborman_uuid",
     "com_github_pkg_errors",
     "com_github_protocolbuffers_txtpbfmt",
