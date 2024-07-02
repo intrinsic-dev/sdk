@@ -135,6 +135,10 @@ message CreateResourceFromCatalogRequest {
 
   // Asset type of the resource instance to be created.
   AssetType asset_type = 3;
+
+  // World ID for which we will instantiate this asset. If left unset, no world
+  // operations will be performed.
+  string world_id = 4;
 }
 
 message CreateResourceFromCatalogResponse {
@@ -159,11 +163,19 @@ message DeleteResourceRequest {
 
   // Deletion strategy to use.
   DeletionStrategy deletion_strategy = 2;
+
+  // World ID from where we will delete this asset. If left unset, no world
+  // operations will be performed.
+  string world_id = 3;
 }
 
 message UpdateResourceRequest {
   // Resource to update.
   Resource resource = 1;
+
+  // World ID for which we will update this asset. If left unset, no world
+  // operations will be performed.
+  string world_id = 2;
 }
 
 message CreateSkillFromCatalogRequest {
