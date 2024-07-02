@@ -7,11 +7,16 @@ package intrinsic_proto.status;
 import "google/protobuf/timestamp.proto";
 import "intrinsic/logging/proto/context.proto";
 
-// The ExtendedStatus proto is currently work in progress. Do not rely on it,
-// yet. If you want to discuss a potential use case contact timdn@.
-
+// A code that identifies a particular error of the given component.
 message StatusCode {
+  // A string identifier of the component. This must consist of a package name
+  // (examples: ai.intrinsic or com.example) and an entity name (examples:
+  // my_skill, my_service). Examples for component strings:
+  // ai.intrinsic.executive, com.example.my_skill.
   string component = 1;
+
+  // A unique error code. Use values greater than 10000, smaller values are
+  // reserved for system and generic errors.
   uint32 code = 2;
 }
 

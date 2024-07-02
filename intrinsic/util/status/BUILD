@@ -15,8 +15,11 @@ cc_library(
     srcs = ["status_builder.cc"],
     hdrs = ["status_builder.h"],
     deps = [
+        ":extended_status_cc_proto",
         "//intrinsic/icon/release:source_location",
         "//intrinsic/logging/proto:context_cc_proto",
+        "//intrinsic/util:proto_time",
+        "//intrinsic/util/proto:type_url",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/base:log_severity",
         "@com_google_absl//absl/container:flat_hash_map",

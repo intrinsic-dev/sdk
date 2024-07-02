@@ -19,6 +19,9 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "intrinsic/icon/release/source_location.h"
+#include "intrinsic/logging/proto/context.pb.h"
+#include "intrinsic/util/proto_time.h"
+#include "intrinsic/util/status/extended_status.pb.h"
 
 namespace intrinsic {
 
@@ -139,6 +142,52 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   // it does not represent an error.
   StatusBuilder& SetPayload(std::string_view type_url, absl::Cord payload) &;
   StatusBuilder&& SetPayload(std::string_view type_url, absl::Cord payload) &&;
+
+  StatusBuilder& SetExtendedStatus(
+      const intrinsic_proto::status::ExtendedStatus& extended_status) &;
+  StatusBuilder&& SetExtendedStatus(
+      const intrinsic_proto::status::ExtendedStatus& extended_status) &&;
+
+  StatusBuilder& SetExtendedStatusCode(std::string_view component,
+                                       uint32_t code) &;
+  StatusBuilder&& SetExtendedStatusCode(std::string_view component,
+                                        uint32_t code) &&;
+
+  StatusBuilder& SetExtendedStatusCode(
+      const intrinsic_proto::status::StatusCode& status_code) &;
+  StatusBuilder&& SetExtendedStatusCode(
+      const intrinsic_proto::status::StatusCode& status_code) &&;
+
+  StatusBuilder& SetExtendedStatusTitle(std::string_view title) &;
+  StatusBuilder&& SetExtendedStatusTitle(std::string_view title) &&;
+
+  StatusBuilder& SetExtendedStatusTimestamp(absl::Time t = absl::Now()) &;
+  StatusBuilder&& SetExtendedStatusTimestamp(absl::Time t = absl::Now()) &&;
+
+  StatusBuilder& SetExtendedStatusInternalReportMessage(
+      std::string_view message) &;
+  StatusBuilder&& SetExtendedStatusInternalReportMessage(
+      std::string_view message) &&;
+
+  StatusBuilder& SetExtendedStatusExternalReportMessage(
+      std::string_view message) &;
+  StatusBuilder&& SetExtendedStatusExternalReportMessage(
+      std::string_view message) &&;
+
+  StatusBuilder& AddExtendedStatusContext(
+      const intrinsic_proto::status::ExtendedStatus& context_status) &;
+  StatusBuilder&& AddExtendedStatusContext(
+      const intrinsic_proto::status::ExtendedStatus& context_status) &&;
+
+  StatusBuilder& SetExtendedStatusLogContext(
+      const intrinsic_proto::data_logger::Context& log_context) &;
+  StatusBuilder&& SetExtendedStatusLogContext(
+      const intrinsic_proto::data_logger::Context& log_context) &&;
+
+  // Mutates the builder so that a stack trace will be appended to the internal
+  // report message when converting to status.
+  StatusBuilder& EmitStackTraceToExtendedStatusInternalReport() &;
+  StatusBuilder&& EmitStackTraceToExtendedStatusInternalReport() &&;
 
   ///////////////////////////////// Adaptors /////////////////////////////////
   //
@@ -347,6 +396,11 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
     // If not nullptr, specifies the log sink where log output should be also
     // sent to.  Only used when `logging_mode != LoggingMode::kDisabled`.
     absl::LogSink* sink = nullptr;
+
+    // Extended status information with more details about the error.
+    // Only set if any related method was called.
+    std::unique_ptr<intrinsic_proto::status::ExtendedStatus> extended_status;
+    bool extended_status_emit_stacktrace = false;
   };
 
   // The status that the result will be based on.
@@ -682,6 +736,184 @@ inline StatusBuilder::operator absl::Status() && {
 
 inline intrinsic::SourceLocation StatusBuilder::source_location() const {
   return loc_;
+}
+
+inline StatusBuilder& StatusBuilder::SetExtendedStatus(
+    const intrinsic_proto::status::ExtendedStatus& extended_status) & {
+  if (rep_ == nullptr) {
+    rep_ = std::make_unique<Rep>();
+  }
+  if (!rep_->extended_status) {
+    rep_->extended_status =
+        std::make_unique<intrinsic_proto::status::ExtendedStatus>();
+  }
+  *rep_->extended_status = extended_status;
+  return *this;
+}
+
+inline StatusBuilder&& StatusBuilder::SetExtendedStatus(
+    const intrinsic_proto::status::ExtendedStatus& extended_status) && {
+  return std::move(SetExtendedStatus(extended_status));
+}
+
+inline StatusBuilder& StatusBuilder::SetExtendedStatusCode(
+    const intrinsic_proto::status::StatusCode& status_code) & {
+  if (rep_ == nullptr) {
+    rep_ = std::make_unique<Rep>();
+  }
+  if (!rep_->extended_status) {
+    rep_->extended_status =
+        std::make_unique<intrinsic_proto::status::ExtendedStatus>();
+  }
+  *rep_->extended_status->mutable_status_code() = status_code;
+  return *this;
+}
+
+inline StatusBuilder&& StatusBuilder::SetExtendedStatusCode(
+    const intrinsic_proto::status::StatusCode& status_code) && {
+  return std::move(SetExtendedStatusCode(status_code));
+}
+
+inline StatusBuilder& StatusBuilder::SetExtendedStatusCode(
+    std::string_view component, uint32_t code) & {
+  if (rep_ == nullptr) {
+    rep_ = std::make_unique<Rep>();
+  }
+  if (!rep_->extended_status) {
+    rep_->extended_status =
+        std::make_unique<intrinsic_proto::status::ExtendedStatus>();
+  }
+  rep_->extended_status->mutable_status_code()->set_component(component);
+  rep_->extended_status->mutable_status_code()->set_code(code);
+  return *this;
+}
+
+inline StatusBuilder&& StatusBuilder::SetExtendedStatusCode(
+    std::string_view component, uint32_t code) && {
+  return std::move(SetExtendedStatusCode(component, code));
+}
+
+inline StatusBuilder& StatusBuilder::SetExtendedStatusTitle(
+    std::string_view title) & {
+  if (rep_ == nullptr) {
+    rep_ = std::make_unique<Rep>();
+  }
+  if (!rep_->extended_status) {
+    rep_->extended_status =
+        std::make_unique<intrinsic_proto::status::ExtendedStatus>();
+  }
+  rep_->extended_status->set_title(title);
+  return *this;
+}
+
+inline StatusBuilder&& StatusBuilder::SetExtendedStatusTitle(
+    std::string_view title) && {
+  return std::move(SetExtendedStatusTitle(title));
+}
+
+inline StatusBuilder& StatusBuilder::SetExtendedStatusTimestamp(
+    absl::Time t) & {
+  if (rep_ == nullptr) {
+    rep_ = std::make_unique<Rep>();
+  }
+  if (!rep_->extended_status) {
+    rep_->extended_status =
+        std::make_unique<intrinsic_proto::status::ExtendedStatus>();
+  }
+  ToProto(t, rep_->extended_status->mutable_timestamp()).IgnoreError();
+  return *this;
+}
+
+inline StatusBuilder&& StatusBuilder::SetExtendedStatusTimestamp(
+    absl::Time t) && {
+  return std::move(SetExtendedStatusTimestamp(t));
+}
+
+inline StatusBuilder& StatusBuilder::SetExtendedStatusExternalReportMessage(
+    std::string_view message) & {
+  if (rep_ == nullptr) {
+    rep_ = std::make_unique<Rep>();
+  }
+  if (!rep_->extended_status) {
+    rep_->extended_status =
+        std::make_unique<intrinsic_proto::status::ExtendedStatus>();
+  }
+  rep_->extended_status->mutable_external_report()->set_message(message);
+  return *this;
+}
+
+inline StatusBuilder&& StatusBuilder::SetExtendedStatusExternalReportMessage(
+    std::string_view message) && {
+  return std::move(SetExtendedStatusExternalReportMessage(message));
+}
+
+inline StatusBuilder& StatusBuilder::SetExtendedStatusInternalReportMessage(
+    std::string_view message) & {
+  if (rep_ == nullptr) {
+    rep_ = std::make_unique<Rep>();
+  }
+  if (!rep_->extended_status) {
+    rep_->extended_status =
+        std::make_unique<intrinsic_proto::status::ExtendedStatus>();
+  }
+  rep_->extended_status->mutable_internal_report()->set_message(message);
+  return *this;
+}
+
+inline StatusBuilder&& StatusBuilder::SetExtendedStatusInternalReportMessage(
+    std::string_view message) && {
+  return std::move(SetExtendedStatusInternalReportMessage(message));
+}
+
+inline StatusBuilder& StatusBuilder::AddExtendedStatusContext(
+    const intrinsic_proto::status::ExtendedStatus& context_status) & {
+  if (rep_ == nullptr) {
+    rep_ = std::make_unique<Rep>();
+  }
+  if (!rep_->extended_status) {
+    rep_->extended_status =
+        std::make_unique<intrinsic_proto::status::ExtendedStatus>();
+  }
+  *rep_->extended_status->add_context() = context_status;
+  return *this;
+}
+
+inline StatusBuilder&& StatusBuilder::AddExtendedStatusContext(
+    const intrinsic_proto::status::ExtendedStatus& context_status) && {
+  return std::move(AddExtendedStatusContext(context_status));
+}
+
+inline StatusBuilder& StatusBuilder::SetExtendedStatusLogContext(
+    const intrinsic_proto::data_logger::Context& log_context) & {
+  if (rep_ == nullptr) {
+    rep_ = std::make_unique<Rep>();
+  }
+  if (!rep_->extended_status) {
+    rep_->extended_status =
+        std::make_unique<intrinsic_proto::status::ExtendedStatus>();
+  }
+  *rep_->extended_status->mutable_related_to()->mutable_log_context() =
+      log_context;
+  return *this;
+}
+
+inline StatusBuilder&& StatusBuilder::SetExtendedStatusLogContext(
+    const intrinsic_proto::data_logger::Context& log_context) && {
+  return std::move(SetExtendedStatusLogContext(log_context));
+}
+
+inline StatusBuilder&
+StatusBuilder::EmitStackTraceToExtendedStatusInternalReport() & {
+  if (rep_ == nullptr) {
+    rep_ = std::make_unique<Rep>();
+  }
+  rep_->extended_status_emit_stacktrace = true;
+  return *this;
+}
+
+inline StatusBuilder&&
+StatusBuilder::EmitStackTraceToExtendedStatusInternalReport() && {
+  return std::move(EmitStackTraceToExtendedStatusInternalReport());
 }
 
 }  // namespace intrinsic
