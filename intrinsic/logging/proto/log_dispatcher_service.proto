@@ -21,6 +21,24 @@ message PutLogItemsRequest {
 
   // The organization ID prefixes the bucket that logs are uploaded into.
   string organization_id = 3;
+
+  // intrinsic:strip_begin
+  //
+  // INTERNAL ONLY, but 1P developers should NOT populate this field, instead,
+  // Data Infrastructure devs should exclusively handle the population of this
+  // field when handling bag recording requests.
+  //
+  // If populated, the log items will be uploaded to a directory for a specific
+  // bag instead.
+  //
+  // They will be pushed into a bag-only pipeline that is separate
+  // from the standard structured logging pipeline.
+  //
+  // In other words, logs uploaded for bags will be unreachable via the BigQuery
+  // importer pipeline, 3P GetCloudLogItems or any of the list methods. Those
+  // logs will instead be retrievable as part of a bag.
+  optional string bag_id = 4;
+  // intrinsic:strip_end
 }
 
 message PutLogItemsResponse {
@@ -189,6 +207,23 @@ message LoadCloudLogItemsRequest {
 
   // Session is bound to organization ID.
   string organization_id = 6;
+
+  // intrinsic:strip_begin
+  //
+  // INTERNAL ONLY.
+  //
+  // If populated, the log items will be pulled from a directory for a specific
+  // bag instead.
+  //
+  // This is internal only because accessing bag-inputs directly defeats the
+  // purpose of bags, and only makes sense in the interim before we implement
+  // log backfilling and the full bag pipeline.
+  //
+  // So it is here as a convenience for 1Ps in the interim only. (Full 3P
+  // support will require significantly complicating the List and Get APIs, only
+  // to deprecate them when the full bag pipeline is completed.)
+  optional string bag_id = 7;
+  // intrinsic:strip_end
 }
 
 message LoadCloudLogItemsResponse {
