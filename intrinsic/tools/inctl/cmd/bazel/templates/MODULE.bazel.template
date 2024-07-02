@@ -1,0 +1,25 @@
+{{/*
+Copyright 2023 Intrinsic Innovation LLC
+*/ -}}
+
+module(name="{{.WorkspaceName}}")
+
+{{ if .SDKRepository -}}
+bazel_dep(name = "ai_intrinsic_sdks")
+git_override(
+    module_name = "ai_intrinsic_sdks",
+    {{if eq .SDKVersion .SDKVersionDefaultValue -}}
+    # To pin a version change the following to, e.g.:
+    #   commit = "origin/intrinsic.platform.20221231.RC00",
+    commit = "origin/main",
+    {{- else -}}
+    commit = "origin/{{.SDKVersion}}",
+    {{- end}}
+    remote = "{{.SDKRepository}}",
+)
+{{- else if .LocalSDKPath -}}
+local_path_override(
+    module_name = "ai_intrinsic_sdks",
+    path = "{{.LocalSDKPath}}",
+)
+{{- end }}

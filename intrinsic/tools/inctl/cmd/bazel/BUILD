@@ -11,6 +11,8 @@ go_library(
         "bazelinit.go",
     ],
     embedsrcs = [
+        "//intrinsic/tools/inctl/cmd/bazel/templates:MODULE.bazel.template",  #keep
+        "//intrinsic/tools/inctl/cmd/bazel/templates:WORKSPACE.bzlmod.template",  #keep
         "//intrinsic/tools/inctl/cmd/bazel/templates:WORKSPACE.template",  #keep
         "//intrinsic/tools/inctl/cmd/bazel/templates:bazelrc.template",  #keep
         "//intrinsic/tools/inctl/cmd/bazel/templates:bazelversion.template",  #keep

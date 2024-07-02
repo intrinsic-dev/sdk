@@ -6,6 +6,8 @@ package(default_visibility = ["//intrinsic/tools/inctl/cmd/bazel:__subpackages__
 exports_files(
     srcs = [
         "BUILD",
+        "MODULE.bazel.template",
+        "WORKSPACE.bzlmod.template",
         "WORKSPACE.template",
     ],
     visibility = [

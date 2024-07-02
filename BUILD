@@ -14,6 +14,7 @@ exports_files(
 
 exports_files(
     srcs = [
+        "MODULE.bazel",
         "requirements.in",
         "requirements.txt",
     ],

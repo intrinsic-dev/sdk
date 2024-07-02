@@ -97,6 +97,28 @@ void ZenohHandle::Initialize() {
   handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY | RTLD_DEEPBIND);
 #endif
 
+  // MODULE.bazel
+  if (handle == nullptr) {
+    runfiles_dir =
+        bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation("_main");
+#if defined(MEMORY_SANITIZER) || defined(THREAD_SANITIZER) || \
+    defined(ADDRESS_SANITIZER)
+    handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY);
+#else
+    handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY | RTLD_DEEPBIND);
+#endif
+  }
+  if (handle == nullptr) {
+    runfiles_dir = bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation(
+        "ai_intrinsic_sdks~override");
+#if defined(MEMORY_SANITIZER) || defined(THREAD_SANITIZER) || \
+    defined(ADDRESS_SANITIZER)
+    handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY);
+#else
+    handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY | RTLD_DEEPBIND);
+#endif
+  }
+
   if (handle == nullptr) {
     LOG(FATAL) << "Cannot open the shared library at: " << runfiles_dir + path;
   }

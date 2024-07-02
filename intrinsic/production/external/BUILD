@@ -21,12 +21,15 @@ py_test(
     args = [
         "--deps-0",
         "$(location //bazel:deps_0.bzl)",
+        "--module-bazel",
+        "$(location //:MODULE.bazel)",
         "--requirements-in",
         "$(location //:requirements.in)",
         "--requirements-txt",
         "$(location //:requirements.txt)",
     ],
     data = [
+        "//:MODULE.bazel",
         "//:requirements.in",
         "//:requirements.txt",
         "//bazel:deps_0.bzl",

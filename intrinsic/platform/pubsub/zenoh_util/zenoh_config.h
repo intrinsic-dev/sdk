@@ -31,6 +31,19 @@ inline std::string GetZenohPeerConfig() {
             "ai_intrinsic_sdks");
   }
   std::ifstream file(runfiles_path + config_path);
+  // MODULE.bazel
+  if (!file.is_open()) {
+    runfiles_path =
+        bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation("_main");
+    file = std::ifstream(runfiles_path + config_path);
+  }
+  if (!file.is_open()) {
+    runfiles_path =
+        bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation(
+            "ai_intrinsic_sdks~override");
+    file = std::ifstream(runfiles_path + config_path);
+  }
+
   if (file.is_open()) {
     // Read the entire file into a string
     file.seekg(0, std::ios::end);

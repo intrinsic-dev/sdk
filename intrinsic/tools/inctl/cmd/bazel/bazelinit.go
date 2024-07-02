@@ -105,15 +105,19 @@ func RunInitCmd(params *InitCmdParams) (InitSuccessMessage, error) {
 		SDKVersionDefaultValue: version.SDKVersionDefaultValue,
 	}
 
+	moduleFile := filepath.Join(workspaceRoot, "MODULE.bazel")
 	bazelVersionFile := filepath.Join(workspaceRoot, ".bazelversion")
 	workspaceFile := filepath.Join(workspaceRoot, "WORKSPACE")
+	workspaceBzlmodFile := filepath.Join(workspaceRoot, "WORKSPACE.bzlmod")
 	bazelrcFile := filepath.Join(workspaceRoot, ".bazelrc")
 	permissiveContentMirrorFile := filepath.Join(workspaceRoot, "bazel/content_mirror/permissive.cfg")
 	createdFiles := []string{bazelrcFile}
 
 	if !params.BazelrcOnly {
+		createdFiles = append(createdFiles, moduleFile)
 		createdFiles = append(createdFiles, bazelVersionFile)
 		createdFiles = append(createdFiles, workspaceFile)
+		createdFiles = append(createdFiles, workspaceBzlmodFile)
 		createdFiles = append(createdFiles, permissiveContentMirrorFile)
 	}
 
@@ -133,12 +137,29 @@ func RunInitCmd(params *InitCmdParams) (InitSuccessMessage, error) {
 
 		if !params.BazelrcOnly {
 			if err := templateutil.CreateNewFileFromTemplate(
+				moduleFile, "MODULE.bazel.template", templateParams, templateSet,
+				templateutil.CreateFileOptions{
+					Override: params.Override,
+				}); err != nil {
+				return InitSuccessMessage{}, fmt.Errorf("creating file: %w", err)
+			}
+
+			if err := templateutil.CreateNewFileFromTemplate(
 				workspaceFile, "WORKSPACE.template", templateParams, templateSet,
 				templateutil.CreateFileOptions{
 					Override: params.Override,
 				}); err != nil {
 				return InitSuccessMessage{}, fmt.Errorf("creating file: %w", err)
 			}
+
+			if err := templateutil.CreateNewFileFromTemplate(
+				workspaceBzlmodFile, "WORKSPACE.bzlmod.template", templateParams, templateSet,
+				templateutil.CreateFileOptions{
+					Override: params.Override,
+				}); err != nil {
+				return InitSuccessMessage{}, fmt.Errorf("creating file: %w", err)
+			}
+
 			if err := templateutil.CreateNewFileFromTemplate(
 				bazelVersionFile, "bazelversion.template", templateParams, templateSet,
 				templateutil.CreateFileOptions{

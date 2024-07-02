@@ -1,0 +1,189 @@
+# Copyright 2023 Intrinsic Innovation LLC
+
+module(
+    name = "ai_intrinsic_sdks",
+    version = "",
+)
+
+bazel_dep(name = "bazel_skylib", version = "1.5.0")
+bazel_dep(name = "aspect_bazel_lib", version = "2.7.0")
+bazel_dep(name = "platforms", version = "0.0.8")
+bazel_dep(name = "rules_pkg", version = "0.9.1")
+
+non_module_deps = use_extension("//bazel:non_module_deps.bzl", "non_module_deps_ext")
+
+##########
+# Go
+##########
+
+bazel_dep(name = "rules_go", version = "0.48.0", repo_name = "io_bazel_rules_go")
+
+go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.download(version = "1.22.1")
+
+bazel_dep(name = "gazelle", version = "0.36.0", repo_name = "bazel_gazelle")
+
+go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps")
+go_deps.from_file(go_mod = "//:go.mod")
+use_repo(
+    go_deps,
+    # go/keep-sorted start
+    "com_github_bazelbuild_buildtools",
+    "com_github_cenkalti_backoff_v4",
+    "com_github_golang_glog",
+    "com_github_google_go_containerregistry",
+    "com_github_google_subcommands",
+    "com_github_pborman_uuid",
+    "com_github_pkg_errors",
+    "com_github_protocolbuffers_txtpbfmt",
+    "com_github_rs_xid",
+    "com_github_spf13_cobra",
+    "com_github_spf13_pflag",
+    "com_github_spf13_viper",
+    "com_github_stoewer_go_strcase",
+    "com_google_cloud_go_longrunning",
+    "io_opencensus_go",
+    "org_golang_google_genproto_googleapis_api",
+    "org_golang_google_genproto_googleapis_rpc",
+    "org_golang_google_grpc",
+    "org_golang_google_protobuf",
+    "org_golang_x_exp",
+    "org_golang_x_sync",
+    "org_uber_go_atomic",
+    "org_uber_go_multierr",
+    # go/keep-sorted end
+)
+
+##########
+# Python
+##########
+
+bazel_dep(name = "rules_python", version = "0.31.0")
+
+# The root module defines the default toolchain version.
+# If it doesn't find dependencies which that version it errors out.
+# It seems to be best practice to just declare all compatible versions in dependencies.
+PYTHON_VERSIONS = [
+    "3.11",
+]
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+
+[
+    python.toolchain(
+        # Choose last version as default.
+        is_default = python_version == PYTHON_VERSIONS[-1],
+        python_version = python_version,
+    )
+    for python_version in PYTHON_VERSIONS
+]
+use_repo(python, system_python = "python_3_11")
+
+bazel_dep(name = "pybind11_bazel", version = "2.12.0")
+bazel_dep(name = "pybind11_abseil", version = "202402.0")
+bazel_dep(name = "pybind11_protobuf", version = "0.0.0-20240524-1d7a729")
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "ai_intrinsic_sdks_pip_deps",
+    python_version = "3.11",
+    requirements_lock = "//:requirements.txt",
+)
+use_repo(pip, "ai_intrinsic_sdks_pip_deps")
+
+##########
+# C++
+##########
+
+bazel_dep(name = "toolchains_llvm", version = "1.0.0")
+
+use_repo(non_module_deps, "com_googleapis_storage_chrome_linux_amd64_sysroot")
+
+llvm = use_extension(
+    "@toolchains_llvm//toolchain/extensions:llvm.bzl",
+    "llvm",
+    dev_dependency = True,
+)
+llvm.toolchain(
+    llvm_version = "14.0.0",
+)
+
+llvm.sysroot(
+    label = "@com_googleapis_storage_chrome_linux_amd64_sysroot//:all_files",
+    targets = ["linux-x86_64"],
+)
+use_repo(llvm, "llvm_toolchain")
+
+register_toolchains(
+    "@llvm_toolchain//:all",
+    dev_dependency = True,
+)
+
+bazel_dep(name = "rules_cc", version = "0.0.9")
+bazel_dep(name = "rules_foreign_cc", version = "0.10.1")
+
+##########
+# Java
+##########
+
+bazel_dep(name = "rules_java", version = "6.4.0")
+
+##########
+# Containers
+##########
+
+bazel_dep(name = "rules_oci", version = "1.5.1")
+
+extension_for_rules_oci = use_extension("//bazel:extension_for_rules_oci.bzl", "extension_for_rules_oci_ext")
+use_repo(extension_for_rules_oci, "distroless_base_amd64_oci")
+use_repo(extension_for_rules_oci, "distroless_python3")
+
+############################
+# Missing Google OSS files #
+############################
+
+# go/keep-sorted start
+use_repo(non_module_deps, "com_google_xls_strong_int_h")
+# go/keep-sorted end
+
+##########
+# Other  #
+##########
+
+# go/keep-sorted start
+bazel_dep(name = "abseil-cpp", version = "20240116.2", repo_name = "com_google_absl")
+bazel_dep(name = "abseil-py", version = "2.1.0", repo_name = "com_google_absl_py")
+bazel_dep(name = "boringssl", version = "0.0.0-20240530-2db0eb3")
+bazel_dep(name = "flatbuffers", version = "24.3.7", repo_name = "com_github_google_flatbuffers")
+bazel_dep(name = "googleapis", version = "0.0.0-20240326-1c8d509c5", repo_name = "com_google_googleapis")
+bazel_dep(name = "googletest", version = "1.14.0.bcr.1", repo_name = "com_google_googletest")
+bazel_dep(name = "grpc", version = "1.63.1", repo_name = "com_github_grpc_grpc")
+bazel_dep(name = "protobuf", version = "26.0.bcr.2", repo_name = "com_google_protobuf")
+bazel_dep(name = "protobuf-matchers", version = "0.0.0-20240603-9f688b0", repo_name = "com_github_inazarenko_protobuf_matchers")
+bazel_dep(name = "re2", version = "2021-09-01", repo_name = "com_github_google_re2")
+bazel_dep(name = "rules_license", version = "0.0.8")
+# go/keep-sorted end
+
+use_repo(
+    non_module_deps,
+    # go/keep-sorted start
+    "com_gitlab_libeigen_eigen",
+    "com_google_cel_cpp",
+    "io_opencensus_cpp",
+    # go/keep-sorted end
+)
+
+switched_rules = use_extension("@com_google_googleapis//:extensions.bzl", "switched_rules")
+switched_rules.use_languages(
+    cc = True,
+    # csharp = True,
+    # gapic = True,
+    go = True,
+    grpc = True,
+    java = True,
+    # nodejs = True,
+    # php = True,
+    python = True,
+    # ruby = True,
+)
+use_repo(switched_rules, "com_google_googleapis_imports")
