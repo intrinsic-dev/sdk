@@ -29,15 +29,18 @@ func GetCommand() *cobra.Command {
 		Use:   "install bundle",
 		Short: "Install service",
 		Example: `
-	Upload the relevant artifacts to a container registry and CAS, and then install the service
+	Install a service to the specified solution:
 	$ inctl service install abc/service_bundle.tar \
-			--registry gcr.io/my-registry \
-			--project my_project \
+			--org my_org \
 			--solution my_solution_id
 
-			To find a running solution's id, run:
-			$ inctl solution list --project my-project --filter "running_on_hw,running_in_sim" --output json
+	To find a running solution's id, run:
+	$ inctl solution list --project my-project --filter "running_on_hw,running_in_sim" --output json
 
+	The service can also be installed by specifying the cluster on which the solution is running:
+	$ inctl service install abc/service_bundle.tar \
+			--org my_org \
+			--cluster my_cluster
 	`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
