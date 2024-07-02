@@ -149,3 +149,16 @@ cc_test(
         "@com_google_protobuf//:protobuf",
     ],
 )
+
+cc_library(
+    name = "parse_text_proto",
+    hdrs = ["parse_text_proto.h"],
+    deps = [
+        "//intrinsic/util/status:status_macros",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
