@@ -25,6 +25,8 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "intrinsic/icon/release/source_location.h"
+#include "intrinsic/util/proto/type_url.h"
+#include "intrinsic/util/status/extended_status.pb.h"
 
 namespace intrinsic {
 
@@ -60,7 +62,14 @@ StatusBuilder::Rep::Rep(const Rep& r)
       stream(r.stream.str()),
       should_log_stack_trace(r.should_log_stack_trace),
       message_join_style(r.message_join_style),
-      sink(r.sink) {}
+      sink(r.sink) {
+  extended_status_emit_stacktrace = r.extended_status_emit_stacktrace;
+  if (r.extended_status != nullptr) {
+    extended_status =
+        std::make_unique<intrinsic_proto::status::ExtendedStatus>();
+    *extended_status = *r.extended_status;
+  }
+}
 
 absl::Status StatusBuilder::JoinMessageToStatus(absl::Status s,
                                                 std::string_view msg,
@@ -192,6 +201,23 @@ absl::Status StatusBuilder::AnnotateStatus(const absl::Status& s,
 }
 
 absl::Status StatusBuilder::CreateStatusAndConditionallyLog() && {
+  if (rep_ != nullptr && rep_->extended_status_emit_stacktrace) {
+    if (rep_->extended_status == nullptr) {
+      rep_->extended_status =
+          std::make_unique<intrinsic_proto::status::ExtendedStatus>();
+    }
+    rep_->extended_status->mutable_internal_report()->set_message(
+        absl::StrCat(rep_->extended_status->internal_report().message(), "\n",
+                     GetSymbolizedStackTraceAsString(
+                         /*max_depth=*/50, /*skip_count=*/1)));
+  }
+  if (rep_ != nullptr && rep_->extended_status != nullptr) {
+    SetPayload(
+        AddTypeUrlPrefix(
+            intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()),
+        rep_->extended_status->SerializeAsCord());
+  }
+
   absl::Status result = JoinMessageToStatus(
       std::move(status_), rep_->stream.str(), rep_->message_join_style);
 
