@@ -212,6 +212,42 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "get_extended_status",
+    srcs = ["get_extended_status.cc"],
+    hdrs = ["get_extended_status.h"],
+    deps = [
+        ":extended_status_cc_proto",
+        "//intrinsic/util/proto:type_url",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:cord",
+        "@com_google_googleapis//google/rpc:code_cc_proto",
+        "@com_google_googleapis//google/rpc:status_cc_proto",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_test(
+    name = "get_extended_status_test",
+    srcs = ["get_extended_status_test.cc"],
+    deps = [
+        ":extended_status_cc_proto",
+        ":get_extended_status",
+        ":status_builder",
+        ":status_conversion_grpc",
+        ":status_conversion_rpc",
+        "//intrinsic/util/proto:parse_text_proto",
+        "//intrinsic/util/testing:gtest_wrapper",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_googleapis//google/rpc:code_cc_proto",
+        "@com_google_googleapis//google/rpc:status_cc_proto",
+    ],
+)
+
 cc_test(
     name = "annotate_test",
     srcs = ["annotate_test.cc"],
