@@ -35,6 +35,8 @@ namespace intrinsic::icon {
 template <std::size_t MaxSize>
 class FixedString {
  public:
+  static constexpr std::size_t kMaxSize = MaxSize;
+
   FixedString() = default;
 
   // FixedString is copy-able.s

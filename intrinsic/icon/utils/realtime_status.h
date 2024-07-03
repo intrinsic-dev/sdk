@@ -32,6 +32,7 @@ class ABSL_MUST_USE_RESULT RealtimeStatus final {
  public:
   // Char array for error message.
   static constexpr size_t kMaxMessageLength = 100;
+  using MessageType = FixedString<kMaxMessageLength>;
 
   // Local name for the FixedStrCat function that includes the correct maximum
   // message size.
@@ -39,8 +40,7 @@ class ABSL_MUST_USE_RESULT RealtimeStatus final {
   // NOTE: This, like FixedStrCat, truncates messages to kMaxMessageLength. It
   // is your responsibility to make sure your error messages are not too long!
   template <typename... AV>
-  static ABSL_MUST_USE_RESULT FixedString<kMaxMessageLength> StrCat(
-      const AV&... args) {
+  static ABSL_MUST_USE_RESULT MessageType StrCat(const AV&... args) {
     return FixedStrCat<kMaxMessageLength>(args...);
   }
 
@@ -86,7 +86,7 @@ class ABSL_MUST_USE_RESULT RealtimeStatus final {
  private:
   // Error code.
   absl::StatusCode code_ = absl::StatusCode::kOk;
-  FixedString<kMaxMessageLength> message_;
+  MessageType message_;
 };
 
 // Each of the functions below creates a RealtimeStatus object with a particular
