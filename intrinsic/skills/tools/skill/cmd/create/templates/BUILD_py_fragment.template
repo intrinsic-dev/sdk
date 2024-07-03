@@ -26,6 +26,7 @@ py_library(
     deps = [
         ":{{.SkillNameSnakeCase}}_py_pb2",
         "@ai_intrinsic_sdks//intrinsic/skills/proto:equipment_py_pb2",
+        "@ai_intrinsic_sdks//intrinsic/skills/proto:footprint_py_pb2",
         "@ai_intrinsic_sdks//intrinsic/skills/python:proto_utils",
         "@ai_intrinsic_sdks//intrinsic/skills/python:skill_interface",
         "@ai_intrinsic_sdks//intrinsic/util:decorators",
