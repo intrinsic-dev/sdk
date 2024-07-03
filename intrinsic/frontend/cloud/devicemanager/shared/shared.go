@@ -73,6 +73,9 @@ type Interface struct {
 	// Realtime identifies this interface to be used for realtime communication
 	// with the robot.
 	Realtime bool `json:"realtime"`
+
+	// EtherType specifies the protocol used on this interface.
+	EtherType int64 `json:"ether_type"`
 }
 
 // String implements fmt.Stringer for logging purposes.
