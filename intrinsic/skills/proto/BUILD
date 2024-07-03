@@ -161,6 +161,7 @@ proto_library(
         ":prediction_proto",
         ":skills_proto",
         "//intrinsic/logging/proto:context_proto",
+        "//intrinsic/util/status:extended_status_proto",
         "@com_google_googleapis//google/longrunning:operations_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:duration_proto",

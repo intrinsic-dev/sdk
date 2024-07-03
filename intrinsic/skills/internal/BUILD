@@ -72,6 +72,8 @@ cc_library(
     deps = [
         "//intrinsic/skills/proto:error_cc_proto",
         "//intrinsic/util/proto:type_url",
+        "//intrinsic/util/status:extended_status_cc_proto",
+        "//intrinsic/util/status:get_extended_status",
         "//intrinsic/util/status:status_conversion_rpc",
         "@com_github_grpc_grpc//:grpc++_public_hdrs",
         "@com_google_absl//absl/log:check",

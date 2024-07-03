@@ -13,6 +13,7 @@ import "intrinsic/skills/proto/error.proto";
 import "intrinsic/skills/proto/footprint.proto";
 import "intrinsic/skills/proto/prediction.proto";
 import "intrinsic/skills/proto/skills.proto";
+import "intrinsic/util/status/extended_status.proto";
 
 message PredictRequest {
   google.protobuf.Any parameters = 2;
@@ -224,9 +225,13 @@ message PredictionSummary {
   google.protobuf.Duration duration = 3;
 
   // Error information if the request failed for any reason.
+  // error_code and error_message are not set if extended_status is set.
   int32 error_code = 4;
   string error_message = 5;
   SkillErrorInfo error_info = 6;
+
+  // On error, optionally detailed error information.
+  intrinsic_proto.status.ExtendedStatus extended_status = 7;
 }
 
 // Logged by the skills client library after a skill get footprint.
@@ -238,9 +243,13 @@ message FootprintSummary {
   google.protobuf.Duration duration = 3;
 
   // Error information if the request failed for any reason.
+  // error_code and error_message are not set if extended_status is set.
   int32 error_code = 4;
   string error_message = 5;
   SkillErrorInfo error_info = 6;
+
+  // On error, optionally detailed error information.
+  intrinsic_proto.status.ExtendedStatus extended_status = 8;
 
   reserved 2;
   reserved "result";
@@ -259,9 +268,13 @@ message ExecutionSummary {
   string trace_id = 4;
 
   // Error information if the request failed for any reason.
+  // error_code and error_message are not set if extended_status is set.
   int32 error_code = 5;
   string error_message = 6;
   SkillErrorInfo error_info = 7;
+
+  // On error, optionally detailed error information.
+  intrinsic_proto.status.ExtendedStatus extended_status = 8;
 }
 
 // Logged by the skills client library after a skill preview.
@@ -277,9 +290,13 @@ message PreviewSummary {
   string trace_id = 4;
 
   // Error information if the request failed for any reason.
+  // error_code and error_message are not set if extended_status is set.
   int32 error_code = 5;
   string error_message = 6;
   SkillErrorInfo error_info = 7;
+
+  // On error, optionally detailed error information.
+  intrinsic_proto.status.ExtendedStatus extended_status = 8;
 }
 
 message ProjectRequest {

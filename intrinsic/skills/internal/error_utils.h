@@ -3,12 +3,15 @@
 #ifndef INTRINSIC_SKILLS_INTERNAL_ERROR_UTILS_H_
 #define INTRINSIC_SKILLS_INTERNAL_ERROR_UTILS_H_
 
+#include <optional>
 #include <string>
 
 #include "absl/status/status.h"
 #include "google/rpc/status.pb.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/skills/proto/error.pb.h"
+#include "intrinsic/util/status/extended_status.pb.h"
+#include "intrinsic/util/status/get_extended_status.h"
 
 namespace intrinsic {
 namespace skills {
@@ -54,8 +57,15 @@ intrinsic_proto::skills::SkillErrorInfo GetErrorInfo(
 template <typename T>
 void AddErrorToSummary(const absl::Status& absl_status, T& summary) {
   if (absl_status.ok()) return;
-  summary.set_error_code(absl_status.raw_code());
-  summary.set_error_message(std::string(absl_status.message()));
+  std::optional<intrinsic_proto::status::ExtendedStatus> extended_status =
+      GetExtendedStatus(absl_status);
+
+  if (extended_status.has_value()) {
+    *summary.mutable_extended_status() = std::move(*extended_status);
+  } else {
+    summary.set_error_code(absl_status.raw_code());
+    summary.set_error_message(std::string(absl_status.message()));
+  }
   *summary.mutable_error_info() = GetErrorInfo(absl_status);
 }
 
