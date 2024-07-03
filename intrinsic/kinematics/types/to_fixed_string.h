@@ -3,9 +3,9 @@
 #ifndef INTRINSIC_KINEMATICS_TYPES_TO_FIXED_STRING_H_
 #define INTRINSIC_KINEMATICS_TYPES_TO_FIXED_STRING_H_
 
+#include <cstddef>
 #include <ostream>
 
-#include "absl/strings/string_view.h"
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/icon/utils/fixed_string.h"
 #include "intrinsic/kinematics/types/cartesian_limits.h"
@@ -27,11 +27,13 @@ constexpr size_t kVectorNdStrSize =
 // We need to had the prefix to the vector.
 constexpr size_t kStateStrSize = 3 + kVectorNdStrSize;
 
-// We need 10 fields that include min_,max_ in from fo the prefix.
+// We need 10 fields that include min_,max_ in front of the prefix.
 constexpr size_t kLimitStrSize = 10 * (7 + kVectorNdStrSize);
 
-// A pose is 3 position values and 4 quaternions values.
-constexpr size_t kPose3dStrSize = kDoubleStrSize * (3 + 4);
+// A quaternion is 4 doubles separated by 3 commas.
+constexpr size_t kQuaternionStrSize = kDoubleStrSize * 4 + 3;
+// A pose is 3 position values and one quaternion, separated by 3 commas.
+constexpr size_t kPose3dStrSize = kQuaternionStrSize + kDoubleStrSize * 3 + 3;
 
 // We have 8 Vector3d and their prefix and 3 doubles and their prefix.
 constexpr size_t kCartLimitStrSize =
@@ -43,6 +45,8 @@ icon::FixedString<kVectorNdStrSize> ToFixedString(
     const eigenmath::VectorNd& vec);
 
 icon::FixedString<kPose3dStrSize> ToFixedString(const Pose3d& pose);
+
+icon::FixedString<kQuaternionStrSize> ToFixedString(const Quaterniond& q);
 
 }  // namespace eigenmath
 

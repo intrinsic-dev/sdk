@@ -2,6 +2,7 @@
 
 #include "intrinsic/kinematics/types/to_fixed_string.h"
 
+#include <cstddef>
 #include <ostream>
 
 #include "absl/strings/string_view.h"
@@ -40,6 +41,11 @@ icon::FixedString<kPose3dStrSize> ToFixedString(const Pose3d& pose) {
       pose.translation().z(), ",", pose.quaternion().w(), ",",
       pose.quaternion().x(), ",", pose.quaternion().y(), ",",
       pose.quaternion().z());
+}
+
+icon::FixedString<kQuaternionStrSize> ToFixedString(const Quaterniond& q) {
+  return FixedStrCat<kQuaternionStrSize>(q.w(), ",", q.x(), ",", q.y(), ",",
+                                         q.z());
 }
 
 }  // namespace eigenmath
