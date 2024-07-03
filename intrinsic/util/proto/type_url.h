@@ -17,7 +17,7 @@ constexpr char kTypeUrlPrefix[] = "type.googleapis.com/";
 constexpr char kTypeUrlSeparator = '/';
 
 inline std::string AddTypeUrlPrefix(std::string_view proto_type) {
-  if (proto_type.starts_with(kTypeUrlPrefix)) {
+  if (proto_type.find(kTypeUrlPrefix) == 0) {
     return std::string(proto_type);
   }
   return absl::StrCat(kTypeUrlPrefix, proto_type);
