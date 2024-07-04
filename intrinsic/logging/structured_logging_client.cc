@@ -169,9 +169,9 @@ StructuredLoggingClient::GetLogItems(absl::string_view event_source,
   intrinsic_proto::data_logger::GetLogItemsRequest request;
   intrinsic_proto::data_logger::GetLogItemsResponse response;
   request.add_event_sources(std::string{event_source});
-  INTR_ASSIGN_OR_RETURN(auto start_time_proto, ToProto(start_time));
+  INTR_ASSIGN_OR_RETURN(auto start_time_proto, FromAbslTime(start_time));
   *request.mutable_start_time() = std::move(start_time_proto);
-  INTR_ASSIGN_OR_RETURN(auto end_time_proto, ToProto(end_time));
+  INTR_ASSIGN_OR_RETURN(auto end_time_proto, FromAbslTime(end_time));
   *request.mutable_end_time() = std::move(end_time_proto);
   request.set_max_num_items(page_size);
   if (!page_token.empty()) {

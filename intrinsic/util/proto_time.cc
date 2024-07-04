@@ -70,21 +70,22 @@ void ToProtoNoValidation(absl::Time time,
 
 }  // namespace
 
-absl::Status ToProto(absl::Time time, google::protobuf::Timestamp* timestamp) {
+absl::Status FromAbslTime(absl::Time time,
+                          google::protobuf::Timestamp* timestamp) {
   ToProtoNoValidation(time, timestamp);
   return Validate(*timestamp);
 }
 
-absl::StatusOr<google::protobuf::Timestamp> ToProto(absl::Time time) {
+absl::StatusOr<google::protobuf::Timestamp> FromAbslTime(absl::Time time) {
   google::protobuf::Timestamp timestamp;
-  auto status = ToProto(time, &timestamp);
+  auto status = FromAbslTime(time, &timestamp);
   if (!status.ok()) {
     return status;
   }
   return timestamp;
 }
 
-google::protobuf::Timestamp ToProtoClampToValidRange(absl::Time time) {
+google::protobuf::Timestamp FromAbslTimeClampToValidRange(absl::Time time) {
   time = std::clamp(time, absl::TimeFromTimespec(kMinProtoTimestamp),
                     absl::TimeFromTimespec(kMaxProtoTimestamp));
   google::protobuf::Timestamp out;
@@ -92,33 +93,35 @@ google::protobuf::Timestamp ToProtoClampToValidRange(absl::Time time) {
   return out;
 }
 
-absl::StatusOr<absl::Time> FromProto(const google::protobuf::Timestamp& proto) {
+absl::StatusOr<absl::Time> ToAbslTime(
+    const google::protobuf::Timestamp& proto) {
   absl::Status status = Validate(proto);
   if (!status.ok()) return status;
   return absl::FromUnixSeconds(proto.seconds()) +
          absl::Nanoseconds(proto.nanos());
 }
 
-absl::Duration FromProto(const google::protobuf::Duration& proto) {
+absl::Duration ToAbslDuration(const google::protobuf::Duration& proto) {
   return absl::Seconds(proto.seconds()) + absl::Nanoseconds(proto.nanos());
 }
 
 google::protobuf::Timestamp GetCurrentTimeProto() {
-  auto time_or = ToProto(absl::Now());
+  auto time_or = FromAbslTime(absl::Now());
   if (!time_or.ok()) {
     return google::protobuf::Timestamp();
   }
   return *time_or;
 }
 
-absl::StatusOr<google::protobuf::Duration> ToProto(absl::Duration d) {
+absl::StatusOr<google::protobuf::Duration> FromAbslDuration(absl::Duration d) {
   google::protobuf::Duration proto;
-  absl::Status status = ToProto(d, &proto);
+  absl::Status status = FromAbslDuration(d, &proto);
   if (!status.ok()) return status;
   return proto;
 }
 
-absl::Status ToProto(absl::Duration d, google::protobuf::Duration* proto) {
+absl::Status FromAbslDuration(absl::Duration d,
+                              google::protobuf::Duration* proto) {
   // s and n may both be negative, per the Duration proto spec.
   const int64_t s = absl::IDivDuration(d, absl::Seconds(1), &d);
   const int64_t n = absl::IDivDuration(d, absl::Nanoseconds(1), &d);

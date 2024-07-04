@@ -48,7 +48,8 @@ absl::Status Publisher::Publish(const google::protobuf::Message& message,
   wrapper.mutable_payload()->PackFrom(message);
   // When the pubsub message was sent out.
   absl::Time publish_time = absl::Now();
-  INTR_ASSIGN_OR_RETURN(*wrapper.mutable_publish_time(), ToProto(publish_time));
+  INTR_ASSIGN_OR_RETURN(*wrapper.mutable_publish_time(),
+                        FromAbslTime(publish_time));
   if (event_time > publish_time) {
     return absl::InvalidArgumentError("event_time should not be in the future");
   }

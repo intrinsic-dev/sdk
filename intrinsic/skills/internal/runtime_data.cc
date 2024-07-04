@@ -72,8 +72,8 @@ absl::StatusOr<SkillRuntimeData> GetRuntimeDataFrom(
                 skill_service_config.skill_description()
                     .execution_options()
                     .supports_cancellation(),
-                FromProto(skill_service_config.execution_service_options()
-                              .cancellation_ready_timeout()))
+                ToAbslDuration(skill_service_config.execution_service_options()
+                                   .cancellation_ready_timeout()))
           : ExecutionOptions(skill_service_config.skill_description()
                                  .execution_options()
                                  .supports_cancellation()),

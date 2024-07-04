@@ -152,7 +152,7 @@ absl::Status RunBlendedJointMove(
   // Some minimal introspection on the planned trajectory
   LOG(INFO) << "Planned trajectory holds " << planned_trajectory.state_size()
             << " data points and lasts "
-            << intrinsic::FromProto(planned_trajectory.time_since_start(
+            << intrinsic::ToAbslDuration(planned_trajectory.time_since_start(
                    planned_trajectory.time_since_start_size() - 1));
 
   LOG(INFO) << "Starting to execute motion";

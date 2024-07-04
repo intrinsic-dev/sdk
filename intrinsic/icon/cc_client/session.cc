@@ -110,7 +110,7 @@ absl::StatusOr<SessionId> InitializeSessionOrEndCall(
        ->mutable_part() = {parts.begin(), parts.end()};
   if (deadline.has_value()) {
     *request_message.mutable_initial_session_data()->mutable_deadline() =
-        ::intrinsic::ToProtoClampToValidRange(*deadline);
+        ::intrinsic::FromAbslTimeClampToValidRange(*deadline);
   }
   *request_message.mutable_log_context() = context;
 

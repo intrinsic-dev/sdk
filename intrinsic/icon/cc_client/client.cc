@@ -282,8 +282,9 @@ absl::StatusOr<TimestampedPartProperties> Client::GetPartProperties() const {
       ToAbslStatus(stub_->GetPartProperties(context.get(), req, &resp)));
   TimestampedPartProperties properties;
   INTR_ASSIGN_OR_RETURN(properties.timestamp_wall,
-                        intrinsic::FromProto(resp.timestamp_wall()));
-  properties.timestamp_control = intrinsic::FromProto(resp.timestamp_control());
+                        intrinsic::ToAbslTime(resp.timestamp_wall()));
+  properties.timestamp_control =
+      intrinsic::ToAbslDuration(resp.timestamp_control());
 
   for (const auto& [part_name, properties_proto] :
        resp.part_properties_by_part_name()) {

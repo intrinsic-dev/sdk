@@ -820,7 +820,7 @@ inline StatusBuilder& StatusBuilder::SetExtendedStatusTimestamp(
     rep_->extended_status =
         std::make_unique<intrinsic_proto::status::ExtendedStatus>();
   }
-  ToProto(t, rep_->extended_status->mutable_timestamp()).IgnoreError();
+  FromAbslTime(t, rep_->extended_status->mutable_timestamp()).IgnoreError();
   return *this;
 }
 

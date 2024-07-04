@@ -62,13 +62,13 @@ absl::Status PreviewContextImpl::RecordWorldUpdate(
 
   INTR_ASSIGN_OR_RETURN(
       absl::Time base_time,
-      FromProto(world_updates_.empty() ? google::protobuf::Timestamp()
-                                       : world_updates_.back().start_time()));
+      ToAbslTime(world_updates_.empty() ? google::protobuf::Timestamp()
+                                        : world_updates_.back().start_time()));
   INTR_ASSIGN_OR_RETURN(*timed_update.mutable_start_time(),
-                        ToProto(base_time + elapsed));
+                        FromAbslTime(base_time + elapsed));
 
   INTR_ASSIGN_OR_RETURN(*timed_update.mutable_time_until_update(),
-                        ToProto(duration));
+                        FromAbslDuration(duration));
 
   world_updates_.push_back(std::move(timed_update));
 
