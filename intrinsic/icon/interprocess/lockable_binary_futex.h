@@ -24,10 +24,13 @@ namespace intrinsic::icon {
 // same thread! Whenever possible, use the `ScopedLock`!
 class ABSL_LOCKABLE LockableBinaryFutex {
  public:
-  LockableBinaryFutex()
-      : futex_(/*posted = */ true)  // Set `posted` so that the user can and
+  // If `private_futex` is true, the futex can only be used from the current
+  // process. This can have performance benefits. If the futex is used in a
+  // shared memory segment, set `private_futex` to false.
+  explicit LockableBinaryFutex(bool private_futex = false)
+      : futex_(/*posted = */ true,  // Set `posted` so that the user can and
                                     // must call `Lock()` before `Unlock()`.
-  {}
+               private_futex) {}
   LockableBinaryFutex(const LockableBinaryFutex &) = delete;
   LockableBinaryFutex(LockableBinaryFutex &&) = default;
   ~LockableBinaryFutex() {

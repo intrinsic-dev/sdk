@@ -20,11 +20,21 @@ namespace intrinsic::icon {
 namespace {
 
 inline int64_t futex(std::atomic<uint32_t> &uaddr, int futex_op, uint32_t val,
+                     bool private_futex,
                      const struct timespec *timeout = nullptr,
                      uint32_t *uaddr2 = nullptr,
                      uint32_t val3 = 0) INTRINSIC_SUPPRESS_REALTIME_CHECK {
   // For the static analysis, we allow futex operations even though they can
   // be blocking, because the blocking behavior is usually intended.
+
+  if (private_futex) {
+    // This option bit can be employed with all futex operations. It tells the
+    // kernel that the futex is process-private and not shared with another
+    // process (i.e., it is being used for synchronization only between threads
+    // of the same process). This allows the kernel to make some
+    // additional performance optimizations.
+    futex_op |= FUTEX_PRIVATE_FLAG;
+  }
   return syscall(SYS_futex, &uaddr, futex_op, val, timeout, uaddr2,
                  FUTEX_BITSET_MATCH_ANY);
 }
@@ -35,7 +45,8 @@ bool TryWait(std::atomic<uint32_t> &val) {
   return val.compare_exchange_strong(one, 0);
 }
 
-RealtimeStatus Wait(std::atomic<uint32_t> &val, const timespec *ts) {
+RealtimeStatus Wait(std::atomic<uint32_t> &val, const timespec *ts,
+                    bool private_futex) {
   const absl::Time start_time = absl::Now();
   while (true) {
     if (TryWait(val)) {
@@ -43,7 +54,8 @@ RealtimeStatus Wait(std::atomic<uint32_t> &val, const timespec *ts) {
     }
 
     // The value is not yet what we expect, let's wait for it.
-    auto ret = futex(val, FUTEX_WAIT_BITSET | FUTEX_CLOCK_REALTIME, 0, ts);
+    auto ret = futex(val, FUTEX_WAIT_BITSET | FUTEX_CLOCK_REALTIME, 0,
+                     private_futex, ts);
     if (ret == -1 && errno == ETIMEDOUT) {
       return DeadlineExceededError(RealtimeStatus::StrCat(
           "Timeout after ",
@@ -63,7 +75,8 @@ RealtimeStatus Wait(std::atomic<uint32_t> &val, const timespec *ts) {
 
 }  // namespace
 
-BinaryFutex::BinaryFutex(bool posted) : val_(posted == true ? 1 : 0) {}
+BinaryFutex::BinaryFutex(bool posted, bool private_futex)
+    : val_(posted == true ? 1 : 0), private_futex_(private_futex) {}
 BinaryFutex::BinaryFutex(BinaryFutex &&other) : val_(other.val_.load()) {}
 BinaryFutex &BinaryFutex::operator=(BinaryFutex &&other) {
   if (this != &other) {
@@ -76,7 +89,7 @@ RealtimeStatus BinaryFutex::Post() {
   uint32_t zero = 0;
   if (val_.compare_exchange_strong(zero, 1)) {
     // One indicating that we wake up at most 1 other client.
-    if (futex(val_, FUTEX_WAKE, 1) == -1) {
+    if (futex(val_, FUTEX_WAKE, 1, private_futex_) == -1) {
       return InternalError(strerror(errno));
     }
   }
@@ -88,10 +101,10 @@ RealtimeStatus BinaryFutex::WaitUntil(absl::Time deadline) const {
     return DeadlineExceededError("Specified deadline is in the past");
   }
   if (deadline == absl::InfiniteFuture()) {
-    return Wait(val_, nullptr);
+    return Wait(val_, nullptr, private_futex_);
   }
   auto ts = absl::ToTimespec(deadline);
-  return Wait(val_, &ts);
+  return Wait(val_, &ts, private_futex_);
 }
 
 RealtimeStatus BinaryFutex::WaitFor(absl::Duration timeout) const {

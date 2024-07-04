@@ -66,8 +66,12 @@ namespace intrinsic::icon {
 //
 class BinaryFutex {
  public:
-  // Constructors.
-  explicit BinaryFutex(bool posted = false);
+  // `posted` sets the initial value of the futex, i.e. if set to
+  // true it equals calling `Post()`.
+  // Set `private_futex` to true, if the futex is only used in one process, e.g.
+  // it does not live in a shared memory segment. This can give some performance
+  // benefits.
+  explicit BinaryFutex(bool posted = false, bool private_futex = false);
   BinaryFutex(BinaryFutex &other) = delete;
   BinaryFutex &operator=(const BinaryFutex &other) = delete;
   BinaryFutex(BinaryFutex &&other);
@@ -112,6 +116,7 @@ class BinaryFutex {
       std::atomic<uint32_t>::is_always_lock_free,
       "Atomic operations need to be lock free for multi-process communication");
   mutable std::atomic<uint32_t> val_ = {0};
+  const bool private_futex_ = false;
 };
 
 }  // namespace intrinsic::icon
