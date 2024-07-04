@@ -6,6 +6,10 @@
 #include <sys/syscall.h>
 
 #include <atomic>
+#include <cerrno>
+#include <cstdint>
+#include <cstring>
+#include <ctime>
 
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -25,12 +29,16 @@ inline int64_t futex(std::atomic<uint32_t> &uaddr, int futex_op, uint32_t val,
                  FUTEX_BITSET_MATCH_ANY);
 }
 
+// Iff the value is one, we return true and set the value to zero.
+bool TryWait(std::atomic<uint32_t> &val) {
+  uint32_t one = 1;
+  return val.compare_exchange_strong(one, 0);
+}
+
 RealtimeStatus Wait(std::atomic<uint32_t> &val, const timespec *ts) {
   const absl::Time start_time = absl::Now();
   while (true) {
-    // If the value is what we expect, we can return.
-    uint32_t one = 1;
-    if (val.compare_exchange_strong(one, 0)) {
+    if (TryWait(val)) {
       return OkStatus();
     }
 
@@ -89,6 +97,8 @@ RealtimeStatus BinaryFutex::WaitUntil(absl::Time deadline) const {
 RealtimeStatus BinaryFutex::WaitFor(absl::Duration timeout) const {
   return WaitUntil(absl::Now() + timeout);
 }
+
+bool BinaryFutex::TryWait() const { return icon::TryWait(val_); }
 
 uint32_t BinaryFutex::Value() const { return val_; }
 

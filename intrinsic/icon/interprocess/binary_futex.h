@@ -6,10 +6,8 @@
 #include <atomic>
 #include <cstdint>
 
-#include "absl/log/log.h"
 #include "absl/time/time.h"
 #include "intrinsic/icon/utils/realtime_status.h"
-#include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon {
 
@@ -76,7 +74,7 @@ class BinaryFutex {
   BinaryFutex &operator=(BinaryFutex &&other);
 
   // Posts on the futex and increases its value to one.
-  // If the current value is already one, the value will not furher increase.
+  // If the current value is already one, the value will not further increase.
   // Returns an internal error if the futex could not be increased.
   // Real-time safe.
   // Thread-safe.
@@ -95,6 +93,10 @@ class BinaryFutex {
   // Real-time safe when `timeout` is short enough.
   // Thread-safe.
   RealtimeStatus WaitFor(absl::Duration timeout) const;
+
+  // Returns true if the current value is one and, in this case, sets the value
+  // to zero.
+  bool TryWait() const;
 
   // Returns the current value of the futex.
   // This can either be zero or one. The returned value might be outdated by the

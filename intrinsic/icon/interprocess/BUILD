@@ -13,8 +13,6 @@ cc_library(
     deps = [
         "//intrinsic/icon/testing:realtime_annotations",
         "//intrinsic/icon/utils:realtime_status",
-        "//intrinsic/util/status:status_macros",
-        "@com_google_absl//absl/log",
         "@com_google_absl//absl/time",
     ],
 )
