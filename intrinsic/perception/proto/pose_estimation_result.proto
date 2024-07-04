@@ -24,6 +24,10 @@ message PoseEstimate {
   // during, for example, the picking process. It is defined as:
   // Visible pixels / (Visible pixels + Occluded pixels)
   optional float visibility_score = 4;
+
+  // Unique ID of this pose estimate, should be unique for a given
+  // scene of objects. Useful for debugging purposes.
+  optional uint64 unique_id = 5;
 }
 
 // Contains the results of a perception detector.
