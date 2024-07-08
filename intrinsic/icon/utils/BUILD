@@ -1,6 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -76,6 +77,12 @@ go_binary(
         "//intrinsic/production:intrinsic",
         "@com_github_golang_glog//:go_default_library",
     ],
+)
+
+pkg_tar(
+    name = "init_hwm_tar",
+    srcs = [":init_hwm"],
+    include_runfiles = True,
 )
 
 cc_library(
