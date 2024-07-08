@@ -14,7 +14,8 @@ import "intrinsic/perception/proto/sensor_config.proto";
 // The specification includes the driver to be used, connection parameters,
 // but also intrinsic calibration info and optional per-sensor configuration.
 message CameraConfig {
-  string name = 1;
+  reserved 1;
+  reserved "name";
 
   // A unique identifier of a specific camera.
   // This identifier determines which underlying driver is used to access a
