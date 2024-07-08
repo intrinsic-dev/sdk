@@ -29,11 +29,6 @@ message CartesianLimits {
   double max_rotational_jerk = 11;
 }
 
-// Admittance gain for each cartesian DOF.
-message CartesianAdmittance {
-  repeated double gain = 1;  // m/Ns (translation) or rad/Nms (rotation)
-}
-
 // Frame/Pose/Transform Terminology:
 //
 // Pose: An abstract absolute 3D position and orientation.
