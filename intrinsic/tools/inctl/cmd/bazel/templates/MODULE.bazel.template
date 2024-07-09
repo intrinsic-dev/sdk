@@ -25,10 +25,11 @@ local_path_override(
 {{- end }}
 
 # Direct dependencies
-bazel_dep(name = "platforms", version = "0.0.8")
+bazel_dep(name = "platforms", version = "0.0.9")
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
-bazel_dep(name = "rules_proto", version = "6.0.0")
+bazel_dep(name = "abseil-cpp", version = "20240116.2", repo_name = "com_google_absl")
 bazel_dep(name = "abseil-py", version = "2.1.0", repo_name = "com_google_absl_py")
+bazel_dep(name = "rules_proto", version = "6.0.0")
 bazel_dep(name = "protobuf", version = "26.0.bcr.2", repo_name = "com_google_protobuf")
 bazel_dep(name = "grpc", version = "1.63.1", repo_name = "com_github_grpc_grpc")
 
@@ -46,6 +47,9 @@ llvm.sysroot(
 )
 use_repo(llvm, "llvm_toolchain")
 register_toolchains("@llvm_toolchain//:all")
+
+bazel_dep(name = "rules_cc", version = "0.0.9")
+bazel_dep(name = "rules_foreign_cc", version = "0.10.1")
 
 # Google API bindings
 bazel_dep(name = "googleapis", version = "0.0.0-20240326-1c8d509c5", repo_name = "com_google_googleapis")
