@@ -45,6 +45,10 @@ func (i *Info) LastSeen() (time.Time, error) {
 
 // RollbackAvailable reports whether a rollback is available according to this info object
 func (i *Info) RollbackAvailable() bool {
+	if i.BaseManager != "inversion" {
+		// No rollback available for non-inversion base clusters
+		return false
+	}
 	return i.RollbackOS != "" && i.RollbackBase != ""
 }
 
