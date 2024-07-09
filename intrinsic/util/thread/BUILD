@@ -27,6 +27,14 @@ cc_library(
 )
 
 cc_library(
+    name = "stop_token",
+    hdrs = ["stop_token.h"],
+    deps = [
+        "@com_google_absl//absl/base:core_headers",
+    ],
+)
+
+cc_library(
     name = "lockstep",
     srcs = ["lockstep.cc"],
     hdrs = ["lockstep.h"],
