@@ -14,8 +14,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"google.golang.org/grpc"
 	clustermanagergrpcpb "intrinsic/frontend/cloud/api/clustermanager_api_go_grpc_proto"
+
+	"google.golang.org/grpc"
+	"intrinsic/frontend/cloud/devicemanager/shared"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/auth"
 )
@@ -102,6 +104,62 @@ func (c *AuthedClient) Close() error {
 		return c.grpcConn.Close()
 	}
 	return nil
+}
+
+func (c *AuthedClient) GetStatusNetwork(ctx context.Context, clusterName, deviceID string) (map[string]shared.StatusInterface, error) {
+	req := &clustermanagergrpcpb.GetStatusRequest{
+		Project:   c.projectName,
+		Org:       c.organization,
+		ClusterId: clusterName,
+		DeviceId:  deviceID,
+	}
+	resp, err := c.grpcClient.GetStatus(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	statusNetwork := map[string]shared.StatusInterface{}
+	for in, ifa := range resp.GetInterfaces() {
+		statusNetwork[in] = shared.StatusInterface{
+			IPAddress: ifa.GetAddresses(),
+		}
+	}
+	return statusNetwork, nil
+}
+
+func translateNetworkConfig(n *clustermanagergrpcpb.IntOSNetworkConfig) map[string]shared.Interface {
+	configMap := map[string]shared.Interface{}
+	for name, inf := range n.GetInterfaces() {
+		ns := inf.GetNameservers()
+		configMap[name] = shared.Interface{
+			DHCP4:    inf.GetDhcp4(),
+			Gateway4: inf.GetGateway4(),
+			DHCP6:    &inf.Dhcp6,
+			Gateway6: inf.GetGateway6(),
+			MTU:      int64(inf.GetMtu()),
+			Nameservers: shared.Nameservers{
+				Search:    ns.GetSearch(),
+				Addresses: ns.GetAddresses(),
+			},
+			Addresses: inf.GetAddresses(),
+			Realtime:  inf.GetRealtime(),
+			EtherType: int64(inf.GetEtherType()),
+		}
+	}
+	return configMap
+}
+
+func (c *AuthedClient) GetNetworkConfig(ctx context.Context, clusterName, deviceID string) (map[string]shared.Interface, error) {
+	req := &clustermanagergrpcpb.GetNetworkConfigRequest{
+		Project: c.projectName,
+		Org:     c.organization,
+		Cluster: clusterName,
+		Device:  deviceID,
+	}
+	resp, err := c.grpcClient.GetNetworkConfig(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return translateNetworkConfig(resp), nil
 }
 
 // PostDevice acts similar to [http.Post] but takes a context and injects base path of the device manager for the project.

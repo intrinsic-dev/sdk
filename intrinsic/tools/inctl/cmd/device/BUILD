@@ -22,6 +22,8 @@ go_library(
         "@com_github_golang_glog//:go_default_library",
         "@com_github_spf13_cobra//:go_default_library",
         "@com_github_spf13_viper//:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
         "@org_uber_go_multierr//:go_default_library",
     ],
 )
@@ -31,6 +33,7 @@ go_library(
     srcs = ["projectclient.go"],
     deps = [
         "//intrinsic/frontend/cloud/api:clustermanager_api_go_grpc_proto",
+        "//intrinsic/frontend/cloud/devicemanager/shared",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/tools/inctl/auth",
         "@org_golang_google_grpc//:go_default_library",

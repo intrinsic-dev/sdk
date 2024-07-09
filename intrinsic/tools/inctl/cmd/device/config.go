@@ -18,6 +18,8 @@ import (
 	backoff "github.com/cenkalti/backoff/v4"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"intrinsic/frontend/cloud/devicemanager/shared"
 	"intrinsic/tools/inctl/cmd/device/projectclient"
 	"intrinsic/tools/inctl/cmd/root"
@@ -85,46 +87,26 @@ var configGetCmd = &cobra.Command{
 		}
 		defer client.Close()
 
-		var status shared.Status
-		if err := client.GetJSON(ctx, clusterName, deviceID, "relay/v1alpha1/status", &status); err != nil {
-			if errors.Is(err, projectclient.ErrNotFound) {
+		statusNetwork, err := client.GetStatusNetwork(ctx, clusterName, deviceID)
+		if err != nil {
+			switch status.Code(err) {
+			case codes.NotFound:
 				fmt.Fprintf(os.Stderr, "Cluster does not exist. Either it does not exist, or you don't have access to it.\n")
-				return err
-			}
-
-			if errors.Is(err, projectclient.ErrBadGateway) {
-				fmt.Fprint(os.Stderr, gatewayError)
-				return err
-			}
-
-			if errors.Is(err, projectclient.ErrUnauthorized) {
+			case codes.PermissionDenied:
 				fmt.Fprint(os.Stderr, unauthorizedError)
-				return err
 			}
-
-			return fmt.Errorf("get status: %w", err)
+			return err
 		}
-		prettyPrintStatusInterfaces(status.Network)
 
-		res, err := client.GetDevice(ctx, clusterName, deviceID, "relay/v1alpha1/config/network")
+		network, err := client.GetNetworkConfig(ctx, clusterName, deviceID)
 		if err != nil {
-			return fmt.Errorf("get config: %w", err)
+			return err
 		}
-		defer res.Body.Close()
-
-		if res.StatusCode != http.StatusOK {
-			io.Copy(os.Stderr, res.Body)
-			return fmt.Errorf("http code %v", res.StatusCode)
-		}
-		body, err := io.ReadAll(res.Body)
+		jsonNetwork, err := json.Marshal(network)
 		if err != nil {
-			return fmt.Errorf("read config: %w", err)
+			return err
 		}
-		prtr.Print(&networkConfigInfo{Current: status.Network, Config: string(body)})
-
-		if res.StatusCode != 200 {
-			return fmt.Errorf("request failed")
-		}
+		prtr.Print(&networkConfigInfo{Current: statusNetwork, Config: string(jsonNetwork)})
 
 		return nil
 	},
