@@ -520,6 +520,11 @@ message BehaviorTree {
     // provide documentation for a particular node.
     optional string description = 20;
 
+    // User provided data that is treated opaquely by the executive.
+    // The data is assumed to be small (all data combined in the order of
+    // kilobytes) as to not slow down state retrieval.
+    optional UserData user_data = 21;
+
     // An identifier for the node. The identifier must be unique for the
     // behavior tree containing the node.
     // Given a subtree (TREE-A), which gets used in another tree (TREE-B),
@@ -561,6 +566,7 @@ message BehaviorTree {
   // in the executive state. It is not further examined or used.
   message UserData {
     map<string, bytes> data_bytes = 1;
+    map<string, google.protobuf.Any> data_any = 2;
   }
 
   // Describes the overall state of the Behavior Tree.
