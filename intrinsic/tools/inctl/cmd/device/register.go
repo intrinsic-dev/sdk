@@ -18,7 +18,6 @@ import (
 	log "github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"intrinsic/frontend/cloud/devicemanager/shared"
-	"intrinsic/tools/inctl/cmd/device/projectclient"
 	"intrinsic/tools/inctl/util/orgutil"
 )
 
@@ -80,7 +79,7 @@ func makeNameError(hostname string, index int) string {
 	return fmt.Sprintf("Cannot use %q in hostname", offender)
 }
 
-func waitForConfigDownload(ctx context.Context, client projectclient.AuthedClient, clusterName, deviceID string) error {
+func waitForConfigDownload(ctx context.Context, client authedClient, clusterName, deviceID string) error {
 	// This should usually only take 1-2 min.
 	// If it takes longer than 5 minutes, there' something wrong.
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*5)
@@ -90,7 +89,7 @@ func waitForConfigDownload(ctx context.Context, client projectclient.AuthedClien
 	defer fmt.Printf("\n")
 	for {
 		status := map[string]any{}
-		if err := client.GetJSON(ctx, clusterName, deviceID, "configure:status", &status); err != nil {
+		if err := client.getJSON(ctx, clusterName, deviceID, "configure:status", &status); err != nil {
 			if errors.Is(err, context.DeadlineExceeded) {
 				return fmt.Errorf("the IPC did not reach cloud infrastructure.\nPlease make sure the IPC has a stable internet connection and retry")
 			}
@@ -108,10 +107,10 @@ func waitForConfigDownload(ctx context.Context, client projectclient.AuthedClien
 	}
 }
 
-func waitForStatusAvailable(ctx context.Context, client projectclient.AuthedClient, clusterName, deviceID string) error {
+func waitForStatusAvailable(ctx context.Context, client authedClient, clusterName, deviceID string) error {
 	fmt.Printf("Waiting for IPC to offer status")
 	for {
-		resp, err := client.GetDevice(ctx, clusterName, deviceID, "relay/v1alpha1/status")
+		resp, err := client.getDevice(ctx, clusterName, deviceID, "relay/v1alpha1/status")
 		if err != nil {
 			if errors.Is(err, context.DeadlineExceeded) {
 				return fmt.Errorf("the IPC failed to initialize.\nPlease make sure the IPC has as stable internet connection")
@@ -139,7 +138,7 @@ func waitForStatusAvailable(ctx context.Context, client projectclient.AuthedClie
 	}
 }
 
-func waitForCluster(ctx context.Context, client projectclient.AuthedClient, clusterName, deviceID, hostname string) error {
+func waitForCluster(ctx context.Context, client authedClient, clusterName, deviceID, hostname string) error {
 	// Set a total timeout of 15min
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*15)
 	defer cancel()
@@ -176,11 +175,11 @@ var registerCmd = &cobra.Command{
 			return fmt.Errorf(makeNameError(hostname, offender))
 		}
 
-		ctx, client, err := projectclient.Client(cmd.Context(), projectName, orgName, clusterName)
+		ctx, client, err := newClient(cmd.Context(), projectName, orgName, clusterName)
 		if err != nil {
 			return fmt.Errorf("get client for project: %w", err)
 		}
-		defer client.Close()
+		defer client.close()
 
 		// This map represents a json mapping of a config struct.
 		config := map[string]any{
@@ -228,7 +227,7 @@ var registerCmd = &cobra.Command{
 			return fmt.Errorf("failed to marshal config: %w", err)
 		}
 
-		resp, err := client.PostDevice(ctx, clusterName, deviceID, "configure", bytes.NewBuffer(body))
+		resp, err := client.postDevice(ctx, clusterName, deviceID, "configure", bytes.NewBuffer(body))
 		if err != nil {
 			return err
 		}

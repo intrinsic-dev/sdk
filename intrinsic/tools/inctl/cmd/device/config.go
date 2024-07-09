@@ -21,7 +21,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"intrinsic/frontend/cloud/devicemanager/shared"
-	"intrinsic/tools/inctl/cmd/device/projectclient"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/orgutil"
 	"intrinsic/tools/inctl/util/printer"
@@ -81,13 +80,13 @@ var configGetCmd = &cobra.Command{
 		projectName := viperLocal.GetString(orgutil.KeyProject)
 		orgName := viperLocal.GetString(orgutil.KeyOrganization)
 
-		ctx, client, err := projectclient.Client(cmd.Context(), projectName, orgName, clusterName)
+		ctx, client, err := newClient(cmd.Context(), projectName, orgName, clusterName)
 		if err != nil {
 			return fmt.Errorf("get project client: %w", err)
 		}
-		defer client.Close()
+		defer client.close()
 
-		statusNetwork, err := client.GetStatusNetwork(ctx, clusterName, deviceID)
+		statusNetwork, err := client.getStatusNetwork(ctx, clusterName, deviceID)
 		if err != nil {
 			switch status.Code(err) {
 			case codes.NotFound:
@@ -98,7 +97,7 @@ var configGetCmd = &cobra.Command{
 			return err
 		}
 
-		network, err := client.GetNetworkConfig(ctx, clusterName, deviceID)
+		network, err := client.getNetworkConfig(ctx, clusterName, deviceID)
 		if err != nil {
 			return err
 		}
@@ -116,7 +115,7 @@ var configGetCmd = &cobra.Command{
 // This persists the network configuration to disk.
 // The configuration was already sent and tentatively applied with POST /v1alpha1/config/network.
 // We need to retry because the device may be briefly unreachable while it changes its network config.
-func applyConfig(ctx context.Context, client *projectclient.AuthedClient, clusterName, deviceID string) error {
+func applyConfig(ctx context.Context, client *authedClient, clusterName, deviceID string) error {
 	ctx, stop := context.WithTimeout(ctx, time.Minute*3)
 	defer stop()
 
@@ -134,7 +133,7 @@ func applyConfig(ctx context.Context, client *projectclient.AuthedClient, cluste
 		fmt.Printf(".")
 		os.Stdout.Sync()
 
-		resp, err := client.PostDevice(ctx, clusterName, deviceID, "relay/v1alpha1/config/network:persist", nil)
+		resp, err := client.postDevice(ctx, clusterName, deviceID, "relay/v1alpha1/config/network:persist", nil)
 		if err != nil {
 			return err
 		}
@@ -144,7 +143,7 @@ func applyConfig(ctx context.Context, client *projectclient.AuthedClient, cluste
 			// In this case, 404 signals an older OS which doesn't do the apply flow yet.
 			// Return the error and adapt the output
 			if resp.StatusCode == http.StatusNotFound {
-				return backoff.Permanent(projectclient.ErrNotFound)
+				return backoff.Permanent(errNotFound)
 			}
 
 			if resp.StatusCode == http.StatusGone {
@@ -166,28 +165,28 @@ func applyConfig(ctx context.Context, client *projectclient.AuthedClient, cluste
 	return nil
 }
 
-func setConfig(ctx context.Context, client *projectclient.AuthedClient, clusterName, deviceID, config string) error {
+func setConfig(ctx context.Context, client *authedClient, clusterName, deviceID, config string) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
 
 	const timeoutWarning = "Warning: Timeout while sending config to the device. This may indicate that the config is unusable, but could also be a transient network error."
-	resp, err := client.PostDevice(ctx, clusterName, deviceID, "relay/v1alpha1/config/network", strings.NewReader(config))
+	resp, err := client.postDevice(ctx, clusterName, deviceID, "relay/v1alpha1/config/network", strings.NewReader(config))
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			fmt.Println(timeoutWarning)
 			return nil
 		}
-		if errors.Is(err, projectclient.ErrNotFound) {
+		if errors.Is(err, errNotFound) {
 			fmt.Fprintf(os.Stderr, "Cluster does not exist. Either it does not exist, or you don't have access to it.\n")
 			return err
 		}
 
-		if errors.Is(err, projectclient.ErrBadGateway) {
+		if errors.Is(err, errBadGateway) {
 			fmt.Fprint(os.Stderr, gatewayError)
 			return err
 		}
 
-		if errors.Is(err, projectclient.ErrUnauthorized) {
+		if errors.Is(err, errUnauthorized) {
 			fmt.Fprint(os.Stderr, unauthorizedError)
 			return err
 		}
@@ -230,11 +229,11 @@ var configSetCmd = &cobra.Command{
 		configString := args[0]
 		projectName := viperLocal.GetString(orgutil.KeyProject)
 		orgName := viperLocal.GetString(orgutil.KeyOrganization)
-		ctx, client, err := projectclient.Client(cmd.Context(), projectName, orgName, clusterName)
+		ctx, client, err := newClient(cmd.Context(), projectName, orgName, clusterName)
 		if err != nil {
 			return fmt.Errorf("get project client: %w", err)
 		}
-		defer client.Close()
+		defer client.close()
 
 		var config map[string]shared.Interface
 		if err := json.Unmarshal([]byte(configString), &config); err != nil {
@@ -263,7 +262,7 @@ var configSetCmd = &cobra.Command{
 		}
 
 		if err := applyConfig(ctx, &client, clusterName, deviceID); err != nil {
-			if errors.Is(err, projectclient.ErrNotFound) {
+			if errors.Is(err, errNotFound) {
 				fmt.Println("The device is running an older version of INTRINSIC-OS. Please reboot manually")
 				return nil
 			}

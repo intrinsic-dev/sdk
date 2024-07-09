@@ -1,7 +1,6 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-// Package projectclient provides a http client wrapper that authenticates requests via apikeys.
-package projectclient
+package device
 
 import (
 	"context"
@@ -25,13 +24,13 @@ import (
 var (
 	// These will be returned on corresponding http error codes, since they are errors that are
 	// expected and can be printed with better UX than just the number.
-	ErrNotFound     = fmt.Errorf("Not found")
-	ErrBadGateway   = fmt.Errorf("Bad Gateway")
-	ErrUnauthorized = fmt.Errorf("Unauthorized")
+	errNotFound     = fmt.Errorf("Not found")
+	errBadGateway   = fmt.Errorf("Bad Gateway")
+	errUnauthorized = fmt.Errorf("Unauthorized")
 )
 
-// AuthedClient injects an api key for the project into every request.
-type AuthedClient struct {
+// authedClient injects an api key for the project into every request.
+type authedClient struct {
 	client       *http.Client
 	baseURL      url.URL
 	tokenSource  *auth.ProjectToken
@@ -41,8 +40,8 @@ type AuthedClient struct {
 	grpcClient   clustermanagergrpcpb.ClustersServiceClient
 }
 
-// Do is the primary function of the http client interface.
-func (c *AuthedClient) Do(req *http.Request) (*http.Response, error) {
+// do is the primary function of the http client interface.
+func (c *authedClient) do(req *http.Request) (*http.Response, error) {
 	req, err := c.tokenSource.HTTPAuthorization(req)
 	if c.organization != "" {
 		req.AddCookie(&http.Cookie{Name: auth.OrgIDHeader, Value: c.organization})
@@ -55,22 +54,22 @@ func (c *AuthedClient) Do(req *http.Request) (*http.Response, error) {
 	return c.client.Do(req)
 }
 
-// Client returns a http.Client compatible that injects auth for the project into every request.
-func Client(ctx context.Context, projectName string, orgName string, clusterName string) (context.Context, AuthedClient, error) {
+// newClient returns a http.Client compatible that injects auth for the project into every request.
+func newClient(ctx context.Context, projectName string, orgName string, clusterName string) (context.Context, authedClient, error) {
 	configuration, err := auth.NewStore().GetConfiguration(projectName)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return nil, AuthedClient{}, &dialerutil.ErrCredentialsNotFound{
+			return nil, authedClient{}, &dialerutil.ErrCredentialsNotFound{
 				CredentialName: projectName,
 				Err:            err,
 			}
 		}
-		return nil, AuthedClient{}, fmt.Errorf("get configuration: %w", err)
+		return nil, authedClient{}, fmt.Errorf("get configuration: %w", err)
 	}
 
 	token, err := configuration.GetDefaultCredentials()
 	if err != nil {
-		return nil, AuthedClient{}, fmt.Errorf("get default credential: %w", err)
+		return nil, authedClient{}, fmt.Errorf("get default credential: %w", err)
 	}
 
 	params := dialerutil.DialInfoParams{
@@ -80,10 +79,10 @@ func Client(ctx context.Context, projectName string, orgName string, clusterName
 	}
 	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, params)
 	if err != nil {
-		return nil, AuthedClient{}, fmt.Errorf("create grpc client: %w", err)
+		return nil, authedClient{}, fmt.Errorf("create grpc client: %w", err)
 	}
 
-	return ctx, AuthedClient{
+	return ctx, authedClient{
 		client: http.DefaultClient,
 		baseURL: url.URL{
 			Scheme: "https",
@@ -98,15 +97,15 @@ func Client(ctx context.Context, projectName string, orgName string, clusterName
 	}, nil
 }
 
-// Close closes the grpc connection if it exists.
-func (c *AuthedClient) Close() error {
+// close closes the grpc connection if it exists.
+func (c *authedClient) close() error {
 	if c.grpcConn != nil {
 		return c.grpcConn.Close()
 	}
 	return nil
 }
 
-func (c *AuthedClient) GetStatusNetwork(ctx context.Context, clusterName, deviceID string) (map[string]shared.StatusInterface, error) {
+func (c *authedClient) getStatusNetwork(ctx context.Context, clusterName, deviceID string) (map[string]shared.StatusInterface, error) {
 	req := &clustermanagergrpcpb.GetStatusRequest{
 		Project:   c.projectName,
 		Org:       c.organization,
@@ -148,7 +147,7 @@ func translateNetworkConfig(n *clustermanagergrpcpb.IntOSNetworkConfig) map[stri
 	return configMap
 }
 
-func (c *AuthedClient) GetNetworkConfig(ctx context.Context, clusterName, deviceID string) (map[string]shared.Interface, error) {
+func (c *authedClient) getNetworkConfig(ctx context.Context, clusterName, deviceID string) (map[string]shared.Interface, error) {
 	req := &clustermanagergrpcpb.GetNetworkConfigRequest{
 		Project: c.projectName,
 		Org:     c.organization,
@@ -162,8 +161,8 @@ func (c *AuthedClient) GetNetworkConfig(ctx context.Context, clusterName, device
 	return translateNetworkConfig(resp), nil
 }
 
-// PostDevice acts similar to [http.Post] but takes a context and injects base path of the device manager for the project.
-func (c *AuthedClient) PostDevice(ctx context.Context, cluster, deviceID, subPath string, body io.Reader) (*http.Response, error) {
+// postDevice acts similar to [http.Post] but takes a context and injects base path of the device manager for the project.
+func (c *authedClient) postDevice(ctx context.Context, cluster, deviceID, subPath string, body io.Reader) (*http.Response, error) {
 	reqURL := c.baseURL
 
 	reqURL.Path = filepath.Join(reqURL.Path, subPath)
@@ -174,11 +173,11 @@ func (c *AuthedClient) PostDevice(ctx context.Context, cluster, deviceID, subPat
 		return nil, err
 	}
 
-	return c.Do(req)
+	return c.do(req)
 }
 
-// GetDevice acts similar to [http.Get] but takes a context and injects base path of the device manager for the project.
-func (c *AuthedClient) GetDevice(ctx context.Context, cluster, deviceID, subPath string) (*http.Response, error) {
+// getDevice acts similar to [http.Get] but takes a context and injects base path of the device manager for the project.
+func (c *authedClient) getDevice(ctx context.Context, cluster, deviceID, subPath string) (*http.Response, error) {
 	reqURL := c.baseURL
 
 	reqURL.Path = filepath.Join(reqURL.Path, subPath)
@@ -189,12 +188,12 @@ func (c *AuthedClient) GetDevice(ctx context.Context, cluster, deviceID, subPath
 		return nil, err
 	}
 
-	return c.Do(req)
+	return c.do(req)
 }
 
-// GetJSON acts similar to [GetDevice] but also does [json.Decode] and enforces [http.StatusOK].
-func (c *AuthedClient) GetJSON(ctx context.Context, cluster, deviceID, subPath string, value any) error {
-	resp, err := c.GetDevice(ctx, cluster, deviceID, subPath)
+// getJSON acts similar to [GetDevice] but also does [json.Decode] and enforces [http.StatusOK].
+func (c *authedClient) getJSON(ctx context.Context, cluster, deviceID, subPath string, value any) error {
+	resp, err := c.getDevice(ctx, cluster, deviceID, subPath)
 	if err != nil {
 		return err
 	}
@@ -202,13 +201,13 @@ func (c *AuthedClient) GetJSON(ctx context.Context, cluster, deviceID, subPath s
 
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusNotFound {
-			return ErrNotFound
+			return errNotFound
 		}
 		if resp.StatusCode == http.StatusBadGateway {
-			return ErrBadGateway
+			return errBadGateway
 		}
 		if resp.StatusCode == http.StatusUnauthorized {
-			return ErrUnauthorized
+			return errUnauthorized
 		}
 
 		return fmt.Errorf("get status code: %v", resp.StatusCode)
