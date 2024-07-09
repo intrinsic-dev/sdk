@@ -26,20 +26,28 @@ using ::{{strJoin .ProtoPackage "::"}}::{{.SkillNameUpperCamelCase}}Params;
 
 using ::intrinsic::skills::ExecuteContext;
 using ::intrinsic::skills::ExecuteRequest;
+using ::intrinsic::skills::GetFootprintContext;
+using ::intrinsic::skills::GetFootprintRequest;
+using ::intrinsic::skills::PreviewContext;
+using ::intrinsic::skills::PreviewRequest;
 using ::intrinsic::skills::SkillInterface;
 using ::intrinsic::skills::SkillProjectInterface;
-
-// -----------------------------------------------------------------------------
-// Skill signature.
-// -----------------------------------------------------------------------------
 
 std::unique_ptr<SkillInterface> {{.SkillNameUpperCamelCase}}::CreateSkill() {
   return std::make_unique<{{.SkillNameUpperCamelCase}}>();
 }
 
-// -----------------------------------------------------------------------------
-// Skill execute.
-// -----------------------------------------------------------------------------
+absl::StatusOr<intrinsic_proto::skills::Footprint> {{.SkillNameUpperCamelCase}}::GetFootprint(
+    const GetFootprintRequest& request, GetFootprintContext& context) const {
+  intrinsic_proto::skills::Footprint result;
+  result.set_lock_the_universe(true);
+  return std::move(result);
+}
+
+absl::StatusOr<std::unique_ptr<::google::protobuf::Message>> {{.SkillNameUpperCamelCase}}::Preview(
+      const PreviewRequest& request, PreviewContext& context) {
+    return absl::UnimplementedError("Skill has not implemented `Preview`.");
+}
 
 absl::StatusOr<std::unique_ptr<google::protobuf::Message>> {{.SkillNameUpperCamelCase}}::Execute(
     const ExecuteRequest& request, ExecuteContext& context) {
