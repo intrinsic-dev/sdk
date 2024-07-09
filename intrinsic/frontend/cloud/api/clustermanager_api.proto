@@ -23,6 +23,14 @@ enum ClusterState {
   CLUSTER_STATE_ENABLED = 2;
 }
 
+// The entity managing the intrinsic-base on the cluster
+enum IntrinsicBaseManager {
+  INTRINSIC_BASE_MANAGER_UNSPECIFIED = 0;
+  INTRINSIC_BASE_MANAGER_INVERSION = 1;
+  INTRINSIC_BASE_MANAGER_ONPREM = 2;
+  INTRINSIC_BASE_MANAGER_RAPID = 3;
+}
+
 // Modes that the update system can be in
 enum PlatformUpdateMode {
   PLATFORM_UPDATE_MODE_UNSPECIFIED = 0;
@@ -42,7 +50,7 @@ enum UpdateState {
 // This is the publicly accessible subset of the intrinsic_proto.config.Cluster
 // object.
 //
-// next number is 22
+// next number is 23
 message Cluster {
   // name shown to admins - globally unique
   string cluster_name = 1;
@@ -63,6 +71,7 @@ message Cluster {
   PlatformUpdateMode update_mode = 16;  // whether updates are on/off/automatic
   UpdateState update_state = 17;  // update status (running/pending/fault/...)
   repeated IPCNode ipc_nodes = 21;
+  IntrinsicBaseManager intrinsic_base_manager = 22;
   // removed fields:
   reserved 10, 11, 12;
   reserved "is_public", "is_mine", "is_shared";
