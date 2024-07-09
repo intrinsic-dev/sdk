@@ -79,13 +79,14 @@ var configGetCmd = &cobra.Command{
 		projectName := viperLocal.GetString(orgutil.KeyProject)
 		orgName := viperLocal.GetString(orgutil.KeyOrganization)
 
-		client, err := projectclient.Client(projectName, orgName)
+		ctx, client, err := projectclient.Client(cmd.Context(), projectName, orgName, clusterName)
 		if err != nil {
 			return fmt.Errorf("get project client: %w", err)
 		}
+		defer client.Close()
 
 		var status shared.Status
-		if err := client.GetJSON(cmd.Context(), clusterName, deviceID, "relay/v1alpha1/status", &status); err != nil {
+		if err := client.GetJSON(ctx, clusterName, deviceID, "relay/v1alpha1/status", &status); err != nil {
 			if errors.Is(err, projectclient.ErrNotFound) {
 				fmt.Fprintf(os.Stderr, "Cluster does not exist. Either it does not exist, or you don't have access to it.\n")
 				return err
@@ -105,7 +106,7 @@ var configGetCmd = &cobra.Command{
 		}
 		prettyPrintStatusInterfaces(status.Network)
 
-		res, err := client.GetDevice(cmd.Context(), clusterName, deviceID, "relay/v1alpha1/config/network")
+		res, err := client.GetDevice(ctx, clusterName, deviceID, "relay/v1alpha1/config/network")
 		if err != nil {
 			return fmt.Errorf("get config: %w", err)
 		}
@@ -247,10 +248,11 @@ var configSetCmd = &cobra.Command{
 		configString := args[0]
 		projectName := viperLocal.GetString(orgutil.KeyProject)
 		orgName := viperLocal.GetString(orgutil.KeyOrganization)
-		client, err := projectclient.Client(projectName, orgName)
+		ctx, client, err := projectclient.Client(cmd.Context(), projectName, orgName, clusterName)
 		if err != nil {
 			return fmt.Errorf("get project client: %w", err)
 		}
+		defer client.Close()
 
 		var config map[string]shared.Interface
 		if err := json.Unmarshal([]byte(configString), &config); err != nil {
@@ -274,11 +276,11 @@ var configSetCmd = &cobra.Command{
 			}
 		}
 
-		if err := setConfig(cmd.Context(), &client, clusterName, deviceID, configString); err != nil {
+		if err := setConfig(ctx, &client, clusterName, deviceID, configString); err != nil {
 			return fmt.Errorf("set config: %w", err)
 		}
 
-		if err := applyConfig(cmd.Context(), &client, clusterName, deviceID); err != nil {
+		if err := applyConfig(ctx, &client, clusterName, deviceID); err != nil {
 			if errors.Is(err, projectclient.ErrNotFound) {
 				fmt.Println("The device is running an older version of INTRINSIC-OS. Please reboot manually")
 				return nil

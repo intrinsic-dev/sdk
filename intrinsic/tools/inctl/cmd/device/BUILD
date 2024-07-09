@@ -30,7 +30,9 @@ go_library(
     name = "projectclient",
     srcs = ["projectclient.go"],
     deps = [
+        "//intrinsic/frontend/cloud/api:clustermanager_api_go_grpc_proto",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/tools/inctl/auth",
+        "@org_golang_google_grpc//:go_default_library",
     ],
 )

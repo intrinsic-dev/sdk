@@ -176,10 +176,11 @@ var registerCmd = &cobra.Command{
 			return fmt.Errorf(makeNameError(hostname, offender))
 		}
 
-		client, err := projectclient.Client(projectName, orgName)
+		ctx, client, err := projectclient.Client(cmd.Context(), projectName, orgName, clusterName)
 		if err != nil {
 			return fmt.Errorf("get client for project: %w", err)
 		}
+		defer client.Close()
 
 		// This map represents a json mapping of a config struct.
 		config := map[string]any{
@@ -227,7 +228,7 @@ var registerCmd = &cobra.Command{
 			return fmt.Errorf("failed to marshal config: %w", err)
 		}
 
-		resp, err := client.PostDevice(cmd.Context(), clusterName, deviceID, "configure", bytes.NewBuffer(body))
+		resp, err := client.PostDevice(ctx, clusterName, deviceID, "configure", bytes.NewBuffer(body))
 		if err != nil {
 			return err
 		}
@@ -252,7 +253,7 @@ var registerCmd = &cobra.Command{
 			return fmt.Errorf("request failed. http code: %v", resp.StatusCode)
 		}
 		if !noWait {
-			if err := waitForCluster(cmd.Context(), client, clusterName, deviceID, hostname); err != nil {
+			if err := waitForCluster(ctx, client, clusterName, deviceID, hostname); err != nil {
 				return fmt.Errorf("wait for device: %w", err)
 			}
 		}

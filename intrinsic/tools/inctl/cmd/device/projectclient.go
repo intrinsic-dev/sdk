@@ -14,6 +14,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"google.golang.org/grpc"
+	clustermanagergrpcpb "intrinsic/frontend/cloud/api/clustermanager_api_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/auth"
 )
@@ -31,7 +33,10 @@ type AuthedClient struct {
 	client       *http.Client
 	baseURL      url.URL
 	tokenSource  *auth.ProjectToken
+	projectName  string
 	organization string
+	grpcConn     *grpc.ClientConn
+	grpcClient   clustermanagergrpcpb.ClustersServiceClient
 }
 
 // Do is the primary function of the http client interface.
@@ -49,24 +54,34 @@ func (c *AuthedClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 // Client returns a http.Client compatible that injects auth for the project into every request.
-func Client(projectName string, orgName string) (AuthedClient, error) {
+func Client(ctx context.Context, projectName string, orgName string, clusterName string) (context.Context, AuthedClient, error) {
 	configuration, err := auth.NewStore().GetConfiguration(projectName)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return AuthedClient{}, &dialerutil.ErrCredentialsNotFound{
+			return nil, AuthedClient{}, &dialerutil.ErrCredentialsNotFound{
 				CredentialName: projectName,
 				Err:            err,
 			}
 		}
-		return AuthedClient{}, fmt.Errorf("get configuration: %w", err)
+		return nil, AuthedClient{}, fmt.Errorf("get configuration: %w", err)
 	}
 
 	token, err := configuration.GetDefaultCredentials()
 	if err != nil {
-		return AuthedClient{}, fmt.Errorf("get default credential: %w", err)
+		return nil, AuthedClient{}, fmt.Errorf("get default credential: %w", err)
 	}
 
-	return AuthedClient{
+	params := dialerutil.DialInfoParams{
+		Cluster:  clusterName,
+		CredName: projectName,
+		CredOrg:  orgName,
+	}
+	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, params)
+	if err != nil {
+		return nil, AuthedClient{}, fmt.Errorf("create grpc client: %w", err)
+	}
+
+	return ctx, AuthedClient{
 		client: http.DefaultClient,
 		baseURL: url.URL{
 			Scheme: "https",
@@ -74,8 +89,19 @@ func Client(projectName string, orgName string) (AuthedClient, error) {
 			Path:   "/api/devices/",
 		},
 		tokenSource:  token,
+		projectName:  projectName,
 		organization: orgName,
+		grpcConn:     conn,
+		grpcClient:   clustermanagergrpcpb.NewClustersServiceClient(conn),
 	}, nil
+}
+
+// Close closes the grpc connection if it exists.
+func (c *AuthedClient) Close() error {
+	if c.grpcConn != nil {
+		return c.grpcConn.Close()
+	}
+	return nil
 }
 
 // PostDevice acts similar to [http.Post] but takes a context and injects base path of the device manager for the project.
