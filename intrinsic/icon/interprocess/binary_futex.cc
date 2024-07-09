@@ -19,7 +19,7 @@
 namespace intrinsic::icon {
 namespace {
 
-inline int64_t futex(std::atomic<uint32_t> &uaddr, int futex_op, uint32_t val,
+inline int64_t futex(std::atomic<uint32_t> *uaddr, int futex_op, uint32_t val,
                      bool private_futex,
                      const struct timespec *timeout = nullptr,
                      uint32_t *uaddr2 = nullptr,
@@ -35,7 +35,7 @@ inline int64_t futex(std::atomic<uint32_t> &uaddr, int futex_op, uint32_t val,
     // additional performance optimizations.
     futex_op |= FUTEX_PRIVATE_FLAG;
   }
-  return syscall(SYS_futex, &uaddr, futex_op, val, timeout, uaddr2,
+  return syscall(SYS_futex, uaddr, futex_op, val, timeout, uaddr2,
                  FUTEX_BITSET_MATCH_ANY);
 }
 
@@ -54,7 +54,7 @@ RealtimeStatus Wait(std::atomic<uint32_t> &val, const timespec *ts,
     }
 
     // The value is not yet what we expect, let's wait for it.
-    auto ret = futex(val, FUTEX_WAIT_BITSET | FUTEX_CLOCK_REALTIME, 0,
+    auto ret = futex(&val, FUTEX_WAIT_BITSET | FUTEX_CLOCK_REALTIME, 0,
                      private_futex, ts);
     if (ret == -1 && errno == ETIMEDOUT) {
       return DeadlineExceededError(RealtimeStatus::StrCat(
@@ -87,11 +87,26 @@ BinaryFutex &BinaryFutex::operator=(BinaryFutex &&other) {
 
 RealtimeStatus BinaryFutex::Post() {
   uint32_t zero = 0;
+  // We need to make a copy of the private_futex_ member variable. Otherwise,
+  // we might end up with a data race if the thread destructing the futex
+  // reads `val_` between the `compare_exchange_strong` and the
+  // `futex` call.
+  const bool private_futex = private_futex_;
+  // Take the address before, since the class instance could be destroyed before
+  // `futex()` is called.
+  std::atomic<uint32_t> *val_addr = &val_;
   if (val_.compare_exchange_strong(zero, 1)) {
+    // `futex` could fail with EFAULT, if `val_addr` is not a valid
+    // user-space address anymore. This can happen if another thread destroyed
+    // the BinaryFutex between the previous line and this one. Therefore, we
+    // ignore the return value here. Another error value should only be EINVAL,
+    // which should never happen here
+    // ("EINVAL: The kernel detected an inconsistency between the user-space
+    // state at uaddr and the kernel state—that is, it detected a waiter which
+    // waits in FUTEX_LOCK_PI or FUTEX_LOCK_PI2 on uaddr.").
+    //
     // One indicating that we wake up at most 1 other client.
-    if (futex(val_, FUTEX_WAKE, 1, private_futex_) == -1) {
-      return InternalError(strerror(errno));
-    }
+    futex(val_addr, FUTEX_WAKE, 1, private_futex);
   }
   return OkStatus();
 }
