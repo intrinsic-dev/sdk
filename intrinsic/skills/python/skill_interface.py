@@ -182,7 +182,6 @@ class Skill(
   """Interface for skills.
 
   This interface combines all skill constituents:
-  - SkillSignatureInterface: Metadata about the skill.
   - SkillProjectInterface: Skill prediction.
   - SkillExecuteInterface: Skill execution.
   """

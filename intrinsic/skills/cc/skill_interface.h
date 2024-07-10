@@ -47,9 +47,14 @@ class SkillProjectInterface {
   //
   // Skill developers should override this method with their implementation.
   //
-  // If a skill does not implement `get_footprint`, the default implementation
+  // If a skill does not implement GetFootprint(), the default implementation
   // specifies that the skill needs exclusive access to everything. The skill
   // will therefore not be able to execute in parallel with any other skill.
+  //
+  // `request` the get footprint request.
+  // `context` provides access to services that the skill may use.
+  //
+  // Returns the skill's footprint.
   virtual absl::StatusOr<intrinsic_proto::skills::Footprint> GetFootprint(
       const GetFootprintRequest& request, GetFootprintContext& context) const {
     intrinsic_proto::skills::Footprint result;
@@ -72,17 +77,6 @@ class SkillExecuteInterface {
   //    Cancelled skill executions should end by returning
   //    `absl::CancelledError`;
   //
-  // If the skill fails for one of the following reasons, it should return the
-  // specified error along with a descriptive and, if possible, actionable error
-  // message:
-  // - `absl::CancelledError` if the skill is aborted due to a cancellation
-  //   request (assuming the skill supports the cancellation).
-  // - `absl::InvalidArgumentError` if the arguments provided as skill
-  //   parameters are invalid.
-  //
-  // Refer to absl status documentation for other errors:
-  // https://github.com/abseil/abseil-cpp/blob/master/absl/status/status.h
-  //
   // Any error status returned by the skill will be handled by the executive
   // that runs the process to which the skill belongs. The effect of the error
   // will depend on how the skill is integrated into that process' behavior
@@ -95,14 +89,21 @@ class SkillExecuteInterface {
   // the skill's objective) and other failures that should cause the entire
   // process to abort (e.g., failure to connect to a gRPC service).
   //
-  // `request` includes parameters for the execution.
-  // `context` provides access to the world and other services that the skill
-  //    may use.
+  // `request` the execute request.
+  // `context` provides access to services that the skill may use.
   //
-  // If skill execution succeeds, the skill should return either the skill's
-  // result proto message, or nullptr if the skill has no output. If skill
-  // execution fails, the skill should return an appropriate error status, as
-  // described above.
+  // If skill execution succeeds, the skill should return either the
+  // skill's result proto message, or nullptr if the skill has no output.
+  // If the skill fails for one of the following reasons, it should return the
+  // specified error along with a descriptive and, if possible, actionable error
+  // message:
+  // - `absl::CancelledError` if the skill is aborted due to a cancellation
+  //   request (assuming the skill supports the cancellation).
+  // - `absl::InvalidArgumentError` if the arguments provided as skill
+  //   parameters are invalid.
+  //
+  // Refer to absl status documentation for other errors:
+  // https://github.com/abseil/abseil-cpp/blob/master/absl/status/status.h
   virtual absl::StatusOr<std::unique_ptr<google::protobuf::Message>> Execute(
       const ExecuteRequest& request, ExecuteContext& context) = 0;
 
@@ -119,7 +120,7 @@ class SkillExecuteInterface {
   // preview the execution. The implementation should return the expected output
   // of executing the skill in that world.
   //
-  // If a skill does override the default implementation, any process that
+  // If a skill does not override the default implementation, any process that
   // includes that skill will not be executable in "preview" mode.
   //
   // NOTE: In preview mode, the object world provided by the PreviewContext
@@ -141,14 +142,21 @@ class SkillExecuteInterface {
   // - PreviewViaExecute(): If executing the skill does not require resources or
   //   modify the world.
   //
-  // `request` includes parameters for the execution to preview.
-  // `context` provides access to the world and other services that the skill
-  //    may use.
+  // `request` the preview request.
+  // `context` provides access to services that the skill may use.
   //
   // If skill preview succeeds, the skill should return either the skill's
-  // expected result proto message, or nullptr if the skill has no output. If
-  // skill preview fails, the skill should return an appropriate error status,
-  // as described in Execute().
+  // expected result proto message, or nullptr if the skill has no output.
+  // If the skill fails for one of the following reasons, it should return the
+  // specified error along with a descriptive and, if possible, actionable error
+  // message:
+  // - `absl::CancelledError` if the skill is aborted due to a cancellation
+  //   request (assuming the skill supports the cancellation).
+  // - `absl::InvalidArgumentError` if the arguments provided as skill
+  //   parameters are invalid.
+  //
+  // Refer to absl status documentation for other errors:
+  // https://github.com/abseil/abseil-cpp/blob/master/absl/status/status.h
   virtual absl::StatusOr<std::unique_ptr<::google::protobuf::Message>> Preview(
       const PreviewRequest& request, PreviewContext& context) {
     return absl::UnimplementedError("Skill has not implemented `Preview`.");
