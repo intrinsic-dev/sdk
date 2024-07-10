@@ -1,0 +1,15 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+import "intrinsic/icon/control/parts/hal/hal_part_config.proto";
+import "intrinsic/icon/control/parts/proto/realtime_part_config.proto";
+
+message RealtimeControlConfig {
+  // List of parts supported by this RealtimeControlManager, keyed by part name.
+  map<string, intrinsic_proto.RealtimePartConfig> parts_by_name = 1;
+
+  optional intrinsic_proto.icon.HardwareInterface safety_hardware_interface = 2;
+}
