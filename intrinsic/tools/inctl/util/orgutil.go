@@ -25,7 +25,7 @@ const (
 var (
 	// Exposed for testing
 	authStore = auth.NewStore()
-	errNotXor = fmt.Errorf("exactly one of --%s or --%s must be set", KeyProject, KeyOrganization)
+	errNotXor = fmt.Errorf("%s is deprecated and will soon be removed. Please use %s instead", KeyProject, KeyOrganization)
 
 	noOrg = false
 )
