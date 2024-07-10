@@ -16,28 +16,39 @@ namespace intrinsic {
 
 namespace {
 
-// Minimum valid value for google::protobuf::Timestamp nanos().
-constexpr int kMinProtoTimestampNanos = 0;
-// Maximum valid value for google::protobuf::Timestamp nanos().
-constexpr int kMaxProtoTimestampNanos = 999999999;
 // Earliest time that can be represented by a google::protobuf::Timestamp.
-// Corresponds to 0001-01-01T00:00:00Z. See google/protobuf/timestamp.proto.
-constexpr timespec kMinProtoTimestamp{.tv_sec = -62135596800,
-                                      .tv_nsec = kMinProtoTimestampNanos};
+// Corresponds to 0001-01-01T00:00:00Z.
+//
+// See google/protobuf/timestamp.proto.
+constexpr timespec kMinProtoTimestamp{.tv_sec = -62135596800, .tv_nsec = 0};
 // Latest time that can be represented by a google::protobuf::Timestamp.
-// Corresponds to 9999-12-31T23:59:59.999999999Z. See
-// google/protobuf/timestamp.proto.
+// Corresponds to 9999-12-31T23:59:59.999999999Z.
+//
+// See google/protobuf/timestamp.proto.
 constexpr timespec kMaxProtoTimestamp{.tv_sec = 253402300799,
-                                      .tv_nsec = kMaxProtoTimestampNanos};
+                                      .tv_nsec = 999999999};
+
+// Least duration that can be represented by a google::protobuf::Duration.
+// Corresponds to -10000 years.
+//
+// See google/protobuf/duration.proto.
+constexpr timespec kMinProtoDuration{.tv_sec = -315576000000,
+                                     .tv_nsec = -999999999};
+// Greatest duration that can be represented by a google::protobuf::Duration.
+// Corresponds to 10000 years.
+//
+// See google/protobuf/duration.proto.
+constexpr timespec kMaxProtoDuration{.tv_sec = 315576000000,
+                                     .tv_nsec = 999999999};
 
 // Validation requirements documented in duration.proto
 absl::Status Validate(const google::protobuf::Duration& d) {
   const auto sec = d.seconds();
   const auto ns = d.nanos();
-  if (sec < -315576000000 || sec > 315576000000) {
+  if (sec < kMinProtoDuration.tv_sec || sec > kMaxProtoDuration.tv_sec) {
     return absl::InvalidArgumentError(absl::StrCat("seconds=", sec));
   }
-  if (ns < -999999999 || ns > 999999999) {
+  if (ns < kMinProtoDuration.tv_nsec || ns > kMaxProtoDuration.tv_nsec) {
     return absl::InvalidArgumentError(absl::StrCat("nanos=", ns));
   }
   if ((sec < 0 && ns > 0) || (sec > 0 && ns < 0)) {
@@ -50,18 +61,18 @@ absl::Status Validate(const google::protobuf::Duration& d) {
 absl::Status Validate(const google::protobuf::Timestamp& timestamp) {
   const auto sec = timestamp.seconds();
   const auto ns = timestamp.nanos();
-  absl::Status status = absl::OkStatus();
   // sec must be [0001-01-01T00:00:00Z, 9999-12-31T23:59:59.999999999Z]
   if (sec < kMinProtoTimestamp.tv_sec || sec > kMaxProtoTimestamp.tv_sec) {
-    status = absl::InvalidArgumentError(absl::StrCat("seconds=", sec));
-  } else if (ns < kMinProtoTimestampNanos || ns > kMaxProtoTimestampNanos) {
-    status = absl::InvalidArgumentError(absl::StrCat("nanos=", ns));
+    return absl::InvalidArgumentError(absl::StrCat("seconds=", sec));
   }
-  return status;
+  if (ns < kMinProtoTimestamp.tv_nsec || ns > kMaxProtoTimestamp.tv_nsec) {
+    return absl::InvalidArgumentError(absl::StrCat("nanos=", ns));
+  }
+  return absl::OkStatus();
 }
 
-void ToProtoNoValidation(absl::Time time,
-                         google::protobuf::Timestamp* timestamp) {
+void FromAbslTimeNoValidation(absl::Time time,
+                              google::protobuf::Timestamp* timestamp) {
   const int64_t s = absl::ToUnixSeconds(time);
   timestamp->set_seconds(s);
   timestamp->set_nanos((time - absl::FromUnixSeconds(s)) /
@@ -70,9 +81,19 @@ void ToProtoNoValidation(absl::Time time,
 
 }  // namespace
 
+/// google::protobuf::Timestamp.
+
+google::protobuf::Timestamp GetCurrentTimeProto() {
+  absl::StatusOr<google::protobuf::Timestamp> time = FromAbslTime(absl::Now());
+  if (!time.ok()) {
+    return google::protobuf::Timestamp();
+  }
+  return *time;
+}
+
 absl::Status FromAbslTime(absl::Time time,
                           google::protobuf::Timestamp* timestamp) {
-  ToProtoNoValidation(time, timestamp);
+  FromAbslTimeNoValidation(time, timestamp);
   return Validate(*timestamp);
 }
 
@@ -89,7 +110,7 @@ google::protobuf::Timestamp FromAbslTimeClampToValidRange(absl::Time time) {
   time = std::clamp(time, absl::TimeFromTimespec(kMinProtoTimestamp),
                     absl::TimeFromTimespec(kMaxProtoTimestamp));
   google::protobuf::Timestamp out;
-  ToProtoNoValidation(time, &out);
+  FromAbslTimeNoValidation(time, &out);
   return out;
 }
 
@@ -101,17 +122,7 @@ absl::StatusOr<absl::Time> ToAbslTime(
          absl::Nanoseconds(proto.nanos());
 }
 
-absl::Duration ToAbslDuration(const google::protobuf::Duration& proto) {
-  return absl::Seconds(proto.seconds()) + absl::Nanoseconds(proto.nanos());
-}
-
-google::protobuf::Timestamp GetCurrentTimeProto() {
-  auto time_or = FromAbslTime(absl::Now());
-  if (!time_or.ok()) {
-    return google::protobuf::Timestamp();
-  }
-  return *time_or;
-}
+/// google::protobuf::Duration.
 
 absl::StatusOr<google::protobuf::Duration> FromAbslDuration(absl::Duration d) {
   google::protobuf::Duration proto;
@@ -128,6 +139,10 @@ absl::Status FromAbslDuration(absl::Duration d,
   proto->set_seconds(s);
   proto->set_nanos(n);
   return Validate(*proto);
+}
+
+absl::Duration ToAbslDuration(const google::protobuf::Duration& proto) {
+  return absl::Seconds(proto.seconds()) + absl::Nanoseconds(proto.nanos());
 }
 
 }  // namespace intrinsic
