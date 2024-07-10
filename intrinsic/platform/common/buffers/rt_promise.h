@@ -30,7 +30,7 @@ namespace intrinsic {
 //
 // NonRealtimeFuture<bool> rt_job_result;
 // Thread rt_thread;
-// Thread::Options rt_thread_options;
+// ThreadOptions rt_thread_options;
 // ASSIGN_OR_RETURN(auto promise, rt_job_result.GetPromise());
 // RETURN_IF_ERROR(rt_thread.Start(rt_thread_options,
 //                           [promise = std::move(promise)]() mutable {

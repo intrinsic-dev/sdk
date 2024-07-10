@@ -25,7 +25,7 @@ namespace intrinsic::icon {
 // AsyncRequest<int, bool> request(request_value, std::move(promise));
 
 // Thread rt_thread;
-// Thread::Options rt_thread_options;
+// ThreadOptions rt_thread_options;
 
 // auto status = (rt_thread.Start(rt_thread_options,
 //                    [request = std::move(request)]() mutable {
