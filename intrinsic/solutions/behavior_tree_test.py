@@ -3,11 +3,13 @@
 """Tests for intrinsic.solutions.behavior_tree."""
 
 import copy
+import textwrap
 from typing import Union, cast
 from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
+from google.protobuf import any_pb2
 from google.protobuf import descriptor_pb2
 from google.protobuf import text_format
 from intrinsic.executive.proto import any_with_assignments_pb2
@@ -329,6 +331,48 @@ class BehaviorTreeTest(parameterized.TestCase):
     self.assertEqual(
         str(my_bt),
         'BehaviorTree(root=Task(action=behavior_call.Action(skill_id="say")))',
+    )
+
+  def test_node_user_data(self):
+    """Tests if behavior tree node user data works."""
+    node = bt.Sequence()
+    node.set_user_data_proto(
+        'testkey', test_message_pb2.TestMessage(int32_value=123)
+    )
+    packed_test_msg = any_pb2.Any()
+    packed_test_msg.Pack(test_message_pb2.TestMessage(int32_value=123))
+    compare.assertProto2Equal(
+        self, node.user_data_protos['testkey'], packed_test_msg
+    )
+    self.assertEqual(
+        str(node.proto),
+        """sequence {
+}
+user_data {
+  data_any {
+    key: "testkey"
+    value {
+%s    }
+  }
+}
+""" % textwrap.indent(str(packed_test_msg), '      '),
+    )
+
+  def test_node_user_data_read(self):
+    """Tests if behavior tree node read with user data works."""
+    node = bt.Sequence()
+    node.set_user_data_proto(
+        'testkey', test_message_pb2.TestMessage(int32_value=123)
+    )
+    node_proto = node.proto
+
+    read_node = bt.Node.create_from_proto(node_proto)
+    self.assertIn('testkey', read_node.user_data_protos)
+
+    packed_test_msg = any_pb2.Any()
+    packed_test_msg.Pack(test_message_pb2.TestMessage(int32_value=123))
+    compare.assertProto2Equal(
+        self, read_node.user_data_protos['testkey'], packed_test_msg
     )
 
   def test_to_proto_required_root_attribute(self):
