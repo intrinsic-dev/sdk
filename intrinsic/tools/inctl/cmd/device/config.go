@@ -5,21 +5,18 @@ package device
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"net"
-	"net/http"
 	"os"
 	"sort"
 	"strings"
 	"time"
 
-	backoff "github.com/cenkalti/backoff/v4"
+	lropb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	"github.com/spf13/cobra"
-	"go.uber.org/multierr"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	clustermanagergrpcpb "intrinsic/frontend/cloud/api/clustermanager_api_go_grpc_proto"
 	"intrinsic/frontend/cloud/devicemanager/shared"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/orgutil"
@@ -111,107 +108,6 @@ var configGetCmd = &cobra.Command{
 	},
 }
 
-// applyConfig tries to call the apply endpoint for the device periodically for a maximum of 3 minutes.
-// This persists the network configuration to disk.
-// The configuration was already sent and tentatively applied with POST /v1alpha1/config/network.
-// We need to retry because the device may be briefly unreachable while it changes its network config.
-func applyConfig(ctx context.Context, client *authedClient, clusterName, deviceID string) error {
-	ctx, stop := context.WithTimeout(ctx, time.Minute*3)
-	defer stop()
-
-	var connectionError error
-
-	fmt.Printf("Trying to apply")
-	os.Stdout.Sync()
-
-	err := backoff.RetryNotify(func() error {
-		// There's a shorter timeout on the actual request, because the network re-configuration can lead to a hung request.
-		// Likely due to some drop in the relay.
-		// The lower timeout here guarantees multiple requests in the 2 minute time frame.
-		ctx, stop := context.WithTimeout(ctx, time.Second*10)
-		defer stop()
-		fmt.Printf(".")
-		os.Stdout.Sync()
-
-		resp, err := client.postDevice(ctx, clusterName, deviceID, "relay/v1alpha1/config/network:persist", nil)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != 200 {
-			// In this case, 404 signals an older OS which doesn't do the apply flow yet.
-			// Return the error and adapt the output
-			if resp.StatusCode == http.StatusNotFound {
-				return backoff.Permanent(errNotFound)
-			}
-
-			if resp.StatusCode == http.StatusGone {
-				return backoff.Permanent(errConfigGone)
-			}
-
-			return fmt.Errorf("request failed: %v", resp.StatusCode)
-		}
-
-		return nil
-	}, backoff.WithContext(backoff.NewConstantBackOff(time.Second*5), ctx),
-		func(err error, _ time.Duration) { connectionError = multierr.Append(connectionError, err) })
-	fmt.Printf("\n")
-
-	if err != nil {
-		return multierr.Append(err, connectionError)
-	}
-
-	return nil
-}
-
-func setConfig(ctx context.Context, client *authedClient, clusterName, deviceID, config string) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
-	defer cancel()
-
-	const timeoutWarning = "Warning: Timeout while sending config to the device. This may indicate that the config is unusable, but could also be a transient network error."
-	resp, err := client.postDevice(ctx, clusterName, deviceID, "relay/v1alpha1/config/network", strings.NewReader(config))
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			fmt.Println(timeoutWarning)
-			return nil
-		}
-		if errors.Is(err, errNotFound) {
-			fmt.Fprintf(os.Stderr, "Cluster does not exist. Either it does not exist, or you don't have access to it.\n")
-			return err
-		}
-
-		if errors.Is(err, errBadGateway) {
-			fmt.Fprint(os.Stderr, gatewayError)
-			return err
-		}
-
-		if errors.Is(err, errUnauthorized) {
-			fmt.Fprint(os.Stderr, unauthorizedError)
-			return err
-		}
-
-		return fmt.Errorf("post config: %w", err)
-	}
-	defer resp.Body.Close()
-
-	switch resp.StatusCode {
-	case http.StatusOK:
-		// Do nothing
-	case http.StatusGatewayTimeout:
-		fmt.Println(timeoutWarning)
-		return nil
-	case http.StatusNotFound:
-		fmt.Fprintf(os.Stderr, "Cluster does not exist. Either it does not exist, or you don't have access to it.\n")
-		return fmt.Errorf("http code %v", resp.StatusCode)
-	default:
-		io.Copy(os.Stderr, resp.Body)
-		return fmt.Errorf("server returned error: %v", resp.StatusCode)
-	}
-
-	return nil
-}
-
 var configSetCmd = &cobra.Command{
 	Use:   "set",
 	Short: "Set the network config",
@@ -257,28 +153,51 @@ var configSetCmd = &cobra.Command{
 			}
 		}
 
-		if err := setConfig(ctx, &client, clusterName, deviceID, configString); err != nil {
-			return fmt.Errorf("set config: %w", err)
+		req := &clustermanagergrpcpb.UpdateNetworkConfigRequest{
+			Project: projectName,
+			Org:     orgName,
+			Cluster: clusterName,
+			Device:  deviceID,
+			Config:  translateToNetworkConfig(config),
 		}
-
-		if err := applyConfig(ctx, &client, clusterName, deviceID); err != nil {
-			if errors.Is(err, errNotFound) {
-				fmt.Println("The device is running an older version of INTRINSIC-OS. Please reboot manually")
-				return nil
+		lro, err := client.grpcClient.UpdateNetworkConfig(ctx, req)
+		if err != nil {
+			switch status.Code(err) {
+			case codes.NotFound:
+				fmt.Fprintf(os.Stderr, "Cluster does not exist. Either it does not exist, or you don't have access to it.\n")
+			case codes.PermissionDenied:
+				fmt.Fprint(os.Stderr, unauthorizedError)
 			}
-
-			if errors.Is(err, errConfigGone) {
-				fmt.Println("The device rejected the network configuration. This happens when it cannot connect to the configuration server with the new configuration.")
-				return errConfigGone
-			}
-
-			fmt.Println("There was an unexpected error trying to configure the device. It may be in an undefined state.")
 			return err
 		}
 
-		fmt.Println("Successfully applied new network configuration to the device.")
-		return nil
-	}}
+		lroctx, stop := context.WithTimeout(ctx, time.Minute*3)
+		defer stop()
+
+		ticker := time.NewTicker(time.Second * 5)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				lro, err := client.grpcClient.GetOperation(ctx, &lropb.GetOperationRequest{Name: lro.GetName()})
+				if err != nil {
+					return err
+				}
+				if !lro.GetDone() {
+					continue
+				}
+				if lro.GetError() != nil {
+					return fmt.Errorf("operation %q failed: %v", lro.GetName(), lro.GetError())
+				}
+				fmt.Println("Successfully applied new network configuration to the device.")
+				return nil
+			case <-lroctx.Done():
+				return fmt.Errorf("operation %q timed out", lro.GetName())
+			}
+		}
+	},
+}
 
 func init() {
 	deviceCmd.AddCommand(configCmd)

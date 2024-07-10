@@ -147,6 +147,35 @@ func translateNetworkConfig(n *clustermanagergrpcpb.IntOSNetworkConfig) map[stri
 	return configMap
 }
 
+func translateToNetworkConfig(n map[string]shared.Interface) *clustermanagergrpcpb.IntOSNetworkConfig {
+	c := &clustermanagergrpcpb.IntOSNetworkConfig{
+		Interfaces: make(map[string]*clustermanagergrpcpb.IntOSInterfaceConfig),
+	}
+	for name, inf := range n {
+		conf := &clustermanagergrpcpb.IntOSInterfaceConfig{
+			Dhcp4:    inf.DHCP4,
+			Gateway4: inf.Gateway4,
+			Dhcp6:    *inf.DHCP6,
+			Gateway6: inf.Gateway6,
+			Mtu:      int32(inf.MTU),
+			Nameservers: &clustermanagergrpcpb.NameserverConfig{
+				Search:    inf.Nameservers.Search,
+				Addresses: inf.Nameservers.Addresses,
+			},
+			Addresses: inf.Addresses,
+			Realtime:  inf.Realtime,
+		}
+		switch inf.EtherType {
+		default:
+			conf.EtherType = clustermanagergrpcpb.IntOSInterfaceConfig_ETHER_TYPE_UNSPECIFIED
+		case 1:
+			conf.EtherType = clustermanagergrpcpb.IntOSInterfaceConfig_ETHER_TYPE_ETHERCAT
+		}
+		c.Interfaces[name] = conf
+	}
+	return c
+}
+
 func (c *authedClient) getNetworkConfig(ctx context.Context, clusterName, deviceID string) (map[string]shared.Interface, error) {
 	req := &clustermanagergrpcpb.GetNetworkConfigRequest{
 		Project: c.projectName,
