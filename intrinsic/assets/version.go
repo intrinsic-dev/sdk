@@ -29,24 +29,9 @@ func Autofill(ctx context.Context, client rrgrpcpb.ResourceRegistryClient, idOrI
 	if idOrIDVersion.GetVersion() != "" {
 		return nil
 	}
-	var versions []string
-	nextPageToken := ""
-	for {
-		resp, err := client.ListResources(ctx, &rrpb.ListResourcesRequest{
-			PageToken: nextPageToken,
-		})
-		if err != nil {
-			return fmt.Errorf("could not retrieve currently installed resources: %w", err)
-		}
-		for _, r := range resp.GetResources() {
-			if proto.Equal(idOrIDVersion.GetId(), r.GetMetadata().GetIdVersion().GetId()) {
-				versions = append(versions, r.GetMetadata().GetIdVersion().GetVersion())
-			}
-		}
-		nextPageToken = resp.GetNextPageToken()
-		if nextPageToken == "" {
-			break
-		}
+	versions, err := List(ctx, client, idOrIDVersion.GetId())
+	if err != nil {
+		return err
 	}
 	id, err := idutils.IDFromProto(idOrIDVersion.GetId())
 	if err != nil {
@@ -59,4 +44,28 @@ func Autofill(ctx context.Context, client rrgrpcpb.ResourceRegistryClient, idOrI
 	}
 	idOrIDVersion.Version = versions[0]
 	return nil
+}
+
+// List returns all installed versions of a particular asset id.
+func List(ctx context.Context, client rrgrpcpb.ResourceRegistryClient, id *idpb.Id) ([]string, error) {
+	var versions []string
+	nextPageToken := ""
+	for {
+		resp, err := client.ListResources(ctx, &rrpb.ListResourcesRequest{
+			PageToken: nextPageToken,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve currently installed resources: %w", err)
+		}
+		for _, r := range resp.GetResources() {
+			if proto.Equal(id, r.GetMetadata().GetIdVersion().GetId()) {
+				versions = append(versions, r.GetMetadata().GetIdVersion().GetVersion())
+			}
+		}
+		nextPageToken = resp.GetNextPageToken()
+		if nextPageToken == "" {
+			break
+		}
+	}
+	return versions, nil
 }
