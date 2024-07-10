@@ -28,6 +28,7 @@ cc_proto_library(
 cc_grpc_library(
     name = "skill_catalog_cc_grpc_proto",
     srcs = [":skill_catalog_proto"],
+    generate_mocks = True,
     grpc_only = True,
     deps = [":skill_catalog_cc_proto"],
 )

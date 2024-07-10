@@ -22,6 +22,7 @@ cc_proto_library(
 cc_grpc_library(
     name = "generic_gripper_cc_grpc_proto",
     srcs = [":generic_gripper_proto"],
+    generate_mocks = True,
     grpc_only = True,
     deps = [":generic_gripper_cc_proto"],
 )

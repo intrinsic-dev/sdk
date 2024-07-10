@@ -49,6 +49,7 @@ cc_proto_library(
 cc_grpc_library(
     name = "camera_server_cc_grpc",
     srcs = [":camera_server_proto"],
+    generate_mocks = True,
     grpc_only = True,
     deps = [":camera_server_cc_proto"],
 )

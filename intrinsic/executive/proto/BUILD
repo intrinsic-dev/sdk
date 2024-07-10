@@ -191,6 +191,7 @@ py_grpc_library(
 cc_grpc_library(
     name = "blackboard_service_cc_grpc_proto",
     srcs = [":blackboard_service_proto"],
+    generate_mocks = True,
     grpc_only = True,
     deps = [":blackboard_service_cc_proto"],
 )
@@ -444,6 +445,7 @@ cc_proto_library(
 cc_grpc_library(
     name = "proto_builder_cc_grpc_proto",
     srcs = [":proto_builder_proto"],
+    generate_mocks = True,
     grpc_only = True,
     deps = [":proto_builder_cc_proto"],
 )

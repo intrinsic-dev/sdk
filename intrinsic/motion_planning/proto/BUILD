@@ -38,6 +38,7 @@ cc_proto_library(
 cc_grpc_library(
     name = "motion_planner_service_cc_grpc_proto",
     srcs = [":motion_planner_service_proto"],
+    generate_mocks = True,
     grpc_only = True,
     deps = [":motion_planner_service_cc_proto"],
 )

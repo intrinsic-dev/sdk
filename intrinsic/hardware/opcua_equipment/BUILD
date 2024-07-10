@@ -26,6 +26,7 @@ cc_proto_library(
 cc_grpc_library(
     name = "opcua_equipment_service_cc_grpc_proto",
     srcs = [":opcua_equipment_service_proto"],
+    generate_mocks = True,
     grpc_only = True,
     deps = [":opcua_equipment_service_cc_proto"],
 )

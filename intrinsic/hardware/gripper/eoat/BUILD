@@ -47,6 +47,7 @@ py_proto_library(
 cc_grpc_library(
     name = "eoat_service_cc_grpc_proto",
     srcs = [":eoat_service_proto"],
+    generate_mocks = True,
     grpc_only = True,
     deps = [":eoat_service_cc_proto"],
 )

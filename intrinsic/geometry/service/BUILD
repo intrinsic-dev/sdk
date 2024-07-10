@@ -82,6 +82,7 @@ cc_proto_library(
 cc_grpc_library(
     name = "geometry_service_cc_grpc_proto",
     srcs = [":geometry_service_proto"],
+    generate_mocks = True,
     grpc_only = True,
     deps = [":geometry_service_cc_proto"],
 )

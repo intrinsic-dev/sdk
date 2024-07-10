@@ -29,6 +29,7 @@ cc_proto_library(
 cc_grpc_library(
     name = "skill_registry_internal_cc_grpc_proto",
     srcs = [":skill_registry_internal_proto"],
+    generate_mocks = True,
     grpc_only = True,
     deps = [":skill_registry_internal_cc_proto"],
 )
@@ -59,6 +60,7 @@ cc_proto_library(
 cc_grpc_library(
     name = "behavior_tree_registry_internal_cc_grpc_proto",
     srcs = [":behavior_tree_registry_internal_proto"],
+    generate_mocks = True,
     grpc_only = True,
     deps = [":behavior_tree_registry_internal_cc_proto"],
 )

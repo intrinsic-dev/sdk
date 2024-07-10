@@ -25,6 +25,7 @@ cc_proto_library(
 cc_grpc_library(
     name = "ping_cc_grpc_proto",
     srcs = [":ping_proto"],
+    generate_mocks = True,
     grpc_only = True,
     visibility = ["//intrinsic/util/grpc:__subpackages__"],
     deps = [":ping_cc_proto"],
