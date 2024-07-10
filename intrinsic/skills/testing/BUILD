@@ -7,23 +7,32 @@ load("@rules_python//python:defs.bzl", "py_library")
 
 package(
     default_testonly = True,
-    default_visibility = ["//visibility:public"],
 )
 
 proto_library(
     name = "no_op_skill_proto",
     testonly = False,
     srcs = ["no_op_skill.proto"],
+    visibility = ["//intrinsic/skills/build_defs/tests:__pkg__"],
 )
 
 cc_proto_library(
     name = "no_op_skill_cc_proto",
     testonly = False,
+    visibility = [
+        "//intrinsic/executive/engine:__pkg__",
+        "//intrinsic/skills/build_defs/tests:__pkg__",
+        "//intrinsic/skills/internal:__pkg__",
+    ],
     deps = [":no_op_skill_proto"],
 )
 
 py_proto_library(
     name = "no_op_skill_py_pb2",
+    visibility = [
+        "//intrinsic/skills/build_defs/tests:__pkg__",
+        "//intrinsic/skills/internal:__pkg__",
+    ],
     deps = [":no_op_skill_proto"],
 )
 
@@ -31,6 +40,10 @@ py_library(
     name = "no_op_skill_py",
     srcs = ["no_op_skill.py"],
     srcs_version = "PY3",
+    visibility = [
+        "//intrinsic/skills/build_defs/tests:__pkg__",
+        "//intrinsic/skills/internal:__pkg__",
+    ],
     deps = [
         ":no_op_skill_py_pb2",
         "//intrinsic/skills/proto:footprint_py_pb2",
@@ -45,6 +58,11 @@ cc_library(
     testonly = False,
     srcs = ["no_op_skill.cc"],
     hdrs = ["no_op_skill.h"],
+    visibility = [
+        "//intrinsic/performance/qa/apps:__pkg__",
+        "//intrinsic/skills/build_defs/tests:__pkg__",
+        "//intrinsic/skills/internal:__pkg__",
+    ],
     deps = [
         ":no_op_skill_cc_proto",
         "//intrinsic/skills/cc:skill_interface",
@@ -60,6 +78,7 @@ py_library(
     name = "map_skill_repository_py",
     testonly = False,
     srcs = ["map_skill_repository.py"],
+    visibility = ["//intrinsic/skills/internal:__pkg__"],
     deps = [
         "//intrinsic/skills/internal:runtime_data_py",
         "//intrinsic/skills/internal:single_skill_factory_py",
@@ -73,6 +92,9 @@ cc_library(
     name = "skill_test_utils_cc",
     srcs = ["skill_test_utils.cc"],
     hdrs = ["skill_test_utils.h"],
+    visibility = [
+        "//intrinsic:public_api_users",
+    ],
     deps = [
         "//intrinsic/skills/cc:skill_interface",
         "//intrinsic/skills/proto:skill_manifest_cc_proto",
