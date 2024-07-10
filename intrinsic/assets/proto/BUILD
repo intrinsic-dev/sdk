@@ -12,13 +12,13 @@ proto_library(
 
 cc_proto_library(
     name = "asset_tag_cc_proto",
-    visibility = ["//intrinsic:__subpackages__"],
+    visibility = ["//visibility:private"],
     deps = [":asset_tag_proto"],
 )
 
 py_proto_library(
     name = "asset_tag_py_pb2",
-    visibility = ["//intrinsic:__subpackages__"],
+    visibility = ["//visibility:private"],
     deps = [":asset_tag_proto"],
 )
 
@@ -39,13 +39,13 @@ proto_library(
 
 cc_proto_library(
     name = "asset_type_cc_proto",
-    visibility = ["//intrinsic:__subpackages__"],
+    visibility = ["//visibility:private"],
     deps = [":asset_type_proto"],
 )
 
 py_proto_library(
     name = "asset_type_py_pb2",
-    visibility = ["//intrinsic:__subpackages__"],
+    visibility = ["//visibility:private"],
     deps = [":asset_type_proto"],
 )
 
@@ -120,13 +120,13 @@ proto_library(
 
 cc_proto_library(
     name = "metadata_cc_proto",
-    visibility = ["//intrinsic:__subpackages__"],
+    visibility = ["//visibility:private"],
     deps = [":metadata_proto"],
 )
 
 py_proto_library(
     name = "metadata_py_pb2",
-    visibility = ["//intrinsic:__subpackages__"],
+    visibility = ["//visibility:private"],
     deps = [":metadata_proto"],
 )
 
@@ -170,7 +170,7 @@ py_proto_library(
 
 cc_proto_library(
     name = "vendor_cc_proto",
-    visibility = ["//intrinsic:__subpackages__"],
+    visibility = ["//visibility:private"],
     deps = [":vendor_proto"],
 )
 
