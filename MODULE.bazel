@@ -51,7 +51,6 @@ use_repo(
     "org_golang_x_exp",
     "org_golang_x_sync",
     "org_uber_go_atomic",
-    "org_uber_go_multierr",
     # go/keep-sorted end
 )
 
@@ -158,7 +157,7 @@ bazel_dep(name = "boringssl", version = "0.0.0-20240530-2db0eb3")
 bazel_dep(name = "flatbuffers", version = "24.3.7", repo_name = "com_github_google_flatbuffers")
 bazel_dep(name = "googleapis", version = "0.0.0-20240326-1c8d509c5", repo_name = "com_google_googleapis")
 bazel_dep(name = "googletest", version = "1.14.0.bcr.1", repo_name = "com_google_googletest")
-bazel_dep(name = "grpc", version = "1.63.1", repo_name = "com_github_grpc_grpc")
+bazel_dep(name = "grpc", version = "1.65.0", repo_name = "com_github_grpc_grpc")
 bazel_dep(name = "protobuf", version = "26.0.bcr.2", repo_name = "com_google_protobuf")
 bazel_dep(name = "protobuf-matchers", version = "0.0.0-20240603-9f688b0", repo_name = "com_github_inazarenko_protobuf_matchers")
 bazel_dep(name = "re2", version = "2021-09-01", repo_name = "com_github_google_re2")

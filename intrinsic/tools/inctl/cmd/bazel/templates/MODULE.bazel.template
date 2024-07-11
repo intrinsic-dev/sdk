@@ -31,7 +31,7 @@ bazel_dep(name = "abseil-cpp", version = "20240116.2", repo_name = "com_google_a
 bazel_dep(name = "abseil-py", version = "2.1.0", repo_name = "com_google_absl_py")
 bazel_dep(name = "rules_proto", version = "6.0.0")
 bazel_dep(name = "protobuf", version = "26.0.bcr.2", repo_name = "com_google_protobuf")
-bazel_dep(name = "grpc", version = "1.63.1", repo_name = "com_github_grpc_grpc")
+bazel_dep(name = "grpc", version = "1.65.0", repo_name = "com_github_grpc_grpc")
 
 # C++ toolchain
 bazel_dep(name = "toolchains_llvm", version = "1.0.0")
