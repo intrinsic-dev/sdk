@@ -14,6 +14,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	crv1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/pborman/uuid"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/metadata"
@@ -195,7 +196,8 @@ func (h *defaultHelper) uploadImageParts(ctx context.Context, image crv1.Image, 
 		}
 
 		for _, layer := range layers {
-			digest, err := layer.Digest()
+
+			reader, digest, err := getLayerReader(layer)
 			if err != nil {
 				return err
 			}
@@ -206,7 +208,7 @@ func (h *defaultHelper) uploadImageParts(ctx context.Context, image crv1.Image, 
 				mediaType, _ := layer.MediaType()
 				log.InfoContextf(ctx, "uploading layer %s (%s) ", digest, mediaType)
 				delete(missingRefs, digest.String())
-				task, err := newTask(ctx, h.strategy, h.client, maxUpdateSize, asDigestNamed(layer), layer.Compressed)
+				task, err := newTask(ctx, h.strategy, h.client, maxUpdateSize, asDigestNamed(layer), reader)
 				if err != nil {
 					return err
 				}
@@ -258,6 +260,23 @@ func (h *defaultHelper) uploadImageParts(ctx context.Context, image crv1.Image, 
 	}
 
 	return nil
+}
+
+func getLayerReader(layer crv1.Layer) (itemReader, crv1.Hash, error) {
+	mt, err := layer.MediaType()
+	if err != nil {
+		return nil, crv1.Hash{}, err
+	}
+	if !mt.IsLayer() {
+		return nil, crv1.Hash{}, fmt.Errorf("object is not a layer: %s", mt)
+	}
+	if mt == types.OCIUncompressedLayer || mt == types.DockerUncompressedLayer {
+		digest, err := layer.DiffID()
+		return layer.Uncompressed, digest, err
+	}
+
+	digest, err := layer.Digest()
+	return layer.Compressed, digest, err
 }
 
 func getDigestReference(imgName string, digest string) string {
