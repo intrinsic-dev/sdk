@@ -20,10 +20,6 @@ build --action_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
 # Use C++20.
 build --cxxopt='-std=c++20'
 
-# Suppress a flood of warnings from gRPC and Protobuf that breaks logs streaming/GitHub Actions usability.
-# At the time of writing we have 12k warnings of this type and ~150 others when doing a full build.
-build --cxxopt='-Wno-deprecated-enum-enum-conversion'
-
 # Use a static value for `PATH` and does not inherit `LD_LIBRARY_PATH`. Doesn't let environment
 # variables like `PATH` sneak into the build, which can cause massive cache misses when they change.
 # Use `--action_env=ENV_VARIABLE` if you want to inherit specific environment variables from the
