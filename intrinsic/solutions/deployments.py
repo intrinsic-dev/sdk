@@ -149,6 +149,7 @@ class Solution:
         self._skill_registry,
         self._resource_registry,
     )
+
     self.pose_estimators = pose_estimators
     self.errors = errors
     self.pbt_registry = pbt_registry
@@ -363,6 +364,7 @@ def connect(
     solution: Id (not display name!) of the solution to connect to.
     cluster: Name of cluster to connect to (instead of specifying 'solution').
     options: An optional Dict[str, Any] containing additional options.
+
   Raises:
     ValueError: if parameter combination is incorrect.
 

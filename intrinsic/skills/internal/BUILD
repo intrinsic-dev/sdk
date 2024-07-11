@@ -6,17 +6,12 @@
 
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
-load("@rules_python//python:defs.bzl", "py_binary", "py_library")
-load("@rules_python//python:packaging.bzl", "py_package", "py_wheel")
-load("//bazel:python_oci_image.bzl", "python_oci_image")
-load("//intrinsic/util/proto/build_defs:descriptor_set.bzl", "proto_source_code_info_transitive_descriptor_set")
+load("@rules_python//python:defs.bzl", "py_library")
 
 package(default_visibility = ["//intrinsic/skills:__subpackages__"])
 
 exports_files(
     [
-        "module_skill_service_main.py",
-        "templates/skill_image_builder.yaml",
     ],
     visibility = [
         "//visibility:public",
@@ -104,12 +99,6 @@ pybind_extension(
         "@com_google_absl//absl/strings",
         "@pybind11_abseil//pybind11_abseil:status_casters",
     ],
-)
-
-py_library(
-    name = "module_utils",
-    srcs = ["module_utils.py"],
-    srcs_version = "PY3",
 )
 
 cc_library(
@@ -244,21 +233,6 @@ py_library(
         "//intrinsic/world/python:object_world_ids",
         "//intrinsic/world/python:object_world_resources",
         "@com_google_protobuf//:protobuf_python",
-    ],
-)
-
-py_library(
-    name = "module_skill_service",
-    srcs = ["module_skill_service.py"],
-    srcs_version = "PY3",
-    deps = [
-        ":module_utils",
-        ":runtime_data_py",
-        ":single_skill_factory_py",
-        ":skill_init_py",
-        "//intrinsic/skills/python:skill_interface",
-        "@com_google_absl_py//absl:app",
-        "@com_google_absl_py//absl/flags",
     ],
 )
 
@@ -595,78 +569,4 @@ cc_binary(
         "@com_google_absl//absl/status",
         "@com_google_protobuf//:protobuf",
     ],
-)
-
-py_package(
-    name = "skills_service_py_packages",
-    packages = [
-        "intrinsic",
-        "pybind11_abseil",
-    ],
-    deps = [
-        ":module_skill_service",
-        ":module_utils",
-        ":skill_service_impl_py",
-        "//intrinsic/skills/python:skill_interface",
-    ],
-)
-
-py_wheel(
-    name = "skills_service_wheel",
-    distribution = "skills_service",
-    requires = [
-        "grpcio",
-        "google-api-core",
-        "numpy",
-        "retrying",
-    ],
-    version = "0.0.1",
-    deps = [":skills_service_py_packages"],
-)
-
-# The default proto descriptors used by the skill image builder.
-proto_source_code_info_transitive_descriptor_set(
-    name = "built_skill_proto_descriptors",
-    deps = [
-        "//intrinsic/math/proto:affine_proto",
-        "//intrinsic/math/proto:array_proto",
-        "//intrinsic/math/proto:matrix_proto",
-        "//intrinsic/math/proto:point_proto",
-        "//intrinsic/math/proto:pose_proto",
-        "//intrinsic/math/proto:quaternion_proto",
-        "//intrinsic/math/proto:vector2_proto",
-        "//intrinsic/math/proto:vector3_proto",
-        "@com_google_protobuf//:any_proto",
-        "@com_google_protobuf//:empty_proto",
-        "@com_google_protobuf//:wrappers_proto",
-    ],
-)
-
-py_binary(
-    name = "module_skill_service_main",
-    srcs = ["module_skill_service_main.py"],
-    data = [
-        ":built_skill_proto_descriptors",
-    ],
-    srcs_version = "PY3",
-    deps = [
-        ":module_skill_service",
-    ],
-)
-
-# The default base image used by the skill image builder for python skills.
-python_oci_image(
-    name = "built_py_skill_base",
-    base = "@distroless_python3",
-    binary = ":module_skill_service_main",
-    entrypoint = [
-        "python3",
-        "/ai_intrinsic_sdks~override/intrinsic/skills/internal/module_skill_service_main",
-    ],
-    # BUG fully-qualified imports on Bzlmod: https://github.com/bazelbuild/rules_python/issues/1679
-    symlinks = {
-        "/ai_intrinsic_sdks~override/intrinsic/skills/internal/module_skill_service_main": "/intrinsic/skills/internal/module_skill_service_main",
-        "/ai_intrinsic_sdks~override/intrinsic/skills/internal/module_skill_service_main.py": "/intrinsic/skills/internal/module_skill_service_main.py",
-    },
-    workdir = "/",
 )
