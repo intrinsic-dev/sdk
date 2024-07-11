@@ -220,7 +220,6 @@ cc_test(
         ":log_sink",
         ":realtime_guard",
         "//intrinsic/util/testing:gtest_wrapper",
-        "@com_google_absl//absl/log",
         "@com_google_absl//absl/types:span",
     ],
 )

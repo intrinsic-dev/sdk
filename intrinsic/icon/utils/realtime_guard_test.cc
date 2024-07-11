@@ -10,7 +10,6 @@
 #include <utility>
 #include <vector>
 
-#include "absl/log/log.h"
 #include "absl/types/span.h"
 #include "intrinsic/icon/utils/log.h"
 #include "intrinsic/icon/utils/log_sink.h"

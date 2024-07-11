@@ -6,7 +6,7 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
-#include "intrinsic/icon/utils/fixed_str_cat.h"
+#include "intrinsic/icon/utils/realtime_guard.h"
 
 namespace intrinsic {
 namespace icon {
