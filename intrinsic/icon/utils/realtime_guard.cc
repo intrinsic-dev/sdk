@@ -91,8 +91,6 @@ void RealTimeGuard::LogErrorBacktrace() {
     Dl_info info;
     for (int index = 1; index < num_frames; index++) {
       if (dladdr(buffer[index], &info) != 0 && info.dli_sname != nullptr) {
-        // Note: can't use abi::__cxa_demangle as it calls malloc, use
-        // absl version instead.
         const char* name = info.dli_sname;
         INTRINSIC_RT_LOG(ERROR)
             << "#" << absl::Dec(index - 1, absl::kZeroPad2) << ": '" << name

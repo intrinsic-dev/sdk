@@ -212,9 +212,7 @@ cc_library(
 
 cc_test(
     name = "realtime_guard_test",
-    srcs = [
-        "realtime_guard_test.cc",
-    ],
+    srcs = ["realtime_guard_test.cc"],
     deps = [
         ":log",
         ":log_sink",

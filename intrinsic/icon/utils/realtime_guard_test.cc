@@ -94,6 +94,7 @@ TEST(RealTimeGuardTest, BacktraceContainsFunctionNames) {
   EXPECT_THAT(absl::MakeSpan(logger->messages_).subspan(0, 4),
               ElementsAre("Hi from baz().", "Hi from bar().", "Hi from foo().",
                           "Backtrace:"));
+  // With Bazel, function names are only symbolized if linked statically.
 }
 
 }  // namespace

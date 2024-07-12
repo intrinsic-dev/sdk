@@ -71,7 +71,7 @@ class RealTimeGuard {
   static bool IsRealTime();
 
   // Print a simple backtrace.
-  // Used by RealtimeChecker::trigger(), public only for testing purposes.
+  // Function names will only be shown if the binary is linked shared.
   // This function does not allocate and is real-time compatible.
   static void LogErrorBacktrace();
 
