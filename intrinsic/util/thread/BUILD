@@ -56,6 +56,15 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "stop_source_test",
+    srcs = ["stop_source_test.cc"],
+    deps = [
+        ":stop_token",
+        "//intrinsic/util/testing:gtest_wrapper",
+    ],
+)
+
 cc_library(
     name = "lockstep",
     srcs = ["lockstep.cc"],
