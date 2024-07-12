@@ -58,6 +58,10 @@ message RunMetadata {
   // Time the operation was started in UTC.
   optional google.protobuf.Timestamp start_time = 26;
 
+  // Time the operation was actively executing, e.g., excluding being suspended
+  // or done.
+  optional google.protobuf.Duration execution_time = 27;
+
   // This context is set when getting the operation info via the service.  It
   // contains the session ID and possibly the ID of the current runnable. It
   // will *not* contain an action ID. The field is *not* set for logged
