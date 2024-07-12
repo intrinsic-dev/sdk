@@ -144,6 +144,16 @@ std::string ADIOAnalogInputStateVariablePath(absl::string_view part_name,
        {.name = std::string(block_name), .index = signal_index}});
 }
 
+std::string ADIOAnalogOutputStateVariablePath(absl::string_view part_name,
+                                              absl::string_view block_name,
+                                              size_t signal_index) {
+  return BuildStateVariablePath(
+      {{.name = std::string(part_name)},
+       {.name = kADIOTypeNodeName},
+       {.name = kAnalogOutputNodeName},
+       {.name = std::string(block_name), .index = signal_index}});
+}
+
 std::string SafetyEnableButtonStatusStateVariablePath() {
   return BuildStateVariablePath(
       {{.name = kSafetyTypeNodeName}, {.name = kEnableButtonStatusNodeName}});

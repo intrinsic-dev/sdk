@@ -50,6 +50,7 @@ constexpr const char* kGripperOpeningWidthNodeName = "opening_width";
 constexpr const char* kDigitalInputNodeName = "di";
 constexpr const char* kDigitalOutputNodeName = "do";
 constexpr const char* kAnalogInputNodeName = "ai";
+constexpr const char* kAnalogOutputNodeName = "ao";
 
 // Rangefinder
 constexpr const char* kRangefinderDistanceNodeName = "distance";

@@ -57,7 +57,7 @@ message GenericSafetyLimitsConfig {
 
 message GenericSimpleGripperConfig {}
 message GenericAdioConfig {
-  message AnalogInputConfig {
+  message AnalogInputOutputConfig {
     // The size of the analog input block (i.e. the number of fields).
     int64 block_size = 2;
     // An analog input block has an array of fields, each with an associated
@@ -78,7 +78,9 @@ message GenericAdioConfig {
   }
 
   // Map from analog input block name to an AnalogInputConfig proto (see above).
-  map<string, AnalogInputConfig> analog_input_blocks = 1;
+  map<string, AnalogInputOutputConfig> analog_input_blocks = 6;
+  // Map from analog input block name to an AnalogInputConfig proto (see above).
+  map<string, AnalogInputOutputConfig> analog_output_blocks = 7;
   // Map from digital input block name to a DigitalInputOutputConfig proto (see
   // above).
   map<string, DigitalInputOutputConfig> digital_input_blocks = 4;
@@ -86,7 +88,7 @@ message GenericAdioConfig {
   // above).
   map<string, DigitalInputOutputConfig> digital_output_blocks = 5;
 
-  reserved 2, 3;
+  reserved 1, 2, 3;
 }
 message GenericRangeFinderConfig {
   intrinsic_proto.Pose pose_in_tcp_frame = 1;

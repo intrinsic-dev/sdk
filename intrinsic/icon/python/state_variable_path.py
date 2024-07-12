@@ -45,6 +45,7 @@ _GRIPPER_OPENING_WIDTH_NODE_NAME = "opening_width"
 _DIGITAL_INPUT_NODE_NAME = "di"
 _DIGITAL_OUTPUT_NODE_NAME = "do"
 _ANALOG_INPUT_NODE_NAME = "ai"
+_ANALOG_OUTPUT_NODE_NAME = "ao"
 
 # Rangefinder part related nodes.
 _RANGEFINDER_DISTANCE_NODE_NAME = "distance"
@@ -565,6 +566,34 @@ class StateVariablePath:
       return (
           _StateVariablePathBuilder()
           .add_nodes([part_name, _ADIO_TYPE_NODE_NAME, _ANALOG_INPUT_NODE_NAME])
+          .add_node_with_index(block_name, signal_index)
+          .build()
+      )
+
+    @classmethod
+    def analog_output(
+        cls,
+        part_name: str,
+        block_name: str,
+        signal_index: int,
+    ) -> str:
+      """Generates a state variable path for the status of an analog output of the signal at `signal_index` in block `block_name`.
+
+      Field type: double
+
+      Args:
+        part_name: Name of the adio part.
+        block_name: Name of the signal block.
+        signal_index: Index in the block.
+
+      Returns:
+        Generated state variable path string.
+      """
+      return (
+          _StateVariablePathBuilder()
+          .add_nodes(
+              [part_name, _ADIO_TYPE_NODE_NAME, _ANALOG_OUTPUT_NODE_NAME]
+          )
           .add_node_with_index(block_name, signal_index)
           .build()
       )

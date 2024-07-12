@@ -12,7 +12,7 @@ import "intrinsic/icon/control/parts/hal/hal_part_config.proto";
 // This poses the risk of multiple parts controlling the same IO blocks!
 //
 // At least one input or output needs to be defined.
-// Next ID: 4
+// Next ID: 5
 message HalADIOPartConfig {
   // Defines a single input or output block exposed by the respective interface.
   // A block is a logical group of inputs or outputs.
@@ -34,10 +34,13 @@ message HalADIOPartConfig {
   // The state of the physical output is not reflected in the command.
   // A module can reflect the physical state of the outputs as a digital input.
   // Block names and interfaces need to be unique within a list.
-  // Configuring the HardwareInterface multiple times with different names
-  // results in undefined behavior.
   repeated HalBlockConfig digital_outputs = 2;
   // Analog input blocks.
   // Block names and interfaces need to be unique within a list.
   repeated HalBlockConfig analog_inputs = 3;
+  // Analog output blocks.
+  // The state of the physical output is not reflected in the command.
+  // A module can reflect the physical state of the outputs as an analog input.
+  // Block names and interfaces need to be unique within a list.
+  repeated HalBlockConfig analog_outputs = 4;
 }

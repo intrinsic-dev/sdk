@@ -165,6 +165,20 @@ std::string ADIOAnalogInputStateVariablePath(absl::string_view part_name,
                                              absl::string_view block_name,
                                              size_t signal_index);
 
+// Generates a state variable path for the status of analog output of the signal
+// at `signal_index` in block `block_name`.
+//
+// The referenced field has the type: double
+//
+//     block_name: Name of the signal block.
+//     signal_index: Index in the block.
+//     part_name: Name of the adio part.
+//
+// Returns a generated state variable path string.
+std::string ADIOAnalogOutputStateVariablePath(absl::string_view part_name,
+                                              absl::string_view block_name,
+                                              size_t signal_index);
+
 // Generates a state variable path for the sensed distance of the rangefinder.
 //
 // The referenced field has the type: double
@@ -185,7 +199,6 @@ std::string RangefinderDistanceStateVariablePath(absl::string_view part_name);
 //
 // Returns a generated state variable path string.
 std::string SafetyEnableButtonStatusStateVariablePath();
-
 }  // namespace intrinsic::icon
 
 #endif  // INTRINSIC_ICON_CC_CLIENT_STATE_VARIABLE_PATH_H_
