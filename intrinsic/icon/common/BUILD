@@ -19,17 +19,6 @@ cc_library(
 )
 
 cc_library(
-    name = "ik_options",
-    srcs = ["ik_options.cc"],
-    hdrs = ["ik_options.h"],
-    deps = [
-        "//intrinsic/eigenmath",
-        "//intrinsic/icon/proto:eigen_conversion",
-        "//intrinsic/icon/proto:ik_options_cc_proto",
-    ],
-)
-
-cc_library(
     name = "slot_part_map",
     srcs = ["slot_part_map.cc"],
     hdrs = ["slot_part_map.h"],
