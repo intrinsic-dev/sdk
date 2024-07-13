@@ -35,7 +35,7 @@ constexpr timespec kMaxProtoTimestamp{.tv_sec = 253402300799,
 constexpr timespec kMinProtoDuration{.tv_sec = -315576000000,
                                      .tv_nsec = -999999999};
 // Greatest duration that can be represented by a google::protobuf::Duration.
-// Corresponds to 10000 years.
+// Corresponds to +10000 years.
 //
 // See google/protobuf/duration.proto.
 constexpr timespec kMaxProtoDuration{.tv_sec = 315576000000,
@@ -45,10 +45,15 @@ constexpr timespec kMaxProtoDuration{.tv_sec = 315576000000,
 // Requirements documented in google/protobuf/duration.proto.
 absl::Status ValidateProtoDurationMembers(int64_t sec, int32_t ns) {
   if (sec < kMinProtoDuration.tv_sec || sec > kMaxProtoDuration.tv_sec) {
-    return absl::InvalidArgumentError(absl::StrCat("seconds=", sec));
+    return absl::InvalidArgumentError(
+        absl::StrCat("Duration seconds out of range: `", sec, "`. Must be in [",
+                     kMinProtoDuration.tv_sec, ", ", kMaxProtoDuration.tv_sec,
+                     "], i.e. [+10000 years, -10000 years]"));
   }
   if (ns < kMinProtoDuration.tv_nsec || ns > kMaxProtoDuration.tv_nsec) {
-    return absl::InvalidArgumentError(absl::StrCat("nanos=", ns));
+    return absl::InvalidArgumentError(absl::StrCat(
+        "Duration nanos out of range: `", ns, "`. Must be in [",
+        kMinProtoDuration.tv_nsec, ", ", kMaxProtoDuration.tv_nsec, "]"));
   }
   if ((sec < 0 && ns > 0) || (sec > 0 && ns < 0)) {
     return absl::InvalidArgumentError("sign mismatch");
@@ -61,10 +66,14 @@ absl::Status ValidateProtoDurationMembers(int64_t sec, int32_t ns) {
 absl::Status ValidateProtoTimestampMembers(int64_t sec, int32_t ns) {
   // sec must be [0001-01-01T00:00:00Z, 9999-12-31T23:59:59.999999999Z]
   if (sec < kMinProtoTimestamp.tv_sec || sec > kMaxProtoTimestamp.tv_sec) {
-    return absl::InvalidArgumentError(absl::StrCat("seconds=", sec));
+    return absl::InvalidArgumentError(absl::StrCat(
+        "Timestamp seconds out of range: `", sec, "`. Must be in [",
+        kMinProtoTimestamp.tv_sec, ", ", kMaxProtoTimestamp.tv_sec, "]"));
   }
   if (ns < kMinProtoTimestamp.tv_nsec || ns > kMaxProtoTimestamp.tv_nsec) {
-    return absl::InvalidArgumentError(absl::StrCat("nanos=", ns));
+    return absl::InvalidArgumentError(absl::StrCat(
+        "Timestamp nanos out of range: `", ns, "`. Must be in [",
+        kMinProtoTimestamp.tv_nsec, ", ", kMaxProtoTimestamp.tv_nsec, "]"));
   }
   return absl::OkStatus();
 }
