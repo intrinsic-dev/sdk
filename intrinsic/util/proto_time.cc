@@ -41,10 +41,9 @@ constexpr timespec kMinProtoDuration{.tv_sec = -315576000000,
 constexpr timespec kMaxProtoDuration{.tv_sec = 315576000000,
                                      .tv_nsec = 999999999};
 
-// Validation requirements documented in duration.proto
-absl::Status Validate(const google::protobuf::Duration& d) {
-  const auto sec = d.seconds();
-  const auto ns = d.nanos();
+// Validate the values of a google::protobuf::Duration.
+// Requirements documented in google/protobuf/duration.proto.
+absl::Status ValidateProtoDurationMembers(int64_t sec, int32_t ns) {
   if (sec < kMinProtoDuration.tv_sec || sec > kMaxProtoDuration.tv_sec) {
     return absl::InvalidArgumentError(absl::StrCat("seconds=", sec));
   }
@@ -57,10 +56,9 @@ absl::Status Validate(const google::protobuf::Duration& d) {
   return absl::OkStatus();
 }
 
-// Documented in google/protobuf/timestamp.proto.
-absl::Status Validate(const google::protobuf::Timestamp& timestamp) {
-  const auto sec = timestamp.seconds();
-  const auto ns = timestamp.nanos();
+// Validate the values of a google::protobuf::Timestamp.
+// Requirements documented in google/protobuf/timestamp.proto.
+absl::Status ValidateProtoTimestampMembers(int64_t sec, int32_t ns) {
   // sec must be [0001-01-01T00:00:00Z, 9999-12-31T23:59:59.999999999Z]
   if (sec < kMinProtoTimestamp.tv_sec || sec > kMaxProtoTimestamp.tv_sec) {
     return absl::InvalidArgumentError(absl::StrCat("seconds=", sec));
@@ -71,17 +69,7 @@ absl::Status Validate(const google::protobuf::Timestamp& timestamp) {
   return absl::OkStatus();
 }
 
-void FromAbslTimeNoValidation(absl::Time time,
-                              google::protobuf::Timestamp* timestamp) {
-  const int64_t s = absl::ToUnixSeconds(time);
-  timestamp->set_seconds(s);
-  timestamp->set_nanos((time - absl::FromUnixSeconds(s)) /
-                       absl::Nanoseconds(1));
-}
-
 }  // namespace
-
-/// google::protobuf::Timestamp.
 
 google::protobuf::Timestamp GetCurrentTimeProto() {
   absl::StatusOr<google::protobuf::Timestamp> time = FromAbslTime(absl::Now());
@@ -91,16 +79,27 @@ google::protobuf::Timestamp GetCurrentTimeProto() {
   return *time;
 }
 
+/// google::protobuf::Timestamp <=> absl::Time.
+
 absl::Status FromAbslTime(absl::Time time,
                           google::protobuf::Timestamp* timestamp) {
-  FromAbslTimeNoValidation(time, timestamp);
-  return Validate(*timestamp);
+  int64_t s = absl::ToUnixSeconds(time);
+  int32_t ns = (time - absl::FromUnixSeconds(s)) / absl::Nanoseconds(1);
+
+  if (absl::Status status = ValidateProtoTimestampMembers(s, ns);
+      !status.ok()) {
+    return status;
+  }
+
+  timestamp->set_seconds(s);
+  timestamp->set_nanos(ns);
+
+  return absl::OkStatus();
 }
 
 absl::StatusOr<google::protobuf::Timestamp> FromAbslTime(absl::Time time) {
   google::protobuf::Timestamp timestamp;
-  auto status = FromAbslTime(time, &timestamp);
-  if (!status.ok()) {
+  if (absl::Status status = FromAbslTime(time, &timestamp); !status.ok()) {
     return status;
   }
   return timestamp;
@@ -109,25 +108,150 @@ absl::StatusOr<google::protobuf::Timestamp> FromAbslTime(absl::Time time) {
 google::protobuf::Timestamp FromAbslTimeClampToValidRange(absl::Time time) {
   time = std::clamp(time, absl::TimeFromTimespec(kMinProtoTimestamp),
                     absl::TimeFromTimespec(kMaxProtoTimestamp));
+  int64_t s = absl::ToUnixSeconds(time);
+  int32_t ns = (time - absl::FromUnixSeconds(s)) / absl::Nanoseconds(1);
+
   google::protobuf::Timestamp out;
-  FromAbslTimeNoValidation(time, &out);
+  out.set_seconds(s);
+  out.set_nanos(ns);
   return out;
 }
 
 absl::StatusOr<absl::Time> ToAbslTime(
     const google::protobuf::Timestamp& proto) {
-  absl::Status status = Validate(proto);
-  if (!status.ok()) return status;
+  if (absl::Status status =
+          ValidateProtoTimestampMembers(proto.seconds(), proto.nanos());
+      !status.ok()) {
+    return status;
+  }
   return absl::FromUnixSeconds(proto.seconds()) +
          absl::Nanoseconds(proto.nanos());
 }
 
-/// google::protobuf::Duration.
+/// google::protobuf::Timestamp <=> floating-point time quantity.
+
+absl::Status FromUnixDoubleNanos(double ns,
+                                 google::protobuf::Timestamp* timestamp) {
+  // We rely on absl to handle edge cases for us (e.g. fractional nanos).
+  return FromAbslTime(absl::UnixEpoch() + absl::Nanoseconds(ns), timestamp);
+}
+
+absl::Status FromUnixDoubleMicros(double us,
+                                  google::protobuf::Timestamp* timestamp) {
+  // We rely on absl to handle edge cases for us (e.g. fractional nanos).
+  return FromAbslTime(absl::UnixEpoch() + absl::Microseconds(us), timestamp);
+}
+
+absl::Status FromUnixDoubleMillis(double ms,
+                                  google::protobuf::Timestamp* timestamp) {
+  // We rely on absl to handle edge cases for us (e.g. fractional nanos).
+  return FromAbslTime(absl::UnixEpoch() + absl::Milliseconds(ms), timestamp);
+}
+
+absl::Status FromUnixDoubleSeconds(double s,
+                                   google::protobuf::Timestamp* timestamp) {
+  // We rely on absl to handle edge cases for us (e.g. fractional nanos).
+  return FromAbslTime(absl::UnixEpoch() + absl::Seconds(s), timestamp);
+}
+
+absl::StatusOr<google::protobuf::Timestamp> FromUnixDoubleNanos(double ns) {
+  google::protobuf::Timestamp timestamp;
+  if (absl::Status status = FromUnixDoubleNanos(ns, &timestamp); !status.ok()) {
+    return status;
+  }
+  return timestamp;
+}
+
+absl::StatusOr<google::protobuf::Timestamp> FromUnixDoubleMicros(double us) {
+  google::protobuf::Timestamp timestamp;
+  if (absl::Status status = FromUnixDoubleMicros(us, &timestamp);
+      !status.ok()) {
+    return status;
+  }
+  return timestamp;
+}
+
+absl::StatusOr<google::protobuf::Timestamp> FromUnixDoubleMillis(double ms) {
+  google::protobuf::Timestamp timestamp;
+  if (absl::Status status = FromUnixDoubleMillis(ms, &timestamp);
+      !status.ok()) {
+    return status;
+  }
+  return timestamp;
+}
+
+absl::StatusOr<google::protobuf::Timestamp> FromUnixDoubleSeconds(double s) {
+  google::protobuf::Timestamp timestamp;
+  if (absl::Status status = FromUnixDoubleSeconds(s, &timestamp);
+      !status.ok()) {
+    return status;
+  }
+  return timestamp;
+}
+
+absl::StatusOr<double> ToUnixDoubleNanos(
+    const google::protobuf::Timestamp& proto) {
+  // We rely on absl to handle edge cases for us (e.g. fractional nanos).
+  //
+  // The absl types do not result in precision loss, so we defer precision-loss
+  // only to the conversion to the floating-point type.
+  absl::StatusOr<absl::Time> time = ToAbslTime(proto);
+  if (!time.ok()) {
+    return time.status();
+  }
+  absl::Duration d = *time - absl::UnixEpoch();
+  return absl::ToDoubleNanoseconds(d);
+}
+
+absl::StatusOr<double> ToUnixDoubleMicros(
+    const google::protobuf::Timestamp& proto) {
+  // We rely on absl to handle edge cases for us (e.g. fractional nanos).
+  //
+  // The absl types do not result in precision loss, so we defer precision-loss
+  // only to the conversion to the floating-point type.
+  absl::StatusOr<absl::Time> time = ToAbslTime(proto);
+  if (!time.ok()) {
+    return time.status();
+  }
+  absl::Duration d = *time - absl::UnixEpoch();
+  return absl::ToDoubleMicroseconds(d);
+}
+
+absl::StatusOr<double> ToUnixDoubleMillis(
+    const google::protobuf::Timestamp& proto) {
+  // We rely on absl to handle edge cases for us (e.g. fractional nanos).
+  //
+  // The absl types do not result in precision loss, so we defer precision-loss
+  // only to the conversion to the floating-point type.
+  absl::StatusOr<absl::Time> time = ToAbslTime(proto);
+  if (!time.ok()) {
+    return time.status();
+  }
+  absl::Duration d = *time - absl::UnixEpoch();
+  return absl::ToDoubleMilliseconds(d);
+}
+
+absl::StatusOr<double> ToUnixDoubleSeconds(
+    const google::protobuf::Timestamp& proto) {
+  // We rely on absl to handle edge cases for us (e.g. fractional nanos).
+  //
+  // The absl types do not result in precision loss, so we defer precision-loss
+  // only to the conversion to the floating-point type.
+  absl::StatusOr<absl::Time> time = ToAbslTime(proto);
+  if (!time.ok()) {
+    return time.status();
+  }
+  absl::Duration d = *time - absl::UnixEpoch();
+  return absl::ToDoubleSeconds(d);
+}
+
+/// google::protobuf::Duration <=> absl::Duration.
 
 absl::StatusOr<google::protobuf::Duration> FromAbslDuration(absl::Duration d) {
   google::protobuf::Duration proto;
-  absl::Status status = FromAbslDuration(d, &proto);
-  if (!status.ok()) return status;
+  if (absl::Status status = FromAbslDuration(d, &proto); !status.ok()) {
+    return status;
+  }
   return proto;
 }
 
@@ -135,10 +259,16 @@ absl::Status FromAbslDuration(absl::Duration d,
                               google::protobuf::Duration* proto) {
   // s and n may both be negative, per the Duration proto spec.
   const int64_t s = absl::IDivDuration(d, absl::Seconds(1), &d);
-  const int64_t n = absl::IDivDuration(d, absl::Nanoseconds(1), &d);
+  const int64_t ns = absl::IDivDuration(d, absl::Nanoseconds(1), &d);
+
+  if (absl::Status status = ValidateProtoDurationMembers(s, ns); !status.ok()) {
+    return status;
+  }
+
   proto->set_seconds(s);
-  proto->set_nanos(n);
-  return Validate(*proto);
+  proto->set_nanos(ns);
+
+  return absl::OkStatus();
 }
 
 absl::Duration ToAbslDuration(const google::protobuf::Duration& proto) {

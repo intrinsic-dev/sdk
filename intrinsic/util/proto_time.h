@@ -25,7 +25,7 @@ absl::StatusOr<google::protobuf::Timestamp> FromAbslTime(absl::Time time);
 absl::StatusOr<absl::Time> ToAbslTime(const google::protobuf::Timestamp& proto);
 
 // Converts an absl:Time to a google::protobuf::Timestamp, clamping to the valid
-// time range allowed in `protobuf/timestamp.proto`.
+// time range allowed in `google/protobuf/timestamp.proto`.
 //
 // This allows absl::InfiniteFuture() and absl::InfinitePast() to be used.
 //
@@ -33,6 +33,46 @@ absl::StatusOr<absl::Time> ToAbslTime(const google::protobuf::Timestamp& proto);
 // `ToAbslTime(FromAbslTimeClampToValidRange(timestamp_proto))` may differ from
 // `timestamp_proto`.
 google::protobuf::Timestamp FromAbslTimeClampToValidRange(absl::Time time);
+
+// Converts a floating-point time quantity since the Unix epoch to
+// google::protobuf::Timestamp.
+//
+// A google::protobuf::Timestamp is defined in `google/protobuf/timestamp.proto`
+// as a time quantity since Unix epoch, so this conversion makes sense.
+//
+// Returns an error if the input value would result in a timestamp that is
+// outside the range allowed in `google/protobuf/timestamp.proto`.
+absl::Status FromUnixDoubleNanos(double ns,
+                                 google::protobuf::Timestamp* timestamp);
+absl::Status FromUnixDoubleMicros(double us,
+                                  google::protobuf::Timestamp* timestamp);
+absl::Status FromUnixDoubleMillis(double ms,
+                                  google::protobuf::Timestamp* timestamp);
+absl::Status FromUnixDoubleSeconds(double s,
+                                   google::protobuf::Timestamp* timestamp);
+absl::StatusOr<google::protobuf::Timestamp> FromUnixDoubleNanos(double ns);
+absl::StatusOr<google::protobuf::Timestamp> FromUnixDoubleMicros(double us);
+absl::StatusOr<google::protobuf::Timestamp> FromUnixDoubleMillis(double ms);
+absl::StatusOr<google::protobuf::Timestamp> FromUnixDoubleSeconds(double s);
+
+// Converts a google::protobuf::Timestamp to a floating-point time quantity
+// since the Unix epoch.
+//
+// NOTE: Precision loss may occur for large values.
+//
+// A google::protobuf::Timestamp is defined in `google/protobuf/timestamp.proto`
+// as a time quantity since Unix epoch, so this conversion makes sense.
+//
+// Returns an error if the input timestamp has a value that is outside the range
+// allowed in `google/protobuf/timestamp.proto`.
+absl::StatusOr<double> ToUnixDoubleNanos(
+    const google::protobuf::Timestamp& proto);
+absl::StatusOr<double> ToUnixDoubleMicros(
+    const google::protobuf::Timestamp& proto);
+absl::StatusOr<double> ToUnixDoubleMillis(
+    const google::protobuf::Timestamp& proto);
+absl::StatusOr<double> ToUnixDoubleSeconds(
+    const google::protobuf::Timestamp& proto);
 
 /// google::protobuf::Duration.
 
