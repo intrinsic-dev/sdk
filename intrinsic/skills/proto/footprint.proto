@@ -70,6 +70,7 @@ message VolumeReservation {
     // exclusive lock. For example, a robot moving through a swept volume would
     // need to acquire this type of lock.
     WRITE = 0;
+
   }
 
   // The type of volume lock.
@@ -79,6 +80,7 @@ message VolumeReservation {
   oneof volume_oneof {
     intrinsic_proto.geometry.TransformedGeometryStorageRefs shape = 4;
   }
+
 }
 
 message ResourceReservation {
