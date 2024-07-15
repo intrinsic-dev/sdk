@@ -53,11 +53,11 @@ const (
 	KeyManifestTarget = "manifest_target"
 	// KeyOrgPrivate is the name of the org-private flag.
 	KeyOrgPrivate = "org_private"
-	// KeyRegistry is the name of the registry flag.
 	// KeyOrganization is used as central flag name for passing an organization name to inctl.
 	KeyOrganization = orgutil.KeyOrganization
 	// KeyProject is used as central flag name for passing a project name to inctl.
-	KeyProject  = orgutil.KeyProject
+	KeyProject = orgutil.KeyProject
+	// KeyRegistry is the name of the registry flag.
 	KeyRegistry = "registry"
 	// KeyReleaseNotes is the name of the release notes flag.
 	KeyReleaseNotes = "release_notes"
@@ -79,8 +79,6 @@ const (
 	KeyVersion = "version"
 
 	envPrefix = "intrinsic"
-
-	gcpEndpointsURLFormat = "dns:///www.endpoints.%s.cloud.goog:443"
 )
 
 // CmdFlags abstracts interaction with inctl command flags.
