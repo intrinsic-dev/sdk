@@ -37,19 +37,22 @@ using SharedStopState = std::shared_ptr<StopState>;
 
 }  // namespace detail
 
-// Token to be passed to long running threads to communicate cancellations,
-// for example in context of deadlines or when the client cancels the request.
-// Loosely follows std::stop_token terminology; The intent is to replace this
-// class eventually by std::stop_token.
-// This class is thread safe.
+// Token to be passed to threads to communicate cancellations, for example in
+// context of deadlines or when the client cancels the request. Follows
+// std::stop_token terminology; The intent is to replace this class eventually
+// by std::stop_token. This class is thread safe.
 class StopToken {
  public:
-  StopToken() = delete;
+  // Constructs an empty StopToken with no associated stop-state.
+  StopToken() noexcept = default;
 
+  // Default copy and move constructors.
+  StopToken(const StopToken& other) noexcept = default;
+  StopToken(StopToken&& other) noexcept = default;
+
+  // Constructs a StopToken with the given stop-state.
   explicit StopToken(detail::SharedStopState state)
       : stop_state_(std::move(state)) {}
-
-  bool request_stop() { return stop_state_->request_stop(); }
 
   ABSL_MUST_USE_RESULT bool stop_requested() const noexcept {
     return stop_state_ != nullptr && stop_state_->stopped;
