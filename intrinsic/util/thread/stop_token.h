@@ -44,7 +44,7 @@ using SharedStopState = std::shared_ptr<StopState>;
 // This class is thread safe.
 class StopToken {
  public:
-  StopToken() : stop_state_(std::make_shared<detail::StopState>()) {}
+  StopToken() = delete;
 
   explicit StopToken(detail::SharedStopState state)
       : stop_state_(std::move(state)) {}
