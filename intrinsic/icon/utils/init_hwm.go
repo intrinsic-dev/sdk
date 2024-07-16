@@ -24,9 +24,11 @@ var (
 	hardwareModuleFatalFaultDuringInit = 111
 	// Corresponds to intrinsic::icon::HardwareModuleExitCode::kFatalFaultDuringExec
 	hardwareModuleFatalFaultDuringExec = 112
+	shutdownRequested = false
 )
 
 func main() {
+	flag.Set("alsologtostderr", "true")
 	intrinsic.Init()
 	sigs := make(chan os.Signal, 1)
 	defer close(sigs)
@@ -54,6 +56,9 @@ func main() {
 			// e.g. SIGTERM to be properly handled instead of the subprocess being immediately terminated.
 			for sig := range sigs {
 				if sig != syscall.SIGCHLD && cmd != nil && cmd.Process != nil {
+					if sig == syscall.SIGTERM || sig == syscall.SIGINT || sig == syscall.SIGKILL {
+						shutdownRequested = true
+					}
 					log.Infof("Sending signal %q to pgid %d", sig.String(), cmd.Process.Pid)
 					// Negation is intentional: Send the signal to every process in the
 					// process group, see the manpage for kill(2).
@@ -67,6 +72,12 @@ func main() {
 			log.Info("Finished Hardware Module without error")
 			return
 		}
+		// Ignore exit failures after a shutdown request.
+		if shutdownRequested {
+			log.Info("Not restarting ICON after external shutdown request.")
+			return
+		}
+
 		exitCode := cmd.ProcessState.ExitCode()
 		switch exitCode {
 		case hardwareModuleFatalFaultDuringInit:
