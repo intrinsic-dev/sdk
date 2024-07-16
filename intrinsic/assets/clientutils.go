@@ -31,6 +31,13 @@ import (
 )
 
 const (
+	// TestGlobalCatalogProject is a test project that uses the global asset catalog.
+	// See GetSkillCatalogProject for details.
+	TestGlobalCatalogProject = "test-global-catalog-project"
+	// TestProjectSpecificCatalogProject is a test project that uses a project-specific catalog.
+	// See GetSkillCatalogProject for details.
+	TestProjectSpecificCatalogProject = "test-project-specific-catalog-project"
+
 	maxMsgSize = math.MaxInt64
 	// policy for retrying failed gRPC requests as documented here:
 	// https://pkg.go.dev/google.golang.org/grpc/examples/features/retry
