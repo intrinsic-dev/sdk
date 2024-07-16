@@ -226,7 +226,11 @@ cc_library(
     name = "shutdown_signals",
     srcs = ["shutdown_signals.cc"],
     hdrs = ["shutdown_signals.h"],
-    deps = ["@com_google_absl//absl/strings:string_view"],
+    deps = [
+        "//intrinsic/icon/release:source_location",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/strings:string_view",
+    ],
 )
 
 cc_library(

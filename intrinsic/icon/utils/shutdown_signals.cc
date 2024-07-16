@@ -6,8 +6,11 @@
 
 #include <atomic>
 #include <csignal>
+#include <optional>
 
+#include "absl/log/log.h"
 #include "absl/strings/string_view.h"
+#include "intrinsic/icon/release/source_location.h"
 
 namespace intrinsic::icon {
 namespace {
@@ -16,6 +19,8 @@ namespace {
 // IsShutdownRequested trigger activity on other threads, and
 // ShutdownSignalHandler must be signal-safe.
 std::atomic<ShutdownType> shutdown_requested = ShutdownType::kNotRequested;
+// Exit code is only set if the shutdown was requested by a user.
+std::atomic<std::optional<int>> user_shutdown_exit_code = {};
 
 // Signal safe function to convert a signal number into a string.
 absl::string_view ToString(int signum) {
@@ -98,12 +103,18 @@ void ShutdownSignalHandler(int sig) {
   shutdown_requested.store(ShutdownType::kSignalledRequest);
 }
 
-void RequestShutdownByUser() {
-  const char message[] = "Shutting down per user request.\n";
-  (void)write(STDERR_FILENO, message, sizeof(message));
+void RequestShutdownByUser(absl::string_view shutdown_reason,
+                           std::optional<int> exit_code,
+                           intrinsic::SourceLocation loc) {
+  LOG(INFO).AtLocation(loc.file_name(), loc.line())
+      << "Shutting down per user request: " << shutdown_reason;
+  user_shutdown_exit_code.store(exit_code);
   shutdown_requested.store(ShutdownType::kUserRequest);
 }
 
 ShutdownType IsShutdownRequested() { return shutdown_requested.load(); }
 
+std::optional<int> GetShutdownExitCode() {
+  return user_shutdown_exit_code.load();
+}
 }  // namespace intrinsic::icon
