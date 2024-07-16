@@ -43,7 +43,7 @@ func TestWrapCmd(t *testing.T) {
 			},
 		}, vi)
 
-		cmd.SetArgs([]string{"--org=defaultorg", "--project=example-project"})
+		cmd.SetArgs([]string{"--org=test-org", "--project=example-project"})
 		if err := cmd.Execute(); err != nil {
 			if !errors.Is(err, errNotXor) {
 				t.Errorf("Expected errNotXor. Got error: %v", err)

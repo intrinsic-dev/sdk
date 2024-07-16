@@ -197,7 +197,7 @@ func WrapCmd(cmd *cobra.Command, vipr *viper.Viper) *cobra.Command {
 // SharedOrg identifies if an org name is ambiguous, ie if it is unqualified and present in multiple
 // projects.
 func SharedOrg(orgName string) bool {
-	return orgName == "defaultorg" || orgName == "intrinsic"
+	return orgName == "intrinsic"
 }
 
 // QualifiedOrg returns a "unique" org name, adding an @project suffix for orgs that are present in
