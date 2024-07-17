@@ -18,6 +18,7 @@
 #include "absl/time/time.h"
 #include "grpcpp/channel.h"
 #include "intrinsic/logging/proto/log_item.pb.h"
+#include "intrinsic/logging/proto/logger_service.grpc.pb.h"
 #include "intrinsic/logging/proto/logger_service.pb.h"
 #include "intrinsic/logging/structured_logging_client.h"
 #include "intrinsic/util/grpc/grpc.h"
