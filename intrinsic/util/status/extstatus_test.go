@@ -19,7 +19,7 @@ import (
 	ctxpb "intrinsic/logging/proto/context_go_proto"
 	"intrinsic/testing/grpctest"
 	estpb "intrinsic/util/status/extended_status_go_proto"
-	testsvcgrpcpb "intrinsic/util/status/test_data/test_service_go_grpc_proto"
+	testsvcgrpcpb "intrinsic/util/status/test_service_go_grpc_proto"
 )
 
 func TestExtendedStatus(t *testing.T) {
