@@ -67,6 +67,11 @@ class SkillCanceller(abc.ABC):
       Exception: Any exception raised when calling the cancellation callback.
       SkillReadyForCancellationError: If the skill has already signaled that it
         is ready for cancellation.
+
+      Raising an error will indicate that the skill could not be cancelled and
+      the skill will be considered to be in an error state. Only raise an error
+      if, after cancellation, the skill was not able to leave resources in a
+      safe and recoverable state.
     """
 
   @abc.abstractmethod

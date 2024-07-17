@@ -43,6 +43,12 @@ class SkillCanceller {
   //
   // Only one callback may be registered, and the callback will be called at
   // most once. It must be registered before calling Ready().
+  //
+  // After a successful invocation, the callback should return absl::OkStatus().
+  // Not returning absl::OkStatus() will indicate that the skill could not
+  // be cancelled and the skill will be considered to be in an error state.
+  // Only return non-OK status if, after cancellation, the skill was not able to
+  // leave resources in a safe and recoverable state.
   virtual absl::Status RegisterCallback(
       absl::AnyInvocable<absl::Status() const> callback) = 0;
 
