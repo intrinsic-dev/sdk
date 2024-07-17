@@ -1,0 +1,157 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+import "google/protobuf/duration.proto";
+import "intrinsic/icon/server/config/dio_config.proto";
+
+message SimDioConfig {
+  string type_name = 1;
+}
+
+// Unlike the other Sim*Config protos, this is not backed by a simulated device.
+// If present, the hardware module simply registers a dummy analog input.
+message SimAnalogInputConfig {
+  uint32 num_inputs = 1;
+}
+message SimAnalogOutputConfig {
+  uint32 num_outputs = 1;
+}
+
+message SimJointConfig {
+  string type_name = 1;
+}
+message SimSafetyConfig {}
+message SimForceTorqueConfig {
+  string type_name = 1;
+}
+message SimRangefinderConfig {}
+
+// Describes a single simulation_bus device so that the HWM can translate from
+// bus device status and command messages to hardware interfaces.
+//
+// The HWM can infer much of this information from a World model. If you're
+// bringing up a new simulated robot, try to start with no DeviceConfigs and
+// only add those that you really need.
+message DeviceConfig {
+  string name = 1;
+  oneof config {
+    // If this is present, the hardware module will have the following
+    // interfaces:
+    // * joint_position_state
+    // * joint_position_command
+    // * joint_velocity_state
+    // Plus (only if sim joints support torque)
+    // * joint_torque_command
+    // * joint_torque_state
+    //
+    // Note that these interfaces _aggregate_ all joints!
+    SimJointConfig joint = 2;
+    // If this is present, the HWM will have
+    // * safety_status
+    // There may only be one safety device, having more is an error.
+    SimSafetyConfig safety = 3;
+    // If this is present, the HWM will have
+    // * force_torque_status
+    // * force_torque_command
+    // There may only be one F/T device, having more is an error.
+    SimForceTorqueConfig force_torque = 4;
+    // If this is present, the HWM will have
+    // * opto_ncdt_rangefinder
+    // There may only be one rangefinder device, having more is an error.
+    SimRangefinderConfig rangefinder = 5;
+    // If this is present, the HWM will have hardware interfaces for each
+    // digital and analog input/output (each may have multiple bits).
+    //
+    // The interface names are auto-generated using the device name and
+    // "_digital_{input,output}_{status,command}", *unless* the corresponding
+    // DIO config specifies status_interface_name_sim_only /
+    // command_interface_name_sim_only.
+    //
+    // There may be multiple DIO devices.
+    SimDioConfig dio = 6;
+    // If this is present, the HWM will have an analog input status interface
+    // called `${device_name}_status`.
+    //
+    // There may be multiple AnalogInput devices.
+    SimAnalogInputConfig analog_input = 7;
+    // If this is present, the HWM will have an analog output command interface
+    // called `${device_name}_command`.
+    //
+    // There may be multiple AnalogOutput devices.
+    SimAnalogOutputConfig analog_output = 8;
+  }
+}
+
+message SimBusModuleConfig {
+  optional string world_id = 1;
+  // Resource IDs to take sim devices from. The sim_bus HWM will automatically
+  // create hardware interfaces based on the corresponding World entities.
+  // If not present, defaults to the resource ID of the hardware module itself
+  // (if that is available).
+  repeated string resource_ids_for_devices = 2;
+  // Optional resource ID to extract a simulation service port from.
+  //
+  // ONLY USE THIS IF YOUR RESOURCE FAILS TO START WITH JUST
+  // `resource_ids_for_devices`
+  //
+  // The HWM tries to be smart about finding a sim port, as explained below.
+  //
+  // The HWM will check a number of resources *and their parents* for a
+  // simulation port. The HWM checks these resources (in order!):
+  //
+  // 1. `resource_id_for_timeslicer_port` – If this is given, and neither it nor
+  //    its parents have a timeslicer port, the HWM reports an error, since the
+  //    user explicitly expected there to be a sim port there.
+  // 2. The resources named in `resource_ids_for_devices`
+  // 3. The hardware module's resource ID
+  //
+  // Use this to connect multiple hardware modules to the same simulation
+  // service, even if their models are not attached to one another. If the
+  // models *are* attached, things should just work. Not all models open up a
+  // separate simulation port, but sometimes we want to break things up into
+  // multiple hardware modules.
+  //
+  // As an example, a robot with a force/torque sensor might use different
+  // hardware modules for the two, but its simulation might only open a single
+  // port.
+  //
+  // In this case, we want to have two simulated hardware modules to mirror the
+  // real ones, and both need to connect to the same simulation port.
+  optional string resource_id_for_timeslicer_port = 3;
+  // Map from device names to sim device configs. Use this in situations
+  // where there is no resource instance associated with a simulated device's
+  // plugin tag. Otherwise, prefer using `resource_ids_for_devices`.
+  //
+  // NOTE: Order is important for joint devices! The hardware module exports
+  // combined hardware interfaces that encompass all joints, and use the order
+  // of devices as the axis order!
+  repeated DeviceConfig additional_devices = 4;
+  // If the HWM has DIOs, you must provide this to map bit values to names that
+  // ICON understands. This must mirror the DIO configuration for the
+  // corresponding real robot. DIO configuration is usually stored in one of
+  // two ways:
+  // 1. Directly in the machine.xml file:
+  //    http://intrinsic/icon/machines/rtcl_iiwa/iiwa_extra_config_rtcl.xml;l=116;rcl=538418285
+  // 2. In a textproto referenced by machine.xml:
+  //    http://intrinsic/icon/machines/rtcl_ur/ur_extra_config_hal.xml;l=159;rcl=549275616
+  //    http://intrinsic/icon/machines/rtcl_ur/sim_dios.textproto;rcl=549275616
+  //
+  // Some configurations of ICON have neither of these (because the hardware
+  // module defines DIOs implicitly, for example. The UR module does this). If
+  // you're writing a SimBusModuleConfig proto, you probably know how to deal
+  // with this.
+  optional intrinsic_proto.icon.DigitalIOs dio_config = 5;
+  // Duration of a single control cycle. Use this to override any value from the
+  // World. Should only be needed for testing.
+  optional google.protobuf.Duration cycle_duration = 6;
+  // Overrides sim server address (in hostname:port format). Only use this for
+  // testing! If omitted, the HWM retrieves the hostname from the ModuleConfig,
+  // and the port from the World entity.
+  optional string sim_server_address_testonly = 7;
+  // Overrides world server address (in hostname:port format). Only use this for
+  // testing!
+  optional string world_server_address_testonly = 8;
+}

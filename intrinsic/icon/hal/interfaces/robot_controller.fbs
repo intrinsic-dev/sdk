@@ -1,0 +1,7 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+namespace intrinsic_fbs;
+
+struct RobotControllerStatus {
+  speed_scaling:double;
+}

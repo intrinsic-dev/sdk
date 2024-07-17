@@ -1,0 +1,30 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+namespace intrinsic_fbs;
+
+enum TransitionRequest : uint8 {
+  kActivate = 0,
+  kDeactivate = 1,
+  kEnableMotion = 2,
+  kDisableMotion = 3,
+  kClearFaults = 4,
+}
+
+enum StateCode : uint8 {
+  kDeactivated = 0,
+  kDeactivating = 1,
+  kActivated =2,
+  kActivating = 3,
+  kMotionEnabled = 4,
+  kMotionEnabling = 5,
+  kMotionDisabling = 6,
+  kFaulted = 7,
+  kClearingFaults = 8,
+  kInitFailed = 9,
+  kFatallyFaulted = 10,
+}
+
+struct HardwareModuleState {
+  code:StateCode = kDeactivated;
+  message:[uint8:256];
+}

@@ -1,0 +1,11 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+include "intrinsic/icon/flatbuffers/transform_types.fbs";
+
+namespace intrinsic_fbs;
+
+table ImuStatus{
+  orientation:intrinsic_fbs.Rotation;
+  angular_velocity:intrinsic_fbs.Point;
+  linear_acceleration:intrinsic_fbs.Point;
+}

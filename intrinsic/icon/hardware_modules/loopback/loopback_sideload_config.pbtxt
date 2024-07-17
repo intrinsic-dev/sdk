@@ -1,0 +1,16 @@
+# Copyright 2023 Intrinsic Innovation LLC
+
+name: "loopback_hardware_module"
+module_config {
+  [type.googleapis.com/intrinsic_proto.icon.LoopbackConfig] {
+    # Pass in module specific parameters
+  }
+}
+drives_realtime_clock: false
+simulation_module_config {
+  cycle_duration: {
+    seconds: 0
+    nanos: 4000000
+  }
+}
+
