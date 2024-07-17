@@ -96,3 +96,10 @@ cc_library(
         "@com_google_absl//absl/time",
     ],
 )
+
+cc_library(
+    name = "sysinfo",
+    srcs = ["sysinfo.cc"],
+    hdrs = ["sysinfo.h"],
+    deps = ["@com_google_absl//absl/time"],
+)
