@@ -414,6 +414,19 @@ func ValidateIDProto(idProto *idpb.Id) error {
 	return nil
 }
 
+// ValidateIDVersionProto validates the parts of an IdVersion proto.
+//
+// Returns an error if `idVersionProto` is not valid.
+func ValidateIDVersionProto(idVersion *idpb.IdVersion) error {
+	if err := ValidateIDProto(idVersion.GetId()); err != nil {
+		return err
+	}
+	if err := ValidateVersion(idVersion.GetVersion()); err != nil {
+		return err
+	}
+	return nil
+}
+
 // ValidateIDVersion validates an id_version.
 //
 // A valid id_version is formatted as described in IsIdVersion.
