@@ -2,7 +2,7 @@
 
 bazel-bin
 bazel-icon
-bazel-intrinsic_sdks
+bazel-sdk
 bazel-out
 bazel-testlogs
 .release_version
