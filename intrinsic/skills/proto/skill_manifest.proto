@@ -114,6 +114,24 @@ message Dependencies {
   map<string, ResourceSelector> required_equipment = 1;
 }
 
+message ExtendedDocumentation {
+  // Prerequisites for a skill refer to the necessary conditions and
+  // requirements that must be met for the skill to function properly.
+  // These can include specific hardware components like sensors or
+  // controllers, initial calibration and setup procedures, software
+  // dependencies, network configurations, required permissions and access
+  // and/or relevant configuration files.
+  string prerequisites = 1;
+
+  // A usage example of a skill outlines the specific steps and conditions
+  // under which the skill is utilized, showcasing its functionality and
+  // effectiveness.
+  // If the usage example has lengthy details, the author can provide a link
+  // to the documentation that shows a practical demonstration of how the
+  // skill can be applied in a real-world scenario.
+  string usage_example = 2;
+}
+
 message Manifest {
   // The skill's id.
   intrinsic_proto.assets.Id id = 1;
@@ -121,8 +139,16 @@ message Manifest {
   // The skill's vendor.
   intrinsic_proto.assets.Vendor vendor = 2;
 
-  // Documentation about the skill which will be shown to users.
+  // Documentation about the skill which will be shown to users. This field
+  // should contain the description of the skill as a summary.
   intrinsic_proto.assets.Documentation documentation = 3;
+
+  // Extended documentation about the skill which will be shown to users.
+  // This field contains additional information about the skill that is used
+  // by automatic skill documentation generation tools. It is optional and can
+  // be left empty. However, only skills that specify this field will be
+  // included in automatic skill documentation generation.
+  optional ExtendedDocumentation extended_documentation = 10;
 
   // Contains user-set options about what skill features are supported by
   // this skill.
