@@ -10,7 +10,7 @@
 #include "intrinsic/util/grpc/channel.h"
 #include "intrinsic/util/grpc/channel_interface.h"
 #include "intrinsic/util/grpc/connection_params.h"
-#include "intrinsic/util/status/status_macros.h"
+#include "intrinsic/util/grpc/grpc.h"
 
 namespace intrinsic {
 namespace icon {

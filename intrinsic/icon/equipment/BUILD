@@ -11,10 +11,10 @@ cc_library(
     srcs = ["channel_factory.cc"],
     hdrs = ["channel_factory.h"],
     deps = [
+        "//intrinsic/util/grpc",
         "//intrinsic/util/grpc:channel",
         "//intrinsic/util/grpc:channel_interface",
         "//intrinsic/util/grpc:connection_params",
-        "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/time",
     ],
