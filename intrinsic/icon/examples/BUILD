@@ -107,6 +107,7 @@ cc_library(
         "//intrinsic/icon/common:builtins",
         "//intrinsic/icon/common:id_types",
         "//intrinsic/icon/proto:cart_space_cc_proto",
+        "//intrinsic/icon/proto:generic_part_config_cc_proto",
         "//intrinsic/icon/proto:part_status_cc_proto",
         "//intrinsic/kinematics/types:joint_limits",
         "//intrinsic/util/grpc:channel_interface",

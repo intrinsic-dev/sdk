@@ -24,6 +24,7 @@
 #include "intrinsic/icon/common/builtins.h"
 #include "intrinsic/icon/common/id_types.h"
 #include "intrinsic/icon/proto/cart_space.pb.h"
+#include "intrinsic/icon/proto/generic_part_config.pb.h"
 #include "intrinsic/icon/proto/part_status.pb.h"
 #include "intrinsic/kinematics/types/joint_limits.h"
 #include "intrinsic/util/grpc/channel_interface.h"
