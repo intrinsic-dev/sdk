@@ -5,7 +5,7 @@
 
 #include "absl/strings/string_view.h"
 #include "intrinsic/icon/hal/hardware_interface_traits.h"
-#include "intrinsic/icon/hal/interfaces/icon_state_generated.h"
+#include "intrinsic/icon/hal/interfaces/icon_state.fbs.h"
 #include "intrinsic/icon/hal/interfaces/icon_state_utils.h"
 
 namespace intrinsic::icon {

@@ -2,7 +2,7 @@
 
 #include "intrinsic/icon/hal/hardware_module_util.h"
 
-#include "intrinsic/icon/hal/interfaces/hardware_module_state_generated.h"
+#include "intrinsic/icon/hal/interfaces/hardware_module_state.fbs.h"
 
 namespace intrinsic::icon {
 

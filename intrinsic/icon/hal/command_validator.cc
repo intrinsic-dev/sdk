@@ -11,7 +11,7 @@
 #include "intrinsic/icon/hal/hardware_interface_handle.h"
 #include "intrinsic/icon/hal/hardware_interface_registry.h"
 #include "intrinsic/icon/hal/icon_state_register.h"
-#include "intrinsic/icon/hal/interfaces/icon_state_generated.h"
+#include "intrinsic/icon/hal/interfaces/icon_state.fbs.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon {

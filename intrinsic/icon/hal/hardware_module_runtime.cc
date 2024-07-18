@@ -29,9 +29,9 @@
 #include "intrinsic/icon/hal/hardware_module_interface.h"
 #include "intrinsic/icon/hal/hardware_module_util.h"
 #include "intrinsic/icon/hal/icon_state_register.h"  // IWYU pragma: keep
-#include "intrinsic/icon/hal/interfaces/hardware_module_state_generated.h"
+#include "intrinsic/icon/hal/interfaces/hardware_module_state.fbs.h"
 #include "intrinsic/icon/hal/interfaces/hardware_module_state_utils.h"
-#include "intrinsic/icon/hal/interfaces/icon_state_generated.h"
+#include "intrinsic/icon/hal/interfaces/icon_state.fbs.h"
 #include "intrinsic/icon/interprocess/remote_trigger/remote_trigger_server.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/memory_segment.h"
 #include "intrinsic/icon/testing/realtime_annotations.h"

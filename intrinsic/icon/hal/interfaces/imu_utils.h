@@ -4,7 +4,7 @@
 #define INTRINSIC_ICON_HAL_INTERFACES_IMU_UTILS_H_
 
 #include "flatbuffers/flatbuffers.h"
-#include "intrinsic/icon/hal/interfaces/imu_generated.h"
+#include "intrinsic/icon/hal/interfaces/imu.fbs.h"
 
 namespace intrinsic_fbs {
 

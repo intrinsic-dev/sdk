@@ -5,7 +5,7 @@
 
 #include "flatbuffers/flatbuffers.h"
 #include "intrinsic/icon/hal/hardware_interface_handle.h"
-#include "intrinsic/icon/hal/interfaces/joint_limits_generated.h"
+#include "intrinsic/icon/hal/interfaces/joint_limits.fbs.h"
 #include "intrinsic/kinematics/types/joint_limits.pb.h"
 
 namespace intrinsic_fbs {

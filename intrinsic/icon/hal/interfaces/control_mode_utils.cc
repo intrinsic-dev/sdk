@@ -4,7 +4,7 @@
 
 #include "flatbuffers/detached_buffer.h"
 #include "flatbuffers/flatbuffer_builder.h"
-#include "intrinsic/icon/hal/interfaces/control_mode_generated.h"
+#include "intrinsic/icon/hal/interfaces/control_mode.fbs.h"
 
 namespace intrinsic_fbs {
 

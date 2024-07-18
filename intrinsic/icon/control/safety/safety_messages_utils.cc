@@ -8,8 +8,8 @@
 #include <cstring>
 #include <string>
 
-#include "intrinsic/icon/control/safety/extern/safety_status_generated.h"
-#include "intrinsic/icon/control/safety/safety_messages_generated.h"
+#include "intrinsic/icon/control/safety/extern/safety_status.fbs.h"
+#include "intrinsic/icon/control/safety/safety_messages.fbs.h"
 
 namespace intrinsic::safety::messages {
 

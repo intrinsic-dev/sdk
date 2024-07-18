@@ -1,9 +1,6 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-load("//intrinsic/platform:cc_fbs_library.bzl", "cc_fbs_library")
-
-# This package provides ICON safety interfaces.
-load("//intrinsic/platform:fbs_library.bzl", "fbs_library")
+load("//intrinsic/platform:flatbuffers.bzl", "cc_flatbuffers_library", "flatbuffers_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -33,7 +30,7 @@ package_group(
     ],
 )
 
-fbs_library(
+flatbuffers_library(
     name = "safety_messages_fbs",
     srcs = [
         "safety_messages.fbs",
@@ -43,7 +40,7 @@ fbs_library(
     ],
 )
 
-cc_fbs_library(
+cc_flatbuffers_library(
     name = "safety_messages_fbs_cc",
     deps = [":safety_messages_fbs"],
 )
@@ -54,7 +51,7 @@ cc_library(
     hdrs = ["safety_messages_utils.h"],
     deps = [
         ":safety_messages_fbs_cc",
-        "@com_github_google_flatbuffers//:flatbuffers",
+        "//intrinsic/icon/control/safety/extern:safety_status_fbs_cc",
         "@com_google_absl//absl/strings",
     ],
 )

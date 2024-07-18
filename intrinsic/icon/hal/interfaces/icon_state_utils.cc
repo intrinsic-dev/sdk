@@ -7,7 +7,7 @@
 
 #include "flatbuffers/detached_buffer.h"
 #include "flatbuffers/flatbuffer_builder.h"
-#include "intrinsic/icon/hal/interfaces/icon_state_generated.h"
+#include "intrinsic/icon/hal/interfaces/icon_state.fbs.h"
 
 namespace intrinsic_fbs {
 

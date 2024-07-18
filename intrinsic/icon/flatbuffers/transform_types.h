@@ -9,7 +9,7 @@
 
 #include "Eigen/Dense"
 #include "flatbuffers/detached_buffer.h"
-#include "intrinsic/icon/flatbuffers/transform_types_generated.h"
+#include "intrinsic/icon/flatbuffers/transform_types.fbs.h"
 
 namespace intrinsic_fbs {
 

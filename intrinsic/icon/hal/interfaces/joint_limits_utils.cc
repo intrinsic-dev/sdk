@@ -9,7 +9,7 @@
 #include "absl/strings/string_view.h"
 #include "flatbuffers/vector.h"
 #include "intrinsic/icon/hal/hardware_interface_handle.h"
-#include "intrinsic/icon/hal/interfaces/joint_limits_generated.h"
+#include "intrinsic/icon/hal/interfaces/joint_limits.fbs.h"
 #include "intrinsic/kinematics/types/joint_limits.pb.h"
 #include "intrinsic/util/status/status_macros.h"
 

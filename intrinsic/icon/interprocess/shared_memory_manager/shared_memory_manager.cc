@@ -27,7 +27,7 @@
 #include "absl/strings/string_view.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/memory_segment.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_header.h"
-#include "intrinsic/icon/interprocess/shared_memory_manager/segment_info_generated.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/segment_info.fbs.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon {

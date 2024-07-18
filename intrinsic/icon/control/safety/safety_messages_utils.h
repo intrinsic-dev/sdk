@@ -9,7 +9,7 @@
 #include <type_traits>
 
 #include "absl/strings/string_view.h"
-#include "intrinsic/icon/control/safety/safety_messages_generated.h"
+#include "intrinsic/icon/control/safety/safety_messages.fbs.h"
 
 namespace intrinsic::safety::messages {
 

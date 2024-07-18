@@ -6,7 +6,7 @@
 
 #include "flatbuffers/detached_buffer.h"
 #include "flatbuffers/flatbuffer_builder.h"
-#include "intrinsic/icon/hal/interfaces/robot_controller_generated.h"
+#include "intrinsic/icon/hal/interfaces/robot_controller.fbs.h"
 
 namespace intrinsic_fbs {
 

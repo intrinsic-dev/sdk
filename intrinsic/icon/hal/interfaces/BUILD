@@ -1,18 +1,17 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-load("//intrinsic/platform:cc_fbs_library.bzl", "cc_fbs_library")
-load("//intrinsic/platform:fbs_library.bzl", "fbs_library")
+load("//intrinsic/platform:flatbuffers.bzl", "cc_flatbuffers_library", "flatbuffers_library")
 
 package(default_visibility = ["//visibility:public"])
 
-fbs_library(
+flatbuffers_library(
     name = "control_mode_fbs",
     srcs = [
         "control_mode.fbs",
     ],
 )
 
-cc_fbs_library(
+cc_flatbuffers_library(
     name = "control_mode_fbs_cc",
     deps = [":control_mode_fbs"],
 )
@@ -27,20 +26,18 @@ cc_library(
     ],
     deps = [
         ":control_mode_fbs_cc",
-        "//intrinsic/icon/utils:fixed_string",
-        "@com_github_google_flatbuffers//:flatbuffers",
         "@com_github_google_flatbuffers//:runtime_cc",
     ],
 )
 
-fbs_library(
+flatbuffers_library(
     name = "hardware_module_state_fbs",
     srcs = [
         "hardware_module_state.fbs",
     ],
 )
 
-cc_fbs_library(
+cc_flatbuffers_library(
     name = "hardware_module_state_fbs_cc",
     deps = [
         ":hardware_module_state_fbs",
@@ -55,26 +52,18 @@ cc_library(
     ],
     deps = [
         ":hardware_module_state_fbs_cc",
-        "//intrinsic/icon/hal:hardware_interface_handle",
-        "//intrinsic/icon/utils:log",
-        "//intrinsic/kinematics/types:joint_limits_cc_proto",
-        "//intrinsic/util/status:status_macros",
         "@com_github_google_flatbuffers//:flatbuffers",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_protobuf//:protobuf_lite",
     ],
 )
 
-fbs_library(
+flatbuffers_library(
     name = "icon_state_fbs",
     srcs = [
         "icon_state.fbs",
     ],
 )
 
-cc_fbs_library(
+cc_flatbuffers_library(
     name = "icon_state_fbs_cc",
     deps = [":icon_state_fbs"],
 )
@@ -91,7 +80,7 @@ cc_library(
     ],
 )
 
-fbs_library(
+flatbuffers_library(
     name = "imu_fbs",
     srcs = [
         "imu.fbs",
@@ -101,7 +90,7 @@ fbs_library(
     ],
 )
 
-cc_fbs_library(
+cc_flatbuffers_library(
     name = "imu_fbs_cc",
     deps = [":imu_fbs"],
 )
@@ -116,20 +105,19 @@ cc_library(
     ],
     deps = [
         ":imu_fbs_cc",
-        "//intrinsic/icon/utils:fixed_string",
-        "@com_github_google_flatbuffers//:flatbuffers",
+        "//intrinsic/icon/flatbuffers:transform_types_fbs_cc",
         "@com_github_google_flatbuffers//:runtime_cc",
     ],
 )
 
-fbs_library(
+flatbuffers_library(
     name = "joint_command_fbs",
     srcs = [
         "joint_command.fbs",
     ],
 )
 
-cc_fbs_library(
+cc_flatbuffers_library(
     name = "joint_command_fbs_cc",
     deps = [":joint_command_fbs"],
 )
@@ -142,19 +130,18 @@ cc_library(
     ],
     deps = [
         ":joint_command_fbs_cc",
-        "@com_github_google_flatbuffers//:flatbuffers",
         "@com_github_google_flatbuffers//:runtime_cc",
     ],
 )
 
-fbs_library(
+flatbuffers_library(
     name = "joint_limits_fbs",
     srcs = [
         "joint_limits.fbs",
     ],
 )
 
-cc_fbs_library(
+cc_flatbuffers_library(
     name = "joint_limits_fbs_cc",
     deps = [":joint_limits_fbs"],
 )
@@ -174,18 +161,17 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-        "@com_google_protobuf//:protobuf_lite",
     ],
 )
 
-fbs_library(
+flatbuffers_library(
     name = "joint_state_fbs",
     srcs = [
         "joint_state.fbs",
     ],
 )
 
-cc_fbs_library(
+cc_flatbuffers_library(
     name = "joint_state_fbs_cc",
     deps = [":joint_state_fbs"],
 )
@@ -202,14 +188,14 @@ cc_library(
     ],
 )
 
-fbs_library(
+flatbuffers_library(
     name = "robot_controller_fbs",
     srcs = [
         "robot_controller.fbs",
     ],
 )
 
-cc_fbs_library(
+cc_flatbuffers_library(
     name = "robot_controller_fbs_cc",
     deps = [":robot_controller_fbs"],
 )

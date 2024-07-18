@@ -15,7 +15,7 @@
 #include "intrinsic/icon/hal/module_config.h"
 #include "intrinsic/icon/hal/proto/hardware_module_config.pb.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/memory_segment.h"
-#include "intrinsic/icon/interprocess/shared_memory_manager/segment_info_generated.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/segment_info.fbs.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
 #include "intrinsic/util/status/status_macros.h"
 

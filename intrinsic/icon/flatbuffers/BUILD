@@ -1,16 +1,15 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-load("//intrinsic/platform:cc_fbs_library.bzl", "cc_fbs_library")
-load("//intrinsic/platform:fbs_library.bzl", "fbs_library")
+load("//intrinsic/platform:flatbuffers.bzl", "cc_flatbuffers_library", "flatbuffers_library")
 
 package(default_visibility = ["//visibility:public"])
 
-fbs_library(
+flatbuffers_library(
     name = "transform_types_fbs",
     srcs = ["transform_types.fbs"],
 )
 
-cc_fbs_library(
+cc_flatbuffers_library(
     name = "transform_types_fbs_cc",
     deps = [":transform_types_fbs"],
 )

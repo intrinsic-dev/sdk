@@ -162,12 +162,12 @@ _gen_flatbuffers_cc = aspect(
     fragments = ["google_cpp", "cpp"],
     attrs = {
         "_flatc": attr.label(
-            default = Label("@com_github_google_flatbuffers//:flatc"),
+            default = Label("//third_party/flatbuffers:flatc"),
             cfg = "exec",
             allow_single_file = True,
             executable = True,
         ),
-        "_flatbuffers_lib": attr.label(default = Label("@com_github_google_flatbuffers//:runtime_cc")),
+        "_flatbuffers_lib": attr.label(default = Label("//third_party/flatbuffers:runtime_cc")),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
     },
     toolchains = use_cpp_toolchain(),

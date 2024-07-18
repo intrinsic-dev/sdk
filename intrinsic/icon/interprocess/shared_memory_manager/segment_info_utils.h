@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include "intrinsic/icon/interprocess/shared_memory_manager/segment_info_generated.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/segment_info.fbs.h"
 
 namespace intrinsic::icon {
 

@@ -4,8 +4,8 @@
 
 #include "flatbuffers/detached_buffer.h"
 #include "flatbuffers/flatbuffer_builder.h"
-#include "intrinsic/icon/flatbuffers/transform_types_generated.h"
-#include "intrinsic/icon/hal/interfaces/imu_generated.h"
+#include "intrinsic/icon/flatbuffers/transform_types.fbs.h"
+#include "intrinsic/icon/hal/interfaces/imu.fbs.h"
 
 namespace intrinsic_fbs {
 

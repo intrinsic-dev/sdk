@@ -7,7 +7,7 @@
 
 #include "flatbuffers/detached_buffer.h"
 #include "flatbuffers/flatbuffer_builder.h"
-#include "intrinsic/icon/hal/interfaces/joint_command_generated.h"
+#include "intrinsic/icon/hal/interfaces/joint_command.fbs.h"
 
 namespace intrinsic_fbs {
 

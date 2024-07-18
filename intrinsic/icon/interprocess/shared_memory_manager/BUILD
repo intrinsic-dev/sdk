@@ -1,7 +1,6 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-load("//intrinsic/platform:cc_fbs_library.bzl", "cc_fbs_library")
-load("//intrinsic/platform:fbs_library.bzl", "fbs_library")
+load("//intrinsic/platform:flatbuffers.bzl", "cc_flatbuffers_library", "flatbuffers_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -21,12 +20,12 @@ cc_library(
     ],
 )
 
-fbs_library(
+flatbuffers_library(
     name = "segment_info_fbs",
     srcs = ["segment_info.fbs"],
 )
 
-cc_fbs_library(
+cc_flatbuffers_library(
     name = "segment_info_fbs_cc",
     deps = ["segment_info_fbs"],
 )
@@ -35,10 +34,7 @@ cc_library(
     name = "segment_info_utils",
     srcs = ["segment_info_utils.cc"],
     hdrs = ["segment_info_utils.h"],
-    deps = [
-        ":segment_info_fbs_cc",
-        "@com_github_google_flatbuffers//:flatbuffers",
-    ],
+    deps = [":segment_info_fbs_cc"],
 )
 
 cc_library(
@@ -52,7 +48,7 @@ cc_library(
     # With gcc we explicitly have to link against librt,
     # providing POSIX functions for shared memory, such as shm_open.
     # Clang automatically links against it,
-    # but won't complain if specified explicilty here.
+    # but won't complain if specified explicitly here.
     linkopts = [
         "-lrt",
     ],
@@ -61,7 +57,6 @@ cc_library(
         ":segment_header",
         ":segment_info_fbs_cc",
         "//intrinsic/util/status:status_macros",
-        "@com_github_google_flatbuffers//:flatbuffers",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",

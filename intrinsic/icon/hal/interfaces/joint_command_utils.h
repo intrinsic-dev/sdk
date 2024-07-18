@@ -4,7 +4,7 @@
 #define INTRINSIC_ICON_HAL_INTERFACES_JOINT_COMMAND_UTILS_H_
 
 #include "flatbuffers/flatbuffers.h"
-#include "intrinsic/icon/hal/interfaces/joint_command_generated.h"
+#include "intrinsic/icon/hal/interfaces/joint_command.fbs.h"
 
 namespace intrinsic_fbs {
 

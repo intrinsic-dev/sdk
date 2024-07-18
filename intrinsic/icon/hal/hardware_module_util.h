@@ -4,7 +4,7 @@
 #define INTRINSIC_ICON_HAL_HARDWARE_MODULE_UTIL_H_
 
 #include "absl/strings/str_format.h"
-#include "intrinsic/icon/hal/interfaces/hardware_module_state_generated.h"
+#include "intrinsic/icon/hal/interfaces/hardware_module_state.fbs.h"
 
 namespace intrinsic_fbs {
 

@@ -11,7 +11,7 @@
 #include "flatbuffers/detached_buffer.h"
 #include "flatbuffers/flatbuffer_builder.h"
 #include "intrinsic/eigenmath/types.h"
-#include "intrinsic/icon/flatbuffers/transform_types_generated.h"
+#include "intrinsic/icon/flatbuffers/transform_types.fbs.h"
 
 namespace intrinsic_fbs {
 

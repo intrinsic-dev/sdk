@@ -13,8 +13,8 @@
 #include "intrinsic/icon/hal/hardware_interface_handle.h"
 #include "intrinsic/icon/hal/hardware_interface_registry.h"
 #include "intrinsic/icon/hal/hardware_module_interface.h"
-#include "intrinsic/icon/hal/interfaces/hardware_module_state_generated.h"
-#include "intrinsic/icon/hal/interfaces/icon_state_generated.h"
+#include "intrinsic/icon/hal/interfaces/hardware_module_state.fbs.h"
+#include "intrinsic/icon/hal/interfaces/icon_state.fbs.h"
 #include "intrinsic/icon/interprocess/remote_trigger/remote_trigger_server.h"
 #include "intrinsic/util/thread/thread.h"
 
