@@ -3,6 +3,8 @@
 #ifndef INTRINSIC_ICON_HAL_HARDWARE_MODULE_UTIL_H_
 #define INTRINSIC_ICON_HAL_HARDWARE_MODULE_UTIL_H_
 
+#include <string>
+
 #include "absl/strings/str_format.h"
 #include "intrinsic/icon/hal/interfaces/hardware_module_state.fbs.h"
 
@@ -35,6 +37,10 @@ enum class HardwareModuleExitCode {
   // HWM reported a fatal fault during execution.
   kFatalFaultDuringExec = 112,
 };
+
+// Returns a string that can be used to visualize the state machine of the
+// hardware module using graphviz in DOT format.
+std::string CreateDotGraphvizStateMachineString();
 
 }  // namespace intrinsic::icon
 
