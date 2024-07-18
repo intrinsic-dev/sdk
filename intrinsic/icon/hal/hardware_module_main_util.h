@@ -17,6 +17,7 @@
 #include "intrinsic/icon/hal/proto/hardware_module_config.pb.h"
 #include "intrinsic/icon/hal/realtime_clock.h"
 #include "intrinsic/util/thread/thread.h"
+#include "intrinsic/util/thread/thread_options.h"
 
 namespace intrinsic::icon {
 

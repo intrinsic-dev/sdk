@@ -40,7 +40,6 @@
 #include "intrinsic/util/proto/any.h"
 #include "intrinsic/util/proto/get_text_proto.h"
 #include "intrinsic/util/status/status_macros.h"
-#include "intrinsic/util/thread/thread.h"
 #include "intrinsic/util/thread/thread_options.h"
 #include "intrinsic/util/thread/util.h"
 namespace intrinsic::icon {
