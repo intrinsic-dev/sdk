@@ -1,0 +1,19 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.performance.analysis.proto;
+
+import "google/protobuf/struct.proto";
+
+message PerformanceMetrics {
+  string cycle_number = 1;
+  Metrics metrics = 2;
+  string cluster = 3;
+  string app_name = 4;
+  string metric_name = 5;
+}
+
+message Metrics {
+  google.protobuf.Struct metrics = 1;
+}

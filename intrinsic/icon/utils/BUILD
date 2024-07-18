@@ -116,6 +116,23 @@ cc_library(
 )
 
 cc_library(
+    name = "metrics_logger",
+    srcs = ["metrics_logger.cc"],
+    hdrs = ["metrics_logger.h"],
+    deps = [
+        "//intrinsic/icon/testing:realtime_annotations",
+        "//intrinsic/logging:data_logger_client",
+        "//intrinsic/logging/proto:log_item_cc_proto",
+        "//intrinsic/performance/analysis/proto:performance_metrics_cc_proto",
+        "//intrinsic/platform/common/buffers:realtime_write_queue",
+        "//intrinsic/util/status:status_macros",
+        "//intrinsic/util/thread",
+        "@com_google_absl//absl/status",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_library(
     name = "realtime_log_sink",
     srcs = ["realtime_log_sink.cc"],
     hdrs = ["realtime_log_sink.h"],
