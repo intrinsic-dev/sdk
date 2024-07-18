@@ -14,6 +14,7 @@
 #include "intrinsic/icon/interprocess/shared_memory_manager/memory_segment.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
 #include "intrinsic/util/thread/thread.h"
+#include "intrinsic/util/thread/thread_options.h"
 
 namespace intrinsic::icon {
 
