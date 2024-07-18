@@ -14,6 +14,7 @@
 #include "intrinsic/icon/hal/hardware_interface_handle.h"
 #include "intrinsic/icon/hal/hardware_interface_registry.h"
 #include "intrinsic/icon/hal/hardware_interface_traits.h"
+#include "intrinsic/icon/hal/hardware_module_init_context.h"
 #include "intrinsic/icon/hal/hardware_module_interface.h"
 #include "intrinsic/icon/hal/interfaces/joint_command_generated.h"
 #include "intrinsic/icon/hal/interfaces/joint_state_generated.h"
