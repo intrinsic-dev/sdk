@@ -6,7 +6,6 @@
 #include <utility>
 
 #include "absl/status/statusor.h"
-#include "absl/strings/string_view.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/memory_segment.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
 #include "intrinsic/util/status/status_macros.h"
