@@ -4,21 +4,23 @@ syntax = "proto3";
 
 package intrinsic_proto.catalog;
 
-// Specifies a view of asset metadata with a particular level of detail.
+// Specifies a view of asset information with a particular level of detail.
 enum AssetViewType {
   // The default/unset value (depends on the RPC being called).
   ASSET_VIEW_TYPE_UNSPECIFIED = 0;
 
-  // Provides minimal/basic information.
+  // Provides minimal, basic metadata about the asset.
   //
   // Includes the following metadata fields:
+  // * asset_type
   // * id_version
   ASSET_VIEW_TYPE_BASIC = 1;
 
-  // Provides detailed information.
+  // Provides detailed metadata about the asset.
   //
   // Includes the following metadata fields:
   // * asset_tag
+  // * asset_type
   // * display_name
   // * documentation
   // * id_version
@@ -27,15 +29,18 @@ enum AssetViewType {
   // Also includes any asset-specific metadata.
   ASSET_VIEW_TYPE_DETAIL = 2;
 
-  // Provides information that distinguishes versions of the asset.
-  //
-  // This view is only intended for list operations.
+  // Provides metadata that distinguish versions of the asset.
   //
   // Includes the following metadata fields:
+  // * asset_type
   // * id_version
   // * release_notes
   // * release_tag
   // * update_time
   // * vendor
   ASSET_VIEW_TYPE_VERSIONS = 3;
+
+  // Provides all metadata fields.
+  ASSET_VIEW_ALL_METADATA = 4;
+
 }
