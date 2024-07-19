@@ -15,6 +15,7 @@
 #include "intrinsic/kinematics/types/joint_limits.h"
 #include "intrinsic/kinematics/types/joint_state.h"
 #include "intrinsic/math/pose3.h"
+#include "intrinsic/math/twist.h"
 
 namespace intrinsic::icon {
 namespace {
