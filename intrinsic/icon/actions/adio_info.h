@@ -14,10 +14,9 @@ struct ADIOActionInfo {
   // ADIO action type name and description
   static constexpr char kActionTypeName[] = "xfa.adio";
   static constexpr char kActionDescription[] =
-      "Allows to react to Analog/Digital Inputs and set Digital Outputs. "
-      "'expectations' and 'outputs' can be provided using the same command "
-      "message. "
-      "It is an error to provide neither 'expectations', nor 'outputs'.";
+      "Allows to react to Analog/Digital Inputs and Outputs. 'expectations' "
+      "and 'outputs' can be provided using the same command message. It is an "
+      "error to provide neither 'expectations', nor 'outputs'.";
   static constexpr char kAdioSlotName[] = "adio";
   static constexpr char kAdioSlotDescription[] =
       "The Action sets and reads this Part's inputs and outputs.";

@@ -41,12 +41,17 @@ message DigitalBlock {
   map<uint32, bool> values_by_index = 1;
 }
 
+message AnalogOutputBlock {
+  map<uint32, double> values_by_index = 1;
+}
+
 // Output values to set on the device.
-message SetDigitalOutputs {
+message SetAnalogDigitalOutputs {
   // Maps from the name of the output block to the values to set.
   // The name must match the name of a DigitalOutputBlock in the
   // GenericAdioConfig.
   map<string, DigitalBlock> digital_outputs = 1;
+  map<string, AnalogOutputBlock> analog_outputs = 2;
 }
 
 // All inputs need to match for the 'all_inputs_match' condition to become
@@ -63,5 +68,5 @@ message AnalogDigitalInExpectations {
 // the lifetime of the action.
 message ADIOFixedParams {
   AnalogDigitalInExpectations expectations = 1;
-  SetDigitalOutputs outputs = 2;
+  SetAnalogDigitalOutputs outputs = 2;
 }
