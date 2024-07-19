@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <deque>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -95,7 +96,7 @@ class SkillOperation {
   //
   // Returns the state of the operation when it finished or the wait timed out.
   absl::StatusOr<google::longrunning::Operation> WaitExecution(
-      absl::Time deadline);
+      std::optional<absl::Duration> timeout);
 
   // Waits for the entire operation to finish.
   //

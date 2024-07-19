@@ -51,6 +51,10 @@ from pybind11_abseil import status
 # can execute simultaneously.
 MAX_NUM_OPERATIONS = 100
 
+# Default timeout, in seconds, to use when unspecified by caller.
+# Should be kept in sync with skills::kClientDefaultTimeout.
+DEFAULT_TIMEOUT = 180.0
+
 
 class InvalidResultTypeError(TypeError):
   """A skill returned a result that does not match the expected type."""
@@ -554,6 +558,8 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
 
     Raises:
       grpc.RpcError:
+        DEADLINE_EXCEEDED: If the operation does not finish within the specified
+            timeout.
         NOT_FOUND: If the operation is not found.
     """
     try:
@@ -568,11 +574,21 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
           ),
       )
 
-    return operation.wait(
-        wait_request.timeout.ToNanoseconds() / 1e9
-        if wait_request.HasField('timeout')
-        else None
-    )
+    try:
+      return operation.wait(
+          wait_request.timeout.ToNanoseconds() / 1e9
+          if wait_request.HasField('timeout')
+          else None
+      )
+    except TimeoutError as err:
+      _abort_with_status(
+          context=context,
+          code=status.StatusCode.DEADLINE_EXCEEDED,
+          message=str(err),
+          skill_error_info=error_pb2.SkillErrorInfo(
+              error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
+          ),
+      )
 
   def ClearOperations(
       self, clear_request: empty_pb2.Empty, context: grpc.ServicerContext
@@ -884,17 +900,27 @@ class _SkillOperation:
 
     self.canceller.cancel()
 
-  def wait(self, timeout: Optional[float] = None) -> operations_pb2.Operation:
+  def wait(self, timeout: float | None) -> operations_pb2.Operation:
     """Waits for the operation to finish.
 
     Args:
-      timeout: The maximum number of seconds to wait for the operation to
-        finish, or None for no timeout.
+      timeout: The maximum number of seconds to wait for the operation to finish
+        before timing out, or None to use a default timeout
 
     Returns:
-      The state of the Operation when it finished or the wait timed out.
+      The state of the Operation when it finished.
+
+    Raises:
+      TimeoutError: If the operation did not finish within the specified
+        timeout.
     """
-    self._finished_event.wait(timeout=timeout)
+    if timeout is None:
+      timeout = DEFAULT_TIMEOUT
+
+    if not self._finished_event.wait(timeout=timeout):
+      raise TimeoutError(
+          f'Skill operation {self.name!r} did not finish within {timeout}s.'
+      )
 
     return self.operation
 
@@ -971,8 +997,6 @@ def _handle_skill_error(
   logging.exception(message)
 
   details = []
-
-  es_proto = extended_status_pb2.ExtendedStatus()
 
   if isinstance(err, status_exception.ExtendedStatusError):
     es_proto = cast(status_exception.ExtendedStatusError, err).proto

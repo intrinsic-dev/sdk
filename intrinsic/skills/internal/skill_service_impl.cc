@@ -19,6 +19,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/synchronization/notification.h"
+#include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/empty.pb.h"
@@ -29,6 +30,7 @@
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
+#include "intrinsic/skills/cc/client_common.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/cc/skill_logging_context.h"
@@ -43,6 +45,7 @@
 #include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
 #include "intrinsic/util/proto/type_url.h"
+#include "intrinsic/util/proto_time.h"
 #include "intrinsic/util/status/extended_status.pb.h"
 #include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_macros.h"
@@ -232,8 +235,15 @@ absl::Status SkillOperation::RequestCancellation() {
 }
 
 absl::StatusOr<google::longrunning::Operation> SkillOperation::WaitExecution(
-    absl::Time deadline) {
-  finished_notification_.WaitForNotificationWithDeadline(deadline);
+    std::optional<absl::Duration> timeout) {
+  absl::Duration resolved_timeout =
+      timeout.value_or(skills::kClientDefaultTimeout);
+  absl::Time deadline = absl::Now() + resolved_timeout;
+  if (!finished_notification_.WaitForNotificationWithDeadline(deadline)) {
+    return absl::DeadlineExceededError(
+        absl::StrFormat("Skill operation %s did not finish within %s.", name(),
+                        absl::FormatDuration(resolved_timeout)));
+  }
 
   return operation();
 }
@@ -709,11 +719,14 @@ grpc::Status SkillExecutorServiceImpl::WaitOperation(
     grpc::ServerContext* context,
     const google::longrunning::WaitOperationRequest* request,
     google::longrunning::Operation* result) {
+  std::optional<absl::Duration> timeout;
+  if (request->has_timeout()) {
+    timeout.emplace(ToAbslDuration(request->timeout()));
+  }
   INTR_ASSIGN_OR_RETURN_GRPC(
       std::shared_ptr<internal::SkillOperation> operation,
       operations_.Get(request->name()));
-  INTR_ASSIGN_OR_RETURN_GRPC(
-      *result, operation->WaitExecution(absl::FromChrono(context->deadline())));
+  INTR_ASSIGN_OR_RETURN_GRPC(*result, operation->WaitExecution(timeout));
 
   return grpc::Status::OK;
 }
