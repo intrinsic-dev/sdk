@@ -33,6 +33,9 @@ type DeviceInfo struct {
 	HasGPU    bool   `json:"has_gpu"`
 	CanDoReal bool   `json:"can_do_real"`
 	LastErr   string `json:"last_error"`
+	// FullID is used for the internal communication to tell the full id of the device registered via
+	// partial id.
+	FullID string `json:"full_id"`
 }
 
 // Nameservers sets DNS servers and search domains.
