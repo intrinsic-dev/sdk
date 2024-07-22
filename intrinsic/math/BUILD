@@ -16,10 +16,16 @@ cc_library(
 )
 
 cc_library(
+    name = "almost_equals",
+    hdrs = ["almost_equals.h"],
+)
+
+cc_library(
     name = "proto_conversion",
     srcs = ["proto_conversion.cc"],
     hdrs = ["proto_conversion.h"],
     deps = [
+        ":almost_equals",
         ":pose3",
         "//intrinsic/eigenmath",
         "//intrinsic/math/proto:matrix_cc_proto",

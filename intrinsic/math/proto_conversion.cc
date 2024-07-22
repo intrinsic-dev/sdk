@@ -2,54 +2,16 @@
 
 #include "intrinsic/math/proto_conversion.h"
 
-#include <algorithm>
 #include <cmath>
-#include <limits>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/substitute.h"
 #include "intrinsic/eigenmath/types.h"
+#include "intrinsic/math/almost_equals.h"
 #include "intrinsic/math/pose3.h"
 #include "intrinsic/util/status/status_macros.h"
-
-namespace intrinsic_proto {
-namespace {
-// 32 is 5 bits of mantissa error; should be adequate for common errors.
-constexpr double kStdError = 32 * std::numeric_limits<double>::epsilon();
-
-// Tests whether two values are close enough to each other to be considered
-// equal. The purpose of AlmostEquals() is to avoid false positive error reports
-// due to minute differences in floating point arithmetic (for example, due to a
-// different compiler).
-//
-static bool AlmostEquals(const double x, const double y,
-                         const double std_error = kStdError) {
-  // If standard == says they are equal then we can return early.
-  if (x == y) return true;
-
-  const double abs_x = std::fabs(x);
-  const double abs_y = std::fabs(y);
-
-  if (abs_x <= std_error && abs_y <= std_error) return true;
-
-  if (std::isinf(x) || std::isnan(x) || std::isinf(y) || std::isnan(y)) {
-    return false;
-  }
-
-  const double relative_margin = std_error * std::max(abs_x, abs_y);
-  const double max_error = std::max(std_error, relative_margin);
-
-  if (x > y) {
-    return (x - y) <= max_error;
-  } else {
-    return (y - x) <= max_error;
-  }
-}
-
-}  // namespace
-}  // namespace intrinsic_proto
 
 namespace intrinsic_proto {
 
@@ -104,7 +66,7 @@ absl::StatusOr<intrinsic::Pose> FromProto(const Pose& pose) {
   // Using exact float comparison, it is not necessarily true that
   //   Quaterniond::UnitRandom().norm() == 1.0
   if (const double squared_norm = quaternion.squaredNorm();
-      !AlmostEquals(squared_norm, 1.0)) {
+      !intrinsic::AlmostEquals(squared_norm, 1.0)) {
     const intrinsic::eigenmath::Quaterniond normalized_quat =
         quaternion.normalized();
     return absl::InvalidArgumentError(absl::StrFormat(
@@ -125,7 +87,7 @@ absl::StatusOr<intrinsic::Pose> FromProtoNormalized(const Pose& pose) {
   // If we're already normalized to a reasonable degree, then simply don't
   // renormalize at all. This preserves the property that if we call
   // FromProtoNormalized(ToProto(pose)) that we get the same result back.
-  if (AlmostEquals(squared_norm, 1.0)) {
+  if (intrinsic::AlmostEquals(squared_norm, 1.0)) {
     return intrinsic::Pose(quaternion, FromProto(pose.position()),
                            intrinsic::eigenmath::kDoNotNormalize);
   }
@@ -136,7 +98,7 @@ absl::StatusOr<intrinsic::Pose> FromProtoNormalized(const Pose& pose) {
   // error status due to numeric errors introduced by the squared norm
   // computation or due to rounding. To enforce higher precision checks and not
   // allow normalization of the quaternion, please use FromProto directly.
-  if (!AlmostEquals(squared_norm, 1.0, kNormalizationError)) {
+  if (!intrinsic::AlmostEquals(squared_norm, 1.0, kNormalizationError)) {
     return absl::InvalidArgumentError(absl::StrFormat(
         "Failed to create Pose from proto which contains a "
         "non-unit quaternion with norm(quat) == %.6f . The normalized "
