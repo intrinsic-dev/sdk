@@ -78,8 +78,8 @@ github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137/go.mod h1:OMCwj8V
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/aws/aws-sdk-go v1.44.129 h1:yld8Rc8OCahLtenY1mnve4w1jVeBu/rSiscGzodaDOs=
 github.com/aws/aws-sdk-go v1.44.129/go.mod h1:y4AeaBuwd2Lk+GepC1E9v0qOiTws0MIWAX4oIKwKHZo=
-github.com/bazelbuild/buildtools v0.0.0-20230926111657-7d855c59baeb h1:4k69c5E7Sa7jmNtv9itBHYA4Z5pfurInuRrtgohxZeA=
-github.com/bazelbuild/buildtools v0.0.0-20230926111657-7d855c59baeb/go.mod h1:689QdV3hBP7Vo9dJMmzhoYIyo/9iMhEmHkJcnaPRCbo=
+github.com/bazelbuild/buildtools v0.0.0-20240422193413-1429e15ae755 h1:hqhMmuZiSNwCWVHqnpr4DZfIeZ2/aJF7fs207eg7HZo=
+github.com/bazelbuild/buildtools v0.0.0-20240422193413-1429e15ae755/go.mod h1:689QdV3hBP7Vo9dJMmzhoYIyo/9iMhEmHkJcnaPRCbo=
 github.com/bazelbuild/remote-apis-sdks v0.0.0-20230919142202-aa1c266ae342 h1:0crdO0h0EFkwdnBWYdjxPbQFuBpllrn6toUwA1j0zbA=
 github.com/bazelbuild/remote-apis-sdks v0.0.0-20230919142202-aa1c266ae342/go.mod h1:WNEeW945Wmw9cBzCRmuExXm0RN5vF3nczx/c4I5H3Fw=
 github.com/bazelbuild/rules_go v0.43.0 h1:Q+vDhH4yzafZ0xHBT0JEVawb+1nDHUXhjvWTqSGCCyU=

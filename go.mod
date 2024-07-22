@@ -13,7 +13,7 @@ require (
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.14
 	dario.cat/mergo v1.0.0
 	firebase.google.com/go v3.13.0+incompatible
-	github.com/bazelbuild/buildtools v0.0.0-20230926111657-7d855c59baeb
+	github.com/bazelbuild/buildtools v0.0.0-20240422193413-1429e15ae755
 	github.com/bazelbuild/remote-apis-sdks v0.0.0-20230919142202-aa1c266ae342
 	github.com/bazelbuild/rules_go v0.43.0
 	github.com/cenkalti/backoff/v4 v4.2.1
