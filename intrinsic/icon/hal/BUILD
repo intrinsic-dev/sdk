@@ -155,7 +155,6 @@ cc_library(
     ],
     deps = [
         "//intrinsic/icon/hal/interfaces:hardware_module_state_fbs_cc",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
 )

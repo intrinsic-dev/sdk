@@ -98,7 +98,6 @@ class HardwareModuleRuntime final {
   std::unique_ptr<CallbackHandler> callback_handler_;
   std::unique_ptr<RemoteTriggerServer> activate_server_;
   std::unique_ptr<RemoteTriggerServer> deactivate_server_;
-  std::unique_ptr<RemoteTriggerServer> prepare_server_;
   std::unique_ptr<RemoteTriggerServer> enable_motion_server_;
   std::unique_ptr<RemoteTriggerServer> disable_motion_server_;
   std::unique_ptr<RemoteTriggerServer> clear_faults_server_;

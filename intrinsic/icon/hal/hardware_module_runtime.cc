@@ -84,35 +84,6 @@ class HardwareModuleRuntime::CallbackHandler final {
            "HardwareModuleRuntime shutdown logic.";
   }
 
-  // Server callback to trigger `Prepare` on the hardware module.
-  void OnPrepare() {
-    switch (hardware_module_state_code_) {
-      case intrinsic_fbs::StateCode::kActivated:
-      case intrinsic_fbs::StateCode::kMotionEnabled:
-      case intrinsic_fbs::StateCode::kMotionEnabling:
-      case intrinsic_fbs::StateCode::kMotionDisabling:
-      case intrinsic_fbs::StateCode::kFaulted:
-      case intrinsic_fbs::StateCode::kClearingFaults:
-      case intrinsic_fbs::StateCode::kPreparing:
-        OnDeactivate();
-        break;
-      default:
-        break;
-    }
-
-    if (!SetStateDirectly(intrinsic_fbs::StateCode::kPreparing)) {
-      return;
-    }
-    CancelPendingRequests("Request cancelled by a call to Prepare()");
-    if (auto ret = instance_->Prepare(); !ret.ok()) {
-      INTRINSIC_RT_LOG_THROTTLED(ERROR)
-          << "PUBLIC: Call to 'Prepare' failed: " << ret.message();
-      SetStateDirectly(intrinsic_fbs::StateCode::kInitFailed, ret.message());
-    } else {
-      SetStateDirectly(intrinsic_fbs::StateCode::kPrepared, "");
-    }
-  }
-
   // Server callback for trigger `Activate` on the hardware module.
   void OnActivate() {
     // The ICON main loop shall not be running yet, so we can and must set the
@@ -230,16 +201,6 @@ class HardwareModuleRuntime::CallbackHandler final {
     // function, which is always called when the HWM is activated.
     ProcessNextPendingRequest();
 
-    // Trigger the transition hook in the first cycle where the current state is
-    // `kMotionEnabled` (set by the Runtime in the previous cycle), so that ICON
-    // calls`ApplyCommand()` as well in this cycle. Don't call this function
-    // directly after setting `kMotionEnabled` since ICON won't know about this
-    // state change until the next cycle and won't call `ApplyCommand()` in this
-    // cycle yet.
-    CheckAndTriggerEnabledTransitionHook(
-        previous_cycle_hardware_module_state_code_,
-        hardware_module_state_code_);
-
     if (auto ret = instance_->ReadStatus();
         !ret.ok() && hardware_module_state_code_ !=
                          intrinsic_fbs::StateCode::kClearingFaults) {
@@ -257,12 +218,8 @@ class HardwareModuleRuntime::CallbackHandler final {
 
   // Server callback for trigger `ApplyCommand` on the hardware module.
   void OnApplyCommand() INTRINSIC_CHECK_REALTIME_SAFE {
-    if (hardware_module_state_code_ ==
-        intrinsic_fbs::StateCode::kMotionDisabling) {
-      // This happens in the first cycle after disabling the motion.
-      return;
-    } else if (hardware_module_state_code_ !=
-               intrinsic_fbs::StateCode::kMotionEnabled) [[unlikely]] {
+    if (hardware_module_state_code_ != intrinsic_fbs::StateCode::kMotionEnabled)
+        [[unlikely]] {
       auto message = "PUBLIC: 'ApplyCommand' called while not enabled.";
       INTRINSIC_RT_LOG_THROTTLED(WARNING) << message;
       if (SetStateDirectly(intrinsic_fbs::StateCode::kFaulted, message)) {
@@ -303,12 +260,8 @@ class HardwareModuleRuntime::CallbackHandler final {
       }
       return false;
     }
-    if (!silent && hardware_module_state_code_ != state) {
-      if (fault_reason.empty()) {
-        INTRINSIC_RT_LOG(INFO) << "Switching from "
-                               << EnumNameStateCode(hardware_module_state_code_)
-                               << " to " << EnumNameStateCode(state);
-      } else {
+    if (!silent) {
+      if ((hardware_module_state_code_ != state)) {
         INTRINSIC_RT_LOG(INFO) << "Switching from "
                                << EnumNameStateCode(hardware_module_state_code_)
                                << " to " << EnumNameStateCode(state)
@@ -471,8 +424,6 @@ class HardwareModuleRuntime::CallbackHandler final {
   // Checks if the request is valid. If the request is valid, applies it to the
   // HWM state. Otherwise, reports the error via the rt-promise.
   void ProcessNextPendingRequest() INTRINSIC_CHECK_REALTIME_SAFE {
-    previous_cycle_hardware_module_state_code_ =
-        hardware_module_state_code_.load();
     if (!request_queue_.reader()->Empty()) {
       // We need to move the promise (contained in AsyncRequest) so that it will
       // get destroyed when leaving this scope. Otherwise the future in the
@@ -487,12 +438,7 @@ class HardwareModuleRuntime::CallbackHandler final {
           newest_data.from == hardware_module_state_code_) {
         const bool allowed = SetStateDirectly(
             newest_data.to, absl::string_view(newest_data.message),
-            /*force=*/false, /*silent=*/false);
-        // Trigger the transition hook directly after setting the internal state
-        // before setting the value on the RT promise so that the
-        // HardwareModuleRuntime calls `Disabled()` before calling
-        // `DisableMotion()` on the hardware module.
-        CheckAndTriggerDisabledTransitionHook(newest_data.from);
+            /*force=*/false, /*silent=*/true);
         status = item.SetResponse(
             allowed
                 ? OkStatus()
@@ -511,49 +457,6 @@ class HardwareModuleRuntime::CallbackHandler final {
     }
   }
 
-  // Checks if the transition from `from` to `to` is `kMotionEnabling` to
-  // `kMotionEnabled` and, if so, calls `Enabled()` on the hardware
-  // module. Must be called from the rt thread and just after
-  // `SetStateDirectly()`.
-  void CheckAndTriggerEnabledTransitionHook(intrinsic_fbs::StateCode from,
-                                            intrinsic_fbs::StateCode to)
-      INTRINSIC_CHECK_REALTIME_SAFE {
-    if (from == intrinsic_fbs::StateCode::kMotionEnabling &&
-        to == intrinsic_fbs::StateCode::kMotionEnabled) {
-      {
-        if (auto status = instance_->Enabled(); !status.ok()) {
-          SetStateDirectly(intrinsic_fbs::StateCode::kFaulted,
-                           RealtimeStatus::StrCat("Enabled() callback failed: ",
-                                                  status.message()),
-                           /*force=*/false, /*silent=*/true);
-        } else {
-          INTRINSIC_RT_LOG(INFO) << "Motion Enabled";
-        }
-      }
-    }
-  }
-
-  // Checks if `from` state is `kMotionEnabled` and, if so, calls `Disabled()`
-  // on the hardware module. It only needs to check the `from` state, since
-  // `Disabled()` needs to be called for every transition from `kMotionEnabled`.
-  // Must be called from the rt thread and just after `SetStateDirectly()`.
-  void CheckAndTriggerDisabledTransitionHook(intrinsic_fbs::StateCode from)
-      INTRINSIC_CHECK_REALTIME_SAFE {
-    if (from == intrinsic_fbs::StateCode::kMotionEnabled) {
-      {
-        if (auto status = instance_->Disabled(); !status.ok()) {
-          SetStateDirectly(
-              intrinsic_fbs::StateCode::kFaulted,
-              RealtimeStatus::StrCat("Disabled() callback failed: ",
-                                     status.message()),
-              /*force=*/false, /*silent=*/true);
-        } else {
-          INTRINSIC_RT_LOG(INFO) << "Motion Disabled";
-        }
-      }
-    }
-  }
-
   HardwareModuleInterface* instance_;
   absl::Mutex action_lock_;
   // Current state of the HWM that should only be used from the RT thread and
@@ -562,12 +465,6 @@ class HardwareModuleRuntime::CallbackHandler final {
   // Current state of the HWM that can be used from multiple threads.
   std::atomic<intrinsic_fbs::StateCode> hardware_module_state_code_ =
       intrinsic_fbs::StateCode::kDeactivated;
-  // State of the HWM from the previous cycle. `ProcessNextPendingRequest()`
-  // updates this variable before it calls `ReadStatus()` on the HWM. Therefore,
-  // this variable only updates while the ICON main loop is running.
-  std::atomic<intrinsic_fbs::StateCode>
-      previous_cycle_hardware_module_state_code_ =
-          intrinsic_fbs::StateCode::kDeactivated;
   // Provides the HWM state from rt threads to non-rt threads.
   AsyncBuffer<intrinsic_fbs::HardwareModuleState> hwm_state_buffer_
       ABSL_GUARDED_BY(non_rt_buffer_lock_);
@@ -616,7 +513,6 @@ HardwareModuleRuntime::HardwareModuleRuntime(
       callback_handler_(nullptr),
       activate_server_(nullptr),
       deactivate_server_(nullptr),
-      prepare_server_(nullptr),
       enable_motion_server_(nullptr),
       disable_motion_server_(nullptr),
       read_status_server_(nullptr),
@@ -646,7 +542,6 @@ HardwareModuleRuntime::HardwareModuleRuntime(HardwareModuleRuntime&& other)
       callback_handler_(std::exchange(other.callback_handler_, nullptr)),
       activate_server_(std::exchange(other.activate_server_, nullptr)),
       deactivate_server_(std::exchange(other.deactivate_server_, nullptr)),
-      prepare_server_(std::exchange(other.prepare_server_, nullptr)),
       enable_motion_server_(
           std::exchange(other.enable_motion_server_, nullptr)),
       disable_motion_server_(
@@ -671,7 +566,6 @@ HardwareModuleRuntime& HardwareModuleRuntime::operator=(
   callback_handler_ = std::exchange(other.callback_handler_, nullptr);
   activate_server_ = std::exchange(other.activate_server_, nullptr);
   deactivate_server_ = std::exchange(other.deactivate_server_, nullptr);
-  prepare_server_ = std::exchange(other.prepare_server_, nullptr);
   enable_motion_server_ = std::exchange(other.enable_motion_server_, nullptr);
   disable_motion_server_ = std::exchange(other.disable_motion_server_, nullptr);
   clear_faults_server_ = std::exchange(other.clear_faults_server_, nullptr);
@@ -725,16 +619,6 @@ absl::Status HardwareModuleRuntime::Connect() {
                     callback_handler_.get())));
   deactivate_server_ =
       std::make_unique<RemoteTriggerServer>(std::move(deactivate_server));
-
-  INTR_ASSIGN_OR_RETURN(
-      auto prepare_server,
-      RemoteTriggerServer::Create(
-          MemoryName(memory_namespace, hardware_module_.config.GetName(),
-                     "prepare"),
-          std::bind(&HardwareModuleRuntime::CallbackHandler::OnPrepare,
-                    callback_handler_.get())));
-  prepare_server_ =
-      std::make_unique<RemoteTriggerServer>(std::move(prepare_server));
 
   INTR_ASSIGN_OR_RETURN(
       auto enable_motion_server,
@@ -848,12 +732,10 @@ absl::Status HardwareModuleRuntime::Run(grpc::ServerBuilder& server_builder,
   deactivate_thread_options.SetName("Deactivate");
 
   auto state_change_query = [](std::atomic<bool>* stop_requested,
-                               RemoteTriggerServer* prepare_server,
                                RemoteTriggerServer* enable_motion_server,
                                RemoteTriggerServer* disable_motion_server,
                                RemoteTriggerServer* clear_faults_server) {
     while (!stop_requested->load()) {
-      prepare_server->Query();
       enable_motion_server->Query();
       disable_motion_server->Query();
       clear_faults_server->Query();
@@ -862,8 +744,8 @@ absl::Status HardwareModuleRuntime::Run(grpc::ServerBuilder& server_builder,
 
   INTR_RETURN_IF_ERROR(set_init_failed_on_error(state_change_thread_.Start(
       state_change_thread_options, state_change_query, stop_requested_.get(),
-      prepare_server_.get(), enable_motion_server_.get(),
-      disable_motion_server_.get(), clear_faults_server_.get())));
+      enable_motion_server_.get(), disable_motion_server_.get(),
+      clear_faults_server_.get())));
   INTR_RETURN_IF_ERROR(set_init_failed_on_error(
       activate_server_->StartAsync(activate_thread_options)));
   INTR_RETURN_IF_ERROR(set_init_failed_on_error(
