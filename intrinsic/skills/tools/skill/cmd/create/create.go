@@ -110,8 +110,8 @@ func supportedLanguages() []string {
 	return supportedLanguages
 }
 
-func bazelWorkspaceFilenames() [2]string {
-	return [2]string{"WORKSPACE", "WORKSPACE.bazel"}
+func bazelWorkspaceFilenames() []string {
+	return []string{"WORKSPACE", "WORKSPACE.bazel", "MODULE.bazel"}
 }
 
 var (
