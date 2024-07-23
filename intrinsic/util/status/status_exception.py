@@ -18,8 +18,7 @@ class ExtendedStatusError(Exception):
   The class uses the builder pattern, so you can parameterize and raise the
   exception like this:
 
-  raise status_exception.ExtendedStatusError()
-    .set_status_code("ai.intrinsic.my_skill", 24543)
+  raise status_exception.ExtendedStatusError("ai.intrinsic.my_skill", 24543)
     .set_title("Failed to do fancy thing")
     .set_timestamp()
 
@@ -31,17 +30,26 @@ class ExtendedStatusError(Exception):
   _emit_traceback: bool
 
   def __init__(
-      self, component: str, code: int, external_report_message: str = ""
+      self,
+      component: str,
+      code: int,
+      *,
+      title: str = "",
+      external_report_message: str = "",
+      internal_report_message: str = "",
   ):
     """Initializes the instance.
 
     Args:
       component: Component for StatusCode where error originated.
       code: Numeric code specific to component for StatusCode.
+      title: brief title of the error, make this meaningful and keep to a length
+        of 75 characters if possible.
       external_report_message: if non-empty, set extended status external report
-        message to this string. This is for backwards compatibility with Python
-        exceptions. It is recommended to call the appropriate functions to set
-        extended status details.
+        message to this string.
+      internal_report_message: if non-empty, set extended status internal report
+        message to this string. Only set this in an environment where the data
+        may be shared.
     """
     self._extended_status = extended_status_pb2.ExtendedStatus(
         status_code=extended_status_pb2.StatusCode(
@@ -49,8 +57,12 @@ class ExtendedStatusError(Exception):
         )
     )
     self._emit_traceback = False
+    if title:
+      self.set_title(title)
     if external_report_message:
       self.set_external_report_message(external_report_message)
+    if internal_report_message:
+      self.set_internal_report_message(internal_report_message)
     super().__init__(external_report_message)
 
   @property

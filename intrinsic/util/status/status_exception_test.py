@@ -43,6 +43,30 @@ class StatusExceptionTest(absltest.TestCase):
 
     compare.assertProto2Equal(self, expected_status, error.proto)
 
+  def test_set_from_constructor(self):
+    error = status_exception.ExtendedStatusError(
+        "ai.testing.my_component",
+        123,
+        title="Title",
+        external_report_message="Ext message",
+        internal_report_message="Int message",
+    )
+
+    expected_status = extended_status_pb2.ExtendedStatus(
+        status_code=extended_status_pb2.StatusCode(
+            component="ai.testing.my_component", code=123
+        ),
+        title="Title",
+        external_report=extended_status_pb2.ExtendedStatus.Report(
+            message="Ext message"
+        ),
+        internal_report=extended_status_pb2.ExtendedStatus.Report(
+            message="Int message"
+        ),
+    )
+
+    compare.assertProto2Equal(self, error.proto, expected_status)
+
   def test_set_status_code(self):
     error = status_exception.ExtendedStatusError("ai.testing.my_component", 123)
     expected_status = extended_status_pb2.ExtendedStatus(

@@ -369,6 +369,23 @@ py_library(
     ],
 )
 
+py_library(
+    name = "status_matcher",
+    testonly = True,
+    srcs = ["status_matcher.py"],
+    deps = [":status_exception"],
+)
+
+py_test(
+    name = "status_matcher_test",
+    srcs = ["status_matcher_test.py"],
+    deps = [
+        ":status_exception",
+        ":status_matcher",
+        "@com_google_absl_py//absl/testing:absltest",
+    ],
+)
+
 py_test(
     name = "status_exception_test",
     srcs = ["status_exception_test.py"],
