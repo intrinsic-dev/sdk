@@ -4,8 +4,10 @@
 
 ."""
 
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_oci//oci:defs.bzl", "oci_image", _oci_tarball = "oci_tarball")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+container_tarball = _oci_tarball
 
 def _symlink_tarball_impl(ctx):
     ctx.actions.symlink(output = ctx.outputs.output, target_file = ctx.file.src)
@@ -46,7 +48,7 @@ def container_image(
         **kwargs):
     """Wrapper for creating an oci_image from a rules_docker container_image target.
 
-    Will create both an oci_image ($name) and an oci_tarball ($name.tar) target.
+    Will create both an oci_image ($name) and a container_tarball ($name.tar) target.
 
     See https://docs.aspect.build/guides/rules_oci_migration/#container_image for the official conversion documentation.
     """
@@ -82,7 +84,7 @@ def container_image(
     package = native.package_name()
     if package:
         tag = "%s/%s" % (package, tag)
-    oci_tarball(
+    container_tarball(
         name = "_%s_tarball" % name,
         image = name,
         repo_tags = [tag],

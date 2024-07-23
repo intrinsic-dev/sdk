@@ -14,7 +14,7 @@ def python_oci_image(
         **kwargs):
     """Wrapper for creating a oci_image from a py_binary target.
 
-    Will create both an oci_image ($name) and an oci_tarball ($name.tar) target.
+    Will create both an oci_image ($name) and a container_tarball ($name.tar) target.
 
     The setup is inspired by https://github.com/aspect-build/bazel-examples/blob/main/oci_python_image/hello_world/BUILD.bazel.
 
