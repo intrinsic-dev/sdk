@@ -10,8 +10,8 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "intrinsic/icon/hal/hardware_interface_handle.h"
 #include "intrinsic/icon/hal/hardware_interface_traits.h"
 #include "intrinsic/icon/hal/icon_state_register.h"  // IWYU pragma: keep
@@ -137,27 +137,24 @@ inline absl::StatusOr<ReadOnlyMemorySegment<SegmentInfo>> GetHardwareModuleInfo(
 }
 
 // Extracts the names of the shared memory segments.
-// A typical shared memory location is represented in the style of
-// `/some_prefix__some_name`. This function will truncate the segment location
-// and only return the name suffix of it.
 //
-// If the location identifier does not conform to the above mentioned style, the
-// complete location will be returned.
+// Returns InternalError if one of the names does not follow the norm of
+// '/<module_name>__<segment_name>'.
 inline absl::StatusOr<std::vector<std::string>> GetInterfacesFromModuleInfo(
     const SegmentInfo& segment_info) {
-  std::vector<std::string> names = GetNamesFromSegmentInfo(segment_info);
-  // A typical shared memory location looks like `/some_module__some_interface`.
-  // We split it by `__` and take the latter part.
-  for (auto& name : names) {
-    std::vector<absl::string_view> split_location = absl::StrSplit(name, "__");
-    if (split_location.size() != 2) {
-      return absl::InternalError(absl::StrCat(
-          "Exported shared memory location '", name,
-          "' does not adhere to norm of '/<module_name>__<segment_name>'"));
-    }
-    name = split_location[1];
-  }
-  return names;
+  return hal::SegmentNamesFromMemoryNames(
+      GetNamesFromSegmentInfo(segment_info));
+}
+
+// Extracts the names of the shared memory segments that are marked as required.
+//
+// Subset of GetInterfacesFromModuleInfo.
+// Returns InternalError if one of the names does not follow the norm of
+// '/<module_name>__<segment_name>'.
+inline absl::StatusOr<std::vector<std::string>>
+GetRequiredInterfacesFromModuleInfo(const SegmentInfo& segment_info) {
+  return hal::SegmentNamesFromMemoryNames(
+      GetRequiredInterfaceNamesFromSegmentInfo(segment_info));
 }
 
 }  // namespace intrinsic::icon

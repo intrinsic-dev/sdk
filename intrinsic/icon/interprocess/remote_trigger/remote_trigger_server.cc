@@ -30,8 +30,10 @@ absl::StatusOr<RemoteTriggerServer> RemoteTriggerServer::Create(
   MemoryName response_memory = server_memory_name;
   response_memory.Append(kSemResponseSuffix);
   intrinsic::icon::SharedMemoryManager shm_manager;
-  INTR_RETURN_IF_ERROR(shm_manager.AddSegment(request_memory, BinaryFutex()));
-  INTR_RETURN_IF_ERROR(shm_manager.AddSegment(response_memory, BinaryFutex()));
+  INTR_RETURN_IF_ERROR(shm_manager.AddSegment(
+      request_memory, /*must_be_used=*/false, BinaryFutex()));
+  INTR_RETURN_IF_ERROR(shm_manager.AddSegment(
+      response_memory, /*must_be_used=*/false, BinaryFutex()));
   INTR_ASSIGN_OR_RETURN(
       auto request_futex,
       ReadOnlyMemorySegment<BinaryFutex>::Get(request_memory));

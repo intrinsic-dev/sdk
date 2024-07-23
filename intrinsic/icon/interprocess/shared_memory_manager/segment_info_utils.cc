@@ -5,8 +5,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include <cstdint>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_info.fbs.h"
@@ -15,7 +15,10 @@ namespace intrinsic::icon {
 
 namespace {
 
-static constexpr size_t kMaxStringLength = 255;
+inline static std::string InterfaceNameFromSegment(const SegmentName& name) {
+  const char* data = reinterpret_cast<const char*>(name.value()->Data());
+  return std::string(data, strnlen(data, name.value()->size()));
+}
 
 }  // namespace
 
@@ -25,10 +28,23 @@ std::vector<std::string> GetNamesFromSegmentInfo(
   names.reserve(segment_info.size());
 
   for (uint32_t i = 0; i < segment_info.size(); ++i) {
+    names.emplace_back(InterfaceNameFromSegment(*segment_info.names()->Get(i)));
+  }
+
+  return names;
+}
+
+std::vector<std::string> GetRequiredInterfaceNamesFromSegmentInfo(
+    const SegmentInfo& segment_info) {
+  std::vector<std::string> names;
+  names.reserve(segment_info.size());
+
+  for (uint32_t i = 0; i < segment_info.size(); ++i) {
     const SegmentName* name = segment_info.names()->Get(i);
-    const char* data = reinterpret_cast<const char*>(name->value()->Data());
-    std::string interface_name(data, strnlen(data, kMaxStringLength));
-    names.emplace_back(std::move(interface_name));
+    if (!name->must_be_used()) {
+      continue;
+    }
+    names.emplace_back(InterfaceNameFromSegment(*name));
   }
 
   return names;

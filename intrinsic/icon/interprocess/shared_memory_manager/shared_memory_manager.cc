@@ -65,11 +65,13 @@ absl::Status VerifyName(const MemoryName& name) {
 }
 
 SegmentInfo SegmentInfoFromHashMap(
-    const absl::flat_hash_map<MemoryName, uint8_t*>& segments) {
+    const absl::flat_hash_map<
+        MemoryName, SharedMemoryManager::MemorySegmentInfo>& segments) {
   SegmentInfo segment_info(segments.size());
   uint32_t index = 0;
   for (const auto& [memory_name, buf] : segments) {
     SegmentName segment;
+    segment.mutate_must_be_used(buf.must_be_used);
     // fbs doesn't have char as datatype, only int8_t which is byte compatible.
     auto* data = reinterpret_cast<char*>(segment.mutable_value()->Data());
     std::memset(data, '\0', kMaxSegmentStringSize);
@@ -85,7 +87,7 @@ SegmentInfo SegmentInfoFromHashMap(
 SharedMemoryManager::~SharedMemoryManager() {
   // unlink all created shm segments
   for (const auto& segment : memory_segments_) {
-    auto* header = reinterpret_cast<SegmentHeader*>(segment.second);
+    auto* header = reinterpret_cast<SegmentHeader*>(segment.second.data);
     // We've used placement new during the initialization. We have to call the
     // destructor explicitly to cleanup.
     header->~SegmentHeader();
@@ -100,6 +102,7 @@ const SegmentHeader* SharedMemoryManager::GetSegmentHeader(
 }
 
 absl::Status SharedMemoryManager::InitSegment(const MemoryName& name,
+                                              bool must_be_used,
                                               size_t segment_size,
                                               const std::string& type_id) {
   if (memory_segments_.size() >= kMaxSegmentSize) {
@@ -112,7 +115,6 @@ absl::Status SharedMemoryManager::InitSegment(const MemoryName& name,
         absl::StrCat("Type id [", type_id, "] exceeds max size of [",
                      SegmentHeader::TypeInfo::kMaxSize, "]."));
   }
-
   if (memory_segments_.contains(name)) {
     return absl::AlreadyExistsError(
         absl::StrCat("Shm segment \"", name.GetName(), "\" exists already."));
@@ -207,7 +209,7 @@ absl::Status SharedMemoryManager::InitSegment(const MemoryName& name,
   // We use a placement new operator here to initialize the "raw" segment
   // data correctly.
   new (data) SegmentHeader(type_id);
-  memory_segments_.insert({name, data});
+  memory_segments_.insert({name, {.data = data, .must_be_used = must_be_used}});
   return absl::OkStatus();
 }
 
@@ -228,7 +230,7 @@ uint8_t* SharedMemoryManager::GetRawSegment(const MemoryName& name) {
   if (result == memory_segments_.end()) {
     return nullptr;
   }
-  return result->second;
+  return result->second.data;
 }
 
 std::vector<MemoryName> SharedMemoryManager::GetRegisteredMemoryNames() const {

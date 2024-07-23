@@ -8,6 +8,8 @@ struct SegmentName {
   // Flatbuffers don't support `char` as a datatype, however
   // a int8 is byte compatible with C++'s signed char used by std::string.
   value:[int8:255];
+  // True means that the robot controller needs to use this interface.
+  must_be_used:bool;
 }
 
 struct SegmentInfo {

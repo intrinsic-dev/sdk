@@ -42,8 +42,8 @@ class HardwareInterfaceRegistry {
   template <class HardwareInterfaceT, typename... ArgsT>
   absl::StatusOr<HardwareInterfaceHandle<HardwareInterfaceT>>
   AdvertiseInterface(absl::string_view interface_name, ArgsT... args) {
-    INTR_RETURN_IF_ERROR(
-        AdvertiseInterfaceT<HardwareInterfaceT>(interface_name, args...));
+    INTR_RETURN_IF_ERROR(AdvertiseInterfaceT<HardwareInterfaceT>(
+        interface_name, /*must_be_used=*/false, args...));
     return GetInterfaceHandle<HardwareInterfaceT>(
         module_config_.GetSharedMemoryNamespace(), module_config_.GetName(),
         interface_name);
@@ -56,8 +56,8 @@ class HardwareInterfaceRegistry {
   template <class HardwareInterfaceT, typename... ArgsT>
   absl::StatusOr<MutableHardwareInterfaceHandle<HardwareInterfaceT>>
   AdvertiseMutableInterface(absl::string_view interface_name, ArgsT... args) {
-    INTR_RETURN_IF_ERROR(
-        AdvertiseInterfaceT<HardwareInterfaceT>(interface_name, args...));
+    INTR_RETURN_IF_ERROR(AdvertiseInterfaceT<HardwareInterfaceT>(
+        interface_name, /*must_be_used=*/false, args...));
     return GetMutableInterfaceHandle<HardwareInterfaceT>(
         module_config_.GetSharedMemoryNamespace(), module_config_.GetName(),
         interface_name);
@@ -70,8 +70,8 @@ class HardwareInterfaceRegistry {
                             flatbuffers::DetachedBuffer&& message_buffer) {
     auto type_id =
         hardware_interface_traits::TypeID<HardwareInterfaceT>::kTypeString;
-    INTR_RETURN_IF_ERROR(
-        AdvertiseInterfaceT(interface_name, message_buffer, type_id));
+    INTR_RETURN_IF_ERROR(AdvertiseInterfaceT(
+        interface_name, /*must_be_used=*/false, message_buffer, type_id));
     return GetMutableInterfaceHandle<HardwareInterfaceT>(
         module_config_.GetSharedMemoryNamespace(), module_config_.GetName(),
         interface_name);
@@ -83,6 +83,9 @@ class HardwareInterfaceRegistry {
   // A strict interface checks that it was updated in the same cycle the special
   // IconState interface reports as the current cycle when reading its data.
   //
+  // Marks the hardware interface as required, which tells ICON that the
+  // interface needs to be used in the ICON configuration.
+  //
   // The arguments are according to the respective `Builder` function as
   // specified via a call to the `INTRINSIC_ADD_HARDWARE_INTERFACE` macro, c.f.
   // `intrinsic/icon/hal/hardware_interface_traits.h`.
@@ -91,8 +94,8 @@ class HardwareInterfaceRegistry {
   template <class HardwareInterfaceT, typename... ArgsT>
   absl::StatusOr<StrictHardwareInterfaceHandle<HardwareInterfaceT>>
   AdvertiseStrictInterface(absl::string_view interface_name, ArgsT... args) {
-    INTR_RETURN_IF_ERROR(
-        AdvertiseInterfaceT<HardwareInterfaceT>(interface_name, args...));
+    INTR_RETURN_IF_ERROR(AdvertiseInterfaceT<HardwareInterfaceT>(
+        interface_name, /*must_be_used=*/true, args...));
     return GetStrictInterfaceHandle<HardwareInterfaceT>(
         module_config_.GetSharedMemoryNamespace(), module_config_.GetName(),
         interface_name);
@@ -104,6 +107,9 @@ class HardwareInterfaceRegistry {
   // A strict interface checks that it was updated in the same cycle the special
   // IconState interface reports as the current cycle when reading its data.
   //
+  // Marks the hardware interface as required, which tells ICON that the
+  // interface needs to be used in the ICON configuration.
+  //
   // The arguments are according to the respective `Builder` function as
   // specified via a call to the `INTRINSIC_ADD_HARDWARE_INTERFACE` macro, c.f.
   // `intrinsic/icon/hal/hardware_interface_traits.h`.
@@ -113,8 +119,8 @@ class HardwareInterfaceRegistry {
   absl::StatusOr<MutableStrictHardwareInterfaceHandle<HardwareInterfaceT>>
   AdvertiseMutableStrictInterface(absl::string_view interface_name,
                                   ArgsT... args) {
-    INTR_RETURN_IF_ERROR(
-        AdvertiseInterfaceT<HardwareInterfaceT>(interface_name, args...));
+    INTR_RETURN_IF_ERROR(AdvertiseInterfaceT<HardwareInterfaceT>(
+        interface_name, /*must_be_used=*/true, args...));
     return GetMutableStrictInterfaceHandle<HardwareInterfaceT>(
         module_config_.GetSharedMemoryNamespace(), module_config_.GetName(),
         interface_name);
@@ -127,8 +133,8 @@ class HardwareInterfaceRegistry {
       flatbuffers::DetachedBuffer&& message_buffer) {
     auto type_id =
         hardware_interface_traits::TypeID<HardwareInterfaceT>::kTypeString;
-    INTR_RETURN_IF_ERROR(
-        AdvertiseInterfaceT(interface_name, message_buffer, type_id));
+    INTR_RETURN_IF_ERROR(AdvertiseInterfaceT(
+        interface_name, /*must_be_used=*/true, message_buffer, type_id));
     return GetMutableStrictInterfaceHandle<HardwareInterfaceT>(
         module_config_.GetSharedMemoryNamespace(), module_config_.GetName(),
         interface_name);
@@ -156,9 +162,11 @@ class HardwareInterfaceRegistry {
  private:
   explicit HardwareInterfaceRegistry(const ModuleConfig& module_config);
 
+  // The parameter `must_be_used` tells ICON that this interface needs to be
+  // used in its configuration.
   template <class HardwareInterfaceT, typename... ArgsT>
   absl::Status AdvertiseInterfaceT(absl::string_view interface_name,
-                                   ArgsT... args) {
+                                   bool must_be_used, ArgsT... args) {
     static_assert(
         hardware_interface_traits::BuilderFunctions<HardwareInterfaceT>::value,
         "No builder function defined.");
@@ -167,10 +175,13 @@ class HardwareInterfaceRegistry {
             args...);
     auto type_id =
         hardware_interface_traits::TypeID<HardwareInterfaceT>::kTypeString;
-    return AdvertiseInterfaceT(interface_name, buffer, type_id);
+    return AdvertiseInterfaceT(interface_name, must_be_used, buffer, type_id);
   }
 
+  // The parameter `must_be_used` tells ICON that this interface needs to be
+  // used in its configuration.
   absl::Status AdvertiseInterfaceT(absl::string_view interface_name,
+                                   bool must_be_used,
                                    const flatbuffers::DetachedBuffer& buffer,
                                    absl::string_view type_id);
 

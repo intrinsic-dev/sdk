@@ -7,12 +7,17 @@
 #include <stdint.h>
 
 #include <string>
+#include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_header.h"
 #include "intrinsic/icon/utils/clock.h"
 #include "intrinsic/util/status/status_macros.h"
@@ -20,6 +25,34 @@
 namespace intrinsic::icon {
 namespace hal {
 static constexpr char kDelimiter[] = "__";
+
+// Internal helper to get a list of segment names from a list of memory location
+// names.
+//
+// Returns InternalError if the name does not follow the norm of
+// '/<module_name>__<segment_name>'.
+inline static absl::StatusOr<std::vector<std::string>>
+SegmentNamesFromMemoryNames(absl::Span<const std::string> memory_names) {
+  std::vector<std::string> segment_names;
+  segment_names.reserve(memory_names.size());
+
+  for (auto& name : memory_names) {
+    // A typical shared memory location looks like
+    // `/some_module__some_interface`. This is split by `__` and takes the
+    // latter part.
+    std::vector<absl::string_view> split_location =
+        absl::StrSplit(name, hal::kDelimiter);
+    if (split_location.size() != 2) {
+      return absl::InternalError(
+          absl::StrCat("Exported shared memory location '", name,
+                       "' does not adhere to norm of '/<module_name>",
+                       hal::kDelimiter, "<segment_name>'"));
+    }
+    segment_names.push_back(std::string(split_location[1]));
+  }
+  return segment_names;
+}
+
 }  // namespace hal
 
 // A strong type for filenames of shared memory segments. Ensures that the

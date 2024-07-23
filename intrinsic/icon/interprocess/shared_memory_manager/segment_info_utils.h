@@ -15,9 +15,12 @@
 namespace intrinsic::icon {
 
 // Extracts the SegmentNames from the SegmentInfo struct.
-// Convenience function to represent the fixed size flatbuffer struct
-// `SegmentName` (c.f. segment_info.fbs) into a vector of std::string.
 std::vector<std::string> GetNamesFromSegmentInfo(
+    const SegmentInfo& segment_info);
+
+// Extracts the SegmentNames that are marked as required from the SegmentInfo
+// struct.
+std::vector<std::string> GetRequiredInterfaceNamesFromSegmentInfo(
     const SegmentInfo& segment_info);
 
 }  // namespace intrinsic::icon

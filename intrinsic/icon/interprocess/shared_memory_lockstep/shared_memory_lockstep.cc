@@ -22,7 +22,7 @@ bool SharedMemoryLockstep::Connected() const {
 
 absl::StatusOr<SharedMemoryLockstep> CreateSharedMemoryLockstep(
     SharedMemoryManager& manager, const MemoryName& memory_name) {
-  INTR_RETURN_IF_ERROR(manager.AddSegment(memory_name, Lockstep()));
+  INTR_RETURN_IF_ERROR(manager.AddSegment(memory_name, false, Lockstep()));
   return GetSharedMemoryLockstep(memory_name);
 }
 

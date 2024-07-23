@@ -41,13 +41,13 @@ HardwareInterfaceRegistry::HardwareInterfaceRegistry(
     : module_config_(module_config) {}
 
 absl::Status HardwareInterfaceRegistry::AdvertiseInterfaceT(
-    absl::string_view interface_name, const flatbuffers::DetachedBuffer& buffer,
-    absl::string_view type_id) {
+    absl::string_view interface_name, bool must_be_used,
+    const flatbuffers::DetachedBuffer& buffer, absl::string_view type_id) {
   MemoryName shm_name =
       GetHardwareInterfaceID(module_config_.GetSharedMemoryNamespace(),
                              module_config_.GetName(), interface_name);
-  INTR_RETURN_IF_ERROR(
-      shm_manager_.AddSegment(shm_name, buffer.size(), std::string(type_id)));
+  INTR_RETURN_IF_ERROR(shm_manager_.AddSegment(
+      shm_name, must_be_used, buffer.size(), std::string(type_id)));
 
   uint8_t* const shm_data = shm_manager_.GetRawValue(shm_name);
   std::memcpy(shm_data, buffer.data(), buffer.size());
@@ -61,7 +61,7 @@ absl::Status HardwareInterfaceRegistry::AdvertiseHardwareInfo() {
 
   auto segment_info = shm_manager_.GetSegmentInfo();
   INTR_RETURN_IF_ERROR(shm_manager_.AddSegment<SegmentInfo>(
-      shm_name, segment_info, hal::kModuleInfoName));
+      shm_name, /**must_be_used=*/false, segment_info, hal::kModuleInfoName));
 
   return absl::OkStatus();
 }

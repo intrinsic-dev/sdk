@@ -99,7 +99,7 @@ absl::StatusOr<std::unique_ptr<RealtimeClock>> RealtimeClock::Create(
       RealtimeClockUpdateSegmentName(memory_namespace, hardware_module_name);
   INTR_RETURN_IF_ERROR(
       shm_manager.AddSegmentWithDefaultValue<icon::RealtimeClockUpdate>(
-          update_name));
+          update_name, /*must_be_used=*/false));
 
   INTR_ASSIGN_OR_RETURN(
       ReadWriteMemorySegment<RealtimeClockUpdate> update,
