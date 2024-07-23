@@ -124,6 +124,7 @@ proto_library(
         ":behavior_tree_proto",
         ":executive_execution_mode_proto",
         "//intrinsic/logging/proto:context_proto",
+        "//intrinsic/util/status:extended_status_proto",
         "@com_google_protobuf//:duration_proto",
         "@com_google_protobuf//:timestamp_proto",
     ],
@@ -144,6 +145,7 @@ go_proto_library(
     go_deps = [
         ":behavior_tree_go_proto",
         ":executive_execution_mode_go_proto",
+        "//intrinsic/util/status:extended_status_go_proto",
         "//intrinsic/logging/proto:context_go_proto",
     ],
     deps = [":run_metadata_proto"],
