@@ -278,8 +278,10 @@ cc_test(
     name = "status_builder_test",
     srcs = ["status_builder_test.cc"],
     deps = [
+        ":extended_status_cc_proto",
         ":status_builder",
         "//intrinsic/icon/release:source_location",
+        "//intrinsic/util:proto_time",
         "//intrinsic/util/proto:type_url",
         "//intrinsic/util/testing:gtest_wrapper",
         "@com_google_absl//absl/base:log_severity",

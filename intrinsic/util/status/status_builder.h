@@ -5,11 +5,13 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "absl/base/attributes.h"
 #include "absl/base/log_severity.h"
@@ -20,6 +22,7 @@
 #include "absl/time/time.h"
 #include "intrinsic/icon/release/source_location.h"
 #include "intrinsic/logging/proto/context.pb.h"
+#include "intrinsic/util/proto/type_url.h"
 #include "intrinsic/util/proto_time.h"
 #include "intrinsic/util/status/extended_status.pb.h"
 
@@ -42,6 +45,20 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   // typical user will not specify `location`, allowing it to default to the
   // current location.
   explicit StatusBuilder(absl::StatusCode code,
+                         intrinsic::SourceLocation location =
+                             intrinsic::SourceLocation::current());
+
+  struct ExtendedStatusOptions {
+    std::optional<std::string> title;
+    std::optional<absl::Time> timestamp;
+    std::optional<std::string> external_report_message;
+    std::optional<std::string> internal_report_message;
+    std::optional<intrinsic_proto::data_logger::Context> log_context;
+    std::vector<intrinsic_proto::status::ExtendedStatus> context;
+    std::optional<bool> emit_stacktrace_to_internal_report;
+  };
+  explicit StatusBuilder(std::string_view component, uint32_t code,
+                         const ExtendedStatusOptions& options = {},
                          intrinsic::SourceLocation location =
                              intrinsic::SourceLocation::current());
 
@@ -147,6 +164,23 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
       const intrinsic_proto::status::ExtendedStatus& extended_status) &;
   StatusBuilder&& SetExtendedStatus(
       const intrinsic_proto::status::ExtendedStatus& extended_status) &&;
+  StatusBuilder& SetExtendedStatus(
+      std::string_view component, uint32_t code,
+      const ExtendedStatusOptions& options = ExtendedStatusOptions()) &;
+  StatusBuilder&& SetExtendedStatus(
+      std::string_view component, uint32_t code,
+      const ExtendedStatusOptions& options = ExtendedStatusOptions()) &&;
+
+  StatusBuilder& WrapExtendedStatus(
+      std::string_view component, uint32_t code,
+      const ExtendedStatusOptions& options = ExtendedStatusOptions(),
+      intrinsic::SourceLocation location =
+          intrinsic::SourceLocation::current()) &;
+  StatusBuilder&& WrapExtendedStatus(
+      std::string_view component, uint32_t code,
+      const ExtendedStatusOptions& options = ExtendedStatusOptions(),
+      intrinsic::SourceLocation location =
+          intrinsic::SourceLocation::current()) &&;
 
   StatusBuilder& SetExtendedStatusCode(std::string_view component,
                                        uint32_t code) &;
@@ -532,6 +566,13 @@ inline StatusBuilder::StatusBuilder(const StatusBuilder& sb)
   }
 }
 
+inline StatusBuilder::StatusBuilder(std::string_view component, uint32_t code,
+                                    const ExtendedStatusOptions& options,
+                                    intrinsic::SourceLocation location)
+    : status_(absl::StatusCode::kUnknown, ""), loc_(location) {
+  SetExtendedStatus(component, code, options);
+}
+
 inline StatusBuilder& StatusBuilder::operator=(const StatusBuilder& sb) {
   status_ = sb.status_;
   loc_ = sb.loc_;
@@ -751,9 +792,113 @@ inline StatusBuilder& StatusBuilder::SetExtendedStatus(
   return *this;
 }
 
+inline void FillExtendedStatusProtoFromOptions(
+    std::string_view component, uint32_t code,
+    const StatusBuilder::ExtendedStatusOptions& options,
+    intrinsic_proto::status::ExtendedStatus& es) {
+  es.mutable_status_code()->set_component(component);
+  es.mutable_status_code()->set_code(code);
+  if (options.title.has_value()) {
+    es.set_title(*options.title);
+  }
+  if (options.timestamp.has_value()) {
+    FromAbslTime(*options.timestamp, es.mutable_timestamp()).IgnoreError();
+  }
+  if (options.external_report_message.has_value()) {
+    es.mutable_external_report()->set_message(*options.external_report_message);
+  }
+  if (options.internal_report_message.has_value()) {
+    es.mutable_internal_report()->set_message(*options.internal_report_message);
+  }
+  if (options.log_context.has_value()) {
+    *es.mutable_related_to()->mutable_log_context() = *options.log_context;
+  }
+  if (!options.context.empty()) {
+    es.mutable_context()->Assign(options.context.begin(),
+                                 options.context.end());
+  }
+}
+
 inline StatusBuilder&& StatusBuilder::SetExtendedStatus(
     const intrinsic_proto::status::ExtendedStatus& extended_status) && {
   return std::move(SetExtendedStatus(extended_status));
+}
+
+inline StatusBuilder& StatusBuilder::WrapExtendedStatus(
+    std::string_view component, uint32_t code,
+    const StatusBuilder::ExtendedStatusOptions& options,
+    intrinsic::SourceLocation location) & {
+  if (rep_ == nullptr) {
+    rep_ = std::make_unique<Rep>();
+  }
+
+  intrinsic_proto::status::ExtendedStatus es;
+  FillExtendedStatusProtoFromOptions(component, code, options, es);
+
+  if (options.emit_stacktrace_to_internal_report.has_value()) {
+    rep_->extended_status_emit_stacktrace =
+        *options.emit_stacktrace_to_internal_report;
+  }
+
+  if (rep_->extended_status) {
+    *es.add_context() = std::move(*rep_->extended_status);
+  } else {
+    rep_->extended_status =
+        std::make_unique<intrinsic_proto::status::ExtendedStatus>();
+
+    intrinsic_proto::status::ExtendedStatus context_es;
+    std::optional<absl::Cord> extended_status_payload = status_.GetPayload(
+        AddTypeUrlPrefix<intrinsic_proto::status::ExtendedStatus>());
+    if (!extended_status_payload.has_value() ||
+        !context_es.ParseFromCord(*extended_status_payload)) {
+      context_es.mutable_status_code()->set_code(
+          static_cast<uint32_t>(status_.code()));
+      context_es.set_title(
+          absl::StrFormat("Generic failure (code %s)",
+                          absl::StatusCodeToString(status_.code())));
+      context_es.mutable_external_report()->set_message(status_.message());
+      context_es.mutable_internal_report()->set_message(absl::StrFormat(
+          "Error source location: %s:%u", loc_.file_name(), loc_.line()));
+    }
+    *es.add_context() = std::move(context_es);
+  }
+  status_ = absl::UnknownError("");
+  loc_ = location;
+  *rep_->extended_status = std::move(es);
+
+  return *this;
+}
+
+inline StatusBuilder&& StatusBuilder::WrapExtendedStatus(
+    std::string_view component, uint32_t code,
+    const StatusBuilder::ExtendedStatusOptions& options,
+    intrinsic::SourceLocation location) && {
+  return std::move(WrapExtendedStatus(component, code, options, location));
+}
+
+inline StatusBuilder& StatusBuilder::SetExtendedStatus(
+    std::string_view component, uint32_t code,
+    const StatusBuilder::ExtendedStatusOptions& options) & {
+  if (rep_ == nullptr) {
+    rep_ = std::make_unique<Rep>();
+  }
+  if (!rep_->extended_status) {
+    rep_->extended_status =
+        std::make_unique<intrinsic_proto::status::ExtendedStatus>();
+  }
+  FillExtendedStatusProtoFromOptions(component, code, options,
+                                     *rep_->extended_status);
+  if (options.emit_stacktrace_to_internal_report.has_value()) {
+    rep_->extended_status_emit_stacktrace =
+        *options.emit_stacktrace_to_internal_report;
+  }
+  return *this;
+}
+
+inline StatusBuilder&& StatusBuilder::SetExtendedStatus(
+    std::string_view component, uint32_t code,
+    const StatusBuilder::ExtendedStatusOptions& options) && {
+  return std::move(SetExtendedStatus(component, code, options));
 }
 
 inline StatusBuilder& StatusBuilder::SetExtendedStatusCode(
