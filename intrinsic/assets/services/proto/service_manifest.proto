@@ -36,7 +36,8 @@ message ServiceDef {
   // The HTTP configuration for this service. If provided (including empty
   // config), an HTTP route to the service will be set up. It may handle HTTP
   // traffic at this route by serving HTTP responses at the HTTP port available
-  // from `RuntimeContext` (`/etc/intrinsic/runtime_config.pb`).
+  // from `RuntimeContext` (`/etc/intrinsic/runtime_config.pb`) or
+  // `INTRINSIC_HTTP_PORT` environment variable.
   ServiceHttpConfig http_config = 4;
 }
 
