@@ -4,7 +4,6 @@ syntax = "proto3";
 
 package intrinsic_proto.gripper;
 
-import "intrinsic/hardware/proto/settings.proto";
 
 message PinchGripperCommand {
   // Command id to disambiguate status messages.
