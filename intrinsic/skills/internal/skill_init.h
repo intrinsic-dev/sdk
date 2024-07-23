@@ -6,7 +6,6 @@
 #include <cstdint>
 
 #include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "intrinsic/skills/internal/skill_repository.h"
@@ -40,14 +39,6 @@ absl::Status SkillInit(
     absl::string_view skill_registry_service_address,
     int32_t skill_service_port, absl::Duration connection_timeout,
     SkillRepository& skill_repository);
-
-// Returns the SkillServiceConfig at `skill_service_config_filename`.
-//
-// Reads the proto binary file at `skill_service_config_filename` and returns
-// the contents. This file must contain a proto binary
-// intrinsic_proto.skills.SkillServiceConfig message.
-absl::StatusOr<intrinsic_proto::skills::SkillServiceConfig>
-GetSkillServiceConfig(absl::string_view skill_service_config_filename);
 
 }  // namespace intrinsic::skills
 

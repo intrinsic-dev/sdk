@@ -391,7 +391,6 @@ cc_library(
         ":skill_registry_client",
         ":skill_repository",
         ":skill_service_impl",
-        "//intrinsic/icon/release:file_helpers",
         "//intrinsic/logging:data_logger_client",
         "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
         "//intrinsic/skills/proto:skill_service_config_cc_proto",
@@ -426,6 +425,31 @@ py_library(
         "//intrinsic/skills/proto:skill_service_py_pb2_grpc",
         "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
         requirement("grpcio"),
+        "@com_google_absl_py//absl/logging",
+    ],
+)
+
+cc_library(
+    name = "skill_service_config_utils",
+    srcs = ["skill_service_config_utils.cc"],
+    hdrs = ["skill_service_config_utils.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//intrinsic/icon/release:file_helpers",
+        "//intrinsic/skills/proto:skill_service_config_cc_proto",
+        "//intrinsic/util/status:status_macros",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
+    ],
+)
+
+py_library(
+    name = "skill_service_config_utils_py",
+    srcs = ["skill_service_config_utils.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//intrinsic/skills/proto:skill_service_config_py_pb2",
         "@com_google_absl_py//absl/logging",
     ],
 )

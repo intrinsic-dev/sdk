@@ -4,7 +4,6 @@
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "absl/algorithm/container.h"
@@ -22,7 +21,6 @@
 #include "grpcpp/security/server_credentials.h"
 #include "grpcpp/server.h"
 #include "grpcpp/server_builder.h"
-#include "intrinsic/icon/release/file_helpers.h"
 #include "intrinsic/logging/data_logger_client.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
 #include "intrinsic/skills/internal/skill_registry_client.h"
@@ -136,21 +134,6 @@ absl::Status SkillInit(
 
   server->Wait();
   return absl::OkStatus();
-}
-
-absl::StatusOr<intrinsic_proto::skills::SkillServiceConfig>
-GetSkillServiceConfig(absl::string_view skill_service_config_filename) {
-  intrinsic_proto::skills::SkillServiceConfig service_config;
-  if (!skill_service_config_filename.empty()) {
-    LOG(INFO) << "Reading skill configuration proto from "
-              << skill_service_config_filename;
-    INTR_ASSIGN_OR_RETURN(
-        service_config,
-        GetBinaryProto<intrinsic_proto::skills::SkillServiceConfig>(
-            skill_service_config_filename));
-    LOG(INFO) << "\nUsing skill configuration proto:\n" << service_config;
-  }
-  return service_config;
 }
 
 }  // namespace intrinsic::skills

@@ -12,6 +12,7 @@
 #include "intrinsic/skills/internal/runtime_data.h"
 #include "intrinsic/skills/internal/single_skill_factory.h"
 #include "intrinsic/skills/internal/skill_init.h"
+#include "intrinsic/skills/internal/skill_service_config_utils.h"
 #include "intrinsic/util/grpc/grpc.h"
 // clang-format off
 {{- range .CCHeaderPaths }}

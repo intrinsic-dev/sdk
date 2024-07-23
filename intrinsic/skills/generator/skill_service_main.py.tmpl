@@ -12,6 +12,7 @@ from intrinsic.skills.generator import app
 from intrinsic.skills.internal import runtime_data
 from intrinsic.skills.internal import single_skill_factory as skill_factory
 from intrinsic.skills.internal import skill_init
+from intrinsic.skills.internal import skill_service_config_utils
 from intrinsic.skills.proto import skill_service_config_pb2
 {{- range .PythonModules }}
 import {{ . }}
@@ -74,7 +75,7 @@ def main(argv):
   if not _SKILL_SERVICE_CONFIG_FILENAME.value:
     raise SystemExit("--skill_service_config_filename not set")
 
-  service_config = skill_init.get_skill_service_config(
+  service_config = skill_service_config_utils.get_skill_service_config(
       _SKILL_SERVICE_CONFIG_FILENAME.value
   )
 
