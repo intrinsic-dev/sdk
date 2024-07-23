@@ -80,6 +80,30 @@ go_proto_library(
 )
 
 proto_library(
+    name = "status_spec_proto",
+    srcs = ["status_spec.proto"],
+    visibility = ["//intrinsic:__subpackages__"],
+)
+
+cc_proto_library(
+    name = "status_spec_cc_proto",
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":status_spec_proto"],
+)
+
+py_proto_library(
+    name = "status_spec_py_pb2",
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":status_spec_proto"],
+)
+
+go_proto_library(
+    name = "status_spec_go_proto",
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":status_spec_proto"],
+)
+
+proto_library(
     name = "id_proto",
     srcs = ["id.proto"],
     visibility = ["//intrinsic:__subpackages__"],

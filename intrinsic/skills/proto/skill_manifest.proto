@@ -8,6 +8,7 @@ import "google/protobuf/any.proto";
 import "google/protobuf/duration.proto";
 import "intrinsic/assets/proto/documentation.proto";
 import "intrinsic/assets/proto/id.proto";
+import "intrinsic/assets/proto/status_spec.proto";
 import "intrinsic/assets/proto/vendor.proto";
 import "intrinsic/skills/proto/equipment.proto";
 
@@ -165,4 +166,9 @@ message Manifest {
 
   // The display name of the skill to be shown in the UI.
   string display_name = 9;
+
+  // List of status codes which the specific skill may return. Codes are
+  // specific to the skill's ID (<package>.<name>), i.e., different skills can
+  // have the same numeric ID representing different errors.
+  repeated intrinsic_proto.assets.StatusSpec status_info = 11;
 }

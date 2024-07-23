@@ -201,6 +201,7 @@ proto_library(
     srcs = ["skill_service_config.proto"],
     deps = [
         ":skills_proto",
+        "//intrinsic/assets/proto:status_spec_proto",
         "@com_google_protobuf//:duration_proto",
     ],
 )
@@ -329,6 +330,7 @@ proto_library(
         ":equipment_proto",
         "//intrinsic/assets/proto:documentation_proto",
         "//intrinsic/assets/proto:id_proto",
+        "//intrinsic/assets/proto:status_spec_proto",
         "//intrinsic/assets/proto:vendor_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:duration_proto",
@@ -346,6 +348,7 @@ go_proto_library(
         ":equipment_go_proto",
         "//intrinsic/resources/proto:resource_handle_go_proto",
         "//intrinsic/assets/proto:documentation_go_proto",
+        "//intrinsic/assets/proto:status_spec_go_proto",
         "//intrinsic/assets/proto:vendor_go_proto",
         "//intrinsic/assets/proto:id_go_proto",
     ],

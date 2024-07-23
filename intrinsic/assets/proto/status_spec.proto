@@ -1,0 +1,24 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.assets;
+
+// Message to describe expected status codes of assets. Assets define a
+// namespace through their ID, e.g., skill ID. Within this codes above 10000 are
+// up to be defined by the author of the respective components. Other components
+// can use this information to react specifically to errors.
+message StatusSpec {
+  // The code to declare.
+  uint32 code = 1;
+
+  // Short one-line description of the error that can be shown, e.g., when
+  // selecting an error to match from a list.
+  // Frameworks, such as the skills framework, may use this information to fill
+  // in missing information if not otherwise provided.
+  string title = 2;
+
+  // Guidance for the user on actions to take when this failure occurs (e.g.,
+  // useful error recovery strategies).
+  string recovery_instructions = 3;
+}

@@ -9,6 +9,7 @@
 #include "google/protobuf/descriptor.pb.h"
 #include "google/protobuf/duration.pb.h"
 #include "intrinsic/assets/proto/id.pb.h"
+#include "intrinsic/assets/proto/status_spec.pb.h"
 #include "intrinsic/icon/release/file_helpers.h"
 #include "intrinsic/icon/release/portable/init_xfa.h"
 #include "intrinsic/skills/internal/skill_proto_utils.h"
@@ -61,6 +62,8 @@ absl::Status MainImpl() {
 
   INTR_ASSIGN_OR_RETURN(*service_config.mutable_skill_description(),
                         BuildSkillProto(manifest, file_descriptor_set));
+
+  *service_config.mutable_status_info() = manifest.status_info();
 
   return SetBinaryProto(absl::GetFlag(FLAGS_output_config_filename),
                         service_config);

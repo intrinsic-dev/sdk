@@ -559,6 +559,7 @@ cc_binary(
     deps = [
         ":skill_proto_utils",
         "//intrinsic/assets/proto:id_cc_proto",
+        "//intrinsic/assets/proto:status_spec_cc_proto",
         "//intrinsic/icon/release:file_helpers",
         "//intrinsic/icon/release/portable:init_xfa_absl",
         "//intrinsic/skills/proto:skill_manifest_cc_proto",
