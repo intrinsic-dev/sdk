@@ -318,11 +318,13 @@ cc_library(
     hdrs = ["runtime_data.h"],
     visibility = ["//visibility:public"],
     deps = [
+        "//intrinsic/assets/proto:status_spec_cc_proto",
         "//intrinsic/skills/proto:equipment_cc_proto",
         "//intrinsic/skills/proto:skill_service_config_cc_proto",
         "//intrinsic/skills/proto:skills_cc_proto",
         "//intrinsic/util:proto_time",
         "//intrinsic/util/status:status_macros",
+        "@com_google_absl//absl/algorithm:container",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
@@ -339,6 +341,7 @@ py_library(
     srcs = ["runtime_data.py"],
     visibility = ["//visibility:public"],
     deps = [
+        "//intrinsic/assets/proto:status_spec_py_pb2",
         "//intrinsic/skills/proto:equipment_py_pb2",
         "//intrinsic/skills/proto:skill_service_config_py_pb2",
         "//intrinsic/skills/proto:skills_py_pb2",

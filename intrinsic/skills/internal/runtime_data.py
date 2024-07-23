@@ -13,6 +13,7 @@ from typing import Mapping, Sequence
 
 from google.protobuf import any_pb2
 from google.protobuf import descriptor as proto_descriptor
+from intrinsic.assets.proto import status_spec_pb2
 from intrinsic.skills.proto import equipment_pb2
 from intrinsic.skills.proto import skill_service_config_pb2
 from intrinsic.skills.proto import skills_pb2
@@ -70,6 +71,17 @@ class ResourceData:
 
 
 @dataclasses.dataclass(frozen=True)
+class StatusSpecs:
+  """Status specifications the skill has declared.
+
+  Attributes:
+    specs: Mapping from code to status specification.
+  """
+
+  specs: Mapping[int, status_spec_pb2.StatusSpec]
+
+
+@dataclasses.dataclass(frozen=True)
 class SkillRuntimeData:
   """Data about skills that are relevant to the skills services.
 
@@ -78,6 +90,7 @@ class SkillRuntimeData:
     return_type_data: The return data.
     execution_options: The execution options.
     resource_data: The resource data.
+    status_specs: Expected status code definitions from manifest.
     skill_id: The skill id.
   """
 
@@ -85,6 +98,7 @@ class SkillRuntimeData:
   return_type_data: ReturnTypeData
   execution_options: ExecutionOptions
   resource_data: ResourceData
+  status_specs: StatusSpecs
   skill_id: str
 
 
@@ -131,6 +145,8 @@ def get_runtime_data_from(
       skill_service_config.skill_description.resource_selectors
   )
 
+  status_specs = {s.code: s for s in skill_service_config.status_info}
+
   if skill_service_config.skill_description.parameter_description.HasField(
       'default_value'
   ):
@@ -157,5 +173,6 @@ def get_runtime_data_from(
       return_type_data=return_type_data,
       execution_options=execute_opts,
       resource_data=ResourceData(resource_data),
+      status_specs=StatusSpecs(status_specs),
       skill_id=skill_service_config.skill_description.id,
   )

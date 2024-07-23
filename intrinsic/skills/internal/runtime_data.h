@@ -18,6 +18,7 @@
 #include "absl/types/span.h"
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/descriptor.h"
+#include "intrinsic/assets/proto/status_spec.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/skill_service_config.pb.h"
 
@@ -98,6 +99,30 @@ class ResourceData {
       resources_required_ = {};
 };
 
+// Contains information about the status codes that are documented in the
+// manifest that the skill may raise.
+class StatusSpecs {
+ public:
+  StatusSpecs() = default;
+  explicit StatusSpecs(
+      const std::vector<intrinsic_proto::assets::StatusSpec>& specs);
+  StatusSpecs(const StatusSpecs& other) = default;
+  StatusSpecs& operator=(const StatusSpecs& other) = default;
+
+  absl::StatusOr<intrinsic_proto::assets::StatusSpec> GetSpecForCode(
+      uint32_t code) const {
+    if (!specs_.contains(code)) {
+      return absl::InvalidArgumentError(
+          absl::StrFormat("Error code %d is unknown", code));
+    }
+    return specs_.at(code);
+  }
+
+ private:
+  // Keyed by status code
+  absl::flat_hash_map<uint32_t, intrinsic_proto::assets::StatusSpec> specs_;
+};
+
 // Contains data about skills that is relevant to the skill services.
 class SkillRuntimeData {
  public:
@@ -105,7 +130,8 @@ class SkillRuntimeData {
   SkillRuntimeData(const ParameterData& parameter_data,
                    const ReturnTypeData& return_type_data,
                    const ExecutionOptions& execution_options,
-                   const ResourceData& resource_data, absl::string_view id);
+                   const ResourceData& resource_data,
+                   const StatusSpecs& status_specs, absl::string_view id);
 
   SkillRuntimeData(const SkillRuntimeData& other) = default;
   SkillRuntimeData& operator=(const SkillRuntimeData& other) = default;
@@ -118,6 +144,8 @@ class SkillRuntimeData {
 
   const ResourceData& GetResourceData() const { return resource_data_; }
 
+  const StatusSpecs& GetStatusSpecs() const { return status_specs_; }
+
   absl::string_view GetId() const { return id_; }
 
  private:
@@ -125,6 +153,7 @@ class SkillRuntimeData {
   ReturnTypeData return_type_data_;
   ExecutionOptions execution_options_;
   ResourceData resource_data_;
+  StatusSpecs status_specs_;
   std::string id_;
 };
 

@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from concurrent import futures
+import textwrap
 import threading
 import traceback
 from typing import Callable, Dict, NoReturn, Optional, cast
@@ -50,6 +51,9 @@ from pybind11_abseil import status
 # This value places a hard upper limit on the number of one type of skill that
 # can execute simultaneously.
 MAX_NUM_OPERATIONS = 100
+
+# Length an extended status message is shortened to to make it the title.
+EXTENDED_STATUS_TITLE_SHORTEN_TO_LENGTH = 75
 
 # Default timeout, in seconds, to use when unspecified by caller.
 # Should be kept in sync with skills::kClientDefaultTimeout.
@@ -183,6 +187,7 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
           skill_id=skill_runtime_data.skill_id,
           op_name='get_footprint',
           log_context=footprint_request.context,
+          status_specs=skill_runtime_data.status_specs,
       )
 
       _abort_with_status(
@@ -949,6 +954,7 @@ class _SkillOperation:
           skill_id=self._runtime_data.skill_id,
           op_name=op_name,
           log_context=log_context,
+          status_specs=self._runtime_data.status_specs,
       )
 
     if error_status is not None:
@@ -990,6 +996,7 @@ def _handle_skill_error(
     skill_id: str,
     op_name: str,
     log_context: Optional[context_pb2.Context],
+    status_specs: rd.StatusSpecs,
 ) -> status_pb2.Status:
   """Handles an error raised by a skill."""
   code, action = _skill_error_to_code_and_action(err)
@@ -1034,9 +1041,40 @@ def _handle_skill_error(
     ):
       es_proto.related_to.log_context.CopyFrom(log_context)
 
-  status_any = any_pb2.Any()
-  status_any.Pack(es_proto)
-  details.append(status_any)
+    # Set timestamp to now if none set
+    if not es_proto.HasField('timestamp'):
+      es_proto.timestamp.GetCurrentTime()
+
+    if not es_proto.title:
+      if (
+          es_proto.HasField('status_code')
+          and es_proto.status_code.code in status_specs.specs
+      ):
+        es_proto.title = status_specs.specs[es_proto.status_code.code].title
+      elif (
+          es_proto.HasField('external_report')
+          and es_proto.external_report.message
+      ):
+        es_proto.title = textwrap.shorten(
+            es_proto.external_report.message,
+            EXTENDED_STATUS_TITLE_SHORTEN_TO_LENGTH,
+            placeholder='...',
+        )
+      elif es_proto.HasField('status_code'):
+        es_proto.title = (
+            f'{es_proto.status_code.component}:{es_proto.status_code.code}'
+        )
+
+    if log_context is not None:
+      # If the extended status has no log context set, yet, add it
+      if not es_proto.HasField(
+          'related_to'
+      ) or not es_proto.related_to.HasField('log_context'):
+        es_proto.related_to.log_context.CopyFrom(log_context)
+
+    status_any = any_pb2.Any()
+    status_any.Pack(es_proto)
+    details.append(status_any)
 
   return status_pb2.Status(
       code=status.StatusCodeAsInt(code),

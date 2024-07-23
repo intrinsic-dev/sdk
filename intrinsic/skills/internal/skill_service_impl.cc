@@ -62,6 +62,10 @@ using ::intrinsic::assets::RemoveVersionFrom;
 
 namespace {
 
+// Maximum length to which an external report message is shortened when used
+// as a title (when title neither set in status specs nor provided by user).
+constexpr int kExtendedStatusTitleShortToLength = 75;
+
 template <class Request>
 absl::Status ValidateRequest(const Request& request) {
   if (request.world_id().empty()) {
@@ -115,13 +119,32 @@ std::string ErrorToSkillAction(absl::Status status) {
   return ToGrpcStatus(rpc_status);
 }
 
+std::string EllipsizeString(std::string_view s) {
+  if (s.length() < kExtendedStatusTitleShortToLength) {
+    return std::string(s);
+  }
+
+  constexpr std::string_view kEllipsis = "...";
+
+  std::string_view::size_type space_pos =
+      s.rfind(' ', kExtendedStatusTitleShortToLength - kEllipsis.length());
+  if (space_pos == std::string_view::npos) {
+    return absl::StrCat(
+        s.substr(0, kExtendedStatusTitleShortToLength - kEllipsis.length()),
+        kEllipsis);
+  }
+  return absl::StrCat(s.substr(0, space_pos), kEllipsis);
+}
+
 // Updates the extended status error in the following ways:
 // - if component not set, sets skill id
 // - if component set that doesn't match skill ID wraps ES
+// - if timestamp not set, sets it to "now"
 // - if log_context provided and non set already set it
 // To be used as StatusBuilder policy.
 absl::Status UpdateExtendedStatusOnError(
     absl::Status status, const std::string& skill_id,
+    const internal::StatusSpecs& status_specs,
     std::optional<intrinsic_proto::data_logger::Context> log_context) {
   intrinsic_proto::status::ExtendedStatus es;
   std::optional<absl::Cord> extended_status_payload =
@@ -156,6 +179,25 @@ absl::Status UpdateExtendedStatusOnError(
     *new_es.add_context() = std::move(es);
     es = std::move(new_es);
   }  // else: it's the expected component ID, don't do anything
+
+  // Set timestamp to now if none set
+  if (!es.has_timestamp()) {
+    *es.mutable_timestamp() = GetCurrentTimeProto();
+  }
+
+  if (es.title().empty()) {
+    absl::StatusOr<intrinsic_proto::assets::StatusSpec> status_spec =
+        status_specs.GetSpecForCode(es.status_code().code());
+    if (status_spec.ok()) {
+      es.set_title(status_spec->title());
+    } else if (es.has_external_report() &&
+               !es.external_report().message().empty()) {
+      es.set_title(EllipsizeString(es.external_report().message()));
+    } else if (es.has_status_code()) {
+      es.set_title(absl::StrFormat("%s:%d", es.status_code().component(),
+                                   es.status_code().code()));
+    }
+  }
 
   // If no log context has been set explicitly, update it
   if (log_context &&
@@ -583,6 +625,7 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
   INTR_RETURN_IF_ERROR_GRPC(operation->Start(
       [skill = std::move(skill),
        skill_id = std::string(operation->runtime_data().GetId()),
+       &status_specs = operation->runtime_data().GetStatusSpecs(),
        skill_request = std::move(skill_request),
        skill_context = std::move(skill_context), request = *request]()
           -> absl::StatusOr<
@@ -590,12 +633,13 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
         INTR_ASSIGN_OR_RETURN(
             std::unique_ptr<::google::protobuf::Message> skill_result,
             skill->Execute(*skill_request, *skill_context),
-            _.With([request, skill_id](absl::Status status) {
+            _.With([request, skill_id, &status_specs](absl::Status status) {
               std::optional<intrinsic_proto::data_logger::Context> log_context;
               if (request.has_context()) {
                 log_context = request.context();
               }
-              return UpdateExtendedStatusOnError(status, skill_id, log_context);
+              return UpdateExtendedStatusOnError(status, skill_id, status_specs,
+                                                 log_context);
             }));
 
         auto result =
