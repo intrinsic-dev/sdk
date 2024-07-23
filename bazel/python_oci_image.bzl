@@ -58,6 +58,7 @@ def python_oci_image(
         name = name + "_interpreter_layer",
         srcs = [binary],
         mtree = ":" + name + "_interpreter_tar_manifest",
+        compress = "gzip",
     )
 
     # Attempt to match all external (3P) dependencies. Since these can come in as either
@@ -77,6 +78,7 @@ def python_oci_image(
         name = name + "_packages_layer",
         srcs = [binary],
         mtree = ":" + name + "_packages_tar_manifest",
+        compress = "gzip",
     )
 
     # Any lines that didn't match one of the two grep above...
@@ -92,6 +94,7 @@ def python_oci_image(
         name = name + "_app_layer",
         srcs = [binary],
         mtree = ":" + name + "_app_tar_manifest",
+        compress = "gzip",
     )
 
     # Layer with a single symlink to make the migration to rules_oci from rules_docker/py3_image backwards compatible.
