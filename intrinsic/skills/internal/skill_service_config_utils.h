@@ -3,8 +3,12 @@
 #ifndef INTRINSIC_SKILLS_INTERNAL_SKILL_SERVICE_CONFIG_UTILS_H_
 #define INTRINSIC_SKILLS_INTERNAL_SKILL_SERVICE_CONFIG_UTILS_H_
 
+#include <optional>
+
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "google/protobuf/descriptor.pb.h"
+#include "intrinsic/skills/proto/skill_manifest.pb.h"
 #include "intrinsic/skills/proto/skill_service_config.pb.h"
 
 namespace intrinsic::skills {
@@ -16,6 +20,24 @@ namespace intrinsic::skills {
 // intrinsic_proto.skills.SkillServiceConfig message.
 absl::StatusOr<intrinsic_proto::skills::SkillServiceConfig>
 GetSkillServiceConfig(absl::string_view skill_service_config_filename);
+
+// Returns the SkillServiceConfig for the skill with the given manifest.
+absl::StatusOr<intrinsic_proto::skills::SkillServiceConfig>
+GetSkillServiceConfigFromManifest(
+    absl::string_view manifest_pbbin_filename,
+    absl::string_view file_descriptor_set_pbbin_filename,
+    std::optional<absl::string_view> version = std::nullopt);
+absl::StatusOr<intrinsic_proto::skills::SkillServiceConfig>
+GetSkillServiceConfigFromManifest(
+    const intrinsic_proto::skills::Manifest& manifest,
+    const google::protobuf::FileDescriptorSet& file_descriptor_set,
+    std::optional<absl::string_view> version = std::nullopt);
+absl::StatusOr<intrinsic_proto::skills::SkillServiceConfig>
+GetSkillServiceConfigFromManifest(
+    const intrinsic_proto::skills::Manifest& manifest,
+    const google::protobuf::FileDescriptorSet& parameter_descriptor_set,
+    const google::protobuf::FileDescriptorSet& return_type_descriptor_set,
+    std::optional<absl::string_view> version = std::nullopt);
 
 }  // namespace intrinsic::skills
 

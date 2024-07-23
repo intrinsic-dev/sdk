@@ -3,6 +3,9 @@
 """Utils for working with the SkillServiceConfig proto."""
 
 from absl import logging
+from google.protobuf import descriptor_pb2
+from intrinsic.skills.internal import proto_utils
+from intrinsic.skills.proto import skill_manifest_pb2
 from intrinsic.skills.proto import skill_service_config_pb2
 
 
@@ -30,4 +33,40 @@ def get_skill_service_config(
   with open(filename, "rb") as f:
     service_config.ParseFromString(f.read())
   logging.info("\nUsing skill configuration proto:\n%s", service_config)
+  return service_config
+
+
+def get_skill_service_config_from_manifest(
+    manifest_pbbin_filename: str,
+    proto_descriptor_pbbin_filename: str,
+    version: str,
+) -> skill_service_config_pb2.SkillServiceConfig:
+  """Returns the SkillServiceConfig for the skill with the given manifest."""
+  service_config = skill_service_config_pb2.SkillServiceConfig()
+
+  logging.info("Loading manifest from: %s", manifest_pbbin_filename)
+  with open(manifest_pbbin_filename, "rb") as f:
+    manifest = skill_manifest_pb2.Manifest.FromString(f.read())
+
+  service_config.skill_name = manifest.id.name
+  if manifest.options.HasField("cancellation_ready_timeout"):
+    service_config.execution_service_options.cancellation_ready_timeout.CopyFrom(
+        manifest.options.cancellation_ready_timeout
+    )
+
+  service_config.status_info.extend(manifest.status_info)
+
+  logging.info(
+      "Reading proto descriptor proto from: %s",
+      proto_descriptor_pbbin_filename,
+  )
+  with open(proto_descriptor_pbbin_filename, "rb") as f:
+    file_descriptor_set = descriptor_pb2.FileDescriptorSet.FromString(f.read())
+
+  service_config.skill_description.CopyFrom(
+      proto_utils.proto_from_skill_manifest(
+          manifest, file_descriptor_set, version=version
+      )
+  )
+
   return service_config

@@ -435,12 +435,17 @@ cc_library(
     hdrs = ["skill_service_config_utils.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":skill_proto_utils",
+        "//intrinsic/assets/proto:id_cc_proto",
+        "//intrinsic/assets/proto:status_spec_cc_proto",
         "//intrinsic/icon/release:file_helpers",
+        "//intrinsic/skills/proto:skill_manifest_cc_proto",
         "//intrinsic/skills/proto:skill_service_config_cc_proto",
         "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:string_view",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 
@@ -449,8 +454,11 @@ py_library(
     srcs = ["skill_service_config_utils.py"],
     visibility = ["//visibility:public"],
     deps = [
+        ":proto_utils",
+        "//intrinsic/skills/proto:skill_manifest_py_pb2",
         "//intrinsic/skills/proto:skill_service_config_py_pb2",
         "@com_google_absl_py//absl/logging",
+        "@com_google_protobuf//:protobuf_python",
     ],
 )
 
@@ -584,9 +592,8 @@ cc_binary(
     srcs = ["skill_service_config_main.cc"],
     visibility = ["//visibility:public"],
     deps = [
-        ":skill_proto_utils",
+        ":skill_service_config_utils",
         "//intrinsic/assets/proto:id_cc_proto",
-        "//intrinsic/assets/proto:status_spec_cc_proto",
         "//intrinsic/icon/release:file_helpers",
         "//intrinsic/icon/release/portable:init_xfa_absl",
         "//intrinsic/skills/proto:skill_manifest_cc_proto",
