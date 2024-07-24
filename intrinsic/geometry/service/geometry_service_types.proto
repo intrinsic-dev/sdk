@@ -60,7 +60,7 @@ message PosedGeometryData {
     GeometryData geometry_data = 1;
 
     // Geometry id already present in geometry storage.
-    string geometry_id = 2;
+    string geometry_id = 2 [deprecated = true];
 
     // The references to the stored geometry artifacts.
     GeometryStorageRefs geometry_storage_refs = 6;
