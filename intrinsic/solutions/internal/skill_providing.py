@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 from typing import Any, Iterable, Type, Union
-import warnings
 
 from intrinsic.resources.client import resource_registry_client
 from intrinsic.skills.client import skill_registry_client
@@ -232,28 +231,30 @@ class Skills(providers.SkillProvider):
           " available skill name, skill id or skill package. Use update() or"
           " reconnect to the deployed solution to update the available skills."
       )
+    # Provide global skills with an empty package name (e.g.
+    # `skills.global_skill`).
     if name not in self._skill_type_classes_by_name:
       self._skill_type_classes_by_name[name] = skill_generation.gen_skill_class(
           self._skills_by_name[name],
           self._compatible_resources_by_name[name],
       )
     skill_class = self._skill_type_classes_by_name[name]
-    # Do not warn for "global skills" with an empty package name. Those will
-    # remain accessible as `skills.global_skill`.
     if skill_class.skill_info.package_name:
-      warnings.warn(
+      raise AttributeError(
           f'The shortcut notation "skills.{skill_class.skill_info.skill_name}"'
-          " is deprecated and will be removed after June 2024. Please use the"
-          " full skill id instead, e.g., by using a custom shortcut"
-          f' "{skill_class.skill_info.skill_name} ='
-          f' skills.{skill_class.skill_info.id}".',
-          DeprecationWarning,
-          stacklevel=2,
+          " has been removed. Please use the full skill id instead, e.g., by"
+          f' using a custom shortcut "{skill_class.skill_info.skill_name} ='
+          f' skills.{skill_class.skill_info.id}".'
       )
     return skill_class
 
   def __dir__(self) -> list[str]:
-    return sorted(self._skill_packages.keys() | self._skills_by_name.keys())
+    global_skill_names = {
+        name
+        for name in self._skills_by_name.keys()
+        if not self._skills_by_name[name].package_name
+    }
+    return sorted(self._skill_packages.keys() | global_skill_names)
 
   def __getitem__(self, skill_id: str) -> Type[Any]:
     if skill_id in self._skills_by_id:

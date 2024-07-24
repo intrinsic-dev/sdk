@@ -411,14 +411,15 @@ def _skill_provider_typedefs_and_classdefs_for_skill_container(
 ) -> list[Union[ast.ClassDef, ast.Assign]]:
   """Returns typedefs (ast.Assign) and ClassDefs for the given skill container.
 
-  E.g. if the skill container has an attribute "move_robot" (a skill class) and
-  an attribute "ai" (a child skill package), the returned list is equivalent to:
+  E.g. if the skill container is a skill provider and has an attribute
+  "global_skill" (a skill class for a skill without a skill package) and an
+  attribute "ai" (a child skill package), the returned list is equivalent to:
 
-    move_robot = intrinsic.solutions.skills.ai.intrinsic.move_robot
+    global_skill = intrinsic.solutions.skills.global_skill
     class ai:
       <recursively generated typedefs and classes for the skill package "ai">
 
-  To be used inside body of the SkillProvider class.
+  To be used inside the body of the SkillProvider class.
 
   Args:
     skill_container: A skill package or skill provider - anything for which
@@ -476,7 +477,8 @@ def _generate_providers_stub(
   # functionality gets replaced by explicit class attributes and nested classes.
   _RemoveClassFunctions("SkillProvider", ["__dir__", "__getattr__"]).visit(root)
 
-  # Add a class attribute SkillProvider.<skill_name> for each global skill.
+  # Add a class attribute SkillProvider.<skill_name> for each global skill and a
+  # nested class SkillProvider.<skill_package_name> for each skill package.
   _AddNodesAfterClassDocstring(
       "SkillProvider",
       _skill_provider_typedefs_and_classdefs_for_skill_container(skills),
@@ -919,30 +921,6 @@ def _ast_class_def_for_message_wrapper(
   )
 
 
-def _ast_typedef_for_message_wrapper(
-    message_wrapper: type[skill_utils.MessageWrapper],
-) -> ast.Assign:
-  """Returns an ast.Assign for the given message wrapper class.
-
-  The returned ast.Assign is equivalent to, e.g.:
-    Pose = move_robot.intrinsic_proto.Pose
-
-  To be used inside the body of a class definition for a skill class (see
-  _ast_typedefs_and_classdefs_for_message_wrapper_container()).
-
-  Args:
-    message_wrapper: The message wrapper class for which to generate the
-      ast.Assign.
-
-  Returns:
-    The created ast.Assign object.
-  """
-  return ast.Assign(
-      targets=[ast.Name(id=message_wrapper.__name__, ctx=ast.Store())],
-      value=dot_expr_to_ast_attribute_or_name(message_wrapper.__qualname__),
-  )
-
-
 def _ast_typedefs_and_classdefs_for_message_wrapper_container(
     container: Union[
         type[provided.SkillBase],
@@ -955,11 +933,9 @@ def _ast_typedefs_and_classdefs_for_message_wrapper_container(
   """Returns typedefs and class defs for the given message wrapper container.
 
   For example, if the container is a skill class "my_skill" which has an
-  attribute "Pose" (a shorcut for a message wrapper class) and an attribute
-  "intrinsic_proto" (a message wrappernamespace class), the returned list is
-  equivalent to:
+  attribute "intrinsic_proto" (a message wrapper namespace class), the returned
+  list is equivalent to:
 
-    Pose = move_robot.intrinsic_proto.Pose
     class intrinsic_proto:
       <recursively generated typedefs and class defs for the message wrappers of
       the proto package "intrinsic_proto">
@@ -991,7 +967,10 @@ def _ast_typedefs_and_classdefs_for_message_wrapper_container(
   nodes: list[ast.ClassDef | ast.Assign] = []
 
   for name in dir(container):
-    attribute = getattr(container, name)
+    try:
+      attribute = getattr(container, name)
+    except AttributeError:
+      continue
 
     if isinstance(attribute, enum.IntEnum):
       nodes.append(_ast_assign_for_enum_value_shortcut(name, attribute))
@@ -1010,25 +989,11 @@ def _ast_typedefs_and_classdefs_for_message_wrapper_container(
       )
     elif issubclass(attribute, skill_utils.MessageWrapper):
       message_wrapper = cast(type[skill_utils.MessageWrapper], attribute)
-      # A "global proto" has an empty package name and thus name==full_name.
-      is_global_proto = (
-          message_wrapper.wrapped_type.DESCRIPTOR.name
-          == message_wrapper.wrapped_type.DESCRIPTOR.full_name
+      nodes.append(
+          _ast_class_def_for_message_wrapper(
+              message_wrapper, module_name, imports
+          )
       )
-      if issubclass(container, provided.SkillBase) and not is_global_proto:
-        # 'message_wrapper' is a shortcut on a skill class-> turn it into a
-        # typedef. E.g., declare 'move_robot.Pose' as a typedef for
-        # 'move_robot.intrinsic_proto.Pose'.
-        nodes.append(_ast_typedef_for_message_wrapper(message_wrapper))
-      else:
-        # 'message_wrapper' is a properly nested message wrapper class (it is on
-        # a message wrapper namespace class or it is on a skill class and
-        # corresponds to a global proto) -> turn it into a full class def.
-        nodes.append(
-            _ast_class_def_for_message_wrapper(
-                message_wrapper, module_name, imports
-            )
-        )
 
   _sort_ast_typedefs_and_classdefs(nodes)
 

@@ -345,8 +345,7 @@ class SolutionTest(absltest.TestCase):
     self.assertIsInstance(solution.world, worlds.ObjectWorld)
     self.assertIsNotNone(solution.pose_estimators)
 
-    skills = dir(solution.skills)
-    self.assertIn("my_skill", skills)
+    self.assertIsNotNone(solution.skills.ai.intrinsic.my_skill)
     self._skill_registry_stub.GetSkills.assert_called_once_with(
         empty_pb2.Empty()
     )

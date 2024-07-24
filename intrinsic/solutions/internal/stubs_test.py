@@ -95,11 +95,7 @@ class StubsTest(absltest.TestCase):
         skill_provider_content,
         r'''(?s)class SkillProvider\(abc.ABC\):
     """[^"]*"""\n*
-    ai_skill = intrinsic.solutions.skills.ai.ai_skill
-    foo_skill = intrinsic.solutions.skills.foo.foo_skill
     global_skill = intrinsic.solutions.skills.global_skill
-    skill_one = intrinsic.solutions.skills.ai.intr.skill_one
-    skill_two = intrinsic.solutions.skills.ai.intr.skill_two\n*
 
     class ai:
         """.*Namespace class for the skill package 'ai'[^"]*"""\n*
@@ -399,13 +395,6 @@ class my_skill\(skill_generation.GeneratedSkill\):.*
         r'''(?s)
 class my_skill\(skill_generation.GeneratedSkill\):.*
         \.\.\.\s*
-    AnotherNestedMessage = \(?\s*my_skill.intrinsic_proto.stubs_test.AnotherOuterMessage.AnotherNestedMessage\s*\)?
-    AnotherOuterMessage = my_skill.intrinsic_proto.stubs_test.AnotherOuterMessage
-    EmptyMessage = my_skill.intrinsic_proto.stubs_test.EmptyMessage
-    NestedMessage = my_skill.intrinsic_proto.stubs_test.OuterMessage.NestedMessage
-    Point = my_skill.intrinsic_proto.Point
-    Pose = my_skill.intrinsic_proto.Pose
-    Quaternion = my_skill.intrinsic_proto.Quaternion\n*
 
     class intrinsic_proto:\n*
         """[^"]*Namespace class[^"]*intrinsic_proto[^"]*"""\n*

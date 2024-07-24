@@ -13,7 +13,6 @@ import textwrap
 import time
 import typing
 from typing import Any, Callable, Container, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Type, Union
-import warnings
 
 from google.protobuf import descriptor
 from google.protobuf import descriptor_pb2
@@ -1451,34 +1450,27 @@ def _gen_enum_class(
   return enum_class
 
 
-class _ClassPropertyReturningWrapperClassWithWarning:
-  """Class property returning a given message wrapper class.
+class _ClassPropertyRaisingRemovalError:
+  """Class property which raises an error when accessed.
 
-  Instances of this class can be used as class properties returning a given
-  message wrapper class while emitting a deprecation warning.
+  Instances of this class can be used as class properties which raise an error
+  that the corresponding property (which used to return a message wrapper class)
+  has been removed.
   """
 
   def __init__(
-      self,
-      skill_name: str,
-      message_name: str,
-      full_message_name: str,
-      wrapper_class: Type[MessageWrapper],
+      self, skill_name: str, message_name: str, full_message_name: str
   ):
     self._skill_name = skill_name
     self._message_name = message_name
     self._full_message_name = full_message_name
-    self._wrapper_class = wrapper_class
 
   def __get__(self, instance, owner):
-    warnings.warn(
-        f'The shortcut notation "{self._skill_name}.{self._message_name}"'
-        " is deprecated and will be removed after June 2024. Please use"
-        f' "{self._skill_name}.{self._full_message_name}" instead.',
-        DeprecationWarning,
-        stacklevel=2,
+    raise AttributeError(
+        f'The shortcut notation "{self._skill_name}.{self._message_name} Has'
+        " been removed. Please use"
+        f' "{self._skill_name}.{self._full_message_name}" instead.'
     )
-    return self._wrapper_class
 
 
 def update_message_class_modules(
@@ -1550,9 +1542,10 @@ def update_message_class_modules(
         "", message_full_name, cls, wrapper_class, skill_name, skill_package
     )
 
-  # Create my_skill.<message name> shortcuts. Note that iteration over a dict is
-  # in insertion order by default, so the shortcuts are deterministic in case of
-  # name collisions.
+  # Create error properties for what used to be shortcuts of the form
+  # my_skill.<message name>. Note that iteration over a dict is in insertion
+  # order by default, so the shortcuts are deterministic in case of name
+  # collisions.
   message_names_done = set()
   for message_full_name, wrapper_class in wrapper_classes.items():
     message_name = wrapper_class.wrapped_type.DESCRIPTOR.name
@@ -1560,11 +1553,10 @@ def update_message_class_modules(
       setattr(
           cls,
           message_name,
-          _ClassPropertyReturningWrapperClassWithWarning(
+          _ClassPropertyRaisingRemovalError(
               skill_name,
               message_name,
               message_full_name,
-              wrapper_class,
           ),
       )
       message_names_done.add(message_name)

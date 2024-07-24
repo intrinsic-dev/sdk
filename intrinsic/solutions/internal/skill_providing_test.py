@@ -195,14 +195,8 @@ class SkillsTest(parameterized.TestCase):
         dir(skills),
         [
             'ai',
-            'ai_skill',
-            'bar',
-            'bar_skill',
             'foo',
-            'foo_skill',
             'global_skill',
-            'intr_skill_one',
-            'intr_skill_two',
         ],
     )
     self.assertEqual(dir(skills.ai), ['ai_skill', 'intr'])
@@ -223,25 +217,13 @@ class SkillsTest(parameterized.TestCase):
         ai_intr_intr_skill_two,
         self._utils.create_parameterless_skill_info('ai.ai_skill'),
         self._utils.create_parameterless_skill_info('foo.foo_skill'),
-        self._utils.create_parameterless_skill_info('foo.foo'),
         self._utils.create_parameterless_skill_info('foo.bar.bar_skill'),
-        self._utils.create_parameterless_skill_info('foo.bar.bar'),
         self._utils.create_parameterless_skill_info('global_skill'),
     ]
     skills = skill_providing.Skills(
         self._utils.create_skill_registry_for_skill_infos(skill_infos),
         self._utils.create_empty_resource_registry(),
     )
-
-    # Shortcut notation: skills.<skill_name>
-    self.assertIsInstance(
-        skills.intr_skill_one(), skill_generation.GeneratedSkill
-    )
-    self.assertIsInstance(
-        skills.intr_skill_two(), skill_generation.GeneratedSkill
-    )
-    self.assertIsInstance(skills.ai_skill(), skill_generation.GeneratedSkill)
-    self.assertIsInstance(skills.foo_skill(), skill_generation.GeneratedSkill)
 
     # Id notation: skills.<skill_id>
     self.assertIsInstance(skills.ai, provided.SkillPackage)
@@ -259,11 +241,9 @@ class SkillsTest(parameterized.TestCase):
     self.assertIsInstance(
         skills.foo.foo_skill(), skill_generation.GeneratedSkill
     )
-    self.assertIsInstance(skills.foo.foo(), skill_generation.GeneratedSkill)
     self.assertIsInstance(
         skills.foo.bar.bar_skill(), skill_generation.GeneratedSkill
     )
-    self.assertIsInstance(skills.foo.bar.bar(), skill_generation.GeneratedSkill)
     self.assertIsInstance(
         skills.global_skill(), skill_generation.GeneratedSkill
     )
@@ -2132,12 +2112,6 @@ Returns:
     )
 
     my_skill = skills.ai.intrinsic.my_skill
-
-    # Shortcut notation: skill.<message name>
-    self.assertIsInstance(my_skill.SubMessage(), skill_utils.MessageWrapper)
-    self.assertIsInstance(my_skill.Foo(), skill_utils.MessageWrapper)
-    self.assertIsInstance(my_skill.Bar(), skill_utils.MessageWrapper)
-    self.assertIsInstance(my_skill.Any(), skill_utils.MessageWrapper)
 
     # Id notation: skill.<full message name>
     self.assertIsInstance(
