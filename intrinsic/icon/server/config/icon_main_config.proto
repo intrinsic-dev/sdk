@@ -4,7 +4,6 @@ syntax = "proto3";
 
 package intrinsic_proto.icon;
 
-import "google/protobuf/duration.proto";
 import "intrinsic/icon/server/config/realtime_control_config.proto";
 import "intrinsic/icon/server/config/services_config.proto";
 
