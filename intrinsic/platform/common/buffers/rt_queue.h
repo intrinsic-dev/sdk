@@ -5,11 +5,11 @@
 
 #include <cstddef>
 #include <functional>
-#include <memory>
 #include <optional>
+#include <type_traits>
 
 #include "absl/base/attributes.h"
-#include "absl/memory/memory.h"
+#include "absl/functional/function_ref.h"
 #include "absl/types/optional.h"
 #include "intrinsic/icon/utils/realtime_guard.h"
 #include "intrinsic/platform/common/buffers/rt_queue_buffer.h"
@@ -190,6 +190,9 @@ class RealtimeQueue : public RealtimeQueueBase {
 
   // Returns true when the buffer is full. Thread-safe.
   bool Full() const { return buffer_.Full(); }
+
+  // Returns the number of elements in the buffer. Thread-safe.
+  size_t Size() const { return buffer_.Size(); }
 
   // Returns the capacity of the buffer.
   size_t Capacity() const { return buffer_.Capacity(); }

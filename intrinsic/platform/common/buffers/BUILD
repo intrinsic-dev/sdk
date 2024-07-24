@@ -11,7 +11,7 @@ cc_library(
         ":rt_queue_buffer",
         "//intrinsic/icon/utils:realtime_guard",
         "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/functional:function_ref",
         "@com_google_absl//absl/types:optional",
     ],
 )
@@ -39,8 +39,6 @@ cc_library(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/functional:function_ref",
         "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/types:optional",
     ],
 )
 

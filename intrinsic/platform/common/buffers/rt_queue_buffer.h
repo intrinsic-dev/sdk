@@ -10,8 +10,6 @@
 #include "absl/base/attributes.h"
 #include "absl/functional/function_ref.h"
 #include "absl/log/check.h"
-#include "absl/memory/memory.h"
-#include "absl/types/optional.h"
 
 // IWYU pragma: no_forward_declare absl::FunctionRef
 
@@ -44,6 +42,9 @@ class RtQueueBuffer {
   // Make the element referenced by the return value of PrepareInsert
   // available to the reader.
   void FinishInsert();
+
+  // Returns the number of elements in the buffer. Thread-safe.
+  size_t Size() const { return size_.load(std::memory_order_acquire); }
 
   // Returns true when the buffer is empty. Thread-safe.
   bool Empty() const { return size_.load(std::memory_order_acquire) == 0; }
