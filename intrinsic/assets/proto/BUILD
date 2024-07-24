@@ -259,3 +259,38 @@ go_grpc_library(
         "@org_golang_google_protobuf//types/known/anypb",
     ],
 )
+
+proto_library(
+    name = "installed_assets_proto",
+    srcs = ["installed_assets.proto"],
+    visibility = [
+        "//intrinsic/kubernetes/api_relay:__subpackages__",
+    ],
+    deps = [
+        ":asset_type_proto",
+        ":id_proto",
+        ":metadata_proto",
+    ],
+)
+
+go_proto_library(
+    name = "installed_assets_go_proto",
+    go_deps = [
+        ":asset_type_go_proto",
+        ":id_go_proto",
+        ":metadata_go_proto",
+    ],
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":installed_assets_proto"],
+)
+
+go_grpc_library(
+    name = "installed_assets_go_grpc_proto",
+    srcs = [":installed_assets_proto"],
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [
+        ":asset_type_go_proto",
+        ":id_go_proto",
+        ":metadata_go_proto",
+    ],
+)
