@@ -1,0 +1,60 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.solution.v1;
+
+import "intrinsic/executive/proto/behavior_tree.proto";
+
+// Manages processes in the running solution.
+service ProcessesService {
+  // Gets a single behavior tree from the running solution.
+  rpc GetBehaviorTree(GetBehaviorTreeRequest)
+      returns (intrinsic_proto.executive.BehaviorTree);
+
+  // Lists behavior trees from the running solution.
+  rpc ListBehaviorTrees(ListBehaviorTreesRequest)
+      returns (ListBehaviorTreesResponse);
+}
+
+message GetBehaviorTreeRequest {
+  // The name of the behavior tree to retrieve.
+  string name = 1;
+}
+
+message ListBehaviorTreesRequest {
+  // The maximum number of behavior trees to return. The service may return
+  // fewer than this value. If unspecified, at most 20 behavior trees will be
+  // returned. The maximum value is 50; values above 50 will be coerced to 50.
+  int32 page_size = 1;
+
+  // Page token received from a previous call. Provide this to retrieve the next
+  // page. When paginating, all other parameters must match the call that
+  // provided the page token.
+  string page_token = 2;
+
+  // The view of the behavior tree to return. Defaults to the BASIC view.
+  BehaviorTreeView view = 3;
+}
+
+message ListBehaviorTreesResponse {
+  // The behavior trees from the running solution. The order of behavior trees
+  // is undefined and must not be relied on.
+  repeated intrinsic_proto.executive.BehaviorTree behavior_trees = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page. If
+  // this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+enum BehaviorTreeView {
+  // The default/unset value. The API will default to the BASIC view.
+  BEHAVIOR_TREE_VIEW_UNSPECIFIED = 0;
+
+  // Include basic metadata about the behavior tree (`name` and `tree_id`). This
+  // is the default view for `ListBehaviorTrees`.
+  BEHAVIOR_TREE_VIEW_BASIC = 1;
+
+  // Include the full contents of the behavior tree.
+  BEHAVIOR_TREE_VIEW_FULL = 2;
+}
