@@ -5,6 +5,7 @@
 import io
 from typing import Optional, Tuple, Type, Union
 
+from intrinsic.perception.proto import dimensions_pb2
 from intrinsic.perception.proto import image_buffer_pb2
 import numpy as np
 from PIL import Image
@@ -35,7 +36,7 @@ def _image_buffer_data_type(
     raise ValueError(f"Data type not supported: {data_type}.")
 
 
-def _image_buffer_encoding(
+def image_buffer_encoding(
     image_buffer: image_buffer_pb2.ImageBuffer,
 ) -> Optional[str]:
   """Returns the encoding of the given image buffer."""
@@ -54,10 +55,26 @@ def _image_buffer_encoding(
     )
 
 
+def _get_image_buffer_encoding(
+    encoding: Optional[str],
+) -> image_buffer_pb2.Encoding:
+  """Returns the encoding of the given image buffer."""
+  if encoding is None:
+    return image_buffer_pb2.ENCODING_UNSPECIFIED
+  elif encoding == "JPEG":
+    return image_buffer_pb2.ENCODING_JPEG
+  elif encoding == "PNG":
+    return image_buffer_pb2.ENCODING_PNG
+  elif encoding == "WEBP":
+    return image_buffer_pb2.ENCODING_WEBP
+  else:
+    raise ValueError(f"Encoding not supported: {encoding}.")
+
+
 def _image_buffer_decoded(
     image_buffer: image_buffer_pb2.ImageBuffer,
 ) -> np.ndarray:
-  encoding = _image_buffer_encoding(image_buffer)
+  encoding = image_buffer_encoding(image_buffer)
   if encoding is None:
     return np.frombuffer(
         image_buffer.data, dtype=_image_buffer_data_type(image_buffer)
@@ -94,6 +111,74 @@ def _image_buffer_size(
       * image_buffer.dimensions.cols
       * image_buffer.num_channels
   )
+
+
+def serialize_image_buffer(
+    image_array: np.ndarray,
+    encoding: Optional[str] = None,
+    pixel_type: image_buffer_pb2.PixelType = image_buffer_pb2.PixelType.PIXEL_INTENSITY,
+    packing_type: image_buffer_pb2.PackingType = image_buffer_pb2.PackingType.PACKING_TYPE_INTERLEAVED,
+) -> image_buffer_pb2.ImageBuffer:
+  """Serializes image provided as a numpy array to the ImageBuffer proto format.
+
+  Args:
+    image_array: The image to serialize.
+    encoding: The encoding to use for the image.
+    pixel_type: The pixel type of the image.
+    packing_type: The packing type of the image.
+
+  Returns:
+    The serialized image buffer proto.
+
+  Raises:
+    ValueError if the buffer size is invalid.
+  """
+  if image_array.dtype == np.uint8:
+    data_type = image_buffer_pb2.DataType.TYPE_8U
+  elif image_array.dtype == np.uint16:
+    data_type = image_buffer_pb2.DataType.TYPE_16U
+  elif image_array.dtype == np.uint32:
+    data_type = image_buffer_pb2.DataType.TYPE_32U
+  elif image_array.dtype == np.int8:
+    data_type = image_buffer_pb2.DataType.TYPE_8S
+  elif image_array.dtype == np.int16:
+    data_type = image_buffer_pb2.DataType.TYPE_16S
+  elif image_array.dtype == np.int32:
+    data_type = image_buffer_pb2.DataType.TYPE_32S
+  elif image_array.dtype == np.float32:
+    data_type = image_buffer_pb2.DataType.TYPE_32F
+  elif image_array.dtype == np.float64:
+    data_type = image_buffer_pb2.DataType.TYPE_64F
+  else:
+    raise ValueError(f"Data type not supported: {image_array.dtype}.")
+
+  if encoding is None:
+    buffer = image_array.tobytes()
+  else:
+    image = Image.fromarray(image_array)
+    image_bytes = io.BytesIO()
+    image.save(image_bytes, format=encoding)
+    buffer = image_bytes.getvalue()
+
+  if pixel_type == image_buffer_pb2.PixelType.PIXEL_POINT:
+    num_channels = 3
+  elif len(image_array.shape) == 3:
+    num_channels = image_array.shape[2]
+  else:
+    num_channels = 1
+
+  image_buffer = image_buffer_pb2.ImageBuffer(
+      data=buffer,
+      dimensions=dimensions_pb2.Dimensions(
+          cols=image_array.shape[1], rows=image_array.shape[0]
+      ),
+      type=data_type,
+      encoding=_get_image_buffer_encoding(encoding),
+      num_channels=num_channels,
+      packing_type=packing_type,
+  )
+
+  return image_buffer
 
 
 def deserialize_image_buffer(

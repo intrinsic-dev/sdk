@@ -14,6 +14,7 @@ py_library(
     name = "image_utils",
     srcs = ["image_utils.py"],
     deps = [
+        "//intrinsic/perception/proto:dimensions_py_pb2",
         "//intrinsic/perception/proto:image_buffer_py_pb2",
         requirement("pillow"),
         requirement("numpy"),
