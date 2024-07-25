@@ -3,7 +3,6 @@
 #include "intrinsic/skills/internal/runtime_data.h"
 
 #include <iterator>
-#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -34,13 +33,18 @@ namespace {}  // namespace
 ParameterData::ParameterData(const google::protobuf::Any& default_value)
     : default_(default_value) {}
 
-ExecutionOptions::ExecutionOptions(bool supports_cancellation)
-    : supports_cancellation_(supports_cancellation) {}
-
-ExecutionOptions::ExecutionOptions(bool supports_cancellation,
-                                   absl::Duration cancellation_ready_timeout)
-    : supports_cancellation_(supports_cancellation),
-      cancellation_ready_timeout_(cancellation_ready_timeout) {}
+ExecutionOptions::ExecutionOptions(
+    bool supports_cancellation,
+    std::optional<absl::Duration> cancellation_ready_timeout,
+    std::optional<absl::Duration> execution_timeout)
+    : supports_cancellation_(supports_cancellation) {
+  if (cancellation_ready_timeout.has_value()) {
+    cancellation_ready_timeout_ = *cancellation_ready_timeout;
+  }
+  if (execution_timeout.has_value()) {
+    execution_timeout_ = *execution_timeout;
+  }
+}
 
 ResourceData::ResourceData(
     const absl::flat_hash_map<std::string,
@@ -71,6 +75,21 @@ SkillRuntimeData::SkillRuntimeData(const ParameterData& parameter_data,
 
 absl::StatusOr<SkillRuntimeData> GetRuntimeDataFrom(
     const intrinsic_proto::skills::SkillServiceConfig& skill_service_config) {
+  std::optional<absl::Duration> cancellation_ready_timeout;
+  if (skill_service_config.execution_service_options()
+          .has_cancellation_ready_timeout()) {
+    cancellation_ready_timeout =
+        ToAbslDuration(skill_service_config.execution_service_options()
+                           .cancellation_ready_timeout());
+  }
+
+  std::optional<absl::Duration> execution_timeout;
+  if (skill_service_config.execution_service_options()
+          .has_execution_timeout()) {
+    execution_timeout = ToAbslDuration(
+        skill_service_config.execution_service_options().execution_timeout());
+  }
+
   return SkillRuntimeData(
       skill_service_config.skill_description()
               .parameter_description()
@@ -80,17 +99,10 @@ absl::StatusOr<SkillRuntimeData> GetRuntimeDataFrom(
                               .default_value())
           : ParameterData(),
       ReturnTypeData(),
-      skill_service_config.execution_service_options()
-              .has_cancellation_ready_timeout()
-          ? ExecutionOptions(
-                skill_service_config.skill_description()
-                    .execution_options()
-                    .supports_cancellation(),
-                ToAbslDuration(skill_service_config.execution_service_options()
-                                   .cancellation_ready_timeout()))
-          : ExecutionOptions(skill_service_config.skill_description()
-                                 .execution_options()
-                                 .supports_cancellation()),
+      ExecutionOptions(skill_service_config.skill_description()
+                           .execution_options()
+                           .supports_cancellation(),
+                       cancellation_ready_timeout, execution_timeout),
       ResourceData({skill_service_config.skill_description()
                         .resource_selectors()
                         .begin(),

@@ -17,8 +17,8 @@
 #include "absl/time/time.h"
 #include "absl/types/span.h"
 #include "google/protobuf/any.pb.h"
-#include "google/protobuf/descriptor.h"
 #include "intrinsic/assets/proto/status_spec.pb.h"
+#include "intrinsic/skills/cc/client_common.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/skill_service_config.pb.h"
 
@@ -57,9 +57,9 @@ class ReturnTypeData {
 class ExecutionOptions {
  public:
   ExecutionOptions() = default;
-  explicit ExecutionOptions(bool supports_cancellation);
   ExecutionOptions(bool supports_cancellation,
-                   absl::Duration cancellation_ready_timeout);
+                   std::optional<absl::Duration> cancellation_ready_timeout,
+                   std::optional<absl::Duration> execution_timeout);
 
   ExecutionOptions(const ExecutionOptions& other) = default;
   ExecutionOptions& operator=(const ExecutionOptions& other) = default;
@@ -71,9 +71,12 @@ class ExecutionOptions {
     return cancellation_ready_timeout_;
   }
 
+  absl::Duration GetExecutionTimeout() const { return execution_timeout_; }
+
  private:
   bool supports_cancellation_ = false;
   absl::Duration cancellation_ready_timeout_ = absl::Seconds(30);
+  absl::Duration execution_timeout_ = skills::kClientDefaultTimeout;
 };
 
 // Contains data about resources for a skill that are relevant to the

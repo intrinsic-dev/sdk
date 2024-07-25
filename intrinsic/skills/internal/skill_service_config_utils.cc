@@ -70,6 +70,10 @@ GetSkillServiceConfigFromManifest(
          ->mutable_cancellation_ready_timeout() =
         manifest.options().cancellation_ready_timeout();
   }
+  if (manifest.options().has_execution_timeout()) {
+    *service_config.mutable_execution_service_options()
+         ->mutable_execution_timeout() = manifest.options().execution_timeout();
+  }
 
   *service_config.mutable_status_info() = manifest.status_info();
 
@@ -94,6 +98,10 @@ GetSkillServiceConfigFromManifest(
     *service_config.mutable_execution_service_options()
          ->mutable_cancellation_ready_timeout() =
         manifest.options().cancellation_ready_timeout();
+  }
+  if (manifest.options().has_execution_timeout()) {
+    *service_config.mutable_execution_service_options()
+         ->mutable_execution_timeout() = manifest.options().execution_timeout();
   }
 
   *service_config.mutable_status_info() = manifest.status_info();

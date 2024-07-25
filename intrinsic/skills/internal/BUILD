@@ -319,6 +319,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//intrinsic/assets/proto:status_spec_cc_proto",
+        "//intrinsic/skills/cc:client_common",
         "//intrinsic/skills/proto:equipment_cc_proto",
         "//intrinsic/skills/proto:skill_service_config_cc_proto",
         "//intrinsic/skills/proto:skills_cc_proto",
@@ -479,7 +480,6 @@ cc_library(
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/motion_planning:motion_planner_client",
         "//intrinsic/motion_planning/proto:motion_planner_service_cc_grpc_proto",
-        "//intrinsic/skills/cc:client_common",
         "//intrinsic/skills/cc:equipment_pack",
         "//intrinsic/skills/cc:skill_canceller",
         "//intrinsic/skills/cc:skill_interface",

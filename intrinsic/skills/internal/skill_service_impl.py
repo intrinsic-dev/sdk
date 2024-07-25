@@ -920,7 +920,9 @@ class _SkillOperation:
         timeout.
     """
     if timeout is None:
-      timeout = DEFAULT_TIMEOUT
+      timeout = (
+          self._runtime_data.execution_options.execution_timeout.total_seconds()
+      )
 
     if not self._finished_event.wait(timeout=timeout):
       raise TimeoutError(

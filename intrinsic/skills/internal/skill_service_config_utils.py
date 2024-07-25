@@ -53,6 +53,10 @@ def get_skill_service_config_from_manifest(
     service_config.execution_service_options.cancellation_ready_timeout.CopyFrom(
         manifest.options.cancellation_ready_timeout
     )
+  if manifest.options.HasField("execution_timeout"):
+    service_config.execution_service_options.execution_timeout.CopyFrom(
+        manifest.options.execution_timeout
+    )
 
   service_config.status_info.extend(manifest.status_info)
 

@@ -88,9 +88,8 @@ message PubTopicMetadata {
 }
 
 message Options {
-  // Describes whether the skill supports cooperative cancellation during
-  // execution. Set to true if the skill supports cancellation, set to false
-  // otherwise.
+  // Indicates whether the skill supports cooperative cancellation during
+  // execution. True if the skill supports cancellation, false otherwise.
   bool supports_cancellation = 1;
 
   // Sets the cancellation ready time for the skill during execution.
@@ -99,9 +98,15 @@ message Options {
   // at most this timeout duration for the skill to have called
   // Ready() (C++) or ready() (Python) before raising a timeout error.
   //
-  // If this is not specified, then the default used by the skill execution
+  // If this timeout is not specified, then the default used by the skill
   // service is 30 seconds.
   google.protobuf.Duration cancellation_ready_timeout = 2;
+
+  // Sets the execution timeout for the skill.
+  //
+  // If this timeout is not specified, then the default used by the skill
+  // service is 180 seconds.
+  google.protobuf.Duration execution_timeout = 3;
 
   // Language-specific configuration options.
   oneof language_specific_options {

@@ -48,15 +48,17 @@ class ExecutionOptions:
   """Execution options for a skill that are relevant to the skill services.
 
   Attributes:
-    supports_cancellation: True, if the skill supports cancellation.
     cancellation_ready_timeout: The amount of time the skill has to prepare for
       cancellation.
+    execution_timeout: The execution timeout for the skill.
+    supports_cancellation: True, if the skill supports cancellation.
   """
 
-  supports_cancellation: bool = False
   cancellation_ready_timeout: datetime.timedelta = datetime.timedelta(
       seconds=30
   )
+  execution_timeout: datetime.timedelta = datetime.timedelta(seconds=180)
+  supports_cancellation: bool = False
 
 
 @dataclasses.dataclass(frozen=True)
@@ -122,24 +124,34 @@ def get_runtime_data_from(
   """
   # pyformat: enable
 
+  execution_service_options_kwargs = {}
   if skill_service_config.execution_service_options.HasField(
       'cancellation_ready_timeout'
   ):
     duration_proto = (
         skill_service_config.execution_service_options.cancellation_ready_timeout
     )
-    timeout = datetime.timedelta(
+    execution_service_options_kwargs['cancellation_ready_timeout'] = (
+        datetime.timedelta(
+            seconds=duration_proto.seconds,
+            milliseconds=(duration_proto.nanos / 1e6),
+        )
+    )
+  if skill_service_config.execution_service_options.HasField(
+      'execution_timeout'
+  ):
+    duration_proto = (
+        skill_service_config.execution_service_options.execution_timeout
+    )
+    execution_service_options_kwargs['execution_timeout'] = datetime.timedelta(
         seconds=duration_proto.seconds,
-        milliseconds=(duration_proto.nanos / 1e-6),
+        milliseconds=(duration_proto.nanos / 1e6),
     )
-    execute_opts = ExecutionOptions(
-        skill_service_config.skill_description.execution_options.supports_cancellation,
-        timeout,
-    )
-  else:
-    execute_opts = ExecutionOptions(
-        skill_service_config.skill_description.execution_options.supports_cancellation
-    )
+
+  execute_opts = ExecutionOptions(
+      supports_cancellation=skill_service_config.skill_description.execution_options.supports_cancellation,
+      **execution_service_options_kwargs,
+  )
 
   resource_data = dict(
       skill_service_config.skill_description.resource_selectors

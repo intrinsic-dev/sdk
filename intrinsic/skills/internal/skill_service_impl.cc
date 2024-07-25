@@ -30,7 +30,6 @@
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
-#include "intrinsic/skills/cc/client_common.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/cc/skill_logging_context.h"
@@ -278,8 +277,8 @@ absl::Status SkillOperation::RequestCancellation() {
 
 absl::StatusOr<google::longrunning::Operation> SkillOperation::WaitExecution(
     std::optional<absl::Duration> timeout) {
-  absl::Duration resolved_timeout =
-      timeout.value_or(skills::kClientDefaultTimeout);
+  absl::Duration resolved_timeout = timeout.value_or(
+      runtime_data_.GetExecutionOptions().GetExecutionTimeout());
   absl::Time deadline = absl::Now() + resolved_timeout;
   if (!finished_notification_.WaitForNotificationWithDeadline(deadline)) {
     return absl::DeadlineExceededError(

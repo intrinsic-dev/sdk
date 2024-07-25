@@ -17,6 +17,9 @@ message PythonSkillServiceConfig {
 message ExecutionServiceOptions {
   // The amount of time a skill has to prepare for cancellation.
   google.protobuf.Duration cancellation_ready_timeout = 2;
+
+  // A custom execution timeout for the skill.
+  optional google.protobuf.Duration execution_timeout = 3;
 }
 
 message SkillServiceConfig {
