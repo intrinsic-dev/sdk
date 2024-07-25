@@ -6,8 +6,8 @@ package intrinsic_proto.solution.v1;
 
 import "intrinsic/executive/proto/behavior_tree.proto";
 
-// Manages processes in the running solution.
-service ProcessesService {
+// Manages the running solution.
+service SolutionService {
   // Gets a single behavior tree from the running solution.
   rpc GetBehaviorTree(GetBehaviorTreeRequest)
       returns (intrinsic_proto.executive.BehaviorTree);
