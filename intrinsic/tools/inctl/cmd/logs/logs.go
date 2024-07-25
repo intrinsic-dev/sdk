@@ -16,22 +16,21 @@ import (
 	"intrinsic/assets/idutils"
 	srvpb "intrinsic/assets/services/proto/service_manifest_go_proto"
 	sklpb "intrinsic/skills/proto/skill_manifest_go_proto"
-	"intrinsic/skills/tools/skill/cmd/dialerutil"
-	"intrinsic/skills/tools/skill/cmd/solutionutil"
 	"intrinsic/tools/inctl/cmd/root"
 )
 
 const (
-	keyFollow       = "follow"
-	keyPrefixType   = "prefix_type"
-	keyPrefixID     = "prefix_id"
-	keySinceSec     = "since"
-	keyTailLines    = "tail"
-	keyTimestamps   = "timestamps"
-	keyTypeService  = "service"
-	keyTypeSkill    = "skill"
-	keyTypeResource = "resource"
-	keyHiddenDebug  = "debug"
+	keyFollow        = "follow"
+	keyPrefixType    = "prefix_type"
+	keyPrefixID      = "prefix_id"
+	keySinceSec      = "since"
+	keyTailLines     = "tail"
+	keyTimestamps    = "timestamps"
+	keyTypeService   = "service"
+	keyTypeSkill     = "skill"
+	keyTypeResource  = "resource"
+	keyHiddenDebug   = "debug"
+	keyOnpremAddress = "onprem_address"
 )
 
 var (
@@ -59,47 +58,18 @@ func runLogsCmd(cmd *cobra.Command, args []string) error {
 	verboseDebug = cmdFlags.GetBool(keyHiddenDebug)
 	verboseOut = cmd.OutOrStderr()
 
-	context := cmdFlags.GetString(cmdutils.KeyContext)
-	project := cmdFlags.GetFlagProject()
-	org := cmdFlags.GetFlagOrganization()
-
-	var serverAddr string
-	if context == "minikube" {
-		serverAddr = localhostURL
-		project = ""
-	} else {
-		serverAddr = fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", project)
-	}
-
-	solution := cmdFlags.GetString(cmdutils.KeySolution)
-	ctx, conn, err := dialerutil.DialConnectionCtx(cmd.Context(), dialerutil.DialInfoParams{
-		Address:  serverAddr,
-		CredName: project,
-		CredOrg:  org,
-	})
-	if err != nil {
-		return fmt.Errorf("could not create connection: %v", err)
-	}
-	defer conn.Close()
-
-	cluster, err := solutionutil.GetClusterNameFromSolutionOrDefault(
-		ctx,
-		conn,
-		solution,
-		context,
-	)
-	if err != nil {
-		return fmt.Errorf("could not resolve solution to cluster: %s", err)
-	}
-
 	params := &cmdParams{
-		frontendURL: createFrontendURL(project, cluster),
-		follow:      cmdFlags.GetBool(keyFollow),
-		timestamps:  cmdFlags.GetBool(keyTimestamps),
-		tailLines:   cmdFlags.GetInt(keyTailLines),
-		projectName: project,
+		follow:        cmdFlags.GetBool(keyFollow),
+		timestamps:    cmdFlags.GetBool(keyTimestamps),
+		tailLines:     cmdFlags.GetInt(keyTailLines),
+		projectName:   cmdFlags.GetString(cmdutils.KeyProject),
+		context:       cmdFlags.GetString(cmdutils.KeyContext),
+		solution:      cmdFlags.GetString(cmdutils.KeySolution),
+		org:           cmdFlags.GetFlagOrganization(),
+		onpremAddress: cmdFlags.GetString(keyOnpremAddress),
 	}
 
+	var err error
 	if params.resourceType, err = getResourceType(); err != nil {
 		return err
 	}
@@ -108,7 +78,7 @@ func runLogsCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return readLogsFromSolution(ctx, params, cmd.OutOrStdout())
+	return readLogsFromSolution(cmd.Context(), params, cmd.OutOrStdout())
 }
 
 func getResourceID(resType resourceType, target string) (string, error) {
@@ -184,6 +154,9 @@ func init() {
 	cmdFlags.OptionalBool(keyTypeService, false, "Indicates logs source is the service")
 
 	cmdFlags.OptionalBool(keyHiddenDebug, false, "Prints extensive debug messages")
+
+	// For using the onprem address to fetch logs
+	cmdFlags.OptionalString(keyOnpremAddress, "", "The onprem address (host:port) of the workcell. Used to circumvent the need of routing through the cloud, if the workcell is running in the same network as the inctl")
 
 	cmdFlags.MarkHidden(cmdutils.KeyContext, cmdutils.KeyProject, keyTypeResource)
 	showLogs.MarkFlagsMutuallyExclusive(keyTypeSkill, keyTypeService)

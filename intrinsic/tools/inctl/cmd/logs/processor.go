@@ -13,6 +13,8 @@ import (
 	"path"
 	"time"
 
+	"intrinsic/skills/tools/skill/cmd/dialerutil"
+	"intrinsic/skills/tools/skill/cmd/solutionutil"
 	"intrinsic/tools/inctl/auth"
 )
 
@@ -34,21 +36,108 @@ var (
 	verboseOut   io.Writer = os.Stderr
 )
 
-type bodyReader = func(context.Context, io.Reader) (string, error)
+type endpoint struct {
+	url       *url.URL
+	xsrfToken string
+	authToken *auth.ProjectToken
+}
 
-func createFrontendURL(projectName string, clusterName string) url.URL {
-	var frontendURL url.URL
-	if projectName == "" {
-		frontendURL = url.URL{Host: localhostURL, Path: "frontend/api", Scheme: "http"}
+func getClusterName(ctx context.Context, params *cmdParams) (string, error) {
+	serverAddr := fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", params.projectName)
+	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
+		Address:  serverAddr,
+		CredName: params.projectName,
+		CredOrg:  params.org,
+	})
+	if err != nil {
+		return "", fmt.Errorf("could not create connection: %v", err)
+	}
+	defer conn.Close()
+
+	cluster, err := solutionutil.GetClusterNameFromSolutionOrDefault(
+		ctx,
+		conn,
+		params.solution,
+		params.context,
+	)
+	if err != nil {
+		return "", fmt.Errorf("could not resolve solution to cluster: %s", err)
+	}
+	return cluster, nil
+}
+
+// createEndpoint creates an endpoint for fetching logs. The endpoint contains the URL, XSRF token,
+// and auth token required to fetch logs. The endpoint is different depending on whether the user
+// is fetching logs from a local minikube route, a local onprem cluster via local IP route, or workcells/VMs via a cloud route.
+func createEndpoint(ctx context.Context, params *cmdParams) (*endpoint, error) {
+	var xsrfTokenURL *url.URL
+	var authToken *auth.ProjectToken
+	var localAddress string
+	var clusterName string
+
+	if params.context == "minikube" { // minikube local route
+		localAddress = localhostURL
+	} else if params.onpremAddress != "" { // onprem local route
+		localAddress = params.onpremAddress
+	} else { // cloud route
+		var err error
+		clusterName, err = getClusterName(ctx, params)
+		if err != nil {
+			return nil, fmt.Errorf("could not resolve solution to cluster: %w", err)
+		}
+	}
+
+	if localAddress == "" {
+		xsrfTokenURL = &url.URL{
+			Host:   fmt.Sprintf("www.endpoints.%s.cloud.goog", params.projectName),
+			Path:   fmt.Sprintf("frontend/client/%s/api/token", clusterName),
+			Scheme: "https",
+		}
+		var err error
+		authToken, err = getAuthToken(params.projectName)
+		if err != nil {
+			return nil, err
+		}
 	} else {
-		frontendURL = url.URL{
-			Host:   fmt.Sprintf("www.endpoints.%s.cloud.goog", projectName),
-			Path:   fmt.Sprintf("frontend/client/%s/api", clusterName),
+		xsrfTokenURL = &url.URL{
+			Host:   localAddress,
+			Path:   "frontend/api/token",
+			Scheme: "http",
+		}
+	}
+
+	xsrfToken, err := callEndpoint(ctx, http.MethodGet, xsrfTokenURL, authToken, nil, nil,
+		func(_ context.Context, body io.Reader) (string, error) {
+			token, err := io.ReadAll(body)
+			return string(token), err
+		})
+	if err != nil {
+		return nil, fmt.Errorf("could not obtain xsrf token: %w", err)
+	}
+
+	var logsURL *url.URL
+	if localAddress != "" {
+		logsURL = &url.URL{
+			Host:   localAddress,
+			Path:   "frontend/api/consoleLogs",
+			Scheme: "http",
+		}
+	} else {
+		logsURL = &url.URL{
+			Host:   fmt.Sprintf("www.endpoints.%s.cloud.goog", params.projectName),
+			Path:   fmt.Sprintf("frontend/client/%s/api/consoleLogs", clusterName),
 			Scheme: "https",
 		}
 	}
-	return frontendURL
+
+	return &endpoint{
+		url:       logsURL,
+		xsrfToken: xsrfToken,
+		authToken: authToken,
+	}, nil
 }
+
+type bodyReader = func(context.Context, io.Reader) (string, error)
 
 type resourceType int
 
@@ -59,35 +148,26 @@ const (
 )
 
 type cmdParams struct {
-	resourceType resourceType
-	resourceID   string
-	frontendURL  url.URL
-	follow       bool
-	timestamps   bool
-	tailLines    int
-	projectName  string
-	sinceSeconds string
+	resourceType  resourceType
+	resourceID    string
+	follow        bool
+	timestamps    bool
+	tailLines     int
+	projectName   string
+	sinceSeconds  string
+	onpremAddress string
+	context       string
+	solution      string
+	org           string
 }
 
 func readLogsFromSolution(ctx context.Context, params *cmdParams, w io.Writer) error {
-	verboseOut.Write([]byte(fmt.Sprintf("%s\n", params.frontendURL.Path)))
-	tokenURL := params.frontendURL
-	tokenURL.Path = path.Join(tokenURL.EscapedPath(), "token")
-	authToken, err := getAuthToken(params.projectName)
+	endpoint, err := createEndpoint(ctx, params)
 	if err != nil {
 		return err
 	}
 
-	xsrfToken, err := callEndpoint(ctx, http.MethodGet, &tokenURL, authToken, nil, nil,
-		func(_ context.Context, body io.Reader) (string, error) {
-			token, err := io.ReadAll(body)
-			return string(token), err
-		})
-	if err != nil {
-		return fmt.Errorf("could not obtain xsrf token: %w", err)
-	}
-
-	consoleLogsURL := params.frontendURL
+	consoleLogsURL := endpoint.url
 	consoleLogsURL.Path = path.Join(consoleLogsURL.EscapedPath(), "consoleLogs")
 	consoleLogsQuery := setResourceID(params.resourceType, params.resourceID)
 	if params.follow {
@@ -110,9 +190,9 @@ func readLogsFromSolution(ctx context.Context, params *cmdParams, w io.Writer) e
 
 	consoleLogsURL.RawQuery = consoleLogsQuery.Encode()
 
-	xsrfHeader := http.Header{"X-XSRF-TOKEN": []string{xsrfToken}}
+	xsrfHeader := http.Header{"X-XSRF-TOKEN": []string{endpoint.xsrfToken}}
 
-	_, err = callEndpoint(ctx, http.MethodGet, &consoleLogsURL, authToken, xsrfHeader, nil,
+	_, err = callEndpoint(ctx, http.MethodGet, consoleLogsURL, endpoint.authToken, xsrfHeader, nil,
 		func(_ context.Context, body io.Reader) (string, error) {
 			if _, err := io.Copy(w, body); err != nil {
 				return "", fmt.Errorf("error reading/writing logs: %w", err)
