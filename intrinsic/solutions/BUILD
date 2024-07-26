@@ -30,6 +30,7 @@ py_library(
         "//intrinsic/solutions/internal:actions",
         "//intrinsic/solutions/internal:skill_generation",
         "//intrinsic/solutions/internal:skill_utils",
+        "//intrinsic/util/status:extended_status_py_pb2",
         "//intrinsic/world/proto:object_world_refs_py_pb2",
         "//intrinsic/world/python:object_world_resources",
         "@com_google_protobuf//:protobuf_python",

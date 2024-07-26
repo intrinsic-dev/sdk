@@ -1442,6 +1442,83 @@ class BehaviorTreeVisitorTest(absltest.TestCase):
     )
 
 
+class BehaviorTreeNodeOnFailureTest(absltest.TestCase):
+  """Tests BehaviorTree.Node extended status decorator support."""
+
+  def test_emit_extended_status(self):
+    """Tests if BehaviorTree.Decorator.on_failure is correctly constructed."""
+    node = bt.Sequence()
+    node.on_failure.emit_extended_status(
+        'ai.intrinsic.testing',
+        4567,
+        external_report_message='ext message',
+        internal_report_message='int message',
+        title='My title',
+        to_blackboard_key='blackboard_foo',
+    )
+
+    node_proto = text_format.Parse(
+        """
+        decorators {
+          on_failure {
+            emit_extended_status {
+              to_blackboard_key: "blackboard_foo"
+              extended_status {
+                status_code {
+                  component: "ai.intrinsic.testing"
+                  code: 4567
+                }
+                title: "My title"
+                external_report {
+                  message: "ext message"
+                }
+                internal_report {
+                  message: "int message"
+                }
+              }
+            }
+          }
+        }
+        sequence {}
+        """,
+        behavior_tree_pb2.BehaviorTree.Node(),
+    )
+
+    compare.assertProto2Equal(self, node.proto, node_proto)
+
+  def test_reads_failure_settings(self):
+    """Tests if BehaviorTree.Decorator.on_failure is read correctly."""
+    node_proto = text_format.Parse(
+        """
+        decorators {
+          on_failure {
+            emit_extended_status {
+              to_blackboard_key: "blackboard_foo"
+              extended_status {
+                status_code {
+                  component: "ai.intrinsic.testing"
+                  code: 4567
+                }
+                title: "My title"
+                external_report {
+                  message: "ext message"
+                }
+                internal_report {
+                  message: "int message"
+                }
+              }
+            }
+          }
+        }
+        sequence {}
+        """,
+        behavior_tree_pb2.BehaviorTree.Node(),
+    )
+    node = bt.Node.create_from_proto(node_proto)
+
+    compare.assertProto2Equal(self, node.proto, node_proto)
+
+
 class BehaviorTreeTaskTest(absltest.TestCase):
   """Tests the method functions of BehaviorTree.Task."""
 
@@ -4074,6 +4151,67 @@ class BehaviorTreeNotConditionTest(absltest.TestCase):
     condition_proto = behavior_tree_pb2.BehaviorTree.Condition()
     not_proto = getattr(condition_proto, 'not')
     not_proto.blackboard.cel_expression = 'foo'
+
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
+    compare.assertProto2Equal(
+        self,
+        bt.Condition.create_from_proto(condition_proto).proto,
+        condition_proto,
+    )
+
+
+class BehaviorTreeExtendedStatusMatchConditionTest(absltest.TestCase):
+  """Tests the method functions of BehaviorTree.ExtendedStatusMatch."""
+
+  def test_init(self):
+    """Tests if BehaviorTree.AnyOf is correctly constructed."""
+    condition = bt.ExtendedStatusMatch(
+        'blackboard_x',
+        bt.ExtendedStatusMatch.MatchStatusCode('ai.intrinsic.testing', 2345),
+    )
+    condition_proto = behavior_tree_pb2.BehaviorTree.Condition()
+    status_match_proto = getattr(condition_proto, 'status_match')
+    status_match_proto.blackboard_key = 'blackboard_x'
+    status_match_proto.status_code.component = 'ai.intrinsic.testing'
+    status_match_proto.status_code.code = 2345
+    compare.assertProto2Equal(self, condition.proto, condition_proto)
+
+  def test_str_conversion(self):
+    """Tests if conversion to string works."""
+    condition = bt.ExtendedStatusMatch(
+        'blackboard_x',
+        bt.ExtendedStatusMatch.MatchStatusCode('ai.intrinsic.testing', 2345),
+    )
+    self.assertEqual(
+        str(condition),
+        'ExtendedStatusMatch("blackboard_x",'
+        ' ExtendedStatusMatch.MatchStatusCode("ai.intrinsic.testing",'
+        ' 2345))',
+    )
+
+  def test_create_from_proto_prevents_accidental_call_from_subclass(self):
+    """create_from_proto should only be called on the base Condition."""
+    condition_proto = behavior_tree_pb2.BehaviorTree.Condition()
+    status_match_proto = getattr(condition_proto, 'status_match')
+    status_match_proto.blackboard_key = 'foo'
+    status_match_proto.status_code.component = 'ai.intrinsic.testing'
+    status_match_proto.status_code.code = 2345
+    with self.assertRaises(TypeError):
+      bt.ExtendedStatusMatch.create_from_proto(condition_proto)
+    bt.Condition.create_from_proto(condition_proto)
+
+  def test_to_proto_and_from_proto(self):
+    """Tests if conversion to and from a proto representation works."""
+    condition = bt.ExtendedStatusMatch(
+        'blackboard_x',
+        bt.ExtendedStatusMatch.MatchStatusCode('ai.intrinsic.testing', 2345),
+    )
+
+    condition_proto = behavior_tree_pb2.BehaviorTree.Condition()
+    status_match_proto = getattr(condition_proto, 'status_match')
+    status_match_proto.blackboard_key = 'blackboard_x'
+    status_match_proto.status_code.component = 'ai.intrinsic.testing'
+    status_match_proto.status_code.code = 2345
 
     compare.assertProto2Equal(self, condition.proto, condition_proto)
     compare.assertProto2Equal(

@@ -43,6 +43,7 @@ from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
 from intrinsic.solutions.internal import skill_generation
 from intrinsic.solutions.internal import skill_utils
+from intrinsic.util.status import extended_status_pb2
 from intrinsic.world.proto import object_world_refs_pb2
 from intrinsic.world.python import object_world_resources
 
@@ -484,6 +485,14 @@ class Node(abc.ABC):
     user_data_protos: user data protos as dict key to Any protos.
   """
 
+  # This is the declaration of an expected member. We cannot initialize this
+  # here (would become a class variable), and we do not implement a constructor
+  # for the base class that initializes it (that would require for all
+  # sub-classes to invoke the super constructor, something we consider doing in
+  # the future). So on first access, in the on_failure property, we initialize
+  # this if not already set. This requires using hasattr in a few places.
+  _failure_settings: Node.FailureSettings | None
+
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
     return f'{type(self).__name__}({self._name_repr()})'
@@ -500,6 +509,116 @@ class Node(abc.ABC):
     if self.name is not None:
       name_snippet = f'name="{self.name}", '
     return name_snippet
+
+  class FailureSettings:
+    """Wrapper to configure failure settings for a node.
+
+    If any are set, will end up in the decorators of a node proto.
+    """
+
+    _settings: (
+        behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings | None
+    )
+
+    def __init__(
+        self,
+        settings_proto: (
+            behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings
+            | None
+        ) = None,
+    ):
+      self._settings = settings_proto
+
+    @property
+    def proto(
+        self,
+    ) -> behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings | None:
+      """Retrieves proto if any settings have been made.
+
+      Returns:
+        proto, if any settings set, None otherwise.
+      """
+      return self._settings
+
+    def emit_extended_status_proto(
+        self,
+        extended_status: extended_status_pb2.ExtendedStatus,
+        to_blackboard_key: str = '',
+    ) -> None:
+      """Causes an extended status to be emitted on node failure.
+
+      Args:
+        extended_status: the extended status to emit
+        to_blackboard_key: the blackboard key to emit the extended status to. If
+          empty, will not write extended status to a blackboard key (cannot be
+          used for status matches), but status will still be propagated.
+      """
+      if extended_status.HasField('status_code'):
+        if (
+            extended_status.status_code.code < 0
+            or extended_status.status_code.code > 0xFFFFFFFF
+        ):
+          raise ValueError(
+              f'Status code number {extended_status.status_code.code} out of'
+              f' range, must be in range [0..{int(0xffffffff)}]'
+          )
+
+      if self._settings is None:
+        self._settings = (
+            behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings()
+        )
+      self._settings.emit_extended_status.extended_status.CopyFrom(
+          extended_status
+      )
+      self._settings.emit_extended_status.to_blackboard_key = to_blackboard_key
+
+    def emit_extended_status(
+        self,
+        component: str,
+        code: int,
+        *,
+        title: str = '',
+        external_report_message: str = '',
+        internal_report_message: str = '',
+        to_blackboard_key: str = '',
+    ) -> None:
+      """Causes an extended status to be emitted on node failure.
+
+      Args:
+        component: Component for StatusCode where error originated.
+        code: Numeric code specific to component for StatusCode.
+        title: brief title of the error, make this meaningful and keep to a
+          length of 75 characters if possible.
+        external_report_message: if non-empty, set extended status external
+          report message to this string.
+        internal_report_message: if non-empty, set extended status internal
+          report message to this string. Only set this in an environment where
+          the data may be shared.
+        to_blackboard_key: the blackboard key to also write the extended status
+          to. If empty, will not write extended status to a blackboard key
+          (cannot be used for status matches), but status will still be
+          propagated.
+      """
+      es = extended_status_pb2.ExtendedStatus(
+          status_code=extended_status_pb2.StatusCode(
+              component=component, code=code
+          )
+      )
+      if title:
+        es.title = title
+      if external_report_message:
+        es.external_report.message = external_report_message
+      if internal_report_message:
+        es.internal_report.message = internal_report_message
+
+      self.emit_extended_status_proto(es, to_blackboard_key)
+
+    @classmethod
+    def create_from_proto(
+        cls,
+        proto_object: behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings,
+    ) -> Node.FailureSettings:
+      return cls(proto_object)
 
   @classmethod
   def create_from_proto(
@@ -539,11 +658,16 @@ class Node(abc.ABC):
       created_node = Debug._create_from_proto(proto_object.debug)
     else:
       raise TypeError('Unsupported proto node type', node_type)
-    # pylint:enable=protected-access
+
     if proto_object.HasField('decorators'):
       created_node.set_decorators(
           Decorators.create_from_proto(proto_object.decorators)
       )
+      if proto_object.decorators.HasField('on_failure'):
+        created_node._failure_settings = Node.FailureSettings.create_from_proto(
+            proto_object.decorators.on_failure
+        )
+
     if proto_object.HasField('user_data'):
       for k, m in proto_object.user_data.data_any.items():
         created_node.set_user_data_proto_from_any(k, m)
@@ -556,8 +680,9 @@ class Node(abc.ABC):
       #     the subclass that created_node is an instance of (i.e., all
       #     subclasses of Node).
       # (2) Intentionally writing protected attribute here
-      # pylint:disable=protected-access
       created_node._state = NodeState.from_proto(proto_object.state)
+
+    # pylint:enable=protected-access
     return created_node
 
   @property
@@ -576,6 +701,13 @@ class Node(abc.ABC):
     if self.user_data_protos:
       for k, m in self.user_data_protos.items():
         proto_message.user_data.data_any[k].CopyFrom(m)
+    if (
+        # The base class only specifies the type, therefore unless something has
+        # actually been set with the property this may not exist, yet.
+        hasattr(self, '_failure_settings')
+        and self._failure_settings is not None
+    ):
+      proto_message.decorators.on_failure.CopyFrom(self._failure_settings.proto)
 
     return proto_message
 
@@ -600,6 +732,13 @@ class Node(abc.ABC):
     )
     self.node_id = uid_32
     return self.node_id
+
+  @property
+  def on_failure(self) -> Node.FailureSettings:
+    """Sets extra settings for behavior on failure."""
+    if not hasattr(self, '_failure_settings'):
+      self._failure_settings = Node.FailureSettings()
+    return self._failure_settings
 
   @property
   @abc.abstractmethod
@@ -831,6 +970,10 @@ class Condition(abc.ABC):
       return AnyOf._create_from_proto(proto_object.any_of)
     elif condition_type == 'not':
       return Not._create_from_proto(getattr(proto_object, 'not'))
+    elif condition_type == 'status_match':
+      return ExtendedStatusMatch._create_from_proto(
+          getattr(proto_object, 'status_match')
+      )
     else:
       raise TypeError('Unsupported proto condition type', condition_type)
     # pylint:enable=protected-access
@@ -1142,6 +1285,138 @@ class Not(Condition):
     super().visit(containing_tree, callback)
     if self.condition is not None:
       self.condition.visit(containing_tree, callback)
+
+
+class ExtendedStatusMatch(Condition):
+  """A BT condition of type StatusMatch.
+
+  Implements matching an extended status stored in the blackboard.
+
+  Attributes:
+    proto: The proto representation of the condition.
+    condition_type: A string label of the condition type.
+  """
+
+  class StatusMatcherDeclaration(abc.ABC):
+    """Abstract base class to formulate expectations for status matchers.
+
+    A status matcher declaration enables to read and write status match types
+    from the FailureSettings proto. One implementation per supported match_type
+    is required.
+    """
+
+    @abc.abstractmethod
+    def update_proto(
+        self,
+        proto: behavior_tree_pb2.BehaviorTree.Condition.ExtendedStatusMatch,
+    ) -> None:
+      """Updates an ExtendedStatusMatch from the matcher's configuration."""
+      ...
+
+    @classmethod
+    @abc.abstractmethod
+    def create_from_proto(
+        cls,
+        proto: behavior_tree_pb2.BehaviorTree.Condition.ExtendedStatusMatch,
+    ) -> ExtendedStatusMatch.StatusMatcherDeclaration:
+      """Reads a matcher's configuration from an ExtendedStatusMatch proto.
+
+      Args:
+        proto: Proto to configure the matcher from.
+
+      Returns:
+        New matcher instance for given configuration.
+      """
+      ...
+
+  class MatchStatusCode(StatusMatcherDeclaration):
+    """Status matcher to match component and code."""
+
+    _proto: extended_status_pb2.StatusCode
+
+    def __init__(self, component: str, code: int):
+      if code < 0 or code > 0xFFFFFFFF:
+        raise ValueError(
+            f'Status code number {code} out of range, must be in range'
+            f' [0..{int(0xffffffff)}]'
+        )
+      self._proto = extended_status_pb2.StatusCode(
+          component=component, code=code
+      )
+
+    @classmethod
+    def create_from_proto(
+        cls,
+        proto: behavior_tree_pb2.BehaviorTree.Condition.ExtendedStatusMatch,
+    ) -> ExtendedStatusMatch.StatusMatcherDeclaration:
+      if not proto.HasField('status_code'):
+        # Should not happen, this would indicate an error in the caller
+        raise TypeError('No status code field in ExtendedStatusMatch')
+      return cls(proto.status_code.component, proto.status_code.code)
+
+    def update_proto(
+        self,
+        proto: behavior_tree_pb2.BehaviorTree.Condition.ExtendedStatusMatch,
+    ) -> None:
+      proto.status_code.CopyFrom(self._proto)
+
+    def __repr__(self) -> str:
+      return (
+          f'{type(self).__name__}("{self._proto.component}",'
+          f' {self._proto.code})'
+      )
+
+  _blackboard_key: str
+  _matcher: StatusMatcherDeclaration
+
+  def __init__(self, blackboard_key: str, matcher: MatchStatusCode):
+    self._blackboard_key = blackboard_key
+    self._matcher = matcher
+
+  def __repr__(self) -> str:
+    """Returns a compact, human-readable string representation."""
+    return (
+        f'{type(self).__name__}("{self._blackboard_key}",'
+        f' {type(self).__name__}.{self._matcher!r})'
+    )
+
+  @property
+  def proto(self) -> behavior_tree_pb2.BehaviorTree.Condition:
+    proto_object = behavior_tree_pb2.BehaviorTree.Condition()
+    status_match_proto = getattr(proto_object, 'status_match')
+    status_match_proto.blackboard_key = self._blackboard_key
+    self._matcher.update_proto(status_match_proto)
+    return proto_object
+
+  @property
+  def condition_type(self) -> str:
+    return 'status_match'
+
+  @classmethod
+  def _create_from_proto(
+      cls,
+      proto: behavior_tree_pb2.BehaviorTree.Condition.ExtendedStatusMatch,
+  ) -> ExtendedStatusMatch:
+    """Creates an instance from a proto.
+
+    Args:
+      proto: ExtendedStatusMatch proto to read configuration from.
+
+    Returns:
+      New instance based on extended status match configuration.
+
+    Raises:
+      TypeError: Unsupported match_type encountered.
+    """
+    blackboard_key = proto.blackboard_key
+    match_type = proto.WhichOneof('match_type')
+    if match_type == 'status_code':
+      return cls(
+          blackboard_key,
+          ExtendedStatusMatch.MatchStatusCode.create_from_proto(proto),
+      )
+
+    raise TypeError(f'Cannot handle match type {match_type}')
 
 
 class Task(Node):
