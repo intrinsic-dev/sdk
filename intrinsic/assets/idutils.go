@@ -16,14 +16,21 @@ import (
 	idpb "intrinsic/assets/proto/id_go_proto"
 )
 
+const (
+	// IDVersionURLRegex is a regex for HTTP handlers that captures all valid IDVersions.
+	// It also captures some invalid IDVersions, but those can be invalidated by the handler function
+	// so a validation error rather than a 404 can be returned.
+	// For fully qualified regex according to go/intrinsic-assets-metadata, use idVersionRegex.
+	IDVersionURLRegex = `[a-zA-Z0-9_\.\+\-]+`
+)
+
 var (
 	nameRegex    = regexp.MustCompile(`(?P<name>^[a-z]([a-z0-9_]?[a-z0-9])*$)`)
 	packageRegex = regexp.MustCompile(`(?P<package>^([a-z]([a-z0-9_]?[a-z0-9])*\.)+([a-z]([a-z0-9_]?[a-z0-9])*)+$)`)
 	// Taken from semver.org.
-	versionRegex   = regexp.MustCompile(`(?P<version>^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$)`)
-	idRegex        = regexp.MustCompile(`(?P<id>^(?P<package>([a-z]([a-z0-9_]?[a-z0-9])*\.)+[a-z]([a-z0-9_]?[a-z0-9])*)\.(?P<name>[a-z]([a-z0-9_]?[a-z0-9])*)$)`)
-	idVersionRegex = regexp.MustCompile(`(?P<id_version>^(?P<id>(?P<package>([a-z]([a-z0-9_]?[a-z0-9])*\.)+[a-z]([a-z0-9_]?[a-z0-9])*)\.(?P<name>[a-z]([a-z0-9_]?[a-z0-9])*))\.(?P<version>(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$)`)
-
+	versionRegex        = regexp.MustCompile(`(?P<version>^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$)`)
+	idRegex             = regexp.MustCompile(`(?P<id>^(?P<package>([a-z]([a-z0-9_]?[a-z0-9])*\.)+[a-z]([a-z0-9_]?[a-z0-9])*)\.(?P<name>[a-z]([a-z0-9_]?[a-z0-9])*)$)`)
+	idVersionRegex      = regexp.MustCompile(`(?P<id_version>^(?P<id>(?P<package>([a-z]([a-z0-9_]?[a-z0-9])*\.)+[a-z]([a-z0-9_]?[a-z0-9])*)\.(?P<name>[a-z]([a-z0-9_]?[a-z0-9])*))\.(?P<version>(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$)`)
 	labelRegex          = regexp.MustCompile(`^[a-z]([a-z0-9\-]*[a-z0-9])*$`)
 	labelFirstCharRegex = regexp.MustCompile(`^[a-z].*`)
 	labelBadCharRegex   = regexp.MustCompile(`[^a-z0-9\-]`)
@@ -554,11 +561,3 @@ func ToLabelNonReversible(s string) (string, error) {
 func FromLabel(label string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(label, "--", "."), "-", "_")
 }
-
-const (
-	// IDVersionURLRegex is a regex for HTTP handlers that captures all valid IDVersions.
-	// It also captures some invalid IDVersions, but those can be invalidated by the handler function
-	// so a validation error rather than a 404 can be returned.
-	// For fully qualified regex according to go/intrinsic-assets-metadata, use idVersionRegex.
-	IDVersionURLRegex = `[a-zA-Z0-9_\.\+]+`
-)
