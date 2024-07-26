@@ -41,6 +41,6 @@ enum AssetViewType {
   ASSET_VIEW_TYPE_VERSIONS = 3;
 
   // Provides all metadata fields.
-  ASSET_VIEW_ALL_METADATA = 4;
+  ASSET_VIEW_TYPE_ALL_METADATA = 4;
 
 }
