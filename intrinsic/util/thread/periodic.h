@@ -1,0 +1,69 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+#ifndef INTRINSIC_UTIL_THREAD_PERIODIC_H_
+#define INTRINSIC_UTIL_THREAD_PERIODIC_H_
+
+#include "absl/functional/any_invocable.h"
+#include "absl/synchronization/mutex.h"
+#include "absl/synchronization/notification.h"
+#include "absl/time/time.h"
+#include "intrinsic/util/thread/thread.h"
+#include "intrinsic/util/thread/thread_options.h"
+
+namespace intrinsic {
+
+class PeriodicOperation {
+ public:
+  // Returns a new PeriodicOperation that executes continuously with no delay
+  // in between.
+  explicit PeriodicOperation(absl::AnyInvocable<void()> f);
+
+  // Returns a new PeriodicOperation that executes with the given period.
+  PeriodicOperation(absl::AnyInvocable<void()> f, absl::Duration period);
+
+  // Returns a new PeriodicOperation that executes with the given period on a
+  // thread with the provided thread options..
+  PeriodicOperation(const ThreadOptions &options, absl::AnyInvocable<void()> f,
+                    absl::Duration period);
+
+  // Disallow copying
+  PeriodicOperation(const PeriodicOperation &) = delete;
+  PeriodicOperation &operator=(const PeriodicOperation &) = delete;
+
+  // Starts the periodic execution of the operation passed to the constructor.
+  // If this is the first time `Start()` is being called, then it is guaranteed
+  // that the operation will execute at least once.
+  absl::Status Start();
+
+  // Stops the periodic execution started by `Start()`. This is a blocking call
+  // that guarantees upon returning that the operation is not being run. This is
+  // a no-op if no call to `Start` has been beforehand unless `Stop` was already
+  // called after `Start`. Must be called before this object is destroyed if
+  // `Start` was also called.
+  absl::Status Stop();
+
+  // Returns the current period for this operation.
+  absl::Duration Period() const { return period_; }
+
+  // Sets the period at which to execute the given operation. The next operation
+  // is scheduled from the start time of the last executed operation.
+  void SetPeriod(absl::Duration new_period) { period_ = std::move(new_period); }
+
+ private:
+  absl::Mutex mutex_;
+
+  ThreadOptions executor_thread_options_;
+  absl::AnyInvocable<void()> operation_;
+  absl::Duration period_;
+
+  void ExecutorLoop();
+
+  absl::Time last_operation_start_time_ ABSL_GUARDED_BY(mutex_) =
+      absl::InfinitePast();
+  std::unique_ptr<absl::Notification> stop_notification_;
+  std::unique_ptr<Thread> operation_executor_;
+};
+
+}  // namespace intrinsic
+
+#endif  // INTRINSIC_UTIL_THREAD_PERIODIC_H_

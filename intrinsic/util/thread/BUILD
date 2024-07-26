@@ -66,6 +66,34 @@ cc_test(
 )
 
 cc_library(
+    name = "periodic",
+    srcs = ["periodic.cc"],
+    hdrs = ["periodic.h"],
+    deps = [
+        ":thread",
+        ":thread_options",
+        "//intrinsic/util/status:status_macros",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_test(
+    name = "periodic_test",
+    srcs = ["periodic_test.cc"],
+    deps = [
+        ":periodic",
+        "//intrinsic/util/testing:gtest_wrapper",
+        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_library(
     name = "lockstep",
     srcs = ["lockstep.cc"],
     hdrs = ["lockstep.h"],
