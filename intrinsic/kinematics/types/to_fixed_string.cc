@@ -2,6 +2,7 @@
 
 #include "intrinsic/kinematics/types/to_fixed_string.h"
 
+#include <array>
 #include <cstddef>
 #include <ostream>
 
@@ -33,6 +34,19 @@ FixedString<kVectorNdStrSize> ToFixedString(const eigenmath::VectorNd& vec) {
     str = FixedStrCat<kVectorNdStrSize>(str, ",", vec[i]);
   }
   return str;
+}
+
+icon::FixedString<kMatrix3dStrSize> Matrix3dToFixedString(
+    const eigenmath::Matrix3d& matrix) {
+  const size_t kMaxRowSize = 3 * kVectorNdStrSize + 3;
+  std::array<FixedString<kMaxRowSize>, 3> rows;
+  for (size_t row = 0; row < 3; ++row) {
+    rows[row] = FixedStrCat<kMaxRowSize>(matrix.row(row)[0]);
+    for (size_t col = 1; col < 3; ++col) {
+      rows[row] = FixedStrCat<kMaxRowSize>(rows[row], " ", matrix(row, col));
+    }
+  }
+  return FixedStrCat<kMatrix3dStrSize>(rows[0], "\n", rows[1], "\n", rows[2]);
 }
 
 icon::FixedString<kPose3dStrSize> ToFixedString(const Pose3d& pose) {

@@ -17,12 +17,17 @@ namespace intrinsic {
 
 // absl::AlphaNum formats double in a "%.6g". So we need 9 character for each
 // numbers: 7 digits (when whole number is 0, we have 6 decimals), dot and
-// negative sign. We need N-1 commas.
-constexpr size_t kDoubleStrSize = 9;
+// negative sign. For small negative numbers with scientific notation 6 digits,
+// a minus, a comma and 4 characters for the exponent are needed.
+constexpr size_t kDoubleStrSize = 12;
 
+// We need N-1 commas.
 constexpr size_t kVectorNdStrSize =
     kDoubleStrSize * eigenmath::MAX_EIGEN_VECTOR_SIZE +
     (eigenmath::MAX_EIGEN_VECTOR_SIZE - 1);
+
+// 9 values plus row and column separators.
+constexpr size_t kMatrix3dStrSize = kDoubleStrSize * 9 + 8;
 
 // We need to had the prefix to the vector.
 constexpr size_t kStateStrSize = 3 + kVectorNdStrSize;
@@ -47,6 +52,9 @@ icon::FixedString<kVectorNdStrSize> ToFixedString(
 icon::FixedString<kPose3dStrSize> ToFixedString(const Pose3d& pose);
 
 icon::FixedString<kQuaternionStrSize> ToFixedString(const Quaterniond& q);
+
+icon::FixedString<kMatrix3dStrSize> Matrix3dToFixedString(
+    const eigenmath::Matrix3d& matrix);
 
 }  // namespace eigenmath
 
