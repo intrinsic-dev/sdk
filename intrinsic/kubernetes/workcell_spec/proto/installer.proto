@@ -47,11 +47,8 @@ message GetInstalledSpecResponse {
   // The human readable name of the currently running workcell spec.
   string display_name = 7;
 
-  // A list of ICON instances that are available. Only set if status = HEALTHY.
-  // These can be used with the x-icon-instance-name header when connecting
-  // through the ingress.
-  // http://intrinsic/util/grpc/channel.h?l=29&rcl=373881143
-  repeated string icon_instance_names = 8;
+  reserved 8;
+  reserved "icon_instance_names";
 
   // Whether it's a simulated workcell or physical.
   bool simulated = 9;
