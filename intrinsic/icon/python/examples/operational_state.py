@@ -22,12 +22,6 @@ _INSTANCE = flags.DEFINE_string(
     None,
     'The instance of ICON, if behind an ingress, you intend to talk to',
 )
-_HEADER = flags.DEFINE_string(
-    'header',
-    icon_api.ICON_HEADER_NAME,
-    'Optional header name to be used to select a specific ICON instance.  Has '
-    'no effect if --instance is not set.',
-)
 
 
 def _display_operational_status(icon_client: icon_api.Client):
@@ -47,7 +41,7 @@ def main(argv):
 
   icon_client = icon_api.Client.connect_with_params(
       connection.ConnectionParams(
-          f'{_HOST.value}:{_PORT.value}', _INSTANCE.value, _HEADER.value
+          f'{_HOST.value}:{_PORT.value}', _INSTANCE.value, None
       )
   )
   _display_operational_status(icon_client)

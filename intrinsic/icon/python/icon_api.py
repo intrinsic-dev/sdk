@@ -53,10 +53,6 @@ _DEFAULT_INSECURE = True
 _DEFAULT_RPC_TIMEOUT_INFINITE = None
 _DEFAULT_CONNECT_TIMEOUT_SECONDS = 20
 
-# The default header to be used by ICON when connecting through the ingress.
-# This is not valid if ICON is run as a resource.
-ICON_HEADER_NAME = "x-icon-instance-name"
-
 
 def _create_stub(
     connection_params: connection.ConnectionParams,

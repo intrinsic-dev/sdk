@@ -20,11 +20,10 @@ ABSL_FLAG(
     std::string, instance, "",
     "Optional name of the ICON instance. Use this to select a specific ICON "
     "instance if multiple ones are running behind an ingress server.");
-ABSL_RETIRED_FLAG(std::string, header, "x-icon-instance-name", "retired");
 
 const char* UsageString() {
   return R"(
-Usage: restart_server [--server=<addr>] [--instance=<name>]
+Usage: restart_server [--server=<addr>]
 
 Attempts to restart the entire ICON server.
 The server waits until all sessions are ended, stops all hardware devices and

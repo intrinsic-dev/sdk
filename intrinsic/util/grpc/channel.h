@@ -26,13 +26,7 @@ class Channel : public ChannelInterface {
       const ConnectionParams& params,
       absl::Duration timeout = kGrpcClientConnectDefaultTimeout);
 
-  // Constructs a Channel from the given gRPC channel and server instance name.
-  //
-  // Under certain network configurations, `server_instance_name` can be used to
-  // select among multiple gRPC service instances that are routed through a
-  // single `grpc_address`. If non-empty, an HTTP header metadata field
-  // "x-icon-instance-name" will be added with a value of
-  // `server_instance_name`.
+  // Constructs a Channel with given connection parameters.
   Channel(std::shared_ptr<grpc::Channel> channel,
           const ConnectionParams& params);
 
