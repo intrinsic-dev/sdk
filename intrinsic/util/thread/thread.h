@@ -4,13 +4,14 @@
 #define INTRINSIC_UTIL_THREAD_THREAD_H_
 
 #include <thread>  // NOLINT(build/c++11)
+#include <type_traits>
 #include <utility>
 
-#include "absl/functional/bind_front.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "intrinsic/icon/utils/realtime_guard.h"
 #include "intrinsic/util/status/status_macros.h"
+#include "intrinsic/util/thread/stop_token.h"
 #include "intrinsic/util/thread/thread_options.h"
 #include "intrinsic/util/thread/thread_utils.h"
 
@@ -32,15 +33,24 @@ class Thread {
   // thread is constructed without setting any threading options, using the
   // default thread creation for the platform. This is equivalent to Start()ing
   // a default-constructed Thread with default `options`.
+  // The 'requires' clause is to prevent the user from passing a Thread object
+  // to the constructor (i.e. prevent confusion with the move ctor).
   template <typename Function, typename... Args>
-  explicit Thread(Function&& f, Args&&... args);
+  explicit Thread(Function&& f, Args&&... args)
+    requires(!std::is_same_v<std::remove_cvref_t<Function>, Thread>)
+      : stop_source_{StopSource{}},
+        thread_impl_(InitThread(stop_source_, std::forward<Function>(f),
+                                std::forward<Args>(args)...)) {
+    INTRINSIC_ASSERT_NON_REALTIME();
+  }
 
   // Movable.
-  //
-  // std::terminate() will be called if `this->Joinable()` returns true.
   Thread(Thread&&) = default;
-  Thread& operator=(Thread&&) = default;
+  Thread& operator=(Thread&& other);
 
+  // Destroys the Thread object.
+  // If *this has an associated thread (Joinable() == true), calls RequestStop()
+  // and then Join().
   ~Thread();
 
   // Not copyable
@@ -54,6 +64,7 @@ class Thread {
   template <typename Function, typename... Args>
   absl::StatusOr<Thread> Create(const ThreadOptions& options, Function&& f,
                                 Args&&... args) {
+    INTRINSIC_ASSERT_NON_REALTIME();
     INTR_ASSIGN_OR_RETURN(std::thread thread,
                           CreateThread(options, std::forward<Function>(f),
                                        std::forward<Args>(args)...));
@@ -77,10 +88,37 @@ class Thread {
   // been Join()ed is still considered an active thread of execution.
   bool Joinable() const;
 
+  // Returns a StopSource associated with the same shared stop-state as held
+  // internally by the Thread object.
+  StopSource GetStopSource() noexcept;
+
+  // Returns a StopToken associated with the same shared stop-state held
+  // internally by the Thread object.
+  StopToken GetStopToken() const noexcept;
+
+  // Issues a stop request to the internal stop-state, if it has not yet already
+  // had stop requested.
+  bool RequestStop() noexcept;
+
  private:
   explicit Thread(std::thread&& thread) noexcept
-      : thread_impl_(std::move(thread)) {}
+      : stop_source_{StopSource{}}, thread_impl_(std::move(thread)) {}
 
+  template <typename Function, typename... Args>
+  static std::thread InitThread(const StopSource& ss, Function&& f,
+                                Args&&... args) {
+    if constexpr (std::is_invocable_v<std::decay_t<Function>, StopToken,
+                                      std::decay_t<Args>...>) {
+      // f takes a StopToken as its first argument, so pass it along.
+      return std::thread(std::forward<Function>(f), ss.get_token(),
+                         std::forward<Args>(args)...);
+    } else {
+      return std::thread(std::forward<Function>(f),
+                         std::forward<Args>(args)...);
+    }
+  }
+
+  StopSource stop_source_{detail::NoState};
   std::thread thread_impl_;  // The new thread of execution
 };
 
@@ -95,13 +133,6 @@ absl::Status Thread::Start(const ThreadOptions& options, Function&& f,
                         Thread::Create(options, std::forward<Function>(f),
                                        std::forward<Args>(args)...));
   return absl::OkStatus();
-}
-
-template <typename Function, typename... Args>
-Thread::Thread(Function&& f, Args&&... args)
-    : thread_impl_(absl::bind_front(std::forward<Function>(f),
-                                    std::forward<Args>(args)...)) {
-  INTRINSIC_ASSERT_NON_REALTIME();
 }
 
 }  // namespace intrinsic
