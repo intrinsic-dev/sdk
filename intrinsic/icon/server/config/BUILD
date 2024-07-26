@@ -42,6 +42,7 @@ proto_library(
     deps = [
         ":realtime_control_config_proto",
         ":services_config_proto",
+        "//intrinsic/icon/proto:logging_mode_proto",
         "@com_google_protobuf//:duration_proto",
     ],
 )
@@ -56,6 +57,7 @@ go_proto_library(
     go_deps = [
         ":realtime_control_config_go_proto",
         ":services_config_go_proto",
+        "//intrinsic/icon/proto:logging_mode_go_proto",
     ],
     deps = [":icon_main_config_proto"],
 )

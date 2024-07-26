@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package intrinsic_proto.icon;
 
+import "intrinsic/icon/proto/logging_mode.proto";
 import "intrinsic/icon/server/config/realtime_control_config.proto";
 import "intrinsic/icon/server/config/services_config.proto";
 
@@ -34,6 +35,11 @@ message IconMainConfig {
   // The CPU core for realtime threads is by default read from /proc/cmdline.
   // Only values >0 are valid.
   optional int32 realtime_core_override = 12;
+
+  // The default logging mode for ICON. This is set at ICON start and can be
+  // changed using the ICON client at runtime. Not setting this field or setting
+  // it to UNSPECIFIED will default to kThrottled.
+  LoggingMode default_logging_mode = 13;
 
   reserved 9;
 }
