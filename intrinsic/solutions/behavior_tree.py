@@ -14,6 +14,8 @@ To execute the behavior tree, simply pass an instance of BehaviorTree to the
 executive.run() method.
 """
 
+from __future__ import annotations
+
 import abc
 import collections
 import enum
@@ -65,15 +67,15 @@ NodeIdentifierType = collections.namedtuple(
 )
 
 
-def _transform_to_node(node: Union['Node', actions.ActionBase]) -> 'Node':
+def _transform_to_node(node: Union[Node, actions.ActionBase]) -> Node:
   if isinstance(node, actions.ActionBase):
     return Task(node)
   return node
 
 
 def _transform_to_optional_node(
-    node: Optional[Union['Node', actions.ActionBase]],
-) -> Optional['Node']:
+    node: Optional[Union[Node, actions.ActionBase]],
+) -> Optional[Node]:
   if node is None:
     return None
   return _transform_to_node(node)
@@ -93,7 +95,7 @@ def _dot_wrap_in_box(
 def _dot_append_child(
     dot_graph: graphviz.Digraph,
     parent_node_name: str,
-    child_node: 'Node',
+    child_node: Node,
     child_node_id_suffix: str,
     edge_label: str = '',
 ):
@@ -122,7 +124,7 @@ def _dot_append_child(
 def _dot_append_children(
     dot_graph: graphviz.Digraph,
     parent_node_name: str,
-    child_nodes: Iterable['Node'],
+    child_nodes: Iterable[Node],
     parent_node_id_suffix: str,
     node_id_suffix_offset: int,
 ):
@@ -242,7 +244,7 @@ class WorldQuery:
       child_frames_of: Optional[WorldQueryObject] = None,
       child_objects_of: Optional[WorldQueryObject] = None,
       children_of: Optional[WorldQueryObject] = None,
-  ) -> 'WorldQuery':
+  ) -> WorldQuery:
     """Sets the query of the world query.
 
     Set only one of the possible arguments.
@@ -293,7 +295,7 @@ class WorldQuery:
 
   def filter(
       self, *, name_regex: Union[str, blackboard_value.BlackboardValue]
-  ) -> 'WorldQuery':
+  ) -> WorldQuery:
     """Sets the filter of the world query.
 
     Args:
@@ -314,7 +316,7 @@ class WorldQuery:
       *,
       by: OrderCriterion,
       direction: OrderDirection = OrderDirection.ASCENDING,
-  ) -> 'WorldQuery':
+  ) -> WorldQuery:
     """Sets the ordering of the world query.
 
     Args:
@@ -341,7 +343,7 @@ class WorldQuery:
   @classmethod
   def create_from_proto(
       cls, proto_object: world_query_pb2.WorldQuery
-  ) -> 'WorldQuery':
+  ) -> WorldQuery:
     return cls(proto_object)
 
   def __str__(self) -> str:
@@ -390,15 +392,15 @@ class Decorators:
     proto: The proto representation of the decorators objects.
   """
 
-  condition: Optional['Condition']
-  breakpoint_type: Optional['BreakpointType']
+  condition: Optional[Condition]
+  breakpoint_type: Optional[BreakpointType]
   execution_mode: Optional[NodeExecutionMode]
   disabled_result_state: Optional[DisabledResultState]
 
   def __init__(
       self,
-      condition: Optional['Condition'] = None,
-      breakpoint_type: Optional['BreakpointType'] = None,
+      condition: Optional[Condition] = None,
+      breakpoint_type: Optional[BreakpointType] = None,
       execution_mode: Optional[NodeExecutionMode] = None,
       disabled_result_state: Optional[DisabledResultState] = None,
   ):
@@ -431,7 +433,7 @@ class Decorators:
   @classmethod
   def create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.Node.Decorators
-  ) -> 'Decorators':
+  ) -> Decorators:
     """Creates an instance from a Decorators proto.
 
     Args:
@@ -502,7 +504,7 @@ class Node(abc.ABC):
   @classmethod
   def create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.Node
-  ) -> 'Node':
+  ) -> Node:
     """Instantiates a Node instance from a proto."""
     if cls != Node:
       raise TypeError('create_from_proto can only be called on the Node class')
@@ -671,18 +673,18 @@ class Node(abc.ABC):
     ...
 
   @abc.abstractmethod
-  def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
+  def set_decorators(self, decorators: Optional[Decorators]) -> Node:
     ...
 
   @property
   @abc.abstractmethod
-  def decorators(self) -> Optional['Decorators']:
+  def decorators(self) -> Optional[Decorators]:
     ...
 
   @abc.abstractmethod
   def set_user_data_proto(
       self, key: str, proto: protobuf_message.Message
-  ) -> 'Node':
+  ) -> Node:
     """Sets a user data proto for a specified key.
 
     This will modify the user_data field of the node proto to contain the
@@ -700,7 +702,7 @@ class Node(abc.ABC):
   @abc.abstractmethod
   def set_user_data_proto_from_any(
       self, key: str, any_proto: any_pb2.Any
-  ) -> 'Node':
+  ) -> Node:
     """Sets a user data proto for a specified key.
 
     This will take the Any proto as-is.
@@ -721,9 +723,9 @@ class Node(abc.ABC):
 
   def visit(
       self,
-      containing_tree: 'BehaviorTree',
+      containing_tree: BehaviorTree,
       callback: Callable[
-          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+          [BehaviorTree, Union[BehaviorTree, Node, Condition]], None
       ],
   ) -> None:
     if self.decorators is not None and self.decorators.condition is not None:
@@ -731,14 +733,12 @@ class Node(abc.ABC):
     callback(containing_tree, self)
 
   @property
-  def breakpoint(self) -> 'BreakpointType':
+  def breakpoint(self) -> BreakpointType:
     if self.decorators is not None:
       return self.decorators.breakpoint_type
     return None
 
-  def set_breakpoint(
-      self, breakpoint_type: Optional['BreakpointType']
-  ) -> 'Node':
+  def set_breakpoint(self, breakpoint_type: Optional[BreakpointType]) -> Node:
     """Sets the breakpoint type on the decorator.
 
     Args:
@@ -764,7 +764,7 @@ class Node(abc.ABC):
   def disable_execution(
       self,
       result_state: Optional[DisabledResultState] = None,
-  ) -> 'Node':
+  ) -> Node:
     """Disables a node, so that it is not executed and appears to be skipped.
 
     Args:
@@ -782,7 +782,7 @@ class Node(abc.ABC):
     self.set_decorators(decorators)
     return self
 
-  def enable_execution(self) -> 'Node':
+  def enable_execution(self) -> Node:
     """Enables a node, so that it will be executed.
 
     Returns:
@@ -806,7 +806,7 @@ class Condition(abc.ABC):
   @classmethod
   def create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.Condition
-  ) -> 'Condition':
+  ) -> Condition:
     """Instantiates a Condition instance from a proto."""
     if cls != Condition:
       raise TypeError(
@@ -851,9 +851,9 @@ class Condition(abc.ABC):
 
   def visit(
       self,
-      containing_tree: 'BehaviorTree',
+      containing_tree: BehaviorTree,
       callback: Callable[
-          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+          [BehaviorTree, Union[BehaviorTree, Node, Condition]], None
       ],
   ) -> None:
     callback(containing_tree, self)
@@ -872,9 +872,9 @@ class SubTreeCondition(Condition):
     tree: The subtree deciding the outcome of the condition.
   """
 
-  tree: 'BehaviorTree'
+  tree: BehaviorTree
 
-  def __init__(self, tree: Union['BehaviorTree', 'Node', actions.ActionBase]):
+  def __init__(self, tree: Union[BehaviorTree, Node, actions.ActionBase]):
     if tree is None:
       raise ValueError(
           'SubTreeCondition requires `tree` to be set to either a BehaviorTree,'
@@ -902,14 +902,14 @@ class SubTreeCondition(Condition):
   @classmethod
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree
-  ) -> 'SubTreeCondition':
+  ) -> SubTreeCondition:
     return cls(BehaviorTree.create_from_proto(proto_object))
 
   def visit(
       self,
-      containing_tree: 'BehaviorTree',
+      containing_tree: BehaviorTree,
       callback: Callable[
-          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+          [BehaviorTree, Union[BehaviorTree, Node, Condition]], None
       ],
   ) -> None:
     super().visit(containing_tree, callback)
@@ -961,7 +961,7 @@ class Blackboard(Condition):
   def _create_from_proto(
       cls,
       proto_object: behavior_tree_pb2.BehaviorTree.Condition.BlackboardExpression,
-  ) -> 'Blackboard':
+  ) -> Blackboard:
     if proto_object.HasField('cel_expression'):
       return cls(proto_object.cel_expression)
     else:
@@ -996,10 +996,10 @@ class CompoundCondition(Condition):
     proto: The proto representation of the node.
   """
 
-  def __init__(self, conditions: Optional[List['Condition']] = None):
-    self.conditions: List['Condition'] = conditions or []
+  def __init__(self, conditions: Optional[List[Condition]] = None):
+    self.conditions: List[Condition] = conditions or []
 
-  def set_conditions(self, conditions: List['Condition']) -> 'Condition':
+  def set_conditions(self, conditions: List[Condition]) -> Condition:
     self.conditions = conditions
     return self
 
@@ -1013,9 +1013,9 @@ class CompoundCondition(Condition):
 
   def visit(
       self,
-      containing_tree: 'BehaviorTree',
+      containing_tree: BehaviorTree,
       callback: Callable[
-          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+          [BehaviorTree, Union[BehaviorTree, Node, Condition]], None
       ],
   ) -> None:
     super().visit(containing_tree, callback)
@@ -1053,7 +1053,7 @@ class AllOf(CompoundCondition):
   def _create_from_proto(
       cls,
       proto_object: behavior_tree_pb2.BehaviorTree.Condition.LogicalCompound,
-  ) -> 'AllOf':
+  ) -> AllOf:
     condition = cls()
     for condition_proto in proto_object.conditions:
       condition.conditions.append(Condition.create_from_proto(condition_proto))
@@ -1090,7 +1090,7 @@ class AnyOf(CompoundCondition):
   def _create_from_proto(
       cls,
       proto_object: behavior_tree_pb2.BehaviorTree.Condition.LogicalCompound,
-  ) -> 'AnyOf':
+  ) -> AnyOf:
     condition = cls()
     for condition_proto in proto_object.conditions:
       condition.conditions.append(Condition.create_from_proto(condition_proto))
@@ -1108,8 +1108,8 @@ class Not(Condition):
     condition: The condition to negate.
   """
 
-  def __init__(self, condition: 'Condition'):
-    self.condition: 'Condition' = condition
+  def __init__(self, condition: Condition):
+    self.condition: Condition = condition
 
   def __repr__(self) -> str:
     """Returns a compact, human-readable string representation."""
@@ -1129,14 +1129,14 @@ class Not(Condition):
   @classmethod
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.Condition
-  ) -> 'Not':
+  ) -> Not:
     return cls(Condition.create_from_proto(proto_object))
 
   def visit(
       self,
-      containing_tree: 'BehaviorTree',
+      containing_tree: BehaviorTree,
       callback: Callable[
-          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+          [BehaviorTree, Union[BehaviorTree, Node, Condition]], None
       ],
   ) -> None:
     super().visit(containing_tree, callback)
@@ -1163,7 +1163,7 @@ class Task(Node):
 
   _action: Optional[actions.ActionBase]
   _behavior_call_proto: Optional[behavior_call_pb2.BehaviorCall]
-  _decorators: Optional['Decorators']
+  _decorators: Optional[Decorators]
   _name: Optional[str]
   _node_id: Optional[int]
   _state: Optional[NodeState]
@@ -1232,17 +1232,17 @@ class Task(Node):
       return self._action.result
     return None
 
-  def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
+  def set_decorators(self, decorators: Optional[Decorators]) -> Node:
     self._decorators = decorators
     return self
 
   @property
-  def decorators(self) -> Optional['Decorators']:
+  def decorators(self) -> Optional[Decorators]:
     return self._decorators
 
   def set_user_data_proto(
       self, key: str, proto: protobuf_message.Message
-  ) -> 'Node':
+  ) -> Node:
     packed = any_pb2.Any()
     packed.Pack(proto)
     self._user_data_protos[key] = packed
@@ -1250,7 +1250,7 @@ class Task(Node):
 
   def set_user_data_proto_from_any(
       self, key: str, any_proto: any_pb2.Any
-  ) -> 'Node':
+  ) -> Node:
     self._user_data_protos[key] = any_proto
     return self
 
@@ -1261,7 +1261,7 @@ class Task(Node):
   @classmethod
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.TaskNode
-  ) -> 'Task':
+  ) -> Task:
     return cls(proto_object.call_behavior)
 
   def dot_graph(  # pytype: disable=signature-mismatch  # overriding-parameter-count-checks
@@ -1288,7 +1288,7 @@ class SubTree(Node):
     node_type: A string label of the node type.
   """
 
-  _decorators: Optional['Decorators']
+  _decorators: Optional[Decorators]
   _name: Optional[str]
   _node_id: Optional[int]
   _state: Optional[NodeState]
@@ -1296,7 +1296,7 @@ class SubTree(Node):
 
   def __init__(
       self,
-      behavior_tree: Optional[Union['Node', 'BehaviorTree']] = None,
+      behavior_tree: Optional[Union[Node, BehaviorTree]] = None,
       name: Optional[str] = None,
   ):
     """Creates a SubTree node.
@@ -1307,7 +1307,7 @@ class SubTree(Node):
       name: name of the behavior tree, if behavior_tree is a node, i.e., a root
         node of a tree; otherwise, the name of this node.
     """
-    self.behavior_tree: Optional['BehaviorTree'] = None
+    self.behavior_tree: Optional[BehaviorTree] = None
     self._decorators = None
     self._name = None
     self._node_id = None
@@ -1321,9 +1321,9 @@ class SubTree(Node):
 
   def set_behavior_tree(
       self,
-      behavior_tree: Union['Node', 'BehaviorTree'],
+      behavior_tree: Union[Node, BehaviorTree],
       name: Optional[str] = None,
-  ) -> 'SubTree':
+  ) -> SubTree:
     """Sets the subtree's behavior tree.
 
     Args:
@@ -1390,17 +1390,17 @@ class SubTree(Node):
   def node_type(self) -> str:
     return 'sub_tree'
 
-  def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
+  def set_decorators(self, decorators: Optional[Decorators]) -> Node:
     self._decorators = decorators
     return self
 
   @property
-  def decorators(self) -> Optional['Decorators']:
+  def decorators(self) -> Optional[Decorators]:
     return self._decorators
 
   def set_user_data_proto(
       self, key: str, proto: protobuf_message.Message
-  ) -> 'Node':
+  ) -> Node:
     packed = any_pb2.Any()
     packed.Pack(proto)
     self._user_data_protos[key] = packed
@@ -1408,7 +1408,7 @@ class SubTree(Node):
 
   def set_user_data_proto_from_any(
       self, key: str, any_proto: any_pb2.Any
-  ) -> 'Node':
+  ) -> Node:
     self._user_data_protos[key] = any_proto
     return self
 
@@ -1419,7 +1419,7 @@ class SubTree(Node):
   @classmethod
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.SubtreeNode
-  ) -> 'SubTree':
+  ) -> SubTree:
     return cls(behavior_tree=BehaviorTree.create_from_proto(proto_object.tree))
 
   def dot_graph(  # pytype: disable=signature-mismatch  # overriding-parameter-count-checks
@@ -1455,9 +1455,9 @@ class SubTree(Node):
 
   def visit(
       self,
-      containing_tree: 'BehaviorTree',
+      containing_tree: BehaviorTree,
       callback: Callable[
-          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+          [BehaviorTree, Union[BehaviorTree, Node, Condition]], None
       ],
   ) -> None:
     super().visit(containing_tree, callback)
@@ -1478,7 +1478,7 @@ class Fail(Node):
     node_type: A string label of the node type.
   """
 
-  _decorators: Optional['Decorators']
+  _decorators: Optional[Decorators]
   _name: Optional[str]
   _node_id: Optional[int]
   _state: Optional[NodeState]
@@ -1531,17 +1531,17 @@ class Fail(Node):
   def node_type(self) -> str:
     return 'fail'
 
-  def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
+  def set_decorators(self, decorators: Optional[Decorators]) -> Node:
     self._decorators = decorators
     return self
 
   @property
-  def decorators(self) -> Optional['Decorators']:
+  def decorators(self) -> Optional[Decorators]:
     return self._decorators
 
   def set_user_data_proto(
       self, key: str, proto: protobuf_message.Message
-  ) -> 'Node':
+  ) -> Node:
     packed = any_pb2.Any()
     packed.Pack(proto)
     self._user_data_protos[key] = packed
@@ -1549,7 +1549,7 @@ class Fail(Node):
 
   def set_user_data_proto_from_any(
       self, key: str, any_proto: any_pb2.Any
-  ) -> 'Node':
+  ) -> Node:
     self._user_data_protos[key] = any_proto
     return self
 
@@ -1560,7 +1560,7 @@ class Fail(Node):
   @classmethod
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.FailNode
-  ) -> 'Fail':
+  ) -> Fail:
     return cls(proto_object.failure_message)
 
   def dot_graph(  # pytype: disable=signature-mismatch  # overriding-parameter-count-checks
@@ -1582,7 +1582,7 @@ class Debug(Node):
     node_type: A string label of the node type.
   """
 
-  _decorators: Optional['Decorators']
+  _decorators: Optional[Decorators]
   _name: Optional[str]
   _node_id: Optional[int]
   _state: Optional[NodeState]
@@ -1637,17 +1637,17 @@ class Debug(Node):
   def node_type(self) -> str:
     return 'debug'
 
-  def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
+  def set_decorators(self, decorators: Optional[Decorators]) -> Node:
     self._decorators = decorators
     return self
 
   @property
-  def decorators(self) -> Optional['Decorators']:
+  def decorators(self) -> Optional[Decorators]:
     return self._decorators
 
   def set_user_data_proto(
       self, key: str, proto: protobuf_message.Message
-  ) -> 'Node':
+  ) -> Node:
     packed = any_pb2.Any()
     packed.Pack(proto)
     self._user_data_protos[key] = packed
@@ -1655,7 +1655,7 @@ class Debug(Node):
 
   def set_user_data_proto_from_any(
       self, key: str, any_proto: any_pb2.Any
-  ) -> 'Node':
+  ) -> Node:
     self._user_data_protos[key] = any_proto
     return self
 
@@ -1666,7 +1666,7 @@ class Debug(Node):
   @classmethod
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.DebugNode
-  ) -> 'Debug':
+  ) -> Debug:
     return cls(proto_object.suspend.fail_on_resume)
 
   def dot_graph(  # pytype: disable=signature-mismatch  # overriding-parameter-count-checks
@@ -1685,17 +1685,17 @@ class NodeWithChildren(Node):
 
   def __init__(
       self,
-      children: Optional[SequenceType[Union['Node', actions.ActionBase]]],
+      children: Optional[SequenceType[Union[Node, actions.ActionBase]]],
   ):
     if not children:
       self.children = []
     else:
-      self.children: List['Node'] = [  # pytype: disable=annotation-type-mismatch  # always-use-return-annotations
+      self.children: List[Node] = [  # pytype: disable=annotation-type-mismatch  # always-use-return-annotations
           _transform_to_optional_node(x) for x in children
       ]
     super().__init__()
 
-  def set_children(self, *children: 'Node') -> 'Node':
+  def set_children(self, *children: Node) -> Node:
     if isinstance(children[0], list):
       self.children = [_transform_to_optional_node(x) for x in children[0]]  # pytype: disable=annotation-type-mismatch  # always-use-return-annotations
     else:
@@ -1726,9 +1726,9 @@ class NodeWithChildren(Node):
 
   def visit(
       self,
-      containing_tree: 'BehaviorTree',
+      containing_tree: BehaviorTree,
       callback: Callable[
-          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+          [BehaviorTree, Union[BehaviorTree, Node, Condition]], None
       ],
   ) -> None:
     super().visit(containing_tree, callback)
@@ -1751,7 +1751,7 @@ class Sequence(NodeWithChildren):
     node_type: A string label of the node type.
   """
 
-  _decorators: Optional['Decorators']
+  _decorators: Optional[Decorators]
   _name: Optional[str]
   _node_id: Optional[int]
   _state: Optional[NodeState]
@@ -1759,9 +1759,7 @@ class Sequence(NodeWithChildren):
 
   def __init__(
       self,
-      children: Optional[
-          SequenceType[Union['Node', actions.ActionBase]]
-      ] = None,
+      children: Optional[SequenceType[Union[Node, actions.ActionBase]]] = None,
       name: Optional[str] = None,
   ):
     super().__init__(children=children)
@@ -1807,17 +1805,17 @@ class Sequence(NodeWithChildren):
   def state(self) -> Optional[NodeState]:
     return self._state
 
-  def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
+  def set_decorators(self, decorators: Optional[Decorators]) -> Node:
     self._decorators = decorators
     return self
 
   @property
-  def decorators(self) -> Optional['Decorators']:
+  def decorators(self) -> Optional[Decorators]:
     return self._decorators
 
   def set_user_data_proto(
       self, key: str, proto: protobuf_message.Message
-  ) -> 'Node':
+  ) -> Node:
     packed = any_pb2.Any()
     packed.Pack(proto)
     self._user_data_protos[key] = packed
@@ -1825,7 +1823,7 @@ class Sequence(NodeWithChildren):
 
   def set_user_data_proto_from_any(
       self, key: str, any_proto: any_pb2.Any
-  ) -> 'Node':
+  ) -> Node:
     self._user_data_protos[key] = any_proto
     return self
 
@@ -1836,7 +1834,7 @@ class Sequence(NodeWithChildren):
   @classmethod
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.SequenceNode
-  ) -> 'Sequence':
+  ) -> Sequence:
     node = cls()
     for child_node_proto in proto_object.children:
       node.children.append(Node.create_from_proto(child_node_proto))
@@ -1858,7 +1856,7 @@ class Parallel(NodeWithChildren):
     node_type: A string label of the node type.
   """
 
-  _decorators: Optional['Decorators']
+  _decorators: Optional[Decorators]
   _name: Optional[str]
   _node_id: Optional[int]
   _state: Optional[NodeState]
@@ -1880,9 +1878,7 @@ class Parallel(NodeWithChildren):
 
   def __init__(
       self,
-      children: Optional[
-          SequenceType[Union['Node', actions.ActionBase]]
-      ] = None,
+      children: Optional[SequenceType[Union[Node, actions.ActionBase]]] = None,
       failure_behavior: FailureBehavior = FailureBehavior.DEFAULT,
       name: Optional[str] = None,
   ):
@@ -1932,17 +1928,17 @@ class Parallel(NodeWithChildren):
   def state(self) -> Optional[NodeState]:
     return self._state
 
-  def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
+  def set_decorators(self, decorators: Optional[Decorators]) -> Node:
     self._decorators = decorators
     return self
 
   @property
-  def decorators(self) -> Optional['Decorators']:
+  def decorators(self) -> Optional[Decorators]:
     return self._decorators
 
   def set_user_data_proto(
       self, key: str, proto: protobuf_message.Message
-  ) -> 'Node':
+  ) -> Node:
     packed = any_pb2.Any()
     packed.Pack(proto)
     self._user_data_protos[key] = packed
@@ -1950,7 +1946,7 @@ class Parallel(NodeWithChildren):
 
   def set_user_data_proto_from_any(
       self, key: str, any_proto: any_pb2.Any
-  ) -> 'Node':
+  ) -> Node:
     self._user_data_protos[key] = any_proto
     return self
 
@@ -1961,7 +1957,7 @@ class Parallel(NodeWithChildren):
   @classmethod
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.ParallelNode
-  ) -> 'Parallel':
+  ) -> Parallel:
     node = cls(
         failure_behavior=cls.FailureBehavior(proto_object.failure_behavior),
     )
@@ -1985,7 +1981,7 @@ class Selector(NodeWithChildren):
     node_type: A string label of the node type.
   """
 
-  _decorators: Optional['Decorators']
+  _decorators: Optional[Decorators]
   _name: Optional[str]
   _node_id: Optional[int]
   _state: Optional[NodeState]
@@ -1993,9 +1989,7 @@ class Selector(NodeWithChildren):
 
   def __init__(
       self,
-      children: Optional[
-          SequenceType[Union['Node', actions.ActionBase]]
-      ] = None,
+      children: Optional[SequenceType[Union[Node, actions.ActionBase]]] = None,
       name: Optional[str] = None,
   ):
     super().__init__(children=children)
@@ -2041,17 +2035,17 @@ class Selector(NodeWithChildren):
   def state(self) -> Optional[NodeState]:
     return self._state
 
-  def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
+  def set_decorators(self, decorators: Optional[Decorators]) -> Node:
     self._decorators = decorators
     return self
 
   @property
-  def decorators(self) -> Optional['Decorators']:
+  def decorators(self) -> Optional[Decorators]:
     return self._decorators
 
   def set_user_data_proto(
       self, key: str, proto: protobuf_message.Message
-  ) -> 'Node':
+  ) -> Node:
     packed = any_pb2.Any()
     packed.Pack(proto)
     self._user_data_protos[key] = packed
@@ -2059,7 +2053,7 @@ class Selector(NodeWithChildren):
 
   def set_user_data_proto_from_any(
       self, key: str, any_proto: any_pb2.Any
-  ) -> 'Node':
+  ) -> Node:
     self._user_data_protos[key] = any_proto
     return self
 
@@ -2070,7 +2064,7 @@ class Selector(NodeWithChildren):
   @classmethod
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.SelectorNode
-  ) -> 'Selector':
+  ) -> Selector:
     node = cls()
     for child_node_proto in proto_object.children:
       node.children.append(Node.create_from_proto(child_node_proto))
@@ -2096,20 +2090,20 @@ class Retry(Node):
       available while inside the retry node.
   """
 
-  _decorators: Optional['Decorators']
+  _decorators: Optional[Decorators]
   _name: Optional[str]
   _node_id: Optional[int]
   _state: Optional[NodeState]
   _user_data_protos: dict[str, any_pb2.Any]
-  child: Optional['Node']
-  recovery: Optional['Node']
+  child: Optional[Node]
+  recovery: Optional[Node]
   max_tries: int
 
   def __init__(
       self,
       max_tries: int = 0,
-      child: Optional[Union['Node', actions.ActionBase]] = None,
-      recovery: Optional[Union['Node', actions.ActionBase]] = None,
+      child: Optional[Union[Node, actions.ActionBase]] = None,
+      recovery: Optional[Union[Node, actions.ActionBase]] = None,
       name: Optional[str] = None,
       retry_counter_key: Optional[str] = None,
   ):
@@ -2126,13 +2120,11 @@ class Retry(Node):
     ).replace('-', '_')
     super().__init__()
 
-  def set_child(self, child: Union['Node', actions.ActionBase]) -> 'Retry':
+  def set_child(self, child: Union[Node, actions.ActionBase]) -> Retry:
     self.child = _transform_to_optional_node(child)
     return self
 
-  def set_recovery(
-      self, recovery: Union['Node', actions.ActionBase]
-  ) -> 'Retry':
+  def set_recovery(self, recovery: Union[Node, actions.ActionBase]) -> Retry:
     self.recovery = _transform_to_optional_node(recovery)
     return self
 
@@ -2188,17 +2180,17 @@ class Retry(Node):
   def node_type(self) -> str:
     return 'retry'
 
-  def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
+  def set_decorators(self, decorators: Optional[Decorators]) -> Node:
     self._decorators = decorators
     return self
 
   @property
-  def decorators(self) -> Optional['Decorators']:
+  def decorators(self) -> Optional[Decorators]:
     return self._decorators
 
   def set_user_data_proto(
       self, key: str, proto: protobuf_message.Message
-  ) -> 'Node':
+  ) -> Node:
     packed = any_pb2.Any()
     packed.Pack(proto)
     self._user_data_protos[key] = packed
@@ -2206,7 +2198,7 @@ class Retry(Node):
 
   def set_user_data_proto_from_any(
       self, key: str, any_proto: any_pb2.Any
-  ) -> 'Node':
+  ) -> Node:
     self._user_data_protos[key] = any_proto
     return self
 
@@ -2217,7 +2209,7 @@ class Retry(Node):
   @classmethod
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.RetryNode
-  ) -> 'Retry':
+  ) -> Retry:
     retry = cls(
         max_tries=proto_object.max_tries,
         child=Node.create_from_proto(proto_object.child),
@@ -2254,9 +2246,9 @@ class Retry(Node):
 
   def visit(
       self,
-      containing_tree: 'BehaviorTree',
+      containing_tree: BehaviorTree,
       callback: Callable[
-          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+          [BehaviorTree, Union[BehaviorTree, Node, Condition]], None
       ],
   ) -> None:
     super().visit(containing_tree, callback)
@@ -2279,7 +2271,7 @@ class Fallback(NodeWithChildren):
     node_type: A string label of the node type.
   """
 
-  _decorators: Optional['Decorators']
+  _decorators: Optional[Decorators]
   _name: Optional[str]
   _node_id: Optional[int]
   _state: Optional[NodeState]
@@ -2287,9 +2279,7 @@ class Fallback(NodeWithChildren):
 
   def __init__(
       self,
-      children: Optional[
-          SequenceType[Union['Node', actions.ActionBase]]
-      ] = None,
+      children: Optional[SequenceType[Union[Node, actions.ActionBase]]] = None,
       name: Optional[str] = None,
   ):
     super().__init__(children=children)
@@ -2335,17 +2325,17 @@ class Fallback(NodeWithChildren):
   def state(self) -> Optional[NodeState]:
     return self._state
 
-  def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
+  def set_decorators(self, decorators: Optional[Decorators]) -> Node:
     self._decorators = decorators
     return self
 
   @property
-  def decorators(self) -> Optional['Decorators']:
+  def decorators(self) -> Optional[Decorators]:
     return self._decorators
 
   def set_user_data_proto(
       self, key: str, proto: protobuf_message.Message
-  ) -> 'Node':
+  ) -> Node:
     packed = any_pb2.Any()
     packed.Pack(proto)
     self._user_data_protos[key] = packed
@@ -2353,7 +2343,7 @@ class Fallback(NodeWithChildren):
 
   def set_user_data_proto_from_any(
       self, key: str, any_proto: any_pb2.Any
-  ) -> 'Node':
+  ) -> Node:
     self._user_data_protos[key] = any_proto
     return self
 
@@ -2364,7 +2354,7 @@ class Fallback(NodeWithChildren):
   @classmethod
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.FallbackNode
-  ) -> 'Fallback':
+  ) -> Fallback:
     node = cls()
     for child_node_proto in proto_object.children:
       node.children.append(Node.create_from_proto(child_node_proto))
@@ -2407,7 +2397,7 @@ class Loop(Node):
       protos. The loop iterates over the result of this list.
   """
 
-  _decorators: Optional['Decorators']
+  _decorators: Optional[Decorators]
   _name: Optional[str]
   _node_id: Optional[int]
   _state: Optional[NodeState]
@@ -2420,8 +2410,8 @@ class Loop(Node):
   def __init__(
       self,
       max_times: int = 0,
-      do_child: Optional[Union['Node', actions.ActionBase]] = None,
-      while_condition: Optional['Condition'] = None,
+      do_child: Optional[Union[Node, actions.ActionBase]] = None,
+      while_condition: Optional[Condition] = None,
       name: Optional[str] = None,
       loop_counter_key: Optional[str] = None,
       *,
@@ -2434,9 +2424,9 @@ class Loop(Node):
     self._decorators = None
     self._user_data_protos = {}
 
-    self.do_child: Optional['Node'] = _transform_to_optional_node(do_child)
+    self.do_child: Optional[Node] = _transform_to_optional_node(do_child)
     self.max_times: int = max_times
-    self.while_condition: Optional['Condition'] = while_condition
+    self.while_condition: Optional[Condition] = while_condition
     self._loop_counter_key = loop_counter_key or 'loop_counter_' + str(
         uuid.uuid4()
     ).replace('-', '_')
@@ -2457,11 +2447,11 @@ class Loop(Node):
     self._check_consistency()
     super().__init__()
 
-  def set_do_child(self, do_child: Union['Node', actions.ActionBase]) -> 'Loop':
+  def set_do_child(self, do_child: Union[Node, actions.ActionBase]) -> Loop:
     self.do_child = _transform_to_optional_node(do_child)
     return self
 
-  def set_while_condition(self, while_condition: 'Condition') -> 'Loop':
+  def set_while_condition(self, while_condition: Condition) -> Loop:
     """Sets the while condition for the loop.
 
     Setting it will make this loop node work as a while loop.
@@ -2476,7 +2466,7 @@ class Loop(Node):
     self._check_consistency()
     return self
 
-  def set_for_each_value_key(self, key: Optional[str]) -> 'Loop':
+  def set_for_each_value_key(self, key: Optional[str]) -> Loop:
     """Sets the blackboard key for the current value of a for each loop.
 
     Setting it anything other than 'None', will make this loop node work as a
@@ -2506,7 +2496,7 @@ class Loop(Node):
               ]
           ]
       ],
-  ) -> 'Loop':
+  ) -> Loop:
     """Sets the messages to iterate over in a for each loop.
 
     The proto messages are packed into Any protos when the loop node is
@@ -2529,7 +2519,7 @@ class Loop(Node):
 
   def set_for_each_generator(
       self, generator_value: blackboard_value.BlackboardValue
-  ) -> 'Loop':
+  ) -> Loop:
     """Sets the value to generate protos from to loop over in a for each loop.
 
     The passed in value must refer to a list of protos to iterate over in this
@@ -2557,7 +2547,7 @@ class Loop(Node):
 
   def set_for_each_generator_cel_expression(
       self, cel_expression: Optional[str]
-  ) -> 'Loop':
+  ) -> Loop:
     """Sets the CEL expression to generate protos for a for each loop.
 
     When this loop node is selected for execution this CEL expression will be
@@ -2797,17 +2787,17 @@ class Loop(Node):
   def node_type(self) -> str:
     return 'loop'
 
-  def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
+  def set_decorators(self, decorators: Optional[Decorators]) -> Node:
     self._decorators = decorators
     return self
 
   @property
-  def decorators(self) -> Optional['Decorators']:
+  def decorators(self) -> Optional[Decorators]:
     return self._decorators
 
   def set_user_data_proto(
       self, key: str, proto: protobuf_message.Message
-  ) -> 'Node':
+  ) -> Node:
     packed = any_pb2.Any()
     packed.Pack(proto)
     self._user_data_protos[key] = packed
@@ -2815,7 +2805,7 @@ class Loop(Node):
 
   def set_user_data_proto_from_any(
       self, key: str, any_proto: any_pb2.Any
-  ) -> 'Node':
+  ) -> Node:
     self._user_data_protos[key] = any_proto
     return self
 
@@ -2826,7 +2816,7 @@ class Loop(Node):
   @classmethod
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.LoopNode
-  ) -> 'Loop':
+  ) -> Loop:
     """Created a Loop node class from a LoopNode proto."""
     condition = None
     if proto_object.HasField('while'):
@@ -2889,9 +2879,9 @@ class Loop(Node):
 
   def visit(
       self,
-      containing_tree: 'BehaviorTree',
+      containing_tree: BehaviorTree,
       callback: Callable[
-          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+          [BehaviorTree, Union[BehaviorTree, Node, Condition]], None
       ],
   ) -> None:
     super().visit(containing_tree, callback)
@@ -2916,7 +2906,7 @@ class Branch(Node):
     node_type: A string label of the node type.
   """
 
-  _decorators: Optional['Decorators']
+  _decorators: Optional[Decorators]
   _name: Optional[str]
   _node_id: Optional[int]
   _state: Optional[NodeState]
@@ -2924,15 +2914,15 @@ class Branch(Node):
 
   def __init__(
       self,
-      if_condition: Optional['Condition'] = None,
-      then_child: Optional[Union['Node', actions.ActionBase]] = None,
-      else_child: Optional[Union['Node', actions.ActionBase]] = None,
+      if_condition: Optional[Condition] = None,
+      then_child: Optional[Union[Node, actions.ActionBase]] = None,
+      else_child: Optional[Union[Node, actions.ActionBase]] = None,
       name: Optional[str] = None,
   ):
     self._decorators = None
-    self.then_child: Optional['Node'] = _transform_to_optional_node(then_child)
-    self.else_child: Optional['Node'] = _transform_to_optional_node(else_child)
-    self.if_condition: Optional['Condition'] = if_condition
+    self.then_child: Optional[Node] = _transform_to_optional_node(then_child)
+    self.else_child: Optional[Node] = _transform_to_optional_node(else_child)
+    self.if_condition: Optional[Condition] = if_condition
     self._name = name
     self._node_id = None
     self._state = None
@@ -2940,18 +2930,18 @@ class Branch(Node):
     super().__init__()
 
   def set_then_child(
-      self, then_child: Union['Node', actions.ActionBase]
-  ) -> 'Branch':
+      self, then_child: Union[Node, actions.ActionBase]
+  ) -> Branch:
     self.then_child = _transform_to_optional_node(then_child)
     return self
 
   def set_else_child(
-      self, else_child: Union['Node', actions.ActionBase]
-  ) -> 'Branch':
+      self, else_child: Union[Node, actions.ActionBase]
+  ) -> Branch:
     self.else_child = _transform_to_optional_node(else_child)
     return self
 
-  def set_if_condition(self, if_condition: 'Condition') -> 'Branch':
+  def set_if_condition(self, if_condition: Condition) -> Branch:
     self.if_condition = if_condition
     return self
 
@@ -3016,17 +3006,17 @@ class Branch(Node):
   def node_type(self) -> str:
     return 'branch'
 
-  def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
+  def set_decorators(self, decorators: Optional[Decorators]) -> Node:
     self._decorators = decorators
     return self
 
   @property
-  def decorators(self) -> Optional['Decorators']:
+  def decorators(self) -> Optional[Decorators]:
     return self._decorators
 
   def set_user_data_proto(
       self, key: str, proto: protobuf_message.Message
-  ) -> 'Node':
+  ) -> Node:
     packed = any_pb2.Any()
     packed.Pack(proto)
     self._user_data_protos[key] = packed
@@ -3034,7 +3024,7 @@ class Branch(Node):
 
   def set_user_data_proto_from_any(
       self, key: str, any_proto: any_pb2.Any
-  ) -> 'Node':
+  ) -> Node:
     self._user_data_protos[key] = any_proto
     return self
 
@@ -3045,7 +3035,7 @@ class Branch(Node):
   @classmethod
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.BranchNode
-  ) -> 'Branch':
+  ) -> Branch:
     """Creates a Branch node class from a BranchNode proto."""
     then_child = None
     else_child = None
@@ -3091,9 +3081,9 @@ class Branch(Node):
 
   def visit(
       self,
-      containing_tree: 'BehaviorTree',
+      containing_tree: BehaviorTree,
       callback: Callable[
-          ['BehaviorTree', Union['BehaviorTree', 'Node', 'Condition']], None
+          [BehaviorTree, Union[BehaviorTree, Node, Condition]], None
       ],
   ) -> None:
     super().visit(containing_tree, callback)
@@ -3133,7 +3123,7 @@ class Data(Node):
   _name: Optional[str]
   _node_id: Optional[int]
   _state: Optional[NodeState]
-  _decorators: Optional['Decorators']
+  _decorators: Optional[Decorators]
   _user_data_protos: dict[str, any_pb2.Any]
 
   class OperationType(enum.Enum):
@@ -3242,18 +3232,18 @@ class Data(Node):
   def node_type(self) -> str:
     return 'data'
 
-  def set_decorators(self, decorators: Optional['Decorators']) -> 'Node':
+  def set_decorators(self, decorators: Optional[Decorators]) -> Node:
     """Sets decorators for this node."""
     self._decorators = decorators
     return self
 
   @property
-  def decorators(self) -> Optional['Decorators']:
+  def decorators(self) -> Optional[Decorators]:
     return self._decorators
 
   def set_user_data_proto(
       self, key: str, proto: protobuf_message.Message
-  ) -> 'Node':
+  ) -> Node:
     packed = any_pb2.Any()
     packed.Pack(proto)
     self._user_data_protos[key] = packed
@@ -3261,7 +3251,7 @@ class Data(Node):
 
   def set_user_data_proto_from_any(
       self, key: str, any_proto: any_pb2.Any
-  ) -> 'Node':
+  ) -> Node:
     self._user_data_protos[key] = any_proto
     return self
 
@@ -3343,7 +3333,7 @@ class Data(Node):
   def blackboard_key(self) -> Optional[str]:
     return self._blackboard_key
 
-  def set_blackboard_key(self, blackboard_key: str) -> 'Data':
+  def set_blackboard_key(self, blackboard_key: str) -> Data:
     """Sets the blackboard key for this operation.
 
     Args:
@@ -3357,10 +3347,10 @@ class Data(Node):
     return self
 
   @property
-  def operation(self) -> 'Data.OperationType':
+  def operation(self) -> Data.OperationType:
     return self._operation
 
-  def set_operation(self, operation: OperationType) -> 'Data':
+  def set_operation(self, operation: OperationType) -> Data:
     """Sets the mode of the performed operation.
 
     Args:
@@ -3381,7 +3371,7 @@ class Data(Node):
   def cel_expression(self) -> Optional[str]:
     return self._cel_expression
 
-  def set_cel_expression(self, cel_expression: str) -> 'Data':
+  def set_cel_expression(self, cel_expression: str) -> Data:
     """Sets the CEL expression to create or update a blackboard value.
 
     Args:
@@ -3402,7 +3392,7 @@ class Data(Node):
   def world_query(self) -> Optional[WorldQuery]:
     return self._world_query
 
-  def set_world_query(self, world_query: WorldQuery) -> 'Data':
+  def set_world_query(self, world_query: WorldQuery) -> Data:
     if self._operation != Data.OperationType.CREATE_OR_UPDATE:
       raise solutions_errors.InvalidArgumentError(
           'Cannot set world_query on data node without operation'
@@ -3415,7 +3405,7 @@ class Data(Node):
   def input_proto(self) -> Optional[protobuf_message.Message]:
     return self._proto
 
-  def set_input_proto(self, proto: protobuf_message.Message) -> 'Data':
+  def set_input_proto(self, proto: protobuf_message.Message) -> Data:
     """Sets a specific proto for creating or updating a blackboard value.
 
     Args:
@@ -3436,7 +3426,7 @@ class Data(Node):
   def input_protos(self) -> Optional[List[protobuf_message.Message]]:
     return self._protos
 
-  def set_input_protos(self, protos: List[protobuf_message.Message]) -> 'Data':
+  def set_input_protos(self, protos: List[protobuf_message.Message]) -> Data:
     """Sets list of specific protos for creating or updating a blackboard value.
 
     Args:
@@ -3457,7 +3447,7 @@ class Data(Node):
   @classmethod
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.DataNode
-  ) -> 'Data':
+  ) -> Data:
     """Creates a new instances from data in a proto.
 
     Args:
@@ -3542,8 +3532,8 @@ class IdRecorder:
 
   def __call__(
       self,
-      containing_tree: 'BehaviorTree',
-      tree_object: Union['BehaviorTree', Node, Condition],
+      containing_tree: BehaviorTree,
+      tree_object: Union[BehaviorTree, Node, Condition],
   ):
     if isinstance(tree_object, Node) and tree_object.node_id is not None:
       self.tree_to_node_id_to_nodes[containing_tree][
@@ -3585,8 +3575,8 @@ class BehaviorTree:
   def __init__(
       self,
       name: Optional[str] = None,
-      root: Optional[Union['Node', actions.ActionBase]] = None,
-      bt: Union['BehaviorTree', behavior_tree_pb2.BehaviorTree, None] = None,
+      root: Optional[Union[Node, actions.ActionBase]] = None,
+      bt: Union[BehaviorTree, behavior_tree_pb2.BehaviorTree, None] = None,
   ):
     """Creates an empty object or an object from another object / a plan proto.
 
@@ -3598,7 +3588,7 @@ class BehaviorTree:
       bt: BehaviorTree instance or BehaviorTree proto. The value of the `name`
         argument overwrites the value from the `bt` proto argument, if set.
     """
-    root: Optional['Node'] = _transform_to_optional_node(root)
+    root: Optional[Node] = _transform_to_optional_node(root)
     self.tree_id = None
     if bt is not None:
       bt_copy = None
@@ -3631,7 +3621,7 @@ class BehaviorTree:
       name_snippet = f'name="{self.name}", '
     return name_snippet
 
-  def set_root(self, root: Union['Node', actions.ActionBase]) -> 'Node':
+  def set_root(self, root: Union[Node, actions.ActionBase]) -> Node:
     """Sets the root member to the given Node instance."""
     self.root = _transform_to_node(root)
     return self.root
@@ -3656,7 +3646,7 @@ class BehaviorTree:
   @classmethod
   def create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree
-  ) -> 'BehaviorTree':
+  ) -> BehaviorTree:
     """Instantiates a behavior tree from a proto."""
     if cls != BehaviorTree:
       raise TypeError(
@@ -3682,7 +3672,7 @@ class BehaviorTree:
   def visit(
       self,
       callback: Callable[
-          ['BehaviorTree', Union['BehaviorTree', Node, Condition]], None
+          [BehaviorTree, Union[BehaviorTree, Node, Condition]], None
       ],
   ) -> None:
     """Visits this BehaviorTree recursively.
@@ -3769,7 +3759,7 @@ class BehaviorTree:
 
     def search_matching_name(
         containing_tree: BehaviorTree,
-        tree_object: Union['BehaviorTree', Node, Condition],
+        tree_object: Union[BehaviorTree, Node, Condition],
     ):
       if (
           isinstance(tree_object, Node)
@@ -3799,7 +3789,7 @@ class BehaviorTree:
       message gives further information on which ids are non-consistent.
     """
 
-    def tree_object_string(tree_object: Union['BehaviorTree', Node]):
+    def tree_object_string(tree_object: Union[BehaviorTree, Node]):
       """Creates a string representation that helps identifying the object."""
 
       tree_object_str = (
