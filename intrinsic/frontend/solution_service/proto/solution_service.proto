@@ -5,9 +5,13 @@ syntax = "proto3";
 package intrinsic_proto.solution.v1;
 
 import "intrinsic/executive/proto/behavior_tree.proto";
+import "intrinsic/frontend/solution_service/proto/status.proto";
 
 // Manages the running solution.
 service SolutionService {
+  // Gets the status of the running solution.
+  rpc GetStatus(GetStatusRequest) returns (Status);
+
   // Gets a single behavior tree from the running solution.
   rpc GetBehaviorTree(GetBehaviorTreeRequest)
       returns (intrinsic_proto.executive.BehaviorTree);
@@ -15,6 +19,10 @@ service SolutionService {
   // Lists behavior trees from the running solution.
   rpc ListBehaviorTrees(ListBehaviorTreesRequest)
       returns (ListBehaviorTreesResponse);
+}
+
+message GetStatusRequest {
+  // For future extensions.
 }
 
 message GetBehaviorTreeRequest {

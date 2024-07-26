@@ -1,0 +1,70 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.solution.v1;
+
+message Status {
+  enum State {
+    // The state of the solution is not specified. The solution should not be
+    // interacted with in this state.
+    STATE_UNSPECIFIED = 0;
+
+    // Core platform services are being deployed and are not available yet. It
+    // is strongly recommended to wait for the state to transition to either
+    // PLATFORM_READY, DEPLOYING or READY before any further action.
+    PLATFORM_DEPLOYING = 1;
+
+    // All core platform services are ready and no solution is running. It is
+    // safe to start a solution in this state.
+    PLATFORM_READY = 2;
+
+    // Solution specific services or assets (e.g. skills, services) are being
+    // deployed. The solution can be safely edited while in this state.
+    // Executing processes is not recommended until the solution transitions to
+    // the READY state.
+    DEPLOYING = 3;
+
+    // The solution and all of its services and assets are ready. All
+    // functionality, including process execution, is available.
+    READY = 4;
+
+    // Solution specific services or assets (e.g. skills, services) are being
+    // stopped. The solution should not be edited when in this state.
+    STOPPING = 5;
+
+    // Something went wrong during deployment of the platform or solution. The
+    // state_reason field may contain more detailed information.
+    ERROR = 6;
+  }
+
+  // Current state of the solution as a single value. It is recommended not to
+  // make assumptions about the sequence of states the solution will transition
+  // through as individual states may be skipped.
+  // - Starting a solution is safe when state is PLATFORM_READY
+  // - Editing the solution is safe when the state is DEPLOYING or READY
+  // - Executing processes is only safe when the state is READY
+  State state = 1;
+
+  // Human-readable reason for the solution being in the current state. Never
+  // populated when the state is PLATFORM_READY or READY.
+  string state_reason = 2;
+
+  // Unique ID of the running solution. Empty if no solution is running or the
+  // solution is not deployed from the catalog.
+  string name = 3;
+
+  // Human readable name of the running solution. Empty if no solution is
+  // running.
+  string display_name = 4;
+
+  // Whether the solution is running in simulation. The solution is running on
+  // real hardware or there is no solution running if this is false.
+  bool simulated = 5;
+
+  // Name of the cluster.
+  string cluster_name = 6;
+
+  // Version of the platform.
+  string platform_version = 7;
+}
