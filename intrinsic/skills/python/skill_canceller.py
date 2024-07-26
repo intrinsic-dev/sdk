@@ -19,17 +19,13 @@ class SkillReadyForCancellationError(RuntimeError):
   """An invalid action occurred on a skill that is ready for cancellation."""
 
 
-class SkillCancelledError(RuntimeError):
-  """A skill was aborted due to a cancellation request."""
-
-
 class SkillCanceller(abc.ABC):
   """Supports cooperative cancellation of skills by the skill service.
 
   When a cancellation request is received, the skill should:
   1) stop as soon as possible and leave resources in a safe and recoverable
      state;
-  2) raise SkillCancelledError.
+  2) raise skill_interface.SkillCancelledError.
 
   The skill must call `ready` once it is ready to be cancelled.
 
