@@ -32,7 +32,7 @@
 
 namespace intrinsic::icon::examples {
 
-constexpr double kCartesianVelocityFraction = 0.2;
+constexpr double kCartesianVelocityConstant = 0.2;
 constexpr double kExpectedJointDifference = 0.002;
 constexpr double kSettlingTimeoutSeconds = 1;
 
@@ -257,9 +257,7 @@ absl::Status JointThenCartMove(
   *fixed_params.mutable_cartesian_limits() =
       generic_part_config.cartesian_limits_config().default_cartesian_limits();
   intrinsic::icon::CartesianJoggingInfo::StreamingParams streaming_params;
-  double velocity_x =
-      kCartesianVelocityFraction *
-      fixed_params.cartesian_limits().max_translational_velocity().at(0);
+  double velocity_x = kCartesianVelocityConstant;
   streaming_params.mutable_goal_twist()->set_x(velocity_x);
   eigenmath::VectorXd joint_position_before, joint_position_after;
   {
