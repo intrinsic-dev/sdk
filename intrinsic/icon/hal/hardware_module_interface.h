@@ -55,6 +55,9 @@ class HardwareModuleInterface {
   // A call to `Activate()` signals the hardware module that ICON has
   // successfully connected to the hardware module and starts the realtime loop.
   // Prior to this, there's no call to `ReadStatus` happening.
+  // Returns kAborted to indicate a fatal fault, which requires a restart of the
+  // process. The Hardware Module runtime will perform the process restart on
+  // the next clear faults call via the ResourceHealth interface.
   virtual RealtimeStatus Activate() = 0;
 
   // Deactivates the hardware module.
@@ -66,6 +69,9 @@ class HardwareModuleInterface {
   // call to `Deactivate()` is semantically different from `Shutdown()` in which
   // a subsequent call to `Activate()` is designed to succeed when the hardware
   // module is deactivated.
+  // Returns kAborted to indicate a fatal fault, which requires a restart of the
+  // process. The Hardware Module runtime will perform the process restart on
+  // the next clear faults call via the ResourceHealth interface.
   virtual RealtimeStatus Deactivate() = 0;
 
   // Enables motion commands for the hardware modules.

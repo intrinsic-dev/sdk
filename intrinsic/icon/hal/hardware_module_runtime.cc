@@ -95,7 +95,9 @@ class HardwareModuleRuntime::CallbackHandler final {
     if (auto ret = instance_->Activate(); !ret.ok()) {
       INTRINSIC_RT_LOG_THROTTLED(ERROR)
           << "PUBLIC: Call to 'Activate' failed: " << ret.message();
-      SetStateDirectly(intrinsic_fbs::StateCode::kFatallyFaulted,
+      SetStateDirectly(ret.code() == absl::StatusCode::kAborted
+                           ? intrinsic_fbs::StateCode::kFatallyFaulted
+                           : intrinsic_fbs::StateCode::kFaulted,
                        ret.message());
     } else {
       SetStateDirectly(intrinsic_fbs::StateCode::kActivated, "");
@@ -121,7 +123,9 @@ class HardwareModuleRuntime::CallbackHandler final {
     if (auto ret = instance_->Deactivate(); !ret.ok()) {
       INTRINSIC_RT_LOG_THROTTLED(ERROR)
           << "PUBLIC: Call to 'Deactivate' failed: " << ret.message();
-      SetStateDirectly(intrinsic_fbs::StateCode::kFatallyFaulted,
+      SetStateDirectly(ret.code() == absl::StatusCode::kAborted
+                           ? intrinsic_fbs::StateCode::kFatallyFaulted
+                           : intrinsic_fbs::StateCode::kFaulted,
                        ret.message());
     } else {
       SetStateDirectly(intrinsic_fbs::StateCode::kDeactivated, "");
