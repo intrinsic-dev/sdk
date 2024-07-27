@@ -10,12 +10,14 @@
 #include <vector>
 
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "google/protobuf/duration.pb.h"
 #include "google/protobuf/empty.pb.h"
 #include "grpcpp/client_context.h"
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/icon/proto/joint_space.pb.h"
 #include "intrinsic/logging/proto/context.pb.h"
+#include "intrinsic/math/pose3.h"
 #include "intrinsic/math/proto_conversion.h"
 #include "intrinsic/motion_planning/conversions.h"
 #include "intrinsic/motion_planning/proto/motion_planner_config.pb.h"
@@ -26,6 +28,8 @@
 #include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/world/objects/kinematic_object.h"
+#include "intrinsic/world/objects/transform_node.h"
+#include "intrinsic/world/proto/object_world_refs.pb.h"
 
 namespace intrinsic {
 namespace motion_planning {
