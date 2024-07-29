@@ -18,6 +18,19 @@ exports_files(
     ],
 )
 
+py_library(
+    name = "basic_compute_context_impl_py",
+    srcs = ["basic_compute_context_impl.py"],
+    visibility = [
+        "//intrinsic/executive:__subpackages__",
+        "//intrinsic/skills:__subpackages__",
+    ],
+    deps = [
+        "//intrinsic/skills/python:basic_compute_context",
+        "//intrinsic/world/python:object_world_client",
+    ],
+)
+
 cc_library(
     name = "default_parameters",
     srcs = ["default_parameters.cc"],

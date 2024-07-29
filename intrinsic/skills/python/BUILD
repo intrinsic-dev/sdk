@@ -53,6 +53,14 @@ py_library(
 )
 
 py_library(
+    name = "basic_compute_context",
+    srcs = ["basic_compute_context.py"],
+    deps = [
+        "//intrinsic/world/python:object_world_client",
+    ],
+)
+
+py_library(
     name = "execute_context",
     srcs = ["execute_context.py"],
     deps = [
