@@ -613,6 +613,24 @@ class Node(abc.ABC):
 
       self.emit_extended_status_proto(es, to_blackboard_key)
 
+    def emit_extended_status_to(self, blackboard_key: str) -> None:
+      """Causes an extended status to be written to the blackboard.
+
+      This applies to extended status that may be produced by the node, e.g., by
+      Task nodes calling a skill, or due to extended status propagation.
+
+      This will not configure a specific extended status to be emitted, but only
+      to store one that was encountered.
+
+      Args:
+        blackboard_key: The blackboard key to write the extended status to.
+      """
+      if self._settings is None:
+        self._settings = (
+            behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings()
+        )
+      self._settings.emit_extended_status.to_blackboard_key = blackboard_key
+
     @classmethod
     def create_from_proto(
         cls,

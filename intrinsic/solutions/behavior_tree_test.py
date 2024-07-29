@@ -1518,6 +1518,27 @@ class BehaviorTreeNodeOnFailureTest(absltest.TestCase):
 
     compare.assertProto2Equal(self, node.proto, node_proto)
 
+  def test_emit_extended_status_to(self):
+    """Tests if BehaviorTree.Decorator.on_failure is correctly constructed."""
+    node = bt.Sequence()
+    node.on_failure.emit_extended_status_to('blackboard_foo')
+
+    node_proto = text_format.Parse(
+        """
+        decorators {
+          on_failure {
+            emit_extended_status {
+              to_blackboard_key: "blackboard_foo"
+            }
+          }
+        }
+        sequence {}
+        """,
+        behavior_tree_pb2.BehaviorTree.Node(),
+    )
+
+    compare.assertProto2Equal(self, node.proto, node_proto)
+
 
 class BehaviorTreeTaskTest(absltest.TestCase):
   """Tests the method functions of BehaviorTree.Task."""
