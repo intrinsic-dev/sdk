@@ -42,6 +42,7 @@ class Thread {
         thread_impl_(InitThread(stop_source_, std::forward<Function>(f),
                                 std::forward<Args>(args)...)) {
     INTRINSIC_ASSERT_NON_REALTIME();
+    SaveStopToken();
   }
 
   // Movable.
@@ -102,7 +103,9 @@ class Thread {
 
  private:
   explicit Thread(std::thread&& thread) noexcept
-      : stop_source_{StopSource{}}, thread_impl_(std::move(thread)) {}
+      : stop_source_{StopSource{}}, thread_impl_(std::move(thread)) {
+    SaveStopToken();
+  }
 
   template <typename Function, typename... Args>
   static std::thread InitThread(const StopSource& ss, Function&& f,
@@ -117,6 +120,8 @@ class Thread {
                          std::forward<Args>(args)...);
     }
   }
+
+  void SaveStopToken() noexcept;
 
   StopSource stop_source_{detail::NoState};
   std::thread thread_impl_;  // The new thread of execution
@@ -134,6 +139,15 @@ absl::Status Thread::Start(const ThreadOptions& options, Function&& f,
                                        std::forward<Args>(args)...));
   return absl::OkStatus();
 }
+
+// Allows client code which is executed in a thread to call
+//   while (!ThisThreadStopRequested()) {
+//     // do something
+//   }
+// The underlying storage for per thread stop tokens is only ever allocated
+// when this function is called. If noone uses this function, no additional
+// memory overhead is incurred.
+bool ThisThreadStopRequested();
 
 }  // namespace intrinsic
 

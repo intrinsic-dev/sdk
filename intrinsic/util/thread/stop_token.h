@@ -48,10 +48,6 @@ class StopToken {
   // Constructs an empty StopToken with no associated stop-state.
   StopToken() noexcept = default;
 
-  // Default copy and move constructors.
-  StopToken(const StopToken& other) noexcept = default;
-  StopToken(StopToken&& other) noexcept = default;
-
   ABSL_MUST_USE_RESULT bool stop_requested() const noexcept {
     return stop_state_ != nullptr && stop_state_->stopped;
   }
