@@ -6,8 +6,10 @@ import importlib
 import sys
 import types
 
+from google.protobuf import any_pb2
 from google.protobuf import descriptor_pb2
 from google.protobuf import descriptor_pool
+from google.protobuf import message
 from google.protobuf.internal import builder
 
 
@@ -114,3 +116,103 @@ def import_from_file_descriptor_set(
   sys.modules[module.__name__] = module
 
   return module
+
+
+def _find_module_containing_message(
+    message_full_name: str,
+    file_descriptor_set: descriptor_pb2.FileDescriptorSet,
+) -> str:
+  """Finds the proto module containing the given message.
+
+  Finds the proto module containing the given message in the given file
+  descriptor set. Assumes that the message is a *top-level* message in some file
+  in the file descriptor set.
+
+  Args:
+    message_full_name: The full name of the message to find.
+    file_descriptor_set: The file descriptor set in which to search for the
+      message.
+
+  Returns:
+    The name of the proto module containing the given message.
+  """
+  for file in file_descriptor_set.file:
+    for message_type in file.message_type:
+      full_message_name = (
+          file.package + "." if file.package else ""
+      ) + message_type.name
+      if full_message_name == message_full_name:
+        return _to_proto_module(file.name)
+
+  raise ValueError(
+      f"Could not find params message {message_full_name} in file"
+      " descriptor set"
+  )
+
+
+def unpack_params_message(
+    params_any: any_pb2.Any,
+    file_descriptor_set: descriptor_pb2.FileDescriptorSet,
+) -> message.Message:
+  """Unpacks the given params Any proto.
+
+  Unpacks the given params Any proto into a message of the proper type (as
+  indicated by the Any proto's type_url).
+
+  Args:
+    params_any: The Any proto to unpack.
+    file_descriptor_set: The file descriptor set containing the file defining
+      the params message and all its dependencies.
+
+  Returns:
+    The unpacked params message.
+  """
+  params_full_message_name = params_any.type_url.split("/")[-1]
+  params_module_name = _find_module_containing_message(
+      params_full_message_name, file_descriptor_set
+  )
+  params_message_module = import_from_file_descriptor_set(
+      params_module_name, file_descriptor_set
+  )
+  message_name = params_any.type_url.split(".")[-1]
+  message_class = getattr(params_message_module, message_name)
+
+  params = message_class()
+  params_any.Unpack(params)
+  return params
+
+
+def serialize_return_value_message(
+    return_value: message.Message | None,
+    return_value_message_full_name: str,
+) -> bytes | None:
+  """Serializes the given return value message as an Any proto.
+
+  Also performs some basic sanity checks on the return value and its message
+  type. For convenience, this function will return None if the given return
+  value is None.
+
+  Args:
+    return_value: The return value message to pack. Must be a proto message of
+      the type indicated by return_value_message_full_name.
+    return_value_message_full_name: The expected full name of the proto message
+      type of the return value.
+
+  Returns:
+    The return value message packed into an Any proto and then serialized.
+  """
+  if return_value is None:
+    return None
+
+  if not isinstance(return_value, message.Message):
+    raise ValueError("returned value is not a proto message")
+  if return_value.DESCRIPTOR.full_name != return_value_message_full_name:
+    raise ValueError(
+        "returned value is a proto message with the wrong type (got"
+        f" {return_value.DESCRIPTOR.full_name}, expected"
+        f" {return_value_message_full_name})"
+    )
+
+  return_value_any = any_pb2.Any()
+  return_value_any.Pack(return_value)
+  return return_value_any.SerializeToString()

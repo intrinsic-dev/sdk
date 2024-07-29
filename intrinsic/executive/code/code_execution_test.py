@@ -5,10 +5,13 @@
 import sys
 
 from absl.testing import absltest
+from google.protobuf import any_pb2
 from google.protobuf import descriptor_pb2
+from google.protobuf import message_factory
 from google.protobuf import text_format
 from intrinsic.executive.code import code_execution
 from intrinsic.math.proto import point_pb2
+from intrinsic.solutions.testing import compare
 
 # Backup of the "initial state" of the import cache.
 _SYS_MODULES_BACKUP = sys.modules.copy()
@@ -114,6 +117,84 @@ class CodeExecutionTest(absltest.TestCase):
       code_execution.import_from_file_descriptor_set(
           "not.in.file_descriptor_set_pb2", file_descriptor_set
       )
+
+  def test_unpack_params_message(self):
+    file_descriptor_set = text_format.Parse(
+        """
+        file {
+          name: "unpack_params.proto"
+          package: "my_protos"
+          message_type {
+            name: "UnpackParams"
+            field {
+              name: "my_str"
+              number: 2
+              label: LABEL_OPTIONAL
+              type: TYPE_STRING
+            }
+          }
+          syntax: "proto3"
+        }""",
+        descriptor_pb2.FileDescriptorSet(),
+    )
+    # Generate message class from file descriptor set. Note that the returned
+    # class is independent/different from unpack_params_pb2.UnpackParams below.
+    # message_factory.GetMessages creates its own descriptor pool on the fly.
+    unpack_params_class = message_factory.GetMessages(file_descriptor_set.file)[
+        "my_protos.UnpackParams"
+    ]
+    params_any = any_pb2.Any()
+    params_any.Pack(unpack_params_class(my_str="some value"))
+
+    params = code_execution.unpack_params_message(
+        params_any, file_descriptor_set
+    )
+
+    unpack_params_pb2 = code_execution.import_from_file_descriptor_set(
+        "unpack_params_pb2", file_descriptor_set
+    )
+    self.assertIsInstance(params, unpack_params_pb2.UnpackParams)
+    compare.assertProto2Equal(
+        self, params, unpack_params_pb2.UnpackParams(my_str="some value")
+    )
+
+  def test_unpack_params_message_fails(self):
+    file_descriptor_set = descriptor_pb2.FileDescriptorSet()
+    params_any = any_pb2.Any(
+        type_url="type.googleapis.com/non.existent.Message",
+    )
+
+    with self.assertRaisesRegex(ValueError, "non.existent.Message"):
+      code_execution.unpack_params_message(params_any, file_descriptor_set)
+
+  def test_serialize_return_value_message(self):
+    return_value = point_pb2.Point(x=1, y=2, z=3)
+    expected_any = any_pb2.Any()
+    expected_any.Pack(return_value)
+
+    return_value_bytes = code_execution.serialize_return_value_message(
+        return_value, "intrinsic_proto.Point"
+    )
+
+    self.assertEqual(return_value_bytes, expected_any.SerializeToString())
+
+  def test_serialize_return_value_message_fails_on_wrong_type(self):
+    with self.assertRaises(ValueError):
+      code_execution.serialize_return_value_message(
+          "this is not a proto message", "irrelevant.MessageType"
+      )
+
+    with self.assertRaises(ValueError):
+      code_execution.serialize_return_value_message(
+          point_pb2.Point(), "expected.MessageType"
+      )
+
+  def test_serialize_return_value_message_passes_none_through(self):
+    self.assertIsNone(
+        code_execution.serialize_return_value_message(
+            None, "irrelevant.MessageType"
+        )
+    )
 
 
 if __name__ == "__main__":
