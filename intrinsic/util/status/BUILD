@@ -2,6 +2,7 @@
 
 # StatusBuilder to build Intrinsic platform error reports
 
+load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
 load("//bazel:go_macros.bzl", "go_grpc_library", "go_library", "go_proto_library")
@@ -366,6 +367,9 @@ py_library(
     deps = [
         ":extended_status_py_pb2",
         "//intrinsic/logging/proto:context_py_pb2",
+        requirement("grpcio"),
+        "@com_google_googleapis//google/rpc:code_py_proto",
+        "@com_google_googleapis//google/rpc:status_py_proto",
     ],
 )
 
@@ -389,12 +393,16 @@ py_test(
 py_test(
     name = "status_exception_test",
     srcs = ["status_exception_test.py"],
+    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
     deps = [
         ":extended_status_py_pb2",
         ":status_exception",
         "//intrinsic/logging/proto:context_py_pb2",
         "//intrinsic/solutions/testing:compare",
+        requirement("grpcio"),
         "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_googleapis//google/rpc:code_py_proto",
+        "@com_google_googleapis//google/rpc:status_py_proto",
         "@com_google_protobuf//:protobuf_python",
     ],
 )

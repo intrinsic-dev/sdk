@@ -7,12 +7,20 @@ from __future__ import annotations
 import datetime
 import textwrap
 import traceback
+from typing import Optional, Sequence, Tuple, Union
 
+from google.rpc import code_pb2
+from google.rpc import status_pb2
+import grpc
 from intrinsic.logging.proto import context_pb2
 from intrinsic.util.status import extended_status_pb2
 
+# This key is taken from the grpc implementation and generates special behavior
+# when sending it as trailing metadata.
+_GRPC_DETAILS_METADATA_KEY = "grpc-status-details-bin"
 
-class ExtendedStatusError(Exception):
+
+class ExtendedStatusError(Exception, grpc.Status):
   """Class that represents an error with extended status information.
 
   The class uses the builder pattern, so you can parameterize and raise the
@@ -20,7 +28,6 @@ class ExtendedStatusError(Exception):
 
   raise status_exception.ExtendedStatusError("ai.intrinsic.my_skill", 24543)
     .set_title("Failed to do fancy thing")
-    .set_timestamp()
 
   Attributes:
     proto: proto representing the extended state
@@ -37,6 +44,7 @@ class ExtendedStatusError(Exception):
       title: str = "",
       external_report_message: str = "",
       internal_report_message: str = "",
+      timestamp: datetime.datetime | None = None,
   ):
     """Initializes the instance.
 
@@ -50,6 +58,7 @@ class ExtendedStatusError(Exception):
       internal_report_message: if non-empty, set extended status internal report
         message to this string. Only set this in an environment where the data
         may be shared.
+      timestamp: The time of the error. If None sets current time.
     """
     self._extended_status = extended_status_pb2.ExtendedStatus(
         status_code=extended_status_pb2.StatusCode(
@@ -63,6 +72,7 @@ class ExtendedStatusError(Exception):
       self.set_external_report_message(external_report_message)
     if internal_report_message:
       self.set_internal_report_message(internal_report_message)
+    self.set_timestamp(timestamp or datetime.datetime.now())
     super().__init__(external_report_message)
 
   @property
@@ -94,19 +104,24 @@ class ExtendedStatusError(Exception):
     return self
 
   def set_timestamp(
-      self, timestamp: datetime.datetime = datetime.datetime.now()
+      self, timestamp: datetime.datetime | None = None
   ) -> ExtendedStatusError:
     """Sets time of error.
 
     Args:
-      timestamp: the time of the error. Default argument simply sets current
-        time.
+      timestamp: The time of the error. If None sets current time.
 
     Returns:
       self
     """
-    self._extended_status.timestamp.FromDatetime(timestamp)
+    self._extended_status.timestamp.FromDatetime(
+        timestamp or datetime.datetime.now()
+    )
     return self
+
+  @property
+  def timestamp(self) -> datetime.datetime:
+    return self._extended_status.timestamp.ToDatetime()
 
   def set_title(self, title: str) -> ExtendedStatusError:
     """Sets title of error.
@@ -220,3 +235,39 @@ class ExtendedStatusError(Exception):
       )
 
     return "".join(strs)
+
+  ### The following are for compatibility with grpc.Status
+  @property
+  def code(self) -> grpc.StatusCode:
+    """Returns GRPC status code UNKNOWN.
+
+    Only added to comply with grpc.Status interface.
+    """
+    code = self._extended_status.status_code.code
+    for status_code in grpc.StatusCode:
+      if status_code.value[0] == code:
+        return status_code
+    return grpc.StatusCode.UNKNOWN
+
+  @property
+  def details(self) -> str:
+    """Returns the title as GRPC status message.
+
+    Only added to comply with grpc.Status interface.
+    """
+    return self._extended_status.title
+
+  @property
+  def trailing_metadata(
+      self,
+  ) -> Optional[Sequence[Tuple[str, Union[str, bytes]]]]:
+    """Returns GRPC trailing metadata encoding this extended status.
+
+    Only added to comply with grpc.Status interface.
+    """
+    rpc_status = status_pb2.Status(
+        code=code_pb2.Code.Value(self.code.name),
+        message=self._extended_status.title,
+    )
+    rpc_status.details.add().Pack(self._extended_status)
+    return ((_GRPC_DETAILS_METADATA_KEY, rpc_status.SerializeToString()),)
