@@ -516,23 +516,19 @@ class Node(abc.ABC):
     If any are set, will end up in the decorators of a node proto.
     """
 
-    _settings: (
-        behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings | None
-    )
+    _settings: behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings
+    _parent_node: Node
 
-    def __init__(
-        self,
-        settings_proto: (
-            behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings
-            | None
-        ) = None,
-    ):
-      self._settings = settings_proto
+    def __init__(self, parent_node: Node):
+      self._settings = (
+          behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings()
+      )
+      self._parent_node = parent_node
 
     @property
     def proto(
         self,
-    ) -> behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings | None:
+    ) -> behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings:
       """Retrieves proto if any settings have been made.
 
       Returns:
@@ -544,7 +540,7 @@ class Node(abc.ABC):
         self,
         extended_status: extended_status_pb2.ExtendedStatus,
         to_blackboard_key: str = '',
-    ) -> None:
+    ) -> Node:
       """Causes an extended status to be emitted on node failure.
 
       Args:
@@ -552,6 +548,9 @@ class Node(abc.ABC):
         to_blackboard_key: the blackboard key to emit the extended status to. If
           empty, will not write extended status to a blackboard key (cannot be
           used for status matches), but status will still be propagated.
+
+      Returns:
+        Node that this instance blongs to.
       """
       if extended_status.HasField('status_code'):
         if (
@@ -571,6 +570,7 @@ class Node(abc.ABC):
           extended_status
       )
       self._settings.emit_extended_status.to_blackboard_key = to_blackboard_key
+      return self._parent_node
 
     def emit_extended_status(
         self,
@@ -581,7 +581,7 @@ class Node(abc.ABC):
         external_report_message: str = '',
         internal_report_message: str = '',
         to_blackboard_key: str = '',
-    ) -> None:
+    ) -> Node:
       """Causes an extended status to be emitted on node failure.
 
       Args:
@@ -598,6 +598,9 @@ class Node(abc.ABC):
           to. If empty, will not write extended status to a blackboard key
           (cannot be used for status matches), but status will still be
           propagated.
+
+      Returns:
+        Node that this instance blongs to.
       """
       es = extended_status_pb2.ExtendedStatus(
           status_code=extended_status_pb2.StatusCode(
@@ -612,8 +615,9 @@ class Node(abc.ABC):
         es.internal_report.message = internal_report_message
 
       self.emit_extended_status_proto(es, to_blackboard_key)
+      return self._parent_node
 
-    def emit_extended_status_to(self, blackboard_key: str) -> None:
+    def emit_extended_status_to(self, blackboard_key: str) -> Node:
       """Causes an extended status to be written to the blackboard.
 
       This applies to extended status that may be produced by the node, e.g., by
@@ -624,19 +628,26 @@ class Node(abc.ABC):
 
       Args:
         blackboard_key: The blackboard key to write the extended status to.
+
+      Returns:
+        Node that this instance blongs to.
       """
       if self._settings is None:
         self._settings = (
             behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings()
         )
       self._settings.emit_extended_status.to_blackboard_key = blackboard_key
+      return self._parent_node
 
     @classmethod
     def create_from_proto(
         cls,
+        parent_node: Node,
         proto_object: behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings,
     ) -> Node.FailureSettings:
-      return cls(proto_object)
+      instance = cls(parent_node)
+      instance._settings = proto_object
+      return instance
 
   @classmethod
   def create_from_proto(
@@ -683,7 +694,7 @@ class Node(abc.ABC):
       )
       if proto_object.decorators.HasField('on_failure'):
         created_node._failure_settings = Node.FailureSettings.create_from_proto(
-            proto_object.decorators.on_failure
+            created_node, proto_object.decorators.on_failure
         )
 
     if proto_object.HasField('user_data'):
@@ -754,8 +765,8 @@ class Node(abc.ABC):
   @property
   def on_failure(self) -> Node.FailureSettings:
     """Sets extra settings for behavior on failure."""
-    if not hasattr(self, '_failure_settings'):
-      self._failure_settings = Node.FailureSettings()
+    if not hasattr(self, '_failure_settings') or self._failure_settings is None:
+      self._failure_settings = Node.FailureSettings(self)
     return self._failure_settings
 
   @property
@@ -1777,7 +1788,11 @@ class Fail(Node):
   _state: Optional[NodeState]
   _user_data_protos: dict[str, any_pb2.Any]
 
-  def __init__(self, failure_message: str = '', name: Optional[str] = None):
+  def __init__(
+      self,
+      failure_message: str = '',
+      name: Optional[str] = None,
+  ):
     self._decorators = None
     self.failure_message: str = failure_message
     self._name = name
@@ -1882,7 +1897,9 @@ class Debug(Node):
   _user_data_protos: dict[str, any_pb2.Any]
 
   def __init__(
-      self, fail_on_resume: Optional[bool] = False, name: Optional[str] = None
+      self,
+      fail_on_resume: Optional[bool] = False,
+      name: Optional[str] = None,
   ):
     self._decorators = None
     self.fail_on_resume: Optional[bool] = fail_on_resume

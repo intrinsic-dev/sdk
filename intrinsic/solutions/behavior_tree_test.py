@@ -1520,8 +1520,7 @@ class BehaviorTreeNodeOnFailureTest(absltest.TestCase):
 
   def test_emit_extended_status_to(self):
     """Tests if BehaviorTree.Decorator.on_failure is correctly constructed."""
-    node = bt.Sequence()
-    node.on_failure.emit_extended_status_to('blackboard_foo')
+    node = bt.Sequence().on_failure.emit_extended_status_to('blackboard_foo')
 
     node_proto = text_format.Parse(
         """
@@ -1533,6 +1532,106 @@ class BehaviorTreeNodeOnFailureTest(absltest.TestCase):
           }
         }
         sequence {}
+        """,
+        behavior_tree_pb2.BehaviorTree.Node(),
+    )
+
+    compare.assertProto2Equal(self, node.proto, node_proto)
+
+  def test_build_selective_recovery_tree(self):
+    """Tests if expected fallback tree is correctly constructed."""
+    node = bt.Retry(
+        retry_counter_key='retry_counter',
+        child=bt.Task(
+            # In real code this would be skills.ai.intrinsic.do_it()
+            behavior_call.Action(skill_id='ai.intrinsic.do_it')
+        ).on_failure.emit_extended_status_to('task_error'),
+        recovery=bt.Fallback(
+            children=[
+                bt.Sequence(name='recovery1').set_decorators(
+                    bt.Decorators(
+                        condition=bt.ExtendedStatusMatch(
+                            'task_error',
+                            bt.ExtendedStatusMatch.MatchStatusCode(
+                                'ai.intrinsic.do_it', 2101
+                            ),
+                        ),
+                    ),
+                ),
+                bt.Parallel(name='recovery2').set_decorators(
+                    bt.Decorators(
+                        condition=bt.ExtendedStatusMatch(
+                            'task_error',
+                            bt.ExtendedStatusMatch.MatchStatusCode(
+                                'ai.intrinsic.do_it', 2202
+                            ),
+                        )
+                    ),
+                ),
+                # Last resort, may often not be useful but should rather be
+                # reported up
+                bt.Sequence(name='fallback_recovery'),
+            ]
+        ),
+    )
+
+    node_proto = text_format.Parse(
+        """
+        retry {
+          child {
+            decorators {
+              on_failure {
+                emit_extended_status {
+                  to_blackboard_key: "task_error"
+                }
+              }
+            }
+            task {
+              call_behavior {
+                skill_id: "ai.intrinsic.do_it"
+              }
+            }
+          }
+          retry_counter_blackboard_key: "retry_counter"
+          recovery {
+            fallback {
+              children {
+                name: "recovery1"
+                decorators {
+                  condition {
+                    status_match {
+                      blackboard_key: "task_error"
+                      status_code {
+                        component: "ai.intrinsic.do_it"
+                        code: 2101
+                      }
+                    }
+                  }
+                }
+                sequence {}
+              }
+              children {
+                name: "recovery2"
+                decorators {
+                  condition {
+                    status_match {
+                      blackboard_key: "task_error"
+                      status_code {
+                        component: "ai.intrinsic.do_it"
+                        code: 2202
+                      }
+                    }
+                  }
+                }
+                parallel {}
+              }
+              children {
+                name: "fallback_recovery"
+                sequence {}
+              }
+            }
+          }
+        }
         """,
         behavior_tree_pb2.BehaviorTree.Node(),
     )
