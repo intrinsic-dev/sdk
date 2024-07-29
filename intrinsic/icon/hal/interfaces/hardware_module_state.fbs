@@ -8,6 +8,7 @@ enum TransitionRequest : uint8 {
   kEnableMotion = 2,
   kDisableMotion = 3,
   kClearFaults = 4,
+  kPrepare = 5,
 }
 
 enum StateCode : uint8 {
@@ -22,6 +23,8 @@ enum StateCode : uint8 {
   kClearingFaults = 8,
   kInitFailed = 9,
   kFatallyFaulted = 10,
+  kPreparing = 11,
+  kPrepared = 12,
 }
 
 struct HardwareModuleState {
