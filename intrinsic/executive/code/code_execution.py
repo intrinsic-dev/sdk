@@ -11,6 +11,12 @@ from google.protobuf import descriptor_pb2
 from google.protobuf import descriptor_pool
 from google.protobuf import message
 from google.protobuf.internal import builder
+import grpc
+from intrinsic.geometry.service import geometry_service_pb2_grpc
+from intrinsic.skills.internal import basic_compute_context_impl
+from intrinsic.skills.python import basic_compute_context
+from intrinsic.world.proto import object_world_service_pb2_grpc
+from intrinsic.world.python import object_world_client
 
 
 # Converts "foo/bar/baz.proto" -> "foo.bar.baz_pb2"
@@ -216,3 +222,29 @@ def serialize_return_value_message(
   return_value_any = any_pb2.Any()
   return_value_any.Pack(return_value)
   return return_value_any.SerializeToString()
+
+
+def create_compute_context(
+    world_id: str,
+    world_service_address: str,
+    geometry_service_address: str,
+) -> basic_compute_context.BasicComputeContext:
+  """Creates a BasicComputeContext.
+
+  Args:
+    world_id: The id of the world.
+    world_service_address: The address of the world service.
+    geometry_service_address: The address of the geometry service.
+
+  Returns:
+    The created BasicComputeContext.
+  """
+  world_stub = object_world_service_pb2_grpc.ObjectWorldServiceStub(
+      grpc.insecure_channel(world_service_address)
+  )
+  geometry_stub = geometry_service_pb2_grpc.GeometryServiceStub(
+      grpc.insecure_channel(geometry_service_address)
+  )
+  return basic_compute_context_impl.BasicComputeContextImpl(
+      object_world_client.ObjectWorldClient(world_id, world_stub, geometry_stub)
+  )

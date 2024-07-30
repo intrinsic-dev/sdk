@@ -11,7 +11,9 @@ from google.protobuf import message_factory
 from google.protobuf import text_format
 from intrinsic.executive.code import code_execution
 from intrinsic.math.proto import point_pb2
+from intrinsic.skills.python import basic_compute_context
 from intrinsic.solutions.testing import compare
+from intrinsic.world.python import object_world_client
 
 # Backup of the "initial state" of the import cache.
 _SYS_MODULES_BACKUP = sys.modules.copy()
@@ -194,6 +196,18 @@ class CodeExecutionTest(absltest.TestCase):
         code_execution.serialize_return_value_message(
             None, "irrelevant.MessageType"
         )
+    )
+
+  def test_create_compute_context(self):
+    context = code_execution.create_compute_context(
+        "world_id",
+        "invalid_world_service_address",
+        "invalid_geometry_service_address",
+    )
+
+    self.assertIsInstance(context, basic_compute_context.BasicComputeContext)
+    self.assertIsInstance(
+        context.object_world, object_world_client.ObjectWorldClient
     )
 
 
