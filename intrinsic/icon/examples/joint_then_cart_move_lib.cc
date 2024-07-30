@@ -33,6 +33,9 @@
 namespace intrinsic::icon::examples {
 
 constexpr double kCartesianVelocityConstant = 0.2;
+constexpr double kMaxCartesianVelocity = 0.5;
+constexpr double kMaxCartesianAcceleration = 10.0;
+constexpr double kMaxCartesianJerk = 500.0;
 constexpr double kExpectedJointDifference = 0.002;
 constexpr double kSettlingTimeoutSeconds = 1;
 
@@ -256,6 +259,23 @@ absl::Status JointThenCartMove(
   }
   *fixed_params.mutable_cartesian_limits() =
       generic_part_config.cartesian_limits_config().default_cartesian_limits();
+  // Override the Cartesian velocity and acceleration limits with custom values.
+  for (int i = 0; i < 3; ++i) {
+    fixed_params.mutable_cartesian_limits()->set_max_translational_velocity(
+        i, kMaxCartesianVelocity);
+    fixed_params.mutable_cartesian_limits()->set_max_translational_acceleration(
+        i, kMaxCartesianAcceleration);
+    fixed_params.mutable_cartesian_limits()->set_max_translational_jerk(
+        i, kMaxCartesianJerk);
+  }
+
+  fixed_params.mutable_cartesian_limits()->set_max_rotational_velocity(
+      kMaxCartesianVelocity);
+  fixed_params.mutable_cartesian_limits()->set_max_rotational_acceleration(
+      kMaxCartesianAcceleration);
+  fixed_params.mutable_cartesian_limits()->set_max_rotational_jerk(
+      kMaxCartesianJerk);
+
   intrinsic::icon::CartesianJoggingInfo::StreamingParams streaming_params;
   double velocity_x = kCartesianVelocityConstant;
   streaming_params.mutable_goal_twist()->set_x(velocity_x);
