@@ -15,7 +15,6 @@ namespace intrinsic {
 class ThreadOptions {
  public:
   ThreadOptions() = default;
-  ThreadOptions(const ThreadOptions&) = default;
 
   // Sets the name for the thread. The ability to set a kernel thread name is
   // platform-specific. The name's prefix will be truncated if it exceeds

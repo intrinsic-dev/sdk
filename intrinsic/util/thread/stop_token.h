@@ -76,12 +76,6 @@ class StopSource {
   // Constructs an empty StopSource with no associated stop-state.
   explicit StopSource(detail::NoStopStateType /*unused*/) noexcept {}
 
-  // Default copy and move constructors.
-  StopSource(const StopSource& other) noexcept = default;
-  StopSource(StopSource&& other) noexcept = default;
-
-  StopSource& operator=(StopSource&& other) noexcept = default;
-
   // Issues a stop request to the stop-state, if the stop_source object has a
   // stop-state and it has not yet already had stop requested.
   bool request_stop() const noexcept {

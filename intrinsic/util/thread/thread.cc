@@ -20,7 +20,7 @@ namespace {
 class PerThreadStopToken {
  public:
   StopToken GetStopToken(std::thread::id tid) const {
-    absl::MutexLock lock(&mutex_);
+    absl::ReaderMutexLock lock(&mutex_);
     if (auto it = stop_tokens_.find(tid); it == stop_tokens_.end()) {  // NOLINT
       return StopToken();
     } else {  // NOLINT
@@ -29,7 +29,7 @@ class PerThreadStopToken {
   }
 
   void EmplaceStopToken(std::thread::id tid, StopToken&& stop_token) {
-    absl::MutexLock lock(&mutex_);
+    absl::WriterMutexLock lock(&mutex_);
     stop_tokens_[tid] = std::move(stop_token);
   }
 
