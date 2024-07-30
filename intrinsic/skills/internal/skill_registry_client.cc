@@ -66,6 +66,14 @@ absl::StatusOr<std::unique_ptr<SkillRegistryClient>> CreateSkillRegistryClient(
         }]
       })");
 
+  // Increase the message size limits.
+  //
+  // Some of the responses we're receiving here may contain the proto
+  // descriptors for multiple skills which can get large. In practice, we've
+  // seen up to ~4MB so far.
+  channel_args.SetMaxReceiveMessageSize(10000000);  // 10 MB
+  channel_args.SetMaxSendMessageSize(10000000);     // 10 MB
+
   INTR_ASSIGN_OR_RETURN(
       std::shared_ptr<grpc::Channel> channel,
       CreateClientChannel(grpc_address, absl::Now() + timeout, channel_args));
