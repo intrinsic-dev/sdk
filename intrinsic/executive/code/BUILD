@@ -2,6 +2,7 @@
 
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@rules_python//python:packaging.bzl", "py_package", "py_wheel")
 
 # This package contains the code execution service.
 
@@ -31,4 +32,26 @@ py_test(
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_protobuf//:protobuf_python",
     ],
+)
+
+py_package(
+    name = "code_execution_py_packages",
+    packages = [
+        "intrinsic",
+    ],
+    deps = [
+        "//intrinsic/executive/code:code_execution",
+    ],
+)
+
+py_wheel(
+    name = "code_execution_wheel",
+    distribution = "code-execution",
+    requires = [
+        "googleapis-common-protos",
+        "grpcio",
+        "retrying",
+    ],
+    version = "0.0.1",
+    deps = [":code_execution_py_packages"],
 )
