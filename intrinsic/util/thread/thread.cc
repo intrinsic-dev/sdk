@@ -33,6 +33,11 @@ class PerThreadStopToken {
     stop_tokens_[tid] = std::move(stop_token);
   }
 
+  void EraseStopToken(std::thread::id tid) {
+    absl::WriterMutexLock lock(&mutex_);
+    stop_tokens_.erase(tid);
+  }
+
  private:
   mutable absl::Mutex mutex_;
   absl::flat_hash_map<std::thread::id, StopToken> stop_tokens_
@@ -53,6 +58,13 @@ Thread::~Thread() {
     RequestStop();
     Join();
   }
+  EraseStopToken();
+}
+
+Thread::Thread(Thread&& other)
+    : stop_source_{std::move(other.stop_source_)},
+      thread_impl_{std::move(other.thread_impl_)} {
+  std::swap(thread_id_, other.thread_id_);
 }
 
 Thread& Thread::operator=(Thread&& other) {
@@ -63,6 +75,7 @@ Thread& Thread::operator=(Thread&& other) {
     }
     stop_source_ = std::move(other.stop_source_);
     thread_impl_ = std::move(other.thread_impl_);
+    std::swap(thread_id_, other.thread_id_);
   }
 
   return *this;
@@ -84,13 +97,19 @@ StopToken Thread::GetStopToken() const noexcept {
 bool Thread::RequestStop() noexcept { return stop_source_.request_stop(); }
 
 void Thread::SaveStopToken() noexcept {
-  GetPerThreadStopState().EmplaceStopToken(thread_impl_.get_id(),
+  thread_id_ = thread_impl_.get_id();
+  GetPerThreadStopState().EmplaceStopToken(thread_id_,
                                            stop_source_.get_token());
 }
 
+void Thread::EraseStopToken() noexcept {
+  GetPerThreadStopState().EraseStopToken(thread_id_);
+}
+
 bool ThisThreadStopRequested() {
-  // 'static' is implied by thread_local
-  thread_local const StopToken kStopToken =
+  // We tried thread_local storage here, but it did not work and lead to
+  // spurious crashes.
+  const StopToken kStopToken =
       GetPerThreadStopState().GetStopToken(std::this_thread::get_id());
   return kStopToken.stop_requested();
 }

@@ -46,7 +46,7 @@ class Thread {
   }
 
   // Movable.
-  Thread(Thread&&) = default;
+  Thread(Thread&&);
   Thread& operator=(Thread&& other);
 
   // Destroys the Thread object.
@@ -123,8 +123,17 @@ class Thread {
 
   void SaveStopToken() noexcept;
 
+  // Explicit erase of the stop token. This is necessary to prevent a new thread
+  // starting and a client calling ThisThreadStopRequested() before the
+  // StopToken is associated with the thread.
+  void EraseStopToken() noexcept;
+
   StopSource stop_source_{detail::NoState};
-  std::thread thread_impl_;  // The new thread of execution
+  std::thread thread_impl_;
+
+  // We cannot rely on using the thread_impl_.get_id() because the thread may
+  // have been finished or joined.
+  std::thread::id thread_id_;
 };
 
 template <typename Function, typename... Args>
@@ -144,9 +153,9 @@ absl::Status Thread::Start(const ThreadOptions& options, Function&& f,
 //   while (!ThisThreadStopRequested()) {
 //     // do something
 //   }
-// The underlying storage for per thread stop tokens is only ever allocated
-// when this function is called. If noone uses this function, no additional
-// memory overhead is incurred.
+// IMPORTANT: This function allocates a reader mutex in each call. Do not use it
+// in hot loops. Instead, use a StopToken and check the stop_requested() state
+// directly.
 bool ThisThreadStopRequested();
 
 }  // namespace intrinsic
