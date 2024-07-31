@@ -141,6 +141,32 @@ def ndarray_to_point_proto(point: np.ndarray) -> point_pb2.Point:
   return point_pb2.Point(x=point[0], y=point[1], z=point[2])
 
 
+def ndarray_to_vector3_proto(arr3: np.ndarray) -> vector3_pb2.Vector3:
+  """Converts a size 3 np.ndarray to a vector3_pb2.Vector3.
+
+  Args:
+    arr3: An np.ndarray of size 3.
+
+  Returns:
+    A vector3_pb2.Vector3.
+
+  Raises:
+    ValueError if the input array has not a length of 3.
+  """
+  if arr3.shape != (3,):
+    raise ValueError(
+        'Received point of size {0} but expected a size of 3.'.format(arr3.size)
+    )
+  return vector3_pb2.Vector3(x=arr3[0], y=arr3[1], z=arr3[2])
+
+
+def ndarray_from_vector3_proto(
+    vector3_proto: vector3_pb2.Vector3,
+) -> np.ndarray:
+  """Converts a vector3_pb2.Vector3 to a size 3 np.ndarray."""
+  return np.array([vector3_proto.x, vector3_proto.y, vector3_proto.z])
+
+
 def quaternion_from_proto(
     quaternion_proto: quaternion_pb2.Quaternion,
 ) -> data_types.Quaternion:
