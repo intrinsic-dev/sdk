@@ -4,18 +4,6 @@ load("//intrinsic/platform:flatbuffers.bzl", "cc_flatbuffers_library", "flatbuff
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(
-    srcs = [
-        "BUILD",
-        "safety_messages.fbs",
-        "safety_messages_utils.cc",
-        "safety_messages_utils.h",
-    ],
-    visibility = [
-        "//intrinsic/production:__pkg__",
-    ],
-)
-
 package_group(
     name = "icon",
     packages = [
@@ -53,5 +41,15 @@ cc_library(
         ":safety_messages_fbs_cc",
         "//intrinsic/icon/control/safety/extern:safety_status_fbs_cc",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "safety_messages_fbs_utils_test",
+    srcs = ["safety_messages_utils_test.cc"],
+    deps = [
+        ":safety_messages_fbs_utils",
+        "//intrinsic/util/testing:gtest_wrapper",
+        "@com_github_google_flatbuffers//:flatbuffers",
     ],
 )

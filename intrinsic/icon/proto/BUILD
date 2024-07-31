@@ -154,6 +154,19 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "eigen_conversion_test",
+    srcs = ["eigen_conversion_test.cc"],
+    deps = [
+        ":eigen_conversion",
+        ":matrix_cc_proto",
+        "//intrinsic/eigenmath",
+        "//intrinsic/util/testing:gtest_wrapper",
+        "@com_google_absl//absl/status",
+        "@com_google_protobuf//:protobuf_lite",
+    ],
+)
+
 proto_library(
     name = "matrix_proto",
     srcs = ["matrix.proto"],

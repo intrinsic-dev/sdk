@@ -3,7 +3,6 @@
 #include "intrinsic/icon/proto/cart_space_conversion.h"
 
 #include <cstdlib>
-#include <string>
 
 #include "Eigen/Geometry"
 #include "absl/status/status.h"
