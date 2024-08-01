@@ -187,14 +187,13 @@ class HardwareModuleRuntime::CallbackHandler final {
 
   // Server callback for trigger `DisableMotion` on the hardware module.
   void OnDisableMotion() {
-    INTRINSIC_RT_LOG_THROTTLED(INFO) << "PUBLIC: 'DisableMotion' called.";
-
     absl::MutexLock lock(&action_lock_);
 
     if (!SetStateAndWait(hardware_module_state_code_,
                          intrinsic_fbs::StateCode::kMotionDisabling)) {
       return;
     }
+    INTRINSIC_RT_LOG_THROTTLED(INFO) << "PUBLIC: 'DisableMotion' called.";
     if (auto ret = instance_->DisableMotion(); !ret.ok()) {
       INTRINSIC_RT_LOG_THROTTLED(ERROR)
           << "PUBLIC: Call to 'DisableMotion' failed: " << ret.message();
@@ -327,7 +326,11 @@ class HardwareModuleRuntime::CallbackHandler final {
       // Don't update timestamp when state and message is the same.
       return false;
     }
-    auto state_changed = hardware_module_state_code_ != state;
+
+    const bool state_changed = hardware_module_state_code_ != state;
+    if (state_changed) {
+      CheckAndTriggerDisabledTransitionHook(hardware_module_state_code_);
+    }
     hardware_module_state_code_ = state;
     hardware_module_state_update_time_ = Clock::Now();
     intrinsic_fbs::SetState(shared_memory_hardware_module_state_, state,
@@ -495,11 +498,6 @@ class HardwareModuleRuntime::CallbackHandler final {
         const bool allowed = SetStateDirectly(
             newest_data.to, absl::string_view(newest_data.message),
             /*force=*/false, /*silent=*/false);
-        // Trigger the transition hook directly after setting the internal state
-        // before setting the value on the RT promise so that the
-        // HardwareModuleRuntime calls `Disabled()` before calling
-        // `DisableMotion()` on the hardware module.
-        CheckAndTriggerDisabledTransitionHook(newest_data.from);
         status = item.SetResponse(
             allowed
                 ? OkStatus()
