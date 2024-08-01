@@ -19,6 +19,7 @@
 #include "absl/synchronization/mutex.h"
 #include "intrinsic/icon/utils/log.h"
 #include "intrinsic/icon/utils/realtime_guard.h"
+#include "intrinsic/icon/utils/realtime_stack_trace.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/thread/thread_options.h"
 
@@ -54,6 +55,7 @@ void ThreadBody(absl::AnyInvocable<void()> f, const ThreadOptions& options,
   const std::string short_name(ShortName(options.GetName().value_or("")));
 
   RtLogInitForThisThread();
+  icon::InitRtStackTrace();
 
   f();
 }

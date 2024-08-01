@@ -16,6 +16,7 @@ namespace intrinsic::icon {
 //
 //   // Here we can still use RT-unsafe code like malloc(), new...
 //   Initialize();
+//   void InitRtStackTrace(); // Initialize real-time stack trace generation.
 //
 //   // From here, this thread must have real time guarantees.
 //   RealTimeGuard guard;
@@ -69,11 +70,6 @@ class RealTimeGuard {
    * @see RealTimeGuard
    */
   static bool IsRealTime();
-
-  // Print a simple backtrace.
-  // Function names will only be shown if the binary is linked shared.
-  // This function does not allocate and is real-time compatible.
-  static void LogErrorBacktrace();
 
   // Optional, only results in `thread_name` being shown in warnings and errors.
   // `thread_name` must outlive `RealTimeGuard`.

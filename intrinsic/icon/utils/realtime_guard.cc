@@ -4,15 +4,13 @@
 
 #include <dlfcn.h>
 
-#include <cstddef>
-
-#include "absl/debugging/stacktrace.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "intrinsic/icon/release/source_location.h"
 #include "intrinsic/icon/utils/log.h"
+#include "intrinsic/icon/utils/realtime_stack_trace.h"
 
 namespace intrinsic::icon {
 namespace {
@@ -50,8 +48,9 @@ void TriggerRealtimeCheck(const intrinsic::SourceLocation& loc) {
       INTRINSIC_RT_LOG_THROTTLED(ERROR)
           << "Unsafe code executed from realtime thread '"
           << s_current_thread.thread_name << "' at (" << loc.file_name() << ":"
-          << loc.line() << ").";
-      RealTimeGuard::LogErrorBacktrace();
+          << loc.line() << "). Stack trace: \n"
+          << absl::string_view(GenerateRtErrorStackTrace());
+
       break;
     }
     case RealTimeGuard::IGNORE: {
@@ -76,34 +75,6 @@ RealTimeGuard::~RealTimeGuard() {
 
 bool RealTimeGuard::IsRealTime() {
   return s_current_thread.realtime_guard_count > 0;
-}
-
-void RealTimeGuard::LogErrorBacktrace() {
-  // This function needs to be real-time compatible when stack is printed
-  // as a non-fatal error.
-  constexpr size_t kMaxFrames = 16;
-  // Get the stack trace using absl instead of linux backtrace, as that
-  // sometimes doesn't show the full trace.
-  void* buffer[kMaxFrames];
-  const int num_frames = absl::GetStackTrace(buffer, kMaxFrames, 1);
-  INTRINSIC_RT_LOG(ERROR) << "Backtrace:";
-  if (num_frames >= 2) {
-    Dl_info info;
-    for (int index = 1; index < num_frames; index++) {
-      if (dladdr(buffer[index], &info) != 0 && info.dli_sname != nullptr) {
-        const char* name = info.dli_sname;
-        INTRINSIC_RT_LOG(ERROR)
-            << "#" << absl::Dec(index - 1, absl::kZeroPad2) << ": '" << name
-            << "' (0x" << absl::Hex(info.dli_saddr) << ").";
-      } else {
-        // This should only happen for functions in the main binary, which
-        // shouldn't contain any relevant information for TimeSlicer code.
-        INTRINSIC_RT_LOG(ERROR)
-            << "#" << absl::Dec(index - 1, absl::kZeroPad2)
-            << ": 'no symbol' (0x" << absl::Hex(buffer[index]) << ").";
-      }
-    }
-  }
 }
 
 void RealTimeGuard::SetCurrentThreadName(absl::string_view thread_name) {

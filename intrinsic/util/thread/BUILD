@@ -21,8 +21,9 @@ cc_library(
     deps = [
         ":thread_options",
         "//intrinsic/icon/testing:realtime_annotations",
-        "//intrinsic/icon/utils:log",
+        "//intrinsic/icon/utils:log",  # buildcleaner: keep
         "//intrinsic/icon/utils:realtime_guard",
+        "//intrinsic/icon/utils:realtime_stack_trace",
         "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/functional:any_invocable",

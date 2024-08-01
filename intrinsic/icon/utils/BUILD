@@ -204,6 +204,36 @@ cc_library(
 )
 
 cc_library(
+    name = "realtime_stack_trace",
+    srcs = [
+        "realtime_stack_trace.cc",
+    ],
+    hdrs = [
+        "log.h",  # Avoid circular dep realtime_stack_trace <-> realtime_log_sink.
+        "realtime_stack_trace.h",
+    ],
+    linkopts = [
+        "-ldl",  # for dlfcn.h, dladdr in realtime_stack_trace.cc
+    ],
+    deps = [
+        ":fixed_str_cat",
+        ":fixed_string",
+        ":log_internal",
+        ":log_sink",
+        "//intrinsic/icon/release:source_location",
+        "//intrinsic/icon/testing:realtime_annotations",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:log_severity",
+        "@com_google_absl//absl/debugging:stacktrace",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_library(
     name = "realtime_guard",
     srcs = [
         "log.h",  # Avoid circular dep realtime_guard <-> realtime_log_sink.
@@ -218,9 +248,9 @@ cc_library(
     deps = [
         ":log_internal",
         ":log_sink",
+        ":realtime_stack_trace",
         "//intrinsic/icon/release:source_location",
         "@com_google_absl//absl/base:log_severity",
-        "@com_google_absl//absl/debugging:stacktrace",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
@@ -231,11 +261,9 @@ cc_test(
     name = "realtime_guard_test",
     srcs = ["realtime_guard_test.cc"],
     deps = [
-        ":log",
-        ":log_sink",
         ":realtime_guard",
+        ":realtime_stack_trace",
         "//intrinsic/util/testing:gtest_wrapper",
-        "@com_google_absl//absl/types:span",
     ],
 )
 
