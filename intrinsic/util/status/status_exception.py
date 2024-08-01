@@ -75,6 +75,18 @@ class ExtendedStatusError(Exception, grpc.Status):
     self.set_timestamp(timestamp or datetime.datetime.now())
     super().__init__(external_report_message)
 
+  @classmethod
+  def create_from_proto(
+      cls, proto: extended_status_pb2.ExtendedStatus
+  ) -> ExtendedStatusError:
+    if proto.HasField("status_code"):
+      es_err = cls(proto.status_code.component, proto.status_code.code)
+    else:
+      # Bad, this shouldn't happen but we cannot do better here
+      es_err = cls("", 0)
+    es_err._extended_status = proto
+    return es_err
+
   @property
   def proto(self) -> extended_status_pb2.ExtendedStatus:
     """Retrieves extended status encoded as ExtendedStatus proto."""
@@ -120,6 +132,15 @@ class ExtendedStatusError(Exception, grpc.Status):
     return self
 
   @property
+  def status_code(self) -> tuple[str, int]:
+    if self._extended_status.HasField("status_code"):
+      return (
+          self._extended_status.status_code.component,
+          self._extended_status.status_code.code,
+      )
+    return ("", 0)
+
+  @property
   def timestamp(self) -> datetime.datetime:
     return self._extended_status.timestamp.ToDatetime()
 
@@ -134,6 +155,10 @@ class ExtendedStatusError(Exception, grpc.Status):
     """
     self._extended_status.title = title
     return self
+
+  @property
+  def title(self) -> str:
+    return self._extended_status.title
 
   def add_context(
       self, context_status: extended_status_pb2.ExtendedStatus
@@ -165,6 +190,10 @@ class ExtendedStatusError(Exception, grpc.Status):
     self._extended_status.internal_report.message = message
     return self
 
+  @property
+  def internal_report(self) -> extended_status_pb2.ExtendedStatus.Report | None:
+    return self._extended_status.internal_report
+
   def set_external_report_message(self, message: str) -> ExtendedStatusError:
     """Sets external report message.
 
@@ -178,6 +207,10 @@ class ExtendedStatusError(Exception, grpc.Status):
     """
     self._extended_status.external_report.message = message
     return self
+
+  @property
+  def external_report(self) -> extended_status_pb2.ExtendedStatus.Report | None:
+    return self._extended_status.external_report
 
   def set_log_context(
       self, context: context_pb2.Context
@@ -233,6 +266,14 @@ class ExtendedStatusError(Exception, grpc.Status):
           "Internal"
           f" Report:\n{textwrap.indent(self._extended_status.internal_report.message, '  ')}\n"
       )
+
+    if self._extended_status.context:
+      strs.append("\nContext\n")
+      for i, context in enumerate(self._extended_status.context):
+        strs.append(f"***** Context {i} *****\n")
+        context_es = ExtendedStatusError.create_from_proto(context)
+        strs.append(f"{context_es}\n")
+      strs.append("\n")
 
     return "".join(strs)
 
