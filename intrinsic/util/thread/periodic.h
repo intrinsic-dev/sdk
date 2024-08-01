@@ -3,6 +3,8 @@
 #ifndef INTRINSIC_UTIL_THREAD_PERIODIC_H_
 #define INTRINSIC_UTIL_THREAD_PERIODIC_H_
 
+#include <atomic>
+
 #include "absl/functional/any_invocable.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/synchronization/notification.h"
@@ -42,6 +44,21 @@ class PeriodicOperation {
   // `Start` was also called.
   absl::Status Stop();
 
+  // Blocking call that waits for the current invocation of the operation to
+  // finish and then schedules a subsequent incovation immediately when the
+  // running thread is next scheduled.
+  //
+  // Multiple calls to this function from different threads will only wait for
+  // a single invocation before returning.
+  void RunNow();
+
+  // Nonblocking call that schedules the operation to run directly after the
+  // current one is finished.
+  //
+  // Multiple calls to this function from different threads will only schedule a
+  // single invocation before returning.
+  void RunNowNonBlocking();
+
   // Returns the current period for this operation.
   absl::Duration Period() const { return period_; }
 
@@ -56,11 +73,13 @@ class PeriodicOperation {
   absl::AnyInvocable<void()> operation_;
   absl::Duration period_;
 
+  bool run_now_request_ ABSL_GUARDED_BY(mutex_) = false;
+  bool run_executor_thread_ ABSL_GUARDED_BY(mutex_) = false;
+
   void ExecutorLoop();
 
   absl::Time last_operation_start_time_ ABSL_GUARDED_BY(mutex_) =
       absl::InfinitePast();
-  std::unique_ptr<absl::Notification> stop_notification_;
   std::unique_ptr<Thread> operation_executor_;
 };
 

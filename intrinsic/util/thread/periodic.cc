@@ -36,7 +36,8 @@ absl::Status PeriodicOperation::Start() {
   if (operation_executor_ != nullptr) {
     return absl::OkStatus();
   }
-  stop_notification_ = std::make_unique<absl::Notification>();
+  run_executor_thread_ = true;
+  run_now_request_ = true;  // Run at least once.
   operation_executor_ = std::make_unique<intrinsic::Thread>();
   INTR_RETURN_IF_ERROR(operation_executor_->Start(
       executor_thread_options_, &PeriodicOperation::ExecutorLoop, this));
@@ -59,46 +60,78 @@ absl::Status PeriodicOperation::Stop() {
     return absl::OkStatus();
   }
 
-  stop_notification_->Notify();
+  run_executor_thread_ = false;
   mutex_.Unlock();
   operation_executor_->Join();
   mutex_.Lock();
   operation_executor_.reset(nullptr);
-  stop_notification_.reset(nullptr);
   return absl::OkStatus();
+}
+
+void PeriodicOperation::RunNow() {
+  absl::Time last_operation_time;
+  {
+    absl::MutexLock l(&mutex_);
+    last_operation_time = last_operation_start_time_;
+
+    // Notify that we're waiting
+    run_now_request_ = true;
+  }
+
+  // Wait until we run
+  struct WaitUntilRanProps {
+    absl::Time last_op_time;
+    PeriodicOperation* op;
+  } props{
+      .last_op_time = last_operation_time,
+      .op = this,
+  };
+
+  absl::Condition wait_until_ran(
+      +[](WaitUntilRanProps* props) ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+        return props->op->operation_executor_ == nullptr ||
+               props->op->last_operation_start_time_ > props->last_op_time;
+      },
+      &props);
+
+  absl::MutexLock l(&mutex_);
+  mutex_.Await(wait_until_ran);
+}
+
+void PeriodicOperation::RunNowNonBlocking() {
+  absl::MutexLock l(&mutex_);
+  run_now_request_ = true;
 }
 
 void PeriodicOperation::ExecutorLoop() {
   // The next execution time is based on the time since the last execution
   // started.
   absl::Time next_execute_time = absl::Now();
-  do {
+  absl::MutexLock l(&mutex_);
+  while (run_executor_thread_ || run_now_request_) {
     const absl::Time now = absl::Now();
-    if (now > next_execute_time) {
-      {
-        absl::MutexLock l(&mutex_);
-        last_operation_start_time_ = now;
-      }
-      operation_();
+    run_now_request_ = false;
+    last_operation_start_time_ = now;
+    mutex_.Unlock();
+    operation_();
+    mutex_.Lock();
 
-      // Catch up to the periodicity of this operation if the operation takes
-      // longer than the period.
-      if (period_ > absl::ZeroDuration()) {
-        while (now > next_execute_time) {
-          next_execute_time += period_;
-        }
+    // Catch up to the periodicity of this operation if the operation takes
+    // longer than the period.
+    if (period_ > absl::ZeroDuration()) {
+      while (now > next_execute_time) {
+        next_execute_time += period_;
       }
     }
 
-    const absl::Duration time_until_next_execution =
-        next_execute_time - absl::Now();
+    absl::Condition should_run_again(
+        +[](PeriodicOperation* op) ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
+          return op->run_now_request_ || !op->run_executor_thread_;
+        },
+        this);
 
-    // Sleep for 3/4 of the time needed until the next execution to try to
-    // avoid missing it when we can.
-    if (time_until_next_execution > absl::ZeroDuration()) {
-      absl::SleepFor(time_until_next_execution * 3 / 4);
-    }
-  } while (!stop_notification_->HasBeenNotified());
+    mutex_.AwaitWithDeadline(should_run_again, next_execute_time);
+  }
 }
 
 }  // namespace intrinsic
