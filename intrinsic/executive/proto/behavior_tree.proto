@@ -611,9 +611,6 @@ message BehaviorTree {
   // uploading a tree.
   optional State state = 7 [(output_only) = true];
 
-  optional intrinsic_proto.status.ExtendedStatus extended_status = 11
-      [(output_only) = true];
-
   intrinsic_proto.skills.Skill description = 4;
   oneof return_value_type {
     string return_value_expression = 5;
