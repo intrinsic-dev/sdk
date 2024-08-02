@@ -24,11 +24,11 @@ ABSL_FLAG(std::string, output_block, "outputs",
           "Name of the output_block to set bits.");
 
 const char kUsage[] =
-    "Sets the two lowest bits of 'output_block' to '1', then waits 10s and "
-    "clears them again.";
+    "Sequentially sets all bits of 'output_block' to '1' and then clears them "
+    "again. Only sets the two lowest bits if unable to determine the size of "
+    "the output block.";
 
 namespace {
-
 absl::Status Run(const intrinsic::ConnectionParams& connection_params,
                  absl::string_view part_name,
                  absl::string_view output_block_name) {

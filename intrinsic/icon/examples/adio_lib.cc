@@ -4,11 +4,12 @@
 
 #include <stddef.h>
 
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <ostream>
 #include <string>
-#include <type_traits>
+#include <vector>
 
 #include "absl/log/log.h"
 #include "absl/status/status.h"
@@ -23,6 +24,7 @@
 #include "intrinsic/icon/cc_client/condition.h"
 #include "intrinsic/icon/cc_client/session.h"
 #include "intrinsic/icon/common/id_types.h"
+#include "intrinsic/icon/proto/io_block.pb.h"
 #include "intrinsic/icon/proto/part_status.pb.h"
 #include "intrinsic/util/grpc/channel_interface.h"
 #include "intrinsic/util/status/status_macros.h"
@@ -32,13 +34,37 @@ namespace intrinsic::icon::examples {
 using ::intrinsic::icon::ADIOActionInfo;
 using ::xfa::icon::actions::proto::DigitalBlock;
 
+absl::StatusOr<intrinsic_proto::icon::PartStatus> GetPartStatus(
+    absl::string_view part_name, intrinsic::icon::Client& icon_client) {
+  return icon_client.GetSinglePartStatus(part_name);
+}
+
+absl::StatusOr<uint64_t> GetBlockSize(
+    absl::string_view part_name, absl::string_view block_name,
+    const intrinsic_proto::icon::PartStatus& part_status) {
+  if (!part_status.has_adio_state()) {
+    return absl::NotFoundError(absl::StrCat("PartStatus for part '", part_name,
+                                            "' is missing ADIO state."));
+  }
+  const auto& adio_state = part_status.adio_state();
+  if (!adio_state.digital_outputs().contains(block_name)) {
+    return absl::NotFoundError(absl::StrCat(
+        "PartStatus for part '", part_name,
+        "' is missing digital output block with name '", block_name, "'."));
+  }
+
+  return adio_state.digital_outputs().at(block_name).signals().size();
+}
+
 absl::Status PrintADIOStatus(absl::string_view part_name,
                              intrinsic::icon::Client& icon_client) {
-  INTR_ASSIGN_OR_RETURN(intrinsic_proto::icon::PartStatus status,
-                        icon_client.GetSinglePartStatus(part_name));
+  auto status = GetPartStatus(part_name, icon_client);
+  if (!status.ok()) {
+    return status.status();
+  }
 
   std::cout << "Status for Part '" << part_name << "'" << std::endl
-            << absl::StrCat(status) << std::endl;
+            << absl::StrCat(status.value()) << std::endl;
   return absl::OkStatus();
 }
 
@@ -53,6 +79,27 @@ ADIOActionInfo::FixedParams CreateActionParameters(
   // Set the output block.
   (*params.mutable_outputs()->mutable_digital_outputs())[output_block_name] =
       block;
+  return params;
+}
+
+absl::StatusOr<std::vector<ADIOActionInfo::FixedParams>>
+CreateAnimationParameterSequence(
+    absl::string_view part_name, absl::string_view block_name,
+    const intrinsic_proto::icon::PartStatus& part_status) {
+  std::vector<ADIOActionInfo::FixedParams> params;
+
+  // Try to get the block size. Use a size of 2 if we fail.
+  uint64_t block_size =
+      GetBlockSize(part_name, block_name, part_status).value_or(2);
+  params.reserve(block_size + 1);
+  // Turn on one bit at a time until all bits are on.
+  for (size_t i = 0; i < block_size; ++i) {
+    params.push_back(CreateActionParameters(/*num_values=*/i + 1,
+                                            /*value=*/true, block_name));
+  }
+  // Turn all bits off again.
+  params.push_back(CreateActionParameters(/*num_values=*/block_size,
+                                          /*value=*/false, block_name));
   return params;
 }
 
@@ -94,19 +141,17 @@ absl::Status ExampleSetDigitalOutput(
 
   intrinsic::icon::Client client(icon_channel);
 
-  // Create a command to set the lowest two bits to `true`;
-  ADIOActionInfo::FixedParams set_bits = CreateActionParameters(
-      /*num_values=*/2, /*value=*/true, output_block_name);
-  // Create a command to set the lowest two bits to `false`;
-  ADIOActionInfo::FixedParams clear_bits = CreateActionParameters(
-      /*num_values=*/2, /*value=*/false, output_block_name);
+  INTR_ASSIGN_OR_RETURN(auto part_status, GetPartStatus(part_name, client));
 
-  INTR_RETURN_IF_ERROR(SendDigitalOutput(part_name, set_bits, icon_channel));
-  LOG(INFO) << "The lowest two bits are set.";
-  INTR_RETURN_IF_ERROR(PrintADIOStatus(part_name, client));
-  LOG(INFO) << "Waiting 10s before clearing the lowest two bits.";
-  absl::SleepFor(absl::Seconds(10));
-  INTR_RETURN_IF_ERROR(SendDigitalOutput(part_name, clear_bits, icon_channel));
+  INTR_ASSIGN_OR_RETURN(auto animation_params,
+                        CreateAnimationParameterSequence(
+                            part_name, output_block_name, part_status));
+
+  for (const auto& params : animation_params) {
+    INTR_RETURN_IF_ERROR(SendDigitalOutput(part_name, params, icon_channel));
+    absl::SleepFor(absl::Seconds(0.5));
+  }
+
   return PrintADIOStatus(part_name, client);
 }
 
