@@ -127,6 +127,7 @@ cc_library(
         "//intrinsic/platform/common/buffers:realtime_write_queue",
         "//intrinsic/util/status:status_macros",
         "//intrinsic/util/thread",
+        "//intrinsic/util/thread:thread_options",
         "@com_google_absl//absl/status",
         "@com_google_protobuf//:protobuf",
     ],

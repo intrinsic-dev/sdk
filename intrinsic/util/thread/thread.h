@@ -21,8 +21,6 @@ namespace intrinsic {
 // multiple functions to execute concurrently.
 class Thread {
  public:
-  using Options = ThreadOptions;
-
   // Default constructs a Thread object, no new thread of execution is created
   // at this time.
   Thread();

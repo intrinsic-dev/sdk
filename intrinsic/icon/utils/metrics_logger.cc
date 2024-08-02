@@ -14,6 +14,7 @@
 #include "intrinsic/platform/common/buffers/realtime_write_queue.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/thread/thread.h"
+#include "intrinsic/util/thread/thread_options.h"
 
 using intrinsic_proto::data_logger::LogItem;
 using intrinsic_proto::performance::analysis::proto::PerformanceMetrics;
@@ -35,7 +36,7 @@ absl::Status MetricsLogger::Start() {
         "Metrics publisher thread is already running");
   }
 
-  intrinsic::Thread::Options options;
+  intrinsic::ThreadOptions options;
   options.SetNormalPriorityAndScheduler();
   options.SetName("metrics_publisher_thread_");
   shutdown_requested_.store(false);
