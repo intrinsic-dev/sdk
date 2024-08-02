@@ -23,6 +23,38 @@ var (
 	regexEnumNameAssetTypeIdx = slices.Index(regexEnumNameGroups, "asset_type")
 )
 
+// AllAssetTypes returns all asset types.
+func AllAssetTypes() []atypepb.AssetType {
+	var assetTypes []atypepb.AssetType
+	for _, i := range atypepb.AssetType_value {
+		assetType := atypepb.AssetType(i)
+		if assetType == atypepb.AssetType_ASSET_TYPE_UNSPECIFIED {
+			continue
+		}
+		assetTypes = append(assetTypes, assetType)
+	}
+	return assetTypes
+}
+
+// UniqueAssetTypes returns the unique asset types from a list.
+//
+// Order is arbitrary, and the unspecified asset type is ignored.
+func UniqueAssetTypes(assetTypes []atypepb.AssetType) []atypepb.AssetType {
+	assetTypesMap := make(map[atypepb.AssetType]bool)
+	for _, assetType := range assetTypes {
+		if assetType != atypepb.AssetType_ASSET_TYPE_UNSPECIFIED {
+			assetTypesMap[assetType] = true
+		}
+	}
+	uniqueAssetTypes := make([]atypepb.AssetType, len(assetTypesMap))
+	i := 0
+	for assetType := range assetTypesMap {
+		uniqueAssetTypes[i] = assetType
+		i++
+	}
+	return uniqueAssetTypes
+}
+
 // NameFromAssetType returns the name of an asset type.
 func NameFromAssetType(a atypepb.AssetType) string {
 	if name, ok := customAssetTypeToName[a]; ok {
