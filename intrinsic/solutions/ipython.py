@@ -6,24 +6,28 @@ Provides meaningful fallback behavior if IPython is not present, e.g., if we are
 running in a regular Python script.
 
 Imports for IPython modules in this file have to be done on-the-fly and behind
-'_running_in_ipython()' checks. There is no build dependency on
+'running_in_ipython()' checks. There is no build dependency on
 //third_party/py/IPython, but imports for IPython modules will be successful
 when running in an IPython enabled runtime such as our Jupyter container.
 """
 
 import builtins
+import textwrap
 from typing import Any
 
+from intrinsic.util.status import status_exception
+import ipywidgets as widgets
 
-def _running_in_ipython() -> bool:
+
+def running_in_ipython() -> bool:
   """Returns true if we are running in an IPython environment."""
   return hasattr(builtins, '__IPYTHON__')
 
 
-def _display_html(html: str, newline_after_html: bool) -> None:
+def _display_html(html: str, newline_after_html: bool = False) -> None:
   """Displays the given HTML via IPython.
 
-  Assumes that '_running_in_ipython()' is True, otherwise has no effect.
+  Assumes that 'running_in_ipython()' is True, otherwise has no effect.
 
   Args:
       html: HTML string to display.
@@ -54,10 +58,98 @@ def display_html_if_ipython(
         separation from followup content. Has no effect if not running in
         IPython.
   """
-  if _running_in_ipython():
+  if running_in_ipython():
     _display_html(html, newline_after_html)
   else:
     print('Display only executed in IPython.')
+
+
+def _create_extended_status_widget(
+    extended_status_error: status_exception.ExtendedStatusError,
+) -> None:
+  """Generates a widget for the extended status recursively.
+
+  Args:
+    extended_status_error: Extended status error to display.
+
+  Returns:
+    Widget that can be displayed in Jupyter.
+  """
+  box_children = []
+
+  if extended_status_error.title:
+    box_children.append(
+        widgets.HTML(f'<b>Title</b>: {extended_status_error.title}')
+    )
+
+  status_code = extended_status_error.status_code
+  box_children.append(
+      widgets.HTML(f'<b>StatusCode</b>: {status_code[0]}:{status_code[1]}')
+  )
+  if extended_status_error.proto.HasField('timestamp'):
+    box_children.append(
+        widgets.HTML(
+            '<b>Timestamp</b>:'
+            f' {extended_status_error.timestamp.strftime("%c")}'
+        )
+    )
+
+  if (
+      extended_status_error.external_report is not None
+      and extended_status_error.external_report.message
+  ):
+    box_children.append(
+        widgets.HTML(
+            '<div><b>External'
+            ' Report</b><br'
+            f' /><pre><samp>\n{textwrap.indent(extended_status_error.external_report.message, "  ")}</samp></pre></div>\n'
+        )
+    )
+
+  if (
+      extended_status_error.internal_report is not None
+      and extended_status_error.internal_report.message
+  ):
+    internal_report_widget = widgets.Accordion(
+        children=[
+            widgets.HTML(
+                f'<div><pre><samp>{textwrap.indent(extended_status_error.internal_report.message, "  ")}<br'
+                ' /></samp></pre></div>\n'
+            )
+        ],
+        selected_index=None,
+    )
+    internal_report_widget.set_title(0, 'Internal Report')
+    box_children.append(internal_report_widget)
+
+  if extended_status_error.proto.context:
+    context_children = []
+
+    for context in extended_status_error.proto.context:
+      context_es = status_exception.ExtendedStatusError.create_from_proto(
+          context
+      )
+      context_children.append(_create_extended_status_widget(context_es))
+
+    context_tabs = widgets.Tab(children=context_children)
+    for i in range(len(extended_status_error.proto.context)):
+      context_tabs.set_title(i, f'Context {i}')
+
+    box_children.append(context_tabs)
+
+  return widgets.VBox(children=box_children)
+
+
+def display_extended_status_if_ipython(
+    extended_status_error: status_exception.ExtendedStatusError,
+) -> None:
+  """Displays the given ExtendedStatus if running in IPython.
+
+  Args:
+    extended_status_error: Extended status error to display.
+  """
+  if running_in_ipython():
+    display_if_ipython(_create_extended_status_widget(extended_status_error))
 
 
 def display_if_ipython(python_object: Any) -> None:
@@ -66,7 +158,7 @@ def display_if_ipython(python_object: Any) -> None:
   Args:
       python_object: Python object to display if running in IPython.
   """
-  if _running_in_ipython():
+  if running_in_ipython():
     try:
       # pytype: disable=import-error
       # pylint: disable=g-import-not-at-top
@@ -92,7 +184,7 @@ def display_html_or_print_msg(
         separation from followup content. Has no effect if not running in
         IPython.
   """
-  if _running_in_ipython():
+  if running_in_ipython():
     _display_html(html, newline_after_html)
   else:
     print(msg)

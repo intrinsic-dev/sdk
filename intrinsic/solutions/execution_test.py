@@ -726,6 +726,7 @@ class ExecutiveTest(parameterized.TestCase):
         create_operation(behavior_tree_pb2.BehaviorTree.FAILED, [error_report]),
         # extra call in error case as get_errors also accesses self.operation
         create_operation(behavior_tree_pb2.BehaviorTree.FAILED, [error_report]),
+        create_operation(behavior_tree_pb2.BehaviorTree.FAILED, [error_report]),
     ]
 
     my_action = behavior_call.Action(skill_id='my_action')

@@ -246,6 +246,8 @@ py_library(
         "//intrinsic/executive/proto:run_metadata_py_pb2",
         "//intrinsic/solutions/internal:actions",
         "//intrinsic/util/grpc:error_handling",
+        "//intrinsic/util/status:extended_status_py_pb2",
+        "//intrinsic/util/status:status_exception",
         requirement("grpcio"),
         "@com_google_googleapis//google/longrunning:operations_py_proto",
     ],
@@ -288,6 +290,10 @@ py_library(
     name = "ipython",
     srcs = ["ipython.py"],
     srcs_version = "PY3",
+    deps = [
+        "//intrinsic/util/status:status_exception",
+        requirement("ipywidgets"),
+    ],
 )
 
 py_test(
@@ -583,6 +589,7 @@ py_wheel(
         "googleapis-common-protos",
         "graphviz",
         "grpcio",
+        "ipywidgets",
         "matplotlib",
         "numpy",
         "retrying",

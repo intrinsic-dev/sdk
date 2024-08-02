@@ -41,6 +41,8 @@ from intrinsic.solutions import simulation as simulation_mod
 from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
 from intrinsic.util.grpc import error_handling
+from intrinsic.util.status import extended_status_pb2
+from intrinsic.util.status import status_exception
 
 _DEFAULT_POLLING_INTERVAL_IN_SECONDS = 0.5
 _CSS_SUCCESS_STYLE = (
@@ -141,6 +143,31 @@ class Operation:
   @property
   def metadata(self) -> run_metadata_pb2.RunMetadata:
     return self._metadata
+
+  @property
+  def extended_status(self) -> status_exception.ExtendedStatusError | None:
+    """Extracts extended status info from failed operation if any.
+
+    Returns:
+      Extended status extracted from operation error, or None if none found.
+      This can mean the operation didn't fail or did not set the ExtendedStatus
+      proto details.
+
+    Raises:
+      RuntimeError: Raised if extended status information was found but
+        failed to deserialize (potential proto version mismatch).
+    """
+    if self._operation_proto.HasField("error"):
+      rpc_status = self._operation_proto.error
+      for detail in rpc_status.details:
+        if detail.Is(extended_status_pb2.ExtendedStatus.DESCRIPTOR):
+          es = extended_status_pb2.ExtendedStatus()
+          if not detail.Unpack(es):
+            raise RuntimeError(
+                f"Failed to unpack extended status from operation {self.name}"
+            )
+          return status_exception.ExtendedStatusError.create_from_proto(es)
+    return None
 
   @error_handling.retry_on_grpc_unavailable
   def update(self) -> None:
@@ -820,9 +847,24 @@ class Executive:
           "interactive details in Jupyter notebook."
       )
       if not silence_outputs:
-        error_summary = self.get_errors()
-        error_summary.display_only_in_ipython()
-        error_msg += f"\n{error_summary.summary}"
+        extended_status = self.operation.extended_status
+        if extended_status is not None:
+          ipython.display_html_or_print_msg(
+              f'<span style="{_CSS_INTERRUPTED_STYLE}">Execution failed</span>',
+              "Execution failed\n",
+          )
+          ipython.display_extended_status_if_ipython(extended_status)
+          if ipython.running_in_ipython():
+            # We nicely show the error, so we don't want to fail with the full
+            # error message in the exception
+            raise ExecutionFailedError("Execution failed")
+          error_msg += f"\n{extended_status}"
+
+        else:
+          error_summary = self.get_errors()
+          error_summary.display_only_in_ipython()
+          error_msg += f"\n{error_summary.summary}"
+
       raise ExecutionFailedError(error_msg)
 
   def get_errors(
