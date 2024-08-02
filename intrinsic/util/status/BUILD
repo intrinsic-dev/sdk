@@ -413,6 +413,7 @@ go_library(
     deps = [
         ":extended_status_go_proto",
         "//intrinsic/logging/proto:context_go_proto",
+        "@org_golang_google_genproto_googleapis_rpc//status",
         "@org_golang_google_grpc//codes:go_default_library",
         "@org_golang_google_grpc//status:go_default_library",
         "@org_golang_google_protobuf//proto",

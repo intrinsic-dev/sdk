@@ -193,9 +193,9 @@ func TestNewError(t *testing.T) {
 			Component: "ai.intrinsic.test", Code: 3465},
 		Title: "test error", InternalReport: &estpb.ExtendedStatus_Report{Message: "Something went wrong"}}
 
-	es, err := FromError(err)
-	if err != nil {
-		t.Fatalf("Failed to convert error back to ExtendedStatus: %v", err)
+	es, ok := FromError(err)
+	if !ok {
+		t.Fatalf("Failed to convert error back to ExtendedStatus.")
 	}
 
 	if diff := cmp.Diff(want, es.Proto(), protocmp.Transform()); diff != "" {
@@ -246,32 +246,58 @@ func TestErrorIs(t *testing.T) {
 	}
 }
 
-func TestFromGRPCErrorSkipsUnrelatedDetails(t *testing.T) {
-	extStProto := &estpb.ExtendedStatus{
+func TestFromGRPCFunctionsSkipUnrelatedDetails(t *testing.T) {
+	extStatusProto := &estpb.ExtendedStatus{
 		StatusCode: &estpb.StatusCode{
 			Component: "ai.intrinsic.test", Code: 2342},
 		Title: "title",
 		ExternalReport: &estpb.ExtendedStatus_Report{
 			Message: "Ext Msg",
 		}}
-	gs, err := grpcstatus.New(codes.ResourceExhausted, "Request limit exceeded.").
+	grpcStatus, err := grpcstatus.New(codes.ResourceExhausted, "Request limit exceeded.").
 		WithDetails(
 			&epb.QuotaFailure{
 				Violations: []*epb.QuotaFailure_Violation{{
 					Subject:     "Test subject",
 					Description: "Limit",
 				}}},
-			extStProto)
+			extStatusProto)
 	if err != nil {
 		t.Fatalf("Failed to create GRPC status: %v", err)
 	}
-	extSt, err := FromGRPCError(gs.Err())
-	if err != nil {
-		t.Errorf("Failed to convert gRPC error extended status: %v", err)
+
+	// FromGRPCError()
+	gotExtStatus, ok := FromGRPCError(grpcStatus.Err())
+	if !ok {
+		t.Errorf("FromGRPCError(%v) did not return ok", grpcStatus.Err())
 	}
 
-	if diff := cmp.Diff(extStProto, extSt.Proto(), protocmp.Transform()); diff != "" {
-		t.Errorf("GRPCStatus returned unexpected diff (-want +got):\n%s", diff)
+	if diff := cmp.Diff(extStatusProto, gotExtStatus.Proto(), protocmp.Transform()); diff != "" {
+		t.Errorf("FromGRPCError(%v) returned unexpected diff (-want +got):\n%s", grpcStatus.Err(), diff)
+	}
+
+	// FromGRPCStatus()
+	gotExtStatus, ok = FromGRPCStatus(grpcStatus)
+	if !ok {
+		t.Errorf("FromGRPCStatus(%v) did not return ok", grpcStatus.Err())
+	}
+
+	if diff := cmp.Diff(extStatusProto, gotExtStatus.Proto(), protocmp.Transform()); diff != "" {
+		t.Errorf(
+			"FromGRPCStatus(%v) returned unexpected diff (-want +got):\n%s", grpcStatus.Err(), diff,
+		)
+	}
+
+	// FromGRPCStatusProto()
+	gotExtStatus, ok = FromGRPCStatusProto(grpcStatus.Proto())
+	if !ok {
+		t.Errorf("FromGRPCStatusProto(%v) did not return ok", grpcStatus.Err())
+	}
+
+	if diff := cmp.Diff(extStatusProto, gotExtStatus.Proto(), protocmp.Transform()); diff != "" {
+		t.Errorf(
+			"FromGRPCStatusProto(%v) returned unexpected diff (-want +got):\n%s", grpcStatus.Err(), diff,
+		)
 	}
 }
 
@@ -301,9 +327,9 @@ func TestGrpcServiceCall(t *testing.T) {
 	if err == nil {
 		t.Fatalf("Expected error from FailingMethod")
 	}
-	extSt, err := FromGRPCError(err)
-	if err != nil {
-		t.Fatalf("Failed to convert gRPC error extended status: %v", err)
+	extSt, ok := FromGRPCError(err)
+	if !ok {
+		t.Errorf("FromGRPCError(%v) did not return ok", err)
 	}
 
 	want := &estpb.ExtendedStatus{
@@ -311,6 +337,6 @@ func TestGrpcServiceCall(t *testing.T) {
 			Component: "ai.intrinsic.test", Code: 9876},
 		Title: "Error Title"}
 	if diff := cmp.Diff(want, extSt.Proto(), protocmp.Transform()); diff != "" {
-		t.Errorf("Status proto returned unexpected diff (-want +got):\n%s", diff)
+		t.Errorf("FromGRPCError(%v) returned unexpected diff (-want +got):\n%s", err, diff)
 	}
 }

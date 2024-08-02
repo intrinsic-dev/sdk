@@ -6,9 +6,9 @@
 package extstatus
 
 import (
-	"errors"
 	"fmt"
 
+	statuspb "google.golang.org/genproto/googleapis/rpc/status"
 	ctxpb "intrinsic/logging/proto/context_go_proto"
 
 	"google.golang.org/grpc/codes"
@@ -64,12 +64,11 @@ func New(component string, code uint32, info *Info) *ExtendedStatus {
 		p.Context = append(p.Context, context)
 	}
 	for _, errContext := range info.ContextFromErrors {
-		context, err := FromError(errContext)
-		if err != nil {
+		context, ok := FromError(errContext)
+		if !ok {
 			// Failed to convert error to extended status, do it the
 			// "old-fashioned" way from the error interface
-			context = New("unknown-downstream", 0,
-				&Info{Title: errContext.Error()})
+			context = New("unknown-downstream", 0, &Info{Title: errContext.Error()})
 		}
 		p.Context = append(p.Context, context.Proto())
 	}
@@ -89,44 +88,61 @@ func FromProto(es *estpb.ExtendedStatus) *ExtendedStatus {
 	return &ExtendedStatus{s: proto.Clone(es).(*estpb.ExtendedStatus)}
 }
 
-// FromError converts an error to an ExtendedStatus. This may fail if the error
-// was not created from an ExtendedStatus.
-func FromError(err error) (*ExtendedStatus, error) {
+// FromError tries to convert an error to an ExtendedStatus. This may fail (and
+// ok will be false) if the error was not created from an ExtendedStatus.
+func FromError(err error) (es *ExtendedStatus, ok bool) {
 	e, ok := err.(*Error)
 	if ok {
-		return e.es, nil
+		return e.es, true
 	}
 
-	return nil, errors.New("Failed to convert error to ExtendedStatus")
+	return nil, false
 }
 
-// FromGRPCError converts an error that originated from a gRPC function call to
-// a new ExtendedStatus. This is called on the client side, i.e., a gRPC client
-// that received an error when invoking a service. This may fail if the error is
-// not a gRPC status/error (but some arbitrary error) or if the gRPC status does
-// not have an ExtendedStatus detail.
-// Use this, for example,  if you called a gRPC service as a client and want to
-// use extended status information for more specific handling of the error.
-// To just pass an error as context use ContextFromErrors when creating the
-// caller component's extended status to pass on the error.
-func FromGRPCError(err error) (*ExtendedStatus, error) {
+// FromGRPCError tries to convert an error to a new ExtendedStatus. This may
+// fail (and ok will be false) if the error is not a gRPC status/error or if the
+// gRPC status does not have an ExtendedStatus detail.
+//
+// Use this, for example, if you called a gRPC service as a client and want to
+// use extended status information for more specific handling of a returned
+// error. To just pass an error as context use ContextFromErrors when creating
+// the caller component's extended status to pass on the error.
+func FromGRPCError(err error) (es *ExtendedStatus, ok bool) {
 	grpcStatus, ok := status.FromError(err)
 	if !ok {
-		return nil, fmt.Errorf("Failed to convert error to gRPC status")
+		return nil, false
 	}
-	details := grpcStatus.Details()
+	return FromGRPCStatus(grpcStatus)
+}
+
+// FromGRPCStatusProto tries to convert a gRPC Status proto to a new ExtendedStatus.
+// This may fail (and ok will be false) if the gRPC status does not have an
+// ExtendedStatus detail.
+//
+// Use this, for example, if you received an error result from a long-running
+// operation on a gRPC service and want to use extended status information for
+// more specific handling of the returned error.
+func FromGRPCStatusProto(s *statuspb.Status) (es *ExtendedStatus, ok bool) {
+	return FromGRPCStatus(status.FromProto(s))
+}
+
+// FromGRPCStatus tries to convert a gRPC Status to a new ExtendedStatus. This
+// may fail (and ok will be false) if the gRPC status does not have an
+// ExtendedStatus detail.
+func FromGRPCStatus(s *status.Status) (es *ExtendedStatus, ok bool) {
+	details := s.Details()
 	if len(details) == 0 {
-		return nil, fmt.Errorf("gRPC status has no error details")
+		return nil, false
 	}
 	for _, detail := range details {
 		extendedStatus, ok := detail.(*estpb.ExtendedStatus)
 		if !ok {
 			continue
 		}
-		return FromProto(extendedStatus), nil
+		return FromProto(extendedStatus), true
 	}
 
-	return nil, fmt.Errorf("No extended status error detail on error")
+	return nil, false
 }
 
 // GRPCStatus converts to and returns a gRPC status.
