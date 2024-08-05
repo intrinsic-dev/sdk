@@ -75,6 +75,8 @@ Thread& Thread::operator=(Thread&& other) {
     }
     stop_source_ = std::move(other.stop_source_);
     thread_impl_ = std::move(other.thread_impl_);
+    // Swapping ensures that we guarantee that EraseStopToken() is called for
+    // the `other` thread.
     std::swap(thread_id_, other.thread_id_);
   }
 
@@ -96,6 +98,8 @@ StopToken Thread::GetStopToken() const noexcept {
 
 bool Thread::RequestStop() noexcept { return stop_source_.request_stop(); }
 
+Thread::Id Thread::GetId() const noexcept { return thread_impl_.get_id(); }
+
 void Thread::SaveStopToken() noexcept {
   thread_id_ = thread_impl_.get_id();
   GetPerThreadStopState().EmplaceStopToken(thread_id_,
@@ -103,6 +107,7 @@ void Thread::SaveStopToken() noexcept {
 }
 
 void Thread::EraseStopToken() noexcept {
+  // This call may be a no-op if the thread has not yet started.
   GetPerThreadStopState().EraseStopToken(thread_id_);
 }
 

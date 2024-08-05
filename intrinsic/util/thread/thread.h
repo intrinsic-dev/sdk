@@ -21,6 +21,10 @@ namespace intrinsic {
 // multiple functions to execute concurrently.
 class Thread {
  public:
+  // This definition prevents the need for client code to include <thread>
+  // directly.
+  using Id = std::thread::id;
+
   // Default constructs a Thread object, no new thread of execution is created
   // at this time.
   Thread();
@@ -79,6 +83,8 @@ class Thread {
                      Args&&... args);
 
   // Blocks the current thread until `this` Thread finishes its execution.
+  // As a post condition of calling Join(), the thread is no longer Joinable().
+  // The thread Id is set to the default Id() value after joining.
   void Join();
 
   // Returns `true` if `this` is an active thread of execution. Note that a
@@ -98,6 +104,9 @@ class Thread {
   // Issues a stop request to the internal stop-state, if it has not yet already
   // had stop requested.
   bool RequestStop() noexcept;
+
+  // Returns this thread's id.
+  Id GetId() const noexcept;
 
  private:
   explicit Thread(std::thread&& thread) noexcept
@@ -131,7 +140,7 @@ class Thread {
 
   // We cannot rely on using the thread_impl_.get_id() because the thread may
   // have been finished or joined.
-  std::thread::id thread_id_;
+  Id thread_id_;
 };
 
 template <typename Function, typename... Args>
