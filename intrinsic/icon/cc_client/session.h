@@ -324,7 +324,6 @@ class Session {
   // Other errors may be returned due to the `actions` specified.
   absl::Status StartActions(absl::Span<const Action> actions,
                             bool stop_active_actions = true);
-  ABSL_DEPRECATED("use StartActions() instead")
   absl::Status StartAction(const Action& action,
                            bool stop_active_actions = true);
 
