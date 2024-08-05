@@ -1,0 +1,65 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.accountsdiscovery.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+message PingResponse {}
+
+message Organization {
+  // Unique name of the organization
+  string name = 1;
+  // GCP project of the organization
+  string project = 2;
+  // Human readable organization name
+  string display_name = 3;
+}
+
+message Member {
+  string name = 1;
+}
+
+message ListOrganizationsResponse {
+  repeated Organization organizations = 1;
+}
+
+message ListMembersRequest {
+  string organization = 1;
+}
+
+message ListMembersResponse {
+  repeated Member members = 1;
+}
+
+// AccountsDiscoveryService provides user-scoped and read-only access to
+// information stored on accounts.
+service AccountsDiscoveryService {
+  // ListOrganizations lists the organizations the signed in user has access to.
+  rpc ListOrganizations(google.protobuf.Empty)
+      returns (ListOrganizationsResponse) {
+    option (google.api.http) = {
+      get: "/v1/accountsdiscovery/organizations"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      operation_id: "ListOrganizations"
+    };
+  }
+
+  // ListMembers lists the members of an organization.
+  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse) {
+    option (google.api.http) = {
+      get: "/v1/accountsdiscovery/organizations/{organization}/members"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      operation_id: "ListMembers"
+    };
+  }
+
+  // Ping returns a static response. Can be used for latency and availability
+  // probes.
+  rpc Ping(google.protobuf.Empty) returns (PingResponse) {}
+}
