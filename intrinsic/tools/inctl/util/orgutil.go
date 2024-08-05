@@ -20,6 +20,16 @@ const (
 	KeyProject = "project"
 	// KeyOrganization is used as central flag name for passing an organization name to inctl.
 	KeyOrganization = "org"
+	// KeyEnvironment is used as central flag name for passing an environment name to inctl.
+	//
+	// The environment can be one of prod, staging or dev.
+	KeyEnvironment = "env"
+	// ProdEnvironment is the value for KeyEnvironment for the prod environment.
+	ProdEnvironment = "prod"
+	// StagingEnvironment is the value for KeyEnvironment for the staging environment.
+	StagingEnvironment = "staging"
+	// DevEnvironment is the value for KeyEnvironment for the dev environment.
+	DevEnvironment = "dev"
 )
 
 var (
@@ -105,6 +115,20 @@ func makeOrgNotFound(inner error, org string) error {
 	}
 
 	return &ErrOrgNotFound{err: inner, CandidateOrgs: candidates, OrgName: org}
+}
+
+// ValidateEnvironment validates the environment value in a cobra command.
+func ValidateEnvironment(vipr *viper.Viper) error {
+	env := vipr.GetString(KeyEnvironment)
+	if env == "" {
+		return fmt.Errorf("--%s needs to be set", KeyEnvironment)
+	}
+	switch env {
+	case ProdEnvironment, StagingEnvironment, DevEnvironment:
+		return nil
+	default:
+		return fmt.Errorf("invalid --%s value %q. It must be one of %s, %s or %s", KeyEnvironment, env, ProdEnvironment, StagingEnvironment, DevEnvironment)
+	}
 }
 
 // PreRunOrganization provides the organization/project flag handling as PersistentPreRunE of a cobra command.

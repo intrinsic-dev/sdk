@@ -28,7 +28,7 @@ const (
 	keyNoBrowser = "no_browser"
 
 	orgTokenURLFmt     = "https://%s/o/%s/generate-keys"
-	projectTokenURLFmt = "https://%s/proxy/projects/%s/generate-keys"
+	projectTokenURLFmt = "https://%s/project/%s/generate-keys"
 	// We are going to use system defaults to ensure we open web-url correctly.
 	// For dev container running via VS Code the sensible-browser redirects
 	// call into code client from server to ensure URL is opened in valid
@@ -38,7 +38,12 @@ const (
 
 // Exposed for testing
 var (
-	queryProject = queryProjectForAPIKey
+	queryProject    = queryProjectForAPIKey
+	flowstateDomain = map[string]string{
+		orgutil.ProdEnvironment:    "flowstate.intrinsic.ai",
+		orgutil.StagingEnvironment: "flowstate-qa.intrinsic.ai",
+		orgutil.DevEnvironment:     "flowstate-dev.intrinsic.ai",
+	}
 )
 
 var loginParams *viper.Viper
@@ -53,6 +58,9 @@ var loginCmd = &cobra.Command{
 	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 		if loginParams.GetString(orgutil.KeyProject) == "" && loginParams.GetString(orgutil.KeyOrganization) == "" {
 			return fmt.Errorf("at least one of --project or --org needs to be set")
+		}
+		if err := orgutil.ValidateEnvironment(loginParams); err != nil {
+			return err
 		}
 
 		return nil
@@ -75,7 +83,10 @@ func readAPIKeyFromPipe(reader *bufio.Reader) (string, error) {
 }
 
 func queryForAPIKey(ctx context.Context, writer io.Writer, in *bufio.Reader, organization, project string) (string, error) {
-	portal := loginParams.GetString(keyPortal)
+	portal := flowstateDomain[loginParams.GetString(orgutil.KeyEnvironment)]
+	if portal == "" {
+		return "", fmt.Errorf("unknown environment %q", loginParams.GetString(orgutil.KeyEnvironment))
+	}
 	authorizationURL := fmt.Sprintf(projectTokenURLFmt, portal, project)
 	if organization != "" {
 		authorizationURL = fmt.Sprintf(orgTokenURLFmt, portal, url.PathEscape(organization))
@@ -103,7 +114,10 @@ func queryForAPIKey(ctx context.Context, writer io.Writer, in *bufio.Reader, org
 }
 
 func queryProjectForAPIKey(ctx context.Context, apiKey string) (string, error) {
-	portal := loginParams.GetString(keyPortal)
+	portal := flowstateDomain[loginParams.GetString(orgutil.KeyEnvironment)]
+	if portal == "" {
+		return "", fmt.Errorf("unknown environment %q", loginParams.GetString(orgutil.KeyEnvironment))
+	}
 	address := fmt.Sprintf("dns:///%s:443", portal)
 	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
 		Address:   address,
@@ -197,9 +211,9 @@ func init() {
 	flags.StringP(orgutil.KeyOrganization, "", "", "Name of the Intrinsic organization to authorize for")
 	flags.Bool(keyNoBrowser, false, "Disables attempt to open login URL in browser automatically")
 	flags.Bool(keyBatch, false, "Suppresses command prompts and assume Yes or default as an answer. Use with shell scripts.")
-	flags.StringP(keyPortal, "", "portal.intrinsic.ai", "Hostname of the intrinsic portal to authenticate with.")
-	flags.MarkHidden(keyPortal)
+	flags.StringP(orgutil.KeyEnvironment, "", orgutil.ProdEnvironment, fmt.Sprintf("Auth environment to use. This should be one of %q, %q or %q. %q is used by default. See http://go/intrinsic-users#environments for the compatible environment corresponding to a cloud project.", orgutil.ProdEnvironment, orgutil.StagingEnvironment, orgutil.DevEnvironment, orgutil.ProdEnvironment))
+	flags.MarkHidden(orgutil.KeyEnvironment)
 	flags.MarkHidden(orgutil.KeyProject)
 
-	loginParams = viperutil.BindToViper(flags, viperutil.BindToListEnv(orgutil.KeyProject, orgutil.KeyOrganization))
+	loginParams = viperutil.BindToViper(flags, viperutil.BindToListEnv(orgutil.KeyProject, orgutil.KeyOrganization, orgutil.KeyEnvironment))
 }

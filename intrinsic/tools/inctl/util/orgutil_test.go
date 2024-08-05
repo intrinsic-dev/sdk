@@ -248,3 +248,50 @@ func TestEditDistance(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateEnvironmentErrors(t *testing.T) {
+	tests := []struct {
+		desc    string
+		env     string
+		wantErr bool
+	}{
+		{
+			desc:    "empty",
+			wantErr: true,
+		},
+		{
+			desc:    "prod",
+			env:     "prod",
+			wantErr: false,
+		},
+		{
+			desc:    "staging",
+			env:     "staging",
+			wantErr: false,
+		},
+		{
+			desc:    "dev",
+			env:     "dev",
+			wantErr: false,
+		},
+		{
+			desc:    "invalid",
+			env:     "foo",
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.desc, func(t *testing.T) {
+			v := viper.New()
+			v.Set(KeyEnvironment, tc.env)
+			if err := ValidateEnvironment(v); err != nil {
+				if !tc.wantErr {
+					t.Errorf("Expected no error, but got %v", err)
+				}
+			} else if tc.wantErr {
+				t.Errorf("Expected error, but got nil")
+			}
+		})
+	}
+}

@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	keyPortal       = "portal"
 	keyProjectShort = "p"
 	keyAlias        = "alias"
 	keyBatch        = "batch"
