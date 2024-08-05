@@ -6,4 +6,6 @@ exports_files([
     "0005-Remove-competing-go-deps.patch",
     "0015-Upgrade-protobuf-rules-python.patch",
     "0017-Fix-py-grpc-library.patch",
+    "robotics-library-clamp.patch",
+    "robotics-library-fixed-size.patch",
 ])
