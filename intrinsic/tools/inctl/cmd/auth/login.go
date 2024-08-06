@@ -167,6 +167,13 @@ func loginCmdE(cmd *cobra.Command, _ []string) (err error) {
 		return err
 	}
 
+	if projectName == "" {
+		parts := strings.Split(orgName, "@")
+		if len(parts) == 2 {
+			projectName = parts[1]
+		}
+	}
+
 	if apiKey != "" && isBatch {
 		_, err = authStore.WriteConfiguration(&auth.ProjectConfiguration{
 			Name:   projectName,
