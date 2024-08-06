@@ -60,7 +60,7 @@ def _skill_manifest_impl(ctx):
     ]
 
 skill_manifest = rule(
-    doc = """Compiles a binary proto message for the given intrinsic_proto.skills.Manifest textproto
+    doc = """Compiles a binary proto message for the given intrinsic_proto.skills.SkillManifest textproto
            and writes it to file.
            
            Example:
@@ -78,7 +78,7 @@ skill_manifest = rule(
     attrs = {
         "src": attr.label(
             allow_single_file = True,
-            doc = "textproto specifying an intrinsic_proto.skills.Manifest",
+            doc = "textproto specifying an intrinsic_proto.skills.SkillManifest",
         ),
         "deps": attr.label_list(
             doc = "proto deps of the manifest textproto for this skill. " +

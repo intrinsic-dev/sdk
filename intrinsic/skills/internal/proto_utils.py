@@ -10,7 +10,7 @@ from intrinsic.util.proto import source_code_info_view_py
 
 
 def proto_from_skill_manifest(
-    manifest: skill_manifest_pb2.Manifest,
+    manifest: skill_manifest_pb2.SkillManifest,
     file_descriptor_set: descriptor_pb2.FileDescriptorSet,
     version: str,
 ) -> skills_pb2.Skill:
@@ -62,7 +62,7 @@ def proto_from_skill_manifest(
 
   return skill_proto
 def add_return_file_descriptor_set_without_source_code_from_manifest(
-    manifest: skill_manifest_pb2.Manifest,
+    manifest: skill_manifest_pb2.SkillManifest,
     return_file_descriptor_set: descriptor_pb2.FileDescriptorSet,
     skill_proto: skills_pb2.Skill,
 ):
@@ -92,7 +92,7 @@ def add_return_file_descriptor_set_without_source_code_from_manifest(
   for file in return_description.descriptor_fileset.file:
     file.ClearField('source_code_info')
 def add_param_file_descriptor_set_without_source_code_from_manifest(
-    manifest: skill_manifest_pb2.Manifest,
+    manifest: skill_manifest_pb2.SkillManifest,
     parameter_file_descriptor_set: descriptor_pb2.FileDescriptorSet,
     skill_proto: skills_pb2.Skill,
 ):

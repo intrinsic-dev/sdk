@@ -106,7 +106,7 @@ message CreateSkillRequest {
   string release_notes = 5;
 
   // The skill manifest.
-  skills.Manifest manifest = 12;
+  skills.SkillManifest manifest = 12;
 
   oneof deployment_type {
     // A container image for the skill with its service.

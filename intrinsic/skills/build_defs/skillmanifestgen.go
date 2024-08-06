@@ -25,7 +25,7 @@ var (
 	flagFileDescriptorSets   = flag.String("file_descriptor_sets", "", "Comma separated paths to binary file descriptor set protos.")
 )
 
-func validateManifest(m *smpb.Manifest, types *protoregistry.Types) error {
+func validateManifest(m *smpb.SkillManifest, types *protoregistry.Types) error {
 	id, err := idutils.IDFromProto(m.GetId())
 	if err != nil {
 		return fmt.Errorf("invalid name or package: %v", err)
@@ -73,7 +73,7 @@ func createSkillManifest() error {
 		return fmt.Errorf("failed to populate the registry: %v", err)
 	}
 
-	m := new(smpb.Manifest)
+	m := new(smpb.SkillManifest)
 	if err := protoio.ReadTextProto(*flagManifest, m, protoio.WithResolver(types)); err != nil {
 		return fmt.Errorf("failed to read manifest: %v", err)
 	}

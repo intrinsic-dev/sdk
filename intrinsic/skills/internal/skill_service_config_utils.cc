@@ -42,7 +42,7 @@ GetSkillServiceConfigFromManifest(
   LOG(INFO) << "Loading manifest from " << manifest_pbbin_filename;
   INTR_ASSIGN_OR_RETURN(
       auto manifest,
-      intrinsic::GetBinaryProto<intrinsic_proto::skills::Manifest>(
+      intrinsic::GetBinaryProto<intrinsic_proto::skills::SkillManifest>(
           manifest_pbbin_filename));
 
   LOG(INFO) << "Loading FileDescriptorSet from "
@@ -58,7 +58,7 @@ GetSkillServiceConfigFromManifest(
 
 absl::StatusOr<intrinsic_proto::skills::SkillServiceConfig>
 GetSkillServiceConfigFromManifest(
-    const intrinsic_proto::skills::Manifest& manifest,
+    const intrinsic_proto::skills::SkillManifest& manifest,
     const google::protobuf::FileDescriptorSet& file_descriptor_set,
     std::optional<absl::string_view> version) {
   intrinsic_proto::skills::SkillServiceConfig service_config;
@@ -86,7 +86,7 @@ GetSkillServiceConfigFromManifest(
 
 absl::StatusOr<intrinsic_proto::skills::SkillServiceConfig>
 GetSkillServiceConfigFromManifest(
-    const intrinsic_proto::skills::Manifest& manifest,
+    const intrinsic_proto::skills::SkillManifest& manifest,
     const google::protobuf::FileDescriptorSet& parameter_descriptor_set,
     const google::protobuf::FileDescriptorSet& return_type_descriptor_set,
     std::optional<absl::string_view> version) {

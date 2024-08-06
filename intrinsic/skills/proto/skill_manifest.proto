@@ -137,8 +137,47 @@ message ExtendedDocumentation {
   // skill can be applied in a real-world scenario.
   string usage_example = 2;
 }
-
+// DEPRECATED. Please use SkillManifest instead.
 message Manifest {
+  // The skill's id.
+  intrinsic_proto.assets.Id id = 1;
+
+  // The skill's vendor.
+  intrinsic_proto.assets.Vendor vendor = 2;
+
+  // Documentation about the skill which will be shown to users. This field
+  // should contain the description of the skill as a summary.
+  intrinsic_proto.assets.Documentation documentation = 3;
+
+  // Extended documentation about the skill which will be shown to users.
+  // This field contains additional information about the skill that is used
+  // by automatic skill documentation generation tools. It is optional and can
+  // be left empty. However, only skills that specify this field will be
+  // included in automatic skill documentation generation.
+  optional ExtendedDocumentation extended_documentation = 10;
+
+  // Contains user-set options about what skill features are supported by
+  // this skill.
+  Options options = 4;
+
+  // Specifies the runtime dependencies of this skill.
+  Dependencies dependencies = 5;
+
+  // A description of the input parameter message for Execution of the skill.
+  ParameterMetadata parameter = 6;
+
+  // A description of the return type for Execution of the skill.
+  optional ReturnMetadata return_type = 7;
+
+  // The display name of the skill to be shown in the UI.
+  string display_name = 9;
+
+  // List of status codes which the specific skill may return. Codes are
+  // specific to the skill's ID (<package>.<name>), i.e., different skills can
+  // have the same numeric ID representing different errors.
+  repeated intrinsic_proto.assets.StatusSpec status_info = 11;
+}
+message SkillManifest {
   // The skill's id.
   intrinsic_proto.assets.Id id = 1;
 

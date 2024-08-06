@@ -13,7 +13,7 @@ namespace intrinsic::skills {
 // config. Does not populate any default parameters. Specifies `kTestVersion` as
 // the semver version.
 absl::StatusOr<intrinsic_proto::skills::Skill> BuildTestSkillProto(
-    const intrinsic_proto::skills::Manifest& manifest,
+    const intrinsic_proto::skills::SkillManifest& manifest,
     const google::protobuf::FileDescriptorSet& param_type_file_descriptor_set,
     const google::protobuf::FileDescriptorSet& return_type_file_descriptor_set);
 

@@ -18,7 +18,7 @@ namespace intrinsic {
 namespace skills {
 
 absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
-    const intrinsic_proto::skills::Manifest& manifest,
+    const intrinsic_proto::skills::SkillManifest& manifest,
     const google::protobuf::FileDescriptorSet& parameter_file_descriptor_set,
     const google::protobuf::FileDescriptorSet& return_value_file_descriptor_set,
     std::optional<absl::string_view> semver_version = std::nullopt);
@@ -26,7 +26,7 @@ absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
 // A convenience wrapper for the above when all file_descriptor_sets are the
 // same.
 absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
-    const intrinsic_proto::skills::Manifest& manifest,
+    const intrinsic_proto::skills::SkillManifest& manifest,
     const google::protobuf::FileDescriptorSet& file_descriptor_set,
     std::optional<absl::string_view> semver_version = std::nullopt);
 

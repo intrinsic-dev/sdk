@@ -101,7 +101,7 @@ func getResourceID(resType resourceType, target string) (string, error) {
 			}
 			return idutils.IDFrom(manifest.Metadata.Id.Package, manifest.Metadata.Id.Name)
 		case rtSkill:
-			var manifest sklpb.Manifest
+			var manifest sklpb.SkillManifest
 			if err := prototext.Unmarshal(content, &manifest); err != nil {
 				return "", fmt.Errorf("cannot parse manifest: %w", err)
 			}

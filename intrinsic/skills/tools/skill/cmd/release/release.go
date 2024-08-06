@@ -43,7 +43,7 @@ var (
 	}
 )
 
-func getManifest() (*skillmanifestpb.Manifest, error) {
+func getManifest() (*skillmanifestpb.SkillManifest, error) {
 	manifestFilePath, manifestTarget, err := cmdFlags.GetFlagsManifest()
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func getManifest() (*skillmanifestpb.Manifest, error) {
 		}
 	}
 
-	manifest := new(skillmanifestpb.Manifest)
+	manifest := new(skillmanifestpb.SkillManifest)
 	if err := protoio.ReadBinaryProto(manifestFilePath, manifest); err != nil {
 		return nil, fmt.Errorf("cannot read proto file %q: %v", manifestFilePath, err)
 	}

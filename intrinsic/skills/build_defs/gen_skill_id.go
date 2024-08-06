@@ -37,7 +37,7 @@ func writeToFile(path string, content string) error {
 }
 
 func genSkillIDFile() error {
-	m := new(smpb.Manifest)
+	m := new(smpb.SkillManifest)
 	if err := protoio.ReadBinaryProto(*flagManifest, m); err != nil {
 		return fmt.Errorf("failed to read manifest: %v", err)
 	}

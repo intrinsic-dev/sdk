@@ -71,12 +71,12 @@ func writePyTemplateOutput(parameters templatePyParameters, out string) error {
 	return w.Flush()
 }
 
-func readSkillManifest(path string) (*manifestpb.Manifest, error) {
+func readSkillManifest(path string) (*manifestpb.SkillManifest, error) {
 	manifestBinary, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read file: %v", err)
 	}
-	manifest := &manifestpb.Manifest{}
+	manifest := &manifestpb.SkillManifest{}
 	if err := proto.Unmarshal(manifestBinary, manifest); err != nil {
 		return nil, fmt.Errorf("cannot unmarshal binary to proto: %v", err)
 	}
@@ -104,7 +104,7 @@ func pyDescriptorFrom(protoModule, protoMessageFullName string) string {
 
 // WriteSkillServiceCC writes a skill service main to the file at out.
 //
-// The manifestPath must refer to a file that contains an intrinsic_proto.skills.Manifest
+// The manifestPath must refer to a file that contains an intrinsic_proto.skills.SkillManifest
 // proto binary. ccHeaderPaths are the path(s) to the proto header file(s) for the skill's
 // protobuf schema(s). out is the file path to write the generated service main to.
 //
@@ -126,7 +126,7 @@ func WriteSkillServiceCC(manifestPath string, ccHeaderPaths []string, out string
 
 // WriteSkillServicePy writes a skill service main to the file at out.
 //
-// The manifestPath must refer to a file that contains an intrinsic_proto.skills.Manifest
+// The manifestPath must refer to a file that contains an intrinsic_proto.skills.SkillManifest
 // proto binary. pyModules are the module(s) to to import for the skill, these must at least include
 // the module where the skill create method is declared and the proto schema modules for the skill.
 // out is the file path to write the generated service main to.

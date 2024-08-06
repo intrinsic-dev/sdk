@@ -41,7 +41,7 @@ func (i *stringArray) Get() any {
 
 var (
 	out           = flag.String("out", "", "The path for the generated file.")
-	manifestPath  = flag.String("manifest", "", "The path to the protobin file containing the intrinsic_proto.skills.Manifest.")
+	manifestPath  = flag.String("manifest", "", "The path to the protobin file containing the intrinsic_proto.skills.SkillManifest.")
 	lang          = flag.String("lang", "", "The language the skill is implemented in; should be one of: {cpp, python}.")
 	ccHeaderPaths = func() *stringArray {
 		p := new(stringArray)
