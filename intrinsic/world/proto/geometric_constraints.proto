@@ -43,6 +43,33 @@ message JointPositionLimits {
       [(intrinsic_proto.skills.skill_parameter_metadata).unit = "radians"];
 }
 
+// Defines the limit on the squared of the sum of several selected joints'
+// position.
+message JointPositionSumLimit {
+  oneof joint_group {
+    ObjectReference object_id = 1;
+    JointIds joint_ids = 2;
+  }
+
+  enum JointSign {
+    UNSPECIFIED = 0;  // means zero
+    POSITIVE = 1;     // means +1 multiplier
+    NEGATIVE = 2;     // means -1 multiplier
+  }
+
+  // A vector that indicates the signs of the joint positions in their sum
+  // combination. For example, if we want to express the constraint `(j0 + j4)^2
+  // <= joint_sum_limit^2`, then the `joint_signs` must be [POSITIVE,
+  // UNSPECIFIED, UNSPECIFIED, UNSPECIFIED, POSITIVE, UNSPECIFIED].
+  repeated JointSign joint_signs = 3;
+
+  // The positive square root of the limit on the squared of the sum combination
+  // of the joint positions. For an example, please see the comment on
+  // `joint_signs` above.
+  double joint_sum_limit = 4
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "radians"];
+}
+
 // Requires a point attached to `moving_frame` to have the same position as
 // a point attached to the `target_frame`, regardless of the orientation of
 // the frames.
@@ -279,6 +306,7 @@ message GeometricConstraint {
     RotationCone rotation_cone = 7;
     PoseEquality pose_equality = 8;
     PositionBoundingBox position_bounding_box = 9;
+    JointPositionSumLimit joint_position_sum_limit = 11;
     ConstraintIntersection constraint_intersection = 10;
   }
 }
@@ -287,6 +315,7 @@ message UniformGeometricConstraint {
   oneof constraint {
     RotationCone rotation_cone = 3;
     PositionBoundingBox position_bounding_box = 5;
+    JointPositionSumLimit joint_position_sum_limit = 6;
     UniformGeometricConstraintIntersection
         uniform_geometric_constraint_intersection = 4;
   }
