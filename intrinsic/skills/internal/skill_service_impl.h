@@ -87,7 +87,9 @@ class SkillOperation {
       absl::AnyInvocable<
           absl::StatusOr<std::unique_ptr<::google::protobuf::Message>>()>
           op,
-      absl::string_view op_name) ABSL_LOCKS_EXCLUDED(thread_mutex_);
+      absl::string_view op_name,
+      std::optional<intrinsic_proto::data_logger::Context> log_context =
+          std::nullopt) ABSL_LOCKS_EXCLUDED(thread_mutex_);
 
   // Requests cancellation of the operation.
   absl::Status RequestCancellation();

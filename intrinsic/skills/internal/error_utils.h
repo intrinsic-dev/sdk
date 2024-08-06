@@ -5,10 +5,13 @@
 
 #include <optional>
 #include <string>
+#include <utility>
 
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "google/rpc/status.pb.h"
-#include "grpcpp/support/status.h"
+#include "intrinsic/logging/proto/context.pb.h"
+#include "intrinsic/skills/internal/runtime_data.h"
 #include "intrinsic/skills/proto/error.pb.h"
 #include "intrinsic/util/status/extended_status.pb.h"
 #include "intrinsic/util/status/get_extended_status.h"
@@ -16,9 +19,6 @@
 namespace intrinsic {
 namespace skills {
 
-// Skill service rpcs use a particular formatting of grpc::Status errors to pass
-// additional metadata. The calls below help translate to and from absl::Status.
-//
 // Details
 //
 // There is some differences in error handling between c++ and python grpc
@@ -42,16 +42,21 @@ namespace skills {
 // Thus, we make the choice of returning a serialized google.rpc.Status proto
 // in the details field of the grpc.Status in both the c++ and python servers.
 
-// Note, the returned absl_status will contain the SkillErrorInfo as a payload.
-absl::Status ToAbslStatusWithErrorInfo(const ::grpc::Status& grpc_status);
-::google::rpc::Status ToGoogleRpcStatus(
-    const absl::Status& absl_status,
-    const intrinsic_proto::skills::SkillErrorInfo& error_info);
-
-void SetErrorInfo(const intrinsic_proto::skills::SkillErrorInfo& error_info,
-                  absl::Status& status);
 intrinsic_proto::skills::SkillErrorInfo GetErrorInfo(
     const absl::Status& status);
+
+// Creates a skill error augmenting the given status.
+// This will augment and extended status attached as payload in the following
+// ways:
+// - if component not set, sets skill id
+// - if component set that doesn't match skill ID wraps ES
+// - if timestamp not set, sets it to "now"
+// - if log_context provided and non set already set it
+// If no extended status is found, will convert the legacy status.
+::google::rpc::Status CreateSkillError(
+    absl::Status status, absl::string_view skill_id, absl::string_view op_name,
+    const internal::StatusSpecs& status_specs,
+    std::optional<intrinsic_proto::data_logger::Context> log_context);
 
 // T should be a PredictionSummary, FootprintSummary, or ExecutionSummary.
 template <typename T>

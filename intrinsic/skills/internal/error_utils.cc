@@ -2,64 +2,167 @@
 
 #include "intrinsic/skills/internal/error_utils.h"
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <utility>
 
 #include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/cord.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "google/protobuf/any.pb.h"
 #include "google/rpc/status.pb.h"
-#include "grpcpp/support/status.h"
+#include "intrinsic/logging/proto/context.pb.h"
+#include "intrinsic/skills/internal/runtime_data.h"
 #include "intrinsic/skills/proto/error.pb.h"
 #include "intrinsic/util/proto/type_url.h"
+#include "intrinsic/util/proto_time.h"
 #include "intrinsic/util/status/status_conversion_rpc.h"
 
 namespace intrinsic {
 namespace skills {
 
-absl::Status ToAbslStatusWithErrorInfo(const ::grpc::Status& grpc_status) {
-  // Note: doing the absl_status = grpc_status assignment attempts to interpret
-  // the error_details in a certain way, so we bypass the assignment in favor
-  // of our own translation for clarity and to avoid sneaky bugs.
-  absl::Status out(static_cast<absl::StatusCode>(grpc_status.error_code()),
-                   grpc_status.error_message());
+namespace {
+// Maximum length to which an external report message is shortened when used
+// as a title (when title neither set in status specs nor provided by user).
+constexpr int kExtendedStatusTitleShortToLength = 75;
 
-  // The error_details field should be a serialized google.rpc.Status.
-  google::rpc::Status status;
-  intrinsic_proto::skills::SkillErrorInfo error_info;
-  // Assume the error came from grpc if not specified.
-  error_info.set_error_type(
-      intrinsic_proto::skills::SkillErrorInfo::ERROR_TYPE_GRPC);
-  if (status.ParseFromString(grpc_status.error_details())) {
-    // Look through the details for the first proto that can be unpacked as a
-    // SkillErrorInfo.
-    for (const auto& any : status.details()) {
-      intrinsic_proto::skills::SkillErrorInfo try_unpack;
-      if (any.UnpackTo(&try_unpack)) {
-        error_info = std::move(try_unpack);
-        break;
-      }
+// Returns an action description for a skill error status.
+std::string ErrorToSkillAction(absl::Status status) {
+  switch (status.code()) {
+    case absl::StatusCode::kCancelled:
+      return "was cancelled during";
+    case absl::StatusCode::kInvalidArgument:
+      return "was passed invalid parameters during";
+    case absl::StatusCode::kUnimplemented:
+      return "has not implemented";
+    case absl::StatusCode::kDeadlineExceeded:
+      return "timed out during";
+    default:
+      return "returned an error during";
+  }
+}
+
+std::string EllipsizeString(absl::string_view s) {
+  if (s.length() < kExtendedStatusTitleShortToLength) {
+    return std::string(s);
+  }
+
+  constexpr absl::string_view kEllipsis = "...";
+
+  absl::string_view::size_type space_pos =
+      s.rfind(' ', kExtendedStatusTitleShortToLength - kEllipsis.length());
+  if (space_pos == absl::string_view::npos) {
+    return absl::StrCat(
+        s.substr(0, kExtendedStatusTitleShortToLength - kEllipsis.length()),
+        kEllipsis);
+  }
+  return absl::StrCat(s.substr(0, space_pos), kEllipsis);
+}
+
+// Updates the extended status error in the following ways:
+// - if component not set, sets skill id
+// - if component set that doesn't match skill ID wraps ES
+// - if timestamp not set, sets it to "now"
+// - if log_context provided and non set already set it
+absl::Status UpdateExtendedStatusOnError(
+    absl::Status status, absl::string_view skill_id, absl::string_view op_name,
+    const internal::StatusSpecs& status_specs,
+    std::optional<intrinsic_proto::data_logger::Context> log_context) {
+  intrinsic_proto::status::ExtendedStatus es;
+  std::optional<absl::Cord> extended_status_payload =
+      status.GetPayload(AddTypeUrlPrefix(es));
+  if (extended_status_payload) {
+    // This should not happen, but since we cannot control the data a skill
+    // developer could put anything. Hence, if we fail to interpret the data
+    // just return as-is.
+    if (!es.ParseFromCord(*extended_status_payload)) {
+      LOG(WARNING) << "Skill " << skill_id
+                   << " issued an invalid extended status payload";
+      return status;
+    }
+  } else {
+    // Fallback conversion to extended status if none given
+    es.mutable_status_code()->set_code(static_cast<uint32_t>(status.code()));
+    es.set_title(absl::StrFormat("Skill %s %s (generic code %s)",
+                                 ErrorToSkillAction(status), op_name,
+                                 absl::StatusCodeToString(status.code())));
+    es.mutable_external_report()->set_message(status.message());
+  }
+
+  if (!es.has_status_code() || es.status_code().component().empty()) {
+    // Set component since it wasn't set before
+    es.mutable_status_code()->set_component(skill_id);
+  } else if (es.status_code().component() != skill_id) {
+    // this may be a case of a skill author simply returning an error
+    // previously received from, e.g., a service. This should not be the
+    // skill's status, but we also cannot just overwrite it. Wrap this
+    // into a new extended status.
+    intrinsic_proto::status::ExtendedStatus new_es;
+    new_es.mutable_status_code()->set_component(skill_id);
+    *new_es.add_context() = std::move(es);
+    es = std::move(new_es);
+  }  // else: it's the expected component ID, don't do anything
+
+  // Set timestamp to now if none set
+  if (!es.has_timestamp()) {
+    *es.mutable_timestamp() = GetCurrentTimeProto();
+  }
+
+  if (es.title().empty()) {
+    absl::StatusOr<intrinsic_proto::assets::StatusSpec> status_spec =
+        status_specs.GetSpecForCode(es.status_code().code());
+    if (status_spec.ok()) {
+      es.set_title(status_spec->title());
+    } else if (es.has_external_report() &&
+               !es.external_report().message().empty()) {
+      es.set_title(EllipsizeString(es.external_report().message()));
+    } else if (es.has_status_code()) {
+      es.set_title(absl::StrFormat("%s:%d", es.status_code().component(),
+                                   es.status_code().code()));
     }
   }
-  SetErrorInfo(error_info, out);
 
-  return out;
+  // If no log context has been set explicitly, update it
+  if (log_context &&
+      (!es.has_related_to() || !es.related_to().has_log_context())) {
+    *es.mutable_related_to()->mutable_log_context() = *log_context;
+  }
+
+  // Update the extended status with the modified version
+  status.SetPayload(AddTypeUrlPrefix(es), es.SerializeAsCord());
+
+  return status;
 }
 
-::google::rpc::Status ToGoogleRpcStatus(
-    const absl::Status& absl_status,
-    const intrinsic_proto::skills::SkillErrorInfo& error_info) {
-  ::google::rpc::Status rpc_status = SaveStatusAsRpcStatus(absl_status);
+}  // end namespace
+
+// Handles an error return a skill.
+::google::rpc::Status CreateSkillError(
+    absl::Status status, absl::string_view skill_id, absl::string_view op_name,
+    const internal::StatusSpecs& status_specs,
+    std::optional<intrinsic_proto::data_logger::Context> log_context) {
+  std::string message = absl::StrFormat(
+      "Skill %s %s %s (code: %s). Message: %s", skill_id,
+      ErrorToSkillAction(status), op_name,
+      absl::StatusCodeToString(status.code()), status.message());
+
+  intrinsic_proto::skills::SkillErrorInfo error_info;
+  error_info.set_error_type(
+      intrinsic_proto::skills::SkillErrorInfo::ERROR_TYPE_SKILL);
+
+  ::google::rpc::Status rpc_status =
+      ToGoogleRpcStatus(UpdateExtendedStatusOnError(status, skill_id, op_name,
+                                                    status_specs, log_context));
+  rpc_status.set_message(message);
   rpc_status.add_details()->PackFrom(error_info);
-  return rpc_status;
-}
 
-void SetErrorInfo(const intrinsic_proto::skills::SkillErrorInfo& error_info,
-                  absl::Status& status) {
-  status.SetPayload(AddTypeUrlPrefix(error_info.GetTypeName()),
-                    absl::Cord(error_info.SerializeAsString()));
+  return rpc_status;
 }
 
 intrinsic_proto::skills::SkillErrorInfo GetErrorInfo(

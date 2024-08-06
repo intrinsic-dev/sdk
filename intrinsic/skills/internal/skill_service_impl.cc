@@ -40,13 +40,12 @@
 #include "intrinsic/skills/internal/preview_context_impl.h"
 #include "intrinsic/skills/internal/runtime_data.h"
 #include "intrinsic/skills/internal/skill_repository.h"
-#include "intrinsic/skills/proto/error.pb.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
 #include "intrinsic/util/proto/type_url.h"
-#include "intrinsic/util/proto_time.h"
 #include "intrinsic/util/status/extended_status.pb.h"
 #include "intrinsic/util/status/status_conversion_grpc.h"
+#include "intrinsic/util/status/status_conversion_rpc.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/status/status_macros_grpc.h"
 #include "intrinsic/util/thread/thread.h"
@@ -61,10 +60,6 @@ using ::intrinsic::assets::RemoveVersionFrom;
 
 namespace {
 
-// Maximum length to which an external report message is shortened when used
-// as a title (when title neither set in status specs nor provided by user).
-constexpr int kExtendedStatusTitleShortToLength = 75;
-
 template <class Request>
 absl::Status ValidateRequest(const Request& request) {
   if (request.world_id().empty()) {
@@ -72,142 +67,6 @@ absl::Status ValidateRequest(const Request& request) {
         "Cannot load a world with an empty world_id");
   }
   return absl::OkStatus();
-}
-
-// Returns an action description for a skill error status.
-std::string ErrorToSkillAction(absl::Status status) {
-  switch (status.code()) {
-    case absl::StatusCode::kCancelled:
-      return "was cancelled during";
-    case absl::StatusCode::kInvalidArgument:
-      return "was passed invalid parameters during";
-    case absl::StatusCode::kUnimplemented:
-      return "has not implemented";
-    case absl::StatusCode::kDeadlineExceeded:
-      return "timed out during";
-    default:
-      return "returned an error during";
-  }
-}
-
-// Handles an error return a skill.
-::google::rpc::Status HandleSkillErrorGoogleRpc(absl::Status status,
-                                                absl::string_view skill_id,
-                                                absl::string_view op_name) {
-  std::string message = absl::StrFormat(
-      "Skill %s %s %s (code: %s). Message: %s", skill_id,
-      ErrorToSkillAction(status), op_name,
-      absl::StatusCodeToString(status.code()), status.message());
-
-  intrinsic_proto::skills::SkillErrorInfo error_info;
-  error_info.set_error_type(
-      intrinsic_proto::skills::SkillErrorInfo::ERROR_TYPE_SKILL);
-  ::google::rpc::Status rpc_status = ToGoogleRpcStatus(status, error_info);
-  rpc_status.set_message(message);
-
-  LOG(ERROR) << message;
-
-  return rpc_status;
-}
-
-::grpc::Status HandleSkillErrorGrpc(absl::Status status,
-                                    absl::string_view skill_id,
-                                    absl::string_view op_name) {
-  ::google::rpc::Status rpc_status =
-      HandleSkillErrorGoogleRpc(status, skill_id, op_name);
-  return ToGrpcStatus(rpc_status);
-}
-
-std::string EllipsizeString(std::string_view s) {
-  if (s.length() < kExtendedStatusTitleShortToLength) {
-    return std::string(s);
-  }
-
-  constexpr std::string_view kEllipsis = "...";
-
-  std::string_view::size_type space_pos =
-      s.rfind(' ', kExtendedStatusTitleShortToLength - kEllipsis.length());
-  if (space_pos == std::string_view::npos) {
-    return absl::StrCat(
-        s.substr(0, kExtendedStatusTitleShortToLength - kEllipsis.length()),
-        kEllipsis);
-  }
-  return absl::StrCat(s.substr(0, space_pos), kEllipsis);
-}
-
-// Updates the extended status error in the following ways:
-// - if component not set, sets skill id
-// - if component set that doesn't match skill ID wraps ES
-// - if timestamp not set, sets it to "now"
-// - if log_context provided and non set already set it
-// To be used as StatusBuilder policy.
-absl::Status UpdateExtendedStatusOnError(
-    absl::Status status, const std::string& skill_id,
-    const internal::StatusSpecs& status_specs,
-    std::optional<intrinsic_proto::data_logger::Context> log_context) {
-  intrinsic_proto::status::ExtendedStatus es;
-  std::optional<absl::Cord> extended_status_payload =
-      status.GetPayload(AddTypeUrlPrefix(es));
-  if (extended_status_payload) {
-    // This should not happen, but since we cannot control the data a skill
-    // developer could put anything. Hence, if we fail to interpret the data
-    // just return as-is.
-    if (!es.ParseFromCord(*extended_status_payload)) {
-      LOG(WARNING) << "Skill " << skill_id
-                   << " issued an invalid extended status payload";
-      return status;
-    }
-  } else {
-    // Fallback conversion to extended status if non given
-    es.mutable_status_code()->set_code(static_cast<uint32_t>(status.code()));
-    es.set_title(absl::StrFormat("Skill failed (generic code %s)",
-                                 absl::StatusCodeToString(status.code())));
-    es.mutable_external_report()->set_message(status.message());
-  }
-
-  if (!es.has_status_code() || es.status_code().component().empty()) {
-    // Set component since it wasn't set before
-    es.mutable_status_code()->set_component(skill_id);
-  } else if (es.status_code().component() != skill_id) {
-    // this may be a case of a skill author simply returning an error
-    // previously received from, e.g., a service. This should not be the
-    // skill's status, but we also cannot just overwrite it. Wrap this
-    // into a new extended status.
-    intrinsic_proto::status::ExtendedStatus new_es;
-    new_es.mutable_status_code()->set_component(skill_id);
-    *new_es.add_context() = std::move(es);
-    es = std::move(new_es);
-  }  // else: it's the expected component ID, don't do anything
-
-  // Set timestamp to now if none set
-  if (!es.has_timestamp()) {
-    *es.mutable_timestamp() = GetCurrentTimeProto();
-  }
-
-  if (es.title().empty()) {
-    absl::StatusOr<intrinsic_proto::assets::StatusSpec> status_spec =
-        status_specs.GetSpecForCode(es.status_code().code());
-    if (status_spec.ok()) {
-      es.set_title(status_spec->title());
-    } else if (es.has_external_report() &&
-               !es.external_report().message().empty()) {
-      es.set_title(EllipsizeString(es.external_report().message()));
-    } else if (es.has_status_code()) {
-      es.set_title(absl::StrFormat("%s:%d", es.status_code().component(),
-                                   es.status_code().code()));
-    }
-  }
-
-  // If no log context has been set explicitly, update it
-  if (log_context &&
-      (!es.has_related_to() || !es.related_to().has_log_context())) {
-    *es.mutable_related_to()->mutable_log_context() = *log_context;
-  }
-
-  // Update the extended status with the modified version
-  status.SetPayload(AddTypeUrlPrefix(es), es.SerializeAsCord());
-
-  return status;
 }
 
 }  // namespace
@@ -218,7 +77,8 @@ absl::Status SkillOperation::Start(
     absl::AnyInvocable<
         absl::StatusOr<std::unique_ptr<::google::protobuf::Message>>()>
         op,
-    absl::string_view op_name) {
+    absl::string_view op_name,
+    std::optional<intrinsic_proto::data_logger::Context> log_context) {
   {
     absl::MutexLock lock(&thread_mutex_);
 
@@ -231,7 +91,7 @@ absl::Status SkillOperation::Start(
          op = std::make_unique<absl::AnyInvocable<
              absl::StatusOr<std::unique_ptr<::google::protobuf::Message>>()>>(
              std::move(op)),
-         op_name]() -> absl::Status {
+         op_name, log_context]() -> absl::Status {
           absl::StatusOr<std::unique_ptr<::google::protobuf::Message>> result =
               (*op)();
 
@@ -241,8 +101,11 @@ absl::Status SkillOperation::Start(
             if (result.ok()) {
               operation_.mutable_response()->PackFrom(**result);
             } else {
-              operation_.mutable_error()->MergeFrom(HandleSkillErrorGoogleRpc(
-                  result.status(), runtime_data().GetId(), op_name));
+              google::rpc::Status rpc_status = CreateSkillError(
+                  result.status(), runtime_data().GetId(), op_name,
+                  runtime_data().GetStatusSpecs(), log_context);
+              LOG(ERROR) << ToAbslStatus(rpc_status);
+              *operation_.mutable_error() = std::move(rpc_status);
             }
 
             operation_.set_done(true);
@@ -522,6 +385,10 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
                                            motion_planner_service_),
       /*object_world=*/
       world::ObjectWorldClient(request->world_id(), object_world_service_));
+
+  INTR_ASSIGN_OR_RETURN_GRPC(internal::SkillRuntimeData runtime_data,
+                             skill_repository_.GetSkillRuntimeData(skill_name));
+
   auto skill_result =
       skill->GetFootprint(get_footprint_request, footprint_context);
 
@@ -529,12 +396,18 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
     INTR_ASSIGN_OR_RETURN_GRPC(
         const std::string skill_id,
         RemoveVersionFrom(request->instance().id_version()));
-    return HandleSkillErrorGrpc(skill_result.status(), skill_id,
-                                "GetFootprint");
+    std::optional<intrinsic_proto::data_logger::Context> log_context;
+    if (request->has_context()) {
+      log_context = request->context();
+    }
+    // This will exit, we have already ensured non-ok status above, but this way
+    // we can invoke LogWarning.
+    INTR_RETURN_IF_ERROR_GRPC(
+        ToAbslStatus(
+            CreateSkillError(skill_result.status(), skill_id, "GetFootprint",
+                             runtime_data.GetStatusSpecs(), log_context)))
+        .LogWarning();
   }
-
-  INTR_ASSIGN_OR_RETURN_GRPC(internal::SkillRuntimeData runtime_data,
-                             skill_repository_.GetSkillRuntimeData(skill_name));
 
   // Populate the footprint in the result with equipment reservations.
   *result->mutable_footprint() = std::move(skill_result).value();
@@ -621,25 +494,19 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
       /*object_world=*/
       world::ObjectWorldClient(request->world_id(), object_world_service_));
 
+  std::optional<intrinsic_proto::data_logger::Context> log_context;
+  if (request->has_context()) {
+    log_context = request->context();
+  }
+
   INTR_RETURN_IF_ERROR_GRPC(operation->Start(
-      [skill = std::move(skill),
-       skill_id = std::string(operation->runtime_data().GetId()),
-       &status_specs = operation->runtime_data().GetStatusSpecs(),
-       skill_request = std::move(skill_request),
+      [skill = std::move(skill), skill_request = std::move(skill_request),
        skill_context = std::move(skill_context), request = *request]()
           -> absl::StatusOr<
               std::unique_ptr<intrinsic_proto::skills::ExecuteResult>> {
         INTR_ASSIGN_OR_RETURN(
             std::unique_ptr<::google::protobuf::Message> skill_result,
-            skill->Execute(*skill_request, *skill_context),
-            _.With([request, skill_id, &status_specs](absl::Status status) {
-              std::optional<intrinsic_proto::data_logger::Context> log_context;
-              if (request.has_context()) {
-                log_context = request.context();
-              }
-              return UpdateExtendedStatusOnError(status, skill_id, status_specs,
-                                                 log_context);
-            }));
+            skill->Execute(*skill_request, *skill_context));
 
         auto result =
             std::make_unique<intrinsic_proto::skills::ExecuteResult>();
@@ -654,7 +521,7 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
 
         return result;
       },
-      /*op_name=*/"Execute"));
+      /*op_name=*/"Execute", log_context));
 
   *result = operation->operation();
 
@@ -706,6 +573,11 @@ grpc::Status SkillExecutorServiceImpl::StartPreview(
 
   );
 
+  std::optional<intrinsic_proto::data_logger::Context> log_context;
+  if (request->has_context()) {
+    log_context = request->context();
+  }
+
   INTR_RETURN_IF_ERROR_GRPC(operation->Start(
       [skill = std::move(skill), skill_request = std::move(skill_request),
        skill_context = std::move(skill_context)]()
@@ -726,7 +598,7 @@ grpc::Status SkillExecutorServiceImpl::StartPreview(
 
         return result;
       },
-      /*op_name=*/"Preview"));
+      /*op_name=*/"Preview", log_context));
 
   *result = operation->operation();
 
