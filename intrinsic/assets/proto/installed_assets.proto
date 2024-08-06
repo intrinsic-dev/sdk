@@ -4,9 +4,11 @@ syntax = "proto3";
 
 package intrinsic_proto.assets.v1;
 
+import "google/longrunning/operations.proto";
 import "intrinsic/assets/proto/asset_type.proto";
 import "intrinsic/assets/proto/id.proto";
 import "intrinsic/assets/proto/metadata.proto";
+import "intrinsic/assets/services/proto/service_manifest.proto";
 
 // Service to manage the installation of assets.
 service InstalledAssets {
@@ -17,6 +19,15 @@ service InstalledAssets {
 
   // Gets a specific installed asset.
   rpc GetInstalledAsset(GetInstalledAssetRequest) returns (InstalledAsset) {}
+
+  // Installs the specified asset into the solution.
+  rpc CreateInstalledAssets(CreateInstalledAssetsRequest)
+      returns (google.longrunning.Operation) {
+    option (google.longrunning.operation_info) = {
+      metadata_type: "CreateInstalledAssetsMetadata"
+      response_type: "CreateInstalledAssetsResponse"
+    };
+  }
 }
 
 message ListInstalledAssetsRequest {
@@ -43,3 +54,26 @@ message ListInstalledAssetsResponse {
 message GetInstalledAssetRequest {
   Id id = 1;
 }
+
+enum UpdatePolicy {
+  // Use a default policy, which may change with platform updates.
+  UPDATE_POLICY_UNSPECIFIED = 0;
+  // Only add new assets to the solution and reject any that would
+  // trigger an update of any installed asset.
+  UPDATE_POLICY_ADD_NEW_ONLY = 10;
+}
+
+message CreateInstalledAssetsRequest {
+  message Asset {
+    oneof variant {
+      intrinsic_proto.services.ProcessedServiceManifest service = 2;
+    }
+  }
+
+  repeated Asset assets = 1;
+  UpdatePolicy policy = 2;
+}
+
+message CreateInstalledAssetsMetadata {}
+
+message CreateInstalledAssetsResponse {}

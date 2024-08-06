@@ -270,6 +270,8 @@ proto_library(
         ":asset_type_proto",
         ":id_proto",
         ":metadata_proto",
+        "//intrinsic/assets/services/proto:service_manifest_proto",
+        "@com_google_googleapis//google/longrunning:operations_proto",
     ],
 )
 
@@ -279,6 +281,8 @@ go_proto_library(
         ":asset_type_go_proto",
         ":id_go_proto",
         ":metadata_go_proto",
+        "@com_google_cloud_go_longrunning//autogen/longrunningpb",
+        "//intrinsic/assets/services/proto:service_manifest_go_proto",
     ],
     visibility = ["//intrinsic:__subpackages__"],
     deps = [":installed_assets_proto"],
@@ -292,5 +296,7 @@ go_grpc_library(
         ":asset_type_go_proto",
         ":id_go_proto",
         ":metadata_go_proto",
+        "//intrinsic/assets/services/proto:service_manifest_go_proto",
+        "@com_google_cloud_go_longrunning//autogen/longrunningpb",
     ],
 )
