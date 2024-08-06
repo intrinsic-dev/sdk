@@ -78,17 +78,8 @@ message ResourceConfiguration {
   // Hostname on which the service should be run.
   optional string scheduled_node_hostname = 3;
 
-  // Optional parent where to attach the new resource instance to.
-  // This may only be specified if the resource type associated with this
-  // resource instance specifies a `world_fragment`. Otherwise, specifying
-  // `parent` is an error.
-  optional intrinsic_proto.world.ObjectReferenceWithEntityFilter parent = 4;
-
-  // Optional pose relative to the attached parent.
-  // This may only be specified if the resource type associated with this
-  // resource instance specifies a `world_fragment`. Otherwise, specifying
-  // `parent_t_this` is an error.
-  optional intrinsic_proto.Pose parent_t_this = 5;
+  reserved 4, 5;
+  reserved "parent", "parent_t_this";
 }
 
 message Resource {
