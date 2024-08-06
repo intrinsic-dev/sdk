@@ -43,7 +43,7 @@ py_library(
     name = "compare",
     srcs = ["compare.py"],
     srcs_version = "PY3",
-    visibility = ["//intrinsic:__subpackages__"],
+    visibility = ["//intrinsic:public_api_users"],
     deps = [
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_protobuf//:protobuf_python",
