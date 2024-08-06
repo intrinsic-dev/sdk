@@ -188,7 +188,6 @@ proto_library(
         ":collision_action_proto",
         ":collision_settings_proto",
         ":geometry_component_proto",
-        ":gripper_component_proto",
         ":object_world_refs_proto",
         ":outfeed_component_proto",
         ":physics_component_proto",

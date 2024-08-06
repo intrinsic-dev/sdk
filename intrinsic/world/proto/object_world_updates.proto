@@ -11,7 +11,6 @@ import "intrinsic/math/proto/pose.proto";
 import "intrinsic/world/proto/collision_action.proto";
 import "intrinsic/world/proto/collision_settings.proto";
 import "intrinsic/world/proto/geometry_component.proto";
-import "intrinsic/world/proto/gripper_component.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 import "intrinsic/world/proto/outfeed_component.proto";
 import "intrinsic/world/proto/physics_component.proto";
@@ -393,12 +392,11 @@ message UpdateObjectPropertiesRequest {
   // error if the object did not have an outfeed component previously.
   intrinsic_proto.world.OutfeedComponent outfeed_component = 8;
 
-  // If set, updates the object's gripper component to the given one. Returns an
-  // error if the object did not have a gripper component previously.
-  intrinsic_proto.world.GripperComponent gripper_component = 7;
-
   // Requested object view for the returned, updated object.
   ObjectView view = 5;
+
+  reserved 7;
+  reserved "gripper_component";
 }
 
 // Request to update advanced properties of an entity such as its optional
