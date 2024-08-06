@@ -88,6 +88,10 @@ message IconHardwareModuleOptions {
   // The hardware module config in raw bytes to tbe used by the installer
   // service.
   HardwareModuleConfig hardware_module_config = 4;
+
+  // If true, then the hardware module is running the EtherCAT OSS stack.
+  // and requires access to the /dev/EtherCAT0 device file.
+  bool running_ethercat_oss = 6;
 }
 
 message InstallContainerAddonRequest {

@@ -44,6 +44,7 @@ var (
 	flagHardwareModuleName      string
 	flagHardwareModuleConfig    string
 	flagRequiresAtemsys         bool
+	flagRunningEthercatOss      bool
 	flagRunWithRealtimePriority bool
 	flagIsolateNetwork          bool
 )
@@ -59,6 +60,7 @@ type installHardwareModuleParams struct {
 	hardwareModuleConfig    *installerpb.IconHardwareModuleOptions_HardwareModuleConfig
 	rtpcHostname            string
 	requiresAtemsys         bool
+	runningEthercatOss      bool
 	runWithRealtimePriority bool
 	isolateNetwork          bool
 }
@@ -104,6 +106,7 @@ func installHardwareModule(params installHardwareModuleParams) error {
 			IconHardwareModuleOptions: &installerpb.IconHardwareModuleOptions{
 				HardwareModuleConfig:    params.hardwareModuleConfig,
 				RequiresAtemsys:         params.requiresAtemsys,
+				RunningEthercatOss:      params.runningEthercatOss,
 				RtpcNodeHostname:        params.rtpcHostname,
 				RunWithRealtimePriority: params.runWithRealtimePriority,
 				IsolateNetwork:          params.isolateNetwork,
