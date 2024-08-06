@@ -10,14 +10,14 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"golang.org/x/exp/maps"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	projectdiscoverygrpcpb "intrinsic/frontend/cloud_portal/api/projectdiscovery_api_go_grpc_proto"
+	accdiscoverv1grpcpb "intrinsic/kubernetes/accounts/service/api/discoveryv1api_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/auth"
 	"intrinsic/tools/inctl/util/orgutil"
@@ -38,7 +38,7 @@ const (
 
 // Exposed for testing
 var (
-	queryProject    = queryProjectForAPIKey
+	queryProjects   = queryProjectsForAPIKey
 	flowstateDomain = map[string]string{
 		orgutil.ProdEnvironment:    "flowstate.intrinsic.ai",
 		orgutil.StagingEnvironment: "flowstate-qa.intrinsic.ai",
@@ -82,6 +82,15 @@ func readAPIKeyFromPipe(reader *bufio.Reader) (string, error) {
 	return "", nil
 }
 
+var portalToAccounts = map[string]string{
+	"portal.intrinsic.ai":        "accounts.intrinsic.ai",
+	"portal-qa.intrinsic.ai":     "accounts-qa.intrinsic.ai",
+	"portal-dev.intrinsic.ai":    "accounts-dev.intrinsic.ai",
+	"flowstate.intrinsic.ai":     "accounts.intrinsic.ai",
+	"flowstate-qa.intrinsic.ai":  "accounts-qa.intrinsic.ai",
+	"flowstate-dev.intrinsic.ai": "accounts-dev.intrinsic.ai",
+}
+
 func queryForAPIKey(ctx context.Context, writer io.Writer, in *bufio.Reader, organization, project string) (string, error) {
 	portal := flowstateDomain[loginParams.GetString(orgutil.KeyEnvironment)]
 	if portal == "" {
@@ -113,32 +122,35 @@ func queryForAPIKey(ctx context.Context, writer io.Writer, in *bufio.Reader, org
 	return strings.TrimSpace(apiKey), nil
 }
 
-func queryProjectForAPIKey(ctx context.Context, apiKey string) (string, error) {
+// queryProjectsForAPIKey discovers the projects the given API key has access to.
+func queryProjectsForAPIKey(ctx context.Context, apiKey string) ([]string, error) {
 	portal := flowstateDomain[loginParams.GetString(orgutil.KeyEnvironment)]
 	if portal == "" {
-		return "", fmt.Errorf("unknown environment %q", loginParams.GetString(orgutil.KeyEnvironment))
+		return nil, fmt.Errorf("unknown environment %q", loginParams.GetString(orgutil.KeyEnvironment))
 	}
-	address := fmt.Sprintf("dns:///%s:443", portal)
+	address := fmt.Sprintf("dns:///%s:443", portalToAccounts[portal])
 	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
 		Address:   address,
 		CredToken: apiKey,
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to dial: %w", err)
+		return nil, fmt.Errorf("failed to dial: %w", err)
 	}
 	defer conn.Close()
 
-	client := projectdiscoverygrpcpb.NewProjectDiscoveryServiceClient(conn)
-	resp, err := client.GetProject(ctx, &emptypb.Empty{})
+	client := accdiscoverv1grpcpb.NewAccountsDiscoveryServiceClient(conn)
+	resp, err := client.ListOrganizations(ctx, &emptypb.Empty{})
 	if err != nil {
-		if code, ok := status.FromError(err); ok && code.Code() == codes.NotFound {
-			fmt.Printf("Could not find the project for this token. Please restart the login process and make sure to provide the exact key shown by the portal.\n")
-			return "", fmt.Errorf("validate token")
-		}
-		return "", err
+		fmt.Println("Could not find the project for this token. Please restart the login process and make sure to provide the exact key shown by the portal.")
+		return nil, fmt.Errorf("failed to list organizations: %w", err)
 	}
-
-	return resp.GetProject(), nil
+	// multiple organizations are fine, but they must be all on the same project
+	orgs := resp.GetOrganizations()
+	projects := map[string]struct{}{}
+	for _, org := range orgs {
+		projects[org.GetProject()] = struct{}{}
+	}
+	return maps.Keys(projects), nil
 }
 
 func loginCmdE(cmd *cobra.Command, _ []string) (err error) {
@@ -172,10 +184,19 @@ func loginCmdE(cmd *cobra.Command, _ []string) (err error) {
 
 	// If we are passed an org, we don't know the project yet
 	if projectName == "" {
-		projectName, err = queryProject(cmd.Context(), apiKey)
+		projects, err := queryProjects(cmd.Context(), apiKey)
 		if err != nil {
 			return fmt.Errorf("query project: %w", err)
 		}
+		if len(projects) == 0 {
+			return fmt.Errorf("no project found for API key")
+		}
+		if len(projects) > 1 {
+			slices.Sort(projects)
+			return fmt.Errorf("multiple projects found for API key: %+v", projects)
+		}
+		// exactly one found
+		projectName = projects[0]
 	}
 	if orgName != "" {
 		if err := authStore.WriteOrgInfo(&auth.OrgInfo{Organization: orgName, Project: projectName}); err != nil {

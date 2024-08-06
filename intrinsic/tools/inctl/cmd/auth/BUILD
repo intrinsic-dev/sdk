@@ -14,7 +14,7 @@ go_library(
         "revoke.go",
     ],
     deps = [
-        "//intrinsic/frontend/cloud_portal/api:projectdiscovery_api_go_grpc_proto",
+        "//intrinsic/kubernetes/accounts/service/api:discoveryv1api_go_grpc_proto",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/tools/inctl/auth",
         "//intrinsic/tools/inctl/cmd:root",
@@ -23,8 +23,7 @@ go_library(
         "//intrinsic/tools/inctl/util:viperutil",
         "@com_github_spf13_cobra//:go_default_library",
         "@com_github_spf13_viper//:go_default_library",
-        "@org_golang_google_grpc//codes:go_default_library",
-        "@org_golang_google_grpc//status:go_default_library",
         "@org_golang_google_protobuf//types/known/emptypb",
+        "@org_golang_x_exp//maps",
     ],
 )
