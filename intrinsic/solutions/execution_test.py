@@ -934,6 +934,19 @@ class ExecutiveTest(parameterized.TestCase):
         executive_service_pb2.ResetOperationRequest(name=_OPERATION_NAME)
     )
 
+  def test_reset_works_with_keep_blackboard(self):
+    """Tests if executive.reset() calls Reset with keep_blackboard."""
+    self._create_operation()
+    self._setup_get_operation(behavior_tree_pb2.BehaviorTree.SUCCEEDED)
+
+    self._executive.reset(keep_blackboard=True)
+
+    self._executive_service_stub.ResetOperation.assert_called_once_with(
+        executive_service_pb2.ResetOperationRequest(
+            name=_OPERATION_NAME, keep_blackboard=True
+        )
+    )
+
   def test_reset_fails_on_unavailable_error(self):
     """Tests if executive.reset() translates UNAVAILABLE error correctly."""
     self._create_operation()

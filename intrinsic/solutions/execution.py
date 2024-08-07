@@ -492,15 +492,20 @@ class Executive:
     """
     self._resume_with_retry(mode)
 
-  def reset(self) -> None:
+  def reset(self, *, keep_blackboard: bool = False) -> None:
     """Resets the current operation to the state from when it was loaded.
+
+    Args:
+      keep_blackboard: If true, resets only the operation state, but keeps the
+        blackboard values. Otherwise the blackboard for the operation is also
+        reset.
 
     Raises:
       solutions_errors.UnavailableError: On executive service not reachable.
       grpc.RpcError: On any other gRPC error.
     """
     try:
-      self._reset_with_retry()
+      self._reset_with_retry(keep_blackboard=keep_blackboard)
     except OperationNotFoundError:
       pass
 
@@ -1033,10 +1038,12 @@ class Executive:
     )
 
   @error_handling.retry_on_grpc_unavailable
-  def _reset_with_retry(self) -> None:
+  def _reset_with_retry(self, *, keep_blackboard: bool) -> None:
     operation_name = self.operation.name
     self._stub.ResetOperation(
-        executive_service_pb2.ResetOperationRequest(name=operation_name)
+        executive_service_pb2.ResetOperationRequest(
+            name=operation_name, keep_blackboard=keep_blackboard
+        )
     )
 
   @error_handling.retry_on_grpc_unavailable
