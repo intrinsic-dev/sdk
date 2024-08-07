@@ -19,7 +19,7 @@
 #define INTR_LOG_IF_ERROR(severity, expr)                                      \
   INTR_STATUS_MACROS_IMPL_ELSE_BLOCKER_                                        \
   if (intrinsic::status_macro_internal::StatusAdaptorForMacros status_adapter{ \
-          (expr), ABSL_LOC}) {                                                 \
+          (expr), INTRINSIC_LOC}) {                                            \
     /* Status of expr is OK, nothing to do */                                  \
   } else /* NOLINT */                                                          \
     intrinsic::status_macro_internal::StatusBuilderConvertOnDestroy(           \
