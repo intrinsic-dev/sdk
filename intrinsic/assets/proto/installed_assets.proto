@@ -28,6 +28,15 @@ service InstalledAssets {
       response_type: "CreateInstalledAssetsResponse"
     };
   }
+
+  // Uninstalls the specified asset from the solution.
+  rpc DeleteInstalledAssets(DeleteInstalledAssetsRequest)
+      returns (google.longrunning.Operation) {
+    option (google.longrunning.operation_info) = {
+      metadata_type: "DeleteInstalledAssetsMetadata"
+      response_type: "google.protobuf.Empty"
+    };
+  }
 }
 
 message ListInstalledAssetsRequest {
@@ -79,3 +88,17 @@ message CreateInstalledAssetsRequest {
 message CreateInstalledAssetsMetadata {}
 
 message CreateInstalledAssetsResponse {}
+
+message DeleteInstalledAssetsRequest {
+  enum Policy {
+    // Use a default policy, which may change with platform updates.
+    POLICY_UNSPECIFIED = 0;
+    // Reject a request to delete an asset that is currently in use.
+    POLICY_REJECT_USED = 10;
+  }
+
+  repeated Id assets = 1;
+  Policy policy = 2;
+}
+
+message DeleteInstalledAssetsMetadata {}
