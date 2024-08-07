@@ -126,5 +126,5 @@ var solutionGetCmd = &cobra.Command{
 }
 
 func init() {
-	solutionCmd.AddCommand(solutionGetCmd)
+	SolutionCmd.AddCommand(solutionGetCmd)
 }

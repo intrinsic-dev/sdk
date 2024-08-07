@@ -18,7 +18,8 @@ var (
 	viperLocal = viper.New()
 )
 
-var solutionCmd = orgutil.WrapCmd(&cobra.Command{
+// SolutionCmd is the `inctl solution` command.
+var SolutionCmd = orgutil.WrapCmd(&cobra.Command{
 	Use:                root.SolutionCmdName,
 	Aliases:            []string{root.SolutionsCmdName},
 	Short:              "Solution interacts with solutions",
@@ -26,5 +27,5 @@ var solutionCmd = orgutil.WrapCmd(&cobra.Command{
 }, viperLocal)
 
 func init() {
-	root.RootCmd.AddCommand(solutionCmd)
+	root.RootCmd.AddCommand(SolutionCmd)
 }

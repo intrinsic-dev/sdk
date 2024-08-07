@@ -153,7 +153,7 @@ var solutionListCmd = &cobra.Command{
 }
 
 func init() {
-	solutionCmd.AddCommand(solutionListCmd)
+	SolutionCmd.AddCommand(solutionListCmd)
 	solutionListCmd.PersistentFlags().StringSliceVarP(&flagFilter, keyFilter, "", []string{},
 		fmt.Sprintf("Filter solutions by state. Available filters: %s."+
 			" Separate multiple filters with a comma (without whitespaces in between).",
