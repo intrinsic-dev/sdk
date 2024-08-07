@@ -26,7 +26,10 @@ message LockMotionConfiguration {
     reserved "motion_id";
   }
   message LoadMotionCommand {
+    // The motion id to load.
     string motion_id = 1;
+    // The motion segments to replan.
+    repeated uint32 replan_motion_segment_ids = 2;
   }
 
   oneof command {
