@@ -99,11 +99,6 @@ message ExecuteRequest {
   // Logging context of the operation (e.g. IDs of related plan instance,
   // deployment configs etc.).
   intrinsic_proto.data_logger.Context context = 6;
-
-  // Additional data associated with the skill. This field is currently required
-  // for all learning (template) skills but may be left empty for non-learning
-  // skills.
-  intrinsic_proto.skills.SkillMetadata skill_metadata = 10;
 }
 
 message ExecuteResult {

@@ -148,18 +148,3 @@ message SkillInstance {
   reserved 2, 3, 7, 8;
   reserved "params", "skill", "skill_name";
 }
-
-// Information needed to execute a learning skill that uses a template.
-message TemplateExecuteParams {
-  // The full path of the gcp filename.
-  string gcp_filename = 1;
-  // The name of the gcp bucket.
-  string gcp_bucket_name = 2;
-}
-
-message SkillMetadata {
-  // Contains information for learning skills that use templates. This field is
-  // optional and only present when a learning skill is executed. Non-learning
-  // skills should not populate this field.
-  TemplateExecuteParams template_execute_params = 1;
-}

@@ -14,7 +14,6 @@ proto_library(
     srcs = ["behavior_call.proto"],
     deps = [
         "//intrinsic/skills/proto:footprint_proto",
-        "//intrinsic/skills/proto:skills_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:duration_proto",
     ],
@@ -34,7 +33,6 @@ go_proto_library(
     name = "behavior_call_go_proto",
     go_deps = [
         "//intrinsic/skills/proto:footprint_go_proto",
-        "//intrinsic/skills/proto:skills_go_proto",
     ],
     deps = [":behavior_call_proto"],
 )
