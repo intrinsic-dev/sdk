@@ -22,6 +22,12 @@ message PinchGripperConfig {
   SignalConfig grasp = 2;
   SignalConfig release = 3;
   SignalConfig gripping_indicated = 4;
+
+  // Whether the gripper is closed at joint positions 0. Set it to false
+  // (default) if the gripper is open at joint positions 0. This parameter is
+  // used to correctly update the digital twin when the gripper is commanded to
+  // grasp or release.
+  bool is_default_closed = 5;
 }
 
 message SuctionGripperConfig {
