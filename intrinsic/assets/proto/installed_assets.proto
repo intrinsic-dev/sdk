@@ -61,6 +61,8 @@ enum UpdatePolicy {
   // Only add new assets to the solution and reject any that would
   // trigger an update of any installed asset.
   UPDATE_POLICY_ADD_NEW_ONLY = 10;
+  // Only update assets if they are currently unused.
+  UPDATE_POLICY_UPDATE_UNUSED = 20;
 }
 
 message CreateInstalledAssetsRequest {
