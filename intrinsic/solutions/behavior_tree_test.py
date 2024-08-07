@@ -26,6 +26,7 @@ from intrinsic.solutions.internal import behavior_call
 from intrinsic.solutions.testing import compare
 from intrinsic.solutions.testing import skill_test_utils
 from intrinsic.solutions.testing import test_skill_params_pb2
+from intrinsic.util.status import extended_status_pb2
 from intrinsic.world.proto import object_world_refs_pb2
 from intrinsic.world.proto import object_world_service_pb2
 from intrinsic.world.python import object_world_resources
@@ -1983,8 +1984,12 @@ class BehaviorTreeFailTest(absltest.TestCase):
   def test_init(self):
     """Tests if BehaviorTree.Fail is correctly constructed."""
     node = bt.Fail('some_failure_message', name='expected failure')
-    node_proto = behavior_tree_pb2.BehaviorTree.Node(name='expected failure')
-    node_proto.fail.failure_message = 'some_failure_message'
+    node_proto = behavior_tree_pb2.BehaviorTree.Node(
+        name='expected failure', fail=behavior_tree_pb2.BehaviorTree.FailNode()
+    )
+    node_proto.decorators.on_failure.emit_extended_status.extended_status.title = (
+        'some_failure_message'
+    )
     compare.assertProto2Equal(self, node.proto, node_proto)
 
   def test_str_conversion(self):
@@ -2003,8 +2008,19 @@ class BehaviorTreeFailTest(absltest.TestCase):
     """Tests if conversion to and from a proto representation works."""
     node = bt.Fail('some_failure_message', name='expected failure')
 
-    node_proto = behavior_tree_pb2.BehaviorTree.Node(name='expected failure')
-    node_proto.fail.failure_message = 'some_failure_message'
+    node_proto = behavior_tree_pb2.BehaviorTree.Node(
+        name='expected failure',
+        fail=behavior_tree_pb2.BehaviorTree.FailNode(),
+        decorators=behavior_tree_pb2.BehaviorTree.Node.Decorators(
+            on_failure=behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings(
+                emit_extended_status=behavior_tree_pb2.BehaviorTree.Node.Decorators.FailureSettings.ExtendedStatusSettings(
+                    extended_status=extended_status_pb2.ExtendedStatus(
+                        title='some_failure_message'
+                    )
+                )
+            )
+        ),
+    )
 
     compare.assertProto2Equal(self, node.proto, node_proto)
     compare.assertProto2Equal(
@@ -2023,13 +2039,29 @@ class BehaviorTreeFailTest(absltest.TestCase):
         node_proto,
     )
 
+  def test_rejects_failure_message_and_extended_status_title(self):
+    """Tests if conversion to string works."""
+    node = bt.Fail(failure_message='Foo').on_failure.emit_extended_status(
+        'ai.intrinsic.testing', 123456, title='Bar'
+    )
+
+    with self.assertRaisesRegex(
+        ValueError,
+        r'Fail node has failure_message \("Foo"\) and decorator to emit'
+        r' extended status with title \("Bar"\) set\..*',
+    ):
+      _ = node.proto
+
   def test_from_proto_with_state(self):
     """Tests if conversion from a proto representation maintains the state."""
     node_proto = behavior_tree_pb2.BehaviorTree.Node(
         name='expected failure',
         state=behavior_tree_pb2.BehaviorTree.State.SUCCEEDED,
+        fail=behavior_tree_pb2.BehaviorTree.FailNode(),
     )
-    node_proto.fail.failure_message = 'some_failure_message'
+    node_proto.decorators.on_failure.emit_extended_status.extended_status.title = (
+        'some_failure_message'
+    )
 
     self.assertEqual(
         bt.Node.create_from_proto(node_proto).state, bt.NodeState.SUCCEEDED
@@ -2065,8 +2097,12 @@ class BehaviorTreeFailTest(absltest.TestCase):
     my_node = bt.Fail('failed')
     my_node.node_id = 42
 
-    my_proto = behavior_tree_pb2.BehaviorTree.Node(id=42)
-    my_proto.fail.failure_message = 'failed'
+    my_proto = behavior_tree_pb2.BehaviorTree.Node(
+        id=42, fail=behavior_tree_pb2.BehaviorTree.FailNode()
+    )
+    my_proto.decorators.on_failure.emit_extended_status.extended_status.title = (
+        'failed'
+    )
 
     compare.assertProto2Equal(self, my_node.proto, my_proto)
     compare.assertProto2Equal(

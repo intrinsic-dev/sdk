@@ -1777,7 +1777,10 @@ class Fail(Node):
 
   Attributes:
     failure_message: A string that gives more information about the failure,
-      mostly for the user's convenience.
+      mostly for the user's convenience. This will be set on the fail node's
+      extended status on failure decorator. Prefer to set the decorator directly
+      using node.on_failure.emit_extended_status(...). It is an error set both,
+      the title of an extended status decorator and a failure message.
     proto: The proto representation of the node.
     node_type: A string label of the node type.
   """
@@ -1787,6 +1790,7 @@ class Fail(Node):
   _node_id: Optional[int]
   _state: Optional[NodeState]
   _user_data_protos: dict[str, any_pb2.Any]
+  failure_message: str
 
   def __init__(
       self,
@@ -1794,7 +1798,7 @@ class Fail(Node):
       name: Optional[str] = None,
   ):
     self._decorators = None
-    self.failure_message: str = failure_message
+    self.failure_message = failure_message
     self._name = name
     self._node_id = None
     self._state = None
@@ -1812,7 +1816,20 @@ class Fail(Node):
   @property
   def proto(self) -> behavior_tree_pb2.BehaviorTree.Node:
     proto_object = super().proto
-    proto_object.fail.failure_message = self.failure_message
+    if self.failure_message:
+      if (
+          proto_object.decorators.on_failure.emit_extended_status.extended_status.title
+      ):
+        raise ValueError(
+            f'Fail node has failure_message ("{self.failure_message}") and'
+            ' decorator to emit extended status with title'
+            f' ("{proto_object.decorators.on_failure.emit_extended_status.extended_status.title}")'
+            ' set. Only one can be set at a time. Prefer to use the decorator.'
+        )
+      proto_object.decorators.on_failure.emit_extended_status.extended_status.title = (
+          self.failure_message
+      )
+    proto_object.fail.CopyFrom(behavior_tree_pb2.BehaviorTree.FailNode())
     return proto_object
 
   @property
@@ -1869,7 +1886,16 @@ class Fail(Node):
   def _create_from_proto(
       cls, proto_object: behavior_tree_pb2.BehaviorTree.FailNode
   ) -> Fail:
-    return cls(proto_object.failure_message)
+    """Creates a Fail node instance from a proto.
+
+    Args:
+      proto_object: Proto to read data from.
+
+    Returns:
+      Instance of Fail node with data from proto.
+    """
+    del proto_object
+    return cls()
 
   def dot_graph(  # pytype: disable=signature-mismatch  # overriding-parameter-count-checks
       self, node_id_suffix: str = ''

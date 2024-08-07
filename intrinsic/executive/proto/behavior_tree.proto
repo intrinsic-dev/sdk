@@ -314,7 +314,8 @@ message BehaviorTree {
 
   // Leaf node for throwing execution failures, to direct the control flow
   message FailNode {
-    string failure_message = 1;
+    reserved "failure_message";
+    reserved 1;
   }
 
   message SubtreeNode {
