@@ -60,6 +60,8 @@ def container_image(
             package_dir = directory,
             strip_prefix = data_path,
             srcs = files,
+            visibility = kwargs.get("visibility"),
+            testonly = kwargs.get("testonly"),
         )
         tars.append(name + "_main_files")
 
@@ -68,6 +70,8 @@ def container_image(
             name = name + "_symlink_layer",
             strip_prefix = "/",
             symlinks = symlinks,
+            visibility = kwargs.get("visibility"),
+            testonly = kwargs.get("testonly"),
         )
         tars.append(name + "_symlink_layer")
 
