@@ -152,10 +152,14 @@ func translateToNetworkConfig(n map[string]shared.Interface) *clustermanagergrpc
 		Interfaces: make(map[string]*clustermanagergrpcpb.IntOSInterfaceConfig),
 	}
 	for name, inf := range n {
+		dhcp6 := false
+		if inf.DHCP6 != nil {
+			dhcp6 = *inf.DHCP6
+		}
 		conf := &clustermanagergrpcpb.IntOSInterfaceConfig{
 			Dhcp4:    inf.DHCP4,
 			Gateway4: inf.Gateway4,
-			Dhcp6:    *inf.DHCP6,
+			Dhcp6:    dhcp6,
 			Gateway6: inf.Gateway6,
 			Mtu:      int32(inf.MTU),
 			Nameservers: &clustermanagergrpcpb.NameserverConfig{
