@@ -25,7 +25,8 @@ class GetFootprintRequest {
   // unset fields of `params`.
   explicit GetFootprintRequest(
       const ::google::protobuf::Message& params,
-      ::google::protobuf::Message* param_defaults = nullptr) {
+      ::google::protobuf::Message* param_defaults = nullptr)
+  {
     params_any_.PackFrom(params);
     if (param_defaults != nullptr) {
       param_defaults_any_ = google::protobuf::Any();
@@ -42,7 +43,8 @@ class GetFootprintRequest {
   explicit GetFootprintRequest(
       google::protobuf::Any params,
       std::optional<::google::protobuf::Any> param_defaults)
-      : params_any_(std::move(params)),
+        :
+        params_any_(std::move(params)),
         param_defaults_any_(std::move(param_defaults)) {}
 
   // The skill parameters proto.
@@ -52,6 +54,7 @@ class GetFootprintRequest {
   }
 
  private:
+
   ::google::protobuf::Any params_any_;
   std::optional<::google::protobuf::Any> param_defaults_any_;
 };

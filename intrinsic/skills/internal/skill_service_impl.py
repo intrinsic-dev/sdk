@@ -231,7 +231,9 @@ class SkillProjectorServicer(skill_service_pb2_grpc.ProjectorServicer):
       context: grpc.ServicerContext,
   ) -> skill_service_pb2.PredictResult:
     return skill_service_pb2.PredictResult(
-        outcomes=[prediction_pb2.Prediction(probability=1.0)],
+        outcomes=[
+            prediction_pb2.Prediction(probability=1.0)
+        ],
         internal_data=predict_request.internal_data,
     )
 
@@ -1113,6 +1115,7 @@ def _abort_with_status(
   # since context.abort_with_status does not properly annotate its return value
   # as NoReturn.
   raise AssertionError('This error should not have been raised.')
+
 
 
 def _proto_to_get_footprint_request(

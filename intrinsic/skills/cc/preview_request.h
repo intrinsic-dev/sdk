@@ -25,7 +25,8 @@ class PreviewRequest {
   // unset fields of `params`.
   explicit PreviewRequest(
       const ::google::protobuf::Message& params,
-      ::google::protobuf::Message* param_defaults = nullptr) {
+      ::google::protobuf::Message* param_defaults = nullptr)
+  {
     params_any_.PackFrom(params);
     if (param_defaults != nullptr) {
       param_defaults_any_ = google::protobuf::Any();
@@ -39,9 +40,11 @@ class PreviewRequest {
   // This constructor enables conversion from Any to the target type without
   // needing a message pool/factory up front, since params() is templated on the
   // target type.
-  explicit PreviewRequest(google::protobuf::Any params,
-                          std::optional<::google::protobuf::Any> param_defaults)
-      : params_any_(std::move(params)),
+  explicit PreviewRequest(
+      google::protobuf::Any params,
+      std::optional<::google::protobuf::Any> param_defaults)
+        :
+        params_any_(std::move(params)),
         param_defaults_any_(std::move(param_defaults)) {}
 
   // The skill parameters proto.
@@ -54,6 +57,7 @@ class PreviewRequest {
   ::google::protobuf::Any params_any() const { return params_any_; }
 
  private:
+
   ::google::protobuf::Any params_any_;
   std::optional<::google::protobuf::Any> param_defaults_any_;
 };

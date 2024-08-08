@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.skills.internal import execute_context_impl
-from intrinsic.skills.internal import preview_context_impl
 from intrinsic.skills.python import skill_interface
 
 
@@ -48,6 +47,7 @@ def preview_via_execute(
   )
 
 
+
 def preview_to_execute_request(
     request: skill_interface.PreviewRequest[skill_interface.TParamsType],
 ) -> skill_interface.ExecuteRequest[skill_interface.TParamsType]:
@@ -69,3 +69,4 @@ def preview_to_execute_context(
       object_world=context.object_world,
       resource_handles=resource_handles,
   )
+
