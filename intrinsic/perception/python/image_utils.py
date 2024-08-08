@@ -116,7 +116,7 @@ def _image_buffer_size(
 def serialize_image_buffer(
     image_array: np.ndarray,
     encoding: Optional[str] = None,
-    pixel_type: image_buffer_pb2.PixelType = image_buffer_pb2.PixelType.PIXEL_INTENSITY,
+    pixel_type: image_buffer_pb2.PixelType = image_buffer_pb2.PixelType.PIXEL_UNSPECIFIED,
     packing_type: image_buffer_pb2.PackingType = image_buffer_pb2.PackingType.PACKING_TYPE_INTERLEAVED,
 ) -> image_buffer_pb2.ImageBuffer:
   """Serializes image provided as a numpy array to the ImageBuffer proto format.
@@ -172,6 +172,7 @@ def serialize_image_buffer(
       dimensions=dimensions_pb2.Dimensions(
           cols=image_array.shape[1], rows=image_array.shape[0]
       ),
+      pixel_type=pixel_type,
       type=data_type,
       encoding=_get_image_buffer_encoding(encoding),
       num_channels=num_channels,
