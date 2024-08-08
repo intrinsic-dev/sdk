@@ -72,8 +72,6 @@ class ThreadOptions {
   std::optional<int> priority_;
   std::optional<int> policy_;
   std::optional<std::string> name_;
-  // Not part of equals check.
-  // Not part of equals check.
 
   // a zero-sized vector is considered to be unset, since it makes no sense to
   // specify that a thread runs on no cpus.
