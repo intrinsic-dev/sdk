@@ -404,6 +404,7 @@ def cc_skill(
     _skill_labels(
         name = labels,
         skill_id = skill_id_name,
+        testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],
     )
