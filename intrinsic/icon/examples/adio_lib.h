@@ -13,6 +13,7 @@
 #include "absl/strings/string_view.h"
 #include "intrinsic/icon/actions/adio_info.h"
 #include "intrinsic/icon/cc_client/client.h"
+#include "intrinsic/icon/proto/part_status.pb.h"
 #include "intrinsic/util/grpc/channel_interface.h"
 
 namespace intrinsic::icon::examples {
