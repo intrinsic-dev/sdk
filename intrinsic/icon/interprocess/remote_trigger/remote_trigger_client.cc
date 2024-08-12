@@ -171,6 +171,11 @@ RemoteTriggerClient::TriggerAsync() {
     return AlreadyExistsError("request already triggered");
   }
 
+  // In case the response is already set before we do the request, it is a left
+  // over from a previous call. TryWait resets the futex state to 0 in case it
+  // was already 1.
+  response_futex_.GetValue().TryWait();
+
   INTRINSIC_RT_RETURN_IF_ERROR(request_futex_.GetValue().Post());
   return AsyncRequest(&response_futex_, &request_started_);
 }
