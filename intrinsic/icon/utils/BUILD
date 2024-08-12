@@ -2,6 +2,7 @@
 
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("//intrinsic/icon/testing:cc_test_and_malloc_test.bzl", "cc_test_and_malloc_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -180,14 +181,13 @@ cc_library(
     ],
 )
 
-cc_test(
+cc_test_and_malloc_test(
     name = "log_test",
     srcs = ["log_test.cc"],
     deps = [
         ":log",
         ":log_internal",
         "//intrinsic/icon/release:source_location",
-        "//intrinsic/util/testing:gtest_wrapper",
         "//intrinsic/util/thread",
         "@com_google_absl//absl/strings",
     ],
@@ -258,13 +258,12 @@ cc_library(
     ],
 )
 
-cc_test(
+cc_test_and_malloc_test(
     name = "realtime_guard_test",
     srcs = ["realtime_guard_test.cc"],
     deps = [
         ":realtime_guard",
         ":realtime_stack_trace",
-        "//intrinsic/util/testing:gtest_wrapper",
     ],
 )
 
