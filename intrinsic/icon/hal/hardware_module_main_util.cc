@@ -139,7 +139,7 @@ std::optional<HardwareModuleExitCode>
 RunRuntimeWithGrpcServerAndWaitForShutdown(
     const absl::StatusOr<HardwareModuleMainConfig>& main_config,
     absl::StatusOr<intrinsic::icon::HardwareModuleRuntime>& runtime,
-    std::optional<int> cli_grpc_server_port, bool use_realtime_scheduling,
+    std::optional<int> cli_grpc_server_port,
     const std::vector<int>& cpu_affinity) {
   absl::Status hwm_run_error;
   grpc::ServerBuilder server_builder;
@@ -147,10 +147,12 @@ RunRuntimeWithGrpcServerAndWaitForShutdown(
   server_builder.AddChannelArgument(GRPC_ARG_MAX_METADATA_SIZE,
                                     16 * 1024);  // Set to 16KB
   if (runtime.ok()) {
+    QCHECK_OK(main_config.status())
+        << "Runtime OK but config not OK - this is a bug";
     LOG(INFO) << "PUBLIC: Starting hardware module "
               << main_config->module_config.name();
-    auto status =
-        runtime->Run(server_builder, use_realtime_scheduling, cpu_affinity);
+    auto status = runtime->Run(
+        server_builder, main_config->use_realtime_scheduling, cpu_affinity);
     if (!status.ok()) {
       LOG(ERROR) << "PUBLIC: Error running hardware module: "
                  << status.message();

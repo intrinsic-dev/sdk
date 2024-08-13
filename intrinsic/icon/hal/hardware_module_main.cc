@@ -95,6 +95,9 @@ absl::StatusOr<HardwareModuleExitCode> ModuleMain(int argc, char** argv) {
     LOG(INFO) << "Shared memory namespace: \'" << shared_memory_namespace
               << "\'";
     std::optional<int> realtime_core = absl::GetFlag(FLAGS_realtime_core);
+    if (!hwm_main_config->module_config.has_disable_malloc_guard()) {
+      hwm_main_config->module_config.set_disable_malloc_guard(false);
+    }
 
     INTR_ASSIGN_OR_RETURN(
         (auto [realtime_clock, server_thread_options, affinity_set]),
@@ -118,7 +121,7 @@ absl::StatusOr<HardwareModuleExitCode> ModuleMain(int argc, char** argv) {
   std::optional<HardwareModuleExitCode> exit_code =
       RunRuntimeWithGrpcServerAndWaitForShutdown(
           hwm_main_config, runtime, absl::GetFlag(FLAGS_grpc_server_port),
-          hwm_main_config->use_realtime_scheduling, cpu_affinity);
+          cpu_affinity);
 
   // Stop the runtime and shutdown fully.
   if (runtime.ok()) {

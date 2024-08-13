@@ -76,6 +76,8 @@ class ModuleConfig {
 
   absl::string_view GetSharedMemoryNamespace() const;
 
+  bool DisableMallocGuard() const { return config_.disable_malloc_guard(); }
+
  private:
   intrinsic_proto::icon::HardwareModuleConfig config_;
   std::string shared_memory_namespace_;

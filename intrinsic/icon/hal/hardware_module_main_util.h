@@ -58,7 +58,7 @@ std::optional<HardwareModuleExitCode>
 RunRuntimeWithGrpcServerAndWaitForShutdown(
     const absl::StatusOr<HardwareModuleMainConfig>& main_config,
     absl::StatusOr<intrinsic::icon::HardwareModuleRuntime>& runtime,
-    std::optional<int> cli_grpc_server_port, bool use_realtime_scheduling,
+    std::optional<int> cli_grpc_server_port,
     const std::vector<int>& cpu_affinity);
 
 }  // namespace intrinsic::icon

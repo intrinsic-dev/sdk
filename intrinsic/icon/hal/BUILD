@@ -186,7 +186,6 @@ cc_library(
         "//intrinsic/icon/utils:async_request",
         "//intrinsic/icon/utils:core_time",
         "//intrinsic/icon/utils:fixed_string",
-        "//intrinsic/icon/utils:log",
         "//intrinsic/icon/utils:realtime_guard",
         "//intrinsic/icon/utils:realtime_status",
         "//intrinsic/platform/common/buffers:rt_promise",
@@ -204,6 +203,7 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

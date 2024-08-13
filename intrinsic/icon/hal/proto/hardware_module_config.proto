@@ -43,4 +43,9 @@ message HardwareModuleConfig {
   // If not specified, the hardware module will look for a realtime_core
   // configured via commandline flag, and then from /proc/cmdline.
   repeated int32 realtime_cores = 6;
+
+  // A hardware module can monitor memory allocations in its realtime threads.
+  // This is only an override: By default, hardware modules enable the malloc
+  // guard on real hardware, and disable it in simulation
+  optional bool disable_malloc_guard = 7;
 }
