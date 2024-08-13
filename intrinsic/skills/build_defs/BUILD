@@ -18,7 +18,6 @@ bzl_library(
     srcs = ["skill.bzl"],
     deps = [
         ":manifest_bzl",
-        "//intrinsic/util/proto/build_defs:descriptor_set",
     ],
 )
 
