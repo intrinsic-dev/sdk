@@ -88,13 +88,16 @@ class BinaryFutex {
   // When futex becomes one, immediately sets it to zero and returns ok.
   // Returns an internal error if the futex could not be accessed.
   // Real-time safe when `deadline` is close enough.
-  // Thread-safe.
+  // Checks the futex before checking the deadline. So if the futex is already
+  // posted (i.e. has value one), the deadline is not checked. Thread-safe.
   RealtimeStatus WaitUntil(absl::Time deadline) const;
 
   // Waits until the futex becomes one or the timeout exceeds.
   // When futex becomes one, immediately sets it to zero and returns ok.
   // Returns an internal error if the futex could not be accessed.
   // Real-time safe when `timeout` is short enough.
+  // Checks the futex before checking the timeout. So if the futex is already
+  // posted (i.e. has value one), the timeout is not checked.
   // Thread-safe.
   RealtimeStatus WaitFor(absl::Duration timeout) const;
 

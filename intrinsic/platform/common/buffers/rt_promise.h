@@ -266,6 +266,8 @@ class NonRealtimeFuture {
   };
 
   // Waits until `deadline` for another thread to call `SetValue` on a promise.
+  // Checks the value before checking the deadline. So if the value is
+  // already set, the deadline is not checked.
   // Returns a ...
   //   * `DeadlineExceededError` if the promise does not report a value by
   //     `deadline`.

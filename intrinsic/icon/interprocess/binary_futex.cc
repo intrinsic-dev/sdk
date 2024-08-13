@@ -112,9 +112,6 @@ RealtimeStatus BinaryFutex::Post() {
 }
 
 RealtimeStatus BinaryFutex::WaitUntil(absl::Time deadline) const {
-  if (deadline < absl::Now()) {
-    return DeadlineExceededError("Specified deadline is in the past");
-  }
   if (deadline == absl::InfiniteFuture()) {
     return Wait(val_, nullptr, private_futex_);
   }

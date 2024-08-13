@@ -77,6 +77,9 @@ class Lockstep {
   // Returns early when `Cancel()` has been called.
   // For concurrent calls, only one `StartOperationA...()` returns.
   //
+  // Checks the condition before checking the deadline. So if the condition is
+  // already fulfilled, the deadline is not checked.
+  //
   // Returns `OkStatus` on success. Otherwise, returns an error, in which case
   // user code *should not* perform Operation A. Returns `kAborted` if
   // `Cancel()` has been called. Returns `kDeadlineExceeded` if the underlying
@@ -107,6 +110,8 @@ class Lockstep {
   // Blocks the current thread until Operation B is ready to begin or the
   // deadline has expired. Similar to StartOperationBWithTimeout except that
   // this uses a deadline instead of a timeout.
+  // Checks the condition before checking the deadline. So if the condition is
+  // already fulfilled, the deadline is not checked.
   //
   // Returns early when `Cancel()` has been called.
   // For concurrent calls, only one `StartOperationB...()` returns.

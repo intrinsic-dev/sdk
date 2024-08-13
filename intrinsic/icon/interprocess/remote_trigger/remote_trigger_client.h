@@ -72,9 +72,12 @@ class RemoteTriggerClient {
     // server to respond to the initial request. The `deadline` argument
     // indicates how long we should wait for this response before timing out. By
     // default, we wait forever.
-    // Returns a `DeadlineExceeded` error code when timed out.
-    // Returns `FailedPrecondition` error if request is invalid.
-    // Returns `OkStatus` otherwise.
+    // Checks the response before checking the deadline. So if the response is
+    // already set, the deadline is not checked.
+    //
+    // Returns a `DeadlineExceeded` error code when timed out. Returns
+    // `FailedPrecondition` error if request is invalid. Returns `OkStatus`
+    // otherwise.
     RealtimeStatus WaitUntil(absl::Time deadline = absl::InfiniteFuture());
 
    private:
@@ -112,6 +115,8 @@ class RemoteTriggerClient {
   // waits for the server to respond.
   // The `deadline` argument indicates how long we should wait for the
   // server to respond before timing out. By default, it waits forever.
+  // Checks the response before checking the deadline. So if the response is
+  // already set, the deadline is not checked.
   // Returns a `DeadlineExceeded` error code when timed out.
   // Returns `OkStatus` otherwise.
   RealtimeStatus Trigger(absl::Time deadline = absl::InfiniteFuture());
