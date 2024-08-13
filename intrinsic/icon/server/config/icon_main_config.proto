@@ -41,5 +41,9 @@ message IconMainConfig {
   // it to UNSPECIFIED will default to kThrottled.
   LoggingMode default_logging_mode = 13;
 
+  // Disables the malloc guard in the ICON server. This means memory allocation
+  // in action's Enter(), Control() or Sense() functions will not be caught.
+  bool disable_malloc_guard = 14;
+
   reserved 9;
 }
