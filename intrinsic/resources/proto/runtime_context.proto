@@ -20,6 +20,9 @@ message RuntimeContext {
   // implemented.
   int32 http_port = 7;
 
+  // The path prefix for the http endpoint.
+  string http_path_prefix = 9;
+
   // Similar to `simulation_level` in a skill's ExecuteRequest, a resource is
   // expected to modify its behavior whether it's running in simulation or
   // reality.  The resource is expected to take a safe and reasonable default in
