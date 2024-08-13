@@ -52,6 +52,7 @@ message PutBlobRequest {
   // Used to further prefix the blob ID to prevent collisions between blobs from
   // different event sources.
   string event_source = 4;
+  optional string bag_id = 5;
 }
 
 // ID of a cloud structured log source.
