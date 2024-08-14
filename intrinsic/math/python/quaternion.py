@@ -482,4 +482,9 @@ class Quaternion(object):
       Returns the string, 'Quaternion([x, y, z, w])', which can be used to
       regenerate the quaternion.
     """
-    return 'Quaternion([%r, %r, %r, %r])' % (self.x, self.y, self.z, self.w)
+    return 'Quaternion([%r, %r, %r, %r])' % (
+        float(self.x),
+        float(self.y),
+        float(self.z),
+        float(self.w),
+    )
