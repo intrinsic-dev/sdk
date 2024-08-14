@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <random>
+#include <vector>
 
 #include "absl/functional/any_invocable.h"
 #include "absl/status/status.h"

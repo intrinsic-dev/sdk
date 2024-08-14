@@ -4,6 +4,8 @@
 #define INTRINSIC_UTIL_THREAD_PERIODIC_H_
 
 #include <atomic>
+#include <memory>
+#include <utility>
 
 #include "absl/functional/any_invocable.h"
 #include "absl/synchronization/mutex.h"
