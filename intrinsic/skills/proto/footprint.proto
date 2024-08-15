@@ -85,12 +85,20 @@ message VolumeReservation {
 
 message ResourceReservation {
   enum SharingType {
+    // Unspecified sharing type is treated the same as WRITE_NONEXCLUSIVE.
     UNSPECIFIED = 0;
-    // The holder is allowed to change the state of this equipment.
+    // The holder requires exclusive access to read and change the state of this
+    // resource.
     WRITE = 1;
-    // The holder is allowed to read the state of this equipment, but should not
-    // make any changes that can be perceived by another skill.
+    // The holder can read but may not change the state of this resource.
     READ = 2;
+    // The holder can read and change the state of this resource. It requires
+    // exclusive access to change the state, but does not require exclusive
+    // access to read it.
+    WRITE_EXCLUSIVE_READ_NONEXCLUSIVE = 3;
+    // The holder can read and change the state of this resource, but does not
+    // require exclusive access to either.
+    WRITE_NONEXCLUSIVE = 4;
   }
 
   // The type of reservation.

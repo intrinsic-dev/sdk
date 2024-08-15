@@ -11,10 +11,9 @@ message ResourceSelector {
   // specified here.
   repeated string capability_names = 1;
 
-  // Specifies the manner in which the equipment will be used.
+  // Specifies how the resource will be used.
   //
-  // By default, the sharing type defaults to exclusive access, meaning that
-  // only one skill may use the equipment at the time. Some skills may use
-  // equipment in a way that enables multiple simultaneous access.
+  // NOTE that the sharing type is not enforced. It only specifies the skill's
+  // intent.
   intrinsic_proto.skills.ResourceReservation.SharingType sharing_type = 2;
 }
