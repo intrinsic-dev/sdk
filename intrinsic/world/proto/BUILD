@@ -152,6 +152,7 @@ proto_library(
         "//intrinsic/math/proto:pose_proto",
         "//intrinsic/skills/proto:footprint_proto",
         "@com_google_googleapis//google/rpc:status_proto",
+        "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:empty_proto",
         "@com_google_protobuf//:timestamp_proto",
     ],
@@ -197,6 +198,7 @@ proto_library(
         "//intrinsic/icon/proto:cart_space_proto",
         "//intrinsic/kinematics/types:joint_limits_proto",
         "//intrinsic/math/proto:pose_proto",
+        "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:wrappers_proto",
     ],
 )

@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package intrinsic_proto.world;
 
+import "google/protobuf/any.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "google/rpc/status.proto";
@@ -293,6 +294,9 @@ message ObjectComponent {
   // Configuration properties for this object if it is a gripper. Will not be
   // set if the object is not a gripper resource.
   intrinsic_proto.world.GripperComponent gripper_component = 7;
+
+  // User data associated with this object.
+  map<string, google.protobuf.Any> user_data = 9;
 }
 
 // A reference to a world resource that includes both its resource id as well as

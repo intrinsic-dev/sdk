@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package intrinsic_proto.world;
 
+import "google/protobuf/any.proto";
 import "google/protobuf/wrappers.proto";
 import "intrinsic/icon/proto/cart_space.proto";
 import "intrinsic/kinematics/types/joint_limits.proto";
@@ -168,6 +169,9 @@ message CreateObjectRequest {
     ObjectSpecForSingleEntityObject create_single_entity_object = 5;
     ObjectSpecFromProduct create_from_product = 8;
   }
+
+  // User data to be attached to the object.
+  map<string, google.protobuf.Any> user_data = 13;
 
   // Requested object view for the returned, created object.
   ObjectView view = 7;
