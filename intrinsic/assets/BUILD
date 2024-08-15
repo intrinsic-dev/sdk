@@ -140,7 +140,10 @@ go_library(
 
 go_library(
     name = "bundleio",
-    srcs = ["bundle_io.go"],
+    srcs = [
+        "bundle_io.go",
+        "bundle_io_services.go",
+    ],
     visibility = ["//intrinsic:internal_api_users"],
     deps = [
         "//intrinsic/assets/proto:id_go_proto",
