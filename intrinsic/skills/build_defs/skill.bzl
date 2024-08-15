@@ -24,10 +24,10 @@ def _gen_cc_skill_service_main_impl(ctx):
 
     args = ctx.actions.args().add(
         "--manifest",
-        manifest_pbbin_file.path,
+        manifest_pbbin_file,
     ).add(
         "--out",
-        output_file.path,
+        output_file,
     ).add_joined(
         "--cc_headers",
         header_paths,
@@ -201,13 +201,13 @@ def _skill_service_config_manifest_impl(ctx):
 
     arguments = ctx.actions.args().add(
         "--manifest_pbbin_filename",
-        manifest_pbbin_file.path,
+        manifest_pbbin_file,
     ).add(
         "--proto_descriptor_filename",
-        proto_desc_fileset_file.path,
+        proto_desc_fileset_file,
     ).add(
         "--output_config_filename",
-        outputfile.path,
+        outputfile,
     )
     ctx.actions.run(
         outputs = [outputfile],
