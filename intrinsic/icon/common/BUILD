@@ -9,7 +9,6 @@ package(
 cc_library(
     name = "builtins",
     hdrs = ["builtins.h"],
-    deps = ["@com_google_absl//absl/strings"],
 )
 
 cc_library(

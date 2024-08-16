@@ -5,8 +5,6 @@
 
 // This header defines the names of built-in action types and state variables.
 
-#include "absl/strings/string_view.h"
-
 namespace intrinsic {
 namespace icon {
 
@@ -41,7 +39,7 @@ inline constexpr char kIsStoppedDescription[] =
     "Builtin state variable that tells if an action has brought the robot to a "
     "stop";
 // Name of the builtin state variable that reports the amount of time since an
-// action became active, in seconds. All actions automatically expose this.
+// action became active, in seconds. Actions optionally expose this.
 // Value is a double.
 inline constexpr char kActionElapsedTime[] = "xfa.action_elapsed_time";
 inline constexpr char kActionElapsedTimeDescription[] =
