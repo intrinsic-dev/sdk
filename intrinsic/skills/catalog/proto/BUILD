@@ -17,6 +17,7 @@ proto_library(
         "//intrinsic/kubernetes/workcell_spec/proto:image_proto",
         "//intrinsic/skills/proto:skill_manifest_proto",
         "@com_google_protobuf//:empty_proto",
+        "@com_google_protobuf//:timestamp_proto",
     ],
 )
 
