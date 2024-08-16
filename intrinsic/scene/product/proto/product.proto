@@ -1,0 +1,23 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.product;
+
+import "google/protobuf/struct.proto";
+
+// A Product is a template instantiable in a Flowstate Solution. A product is
+// composed from a geometry respresentation(SceneObject) and product
+// configurations.
+message Product {
+  // The name of the product.
+  string name = 1;
+
+  // Default configuration for this Product.
+  ProductConfig default_config = 2;
+}
+
+message ProductConfig {
+  // metadata is a struct that a product can use to store arbitrary metadata.
+  google.protobuf.Struct metadata = 1;
+}

@@ -1,0 +1,117 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.product;
+
+import "google/protobuf/empty.proto";
+import "intrinsic/assets/proto/id.proto";
+import "intrinsic/scene/product/proto/product.proto";
+import "intrinsic/scene/proto/scene_object.proto";
+
+// ProductService provides the means to work with products in a
+// Solution.
+service ProductService {
+
+  // Creates a new product to be instantiated and adds it to the application.
+  rpc CreateProduct(CreateProductRequest) returns (Product) {
+    // A generous finite deadline based on suggestion from
+    // go/proto-best-practices-checkers#service-deadline.
+  }
+
+  // Gets a product.
+  rpc GetProduct(GetProductRequest) returns (Product) {
+    // A generous finite deadline based on suggestion from
+    // go/proto-best-practices-checkers#service-deadline.
+  }
+
+  // Gets the geometry representation of a product.
+  rpc GetProductGeometry(GetProductGeometryRequest)
+      returns (GetProductGeometryResponse) {
+    // A generous finite deadline based on suggestion from
+    // go/proto-best-practices-checkers#service-deadline.
+  }
+
+  // Updates a product.
+  rpc UpdateProduct(UpdateProductRequest) returns (Product) {
+    // A generous finite deadline based on suggestion from
+    // go/proto-best-practices-checkers#service-deadline.
+  }
+
+  // Deletes a product.
+  rpc DeleteProduct(DeleteProductRequest) returns (google.protobuf.Empty) {
+    // A generous finite deadline based on suggestion from
+    // go/proto-best-practices-checkers#service-deadline.
+  }
+
+  // List all of the products currently in the Solution.
+  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
+    // A generous finite deadline based on suggestion from
+    // go/proto-best-practices-checkers#service-deadline.
+  }
+}
+
+message CreateProductRequest {
+  // The name of the product.
+  string name = 1;
+
+  // The spec to create the new product from.
+  oneof spec {
+    // The scene file to create the product from.
+    ProductSceneFileData scene_file = 2;
+
+    // The scene object to create the product from.
+    intrinsic_proto.scene_object.v1.SceneObject scene_object = 3;
+    // The id version of the product to create from.
+    intrinsic_proto.assets.IdVersion id_version = 4;
+  }
+
+  // The default product configuration.
+  optional ProductConfig default_product_config = 5;
+}
+
+// A scene file to create a product from.
+message ProductSceneFileData {
+  // Name of the file.
+  string file_name = 1;
+  // The data of the file.
+  bytes data = 2;
+}
+
+message GetProductRequest {
+  // The name of the product to get.
+  string name = 1;
+}
+
+message GetProductGeometryRequest {
+  // The name of the product to get.
+  string name = 1;
+}
+
+message GetProductGeometryResponse {
+  // The geometry representation of the product in the form of a SceneObject.
+  intrinsic_proto.scene_object.v1.SceneObject scene_object = 1;
+}
+
+message UpdateProductRequest {
+  // The name of the product to update.
+  string name = 1;
+  oneof update {
+    RenameProduct rename_product = 2;
+  }
+}
+
+message RenameProduct {
+  // The new name of the product.
+  string new_name = 1;
+}
+
+message DeleteProductRequest {
+  // The name of the product to delete.
+  string name = 1;
+}
+message ListProductsRequest {}
+
+message ListProductsResponse {
+  repeated Product products = 1;
+}
