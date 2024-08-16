@@ -1,0 +1,32 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_object.v1;
+
+// These are properties that are associated with a particular scene object.
+message ObjectProperties {
+  Kinematics kinematics = 1;
+}
+
+message Kinematics {
+  // Optional cartesian limits.
+  optional CartesianLimits limits = 1;
+
+}
+
+// Cartesian limits.
+message CartesianLimits {
+  // Units are meters or radians per s, s^2, or s^3.
+  repeated double min_translational_velocity = 1;
+  repeated double max_translational_velocity = 2;
+  repeated double min_translational_acceleration = 3;
+  repeated double max_translational_acceleration = 4;
+  repeated double min_translational_jerk = 5;
+  repeated double max_translational_jerk = 6;
+  repeated double min_translational_position = 7;
+  repeated double max_translational_position = 8;
+  double max_rotational_velocity = 9;
+  double max_rotational_acceleration = 10;
+  double max_rotational_jerk = 11;
+}

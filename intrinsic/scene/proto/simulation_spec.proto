@@ -1,0 +1,41 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_object.v1;
+
+message SimulationSpec {
+  oneof object_spec {
+    RobotSimPluginSpec robot = 1;
+  }
+
+  // If true, the entity or object is immovable (not affected by physics during
+  // simulation.).
+  bool is_static = 2;
+
+}
+
+// Simulation plugin specification for a robot.
+message RobotSimPluginSpec {
+  // Simulation specification for the realtime control service.
+  message IconSimSpec {}
+
+  // Simulation specification for a device connected to a joint.
+  message DeviceSpec {
+    // Name of the device.
+    string name = 4;
+
+    // The type of device. For example, "ds402" or "fri_joint".
+    optional string type = 1;
+
+    // The joint entity that this device controls.
+    optional string joint_entity = 2;
+
+    // Initial state of the joint in the simulation.
+    // Only relevant if `joint_entity` is set.
+    optional double initial_state = 3;
+  }
+
+  IconSimSpec icon_sim_spec = 1;
+  repeated DeviceSpec device_specs = 2;
+}

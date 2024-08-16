@@ -1,0 +1,61 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_object.v1;
+
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/world/proto/geometry_component.proto";
+import "intrinsic/world/proto/kinematics_component.proto";
+import "intrinsic/world/proto/physics_component.proto";
+import "intrinsic/world/proto/sensor_component.proto";
+
+// Frame represents a reference frame local to the model (e.g., a grasp or
+// drop-off position, a tool frame, etc.).
+message Frame {
+  bool is_attachment_frame = 1;
+}
+
+// Link represents a rigid segment of the model with geometric and physics
+// properties.
+message Link {
+  // Visual and collision geometry of this entity.
+  intrinsic_proto.world.GeometryComponent geometry_component = 1;
+
+  // Physics properties of this entity.
+  intrinsic_proto.world.PhysicsComponent physics_component = 2;
+}
+
+// Joint represents a moveable component of the model, generally connecting two
+// `Links`.
+message Joint {
+  // Kinematics properties of the joint.
+  intrinsic_proto.world.KinematicsComponent kinematics_component = 1;
+}
+
+// Sensor represents a specific sensing capability of the model.
+// A sensor may be attached to a link or a joint.
+message Sensor {
+  intrinsic_proto.world.SensorComponent sensor_component = 1;
+}
+
+// Entity represents a node in the tree of entities that together form a model.
+message Entity {
+  // Human readable name for the entity.
+  // Guaranteed to be unique within the model.
+  string name = 1;
+
+  // Name of the parent entity. Unset for the root entity.
+  string parent_name = 2;
+
+  // Pose of this entity in the space of the parent entity. Unset for the root
+  // entity.
+  intrinsic_proto.Pose parent_t_this = 3;
+
+  oneof entity_type {
+    Frame frame = 4;
+    Link link = 5;
+    Joint joint = 6;
+    Sensor sensor = 7;
+  }
+}

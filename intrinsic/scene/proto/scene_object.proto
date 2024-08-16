@@ -1,0 +1,37 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_object.v1;
+
+import "intrinsic/scene/proto/entity.proto";
+import "intrinsic/scene/proto/object_properties.proto";
+import "intrinsic/scene/proto/simulation_spec.proto";
+
+// SceneObject is the physical building block for the world modeled as a tree of
+// entities, each with a specific set of properties.
+//
+// Requirements for a scene object to be valid:
+// - Should have at least one `Link` entity.
+// - Should have exactly one root entity. A root entity must not set its
+// `parent_name` field and should be a `Frame` or a `Link`. Its `parent_t_this`
+// field, if set, is ignored.
+// - Every entity, except the root entity, should provide `parent_name`.
+// - Every entity in `entities` must have a unique `name`.
+// - Each `Joint` entity must have at one parent link and one child link.
+// - Each `Sensor` entity must have a parent link or joint.
+message SceneObject {
+  // Human-readable name of the scene object.
+  string name = 2;
+
+  // Properties of the scene object itself.
+  ObjectProperties properties = 3;
+
+  // Entities that makes up the internal structure of the scene object (e.g.
+  // links, joints, etc.).
+  repeated Entity entities = 4;
+
+  // Simulation specification.
+  SimulationSpec simulation_spec = 5;
+
+}
