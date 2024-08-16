@@ -34,6 +34,10 @@ message RuntimeContext {
   // simulator and will report an error.
   string simulation_server_address = 3;
 
+  // The address of the ProductService to connect to to access product data in
+  // the deployed solution.
+  string product_service_address = 10;
+
   // This resource instance's name.
   string name = 5;
 

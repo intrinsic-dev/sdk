@@ -5,7 +5,6 @@ syntax = "proto3";
 package intrinsic_proto.product;
 
 import "google/protobuf/empty.proto";
-import "intrinsic/assets/proto/id.proto";
 import "intrinsic/scene/product/proto/product.proto";
 import "intrinsic/scene/proto/scene_object.proto";
 
@@ -14,41 +13,23 @@ import "intrinsic/scene/proto/scene_object.proto";
 service ProductService {
 
   // Creates a new product to be instantiated and adds it to the application.
-  rpc CreateProduct(CreateProductRequest) returns (Product) {
-    // A generous finite deadline based on suggestion from
-    // go/proto-best-practices-checkers#service-deadline.
-  }
+  rpc CreateProduct(CreateProductRequest) returns (Product) {}
 
   // Gets a product.
-  rpc GetProduct(GetProductRequest) returns (Product) {
-    // A generous finite deadline based on suggestion from
-    // go/proto-best-practices-checkers#service-deadline.
-  }
+  rpc GetProduct(GetProductRequest) returns (Product) {}
 
   // Gets the geometry representation of a product.
   rpc GetProductGeometry(GetProductGeometryRequest)
-      returns (GetProductGeometryResponse) {
-    // A generous finite deadline based on suggestion from
-    // go/proto-best-practices-checkers#service-deadline.
-  }
+      returns (GetProductGeometryResponse) {}
 
   // Updates a product.
-  rpc UpdateProduct(UpdateProductRequest) returns (Product) {
-    // A generous finite deadline based on suggestion from
-    // go/proto-best-practices-checkers#service-deadline.
-  }
+  rpc UpdateProduct(UpdateProductRequest) returns (Product) {}
 
   // Deletes a product.
-  rpc DeleteProduct(DeleteProductRequest) returns (google.protobuf.Empty) {
-    // A generous finite deadline based on suggestion from
-    // go/proto-best-practices-checkers#service-deadline.
-  }
+  rpc DeleteProduct(DeleteProductRequest) returns (google.protobuf.Empty) {}
 
   // List all of the products currently in the Solution.
-  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
-    // A generous finite deadline based on suggestion from
-    // go/proto-best-practices-checkers#service-deadline.
-  }
+  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {}
 }
 
 message CreateProductRequest {
@@ -60,10 +41,6 @@ message CreateProductRequest {
     // The scene file to create the product from.
     ProductSceneFileData scene_file = 2;
 
-    // The scene object to create the product from.
-    intrinsic_proto.scene_object.v1.SceneObject scene_object = 3;
-    // The id version of the product to create from.
-    intrinsic_proto.assets.IdVersion id_version = 4;
   }
 
   // The default product configuration.
