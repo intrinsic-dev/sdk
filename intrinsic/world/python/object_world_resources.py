@@ -5,6 +5,7 @@
 import abc
 from typing import Dict, List, Optional, Protocol
 
+from google.protobuf import any_pb2
 from intrinsic.icon.proto import cart_space_pb2
 from intrinsic.kinematics.types import joint_limits_pb2
 from intrinsic.math.python import data_types
@@ -269,6 +270,7 @@ class WorldObject(TransformNode):
     child_ids: A list with the ids of all child objects.
     child_names: A list with the names of all child objects.
     parent_t_this: Transform between the parent object and this frame.
+    user_data: A dict mapping str to any_pb2.Any protos containing user data.
     reference: The object_world_refs_pb2.ObjectReference that uniquely
       identifies the object in the world based on the ID.
     transform_node_reference: The object_world_refs_pb2.TransformNodeReference
@@ -465,6 +467,10 @@ class WorldObject(TransformNode):
     return math_proto_conversion.pose_from_proto(
         self._proto.object_component.parent_t_this
     )
+
+  @property
+  def user_data(self) -> Dict[str, any_pb2.Any]:
+    return dict(self._proto.object_component.user_data)
 
   def __getattr__(self, child_name: str) -> TransformNode:
     if object_world_ids.WorldObjectName(child_name) in self.child_names:

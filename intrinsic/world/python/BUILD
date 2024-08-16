@@ -25,6 +25,7 @@ py_library(
         "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
         "//intrinsic/world/proto:object_world_updates_py_pb2",
         "//intrinsic/world/robot_payload/python:robot_payload",
+        "@com_google_protobuf//:protobuf_python",
     ],
 )
 

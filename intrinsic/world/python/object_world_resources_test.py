@@ -8,6 +8,8 @@ import grpc  # pylint: disable=unused-import
 import numpy as np
 from numpy import testing as np_testing
 
+from google.protobuf import any_pb2
+from google.protobuf import empty_pb2
 from intrinsic.icon.proto import cart_space_pb2
 from intrinsic.kinematics.types import joint_limits_pb2
 from intrinsic.math.python import data_types
@@ -390,6 +392,7 @@ my_object: WorldObject(id=15)
             'proto',
             'reference',
             'transform_node_reference',
+            'user_data',
             'world_id',
         ],
     )
@@ -647,6 +650,50 @@ my_object: WorldObject(id=15)
     np_testing.assert_allclose(
         my_object.parent_t_this.translation, np.array([1, 2, 3])
     )
+
+  def test_get_user_data(self):
+    object_proto_string = """
+    object_component: {
+      user_data: {
+        key: "my_key"
+        value: {
+          [type.googleapis.com/google.protobuf.Empty] {}
+        }
+      }
+    }
+    """
+    my_object = object_world_resources.WorldObject(
+        text_format.Parse(
+            object_proto_string, object_world_service_pb2.Object()
+        ),
+        self._stub,
+    )
+    any_empty = any_pb2.Any()
+    any_empty.Pack(empty_pb2.Empty())
+    self.assertEqual(my_object.user_data, {'my_key': any_empty})
+
+  def test_user_data_immutable(self):
+    object_proto_string = """
+    object_component: {
+      user_data: {
+        key: "my_key"
+        value: {
+          [type.googleapis.com/google.protobuf.Empty] {}
+        }
+      }
+    }
+    """
+    my_object = object_world_resources.WorldObject(
+        text_format.Parse(
+            object_proto_string, object_world_service_pb2.Object()
+        ),
+        self._stub,
+    )
+    any_empty = any_pb2.Any()
+    any_empty.Pack(empty_pb2.Empty())
+    my_object.user_data['my_new_key'] = any_empty
+    del my_object.user_data['my_key']
+    self.assertEqual(my_object.user_data, {'my_key': any_empty})
 
   def test_create_world_object_with_auto_type(self):
     my_object = object_world_resources.create_object_with_auto_type(
