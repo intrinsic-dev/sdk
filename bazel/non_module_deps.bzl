@@ -17,11 +17,10 @@ def _non_module_deps_impl(ctx):  # @unused
     http_archive(
         name = "com_googleapis_storage_chrome_linux_amd64_sysroot",
         build_file = Label("//intrinsic/production/external:BUILD.sysroot"),
-        sha256 = "66bed6fb2617a50227a824b1f9cfaf0a031ce33e6635edaa2148f71a5d50be48",
+        sha256 = "5df5be9357b425cdd70d92d4697d07e7d55d7a923f037c22dc80a78e85842d2c",
         urls = [
-            # features.h defines GLIBC 2.24. Contains /lib/x86_64-linux-gnu/libc-2.24.so,
-            # last modified by Chrome 2018-02-22.
-            "https://storage.googleapis.com/chrome-linux-sysroot/toolchain/15b7efb900d75f7316c6e713e80f87b9904791b1/debian_stretch_amd64_sysroot.tar.xz",
+            # features.h defines GLIBC 2.31.
+            "https://storage.googleapis.com/chrome-linux-sysroot/toolchain/4f611ec025be98214164d4bf9fbe8843f58533f7/debian_bullseye_amd64_sysroot.tar.xz",
         ],
     )
 
