@@ -20,7 +20,7 @@ def create_digital_output_action(
     adio_part_name: str,
     digital_outputs: abc.Mapping[str, adio_pb2.DigitalBlock] | None = None,
 ) -> actions.Action:
-  """Creates an ADIOAction to det digital outputs.
+  """Creates an ADIOAction to set digital outputs.
 
   Args:
     action_id: The ID of the action.
