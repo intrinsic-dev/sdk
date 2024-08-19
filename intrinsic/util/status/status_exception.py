@@ -9,6 +9,7 @@ import textwrap
 import traceback
 from typing import Optional, Sequence, Tuple, Union
 
+from google.protobuf import message as proto_message
 from google.rpc import code_pb2
 from google.rpc import status_pb2
 import grpc
@@ -35,6 +36,7 @@ class ExtendedStatusError(Exception, grpc.Status):
 
   _extended_status: extended_status_pb2.ExtendedStatus
   _emit_traceback: bool
+  _rpc_details: list[proto_message.Message]
 
   def __init__(
       self,
@@ -66,6 +68,7 @@ class ExtendedStatusError(Exception, grpc.Status):
         )
     )
     self._emit_traceback = False
+    self._rpc_details = []
     if title:
       self.set_title(title)
     if external_report_message:
@@ -278,6 +281,23 @@ class ExtendedStatusError(Exception, grpc.Status):
     return "".join(strs)
 
   ### The following are for compatibility with grpc.Status
+
+  def add_rpc_detail(self, msg: proto_message.Message) -> ExtendedStatusError:
+    """Adds additional detail to be returned for grpc.Status interface.
+
+    When used as a grpc.Status, the Extended status is added to the
+    google.rpc.Status details. This function can be used to add additional other
+    additional details to the rpc status.
+
+    Args:
+      msg: message to add to the google.rpc.Status details Any proto list.
+
+    Returns:
+      self
+    """
+    self._rpc_details.append(msg)
+    return self
+
   @property
   def code(self) -> grpc.StatusCode:
     """Returns GRPC status code UNKNOWN.
@@ -311,4 +331,6 @@ class ExtendedStatusError(Exception, grpc.Status):
         message=self._extended_status.title,
     )
     rpc_status.details.add().Pack(self._extended_status)
+    for detail in self._rpc_details:
+      rpc_status.details.add().Pack(detail)
     return ((_GRPC_DETAILS_METADATA_KEY, rpc_status.SerializeToString()),)

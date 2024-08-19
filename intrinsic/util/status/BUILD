@@ -370,6 +370,7 @@ py_library(
         requirement("grpcio"),
         "@com_google_googleapis//google/rpc:code_py_proto",
         "@com_google_googleapis//google/rpc:status_py_proto",
+        "@com_google_protobuf//:protobuf_python",
     ],
 )
 
