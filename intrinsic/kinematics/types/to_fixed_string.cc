@@ -31,7 +31,7 @@ FixedString<kVectorNdStrSize> ToFixedString(const eigenmath::VectorNd& vec) {
 
   FixedString<kVectorNdStrSize> str = FixedStrCat<kVectorNdStrSize>(vec[0]);
   for (size_t i = 1; i < vec.size(); ++i) {
-    str = FixedStrCat<kVectorNdStrSize>(str, ",", vec[i]);
+    str.append(FixedStrCat<kVectorNdStrSize>(",", vec[i]));
   }
   return str;
 }
