@@ -10,7 +10,6 @@ cc_library(
         "//intrinsic/eigenmath",
         "//intrinsic/icon/utils:realtime_status",
         "//intrinsic/kinematics/types:to_fixed_string",
-        "//intrinsic/kinematics/types:to_string",
         "@com_gitlab_libeigen_eigen//:eigen",
     ],
 )

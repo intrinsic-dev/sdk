@@ -6,7 +6,6 @@
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/icon/utils/realtime_status.h"
 #include "intrinsic/kinematics/types/to_fixed_string.h"
-#include "intrinsic/kinematics/types/to_string.h"
 
 namespace intrinsic::kinematics {
 namespace {
@@ -45,19 +44,17 @@ icon::RealtimeStatus ValidateInertia(const eigenmath::Matrix3d& inertia) {
   const eigenmath::Vector3d& eigenvalues = eigen_solver.eigenvalues().real();
   if ((eigenvalues.array() <= 0.0).any()) {
     return icon::FailedPreconditionError(icon::RealtimeStatus::StrCat(
-        "Inertia tensor of link is not positive definite. All of its "
-        "eigenvalues should be > 0.0, "
-        "but got ",
-        eigenmath::ToFixedString(eigenvalues), "."));
+        "Inertia tensor is not positive definite. Not all eigenvalues "
+        "> 0.0: ",
+        eigenmath::ToFixedString(eigenvalues)));
   }
 
   for (int i = 0; i < 3; ++i) {
     if (eigenvalues.sum() < 2.0 * eigenvalues[i]) {
       return icon::FailedPreconditionError(icon::RealtimeStatus::StrCat(
-          "The eigenvalues of the inertia tensor do not satisfy "
+          "The inertia eigenvalues do not satisfy "
           "the triangle inequality: ",
-          eigenvalues.sum(), " is not larger or equal than ",
-          2.0 * eigenvalues[i], "."));
+          eigenvalues.sum(), " < ", 2.0 * eigenvalues[i], "."));
     }
   }
   return icon::OkStatus();
