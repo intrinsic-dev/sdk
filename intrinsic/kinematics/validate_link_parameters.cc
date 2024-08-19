@@ -48,7 +48,7 @@ icon::RealtimeStatus ValidateInertia(const eigenmath::Matrix3d& inertia) {
         "Inertia tensor of link is not positive definite. All of its "
         "eigenvalues should be > 0.0, "
         "but got ",
-        eigenmath::ToString(eigenvalues), "."));
+        eigenmath::ToFixedString(eigenvalues), "."));
   }
 
   for (int i = 0; i < 3; ++i) {
