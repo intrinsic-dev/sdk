@@ -16,7 +16,7 @@ py_library(
         "//intrinsic/perception/proto:dimensions_py_pb2",
         "//intrinsic/perception/proto:distortion_params_py_pb2",
         "//intrinsic/perception/proto:intrinsic_params_py_pb2",
-        requirement("numpy"),
+        "@ai_intrinsic_sdks_pip_deps//numpy",
     ],
 )
 
@@ -35,7 +35,7 @@ py_library(
         "//intrinsic/perception/proto:sensor_image_py_pb2",
         "//intrinsic/perception/python:image_utils",
         "//intrinsic/perception/service/proto:camera_server_py_pb2",
-        requirement("numpy"),
+        "@ai_intrinsic_sdks_pip_deps//numpy",
     ],
 )
 
@@ -74,9 +74,9 @@ py_library(
         "//intrinsic/util/grpc:connection",
         "//intrinsic/world/python:object_world_client",
         "//intrinsic/world/python:object_world_resources",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         requirement("grpcio"),
         "@com_google_absl_py//absl/logging",
         "@com_google_protobuf//:protobuf_python",
-        requirement("numpy"),
     ],
 )

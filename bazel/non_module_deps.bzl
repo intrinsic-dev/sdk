@@ -6,11 +6,7 @@ Module extension for non-module dependencies
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file", "http_jar")
 
-def non_module_deps():
-    """
-    Declare repos here which have not been migrated to Bzlmod yet.
-    """
-
+def _non_module_deps_impl(ctx):  # @unused
     # Sysroot and libc
     # How to upgrade:
     # - Find image in https://storage.googleapis.com/chrome-linux-sysroot/ for amd64 for
@@ -36,10 +32,7 @@ def non_module_deps():
         sha256 = "d56e8c15b55240c92143ee3ed717956c67961a24f97711ca410030de92633288",
     )
 
-    # Eigen math library.
-    # Repository name should be com_gitlab_libeigen_eigen to serve
-    # as transitive dependency for com_google_ceres_solver
-    # BCR version is 2 years behind, so we use a specific commit and http_archive.
+    # Last released version 3.4.0 has been released 2 years ago
     EIGEN_COMMIT = "38b9cc263bbaeb03ce408a4e26084543a6c0dedb"  # 2024-05-30
     http_archive(
         name = "com_gitlab_libeigen_eigen",
@@ -69,8 +62,5 @@ def non_module_deps():
         urls = ["https://raw.githubusercontent.com/google/xls/%s/xls/common/strong_int.h" % XLS_COMMIT],
         sha256 = "4daad402bc0913e05b83d0bded9dd699738935e6d59d1424c99c944d6e0c2897",
     )
-
-def _non_module_deps_impl(ctx):  # @unused
-    non_module_deps()
 
 non_module_deps_ext = module_extension(implementation = _non_module_deps_impl)

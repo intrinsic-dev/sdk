@@ -42,14 +42,12 @@ def _get_test_message_file_descriptor_set(
   Returns:
     The file descriptor set.
   """
-  # WORKSPACE
   test_data_path = os.path.join(
       FLAGS.test_srcdir,
       os.environ.get('TEST_WORKSPACE'),
       'intrinsic/solutions',
   )
   if not os.path.exists(test_data_path):
-    # MODULE.bazel
     test_data_path = os.path.join(
         FLAGS.test_srcdir,
         os.environ.get('TEST_WORKSPACE'),

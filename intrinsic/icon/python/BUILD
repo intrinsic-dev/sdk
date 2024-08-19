@@ -86,9 +86,9 @@ py_test(
         "//intrinsic/icon/actions:wait_for_settling_utils",
         "//intrinsic/icon/proto:joint_space_py_pb2",
         "//intrinsic/math/python:data_types",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_protobuf//:protobuf_python",
-        requirement("numpy"),
     ],
 )
 
@@ -122,9 +122,9 @@ py_test(
         "//intrinsic/math/python:data_types",
         "//intrinsic/util/grpc:connection",
         "//intrinsic/world/robot_payload/python:robot_payload",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         requirement("grpcio"),
         "@com_google_absl_py//absl/testing:absltest",
-        requirement("numpy"),
     ],
 )
 
@@ -136,10 +136,10 @@ py_binary(
         ":create_action_utils",
         ":icon",
         "//intrinsic/util/grpc:connection",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         requirement("grpcio"),
         "@com_google_absl_py//absl:app",
         "@com_google_absl_py//absl/flags",
-        requirement("numpy"),
     ],
 )
 

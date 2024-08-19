@@ -8,7 +8,7 @@ bazel_dep(name = "ai_intrinsic_sdks")
 {{ if .SDKRepository -}}
 git_override(
     module_name = "ai_intrinsic_sdks",
-    {{if eq .SDKVersion .SDKVersionDefaultValue -}}
+    {{if eq .SDKVersion "latest" -}}
     # To pin a version change the following to, e.g.:
     #   commit = "origin/intrinsic.platform.20221231.RC00",
     commit = "origin/main",

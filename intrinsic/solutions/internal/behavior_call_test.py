@@ -21,19 +21,11 @@ def _create_behavior_call_proto(index: int) -> behavior_call_pb2.BehaviorCall:
 
 
 def _get_file_descriptor_set():
-  # WORKSPACE
   test_data_path = os.path.join(
       flags.FLAGS.test_srcdir,
       os.environ.get('TEST_WORKSPACE'),
-      'intrinsic/solutions',
+      'external/ai_intrinsic_sdks~override/intrinsic/solutions',
   )
-  if not os.path.exists(test_data_path):
-    # MODULE.bazel
-    test_data_path = os.path.join(
-        flags.FLAGS.test_srcdir,
-        os.environ.get('TEST_WORKSPACE'),
-        'external/ai_intrinsic_sdks~override/intrinsic/solutions',
-    )
 
   test_data_filename = os.path.join(
       test_data_path,

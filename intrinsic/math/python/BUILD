@@ -1,6 +1,5 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
 
 package(default_visibility = [
@@ -20,7 +19,7 @@ py_library(
         "//intrinsic/math/proto:pose_py_pb2",
         "//intrinsic/math/proto:quaternion_py_pb2",
         "//intrinsic/math/proto:vector3_py_pb2",
-        requirement("numpy"),
+        "@ai_intrinsic_sdks_pip_deps//numpy",
     ],
 )
 
@@ -39,10 +38,10 @@ py_test(
         "//intrinsic/math/proto:pose_py_pb2",
         "//intrinsic/math/proto:quaternion_py_pb2",
         "//intrinsic/math/proto:vector3_py_pb2",
+        "@ai_intrinsic_sdks_pip_deps//hypothesis",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
-        requirement("hypothesis"),
-        requirement("numpy"),
     ],
 )
 
@@ -57,7 +56,7 @@ py_library(
         ":rotation3",
         ":vector_util",
         "//intrinsic/icon/proto:cart_space_py_pb2",
-        requirement("numpy"),
+        "@ai_intrinsic_sdks_pip_deps//numpy",
     ],
 )
 
@@ -70,8 +69,8 @@ py_test(
     deps = [
         ":data_types",
         "//intrinsic/icon/proto:cart_space_py_pb2",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         "@com_google_absl_py//absl/testing:absltest",
-        requirement("numpy"),
     ],
 )
 
@@ -85,9 +84,9 @@ py_library(
         ":quaternion",
         ":rotation3",
         ":vector_util",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         "@com_google_absl_py//absl/logging",
         "@com_google_absl_py//absl/testing:absltest",
-        requirement("numpy"),
     ],
 )
 
@@ -104,17 +103,17 @@ py_test(
         ":pose3",
         ":rotation3",
         ":vector_util",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         "@com_google_absl_py//absl/logging",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
-        requirement("numpy"),
     ],
 )
 
 py_library(
     name = "math_types",
     srcs = ["math_types.py"],
-    deps = [requirement("numpy")],
+    deps = ["@ai_intrinsic_sdks_pip_deps//numpy"],
 )
 
 py_test(
@@ -127,9 +126,9 @@ py_test(
     deps = [
         ":math_test",
         ":math_types",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
-        requirement("numpy"),
     ],
 )
 
@@ -143,7 +142,7 @@ py_library(
         ":quaternion",
         ":rotation3",
         ":vector_util",
-        requirement("numpy"),
+        "@ai_intrinsic_sdks_pip_deps//numpy",
     ],
 )
 
@@ -160,9 +159,9 @@ py_test(
         ":quaternion",
         ":rotation3",
         ":vector_util",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
-        requirement("numpy"),
     ],
 )
 
@@ -175,7 +174,7 @@ py_library(
         ":math_types",
         ":quaternion",
         ":vector_util",
-        requirement("numpy"),
+        "@ai_intrinsic_sdks_pip_deps//numpy",
     ],
 )
 
@@ -193,10 +192,10 @@ py_test(
         ":quaternion",
         ":rotation3",
         ":vector_util",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         "@com_google_absl_py//absl/logging",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
-        requirement("numpy"),
     ],
 )
 
@@ -208,7 +207,7 @@ py_library(
     deps = [
         ":math_types",
         ":vector_util",
-        requirement("numpy"),
+        "@ai_intrinsic_sdks_pip_deps//numpy",
     ],
 )
 
@@ -224,10 +223,10 @@ py_test(
         ":math_types",
         ":quaternion",
         ":vector_util",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         "@com_google_absl_py//absl/logging",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_absl_py//absl/testing:parameterized",
-        requirement("numpy"),
     ],
 )
 
@@ -238,6 +237,6 @@ py_library(
     ],
     deps = [
         ":math_types",
-        requirement("numpy"),
+        "@ai_intrinsic_sdks_pip_deps//numpy",
     ],
 )

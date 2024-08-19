@@ -19,8 +19,6 @@ py_test(
     size = "small",
     srcs = ["grpc_synchronized_test.py"],
     args = [
-        "--deps-0",
-        "$(location //bazel:deps_0.bzl)",
         "--module-bazel",
         "$(location //:MODULE.bazel)",
         "--requirements-in",
@@ -32,7 +30,6 @@ py_test(
         "//:MODULE.bazel",
         "//:requirements.in",
         "//:requirements.txt",
-        "//bazel:deps_0.bzl",
     ],
     main = "grpc_synchronized_test.py",
     python_version = "PY3",

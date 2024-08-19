@@ -88,8 +88,8 @@ py_library(
     srcs = ["error_handling.py"],
     srcs_version = "PY3",
     deps = [
+        "@ai_intrinsic_sdks_pip_deps//retrying",
         requirement("grpcio"),
-        requirement("retrying"),
     ],
 )
 

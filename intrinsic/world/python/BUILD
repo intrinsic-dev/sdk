@@ -42,10 +42,10 @@ py_test(
         "//intrinsic/solutions/testing:compare",
         "//intrinsic/world/proto:object_world_refs_py_pb2",
         "//intrinsic/world/proto:object_world_service_py_pb2",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         requirement("grpcio"),
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_protobuf//:protobuf_python",
-        requirement("numpy"),
     ],
 )
 

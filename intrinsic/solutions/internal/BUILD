@@ -227,11 +227,11 @@ py_library(
     deps = [
         ":skill_generation",
         ":skill_utils",
-        requirement("black"),
         "//intrinsic/math/python:data_types",
         "//intrinsic/solutions:provided",
         "//intrinsic/solutions:providers",
-        requirement("typing-extensions"),
+        "@ai_intrinsic_sdks_pip_deps//black",
+        "@ai_intrinsic_sdks_pip_deps//typing_extensions",
     ],
 )
 

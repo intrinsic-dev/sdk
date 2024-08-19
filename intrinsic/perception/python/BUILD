@@ -2,7 +2,6 @@
 
 # Python wrapper for public API.
 
-load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_library")
 
 # Unless we have more mature tests, the library remains unreleased.
@@ -16,7 +15,7 @@ py_library(
     deps = [
         "//intrinsic/perception/proto:dimensions_py_pb2",
         "//intrinsic/perception/proto:image_buffer_py_pb2",
-        requirement("pillow"),
-        requirement("numpy"),
+        "@ai_intrinsic_sdks_pip_deps//numpy",
+        "@ai_intrinsic_sdks_pip_deps//pillow",
     ],
 )

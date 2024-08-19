@@ -111,7 +111,7 @@ func supportedLanguages() []string {
 }
 
 func bazelWorkspaceFilenames() []string {
-	return []string{"WORKSPACE", "WORKSPACE.bazel", "MODULE.bazel"}
+	return []string{"MODULE.bazel"}
 }
 
 var (

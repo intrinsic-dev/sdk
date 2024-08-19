@@ -80,7 +80,7 @@ py_library(
         "//intrinsic/resources/proto:resource_handle_py_pb2",
         "//intrinsic/world/python:object_world_client",
         "//intrinsic/world/python:object_world_resources",
-        requirement("numpy"),
+        "@ai_intrinsic_sdks_pip_deps//numpy",
     ],
 )
 

@@ -34,7 +34,6 @@ from intrinsic.solutions.testing import compare
 from intrinsic.solutions.testing import skill_test_utils
 from intrinsic.solutions.testing import test_skill_params_pb2
 
-
 _SKILL_PARAMETER_DICT = {
     'my_double': 2.2,
     'my_float': -1.1,

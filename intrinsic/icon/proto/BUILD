@@ -290,7 +290,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":matrix_py_pb2",
-        requirement("numpy"),
+        "@ai_intrinsic_sdks_pip_deps//numpy",
     ],
 )
 
@@ -302,8 +302,8 @@ py_test(
     deps = [
         ":matrix_conversions",
         ":matrix_py_pb2",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         "@com_google_absl_py//absl/testing:absltest",
-        requirement("numpy"),
     ],
 )
 

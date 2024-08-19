@@ -33,8 +33,8 @@ py_library(
         "//intrinsic/util/status:extended_status_py_pb2",
         "//intrinsic/world/proto:object_world_refs_py_pb2",
         "//intrinsic/world/python:object_world_resources",
+        "@ai_intrinsic_sdks_pip_deps//graphviz",
         "@com_google_protobuf//:protobuf_python",
-        requirement("graphviz"),
     ],
 )
 
@@ -88,7 +88,7 @@ py_library(
         "//intrinsic/perception/proto:frame_py_pb2",
         "//intrinsic/perception/proto:image_buffer_py_pb2",
         "//intrinsic/perception/python:image_utils",
-        requirement("matplotlib"),
+        "@ai_intrinsic_sdks_pip_deps//matplotlib",
     ],
 )
 
@@ -100,8 +100,8 @@ py_test(
         "//intrinsic/perception/proto:frame_py_pb2",
         "//intrinsic/perception/proto:image_buffer_py_pb2",
         "//intrinsic/solutions/testing:compare",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         "@com_google_absl_py//absl/testing:absltest",
-        requirement("numpy"),
     ],
 )
 
@@ -187,7 +187,7 @@ py_library(
     srcs = ["errors.py"],
     srcs_version = "PY3",
     deps = [
-        requirement("retrying"),
+        "@ai_intrinsic_sdks_pip_deps//retrying",
     ],
 )
 
@@ -293,7 +293,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         "//intrinsic/util/status:status_exception",
-        requirement("ipywidgets"),
+        "@ai_intrinsic_sdks_pip_deps//ipywidgets",
     ],
 )
 
@@ -357,9 +357,9 @@ py_library(
         "//intrinsic/util/grpc:connection",
         "//intrinsic/util/grpc:error_handling",
         "//intrinsic/util/grpc:interceptor",
+        "@ai_intrinsic_sdks_pip_deps//matplotlib",
+        "@ai_intrinsic_sdks_pip_deps//numpy",
         requirement("grpcio"),
-        requirement("matplotlib"),
-        requirement("numpy"),
     ],
 )
 

@@ -7,7 +7,6 @@ exports_files(
     srcs = [
         "BUILD",
         "MODULE.bazel.template",
-        "WORKSPACE.bzlmod.template",
         "WORKSPACE.template",
     ],
     visibility = [
