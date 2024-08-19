@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 
 #include "internal/testing.h"
+#include "intrinsic/util/testing/status_payload_matchers.h"
 #include "protobuf-matchers/protocol-buffer-matchers.h"
 
 namespace intrinsic {
@@ -14,6 +15,8 @@ namespace testing {
 using cel::internal::IsOk;
 using cel::internal::IsOkAndHolds;
 using cel::internal::StatusIs;
+using ::intrinsic::testing::StatusHasGenericPayload;
+using ::intrinsic::testing::StatusHasProtoPayload;
 using ::protobuf_matchers::EqualsProto;
 using ::protobuf_matchers::EquivToProto;
 using ::protobuf_matchers::internal::ProtoCompare;
@@ -23,6 +26,7 @@ using ::protobuf_matchers::proto::IgnoringFieldPaths;
 using ::protobuf_matchers::proto::IgnoringRepeatedFieldOrdering;
 using ::protobuf_matchers::proto::Partially;
 using ::protobuf_matchers::proto::WhenDeserialized;
+using ::protobuf_matchers::proto::WhenDeserializedAs;
 }  // namespace testing
 
 }  // namespace intrinsic

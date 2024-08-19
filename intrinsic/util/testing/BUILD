@@ -21,8 +21,38 @@ cc_library(
     hdrs = ["gtest_wrapper.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":status_payload_matchers",
         "@com_github_inazarenko_protobuf_matchers//protobuf-matchers",
         "@com_google_cel_cpp//internal:testing",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "status_payload_matchers",
+    testonly = 1,
+    hdrs = ["status_payload_matchers.h"],
+    deps = [
+        "//intrinsic/util/proto:type_url",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:cord",
+        "@com_google_googleapis//google/rpc:status_cc_proto",
+        "@com_google_googletest//:gtest",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+cc_test(
+    name = "status_payload_matchers_test",
+    srcs = ["status_payload_matchers_test.cc"],
+    deps = [
+        ":status_payload_matchers",
+        "//intrinsic/util/proto:type_url",
+        "//intrinsic/util/testing:gtest_wrapper",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:cord",
+        "@com_google_protobuf//:protobuf",
     ],
 )
