@@ -13,6 +13,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "google/protobuf/wrappers.pb.h"
 #include "grpcpp/client_context.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/eigenmath/types.h"
@@ -52,6 +53,17 @@ using ::intrinsic_proto::world::TransformNodeReference;
 using ::intrinsic_proto::world::TransformNodeReferenceByName;
 
 namespace {
+constexpr absl::string_view kProductNameUserDataKey = "product_name";
+constexpr absl::string_view kProductMetadataUserDataKey = "product_metadata";
+
+// Wraps a string to Any with a StringValue wrapper.
+google::protobuf::Any StringToAny(absl::string_view product_name) {
+  google::protobuf::StringValue product_name_wrapper;
+  product_name_wrapper.set_value(product_name);
+  google::protobuf::Any any_product_name;
+  any_product_name.PackFrom(product_name_wrapper);
+  return any_product_name;
+}
 
 absl::StatusOr<intrinsic_proto::world::Object> CallGetObjectUsingFullView(
     intrinsic_proto::world::GetObjectRequest request,

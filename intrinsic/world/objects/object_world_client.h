@@ -11,6 +11,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "google/protobuf/struct.pb.h"
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/kinematics/types/cartesian_limits.h"
 #include "intrinsic/kinematics/types/joint_limits_xd.h"
