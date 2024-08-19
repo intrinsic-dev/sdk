@@ -212,10 +212,8 @@ absl::Status StatusBuilder::CreateStatusAndConditionallyLog() && {
                          /*max_depth=*/50, /*skip_count=*/1)));
   }
   if (rep_ != nullptr && rep_->extended_status != nullptr) {
-    SetPayload(
-        AddTypeUrlPrefix(
-            intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()),
-        rep_->extended_status->SerializeAsCord());
+    SetPayload(AddTypeUrlPrefix<intrinsic_proto::status::ExtendedStatus>(),
+               rep_->extended_status->SerializeAsCord());
   }
 
   absl::Status result = JoinMessageToStatus(

@@ -27,9 +27,9 @@
 #include "google/protobuf/wrappers.pb.h"
 #include "intrinsic/icon/release/source_location.h"
 #include "intrinsic/util/proto/type_url.h"
-#include "intrinsic/util/proto_time.h"
 #include "intrinsic/util/status/extended_status.pb.h"
 #include "intrinsic/util/testing/gtest_wrapper.h"
+#include "intrinsic/util/testing/status_payload_matchers.h"
 
 namespace intrinsic {
 namespace {
@@ -37,11 +37,15 @@ namespace {
 using ::absl::LogSeverity;
 using ::absl::ScopedMockLog;
 using ::intrinsic::testing::EqualsProto;
-using ::intrinsic::testing::IsOkAndHolds;
+using ::intrinsic::testing::StatusHasGenericPayload;
+using ::intrinsic::testing::StatusHasProtoPayload;
+using ::intrinsic::testing::StatusIs;
 using ::testing::_;
+using ::testing::AllOf;
 using ::testing::AnyOf;
 using ::testing::Eq;
 using ::testing::HasSubstr;
+using ::testing::Not;
 using ::testing::Pointee;
 
 // We use `#line` to produce some `source_location` values pointing at various
@@ -663,12 +667,9 @@ TEST(StatusBuilderTest, SetPayloadAdds) {
   builder.SetPayload(AddTypeUrlPrefix(value_proto.GetDescriptor()->full_name()),
                      value_proto.SerializeAsCord());
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload = result.GetPayload(
-      AddTypeUrlPrefix(value_proto.GetDescriptor()->full_name()));
-  EXPECT_TRUE(result_payload.has_value());
-  google::protobuf::Int64Value result_proto;
-  EXPECT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_EQ(result_proto.value(), value_proto.value());
+  EXPECT_THAT(result, AllOf(StatusIs(absl::StatusCode::kInvalidArgument),
+                            StatusHasProtoPayload<google::protobuf::Int64Value>(
+                                EqualsProto(value_proto))));
 }
 
 TEST(StatusBuilderTest, SetPayloadIgnoredOnOkStatus) {
@@ -680,43 +681,29 @@ TEST(StatusBuilderTest, SetPayloadIgnoredOnOkStatus) {
   builder.SetPayload(AddTypeUrlPrefix(value_proto.GetDescriptor()->full_name()),
                      value_proto.SerializeAsCord());
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload = result.GetPayload(
-      AddTypeUrlPrefix(value_proto.GetDescriptor()->full_name()));
-  EXPECT_FALSE(result_payload.has_value());
+  EXPECT_THAT(result, Not(StatusHasGenericPayload(
+                          AddTypeUrlPrefix<google::protobuf::Int64Value>())));
 }
 
 TEST(StatusBuilderTest, SetPayloadMultiplePayloads) {
-  google::protobuf::Int64Value value1_proto;
-  value1_proto.set_value(-123);
+  google::protobuf::Int64Value int_proto;
+  int_proto.set_value(-123);
 
-  google::protobuf::StringValue value2_proto;
-  value2_proto.set_value("foo");
+  google::protobuf::StringValue string_proto;
+  string_proto.set_value("foo");
 
   StatusBuilder builder(absl::StatusCode::kInvalidArgument);
   ASSERT_FALSE(builder.ok());
-  builder
-      .SetPayload(AddTypeUrlPrefix(value1_proto.GetDescriptor()->full_name()),
-                  value1_proto.SerializeAsCord())
-      .SetPayload(AddTypeUrlPrefix(value2_proto.GetDescriptor()->full_name()),
-                  value2_proto.SerializeAsCord());
+  builder.SetPayload(AddTypeUrlPrefix(int_proto), int_proto.SerializeAsCord())
+      .SetPayload(AddTypeUrlPrefix(string_proto.GetDescriptor()->full_name()),
+                  string_proto.SerializeAsCord());
 
-  absl::Status result1 = builder;
-  std::optional<absl::Cord> result1_payload = result1.GetPayload(
-      AddTypeUrlPrefix(value1_proto.GetDescriptor()->full_name()));
-  EXPECT_TRUE(result1_payload.has_value());
-
-  absl::Status result2 = builder;
-  std::optional<absl::Cord> result2_payload = result2.GetPayload(
-      AddTypeUrlPrefix(value2_proto.GetDescriptor()->full_name()));
-  EXPECT_TRUE(result2_payload.has_value());
-
-  google::protobuf::Int64Value result1_proto;
-  EXPECT_TRUE(result1_proto.ParseFromCord(*result1_payload));
-  EXPECT_EQ(result1_proto.value(), value1_proto.value());
-
-  google::protobuf::StringValue result2_proto;
-  ASSERT_TRUE(result2_proto.ParseFromCord(*result2_payload));
-  EXPECT_EQ(result2_proto.value(), value2_proto.value());
+  absl::Status result = builder;
+  EXPECT_THAT(result,
+              AllOf(StatusHasProtoPayload<google::protobuf::Int64Value>(
+                        EqualsProto(int_proto)),
+                    StatusHasProtoPayload<google::protobuf::StringValue>(
+                        EqualsProto(string_proto))));
 }
 
 TEST(StatusBuilderTest, SetExtendedStatus) {
@@ -730,12 +717,10 @@ TEST(StatusBuilderTest, SetExtendedStatus) {
   ASSERT_FALSE(builder.ok());
   builder.SetExtendedStatus(extended_status);
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload = result.GetPayload(
-      AddTypeUrlPrefix(extended_status.GetDescriptor()->full_name()));
-  ASSERT_TRUE(result_payload.has_value());
-  intrinsic_proto::status::ExtendedStatus result_proto;
-  ASSERT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_THAT(result_proto, EqualsProto(extended_status));
+
+  EXPECT_THAT(result,
+              StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+                  EqualsProto(extended_status)));
 }
 
 TEST(StatusBuilderTest, SetExtendedStatusCode) {
@@ -743,13 +728,11 @@ TEST(StatusBuilderTest, SetExtendedStatusCode) {
   ASSERT_FALSE(builder.ok());
   builder.SetExtendedStatusCode("component", 2345);
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload = result.GetPayload(AddTypeUrlPrefix(
-      intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()));
-  ASSERT_TRUE(result_payload.has_value());
-  intrinsic_proto::status::ExtendedStatus result_proto;
-  ASSERT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_EQ(result_proto.status_code().component(), "component");
-  EXPECT_EQ(result_proto.status_code().code(), 2345);
+  EXPECT_THAT(result,
+              StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+                  EqualsProto(R"pb(
+                    status_code { component: "component" code: 2345 }
+                  )pb")));
 }
 
 TEST(StatusBuilderTest, SetExtendedStatusCodeFromProto) {
@@ -760,13 +743,11 @@ TEST(StatusBuilderTest, SetExtendedStatusCodeFromProto) {
   status_code.set_code(3456);
   builder.SetExtendedStatusCode(status_code);
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload = result.GetPayload(AddTypeUrlPrefix(
-      intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()));
-  ASSERT_TRUE(result_payload.has_value());
-  intrinsic_proto::status::ExtendedStatus result_proto;
-  ASSERT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_EQ(result_proto.status_code().component(), "component");
-  EXPECT_EQ(result_proto.status_code().code(), 3456);
+  EXPECT_THAT(result,
+              StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+                  EqualsProto(R"pb(
+                    status_code { component: "component" code: 3456 }
+                  )pb")));
 }
 
 TEST(StatusBuilderTest, SetExtendedStatusTitle) {
@@ -774,12 +755,11 @@ TEST(StatusBuilderTest, SetExtendedStatusTitle) {
   ASSERT_FALSE(builder.ok());
   builder.SetExtendedStatusTitle("My title");
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload = result.GetPayload(AddTypeUrlPrefix(
-      intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()));
-  ASSERT_TRUE(result_payload.has_value());
-  intrinsic_proto::status::ExtendedStatus result_proto;
-  ASSERT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_EQ(result_proto.title(), "My title");
+  EXPECT_THAT(result,
+              StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+                  EqualsProto(R"pb(
+                    title: "My title"
+                  )pb")));
 }
 
 TEST(StatusBuilderTest, SetExtendedStatusTimestamp) {
@@ -789,12 +769,11 @@ TEST(StatusBuilderTest, SetExtendedStatusTimestamp) {
                                  absl::UTCTimeZone());
   builder.SetExtendedStatusTimestamp(t);
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload = result.GetPayload(AddTypeUrlPrefix(
-      intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()));
-  ASSERT_TRUE(result_payload.has_value());
-  intrinsic_proto::status::ExtendedStatus result_proto;
-  ASSERT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_THAT(ToAbslTime(result_proto.timestamp()), IsOkAndHolds(t));
+  EXPECT_THAT(result,
+              StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+                  EqualsProto(R"pb(
+                    timestamp { seconds: 1711453873 }
+                  )pb")));
 }
 
 TEST(StatusBuilderTest, SetExtendedStatusInternalReportMessage) {
@@ -802,13 +781,11 @@ TEST(StatusBuilderTest, SetExtendedStatusInternalReportMessage) {
   ASSERT_FALSE(builder.ok());
   builder.SetExtendedStatusInternalReportMessage("internal message");
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload = result.GetPayload(AddTypeUrlPrefix(
-      intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()));
-  ASSERT_TRUE(result_payload.has_value());
-  intrinsic_proto::status::ExtendedStatus result_proto;
-  ASSERT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_EQ(result_proto.internal_report().message(), "internal message");
-  EXPECT_FALSE(result_proto.has_external_report());
+  EXPECT_THAT(result,
+              StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+                  EqualsProto(R"pb(
+                    internal_report { message: "internal message" }
+                  )pb")));
 }
 
 TEST(StatusBuilderTest, SetExtendedStatusExternalReportMessage) {
@@ -816,13 +793,11 @@ TEST(StatusBuilderTest, SetExtendedStatusExternalReportMessage) {
   ASSERT_FALSE(builder.ok());
   builder.SetExtendedStatusExternalReportMessage("external message");
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload = result.GetPayload(AddTypeUrlPrefix(
-      intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()));
-  ASSERT_TRUE(result_payload.has_value());
-  intrinsic_proto::status::ExtendedStatus result_proto;
-  ASSERT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_EQ(result_proto.external_report().message(), "external message");
-  EXPECT_FALSE(result_proto.has_internal_report());
+  EXPECT_THAT(result,
+              StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+                  EqualsProto(R"pb(
+                    external_report { message: "external message" }
+                  )pb")));
 }
 
 TEST(StatusBuilderTest, EmitStackTraceToExtendedStatusInternalReport) {
@@ -846,15 +821,13 @@ TEST(StatusBuilderTest, ChainExtendedStatusCalls) {
       .SetExtendedStatusTitle("My title")
       .SetExtendedStatusExternalReportMessage("Foo");
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload = result.GetPayload(AddTypeUrlPrefix(
-      intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()));
-  ASSERT_TRUE(result_payload.has_value());
-  intrinsic_proto::status::ExtendedStatus result_proto;
-  ASSERT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_EQ(result_proto.status_code().component(), "component");
-  EXPECT_EQ(result_proto.status_code().code(), 2345);
-  EXPECT_EQ(result_proto.title(), "My title");
-  EXPECT_EQ(result_proto.external_report().message(), "Foo");
+  EXPECT_THAT(result,
+              StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+                  EqualsProto(R"pb(
+                    status_code { component: "component" code: 2345 }
+                    title: "My title"
+                    external_report { message: "Foo" }
+                  )pb")));
 }
 
 TEST(StatusBuilderTest, AddExtendedStatusContext) {
@@ -866,16 +839,12 @@ TEST(StatusBuilderTest, AddExtendedStatusContext) {
   builder.SetExtendedStatusCode("component", 2345)
       .AddExtendedStatusContext(context_status);
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload = result.GetPayload(AddTypeUrlPrefix(
-      intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()));
-  ASSERT_TRUE(result_payload.has_value());
-  intrinsic_proto::status::ExtendedStatus result_proto;
-  ASSERT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_EQ(result_proto.status_code().component(), "component");
-  EXPECT_EQ(result_proto.status_code().code(), 2345);
-  ASSERT_EQ(result_proto.context_size(), 1);
-  EXPECT_EQ(result_proto.context(0).status_code().component(), "Context");
-  EXPECT_EQ(result_proto.context(0).status_code().code(), 123);
+  EXPECT_THAT(result,
+              StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+                  EqualsProto(R"pb(
+                    status_code { component: "component" code: 2345 }
+                    context { status_code { component: "Context" code: 123 } }
+                  )pb")));
 }
 
 TEST(StatusBuilderTest, SetExtendedStatusLogContext) {
@@ -914,21 +883,18 @@ TEST(StatusBuilderTest, ExtendedStatusConstructor) {
                          .context = {context_status_1, context_status_2}});
   ASSERT_FALSE(builder.ok());
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload = result.GetPayload(AddTypeUrlPrefix(
-      intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()));
-  ASSERT_TRUE(result_payload.has_value());
-  intrinsic_proto::status::ExtendedStatus result_proto;
-  ASSERT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_THAT(result_proto, EqualsProto(R"pb(
-                status_code { component: "ai.intrinsic.test" code: 2345 }
-                title: "Test title"
-                timestamp { seconds: 1711453873 }
-                related_to { log_context { executive_plan_id: 3354 } }
-                context { status_code { component: "Context" code: 123 } }
-                context { status_code { component: "Context" code: 234 } }
-                external_report { message: "Ext message" }
-                internal_report { message: "Int message" }
-              )pb"));
+  EXPECT_THAT(result,
+              StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+                  EqualsProto(R"pb(
+                    status_code { component: "ai.intrinsic.test" code: 2345 }
+                    title: "Test title"
+                    timestamp { seconds: 1711453873 }
+                    related_to { log_context { executive_plan_id: 3354 } }
+                    external_report { message: "Ext message" }
+                    internal_report { message: "Int message" }
+                    context { status_code { component: "Context" code: 123 } }
+                    context { status_code { component: "Context" code: 234 } }
+                  )pb")));
 }
 
 TEST(StatusBuilderTest, SetExtendedStatusFromOptions) {
@@ -954,21 +920,20 @@ TEST(StatusBuilderTest, SetExtendedStatusFromOptions) {
                              .context = {context_status_1, context_status_2}});
   ASSERT_FALSE(builder.ok());
   absl::Status result = builder;
-  std::optional<absl::Cord> result_payload = result.GetPayload(AddTypeUrlPrefix(
-      intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()));
-  ASSERT_TRUE(result_payload.has_value());
-  intrinsic_proto::status::ExtendedStatus result_proto;
-  ASSERT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_THAT(result_proto, EqualsProto(R"pb(
-                status_code { component: "ai.intrinsic.test" code: 2345 }
-                title: "Test title"
-                timestamp { seconds: 1711453873 }
-                related_to { log_context { executive_plan_id: 3354 } }
-                context { status_code { component: "Context" code: 123 } }
-                context { status_code { component: "Context" code: 234 } }
-                external_report { message: "Ext message" }
-                internal_report { message: "Int message" }
-              )pb"));
+  EXPECT_THAT(
+      result,
+      AllOf(StatusIs(absl::StatusCode::kInvalidArgument),
+            StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+                EqualsProto(R"pb(
+                  status_code { component: "ai.intrinsic.test" code: 2345 }
+                  title: "Test title"
+                  timestamp { seconds: 1711453873 }
+                  related_to { log_context { executive_plan_id: 3354 } }
+                  context { status_code { component: "Context" code: 123 } }
+                  context { status_code { component: "Context" code: 234 } }
+                  external_report { message: "Ext message" }
+                  internal_report { message: "Int message" }
+                )pb"))));
 }
 
 TEST(StatusBuilderTest, WrapExtendedStatus) {
@@ -1001,28 +966,25 @@ TEST(StatusBuilderTest, WrapExtendedStatus) {
        .log_context = log_context,
        .context = {context_status_1, context_status_2}});
 
-  std::optional<absl::Cord> result_payload = result.GetPayload(AddTypeUrlPrefix(
-      intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()));
-  ASSERT_TRUE(result_payload.has_value());
-  intrinsic_proto::status::ExtendedStatus result_proto;
-  ASSERT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_THAT(result_proto, EqualsProto(R"pb(
-                status_code { component: "ai.intrinsic.outer" code: 3456 }
-                timestamp { seconds: 1711453873 }
-                title: "Outer title"
-                external_report { message: "Outer Ext message" }
-                internal_report { message: "Outer Int message" }
-                related_to { log_context { executive_plan_id: 3354 } }
-                context { status_code { component: "Context" code: 123 } }
-                context { status_code { component: "Context" code: 234 } }
-                context {
-                  status_code { component: "ai.intrinsic.test" code: 2345 }
-                  title: "Test title"
-                  related_to { log_context { executive_plan_id: 3354 } }
-                  external_report { message: "Ext message" }
-                  internal_report { message: "Int message" }
-                }
-              )pb"));
+  EXPECT_THAT(result,
+              StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+                  EqualsProto(R"pb(
+                    status_code { component: "ai.intrinsic.outer" code: 3456 }
+                    timestamp { seconds: 1711453873 }
+                    title: "Outer title"
+                    external_report { message: "Outer Ext message" }
+                    internal_report { message: "Outer Int message" }
+                    related_to { log_context { executive_plan_id: 3354 } }
+                    context { status_code { component: "Context" code: 123 } }
+                    context { status_code { component: "Context" code: 234 } }
+                    context {
+                      status_code { component: "ai.intrinsic.test" code: 2345 }
+                      title: "Test title"
+                      related_to { log_context { executive_plan_id: 3354 } }
+                      external_report { message: "Ext message" }
+                      internal_report { message: "Int message" }
+                    }
+                  )pb")));
 }
 
 TEST(StatusBuilderTest, WrapExtendedStatusFromPlainStatus) {
@@ -1049,28 +1011,27 @@ TEST(StatusBuilderTest, WrapExtendedStatusFromPlainStatus) {
        .log_context = log_context,
        .context = {context_status_1, context_status_2}});
 
-  std::optional<absl::Cord> result_payload = result.GetPayload(AddTypeUrlPrefix(
-      intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()));
-  ASSERT_TRUE(result_payload.has_value());
-  intrinsic_proto::status::ExtendedStatus result_proto;
-  ASSERT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_THAT(
-      result_proto, EqualsProto(R"pb(
-        status_code { component: "ai.intrinsic.outer" code: 3456 }
-        timestamp { seconds: 1711453873 }
-        title: "Outer title"
-        external_report { message: "Outer Ext message" }
-        internal_report { message: "Outer Int message" }
-        related_to { log_context { executive_plan_id: 3354 } }
-        context { status_code { component: "Context" code: 123 } }
-        context { status_code { component: "Context" code: 234 } }
-        context {
-          status_code { component: "" code: 3 }
-          title: "Generic failure (code INVALID_ARGUMENT)"
-          external_report { message: "Plain message" }
-          internal_report { message: "Error source location: /bar/baz.cc:1337" }
-        }
-      )pb"));
+  EXPECT_THAT(result,
+              StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+
+                  EqualsProto(R"pb(
+                    status_code { component: "ai.intrinsic.outer" code: 3456 }
+                    timestamp { seconds: 1711453873 }
+                    title: "Outer title"
+                    external_report { message: "Outer Ext message" }
+                    internal_report { message: "Outer Int message" }
+                    related_to { log_context { executive_plan_id: 3354 } }
+                    context { status_code { component: "Context" code: 123 } }
+                    context { status_code { component: "Context" code: 234 } }
+                    context {
+                      status_code { component: "" code: 3 }
+                      title: "Generic failure (code INVALID_ARGUMENT)"
+                      external_report { message: "Plain message" }
+                      internal_report {
+                        message: "Error source location: /bar/baz.cc:1337"
+                      }
+                    }
+                  )pb")));
 }
 
 #line 1337 "/foo/secret.cc"

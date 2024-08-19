@@ -32,6 +32,7 @@ cc_library(
     name = "status_payload_matchers",
     testonly = 1,
     hdrs = ["status_payload_matchers.h"],
+    visibility = ["//intrinsic:__subpackages__"],
     deps = [
         "//intrinsic/util/proto:type_url",
         "@com_google_absl//absl/status",
