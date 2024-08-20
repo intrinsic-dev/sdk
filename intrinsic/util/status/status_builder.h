@@ -56,6 +56,11 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
     std::optional<intrinsic_proto::data_logger::Context> log_context;
     std::vector<intrinsic_proto::status::ExtendedStatus> context;
     std::optional<bool> emit_stacktrace_to_internal_report;
+    // This can be set for compatibility with legacy client code, i.e., code
+    // that only looks for the general status code and not extended status.
+    // Note: this option is only observed by the respective constructor, not by
+    // SetExtendedStatus(options)!
+    std::optional<absl::StatusCode> generic_code;
   };
   explicit StatusBuilder(std::string_view component, uint32_t code,
                          const ExtendedStatusOptions& options = {},
@@ -366,6 +371,11 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   // absl::Status).
   static void SetStatusCode(absl::StatusCode canonical_code,
                             absl::Status* status);
+  // This sets the canonical code and a generic message hinting to look at
+  // extended status information for details.
+  static absl::Status MakeCanonicalStatusFromOptions(
+      const ExtendedStatusOptions& options,
+      intrinsic::SourceLocation source_location);
   // Copies all payloads of a Status to another Status (there is no helper for
   // this in absl::Status).
   static void CopyPayloads(const absl::Status& src, absl::Status* dst);
@@ -569,7 +579,8 @@ inline StatusBuilder::StatusBuilder(const StatusBuilder& sb)
 inline StatusBuilder::StatusBuilder(std::string_view component, uint32_t code,
                                     const ExtendedStatusOptions& options,
                                     intrinsic::SourceLocation location)
-    : status_(absl::StatusCode::kUnknown, ""), loc_(location) {
+    : status_(MakeCanonicalStatusFromOptions(options, location)),
+      loc_(location) {
   SetExtendedStatus(component, code, options);
 }
 
@@ -862,7 +873,8 @@ inline StatusBuilder& StatusBuilder::WrapExtendedStatus(
     }
     *es.add_context() = std::move(context_es);
   }
-  status_ = absl::UnknownError("");
+  status_ = MakeCanonicalStatusFromOptions(options, location);
+
   loc_ = location;
   *rep_->extended_status = std::move(es);
 

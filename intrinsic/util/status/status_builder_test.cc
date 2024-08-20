@@ -936,6 +936,31 @@ TEST(StatusBuilderTest, SetExtendedStatusFromOptions) {
                 )pb"))));
 }
 
+TEST(StatusBuilderTest, SetExtendedStatusFromOptionsWithGenericCode) {
+  intrinsic_proto::data_logger::Context log_context;
+  log_context.set_executive_plan_id(3354);
+  absl::Time t = absl::FromCivil(absl::CivilSecond(2024, 3, 26, 11, 51, 13),
+                                 absl::UTCTimeZone());
+
+  StatusBuilder builder("ai.intrinsic.test", 2345,
+                        {.title = "Test title",
+                         .timestamp = t,
+                         .log_context = log_context,
+                         .generic_code = absl::StatusCode::kDeadlineExceeded});
+  ASSERT_FALSE(builder.ok());
+  absl::Status result = builder;
+  EXPECT_THAT(
+      result,
+      AllOf(StatusIs(absl::StatusCode::kDeadlineExceeded),
+            StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+                EqualsProto(R"pb(
+                  status_code { component: "ai.intrinsic.test" code: 2345 }
+                  title: "Test title"
+                  timestamp { seconds: 1711453873 }
+                  related_to { log_context { executive_plan_id: 3354 } }
+                )pb"))));
+}
+
 TEST(StatusBuilderTest, WrapExtendedStatus) {
   intrinsic_proto::data_logger::Context log_context;
   log_context.set_executive_plan_id(3354);

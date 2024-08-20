@@ -170,6 +170,22 @@ void StatusBuilder::SetStatusCode(absl::StatusCode canonical_code,
   swap(*status, new_status);
 }
 
+absl::Status StatusBuilder::MakeCanonicalStatusFromOptions(
+    const ExtendedStatusOptions& options,
+    intrinsic::SourceLocation source_location) {
+  if (!options.generic_code.has_value()) {
+    return absl::UnknownError(absl::StrFormat(
+        "General error %s (see extended status payload for details)",
+        absl::StatusCodeToString(absl::StatusCode::kUnknown)));
+  }
+
+  return absl::Status(
+      *options.generic_code,
+      absl::StrFormat(
+          "General error %s (see extended status payload for details)",
+          absl::StatusCodeToString(*options.generic_code)));
+}
+
 void StatusBuilder::CopyPayloads(const absl::Status& src, absl::Status* dst) {
   src.ForEachPayload([&](std::string_view type_url, absl::Cord payload) {
     dst->SetPayload(type_url, payload);
