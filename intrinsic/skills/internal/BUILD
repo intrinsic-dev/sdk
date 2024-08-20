@@ -115,6 +115,7 @@ pybind_extension(
     name = "error_bindings",
     srcs = ["error_bindings.cc"],
     deps = [
+        ":error_utils",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@pybind11_abseil//pybind11_abseil:status_casters",
@@ -259,7 +260,10 @@ py_library(
 py_library(
     name = "skill_service_impl_py",
     srcs = ["skill_service_impl.py"],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
+    data = [
+        ":error_bindings.so",
+        "@pybind11_abseil//pybind11_abseil:status.so",
+    ],
     srcs_version = "PY3",
     deps = [
         ":default_parameters_py",

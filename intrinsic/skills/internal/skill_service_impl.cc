@@ -145,9 +145,12 @@ absl::StatusOr<google::longrunning::Operation> SkillOperation::WaitExecution(
       runtime_data_.GetExecutionOptions().GetExecutionTimeout());
   absl::Time deadline = absl::Now() + resolved_timeout;
   if (!finished_notification_.WaitForNotificationWithDeadline(deadline)) {
-    return absl::DeadlineExceededError(
-        absl::StrFormat("Skill operation %s did not finish within %s.", name(),
-                        absl::FormatDuration(resolved_timeout)));
+    return StatusBuilder(kSkillServiceComponent, kSkillServiceWaitTimeoutCode,
+                         {.title = "Waiting for skill to finish timed out",
+                          .external_report_message = absl::StrFormat(
+                              "Skill operation '%s' did not finish within %s.",
+                              name(), absl::FormatDuration(resolved_timeout)),
+                          .generic_code = absl::StatusCode::kDeadlineExceeded});
   }
 
   return operation();

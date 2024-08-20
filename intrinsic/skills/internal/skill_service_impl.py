@@ -25,6 +25,7 @@ from intrinsic.logging.proto import context_pb2
 from intrinsic.motion_planning import motion_planner_client
 from intrinsic.motion_planning.proto import motion_planner_service_pb2_grpc
 from intrinsic.skills.internal import default_parameters
+from intrinsic.skills.internal import error_bindings
 from intrinsic.skills.internal import error_utils
 from intrinsic.skills.internal import execute_context_impl
 from intrinsic.skills.internal import get_footprint_context_impl
@@ -588,12 +589,18 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
           else None
       )
     except TimeoutError as err:
-      _abort_with_status(
-          context=context,
-          code=status.StatusCode.DEADLINE_EXCEEDED,
-          message=str(err),
-          skill_error_info=error_pb2.SkillErrorInfo(
-              error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
+      _abort_with_extended_status(
+          context,
+          status_exception.ExtendedStatusError(
+              error_bindings.SKILL_SERVICE_COMPONENT,
+              error_bindings.SKILL_SERVICE_WAIT_TIMEOUT_CODE,
+              external_report_message=str(err),
+              title='Waiting for skill to finish timed out',
+              grpc_code=grpc.StatusCode.DEADLINE_EXCEEDED,
+          ).add_rpc_detail(
+              error_pb2.SkillErrorInfo(
+                  error_type=error_pb2.SkillErrorInfo.ERROR_TYPE_SKILL
+              )
           ),
       )
 
@@ -1085,6 +1092,26 @@ def _handle_skill_error(
       message=f'{message}\n{err}',
       details=details,
   )
+
+
+def _abort_with_extended_status(
+    context: grpc.ServicerContext, es: status_exception.ExtendedStatusError
+) -> NoReturn:
+  """Raises the error to grpc.
+
+  This is required to get the NoReturn annotation which is not present on the
+  grpc API directly.
+
+  Args:
+    context: Servicer context to call abort on. See context.abort_with_status.
+    es: Extended status to report with error via gRPC.
+  """
+  context.abort_with_status(es)
+
+  # This will never be raised, but we need it to satisfy static type checking,
+  # since context.abort_with_status does not properly annotate its return value
+  # as NoReturn.
+  raise AssertionError('This error should not have been raised.')
 
 
 def _abort_with_status(

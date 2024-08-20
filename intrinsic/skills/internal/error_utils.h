@@ -19,6 +19,11 @@
 namespace intrinsic {
 namespace skills {
 
+// Generic skill framework error codes.
+//
+constexpr std::string_view kSkillServiceComponent = "ai.intrinsic.skill";
+constexpr uint32_t kSkillServiceWaitTimeoutCode = 11010;
+
 // Details
 //
 // There is some differences in error handling between c++ and python grpc
