@@ -37,6 +37,7 @@ class ExtendedStatusError(Exception, grpc.Status):
   _extended_status: extended_status_pb2.ExtendedStatus
   _emit_traceback: bool
   _rpc_details: list[proto_message.Message]
+  _grpc_code: grpc.StatusCode | None
 
   def __init__(
       self,
@@ -47,6 +48,7 @@ class ExtendedStatusError(Exception, grpc.Status):
       external_report_message: str = "",
       internal_report_message: str = "",
       timestamp: datetime.datetime | None = None,
+      grpc_code: grpc.StatusCode | None = None,
   ):
     """Initializes the instance.
 
@@ -61,6 +63,8 @@ class ExtendedStatusError(Exception, grpc.Status):
         message to this string. Only set this in an environment where the data
         may be shared.
       timestamp: The time of the error. If None sets current time.
+      grpc_code: Optional gRPC status code, you may set this to the desired
+        general error code when using the instance as a gRPC status.
     """
     self._extended_status = extended_status_pb2.ExtendedStatus(
         status_code=extended_status_pb2.StatusCode(
@@ -69,6 +73,7 @@ class ExtendedStatusError(Exception, grpc.Status):
     )
     self._emit_traceback = False
     self._rpc_details = []
+    self._grpc_code = grpc_code
     if title:
       self.set_title(title)
     if external_report_message:
@@ -304,10 +309,14 @@ class ExtendedStatusError(Exception, grpc.Status):
 
     Only added to comply with grpc.Status interface.
     """
+    if self._grpc_code is not None:
+      return self._grpc_code
+
     code = self._extended_status.status_code.code
     for status_code in grpc.StatusCode:
       if status_code.value[0] == code:
         return status_code
+
     return grpc.StatusCode.UNKNOWN
 
   @property
