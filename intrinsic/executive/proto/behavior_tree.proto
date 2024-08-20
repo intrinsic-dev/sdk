@@ -287,7 +287,10 @@ message BehaviorTree {
       READY = 5;
       PENDING = 6;
       RUNNING = 7;
+      // User-invoked cancellation is ongoing.
       CANCELING = 10;
+      // Cancellation after execution has timed out is ongoing.
+      CANCELING_EXECUTION_TIMEOUT = 12;
       CANCELED = 11;
       SUCCEEDED = 8;
       FAILED = 9;
