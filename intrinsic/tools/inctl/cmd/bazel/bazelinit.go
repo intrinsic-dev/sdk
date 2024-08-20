@@ -97,9 +97,15 @@ func RunInitCmd(params *InitCmdParams) (InitSuccessMessage, error) {
 		return InitSuccessMessage{}, fmt.Errorf("parsing templates: %w", err)
 	}
 
+	// Strip ".git" suffix from the SDK repository URL if present.
+	SDKRepository := params.SdkRepository
+	if strings.HasSuffix(SDKRepository, ".git") {
+		SDKRepository = strings.TrimSuffix(SDKRepository, ".git")
+	}
+
 	templateParams := &templateParams{
 		WorkspaceName:          filepath.Base(workspaceRoot),
-		SDKRepository:          params.SdkRepository,
+		SDKRepository:          SDKRepository,
 		SDKVersion:             params.SdkVersion,
 		LocalSDKPath:           params.LocalSDKPath,
 		SDKVersionDefaultValue: version.SDKVersionDefaultValue,
@@ -245,7 +251,16 @@ func init() {
 	initCmd.Flags().StringVar(&flagSDKRepository, keySDKRepository, "", "Git repository from which "+
 		"to fetch the Intrinsic SDK, e.g., "+
 		"\"https://github.com/intrinsic-dev/sdk.git\".")
-	initCmd.Flags().StringVar(&flagSDKVersion, "sdk_version", version.SDKVersion, "(optional) "+
+
+	// In the case that a development version of the SDK is used, we want to pin the workspace to the
+	// latest version of the SDK.  In released versions, the version.SDKVersion is set to the
+	// version of the SDK that was used to build the inctl binary.
+	defaultVersion := version.SDKVersion
+	if version.SDKVersion == "unknown" {
+		defaultVersion = "latest"
+	}
+
+	initCmd.Flags().StringVar(&flagSDKVersion, "sdk_version", defaultVersion, "(optional) "+
 		"The Intrinsic SDK version on which the new Bazel workspace should be pinned, e.g., "+
 		"\"intrinsic.platform.20221231.RC00\". If set to \"latest\", the Bazel workspace will not be "+
 		"pinned to a fixed version of the Intrinsic SDK but instead always depend on the newest "+
