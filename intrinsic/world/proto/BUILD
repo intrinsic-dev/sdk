@@ -198,6 +198,7 @@ proto_library(
         "//intrinsic/icon/proto:cart_space_proto",
         "//intrinsic/kinematics/types:joint_limits_proto",
         "//intrinsic/math/proto:pose_proto",
+        "//intrinsic/scene/proto:scene_object_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:wrappers_proto",
     ],
@@ -229,6 +230,7 @@ go_proto_library(
         "//intrinsic/icon/proto:cart_space_go_proto",
         "//intrinsic/kinematics/types:joint_limits_go_proto",
         "//intrinsic/math/proto:pose_go_proto",
+        "//intrinsic/scene/proto:scene_object_go_proto",
     ],
     deps = [":object_world_updates_proto"],
 )

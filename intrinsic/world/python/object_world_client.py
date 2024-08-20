@@ -9,6 +9,9 @@ Python.
 import re
 from typing import Dict, List, Optional, Tuple, Union, cast
 
+from google.protobuf import any_pb2
+from google.protobuf import struct_pb2
+from google.protobuf import wrappers_pb2
 import grpc
 from intrinsic.geometry.service import geometry_service_pb2
 from intrinsic.geometry.service import geometry_service_pb2_grpc
@@ -19,6 +22,7 @@ from intrinsic.kinematics.types import joint_limits_pb2
 from intrinsic.math.python import data_types
 from intrinsic.math.python import proto_conversion as math_proto_conversion
 from intrinsic.resources.proto import resource_handle_pb2
+from intrinsic.scene.proto import scene_object_pb2
 from intrinsic.util.grpc import error_handling
 from intrinsic.world.proto import geometry_component_pb2
 from intrinsic.world.proto import object_world_refs_pb2
@@ -47,10 +51,16 @@ INCLUDE_ALL_ENTITIES = object_world_refs_pb2.ObjectEntityFilter(
 )
 
 ICON2_POSITION_PART_KEY = 'Icon2PositionPart'
+PRODUCT_NAME_KEY = 'product_name'
+PRODUCT_METADATA_KEY = 'product_metadata'
 
 
 class ProductPartDoesNotExistError(ValueError):
   """A non-existent product part was specified."""
+
+
+class CreateObjectError(ValueError):
+  """A failure occurred while creating an object."""
 
 
 def list_world_ids(
@@ -1215,6 +1225,64 @@ class ObjectWorldClient:
         raise ProductPartDoesNotExistError(err) from err
 
       raise
+
+  def create_object_from_product(
+      self,
+      *,
+      product_name: str,
+      product_metadata: Optional[struct_pb2.Struct] = None,
+      scene_object: scene_object_pb2.SceneObject,
+      object_name: object_world_ids.WorldObjectName,
+      parent: Optional[object_world_resources.WorldObject] = None,
+      parent_object_t_created_object: data_types.Pose3 = data_types.Pose3(),
+  ) -> None:
+    """Adds a product as object to the world.
+
+    Arguments:
+      product_name: The name of the product.
+      product_metadata: Product metadata to be associated with the product
+        object.
+      scene_object: The SceneObject to instantiate the product WorldObject from.
+      object_name: The name of the newly created object.
+      parent: The parent object the new product object will be attached to.
+      parent_object_t_created_object: The transform between the parent object
+        and the new product object.
+
+    Raises:
+      CreateObjectError: If the call to the ObjectWorldService fails.
+    """
+    metadata_any = any_pb2.Any()
+    metadata_any.Pack(product_metadata)
+    product_name_any = any_pb2.Any()
+    product_name_any.Pack(wrappers_pb2.StringValue(value=product_name))
+    req = object_world_updates_pb2.CreateObjectRequest(
+        world_id=self._world_id,
+        name=object_name,
+        name_is_global_alias=True,
+        parent_object_t_created_object=math_proto_conversion.pose_to_proto(
+            parent_object_t_created_object
+        ),
+        create_from_scene_object=object_world_updates_pb2.ObjectSpecFromSceneObject(
+            scene_object=scene_object,
+        ),
+        user_data={
+            PRODUCT_NAME_KEY: product_name_any,
+            PRODUCT_METADATA_KEY: metadata_any,
+        },
+    )
+
+    if parent is not None:
+      req.parent_object.reference.CopyFrom(parent.reference)
+    else:
+      req.parent_object.reference.id = object_world_ids.ROOT_OBJECT_ID
+    req.parent_object.entity_filter.CopyFrom(INCLUDE_FINAL_ENTITY)
+
+    try:
+      self._call_create_object(request=req)
+    except grpc.RpcError as err:
+      raise CreateObjectError(
+          f"Create object from product '{product_name}' failed: {err}"
+      ) from err
 
   def register_geometry(
       self,

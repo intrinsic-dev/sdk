@@ -5,6 +5,8 @@
 from unittest import mock
 
 from absl.testing import absltest
+from google.protobuf import struct_pb2
+from intrinsic.scene.proto import scene_object_pb2
 from intrinsic.world.proto import geometry_component_pb2
 from intrinsic.world.proto import object_world_service_pb2
 from intrinsic.world.python import object_world_client
@@ -75,6 +77,20 @@ class ObjectWorldClientTest(absltest.TestCase):
     world_client.create_geometry_object(
         object_name='foo',
         geometry_component=geometry_component_pb2.GeometryComponent(),
+    )
+
+  def test_create_object_from_product_part(self):
+    self._stub.CreateObject.return_value = self._create_object_proto(
+        name='foo', object_id='23', world_id='world'
+    )
+    world_client = object_world_client.ObjectWorldClient(
+        'world', self._stub, self._geometry_service_stub
+    )
+    world_client.create_object_from_product(
+        product_name='my_product',
+        product_metadata=struct_pb2.Struct(),
+        scene_object=scene_object_pb2.SceneObject(),
+        object_name=object_world_ids.WorldObjectName('my_object'),
     )
 
 

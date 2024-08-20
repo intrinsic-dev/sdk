@@ -9,6 +9,7 @@ import "google/protobuf/wrappers.proto";
 import "intrinsic/icon/proto/cart_space.proto";
 import "intrinsic/kinematics/types/joint_limits.proto";
 import "intrinsic/math/proto/pose.proto";
+import "intrinsic/scene/proto/scene_object.proto";
 import "intrinsic/world/proto/collision_action.proto";
 import "intrinsic/world/proto/collision_settings.proto";
 import "intrinsic/world/proto/geometry_component.proto";
@@ -130,6 +131,17 @@ message ObjectSpecFromProduct {
   string product_part_name = 1;
 }
 
+// Specifies to create an object by instantiating a SceneObject.
+message ObjectSpecFromSceneObject {
+  // SceneObject to be used to create the object.
+  intrinsic_proto.scene_object.v1.SceneObject scene_object = 1;
+
+  // Additional user data to be attached to the object.
+  map<string, string> user_data = 2;
+
+  // Optional name of the product that this object is instantiated from.
+}
+
 // Request to create an object. This is currently limited to a very simple use
 // case: The request must specify at least one collision or visual geometry
 // from which an object with ObjectType==PHYSICAL_OBJECT will be created which
@@ -167,6 +179,7 @@ message CreateObjectRequest {
   // Options for specifying the contents and properties of the object.
   oneof object_spec {
     ObjectSpecForSingleEntityObject create_single_entity_object = 5;
+    ObjectSpecFromSceneObject create_from_scene_object = 12;
     ObjectSpecFromProduct create_from_product = 8;
   }
 
