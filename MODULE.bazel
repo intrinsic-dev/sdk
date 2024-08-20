@@ -170,6 +170,7 @@ use_repo(
     "com_gitlab_libeigen_eigen",
     "com_google_cel_cpp",
     "io_opencensus_cpp",
+    "or_tools",
     # go/keep-sorted end
 )
 

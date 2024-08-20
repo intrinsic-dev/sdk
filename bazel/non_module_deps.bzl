@@ -49,6 +49,13 @@ def _non_module_deps_impl(ctx):  # @unused
         strip_prefix = "opencensus-cpp-50eb5de762e5f87e206c011a4f930adb1a1775b1",
         url = "https://github.com/census-instrumentation/opencensus-cpp/archive/50eb5de762e5f87e206c011a4f930adb1a1775b1.tar.gz",  # 2024-03-25
     )
+    OR_TOOLS_COMMIT = "286089e617f75b8aa9a01eaaaec218d843370159"  # Added RecursivelyCreateDir
+    http_archive(
+        name = "or_tools",
+        strip_prefix = "or-tools-%s" % OR_TOOLS_COMMIT,
+        sha256 = "58d014109d50b90b02b422171264f5dfa53af1df5d12783de0d510536789cac3",
+        urls = ["https://github.com/google/or-tools/archive/%s.tar.gz" % OR_TOOLS_COMMIT],
+    )
 
     ################################
     # Google OSS replacement files #
