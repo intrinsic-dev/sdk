@@ -97,6 +97,15 @@ message BagMetadata {
 
   // If known, the name of the solution running when the bag was created.
   optional string solution_name = 10;
+
+  // The total number of log items from all event sources.
+  uint64 total_log_items = 11;
+
+  // The total number of bytes from all event sources.
+  uint64 total_bytes = 12;
+
+  // The total number of uploaded bytes from all event sources.
+  uint64 total_uploaded_bytes = 14;
 }
 
 // Reference to a bag file stored on the cloud.
