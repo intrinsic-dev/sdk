@@ -176,4 +176,5 @@ message SkillManifest {
   // specific to the skill's ID (<package>.<name>), i.e., different skills can
   // have the same numeric ID representing different errors.
   repeated intrinsic_proto.assets.StatusSpec status_info = 11;
+
 }

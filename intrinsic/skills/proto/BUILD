@@ -346,11 +346,10 @@ go_proto_library(
     name = "skill_manifest_go_proto",
     go_deps = [
         ":equipment_go_proto",
-        "//intrinsic/resources/proto:resource_handle_go_proto",
         "//intrinsic/assets/proto:documentation_go_proto",
+        "//intrinsic/assets/proto:id_go_proto",
         "//intrinsic/assets/proto:status_spec_go_proto",
         "//intrinsic/assets/proto:vendor_go_proto",
-        "//intrinsic/assets/proto:id_go_proto",
     ],
     deps = [":skill_manifest_proto"],
 )
