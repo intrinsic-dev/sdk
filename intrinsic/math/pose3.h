@@ -3,6 +3,7 @@
 #ifndef INTRINSIC_MATH_POSE3_H_
 #define INTRINSIC_MATH_POSE3_H_
 
+#include <iomanip>
 #include <iostream>
 #include <ostream>
 
@@ -244,7 +245,8 @@ class Pose3 {
 
 template <typename T, int Options>
 std::ostream& operator<<(std::ostream& os, const Pose3<T, Options>& a_pose_b) {
-  os << "translation: " << a_pose_b.translation().transpose()
+  os << std::setprecision(12)
+     << "translation: " << a_pose_b.translation().transpose()
      << " quaternion: " << a_pose_b.quaternion().coeffs().transpose();
   return os;
 }
