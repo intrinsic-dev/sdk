@@ -35,12 +35,14 @@ class PreviewContextImpl : public PreviewContext {
                      EquipmentPack equipment,
                      SkillLoggingContext logging_context,
                      motion_planning::MotionPlannerClient motion_planner,
-                     world::ObjectWorldClient object_world)
+                     world::ObjectWorldClient object_world
+                     )
       : canceller_(canceller),
         equipment_(std::move(equipment)),
         logging_context_(logging_context),
         motion_planner_(std::move(motion_planner)),
-        object_world_(std::move(object_world)) {}
+        object_world_(std::move(object_world))
+  {}
 
   SkillCanceller& canceller() const override { return *canceller_; }
 

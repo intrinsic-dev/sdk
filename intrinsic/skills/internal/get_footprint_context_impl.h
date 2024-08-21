@@ -26,10 +26,12 @@ class GetFootprintContextImpl : public GetFootprintContext {
  public:
   GetFootprintContextImpl(EquipmentPack equipment,
                           motion_planning::MotionPlannerClient motion_planner,
-                          world::ObjectWorldClient object_world)
+                          world::ObjectWorldClient object_world
+                          )
       : equipment_(std::move(equipment)),
         motion_planner_(std::move(motion_planner)),
-        object_world_(std::move(object_world)) {}
+        object_world_(std::move(object_world))
+  {}
 
   motion_planning::MotionPlannerClient& motion_planner() override {
     return motion_planner_;

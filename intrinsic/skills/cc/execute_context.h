@@ -44,6 +44,7 @@ class ExecuteContext {
 
   // A client for interacting with the object world.
   virtual world::ObjectWorldClient& object_world() = 0;
+
 };
 
 }  // namespace skills

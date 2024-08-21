@@ -46,7 +46,8 @@ absl::StatusOr<ExecuteContextView> PreviewToExecuteContext(
     PreviewContext& context, const EquipmentPack& equipment) {
   return ExecuteContextView(context.canceller(), equipment,
                             context.logging_context(), context.motion_planner(),
-                            context.object_world());
+                            context.object_world()
+  );
 }
 
 }  // namespace skills

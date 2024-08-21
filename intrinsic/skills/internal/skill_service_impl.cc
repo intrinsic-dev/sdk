@@ -388,7 +388,8 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
       motion_planning::MotionPlannerClient(request->world_id(),
                                            motion_planner_service_),
       /*object_world=*/
-      world::ObjectWorldClient(request->world_id(), object_world_service_));
+      world::ObjectWorldClient(request->world_id(), object_world_service_)
+  );
 
   INTR_ASSIGN_OR_RETURN_GRPC(internal::SkillRuntimeData runtime_data,
                              skill_repository_.GetSkillRuntimeData(skill_name));
@@ -497,7 +498,8 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
       motion_planning::MotionPlannerClient(request->world_id(),
                                            motion_planner_service_),
       /*object_world=*/
-      world::ObjectWorldClient(request->world_id(), object_world_service_));
+      world::ObjectWorldClient(request->world_id(), object_world_service_)
+  );
 
   std::optional<intrinsic_proto::data_logger::Context> log_context;
   if (request->has_context()) {

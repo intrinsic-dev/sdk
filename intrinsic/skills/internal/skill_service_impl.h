@@ -254,7 +254,6 @@ class SkillProjectorServiceImpl
   using ObjectWorldService = ::intrinsic_proto::world::ObjectWorldService;
   using MotionPlannerService =
       ::intrinsic_proto::motion_planning::MotionPlannerService;
-
  public:
   // All of the given references will be kept for the lifetime of the created
   // instance.
@@ -292,7 +291,6 @@ class SkillExecutorServiceImpl
   using ObjectWorldService = ::intrinsic_proto::world::ObjectWorldService;
   using MotionPlannerService =
       ::intrinsic_proto::motion_planning::MotionPlannerService;
-
  public:
   // All of the given references will be kept for the lifetime of the created
   // instance.

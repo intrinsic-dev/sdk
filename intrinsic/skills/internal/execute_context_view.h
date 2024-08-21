@@ -25,12 +25,14 @@ class ExecuteContextView : public ExecuteContext {
   ExecuteContextView(SkillCanceller& canceller, const EquipmentPack& equipment,
                      const SkillLoggingContext& logging_context,
                      motion_planning::MotionPlannerClient& motion_planner,
-                     world::ObjectWorldClient& object_world)
+                     world::ObjectWorldClient& object_world
+                     )
       : canceller_(canceller),
         equipment_(equipment),
         logging_context_(logging_context),
         motion_planner_(motion_planner),
-        object_world_(object_world) {}
+        object_world_(object_world)
+  {}
 
   SkillCanceller& canceller() const override { return canceller_; }
 
