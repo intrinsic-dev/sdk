@@ -123,7 +123,9 @@ func queryForAPIKey(ctx context.Context, writer io.Writer, in *bufio.Reader, org
 }
 
 // queryProjectsForAPIKey discovers the projects the given API key has access to.
-func queryProjectsForAPIKey(ctx context.Context, apiKey string) ([]string, error) {
+// If optionalOrg is set, it will be used as a filter to only return projects the given organization
+// is part of.
+func queryProjectsForAPIKey(ctx context.Context, apiKey string, optionalOrg string) ([]string, error) {
 	portal := flowstateDomain[loginParams.GetString(orgutil.KeyEnvironment)]
 	if portal == "" {
 		return nil, fmt.Errorf("unknown environment %q", loginParams.GetString(orgutil.KeyEnvironment))
@@ -148,6 +150,10 @@ func queryProjectsForAPIKey(ctx context.Context, apiKey string) ([]string, error
 	orgs := resp.GetOrganizations()
 	projects := map[string]struct{}{}
 	for _, org := range orgs {
+		// filter by org if specified
+		if optionalOrg != "" && optionalOrg != org.GetName() {
+			continue
+		}
 		projects[org.GetProject()] = struct{}{}
 	}
 	return maps.Keys(projects), nil
@@ -191,7 +197,8 @@ func loginCmdE(cmd *cobra.Command, _ []string) (err error) {
 
 	// If we are passed an org, we don't know the project yet
 	if projectName == "" {
-		projects, err := queryProjects(cmd.Context(), apiKey)
+		// orgName is always pure here (without @) because projectName is set above if org includes "@".
+		projects, err := queryProjects(cmd.Context(), apiKey, orgName)
 		if err != nil {
 			return fmt.Errorf("query project: %w", err)
 		}
@@ -200,7 +207,7 @@ func loginCmdE(cmd *cobra.Command, _ []string) (err error) {
 		}
 		if len(projects) > 1 {
 			slices.Sort(projects)
-			return fmt.Errorf("multiple projects found for API key: %+v", projects)
+			return fmt.Errorf("multiple projects found for API key (and org %q): %+v", orgName, projects)
 		}
 		// exactly one found
 		projectName = projects[0]
