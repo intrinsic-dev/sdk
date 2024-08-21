@@ -2,7 +2,9 @@
 
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = [
+    "//visibility:public",
+])
 
 cc_library(
     name = "source_location",
