@@ -146,8 +146,8 @@ class Session:
 
   def __exit__(self, exc_type, exc_value, traceback):
     """Allows usage in a with-statement context."""
-    del exc_type, exc_value, traceback  # Unused.
-    self.end()
+    del exc_type, traceback  # Unused.
+    self._end(exception_that_caused_session_end=exc_value)
 
   def _next_reaction_id(self) -> int:
     """Advances a counter which is used for this session's reaction IDs.
@@ -181,15 +181,42 @@ class Session:
         for signal_flag in self._watcher_signal_flags[reaction_id]:
           signal_flag.signal()
     except grpc.RpcError as e:
-      # Ignore the error if it's cancelled since this is expected when we are
-      # done with watching, e.g. when the Session ends. Note: this grpc.RpcError
-      # is also a grpc.Call, so it has the code() attribute. See details at
+      # Check if the error has the `CANCELLED` status code since this is
+      # expected when we are done with watching, e.g. when the Session ends.
+      #
+      # Note: this grpc.RpcError is also a grpc.Call, so it has the code()
+      # attribute. See details at
       # https://github.com/grpc/grpc/issues/10885#issuecomment-302581315.
-      if e.code() != grpc.StatusCode.CANCELLED:  # type: ignore
+
+      stream_was_cancelled = (
+          isinstance(e, grpc.Call) and e.code() == grpc.StatusCode.CANCELLED
+      )
+      if stream_was_cancelled:
+        # If the stream was cancelled cleanly, we pass a short and sweet error
+        # to the waiting signal_flags and otherwise exit quietly.
+        nice_error = errors.Session.SessionEndedError(
+            'The ICON session has ended'
+        )
+      else:
+        # If the stream encountered an error, then we
+        # 1. Try to unpack the gRPC error for cleaner reporting
+        # 2. If 1. fails, wrap the entire stream error in a SessionEndedError
+        # 3. Save that error in `_reaction_responses_error`. This is important,
+        #    so we can check against that in `Session.end()` (see
+        #    `Session.__exit__()` and `Session.end()` for details).
+        if isinstance(e, grpc.Call):
+          nice_error = errors.Session.SessionEndedError(e.details())
+        else:
+          nice_error = errors.Session.SessionEndedError(str(e))
         # store the exception so that it can be retrieved by the session user
         # for error handling
-        self._reaction_responses_error = e
+        self._reaction_responses_error = nice_error
         logging.info('The action raised an error during execution: %r', e)
+      # Regardless of whether the stream exited cleanly or not, wake up *all*
+      # waiting signal_flags.
+      for signal_flags in self._watcher_signal_flags.values():
+        for signal_flag in signal_flags:
+          signal_flag.signal(nice_error)
 
   def end(self) -> bool:
     """Attempts to end the Session.
@@ -204,7 +231,20 @@ class Session:
         occurred.
 
     Returns:
-      Whether the attempt was successful.
+      True if the attempt to end the session was successful.
+    """
+    return self._end(exception_that_caused_session_end=None)
+
+  def _end(self, exception_that_caused_session_end: Exception | None = None):
+    """Implements `end()`, with the option to ignore a specific exception.
+
+    Args:
+      exception_that_caused_session_end: For internal use in __exit__(). Knowing
+        we're already handling an exception lets us compare against that
+        exception here, and avoid re-raising it.
+
+    Returns:
+      True if the attempt to end the session was successful.
     """
     if self._ended:
       return False
@@ -231,9 +271,13 @@ class Session:
     # thread to finish up.
     self._watcher_thread.join()
 
-    # if there was an error in the watcher thread,
-    # the execution failed and we should raise here to avoid a silent error
-    if self._reaction_responses_error:
+    # if there was an error in the watcher thread, and it's not the one that
+    # caused us to end the session in the first place, we should raise here
+    # to avoid a silent error
+    if (
+        self._reaction_responses_error is not None
+        and self._reaction_responses_error != exception_that_caused_session_end
+    ):
       raise self._reaction_responses_error
 
     self._ended = True
@@ -754,7 +798,8 @@ class Session:
     """
     if stream.session_id != self._session_id:
       raise errors.Session.ActionError(
-          f'Cannot close stream {stream.id} from session {self._session_id} '
+          f'Cannot close stream {stream.session_id} from session'
+          f' {self._session_id} '
           + f'since it belongs to session {stream.session_id}'
       )
 

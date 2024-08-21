@@ -24,12 +24,8 @@ class Client:
   class ServerError(Error):
     """Errors related to server connection."""
 
-    pass
-
   class InvalidArgumentError(Error):
     """Errors related to bad arguments."""
-
-    pass
 
 
 class Session:
@@ -38,9 +34,8 @@ class Session:
   class ActionError(Error):
     """Errors related to OpenSessionResponse."""
 
-    pass
-
   class StreamError(Error):
     """Errors related to OpenWriteStreamResponse."""
 
-    pass
+  class SessionEndedError(Error):
+    """Errors related to the (expected or unexpected) end of an ICON sesson."""

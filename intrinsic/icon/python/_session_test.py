@@ -21,6 +21,16 @@ from intrinsic.icon.python import errors
 from intrinsic.icon.python import reactions as _reactions
 
 
+class GrpcError(grpc.RpcError, grpc.Call):
+  """The Session class expects the `grpc.RpcError`s it receives from the ICON gRPC service to _also_ be `grpc.Call` objects (and have a `.code()` method).
+
+  This type allows us to hand such errors to the Session.
+  """
+
+  def details(self):
+    return 'details'
+
+
 class SessionTest(absltest.TestCase):
 
   def setUp(self):
@@ -116,7 +126,7 @@ class SessionTest(absltest.TestCase):
     self._prepare_initial_response()
     session = _session.Session(self._stub, ['foo'])
     self.assertFalse(session._ended)
-    error = grpc.RpcError()
+    error = GrpcError()
     error.code = mock.Mock()
     error.code.return_value = grpc.StatusCode.INTERNAL
     session._response_stream = _RaiseExceptionIterable(error)
@@ -962,6 +972,22 @@ class SessionTest(absltest.TestCase):
           any_order=False,
       )
 
+  def test_start_action_and_wait_receives_error(self):
+    session = self._prepare_session_with_response(grpc.StatusCode.OK)
+    done_flag = session.add_action_sequence(
+        [_actions.Action(3, 'bar', 'foo', None, [])]
+    )
+    self._watcher_response_stream.__iter__.side_effect = grpc.RpcError(
+        'server is eepy'
+    )
+    session._watch_reaction_responses()
+    with self.assertRaisesRegex(
+        errors.Session.SessionEndedError, 'server is eepy'
+    ):
+      # We *do not* expect this to timeout, but raise a `SessionEndedError`
+      # immediately!
+      done_flag.wait(timeout=2.0)
+
   @mock.patch.object(_session, 'Stream', autospec=True)
   def test_open_stream(self, mock_stream_cls):
     session = self._prepare_session_with_response(grpc.StatusCode.OK)
@@ -1076,7 +1102,7 @@ class SessionTest(absltest.TestCase):
 
   def test_watch_reaction_responses_cancelled(self):
     session = self._prepare_session_with_response(grpc.StatusCode.OK)
-    error = grpc.RpcError()
+    error = GrpcError()
     error.code = mock.Mock()
     error.code.return_value = grpc.StatusCode.CANCELLED
     session._watcher_response_stream = _RaiseExceptionIterable(error)
@@ -1087,19 +1113,18 @@ class SessionTest(absltest.TestCase):
 
   def test_watch_reaction_responses_error(self):
     session = self._prepare_session_with_response(grpc.StatusCode.OK)
-    error = grpc.RpcError()
+    error = GrpcError()
     error.code = mock.Mock()
     error.code.return_value = grpc.StatusCode.ABORTED
     session._watcher_response_stream = _RaiseExceptionIterable(error)
 
     session._watch_reaction_responses()
     self.assertIsNotNone(session.get_reaction_responses_error())
-    self.assertEqual(
-        session.get_reaction_responses_error().code.return_value,
-        grpc.StatusCode.ABORTED,
+    self.assertRegex(
+        str(session.get_reaction_responses_error()), error.details()
     )
-    error.code.assert_called_once_with()
-    with self.assertRaises(grpc.RpcError):
+    error.code.assert_called_once()
+    with self.assertRaises(errors.Session.SessionEndedError):
       session.end()
 
   def test_get_latest_output_calls_correct_grpc_method(self):
@@ -1215,7 +1240,7 @@ class StreamTest(absltest.TestCase):
     self._prepare_initial_response()
     stream = _session.Stream(self._stub, 2, 0, 'baz')
     self.assertFalse(stream._ended)
-    error = grpc.RpcError()
+    error = GrpcError()
     error.code = mock.Mock()
     error.code.return_value = grpc.StatusCode.INTERNAL
     stream._response_stream = _RaiseExceptionIterable(error)

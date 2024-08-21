@@ -7,6 +7,7 @@ Layer, along with a Response describing what should happen when the Condition is
 satisfied.
 """
 
+import dataclasses
 import datetime
 import threading
 from typing import Callable, Iterable, Optional, Sequence, Union
@@ -478,16 +479,44 @@ class Condition:
 class EventFlag:
   """Provides the signalling mechanism for waiting on Reactions."""
 
-  def __init__(self):
-    # Use an Event Object as the underlying mechanism. This is specifically
-    # chosen so that `wait` calls return immediately if the flag has already
-    # been signalled. Such a case can happen if the action->reaction completes
-    # faster than the actual call to wait for it.
-    self._ev = threading.Event()
+  @dataclasses.dataclass
+  class _Payload:
+    """This carries information about why the `EventFlag` was signalled.
 
-  def signal(self) -> None:
+    If `error` is `None`, the event that the `EventFlag` represents happened.
+    If `error` is an `Exception`, then there was an error (and the `EventFlag`
+    will raise `error`).
+    """
+
+    error: Exception | None = None
+
+    def ok(self):
+      return self.error is None
+
+  _condition: threading.Condition
+  _payload: _Payload | None
+
+  def __init__(self):
+    # Use a Condition and a _Payload (see above) as the underlying mechanism.
+    # This is specifically chosen so that `wait` calls return immediately if the
+    # flag has already been signalled.
+    # Such a case can happen if the action->reaction completes faster than the
+    # actual call to wait for it:
+    #
+    # session.start_action(id)
+    # # action immediately finishes
+    # done_signal.wait()  # should wake immediately
+    self._condition = threading.Condition()
+    self._payload = None
+
+  def signal(self, error: Exception | None = None) -> None:
     """Signals the flag."""
-    self._ev.set()
+    with self._condition:
+      if error is None:
+        self._payload = self._Payload()
+      else:
+        self._payload = self._Payload(error=error)
+      self._condition.notify_all()
 
   def wait(self, timeout: Optional[float] = None) -> bool:
     """Waits until the flag is signalled, or until a timeout occurs.
@@ -500,8 +529,24 @@ class EventFlag:
 
     Returns:
       True unless a given timeout expired, in which case it is False.
+
+    Raises:
+      Any error that ICON reports while waiting for the reaction. Such errors
+      can be caused, among other things, by faults of the robot controller.
     """
-    return self._ev.wait(timeout=timeout)
+    with self._condition:
+
+      def payload_is_set():
+        return self._payload is not None
+
+      if not self._condition.wait_for(payload_is_set, timeout=timeout):
+        return False
+
+      assert isinstance(self._payload, self._Payload)
+      if self._payload.error is None:
+        return True
+      else:
+        raise self._payload.error
 
 
 class _Response:
