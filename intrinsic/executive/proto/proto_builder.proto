@@ -12,9 +12,9 @@ service ProtoBuilder {
   // generate one for skill parameters.
   rpc Compile(ProtoCompileRequest) returns (ProtoCompileResponse) {}
 
-  // Composes file descriptor set from a given descriptor using only well-known
+  // Composes file descriptor set from given descriptors using only well-known
   // types. This creates a transitively closed file descriptor set which
-  // contains the given input descriptor and transitive dependencies.
+  // contains the given input descriptors and transitive dependencies.
   rpc Compose(ProtoComposeRequest) returns (ProtoComposeResponse) {}
 
   // Retrieves list of well-known types as a list of names and transitively
@@ -40,9 +40,9 @@ message ProtoComposeRequest {
   string proto_filename = 1;
   // Package for the enclosed type
   string proto_package = 2;
-  // A descriptor which uses only basic (int64, string etc.) and well-known
-  // (cf. GetWellKnownTypes) types.
-  google.protobuf.DescriptorProto input_descriptor = 3;
+  // A set of descriptors which use only basic (int64, string etc.) and
+  // well-known (cf. GetWellKnownTypes) types.
+  repeated google.protobuf.DescriptorProto input_descriptor = 3;
 }
 
 message ProtoComposeResponse {
