@@ -10,7 +10,6 @@ filegroup(
         "lib/x86_64-linux-gnu/libm*",
         "lib/x86_64-linux-gnu/libpthread*",
         "lib/x86_64-linux-gnu/librt*",
-        "lib/x86_64-linux-gnu/libtinfo*",
         "lib/x86_64-linux-gnu/libutil*",
         "lib64/**",
         "usr/include/*.h",
@@ -32,7 +31,6 @@ filegroup(
         "usr/lib/x86_64-linux-gnu/libpthread*",
         "usr/lib/x86_64-linux-gnu/libresolv.so",
         "usr/lib/x86_64-linux-gnu/librt*",
-        "usr/lib/x86_64-linux-gnu/libtinfo*",
         "usr/lib/x86_64-linux-gnu/libutil*",
       ],
       exclude = [
