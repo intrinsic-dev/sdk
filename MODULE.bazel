@@ -105,7 +105,7 @@ llvm = use_extension(
     dev_dependency = True,
 )
 llvm.toolchain(
-    llvm_version = "14.0.0",
+    llvm_version = "16.0.0",
 )
 
 llvm.sysroot(

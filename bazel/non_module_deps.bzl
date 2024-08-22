@@ -10,7 +10,7 @@ def _non_module_deps_impl(ctx):  # @unused
     # Sysroot and libc
     # How to upgrade:
     # - Find image in https://storage.googleapis.com/chrome-linux-sysroot/ for amd64 for
-    #   a stable Linux (here: Debian stretch), of this pick a current build.
+    #   a stable Linux (here: Debian bullseye), of this pick a current build.
     # - Verify the image contains expected /lib/x86_64-linux-gnu/libc* and defines correct
     #   __GLIBC_MINOR__ in /usr/include/features.h
     # - If system files are not found, add them in ../BUILD.sysroot
