@@ -8,6 +8,7 @@ Python.
 
 import re
 from typing import Dict, List, Optional, Tuple, Union, cast
+import warnings
 
 from google.protobuf import any_pb2
 from google.protobuf import struct_pb2
@@ -1194,6 +1195,12 @@ class ObjectWorldClient:
       ProductPartDoesNotExistError: If the call to the ObjectWorldService fails
         because a product part with the specified name does not exist.
     """
+    warnings.warn(
+        'create_object_from_product_part is deprecated. Use'
+        ' create_object_from_product instead.',
+        DeprecationWarning,
+    )
+
     req = object_world_updates_pb2.CreateObjectRequest(
         world_id=self._world_id,
         name=object_name,
