@@ -132,46 +132,60 @@ func ValidateEnvironment(vipr *viper.Viper) error {
 	}
 }
 
-// PreRunOrganization provides the organization/project flag handling as PersistentPreRunE of a cobra command.
-// This is done automatically with the WrapCmd() function.
-func PreRunOrganization(cmd *cobra.Command, vipr *viper.Viper) error {
+// PreRunOrganizationOptional provides the organization/project flag handling as PersistentPreRunE
+// of a cobra command. This is done automatically with the WrapCmdOptional() function.
+//
+// However, it lets the user skip setting --org in case they prefer --context with a local context /
+// alias.
+func PreRunOrganizationOptional(cmd *cobra.Command, vipr *viper.Viper) error {
 	projectFlag := cmd.PersistentFlags().Lookup(KeyProject)
 	orgFlag := cmd.PersistentFlags().Lookup(KeyOrganization)
 
 	org := vipr.GetString(KeyOrganization)
 	project := vipr.GetString(KeyProject)
 
-	if project == "" && org == "" {
-		return errNoOrg
-	}
 	if project != "" && org != "" {
 		return errOrgAndProject
 	}
 
-	// User used the organization flow.
-	// The above also guarantees that org is set
-	if project == "" {
-		info, err := authStore.ReadOrgInfo(org)
-		if err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				return makeOrgNotFound(err, org)
-			}
+	if org == "" {
+		// When using --project, the org is unknown and no further logic is required.
+		return nil
+	}
 
-			return err
+	// Look up the project that contains this org.
+	info, err := authStore.ReadOrgInfo(org)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return makeOrgNotFound(err, org)
 		}
 
-		projectFlag.Value.Set(info.Project)
-		vipr.Set(KeyProject, info.Project)
+		return err
 	}
+	projectFlag.Value.Set(info.Project)
+	vipr.Set(KeyProject, info.Project)
 
 	// Cleanup the org parameter, it could be org@project.
 	// The full name is only required to lookup the correct project. So we can clean it up here
-	if org != "" {
-		cleanOrg := strings.Split(org, "@")[0]
+	cleanOrg := strings.Split(org, "@")[0]
 
-		orgFlag.Value.Set(cleanOrg)
-		vipr.Set(KeyOrganization, cleanOrg)
-	} else {
+	orgFlag.Value.Set(cleanOrg)
+	vipr.Set(KeyOrganization, cleanOrg)
+	return nil
+}
+
+// PreRunOrganization checks organization/project flags as PersistentPreRunE of a cobra command.
+// This is done automatically with the WrapCmd() function. PreRunOrganization() doesn't call
+// PreRunOrganizationOptional() itself.
+//
+// It enforces that exactly one of --project or --org is set.
+func PreRunOrganization(cmd *cobra.Command, vipr *viper.Viper) error {
+	org := vipr.GetString(KeyOrganization)
+	project := vipr.GetString(KeyProject)
+	if project == "" && org == "" {
+		return errNoOrg
+	}
+	if org == "" {
 		noOrg = true
 		fmt.Fprintf(os.Stderr, "\ninctl was called without an organization. This is deprecated and will soon be an error. Please use --org intrinsic@%v.\n", project)
 	}
@@ -179,14 +193,48 @@ func PreRunOrganization(cmd *cobra.Command, vipr *viper.Viper) error {
 	return nil
 }
 
-// WrapCmd injects KeyProject and KeyOrganization as PersistentFlags into the command and sets up shared handling for them.
-func WrapCmd(cmd *cobra.Command, vipr *viper.Viper) *cobra.Command {
+// WrapCmdOptional injects KeyProject and KeyOrganization as PersistentFlags into the command and
+// sets up shared handling for them.
+//
+// However, it lets the user skip setting --org in case they prefer --context with a local context /
+// alias.
+func WrapCmdOptional(cmd *cobra.Command, vipr *viper.Viper) *cobra.Command {
 	cmd.PersistentFlags().StringP(KeyProject, "p", "",
 		`The Google Cloud Project (GCP) project to use. You can set the environment variable
 		INTRINSIC_PROJECT=project_name to set a default project name.`)
 	cmd.PersistentFlags().StringP(KeyOrganization, "", "",
 		`The Intrinsic organization to use. You can set the environment variable
 		INTRINSIC_ORGANIZATION=organization to set a default organization.`)
+
+	oldPreRunE := cmd.PersistentPreRunE
+	cmd.PersistentPreRunE = func(c *cobra.Command, args []string) error {
+		// This is required to cooperate with cobrautil.
+		// Cobrautil's way to force an error instead of 0 return code when there's no subcommand
+		// causes cobra to run the PersistentPreRunE either way. So we need to short-circuit
+		// the flag handling here.
+		if !c.DisableFlagParsing {
+			if err := PreRunOrganizationOptional(cmd, vipr); err != nil {
+				return err
+			}
+		}
+
+		if oldPreRunE != nil {
+			return oldPreRunE(c, args)
+		}
+		return nil
+	}
+
+	viperutil.BindFlags(vipr, cmd.PersistentFlags(), viperutil.BindToListEnv(KeyOrganization))
+
+	return cmd
+}
+
+// WrapCmd injects KeyProject and KeyOrganization as PersistentFlags into the command and sets up
+// shared handling for them.
+//
+// It enforces that exactly one of --project or --org is set.
+func WrapCmd(cmd *cobra.Command, vipr *viper.Viper) *cobra.Command {
+	cmd = WrapCmdOptional(cmd, vipr)
 
 	oldPreRunE := cmd.PersistentPreRunE
 	cmd.PersistentPreRunE = func(c *cobra.Command, args []string) error {
@@ -216,8 +264,6 @@ func WrapCmd(cmd *cobra.Command, vipr *viper.Viper) *cobra.Command {
 		}
 		return nil
 	}
-
-	viperutil.BindFlags(vipr, cmd.PersistentFlags(), viperutil.BindToListEnv(KeyOrganization))
 
 	return cmd
 }
