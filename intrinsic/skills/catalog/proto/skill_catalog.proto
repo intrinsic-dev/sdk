@@ -131,9 +131,9 @@ message CreateSkillRequest {
   // Cannot be true if `default` is true.
   bool org_private = 14;
 
-  reserved 1, 2, 3, 6, 10, 11;
+  reserved 1, 2, 3, 6, 9, 10, 11;
   reserved "name", "vendor", "package_name", "doc_string", "skill_image",
-      "release_tag";
+      "release_tag", "allow_skill_to_skill_communication";
 }
 
 message ClearDefaultRequest {
