@@ -23,10 +23,6 @@ genrule(
           r"| perl -0777pe 's/# Copyright(.*?)\n\n//s' " +
           # Remove all lines starting with "build:" plus preceding comment and empty lines.
           r"| perl -0777pe 's/(^\s*\n)*(^#.*\n)*(^build:.*\n)+//mg' " +
-          # Disable bzlmod in newly-generated workspaces.
-          # To be reverted once b/356464660  is addressed.
-          r"| perl -0777pe 's/common --enable_bzlmod/common --enable_bzlmod=false/g'" +
-          r"| perl -0777pe 's/# Enable Bzlmod/# Disable Bzlmod/g'" +
           "> $@",
 )
 
