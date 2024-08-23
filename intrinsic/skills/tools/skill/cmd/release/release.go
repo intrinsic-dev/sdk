@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	keyDescription                    = "description"
+	keyDescription = "description"
 )
 
 var cmdFlags = cmdutils.NewCmdFlags()
@@ -261,6 +261,5 @@ func init() {
 	cmdFlags.AddFlagReleaseNotes("skill")
 	cmdFlags.AddFlagSkillReleaseType()
 	cmdFlags.AddFlagVersion("skill")
-
 
 }
