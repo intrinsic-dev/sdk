@@ -107,6 +107,7 @@ cc_library(
     srcs = ["proto_time.cc"],
     hdrs = ["proto_time.h"],
     deps = [
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",

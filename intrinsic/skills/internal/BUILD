@@ -511,7 +511,7 @@ cc_library(
         "//intrinsic/skills/proto:skill_service_cc_grpc_proto",
         "//intrinsic/skills/proto:skill_service_cc_proto",
         "//intrinsic/skills/proto:skills_cc_proto",
-        "//intrinsic/util/proto:type_url",
+        "//intrinsic/util:proto_time",
         "//intrinsic/util/status:extended_status_cc_proto",
         "//intrinsic/util/status:status_conversion_grpc",
         "//intrinsic/util/status:status_conversion_rpc",

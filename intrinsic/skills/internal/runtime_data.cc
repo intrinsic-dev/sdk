@@ -78,15 +78,15 @@ absl::StatusOr<SkillRuntimeData> GetRuntimeDataFrom(
   std::optional<absl::Duration> cancellation_ready_timeout;
   if (skill_service_config.execution_service_options()
           .has_cancellation_ready_timeout()) {
-    cancellation_ready_timeout =
-        ToAbslDuration(skill_service_config.execution_service_options()
-                           .cancellation_ready_timeout());
+    cancellation_ready_timeout = ToAbslDurationNoValidation(
+        skill_service_config.execution_service_options()
+            .cancellation_ready_timeout());
   }
 
   std::optional<absl::Duration> execution_timeout;
   if (skill_service_config.execution_service_options()
           .has_execution_timeout()) {
-    execution_timeout = ToAbslDuration(
+    execution_timeout = ToAbslDurationNoValidation(
         skill_service_config.execution_service_options().execution_timeout());
   }
 

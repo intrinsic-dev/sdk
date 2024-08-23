@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <ctime>
 
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -48,7 +49,7 @@ absl::Status ValidateProtoDurationMembers(int64_t sec, int32_t ns) {
     return absl::InvalidArgumentError(
         absl::StrCat("Duration seconds out of range: `", sec, "`. Must be in [",
                      kMinProtoDuration.tv_sec, ", ", kMaxProtoDuration.tv_sec,
-                     "], i.e. [+10000 years, -10000 years]"));
+                     "], i.e. [-10000 years, +10000 years]"));
   }
   if (ns < kMinProtoDuration.tv_nsec || ns > kMaxProtoDuration.tv_nsec) {
     return absl::InvalidArgumentError(absl::StrCat(
@@ -133,6 +134,10 @@ absl::StatusOr<absl::Time> ToAbslTime(
       !status.ok()) {
     return status;
   }
+  return ToAbslTimeNoValidation(proto);
+}
+
+absl::Time ToAbslTimeNoValidation(const google::protobuf::Timestamp& proto) {
   return absl::FromUnixSeconds(proto.seconds()) +
          absl::Nanoseconds(proto.nanos());
 }
@@ -254,6 +259,49 @@ absl::StatusOr<double> ToUnixDoubleSeconds(
   return absl::ToDoubleSeconds(d);
 }
 
+double ToUnixDoubleNanosNoValidation(const google::protobuf::Timestamp& proto) {
+  // We rely on absl to handle edge cases for us (e.g. fractional nanos).
+  //
+  // The absl types do not result in precision loss, so we defer precision-loss
+  // only to the conversion to the floating-point type.
+  absl::Time time = ToAbslTimeNoValidation(proto);
+  absl::Duration d = time - absl::UnixEpoch();
+  return absl::ToDoubleNanoseconds(d);
+}
+
+double ToUnixDoubleMicrosNoValidation(
+    const google::protobuf::Timestamp& proto) {
+  // We rely on absl to handle edge cases for us (e.g. fractional nanos).
+  //
+  // The absl types do not result in precision loss, so we defer precision-loss
+  // only to the conversion to the floating-point type.
+  absl::Time time = ToAbslTimeNoValidation(proto);
+  absl::Duration d = time - absl::UnixEpoch();
+  return absl::ToDoubleMicroseconds(d);
+}
+
+double ToUnixDoubleMillisNoValidation(
+    const google::protobuf::Timestamp& proto) {
+  // We rely on absl to handle edge cases for us (e.g. fractional nanos).
+  //
+  // The absl types do not result in precision loss, so we defer precision-loss
+  // only to the conversion to the floating-point type.
+  absl::Time time = ToAbslTimeNoValidation(proto);
+  absl::Duration d = time - absl::UnixEpoch();
+  return absl::ToDoubleMilliseconds(d);
+}
+
+double ToUnixDoubleSecondsNoValidation(
+    const google::protobuf::Timestamp& proto) {
+  // We rely on absl to handle edge cases for us (e.g. fractional nanos).
+  //
+  // The absl types do not result in precision loss, so we defer precision-loss
+  // only to the conversion to the floating-point type.
+  absl::Time time = ToAbslTimeNoValidation(proto);
+  absl::Duration d = time - absl::UnixEpoch();
+  return absl::ToDoubleSeconds(d);
+}
+
 /// google::protobuf::Duration <=> absl::Duration.
 
 absl::StatusOr<google::protobuf::Duration> FromAbslDuration(absl::Duration d) {
@@ -280,7 +328,32 @@ absl::Status FromAbslDuration(absl::Duration d,
   return absl::OkStatus();
 }
 
-absl::Duration ToAbslDuration(const google::protobuf::Duration& proto) {
+absl::StatusOr<absl::Duration> ToAbslDuration(
+    const google::protobuf::Duration& proto) {
+  if (absl::Status status =
+          ValidateProtoDurationMembers(proto.seconds(), proto.nanos());
+      !status.ok()) {
+    return status;
+  }
+  return ToAbslDurationNoValidation(proto);
+}
+
+absl::StatusOr<absl::Duration> ToAbslDurationRejectNegative(
+    const google::protobuf::Duration& proto) {
+  absl::StatusOr<absl::Duration> duration = ToAbslDuration(proto);
+  if (!duration.ok()) {
+    return duration.status();
+  }
+  if (*duration < absl::ZeroDuration()) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Duration is negative, must be non-negative: `",
+                     absl::ToInt64Nanoseconds(*duration), "` ns."));
+  }
+  return *duration;
+}
+
+absl::Duration ToAbslDurationNoValidation(
+    const google::protobuf::Duration& proto) {
   return absl::Seconds(proto.seconds()) + absl::Nanoseconds(proto.nanos());
 }
 

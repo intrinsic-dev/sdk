@@ -2,11 +2,9 @@
 
 #include "intrinsic/skills/internal/skill_service_impl.h"
 
-#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -43,7 +41,7 @@
 #include "intrinsic/skills/internal/skill_repository.h"
 #include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
-#include "intrinsic/util/proto/type_url.h"
+#include "intrinsic/util/proto_time.h"
 #include "intrinsic/util/status/extended_status.pb.h"
 #include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_conversion_rpc.h"
@@ -643,7 +641,7 @@ grpc::Status SkillExecutorServiceImpl::WaitOperation(
     google::longrunning::Operation* result) {
   std::optional<absl::Duration> timeout;
   if (request->has_timeout()) {
-    timeout.emplace(ToAbslDuration(request->timeout()));
+    INTR_ASSIGN_OR_RETURN_GRPC(timeout, ToAbslDuration(request->timeout()));
   }
   INTR_ASSIGN_OR_RETURN_GRPC(
       std::shared_ptr<internal::SkillOperation> operation,
