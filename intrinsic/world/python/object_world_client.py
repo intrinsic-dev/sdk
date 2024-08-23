@@ -52,9 +52,9 @@ INCLUDE_ALL_ENTITIES = object_world_refs_pb2.ObjectEntityFilter(
 )
 
 ICON2_POSITION_PART_KEY = 'Icon2PositionPart'
-PRODUCT_NAME_KEY = 'product_name'
-PRODUCT_METADATA_KEY = 'product_metadata'
 
+PRODUCT_NAME_KEY = 'FLOWSTATE_product_name'
+PRODUCT_METADATA_KEY = 'FLOWSTATE_product_metadata'
 
 class ProductPartDoesNotExistError(ValueError):
   """A non-existent product part was specified."""

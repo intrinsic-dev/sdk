@@ -137,6 +137,8 @@ message ObjectSpecFromSceneObject {
   intrinsic_proto.scene_object.v1.SceneObject scene_object = 1;
 
   // Additional user data to be attached to the object.
+  // NOTE: keys that are prefixed with 'FLOWSTATE_' are used internally. Users
+  // should avoid storing keys in this format.
   map<string, string> user_data = 2;
 
   // Optional name of the product that this object is instantiated from.
@@ -184,6 +186,8 @@ message CreateObjectRequest {
   }
 
   // User data to be attached to the object.
+  // NOTE: keys that are prefixed with 'FLOWSTATE_' are used internally. Users
+  // should avoid storing keys in this format.
   map<string, google.protobuf.Any> user_data = 13;
 
   // Requested object view for the returned, created object.

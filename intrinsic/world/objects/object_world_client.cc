@@ -53,8 +53,6 @@ using ::intrinsic_proto::world::TransformNodeReference;
 using ::intrinsic_proto::world::TransformNodeReferenceByName;
 
 namespace {
-constexpr absl::string_view kProductNameUserDataKey = "product_name";
-constexpr absl::string_view kProductMetadataUserDataKey = "product_metadata";
 
 // Wraps a string to Any with a StringValue wrapper.
 google::protobuf::Any StringToAny(absl::string_view product_name) {
