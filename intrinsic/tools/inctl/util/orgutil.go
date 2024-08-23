@@ -34,8 +34,9 @@ const (
 
 var (
 	// Exposed for testing
-	authStore = auth.NewStore()
-	errNotXor = fmt.Errorf("%s is deprecated and will soon be removed. Please use %s instead", KeyProject, KeyOrganization)
+	authStore        = auth.NewStore()
+	errNoOrg         = fmt.Errorf("expected --%s=<org>", KeyOrganization)
+	errOrgAndProject = fmt.Errorf("do not set --%s, use --%s=<org> or <org@project> instead", KeyProject, KeyOrganization)
 
 	noOrg = false
 )
@@ -140,8 +141,11 @@ func PreRunOrganization(cmd *cobra.Command, vipr *viper.Viper) error {
 	org := vipr.GetString(KeyOrganization)
 	project := vipr.GetString(KeyProject)
 
-	if (project == "" && org == "") || (project != "" && org != "") {
-		return errNotXor
+	if project == "" && org == "" {
+		return errNoOrg
+	}
+	if project != "" && org != "" {
+		return errOrgAndProject
 	}
 
 	// User used the organization flow.

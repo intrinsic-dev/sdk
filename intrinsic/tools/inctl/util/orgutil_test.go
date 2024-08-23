@@ -25,8 +25,8 @@ func TestWrapCmd(t *testing.T) {
 
 		cmd.SetArgs([]string{})
 		if err := cmd.Execute(); err != nil {
-			if !errors.Is(err, errNotXor) {
-				t.Errorf("Expected errNotXor. Got error: %v", err)
+			if !errors.Is(err, errNoOrg) {
+				t.Errorf("Expected errNoOrg. Got error: %v", err)
 			}
 		} else {
 			t.Errorf("Should fail with neither --project nor --org")
@@ -45,11 +45,11 @@ func TestWrapCmd(t *testing.T) {
 
 		cmd.SetArgs([]string{"--org=test-org", "--project=example-project"})
 		if err := cmd.Execute(); err != nil {
-			if !errors.Is(err, errNotXor) {
-				t.Errorf("Expected errNotXor. Got error: %v", err)
+			if !errors.Is(err, errOrgAndProject) {
+				t.Errorf("Expected errOrgAndProject. Got error: %v", err)
 			}
 		} else {
-			t.Errorf("Should fail with both --project nor --org")
+			t.Errorf("Should fail with both --project and --org")
 		}
 	})
 
