@@ -11,6 +11,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "intrinsic/platform/pubsub/adapters/pubsub.pb.h"
+#include "intrinsic/platform/pubsub/kvstore.h"
 #include "intrinsic/platform/pubsub/publisher.h"
 #include "intrinsic/platform/pubsub/pubsub.h"
 #include "intrinsic/platform/pubsub/subscription.h"
@@ -200,6 +201,11 @@ absl::StatusOr<bool> PubSub::KeyexprIncludes(absl::string_view left,
     default:
       return absl::InvalidArgumentError("A key expression is invalid");
   }
+}
+
+absl::StatusOr<std::unique_ptr<intrinsic::KeyValueStore>>
+PubSub::KeyValueStore() const {
+  return absl::UnimplementedError("Not implemented");
 }
 
 }  // namespace intrinsic

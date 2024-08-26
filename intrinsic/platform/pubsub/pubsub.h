@@ -15,6 +15,7 @@
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/message.h"
 #include "intrinsic/platform/pubsub/adapters/pubsub.pb.h"
+#include "intrinsic/platform/pubsub/kvstore.h"
 #include "intrinsic/platform/pubsub/publisher.h"
 #include "intrinsic/platform/pubsub/subscription.h"
 
@@ -205,6 +206,11 @@ class PubSub {
   // Returns an error if any input is non-canonical.
   absl::StatusOr<bool> KeyexprIncludes(absl::string_view left,
                                        absl::string_view right) const;
+
+  // Returns a KeyValueStore implementation. This is only supported when
+  // building with Zenoh. See go/intrinsic-kv-store for more details.
+  absl::StatusOr<std::unique_ptr<intrinsic::KeyValueStore>> KeyValueStore()
+      const;
 
  private:
   static void HandleError(const SubscriptionErrorCallback& error_callback,
