@@ -132,5 +132,5 @@ message LogItem {
   // Use this to log individual files smaller than 2GB (size limit for proto
   // messages). For larger files sync them to GCS using the GCS API directly. If
   // you have many files, consider creating a tar archive out of them first.
-  Blob blob_payload = 6;
+  optional Blob blob_payload = 6;
 }
