@@ -28,6 +28,8 @@ message ServiceMetadata {
 
 message ServiceDef {
   // The list of gRPC service names that this service will expose.
+  //
+  // Do not include DynamicReconfiguration in this list.
   repeated string service_proto_prefixes = 1;
   // The pod spec to be used in real environments.
   ServicePodSpec real_spec = 2;
@@ -40,6 +42,9 @@ message ServiceDef {
   // (`/etc/intrinsic/runtime_config.pb`) or `INTRINSIC_HTTP_PATH_PREFIX` and
   // `INTRINSIC_HTTP_PORT` environment variables.
   ServiceHttpConfig http_config = 4;
+  // True if this Service supports dynamic reconfiguration by serving the
+  // DynamicReconfiguration service on its configured gRPC port.
+  bool supports_dynamic_reconfiguration = 5;
 }
 
 message ServicePodSpec {
@@ -64,7 +69,7 @@ message ServiceAssets {
 message ServiceManifest {
   // Metadata associated with this service (e.g., id, documentation, etc.)
   ServiceMetadata metadata = 1;
-  // The service's pod spec.
+  // The service definition.
   ServiceDef service_def = 2;
   // This service's assets.
   ServiceAssets assets = 3;
