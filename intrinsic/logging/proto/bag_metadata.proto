@@ -6,6 +6,15 @@ package intrinsic_proto.data_logger;
 
 import "google/protobuf/timestamp.proto";
 
+message EventSourceWithTypeHints {
+  string event_source = 1;  // Sanitized.
+
+  // Type information for Intrinsic protos and ROS message types respectively.
+  // Used as hints for translation orverification.
+  optional string intrinsic_typename = 6;
+  optional string ros_typename = 7;
+}
+
 // Status to indicate an event source inputs upload progress.
 message EventSourceStatus {
   enum EventSourceStatusEnum {
@@ -24,8 +33,7 @@ message EventSourceStatus {
 
 // Metadata to distinguish an event source.
 message EventSourceMetadata {
-  string event_source = 1;  // Sanitized.
-
+  EventSourceWithTypeHints event_source_with_type_hints = 1;
   EventSourceStatus status = 2;
 
   // Time range of the logged items.
@@ -35,20 +43,14 @@ message EventSourceMetadata {
   // Total number of log items in the event source.
   uint64 num_log_items = 5;
 
-  // Type information Intrinsic protos/data and ROS message types, respectively.
-  //
-  // Used as hints for translation/verification.
-  optional string intrinsic_typename = 6;
-  optional string ros_typename = 7;
+  // Total number of bytes of all messages from this event source.
+  uint64 num_bytes = 6;
 
-  // Total number of bytes of all messages from this event source
-  uint64 num_bytes = 8;
+  // Total number of uploaded bytes (for creating detailed progress messages).
+  uint64 uploaded_bytes = 7;
 
-  // Total number of uploaded bytes (for creating detailed progress messages)
-  uint64 uploaded_bytes = 9;
-
-  // Total number of uploaded items (for creating detailed progress messages)
-  uint64 uploaded_log_items = 10;
+  // Total number of uploaded items (for creating detailed progress messages).
+  uint64 uploaded_log_items = 8;
 }
 
 // Status to indicate overall bag input upload progress.
@@ -92,7 +94,7 @@ message BagMetadata {
   // Event source metadata as claimed by on-prem via registration.
   repeated EventSourceMetadata event_sources = 8;
 
-  // Human-readable description of the contents of the bag
+  // Human-readable description of the contents of the bag.
   optional string description = 9;
 
   // If known, the name of the solution running when the bag was created.
