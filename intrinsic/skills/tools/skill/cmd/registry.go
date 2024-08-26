@@ -4,14 +4,11 @@
 package registry
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	containerregistry "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	"intrinsic/assets/imagetransfer"
 	"intrinsic/assets/imageutils"
 	imagepb "intrinsic/kubernetes/workcell_spec/proto/image_go_proto"
@@ -164,32 +161,4 @@ func PushSkill(target string, opts PushOptions) (*imagepb.Image, *imageutils.Ski
 		return nil, nil, err
 	}
 	return imgpb, installerParams, err
-}
-
-// PushSkillFromBytes is a helper function that takes an image archive file
-// as a byte array and pushes the skill image to the container registry.
-//
-// Returns the image.
-func PushSkillFromBytes(archive []byte, opts PushOptions) (*imagepb.Image, error) {
-	targetType := imageutils.TargetType(opts.Type)
-	if targetType != imageutils.Archive {
-		return nil, fmt.Errorf("type must be in {%s}", imageutils.Archive)
-	}
-
-	thunk := func() (io.ReadCloser, error) {
-		return io.NopCloser(bytes.NewBuffer(archive)), nil
-	}
-	image, err := tarball.Image(thunk, nil)
-	if err != nil {
-		return nil, fmt.Errorf("could not create tarball image from byte array: %v", err)
-	}
-	installerParams, err := imageutils.GetSkillInstallerParams(image)
-	if err != nil {
-		return nil, fmt.Errorf("could not extract labels from image object: %v", err)
-	}
-	imgpb, err := pushImage(image, installerParams.ImageName, opts)
-	if err != nil {
-		return nil, err
-	}
-	return imgpb, err
 }
