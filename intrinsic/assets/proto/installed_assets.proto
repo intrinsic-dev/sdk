@@ -15,10 +15,10 @@ service InstalledAssets {
 
   // Lists the currently installed assets.
   rpc ListInstalledAssets(ListInstalledAssetsRequest)
-      returns (ListInstalledAssetsResponse) {}
+      returns (ListInstalledAssetsResponse);
 
   // Gets a specific installed asset.
-  rpc GetInstalledAsset(GetInstalledAssetRequest) returns (InstalledAsset) {}
+  rpc GetInstalledAsset(GetInstalledAssetRequest) returns (InstalledAsset);
 
   // Installs the specified asset into the solution.
   rpc CreateInstalledAssets(CreateInstalledAssetsRequest)

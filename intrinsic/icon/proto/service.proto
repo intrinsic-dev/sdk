@@ -665,9 +665,9 @@ service IconApi {
 
   // Sets a payload on a part. Fails if the part does not exist or the payload
   // contains invalid values.
-  rpc SetPayload(SetPayloadRequest) returns (SetPayloadResponse) {}
+  rpc SetPayload(SetPayloadRequest) returns (SetPayloadResponse);
 
   // Gets a payload stored in a part. Fails if the part does not exist or the
   // requested payload does not exist.
-  rpc GetPayload(GetPayloadRequest) returns (GetPayloadResponse) {}
+  rpc GetPayload(GetPayloadRequest) returns (GetPayloadResponse);
 }

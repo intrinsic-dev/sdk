@@ -13,23 +13,23 @@ import "intrinsic/scene/proto/scene_object.proto";
 service ProductService {
 
   // Creates a new product to be instantiated and adds it to the application.
-  rpc CreateProduct(CreateProductRequest) returns (Product) {}
+  rpc CreateProduct(CreateProductRequest) returns (Product);
 
   // Gets a product.
-  rpc GetProduct(GetProductRequest) returns (Product) {}
+  rpc GetProduct(GetProductRequest) returns (Product);
 
   // Gets the geometry representation of a product.
   rpc GetProductGeometry(GetProductGeometryRequest)
-      returns (GetProductGeometryResponse) {}
+      returns (GetProductGeometryResponse);
 
   // Updates a product.
-  rpc UpdateProduct(UpdateProductRequest) returns (Product) {}
+  rpc UpdateProduct(UpdateProductRequest) returns (Product);
 
   // Deletes a product.
-  rpc DeleteProduct(DeleteProductRequest) returns (google.protobuf.Empty) {}
+  rpc DeleteProduct(DeleteProductRequest) returns (google.protobuf.Empty);
 
   // List all of the products currently in the Solution.
-  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {}
+  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
 }
 
 message CreateProductRequest {
