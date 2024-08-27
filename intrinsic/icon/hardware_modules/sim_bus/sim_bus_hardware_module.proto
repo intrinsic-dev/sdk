@@ -15,9 +15,11 @@ message SimDioConfig {
 // If present, the hardware module simply registers a dummy analog input.
 message SimAnalogInputConfig {
   uint32 num_inputs = 1;
+  optional string interface_name = 2;
 }
 message SimAnalogOutputConfig {
   uint32 num_outputs = 1;
+  optional string interface_name = 2;
 }
 
 message SimJointConfig {
