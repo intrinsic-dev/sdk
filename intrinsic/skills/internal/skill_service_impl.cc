@@ -23,6 +23,7 @@
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/empty.pb.h"
 #include "google/rpc/status.pb.h"
+#include "grpcpp/channel.h"
 #include "grpcpp/grpcpp.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/assets/id_utils.h"
@@ -439,10 +440,12 @@ grpc::Status SkillProjectorServiceImpl::Predict(
 
 SkillExecutorServiceImpl::SkillExecutorServiceImpl(
     SkillRepository& skill_repository,
+    std::shared_ptr<grpc::Channel> world_service_channel,
     std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
     std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service,
     RequestWatcher* request_watcher)
     : skill_repository_(skill_repository),
+      world_service_channel_(std::move(world_service_channel)),
       object_world_service_(std::move(object_world_service)),
       motion_planner_service_(std::move(motion_planner_service)),
       request_watcher_(request_watcher),
@@ -496,8 +499,8 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
       motion_planning::MotionPlannerClient(request->world_id(),
                                            motion_planner_service_),
       /*object_world=*/
-      world::ObjectWorldClient(request->world_id(), object_world_service_)
-  );
+      world::ObjectWorldClient(request->world_id(), object_world_service_),
+      world_service_channel_);
 
   std::optional<intrinsic_proto::data_logger::Context> log_context;
   if (request->has_context()) {

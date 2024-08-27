@@ -8,6 +8,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "grpcpp/channel.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
@@ -26,14 +27,14 @@ class ExecuteContextImpl : public ExecuteContext {
                      EquipmentPack equipment,
                      SkillLoggingContext logging_context,
                      motion_planning::MotionPlannerClient motion_planner,
-                     world::ObjectWorldClient object_world
-                     )
+                     world::ObjectWorldClient object_world,
+                     std::shared_ptr<grpc::Channel> world_service_channel)
       : canceller_(canceller),
         equipment_(std::move(equipment)),
         logging_context_(logging_context),
         motion_planner_(std::move(motion_planner)),
-        object_world_(std::move(object_world))
-  {}
+        object_world_(std::move(object_world)),
+        world_service_channel_(std::move(world_service_channel)) {}
 
   SkillCanceller& canceller() const override { return *canceller_; }
 
@@ -49,12 +50,18 @@ class ExecuteContextImpl : public ExecuteContext {
 
   world::ObjectWorldClient& object_world() override { return object_world_; }
 
+  absl::StatusOr<std::shared_ptr<grpc::Channel>> GetWorldChannel()
+      const override {
+    return world_service_channel_;
+  }
+
  private:
   std::shared_ptr<SkillCanceller> canceller_;
   EquipmentPack equipment_;
   SkillLoggingContext logging_context_;
   motion_planning::MotionPlannerClient motion_planner_;
   world::ObjectWorldClient object_world_;
+  std::shared_ptr<grpc::Channel> world_service_channel_;
 };
 
 }  // namespace skills

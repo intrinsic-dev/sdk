@@ -23,6 +23,7 @@
 #include "google/longrunning/operations.pb.h"
 #include "google/protobuf/empty.pb.h"
 #include "google/protobuf/message.h"
+#include "grpcpp/channel.h"
 #include "grpcpp/server_context.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/motion_planning/proto/motion_planner_service.grpc.pb.h"
@@ -292,6 +293,7 @@ class SkillExecutorServiceImpl
   using ObjectWorldService = ::intrinsic_proto::world::ObjectWorldService;
   using MotionPlannerService =
       ::intrinsic_proto::motion_planning::MotionPlannerService;
+
  public:
   // All of the given references will be kept for the lifetime of the created
   // instance.
@@ -300,6 +302,7 @@ class SkillExecutorServiceImpl
   // record all requests that it handles.
   explicit SkillExecutorServiceImpl(
       SkillRepository& skill_repository,
+      std::shared_ptr<grpc::Channel> world_service_channel,
       std::shared_ptr<ObjectWorldService::StubInterface> object_world_service,
       std::shared_ptr<MotionPlannerService::StubInterface>
           motion_planner_service,
@@ -342,6 +345,7 @@ class SkillExecutorServiceImpl
       grpc::ServerContext* context);
 
   SkillRepository& skill_repository_;
+  std::shared_ptr<grpc::Channel> world_service_channel_;
   std::shared_ptr<ObjectWorldService::StubInterface> object_world_service_;
   std::shared_ptr<MotionPlannerService::StubInterface> motion_planner_service_;
   RequestWatcher* request_watcher_;

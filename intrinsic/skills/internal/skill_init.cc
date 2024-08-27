@@ -96,7 +96,7 @@ absl::Status SkillInit(
       object_world_service, motion_planner_service);
   SkillExecutorServiceImpl execute_service(
       skill_repository,
-      object_world_service, motion_planner_service);
+      world_service_channel, object_world_service, motion_planner_service);
 
   std::string server_address = absl::StrCat("0.0.0.0:", skill_service_port);
 

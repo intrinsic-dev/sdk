@@ -112,6 +112,8 @@ cc_library(
         "//intrinsic/skills/internal:skill_registry_client_interface",
         "//intrinsic/skills/proto:skill_service_cc_proto",
         "//intrinsic/world/objects:object_world_client",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],
 )

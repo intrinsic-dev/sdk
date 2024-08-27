@@ -171,6 +171,7 @@ cc_library(
         "//intrinsic/skills/cc:skill_interface",
         "//intrinsic/skills/cc:skill_logging_context",
         "//intrinsic/world/objects:object_world_client",
+        "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],

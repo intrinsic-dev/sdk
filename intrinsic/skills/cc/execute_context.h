@@ -4,7 +4,11 @@
 #ifndef INTRINSIC_SKILLS_CC_EXECUTE_CONTEXT_H_
 #define INTRINSIC_SKILLS_CC_EXECUTE_CONTEXT_H_
 
+#include <memory>
+
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "grpcpp/channel.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/motion_planning/motion_planner_client.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
@@ -45,6 +49,14 @@ class ExecuteContext {
   // A client for interacting with the object world.
   virtual world::ObjectWorldClient& object_world() = 0;
 
+ protected:
+  // Returns a `grpc::Channel` that can be used to connect to the World service.
+  // This is intended for internal use. Use object_world() instead.
+  virtual absl::StatusOr<std::shared_ptr<grpc::Channel>> GetWorldChannel()
+      const {
+    return absl::UnimplementedError(
+        "GetWorldChannel is not intended for public use.");
+  }
 };
 
 }  // namespace skills
