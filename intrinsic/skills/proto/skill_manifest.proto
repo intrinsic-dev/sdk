@@ -138,6 +138,18 @@ message ExtendedDocumentation {
   string usage_example = 2;
 }
 
+message SkillAssets {
+  oneof deployment_type {
+    // The filename of the skill image.
+    string image_filename = 1;
+    // A binary proto file that contains the parameterizable behavior tree.
+    string behavior_tree_filename = 2;
+  }
+  // A complete descriptor set for the skill's parameter and execute_result
+  // proto messages.
+  optional string file_descriptor_set_filename = 3;
+}
+
 message SkillManifest {
   // The skill's id.
   intrinsic_proto.assets.Id id = 1;
@@ -177,4 +189,6 @@ message SkillManifest {
   // have the same numeric ID representing different errors.
   repeated intrinsic_proto.assets.StatusSpec status_info = 11;
 
+  // This skill's assets.
+  SkillAssets assets = 12;
 }

@@ -283,6 +283,71 @@ _skill_id = rule(
     provides = [SkillIdInfo],
 )
 
+def _skill_bundle_impl(ctx):
+    image_files = ctx.attr.image.files.to_list()
+    if len(image_files) != 1:
+        fail("image does not contain exactly 1 tar file")
+    manifest = ctx.attr.manifest[SkillManifestInfo].manifest_binary_file
+    fds = ctx.attr.manifest[SkillManifestInfo].file_descriptor_set
+
+    inputs = depset([manifest, fds], transitive = [ctx.attr.image.files])
+    bundle_output = ctx.outputs.bundle_out
+
+    args = ctx.actions.args().add(
+        "--manifest",
+        manifest,
+    ).add(
+        "--image_tar",
+        image_files[0],
+    ).add(
+        "--file_descriptor_set",
+        fds,
+    ).add(
+        "--output_bundle",
+        bundle_output,
+    )
+
+    ctx.actions.run(
+        inputs = inputs,
+        outputs = [bundle_output],
+        executable = ctx.executable._skillbundlegen,
+        arguments = [args],
+        mnemonic = "Skillbundle",
+        progress_message = "Skill bundle %s" % bundle_output.short_path,
+    )
+
+    return [
+        DefaultInfo(
+            executable = bundle_output,
+            runfiles = ctx.runfiles(
+                transitive_files = inputs,
+            ),
+        ),
+    ]
+
+_skill_bundle = rule(
+    implementation = _skill_bundle_impl,
+    attrs = {
+        "image": attr.label(
+            mandatory = True,
+            allow_single_file = [".tar"],
+            doc = "The image tarball of the skill.",
+        ),
+        "manifest": attr.label(
+            mandatory = True,
+            providers = [SkillManifestInfo],
+        ),
+        "_skillbundlegen": attr.label(
+            default = Label("//intrinsic/skills/build_defs:skillbundlegen"),
+            cfg = "exec",
+            executable = True,
+        ),
+    },
+    outputs = {
+        "bundle_out": "%{name}.tar",
+    },
+)
+
 def build_symlinks(skill_service_name, skill_service_config_name):
     return {
         "/skills/skill_service_config.proto.bin": native.package_name() + "/" + skill_service_config_name + ".pbbin",
@@ -394,6 +459,13 @@ def cc_skill(
         **kwargs
     )
 
+    skill_bundle_name = "%s_bundle" % name
+    _skill_bundle(
+        name = skill_bundle_name,
+        image = name + ".tar",
+        manifest = manifest,
+    )
+
 def py_skill(
         name,
         manifest,
@@ -479,4 +551,11 @@ def py_skill(
         symlinks = symlinks,
         workdir = "/",
         labels = labels_name,
+    )
+
+    skill_bundle_name = "%s_bundle" % name
+    _skill_bundle(
+        name = skill_bundle_name,
+        image = name + ".tar",
+        manifest = manifest,
     )

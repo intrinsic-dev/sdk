@@ -12,6 +12,7 @@ import "intrinsic/assets/proto/release_tag.proto";
 import "intrinsic/assets/proto/view.proto";
 import "intrinsic/executive/proto/behavior_tree.proto";
 import "intrinsic/kubernetes/workcell_spec/proto/image.proto";
+import "intrinsic/skills/proto/processed_skill_manifest.proto";
 import "intrinsic/skills/proto/skill_manifest.proto";
 
 // Information about a specific version of a skill in the catalog.
@@ -107,6 +108,10 @@ message CreateSkillRequest {
   string release_notes = 5;
 
   oneof manifest_type {
+    // The processed skill manifest. If specified, the deployment_type oneof
+    // should be empty.
+    intrinsic_proto.skills.ProcessedSkillManifest processed_skill_manifest = 15;
+
     // The skill manifest.
     skills.SkillManifest manifest = 12;
   }

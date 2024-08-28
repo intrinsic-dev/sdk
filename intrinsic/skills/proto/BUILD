@@ -360,6 +360,35 @@ py_proto_library(
 )
 
 proto_library(
+    name = "processed_skill_manifest_proto",
+    srcs = ["processed_skill_manifest.proto"],
+    deps = [
+        ":skill_manifest_proto",
+        "//intrinsic/assets/proto:documentation_proto",
+        "//intrinsic/assets/proto:id_proto",
+        "//intrinsic/assets/proto:status_spec_proto",
+        "//intrinsic/assets/proto:vendor_proto",
+        "//intrinsic/executive/proto:behavior_tree_proto",
+        "//intrinsic/kubernetes/workcell_spec/proto:image_proto",
+        "@com_google_protobuf//:descriptor_proto",
+    ],
+)
+
+go_proto_library(
+    name = "processed_skill_manifest_go_proto",
+    go_deps = [
+        ":skill_manifest_go_proto",
+        "//intrinsic/assets/proto:documentation_go_proto",
+        "//intrinsic/assets/proto:id_go_proto",
+        "//intrinsic/assets/proto:status_spec_go_proto",
+        "//intrinsic/assets/proto:vendor_go_proto",
+        "//intrinsic/executive/proto:behavior_tree_go_proto",
+        "//intrinsic/kubernetes/workcell_spec/proto:image_go_proto",
+    ],
+    deps = [":processed_skill_manifest_proto"],
+)
+
+proto_library(
     name = "skill_parameter_metadata_proto",
     srcs = ["skill_parameter_metadata.proto"],
     deps = ["@com_google_protobuf//:descriptor_proto"],

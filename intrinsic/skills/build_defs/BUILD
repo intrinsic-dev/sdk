@@ -49,3 +49,18 @@ go_binary(
         "@org_golang_google_protobuf//reflect/protoregistry:go_default_library",
     ],
 )
+
+go_binary(
+    name = "skillbundlegen",
+    srcs = ["skillbundlegen.go"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//intrinsic/assets:bundleio",
+        "//intrinsic/assets:idutils",
+        "//intrinsic/production:intrinsic",
+        "//intrinsic/skills/proto:skill_manifest_go_proto",
+        "//intrinsic/util/proto:protoio",
+        "@com_github_golang_glog//:go_default_library",
+        "@io_bazel_rules_go//proto/wkt:descriptor_go_proto",
+    ],
+)

@@ -15,6 +15,7 @@ proto_library(
         "//intrinsic/assets/proto:view_proto",
         "//intrinsic/executive/proto:behavior_tree_proto",
         "//intrinsic/kubernetes/workcell_spec/proto:image_proto",
+        "//intrinsic/skills/proto:processed_skill_manifest_proto",
         "//intrinsic/skills/proto:skill_manifest_proto",
         "@com_google_protobuf//:empty_proto",
         "@com_google_protobuf//:timestamp_proto",
@@ -43,6 +44,7 @@ go_proto_library(
         "//intrinsic/assets/proto:view_go_proto",
         "//intrinsic/executive/proto:behavior_tree_go_proto",
         "//intrinsic/kubernetes/workcell_spec/proto:image_go_proto",
+        "//intrinsic/skills/proto:processed_skill_manifest_go_proto",
         "//intrinsic/skills/proto:skill_manifest_go_proto",
     ],
     deps = [":skill_catalog_proto"],
@@ -58,6 +60,7 @@ go_grpc_library(
         "//intrinsic/assets/proto:view_go_proto",
         "//intrinsic/executive/proto:behavior_tree_go_proto",
         "//intrinsic/kubernetes/workcell_spec/proto:image_go_proto",
+        "//intrinsic/skills/proto:processed_skill_manifest_go_proto",
         "//intrinsic/skills/proto:skill_manifest_go_proto",
     ],
 )

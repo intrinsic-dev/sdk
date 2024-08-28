@@ -143,12 +143,16 @@ go_library(
     srcs = [
         "bundle_io.go",
         "bundle_io_services.go",
+        "bundle_io_skills.go",
     ],
     visibility = ["//intrinsic:internal_api_users"],
     deps = [
         "//intrinsic/assets/proto:id_go_proto",
         "//intrinsic/assets/services/proto:service_manifest_go_proto",
+        "//intrinsic/executive/proto:behavior_tree_go_proto",
         "//intrinsic/kubernetes/workcell_spec/proto:image_go_proto",
+        "//intrinsic/skills/proto:processed_skill_manifest_go_proto",
+        "//intrinsic/skills/proto:skill_manifest_go_proto",
         "//intrinsic/util/archive:tartooling",
         "@io_bazel_rules_go//proto/wkt:descriptor_go_proto",
         "@org_golang_google_protobuf//proto",

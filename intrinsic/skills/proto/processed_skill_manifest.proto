@@ -1,0 +1,70 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.skills;
+
+import "google/protobuf/descriptor.proto";
+import "intrinsic/assets/proto/documentation.proto";
+import "intrinsic/assets/proto/id.proto";
+import "intrinsic/assets/proto/status_spec.proto";
+import "intrinsic/assets/proto/vendor.proto";
+import "intrinsic/executive/proto/behavior_tree.proto";
+import "intrinsic/kubernetes/workcell_spec/proto/image.proto";
+import "intrinsic/skills/proto/skill_manifest.proto";
+
+message SkillMetadata {
+  // The skill's id.
+  intrinsic_proto.assets.Id id = 1;
+  // The skill's vendor.
+  intrinsic_proto.assets.Vendor vendor = 2;
+  // Documentation about the skill which will be shown to users. This field
+  // should contain the description of the skill as a summary.
+  intrinsic_proto.assets.Documentation documentation = 3;
+  // Extended documentation about the skill which will be shown to users.
+  // This field contains additional information about the skill that is used
+  // by automatic skill documentation generation tools. It is optional and can
+  // be left empty. However, only skills that specify this field will be
+  // included in automatic skill documentation generation.
+  optional ExtendedDocumentation extended_documentation = 4;
+  // The display name of the skill to be shown in the UI.
+  string display_name = 5;
+}
+
+message SkillDetails {
+  // Contains user-set options about what skill features are supported by
+  // this skill.
+  Options options = 1;
+  // Specifies the runtime dependencies of this skill.
+  Dependencies dependencies = 2;
+  // A description of the input parameter message for the skill.
+  ParameterMetadata parameter = 3;
+  // A description of the execute result for a skill invocation.
+  optional ReturnMetadata execute_result = 4;
+  // List of status codes which the specific skill may return. Codes are
+  // specific to the skill's ID (<package>.<name>), i.e., different skills can
+  // have the same numeric ID representing different errors.
+  repeated intrinsic_proto.assets.StatusSpec status_info = 7;
+}
+
+message ProcessedSkillAssets {
+  oneof deployment_type {
+    // A container image for the skill with its service.
+    workcell_spec.v1.Image image = 1;
+    // A parameterizable behavior tree.
+    executive.BehaviorTree behavior_tree = 2;
+  }
+  // A complete descriptor set for the skill's parameter and execute_result
+  // proto messages.
+  google.protobuf.FileDescriptorSet file_descriptor_set = 3;
+}
+
+message ProcessedSkillManifest {
+  // Metadata associated with this skill (e.g., id, documentation, etc.)
+  SkillMetadata metadata = 1;
+  // Details about how the skill is to be used.
+  SkillDetails details = 2;
+  // The processed version of the skill assets. This can be used to send a
+  // complete description of a skill using a manifest.
+  ProcessedSkillAssets assets = 3;
+}
