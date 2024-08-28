@@ -106,8 +106,10 @@ message CreateSkillRequest {
   // Release notes for this version of the skill.
   string release_notes = 5;
 
-  // The skill manifest.
-  skills.SkillManifest manifest = 12;
+  oneof manifest_type {
+    // The skill manifest.
+    skills.SkillManifest manifest = 12;
+  }
 
   oneof deployment_type {
     // A container image for the skill with its service.

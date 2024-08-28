@@ -168,7 +168,9 @@ var releaseCmd = &cobra.Command{
 		}
 
 		req := &skillcatalogpb.CreateSkillRequest{
-			Manifest:     manifest,
+			ManifestType: &skillcatalogpb.CreateSkillRequest_Manifest{
+				Manifest: manifest,
+			},
 			Version:      cmdFlags.GetFlagVersion(),
 			ReleaseNotes: cmdFlags.GetFlagReleaseNotes(),
 			Default:      cmdFlags.GetFlagDefault(),
