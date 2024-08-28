@@ -13,7 +13,6 @@ import (
 	"archive/tar"
 	descriptorpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"google.golang.org/protobuf/proto"
-	btpb "intrinsic/executive/proto/behavior_tree_go_proto"
 	psmpb "intrinsic/skills/proto/processed_skill_manifest_go_proto"
 	smpb "intrinsic/skills/proto/skill_manifest_go_proto"
 	"intrinsic/util/archive/tartooling"
@@ -67,16 +66,27 @@ func makeSkillAssetHandlers(manifest *smpb.SkillManifest, opts ProcessSkillOpts)
 			if err != nil {
 				return fmt.Errorf("error processing image: %v", err)
 			}
-			processedAssets.DeploymentType = &psmpb.ProcessedSkillAssets_Image{Image: img}
+			processedAssets.DeploymentType = &psmpb.ProcessedSkillAssets_Image{
+				Image: img,
+			}
 			return nil
 		}
 	case *smpb.SkillAssets_BehaviorTreeFilename:
 		p := manifest.GetAssets().GetBehaviorTreeFilename()
-		bt := &psmpb.ProcessedSkillAssets_BehaviorTree{
-			BehaviorTree: &btpb.BehaviorTree{},
+		if opts.BehaviorTreeProcessor == nil {
+			handlers[p] = ignoreHandler
+		} else {
+			handlers[p] = func(r io.Reader) error {
+				cas, err := opts.BehaviorTreeProcessor(r)
+				if err != nil {
+					return fmt.Errorf("error processing behavior tree: %v", err)
+				}
+				processedAssets.DeploymentType = &psmpb.ProcessedSkillAssets_BehaviorTreeCasUri{
+					BehaviorTreeCasUri: cas,
+				}
+				return nil
+			}
 		}
-		processedAssets.DeploymentType = bt
-		handlers[p] = makeBinaryProtoHandler(bt.BehaviorTree)
 	}
 	return processedAssets, handlers
 }
@@ -114,10 +124,15 @@ func ReadSkillManifest(path string) (*smpb.SkillManifest, error) {
 	return m, nil
 }
 
+// BehaviorTreeProcessor is a closure that pushes a serialized behavior tree
+// to CAS and returns a reference to the stored object.
+type BehaviorTreeProcessor func(r io.Reader) (string, error)
+
 // ProcessSkillOpts contains the necessary handlers to generate a processed
 // skill manifest.
 type ProcessSkillOpts struct {
 	ImageProcessor
+	BehaviorTreeProcessor
 }
 
 // ProcessSkill creates a processed manifest from a bundle on disk using the

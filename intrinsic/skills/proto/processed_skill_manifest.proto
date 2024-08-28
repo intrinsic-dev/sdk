@@ -9,7 +9,6 @@ import "intrinsic/assets/proto/documentation.proto";
 import "intrinsic/assets/proto/id.proto";
 import "intrinsic/assets/proto/status_spec.proto";
 import "intrinsic/assets/proto/vendor.proto";
-import "intrinsic/executive/proto/behavior_tree.proto";
 import "intrinsic/kubernetes/workcell_spec/proto/image.proto";
 import "intrinsic/skills/proto/skill_manifest.proto";
 
@@ -51,8 +50,9 @@ message ProcessedSkillAssets {
   oneof deployment_type {
     // A container image for the skill with its service.
     workcell_spec.v1.Image image = 1;
+
     // A parameterizable behavior tree.
-    executive.BehaviorTree behavior_tree = 2;
+    string behavior_tree_cas_uri = 2;
   }
   // A complete descriptor set for the skill's parameter and execute_result
   // proto messages.
