@@ -8,6 +8,7 @@ import "intrinsic/perception/proto/hand_eye_calibration.proto";
 import "intrinsic/perception/proto/pattern_detection_config.proto";
 import "intrinsic/perception/proto/pose_estimator_id.proto";
 import "intrinsic/skills/apps/calibration/sample_calibration_poses.proto";
+import "intrinsic/skills/proto/skill_parameter_metadata.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 
 enum MotionType {
@@ -17,7 +18,7 @@ enum MotionType {
   MOTION_TYPE_LINEAR = 3;
 }
 
-// Next ID: 15
+// Next ID: 16
 message CollectCalibrationDataParams {
   reserved 1;
   reserved "pose_estimation_config_filename";
@@ -72,6 +73,13 @@ message CollectCalibrationDataParams {
   // individual waypoints. Using the return-to-base strategy can help to
   // increase robustness, e.g. in presence of a dress-pack.
   optional bool skip_return_to_base_between_waypoints = 14;
+
+  // Name of the ICON arm part to control. If not provided but only a single
+  // arm part is present in the ICON instance, that part will be used.
+  optional intrinsic_proto.world.ObjectReference arm_part = 15
+      [(intrinsic_proto.skills.skill_parameter_metadata) = {
+        is_icon2_position_part: true
+      }];
 }
 
 message CollectCalibrationDataResult {

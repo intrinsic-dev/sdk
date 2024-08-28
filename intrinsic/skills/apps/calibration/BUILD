@@ -16,6 +16,7 @@ proto_library(
         "//intrinsic/perception/proto:hand_eye_calibration",
         "//intrinsic/perception/proto:pattern_detection_config",
         "//intrinsic/perception/proto:pose_estimator_id_proto",
+        "//intrinsic/skills/proto:skill_parameter_metadata_proto",
         "//intrinsic/world/proto:object_world_refs_proto",
     ],
 )
