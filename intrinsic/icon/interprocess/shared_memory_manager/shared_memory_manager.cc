@@ -35,7 +35,7 @@ namespace intrinsic::icon {
 inline constexpr mode_t kShmMode = 0644;
 // Max string size as defined in `segment_info.fbs`
 inline constexpr uint32_t kMaxSegmentStringSize = 255;
-inline constexpr uint32_t kMaxSegmentSize = 100;
+inline constexpr uint32_t kMaxSegmentSize = 200;
 
 namespace {
 absl::Status VerifyName(absl::string_view name) {

@@ -17,5 +17,5 @@ struct SegmentInfo {
   // We allow a maximum number of segment names.
   // We have to fix it in order to make the flatbuffer
   // a true fixed size datatype.
-  names:[SegmentName:100];
+  names:[SegmentName:200];
 }
