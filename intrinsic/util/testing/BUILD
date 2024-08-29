@@ -23,6 +23,7 @@ cc_library(
     deps = [
         ":status_payload_matchers",
         "@com_github_inazarenko_protobuf_matchers//protobuf-matchers",
+        "@com_google_absl//absl/status:status_matchers",
         "@com_google_cel_cpp//internal:testing",
         "@com_google_googletest//:gtest_main",
     ],

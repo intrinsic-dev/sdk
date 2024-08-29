@@ -36,10 +36,10 @@ namespace {
 
 using ::absl::LogSeverity;
 using ::absl::ScopedMockLog;
+using ::absl_testing::StatusIs;
 using ::intrinsic::testing::EqualsProto;
 using ::intrinsic::testing::StatusHasGenericPayload;
 using ::intrinsic::testing::StatusHasProtoPayload;
-using ::intrinsic::testing::StatusIs;
 using ::testing::_;
 using ::testing::AllOf;
 using ::testing::AnyOf;

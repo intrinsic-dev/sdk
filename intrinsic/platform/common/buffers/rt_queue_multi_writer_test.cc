@@ -16,7 +16,7 @@
 namespace intrinsic {
 namespace {
 
-using ::intrinsic::testing::StatusIs;
+using ::absl_testing::StatusIs;
 using ::testing::Optional;
 
 TEST(RealtimeQueueMultiWriterTest, SingleInsert) {

@@ -17,9 +17,9 @@ namespace intrinsic::icon {
 
 namespace {
 
+using ::absl_testing::IsOkAndHolds;
+using ::absl_testing::StatusIs;
 using ::intrinsic::testing::EqualsProto;
-using ::intrinsic::testing::IsOkAndHolds;
-using ::intrinsic::testing::StatusIs;
 using ::testing::ElementsAreArray;
 using ::testing::Eq;
 using ::testing::HasSubstr;
