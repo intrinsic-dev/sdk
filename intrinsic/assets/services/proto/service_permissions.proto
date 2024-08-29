@@ -1,0 +1,15 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.services;
+
+// ResourceRequirements describes the compute resource requirements for the
+// container running the service.
+// See:
+// https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits
+message ResourceRequirements {
+  // The maximimum of specific resources that a container can use.  Is also used
+  // as the requested amount of resources by default.
+  map<string, string> limits = 1;
+}

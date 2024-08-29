@@ -11,6 +11,7 @@ import "intrinsic/assets/proto/documentation.proto";
 import "intrinsic/assets/proto/id.proto";
 import "intrinsic/assets/proto/vendor.proto";
 import "intrinsic/assets/services/proto/service_http_config.proto";
+import "intrinsic/assets/services/proto/service_permissions.proto";
 import "intrinsic/kubernetes/workcell_spec/proto/image.proto";
 
 message ServiceMetadata {
@@ -55,6 +56,13 @@ message ServicePodSpec {
 message ServiceImage {
   // The image archive file.
   string archive_filename = 1;
+  // The settings for this specific image.
+  ServiceImageSettings settings = 2;
+}
+
+message ServiceImageSettings {
+  // The compute resource requirements for the container running the service.
+  ResourceRequirements resource_requirements = 3;
 }
 
 message ServiceAssets {
