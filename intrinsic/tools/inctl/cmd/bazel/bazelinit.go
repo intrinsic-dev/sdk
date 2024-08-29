@@ -53,6 +53,7 @@ type templateParams struct {
 	WorkspaceName          string
 	SDKRepository          string
 	SDKVersion             string
+	SDKStripPrefix         string
 	LocalSDKPath           string
 	SDKVersionDefaultValue string
 }
@@ -102,11 +103,14 @@ func RunInitCmd(params *InitCmdParams) (InitSuccessMessage, error) {
 	if strings.HasSuffix(SDKRepository, ".git") {
 		SDKRepository = strings.TrimSuffix(SDKRepository, ".git")
 	}
+	// Change any slashes in the SDK version to dashes. (b/362500909)
+	SDKStripPrefix := "sdk-" + strings.ReplaceAll(params.SdkVersion, "/", "-") + "/"
 
 	templateParams := &templateParams{
 		WorkspaceName:          filepath.Base(workspaceRoot),
 		SDKRepository:          SDKRepository,
 		SDKVersion:             params.SdkVersion,
+		SDKStripPrefix:         SDKStripPrefix,
 		LocalSDKPath:           params.LocalSDKPath,
 		SDKVersionDefaultValue: version.SDKVersionDefaultValue,
 	}

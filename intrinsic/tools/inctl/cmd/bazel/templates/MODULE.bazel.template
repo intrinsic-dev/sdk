@@ -16,7 +16,7 @@ archive_override(
     strip_prefix = "sdk-main/"
         {{- else -}}
     urls = "{{.SDKRepository}}/archive/refs/tags/{{.SDKVersion}}.tar.gz",
-    strip_prefix = "sdk-{{.SDKVersion}}/"
+    strip_prefix = "{{.SDKStripPrefix}}"
     {{- end}}
 )
 {{- else if .LocalSDKPath -}}
