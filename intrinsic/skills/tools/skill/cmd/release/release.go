@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"intrinsic/assets/bundleio"
 	"intrinsic/assets/clientutils"
 	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/idutils"
@@ -23,7 +24,9 @@ import (
 	"intrinsic/assets/imageutils"
 	skillcataloggrpcpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillcatalogpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
+	psmpb "intrinsic/skills/proto/processed_skill_manifest_go_proto"
 	skillmanifestpb "intrinsic/skills/proto/skill_manifest_go_proto"
+	"intrinsic/skills/tools/resource/cmd/bundleimages"
 	skillCmd "intrinsic/skills/tools/skill/cmd"
 	"intrinsic/skills/tools/skill/cmd/directupload"
 	"intrinsic/skills/tools/skill/cmd/registry"
@@ -137,6 +140,76 @@ func release(cmd *cobra.Command, conn *grpc.ClientConn, req *skillcatalogpb.Crea
 	return nil
 }
 
+type imageTransfererOpts struct {
+	cmd             *cobra.Command
+	conn            *grpc.ClientConn
+	useDirectUpload bool
+}
+
+func imageTransferer(opts imageTransfererOpts) imagetransfer.Transferer {
+	var transferer imagetransfer.Transferer
+	if opts.useDirectUpload {
+		dopts := []directupload.Option{
+			directupload.WithDiscovery(directupload.NewCatalogTarget(opts.conn)),
+			directupload.WithOutput(opts.cmd.OutOrStdout()),
+		}
+		transferer = directupload.NewTransferer(opts.cmd.Context(), dopts...)
+	}
+	return transferer
+}
+
+func skillRequestFromManifest() (*skillcatalogpb.CreateSkillRequest, error) {
+	manifest, err := getManifest()
+	if err != nil {
+		return nil, err
+	}
+	return &skillcatalogpb.CreateSkillRequest{
+		ManifestType: &skillcatalogpb.CreateSkillRequest_Manifest{
+			Manifest: manifest,
+		},
+		Version:      cmdFlags.GetFlagVersion(),
+		ReleaseNotes: cmdFlags.GetFlagReleaseNotes(),
+		Default:      cmdFlags.GetFlagDefault(),
+		OrgPrivate:   cmdFlags.GetFlagOrgPrivate(),
+	}, nil
+}
+
+type skillRequestFromBundleOpts struct {
+	flags      *cmdutils.CmdFlags
+	transferer imagetransfer.Transferer
+	target     string
+}
+
+func skillRequestFromBundle(opts skillRequestFromBundleOpts) (*skillcatalogpb.CreateSkillRequest, error) {
+	manifest, err := bundleio.ProcessSkill(opts.target, bundleio.ProcessSkillOpts{
+		ImageProcessor: bundleimages.CreateImageProcessor(imageutils.RegistryOptions{
+			Transferer: opts.transferer,
+			URI:        imageutils.GetRegistry(clientutils.ResolveCatalogProjectFromInctl(opts.flags)),
+		}),
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not read bundle file "+opts.target)
+	}
+	return &skillcatalogpb.CreateSkillRequest{
+		ManifestType: &skillcatalogpb.CreateSkillRequest_ProcessedSkillManifest{
+			ProcessedSkillManifest: manifest,
+		},
+		Version:      opts.flags.GetFlagVersion(),
+		Default:      opts.flags.GetFlagDefault(),
+		OrgPrivate:   opts.flags.GetFlagOrgPrivate(),
+		ReleaseNotes: opts.flags.GetFlagReleaseNotes(),
+	}, nil
+}
+
+func idVersionFromRequest(req *skillcatalogpb.CreateSkillRequest) (string, error) {
+	if req.GetProcessedSkillManifest() != nil {
+		id := req.GetProcessedSkillManifest().GetMetadata().GetId()
+		return idutils.IDVersionFrom(id.GetPackage(), id.GetName(), req.GetVersion())
+	}
+	id := req.GetManifest().GetId()
+	return idutils.IDVersionFrom(id.GetPackage(), id.GetName(), req.GetVersion())
+}
+
 func remoteOpt() remote.Option {
 	return remote.WithAuthFromKeychain(google.Keychain)
 }
@@ -147,6 +220,8 @@ var releaseExamples = strings.Join(
   $ inctl skill release --type=build //abc:skill.tar ...`,
 		`Upload and release a skill image to the skill catalog:
   $ inctl skill release --type=archive /path/to/skill.tar ...`,
+		`Upload and release a skill bundle to the skill catalog:
+  $ inctl skill release --type=bundle /path/to/skill_bundle.tar ...`,
 	},
 	"\n\n",
 )
@@ -162,21 +237,6 @@ var releaseCmd = &cobra.Command{
 		targetType := cmdFlags.GetFlagSkillReleaseType()
 		project := clientutils.ResolveCatalogProjectFromInctl(cmdFlags)
 
-		manifest, err := getManifest()
-		if err != nil {
-			return err
-		}
-
-		req := &skillcatalogpb.CreateSkillRequest{
-			ManifestType: &skillcatalogpb.CreateSkillRequest_Manifest{
-				Manifest: manifest,
-			},
-			Version:      cmdFlags.GetFlagVersion(),
-			ReleaseNotes: cmdFlags.GetFlagReleaseNotes(),
-			Default:      cmdFlags.GetFlagDefault(),
-			OrgPrivate:   cmdFlags.GetFlagOrgPrivate(),
-		}
-
 
 		useDirectUpload := true
 		needConn := true
@@ -191,25 +251,31 @@ var releaseCmd = &cobra.Command{
 			defer conn.Close()
 		}
 
-		// Functions to prepare each release type.
-		pushSkillPreparer := func() error {
-			if dryRun {
-				log.Printf("Skipping pushing skill %q to the container registry (dry-run)", target)
-				return nil
-			}
+		var transferer imagetransfer.Transferer
+		if targetType != "pbt" {
+			transferer = imageTransferer(imageTransfererOpts{
+				cmd:             cmd,
+				conn:            conn,
+				useDirectUpload: useDirectUpload,
+			})
+		}
 
-			var transferer imagetransfer.Transferer
-			if useDirectUpload {
-				opts := []directupload.Option{
-					directupload.WithDiscovery(directupload.NewCatalogTarget(conn)),
-					directupload.WithOutput(cmd.OutOrStdout()),
-				}
-				transferer = directupload.NewTransferer(cmd.Context(), opts...)
+		// Functions to prepare each release type.
+		pushSkillPreparer := func() (*skillcatalogpb.CreateSkillRequest, error) {
+			req, err := skillRequestFromManifest()
+			if err != nil {
+				return nil, err
 			}
 			imageTag, err := imageutils.GetAssetVersionImageTag("skill", cmdFlags.GetFlagVersion())
 			if err != nil {
-				return err
+				return nil, err
 			}
+
+			if dryRun {
+				log.Printf("Skipping pushing skill %q to the container registry (dry-run)", target)
+				return req, nil
+			}
+
 			imgpb, _, err := registry.PushSkill(target, registry.PushOptions{
 				Registry:   imageutils.GetRegistry(project),
 				Tag:        imageTag,
@@ -217,26 +283,57 @@ var releaseCmd = &cobra.Command{
 				Transferer: transferer,
 			})
 			if err != nil {
-				return fmt.Errorf("could not push target %q to the container registry: %v", target, err)
+				return nil, fmt.Errorf("could not push target %q to the container registry: %v", target, err)
 			}
 			req.DeploymentType = &skillcatalogpb.CreateSkillRequest_Image{Image: imgpb}
-
-			return nil
+			return req, nil
 		}
-		releasePreparers := map[string]func() error{
+		bundlePreparer := func() (*skillcatalogpb.CreateSkillRequest, error) {
+			if dryRun {
+				manifest, err := bundleio.ReadSkillManifest(target)
+				if err != nil {
+					return nil, fmt.Errorf("failed to read skill manifest from bundle: %v", err)
+				}
+				log.Printf("Skipping pushing skill %q to the container registry (dry-run)", target)
+				return &skillcatalogpb.CreateSkillRequest{
+					ManifestType: &skillcatalogpb.CreateSkillRequest_ProcessedSkillManifest{
+						ProcessedSkillManifest: &psmpb.ProcessedSkillManifest{
+							Metadata: &psmpb.SkillMetadata{
+								Id: manifest.GetId(),
+							},
+						},
+					},
+					Version:      cmdFlags.GetFlagVersion(),
+					Default:      cmdFlags.GetFlagDefault(),
+					OrgPrivate:   cmdFlags.GetFlagOrgPrivate(),
+					ReleaseNotes: cmdFlags.GetFlagReleaseNotes(),
+				}, nil
+			}
+			return skillRequestFromBundle(skillRequestFromBundleOpts{
+				flags:      cmdFlags,
+				transferer: transferer,
+				target:     target,
+			})
+		}
+
+		releasePreparers := map[string]func() (*skillcatalogpb.CreateSkillRequest, error){
 			"archive": pushSkillPreparer,
 			"build":   pushSkillPreparer,
 			"image":   pushSkillPreparer,
+			"bundle":  bundlePreparer,
 		}
 
 		// Prepare the release based on the specified release type.
-		if prepareRelease, ok := releasePreparers[targetType]; !ok {
+		prepareRelease, ok := releasePreparers[targetType]
+		if !ok {
 			return fmt.Errorf("unknown release type %q", targetType)
-		} else if err := prepareRelease(); err != nil {
+		}
+		req, err := prepareRelease()
+		if err != nil {
 			return err
 		}
 
-		idVersion, err := idutils.IDVersionFrom(manifest.GetId().GetPackage(), manifest.GetId().GetName(), req.GetVersion())
+		idVersion, err := idVersionFromRequest(req)
 		if err != nil {
 			return err
 		}
