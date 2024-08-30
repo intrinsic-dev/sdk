@@ -24,7 +24,6 @@ cc_library(
     ],
     deps = [
         ":transform_types_fbs_cc",
-        "//intrinsic/eigenmath",
         "@com_github_google_flatbuffers//:flatbuffers",
         "@com_gitlab_libeigen_eigen//:eigen",
     ],
