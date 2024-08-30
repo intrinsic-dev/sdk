@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	clustermanagergrpcpb "intrinsic/frontend/cloud/api/clustermanager_api_go_grpc_proto"
+	clustermanagergrpcpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
 	"intrinsic/frontend/cloud/devicemanager/shared"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/orgutil"

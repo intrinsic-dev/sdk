@@ -18,9 +18,9 @@ import (
 	"google.golang.org/grpc"
 
 	fmpb "google.golang.org/protobuf/types/known/fieldmaskpb"
-	clustermanagergrpcpb "intrinsic/frontend/cloud/api/clustermanager_api_go_grpc_proto"
+	clustermanagergrpcpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
 
-	clustermanagercpb "intrinsic/frontend/cloud/api/clustermanager_api_go_grpc_proto"
+	clustermanagercpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
 	"intrinsic/frontend/cloud/devicemanager/info"
 	"intrinsic/frontend/cloud/devicemanager/messages"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"

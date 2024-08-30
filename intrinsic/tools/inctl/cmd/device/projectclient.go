@@ -13,7 +13,7 @@ import (
 	"os"
 	"path/filepath"
 
-	clustermanagergrpcpb "intrinsic/frontend/cloud/api/clustermanager_api_go_grpc_proto"
+	clustermanagergrpcpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
 
 	"google.golang.org/grpc"
 	"intrinsic/frontend/cloud/devicemanager/shared"
