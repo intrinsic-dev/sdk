@@ -149,16 +149,16 @@ std::string CreateDotGraphvizStateMachineString(
     states.insert(transition.second);
   }
   for (const auto& state : states) {
-    dot_string += absl::StrCat(
-        "  ", intrinsic_fbs::EnumNameStateCode(state), " [label=\"",
-        intrinsic_fbs::EnumNameStateCode(state), "\"];\n");
+    absl::StrAppend(&dot_string, "  ", intrinsic_fbs::EnumNameStateCode(state),
+                    " [label=\"", intrinsic_fbs::EnumNameStateCode(state),
+                    "\"];\n");
   }
 
   // Add edges (transitions)
   for (const auto& transition : transitions) {
-    dot_string += absl::StrCat(
-        "  ", intrinsic_fbs::EnumNameStateCode(transition.first), " -> ",
-        intrinsic_fbs::EnumNameStateCode(transition.second), ";\n");
+    absl::StrAppend(&dot_string, "  ",
+                    intrinsic_fbs::EnumNameStateCode(transition.first), " -> ",
+                    intrinsic_fbs::EnumNameStateCode(transition.second), ";\n");
   }
 
   dot_string += "}\n";

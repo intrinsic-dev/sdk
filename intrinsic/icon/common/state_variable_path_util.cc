@@ -27,7 +27,7 @@ std::string BuildStateVariablePath(
 std::string StateVariablePathNode::ToString() const {
   std::string result = name;
   if (index.has_value()) {
-    result += absl::StrCat("[", index.value(), "]");
+    absl::StrAppend(&result, "[", index.value(), "]");
   }
   return result;
 }
