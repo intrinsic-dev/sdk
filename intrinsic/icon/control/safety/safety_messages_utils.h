@@ -9,6 +9,8 @@
 #include <type_traits>
 
 #include "absl/strings/string_view.h"
+#include "flatbuffers/detached_buffer.h"
+#include "intrinsic/icon/control/safety/extern/safety_status.fbs.h"
 #include "intrinsic/icon/control/safety/safety_messages.fbs.h"
 
 namespace intrinsic::safety::messages {

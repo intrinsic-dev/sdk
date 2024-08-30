@@ -2,7 +2,6 @@
 
 #include "intrinsic/icon/control/safety/safety_messages_utils.h"
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <bitset>
@@ -10,8 +9,9 @@
 #include <limits>
 #include <string>
 
-#include "flatbuffers/flatbuffers.h"
-#include "intrinsic/util/testing/gtest_wrapper.h"
+#include "flatbuffers/buffer.h"
+#include "intrinsic/icon/control/safety/extern/safety_status.fbs.h"
+#include "intrinsic/icon/control/safety/safety_messages.fbs.h"
 
 namespace intrinsic::safety::messages {
 namespace {

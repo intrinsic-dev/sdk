@@ -8,6 +8,8 @@
 #include <cstring>
 #include <string>
 
+#include "flatbuffers/detached_buffer.h"
+#include "flatbuffers/flatbuffer_builder.h"
 #include "intrinsic/icon/control/safety/extern/safety_status.fbs.h"
 #include "intrinsic/icon/control/safety/safety_messages.fbs.h"
 

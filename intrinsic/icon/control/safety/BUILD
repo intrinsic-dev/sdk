@@ -40,6 +40,7 @@ cc_library(
     deps = [
         ":safety_messages_fbs_cc",
         "//intrinsic/icon/control/safety/extern:safety_status_fbs_cc",
+        "@com_github_google_flatbuffers//:runtime_cc",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -48,7 +49,9 @@ cc_test(
     name = "safety_messages_fbs_utils_test",
     srcs = ["safety_messages_utils_test.cc"],
     deps = [
+        ":safety_messages_fbs_cc",
         ":safety_messages_fbs_utils",
+        "//intrinsic/icon/control/safety/extern:safety_status_fbs_cc",
         "//intrinsic/util/testing:gtest_wrapper",
         "@com_github_google_flatbuffers//:flatbuffers",
     ],
