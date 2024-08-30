@@ -72,7 +72,8 @@ go_library(
         "//intrinsic/assets:clientutils",
         "//intrinsic/assets:cmdutils",
         "//intrinsic/assets:idutils",
-        "//intrinsic/resources/proto:resource_registry_go_grpc_proto",
+        "//intrinsic/assets/proto:asset_type_go_proto",
+        "//intrinsic/assets/proto:installed_assets_go_grpc_proto",
         "@com_github_spf13_cobra//:go_default_library",
     ],
 )

@@ -10,9 +10,14 @@ import (
 	"intrinsic/assets/clientutils"
 	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/idutils"
-	rrgrpcpb "intrinsic/resources/proto/resource_registry_go_grpc_proto"
-	rrpb "intrinsic/resources/proto/resource_registry_go_grpc_proto"
+	atpb "intrinsic/assets/proto/asset_type_go_proto"
+	iagrpcpb "intrinsic/assets/proto/installed_assets_go_grpc_proto"
+	iapb "intrinsic/assets/proto/installed_assets_go_grpc_proto"
 )
+
+func ptr[T any](value T) *T {
+	return &value
+}
 
 // GetCommand returns the command to list installed services in a cluster.
 func GetCommand() *cobra.Command {
@@ -39,14 +44,17 @@ func GetCommand() *cobra.Command {
 
 			var pageToken string
 			for {
-				client := rrgrpcpb.NewResourceRegistryClient(conn)
-				resp, err := client.ListServices(ctx, &rrpb.ListServicesRequest{
+				client := iagrpcpb.NewInstalledAssetsClient(conn)
+				resp, err := client.ListInstalledAssets(ctx, &iapb.ListInstalledAssetsRequest{
+					StrictFilter: &iapb.ListInstalledAssetsRequest_Filter{
+						AssetType: ptr(atpb.AssetType_ASSET_TYPE_SERVICE),
+					},
 					PageToken: pageToken,
 				})
 				if err != nil {
 					return fmt.Errorf("could not list services: %v", err)
 				}
-				for _, s := range resp.GetServices() {
+				for _, s := range resp.GetInstalledAssets() {
 					idVersion, err := idutils.IDVersionFromProto(s.GetMetadata().GetIdVersion())
 					if err != nil {
 						return fmt.Errorf("registry returned invalid id_version: %v", err)
