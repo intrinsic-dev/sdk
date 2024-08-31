@@ -17,11 +17,13 @@
 #include "absl/strings/string_view.h"
 #include "google/protobuf/any.pb.h"
 #include "google/rpc/status.pb.h"
+#include "intrinsic/assets/proto/status_spec.pb.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/skills/internal/runtime_data.h"
 #include "intrinsic/skills/proto/error.pb.h"
 #include "intrinsic/util/proto/type_url.h"
 #include "intrinsic/util/proto_time.h"
+#include "intrinsic/util/status/extended_status.pb.h"
 #include "intrinsic/util/status/status_conversion_rpc.h"
 
 namespace intrinsic {

@@ -13,6 +13,7 @@
 #include "intrinsic/icon/release/file_helpers.h"
 #include "intrinsic/skills/internal/skill_proto_utils.h"
 #include "intrinsic/skills/proto/skill_manifest.pb.h"
+#include "intrinsic/skills/proto/skill_service_config.pb.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::skills {

@@ -79,6 +79,7 @@ cc_library(
     hdrs = ["error_utils.h"],
     deps = [
         ":runtime_data",
+        "//intrinsic/assets/proto:status_spec_cc_proto",
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/skills/proto:error_cc_proto",
         "//intrinsic/util:proto_time",
