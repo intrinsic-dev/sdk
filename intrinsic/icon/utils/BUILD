@@ -1,7 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("//intrinsic/icon/testing:cc_test_and_malloc_test.bzl", "cc_test_and_malloc_test")
 
 package(default_visibility = ["//visibility:public"])

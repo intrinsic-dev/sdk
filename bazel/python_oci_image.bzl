@@ -3,8 +3,10 @@
 """Helpers for dealing with Python docker images."""
 
 load("@aspect_bazel_lib//lib:tar.bzl", "mtree_spec", "tar")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
-load("//bazel:container.bzl", "container_image")
+load(
+    "//bazel:container.bzl",
+    "container_image",
+)
 
 def python_oci_image(
         name,
@@ -97,22 +99,13 @@ def python_oci_image(
         compress = "gzip",
     )
 
-    # Layer with a single symlink to make the migration to rules_oci from rules_docker/py3_image backwards compatible.
-    # This is needed because the Aspect tar rule used above does not support `symlinks` or `package_dir` and I cannot
-    # atomically change the entry point in the yaml.
-    pkg_tar(
-        name = name + "_symlink_layer",
-        strip_prefix = "/",
-        symlinks = symlinks,
-    )
-
     container_image(
         name = name,
         layers = [
             ":" + name + "_interpreter_layer",
             ":" + name + "_packages_layer",
             ":" + name + "_app_layer",
-            ":" + name + "_symlink_layer",
         ] + (extra_tars if extra_tars else []),
+        symlinks = symlinks,
         **kwargs
     )

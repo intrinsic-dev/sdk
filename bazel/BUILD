@@ -9,6 +9,24 @@ package(default_visibility = ["//visibility:public"])
 exports_files(glob(["content_mirror/*"]))
 
 bzl_library(
+    name = "container_bzl",
+    srcs = ["container.bzl"],
+    deps = [
+        "@rules_oci//oci:defs",
+        "@rules_pkg//pkg:bzl_srcs",
+    ],
+)
+
+bzl_library(
+    name = "python_oci_image_bzl",
+    srcs = ["python_oci_image.bzl"],
+    deps = [
+        ":container_bzl",
+        "@aspect_bazel_lib//lib:tar",
+    ],
+)
+
+bzl_library(
     name = "go_macros",
     srcs = ["go_macros.bzl"],
 )
