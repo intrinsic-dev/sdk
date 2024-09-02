@@ -345,6 +345,5 @@ cc_library(
 
 cc_library(
     name = "force_stop_action_info",
-    srcs = [],
     hdrs = ["force_stop_action_info.h"],
 )
