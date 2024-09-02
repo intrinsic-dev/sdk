@@ -35,7 +35,7 @@ def _path_in_container(target):
 
 def _build_symlink(file, path_prefix):
     """Creates a symlink from <path_prefix>/<file name> to <file>."""
-    file_target = Label(file)
+    file_target = native.package_relative_label(file)
     package_path = file_target.package
     file_name = file_target.name
     symlink = path_prefix + file_name
@@ -55,7 +55,7 @@ def hardware_module_image(
       hardware_module_lib: The C++ library that defines the hardware module to generate an image for. If this arg is set, then `hardware_module_binary` must be unset.
       hardware_module_binary: A binary that implements the hardware module to generate an image for. If this arg is set, then `hardware_module_lib` must be unset.
       extra_files: Extra files to include in the image.
-      base_image: The base image to use for the docker_build 'base'.
+      base_image: The base image to use for the container_image 'base'.
       **kwargs: Additional arguments to pass to container_image().
     """
 
@@ -82,7 +82,7 @@ def hardware_module_image(
         symlinks.update(_build_symlink(file, "/data/"))
 
     # init_hwm is a wrapper to work around the restart backoff of Kubernetes.
-    init_hwm_tar = "//intrinsic/icon/utils:init_hwm_tar"
+    init_hwm_tar = Label("//intrinsic/icon/utils:init_hwm_tar")
     init_hwm_path = "/init_hwm"
 
     # Resources use the resource_context for configuration. They should not be called with `--config_pbtxt_file`.
@@ -92,10 +92,8 @@ def hardware_module_image(
         _path_in_container(hardware_module_binary),
     ]
 
-    init_hwm_layer = init_hwm_tar
-
     layers = kwargs.get("layers", [])
-    layers.append(init_hwm_layer)
+    layers.append(init_hwm_tar)
     kwargs["layers"] = layers
 
     container_image(

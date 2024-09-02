@@ -16,5 +16,6 @@ bzl_library(
     srcs = ["hardware_module_image.bzl"],
     deps = [
         ":hardware_module_binary_bzl",
+        "//bazel:container_bzl",
     ],
 )
