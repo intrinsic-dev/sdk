@@ -220,8 +220,13 @@ class Pose3 {
 
   template <typename H>
   friend H AbslHashValue(H h, const Pose3<Scalar, Options>& p) {
-    Eigen::Quaternion<Scalar, Options> q =
-        p.rotation_.quaternion().normalized();
+    Eigen::Quaternion<Scalar, Options> q = p.rotation_.quaternion();
+    // Doing the check is more computationally efficient than normalizing so we
+    // do the check first and avoid the computation in a lot of cases.
+    if (!p.rotation_.IsNormalizedQuaternion(q)) {
+      // Normalize the quaternion to ensure that we hash to the same values.
+      q.normalize();
+    }
     if (q.w() < 0) {
       // Since we have double coverage, we make the choice that we want to have
       // w be positive to ensure that we hash to the same values.
