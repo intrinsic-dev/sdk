@@ -4,18 +4,20 @@
 package install
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"log"
 
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/proto"
 	"intrinsic/assets/bundleio"
 	"intrinsic/assets/clientutils"
 	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/idutils"
 	"intrinsic/assets/imagetransfer"
-	iagrpcpb "intrinsic/assets/proto/installed_assets_go_grpc_proto"
-	iapb "intrinsic/assets/proto/installed_assets_go_grpc_proto"
+	installergrpcpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
+	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/skills/tools/resource/cmd/bundleimages"
 	"intrinsic/skills/tools/skill/cmd/directupload"
 )
@@ -82,28 +84,31 @@ func GetCommand() *cobra.Command {
 				return fmt.Errorf("could not read bundle file %q: %v", target, err)
 			}
 
-			id, err := idutils.IDFromProto(manifest.GetMetadata().GetId())
+			pkg := manifest.GetMetadata().GetId().GetPackage()
+			name := manifest.GetMetadata().GetId().GetName()
+			manifestBytes, err := proto.MarshalOptions{Deterministic: true}.Marshal(manifest)
 			if err != nil {
-				return fmt.Errorf("invalid id: %v", err)
+				return fmt.Errorf("could not marshal manifest: %v", err)
 			}
-			log.Printf("Installing service %q", id)
+			version := fmt.Sprintf("0.0.1+%x", sha256.Sum256(manifestBytes))
+			idVersion, err := idutils.IDVersionFrom(pkg, name, version)
+			if err != nil {
+				return fmt.Errorf("could not create id_version: %w", err)
+			}
+			log.Printf("Installing service %q", idVersion)
 
-			client := iagrpcpb.NewInstalledAssetsClient(conn)
+			client := installergrpcpb.NewInstallerServiceClient(conn)
 			authCtx := clientutils.AuthInsecureConn(ctx, address, flags.GetFlagProject())
 
 			// This needs an authorized context to pull from the catalog if not available.
-			if _, err := client.CreateInstalledAssets(authCtx, &iapb.CreateInstalledAssetsRequest{
-				Assets: []*iapb.CreateInstalledAssetsRequest_Asset{
-					&iapb.CreateInstalledAssetsRequest_Asset{
-						Variant: &iapb.CreateInstalledAssetsRequest_Asset_Service{
-							Service: manifest,
-						},
-					},
-				},
-			}); err != nil {
+			resp, err := client.InstallService(authCtx, &installerpb.InstallServiceRequest{
+				Manifest: manifest,
+				Version:  version,
+			})
+			if err != nil {
 				return fmt.Errorf("could not install the service: %v", err)
 			}
-			log.Printf("Finished installing %q", id)
+			log.Printf("Finished installing the service: %q", resp.GetIdVersion())
 
 			return nil
 		},

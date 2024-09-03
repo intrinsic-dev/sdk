@@ -57,11 +57,12 @@ go_library(
         "//intrinsic/assets:cmdutils",
         "//intrinsic/assets:idutils",
         "//intrinsic/assets:imagetransfer",
-        "//intrinsic/assets/proto:installed_assets_go_grpc_proto",
+        "//intrinsic/kubernetes/workcell_spec/proto:installer_go_grpc_proto",
         "//intrinsic/skills/tools/resource/cmd:bundleimages",
         "//intrinsic/skills/tools/skill/cmd/directupload",
         "@com_github_google_go_containerregistry//pkg/v1/remote:go_default_library",
         "@com_github_spf13_cobra//:go_default_library",
+        "@org_golang_google_protobuf//proto",
     ],
 )
 
@@ -85,8 +86,9 @@ go_library(
         "//intrinsic/assets:clientutils",
         "//intrinsic/assets:cmdutils",
         "//intrinsic/assets:idutils",
-        "//intrinsic/assets/proto:id_go_proto",
-        "//intrinsic/assets/proto:installed_assets_go_grpc_proto",
+        "//intrinsic/assets:version",
+        "//intrinsic/kubernetes/workcell_spec/proto:installer_go_grpc_proto",
+        "//intrinsic/resources/proto:resource_registry_go_grpc_proto",
         "@com_github_spf13_cobra//:go_default_library",
     ],
 )
