@@ -199,12 +199,8 @@ func PreRunOrganization(cmd *cobra.Command, vipr *viper.Viper) error {
 // However, it lets the user skip setting --org in case they prefer --context with a local context /
 // alias.
 func WrapCmdOptional(cmd *cobra.Command, vipr *viper.Viper) *cobra.Command {
-	cmd.PersistentFlags().StringP(KeyProject, "p", "",
-		`The Google Cloud Project (GCP) project to use. You can set the environment variable
-		INTRINSIC_PROJECT=project_name to set a default project name.`)
-	cmd.PersistentFlags().StringP(KeyOrganization, "", "",
-		`The Intrinsic organization to use. You can set the environment variable
-		INTRINSIC_ORGANIZATION=organization to set a default organization.`)
+	cmd.PersistentFlags().StringP(KeyProject, "p", "", "The Google Cloud Project (GCP) project to use.")
+	cmd.PersistentFlags().StringP(KeyOrganization, "", "", "The Intrinsic organization to use.")
 
 	oldPreRunE := cmd.PersistentPreRunE
 	cmd.PersistentPreRunE = func(c *cobra.Command, args []string) error {
