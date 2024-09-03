@@ -8,6 +8,7 @@
 
 #include <string>
 #include <typeinfo>
+#include <utility>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
@@ -64,8 +65,18 @@ class SharedMemoryManager final {
   // This class is move-only.
   SharedMemoryManager(const SharedMemoryManager& other) = delete;
   SharedMemoryManager& operator=(const SharedMemoryManager& other) = delete;
-  SharedMemoryManager(SharedMemoryManager&& other) = default;
-  SharedMemoryManager& operator=(SharedMemoryManager&& other) = default;
+  // We need to clear other.memory_segments_ on moves in order to avoid
+  // use-after-move bugs when accessing memory_segments_ in
+  // ~SharedMemoryManager.
+  SharedMemoryManager(SharedMemoryManager&& other)
+      : memory_segments_(std::move(other.memory_segments_)) {
+    other.memory_segments_.clear();
+  }
+  SharedMemoryManager& operator=(SharedMemoryManager&& other) {
+    memory_segments_ = std::move(other.memory_segments_);
+    other.memory_segments_.clear();
+    return *this;
+  }
   ~SharedMemoryManager();
 
   // Allocates a shared memory segment for the type `T` and initializes it with
