@@ -1,0 +1,17 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.skills;
+
+// The parameter for the echo skill
+message EchoSkillParams {
+  // The string to echo
+  string foo = 1;
+}
+
+// The return type for the echo skill
+message EchoSkillReturn {
+  // The echoed string
+  string foo = 2;
+}

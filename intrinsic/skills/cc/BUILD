@@ -201,3 +201,23 @@ cc_library(
         "@com_google_absl//absl/strings:str_format",
     ],
 )
+
+cc_test(
+    name = "skill_interface_utils_test",
+    srcs = ["skill_interface_utils_test.cc"],
+    deps = [
+        ":skill_interface",
+        ":skill_interface_utils",
+        "//intrinsic/skills/internal:preview_context_impl",
+        "//intrinsic/skills/proto:prediction_cc_proto",
+        "//intrinsic/skills/testing:echo_skill_cc_proto",
+        "//intrinsic/skills/testing:skill_test_utils_cc",
+        "//intrinsic/util/status:status_macros",
+        "//intrinsic/util/testing:gtest_wrapper",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_protobuf//:protobuf",
+    ],
+)

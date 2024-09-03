@@ -166,6 +166,7 @@ cc_proto_library(
 cc_grpc_library(
     name = "object_world_service_cc_grpc_proto",
     srcs = [":object_world_service_proto"],
+    generate_mocks = True,
     grpc_only = True,
     deps = [":object_world_service_cc_proto"],
 )
