@@ -254,6 +254,9 @@ message WorldMetadata {
   // The timestamp of the most recent update to this world.
   google.protobuf.Timestamp last_update = 7;
 
+  // Arbitrary user tag.
+  optional string user_tag = 8;
+
   reserved 4, 5;
   reserved "db_world_id", "dirty";
 }
@@ -609,6 +612,9 @@ message CloneWorldRequest {
   // if cloned_world_id is empty (the system automatically picks a new yet
   // unused ID).
   bool allow_overwrite = 6;
+
+  // Arbitrary user tag. If not set, the user tag of the base world is used.
+  optional string user_tag = 7;
 }
 
 message DeleteWorldRequest {
