@@ -182,6 +182,11 @@ py_proto_library(
     deps = [":matrix_proto"],
 )
 
+go_proto_library(
+    name = "matrix_go_proto",
+    deps = [":matrix_proto"],
+)
+
 proto_library(
     name = "cart_space_proto",
     srcs = ["cart_space.proto"],
