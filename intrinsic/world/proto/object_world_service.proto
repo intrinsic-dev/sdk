@@ -615,6 +615,7 @@ message CloneWorldRequest {
 
   // Arbitrary user tag. If not set, the user tag of the base world is used.
   optional string user_tag = 7;
+
 }
 
 message DeleteWorldRequest {
