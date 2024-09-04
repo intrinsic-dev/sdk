@@ -9,6 +9,7 @@ go_library(
     srcs = [
         "auth.go",
         "token_source.go",
+        "tokenshttp.go",
     ],
     deps = [
         "//intrinsic/kubernetes/acl:jwt",
