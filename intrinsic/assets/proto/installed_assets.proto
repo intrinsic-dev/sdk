@@ -87,7 +87,11 @@ message CreateInstalledAssetsRequest {
 
 message CreateInstalledAssetsMetadata {}
 
-message CreateInstalledAssetsResponse {}
+message CreateInstalledAssetsResponse {
+  // The description of the installed assets, in the order requested for
+  // installation.
+  repeated InstalledAsset installed_assets = 1;
+}
 
 message DeleteInstalledAssetsRequest {
   enum Policy {
