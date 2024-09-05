@@ -38,7 +38,7 @@ func TestNewTokensServiceClient(t *testing.T) {
 		if req.Header.Get("Content-Type") != "application/json" {
 			t.Errorf("Unexpected request content type: %q", req.Header.Get("Content-Type"))
 		}
-		var gotReq getIDTokenRequest
+		var gotReq GetIDTokenRequest
 		if err := json.NewDecoder(req.Body).Decode(&gotReq); err != nil {
 			t.Errorf("Failed to decode request: %v", err)
 		}

@@ -16,62 +16,63 @@ import (
 // TokensServiceClient is a HTTP-based client for the accounts tokens service.
 type TokensServiceClient struct {
 	client *http.Client
-	p      string
-	url    string
+	addr   string
 }
 
-var knownDomains = map[string]bool{
-	"flowstate-dev.intrinsic.ai": true,
-	"flowstate-qa.intrinsic.ai":  true,
-	"flowstate.intrinsic.ai":     true,
-}
-
-type getIDTokenRequest struct {
+// GetIDTokenRequest is the HTTP payload to request an ID token.
+type GetIDTokenRequest struct {
 	APIKey   string `json:"api_key"`
 	DoFanOut bool   `json:"do_fan_out"`
 }
 
-type getIDTokenResponse struct {
+// GetIDTokenResponse is the body format of a successful ID token response.
+type GetIDTokenResponse struct {
 	IDToken string `json:"IdToken"`
 }
 
 // NewTokensServiceClient creates a new client for the accounts tokens service.
-func NewTokensServiceClient(client *http.Client, gwDomain string) (*TokensServiceClient, error) {
-	if !knownDomains[gwDomain] {
-		return nil, fmt.Errorf("invalid flowstate domain: %q", gwDomain)
-	}
-	url := fmt.Sprintf("https://%s/api/v1/accountstokens:idtoken", gwDomain)
-	return &TokensServiceClient{client: client, url: url}, nil
+// addr is typically "flowstate.intrinsic.ai".
+func NewTokensServiceClient(client *http.Client, addr string) (*TokensServiceClient, error) {
+	return &TokensServiceClient{client: client, addr: addr}, nil
 }
 
 func (t *TokensServiceClient) Token(ctx context.Context, apiKey string) (string, error) {
-	req := &getIDTokenRequest{
+	resp, err := GetIDToken(ctx, t.client, t.addr, &GetIDTokenRequest{
 		APIKey:   apiKey,
 		DoFanOut: true,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to get ID token: %v", err)
 	}
+	return resp.IDToken, nil
+}
+
+// GetIDToken exchanges an API key for an ID token using the accounts tokens service via HTTP.
+func GetIDToken(ctx context.Context, cl *http.Client, addr string, req *GetIDTokenRequest) (*GetIDTokenResponse, error) {
+	url := fmt.Sprintf("https://%s/api/v1/accountstokens:idtoken", addr)
 	bd, err := json.Marshal(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal request: %v", err)
+		return nil, fmt.Errorf("failed to marshal request: %v", err)
 	}
-	r, err := http.NewRequestWithContext(ctx, http.MethodPost, t.url, bytes.NewBuffer(bd))
+	r, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(bd))
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %v", err)
+		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
 	r.Header.Set("Content-Type", "application/json")
-	resp, err := t.client.Do(r)
+	resp, err := cl.Do(r)
 	if err != nil {
-		return "", fmt.Errorf("failed to call accounts service: %v", err)
+		return nil, fmt.Errorf("failed to call accounts service: %v", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("accounts service returned %d", resp.StatusCode)
+		return nil, fmt.Errorf("accounts service returned %d", resp.StatusCode)
 	}
-	var res getIDTokenResponse
+	var res GetIDTokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		return "", fmt.Errorf("failed to decode response: %v", err)
+		return nil, fmt.Errorf("failed to decode response: %v", err)
 	}
 	if res.IDToken == "" {
-		return "", fmt.Errorf("empty id token")
+		return nil, fmt.Errorf("empty id token")
 	}
-	return res.IDToken, nil
+	return &res, nil
 }
