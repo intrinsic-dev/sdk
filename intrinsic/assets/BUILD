@@ -166,7 +166,7 @@ go_library(
     deps = [
         ":idutils",
         "//intrinsic/assets/proto:id_go_proto",
-        "//intrinsic/resources/proto:resource_registry_go_grpc_proto",
+        "//intrinsic/assets/proto:installed_assets_go_grpc_proto",
         "@org_golang_google_protobuf//proto",
     ],
 )

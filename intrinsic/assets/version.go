@@ -13,8 +13,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"intrinsic/assets/idutils"
 	idpb "intrinsic/assets/proto/id_go_proto"
-	rrgrpcpb "intrinsic/resources/proto/resource_registry_go_grpc_proto"
-	rrpb "intrinsic/resources/proto/resource_registry_go_grpc_proto"
+	iagrpcpb "intrinsic/assets/proto/installed_assets_go_grpc_proto"
+	iapb "intrinsic/assets/proto/installed_assets_go_grpc_proto"
 )
 
 var (
@@ -25,7 +25,7 @@ var (
 // Autofill updates an unspecified version in an IdVersion proto to be the only
 // available version of the specified Id proto.  An error is returned if there
 // is not exactly one version installed.
-func Autofill(ctx context.Context, client rrgrpcpb.ResourceRegistryClient, idOrIDVersion *idpb.IdVersion) error {
+func Autofill(ctx context.Context, client iagrpcpb.InstalledAssetsClient, idOrIDVersion *idpb.IdVersion) error {
 	if idOrIDVersion.GetVersion() != "" {
 		return nil
 	}
@@ -47,17 +47,17 @@ func Autofill(ctx context.Context, client rrgrpcpb.ResourceRegistryClient, idOrI
 }
 
 // List returns all installed versions of a particular asset id.
-func List(ctx context.Context, client rrgrpcpb.ResourceRegistryClient, id *idpb.Id) ([]string, error) {
+func List(ctx context.Context, client iagrpcpb.InstalledAssetsClient, id *idpb.Id) ([]string, error) {
 	var versions []string
 	nextPageToken := ""
 	for {
-		resp, err := client.ListResources(ctx, &rrpb.ListResourcesRequest{
+		resp, err := client.ListInstalledAssets(ctx, &iapb.ListInstalledAssetsRequest{
 			PageToken: nextPageToken,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve currently installed resources: %w", err)
 		}
-		for _, r := range resp.GetResources() {
+		for _, r := range resp.GetInstalledAssets() {
 			if proto.Equal(id, r.GetMetadata().GetIdVersion().GetId()) {
 				versions = append(versions, r.GetMetadata().GetIdVersion().GetVersion())
 			}

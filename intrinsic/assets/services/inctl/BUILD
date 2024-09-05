@@ -28,7 +28,7 @@ go_library(
         "//intrinsic/assets:version",
         "//intrinsic/assets/proto:asset_deployment_go_grpc_proto",
         "//intrinsic/assets/proto:asset_type_go_proto",
-        "//intrinsic/resources/proto:resource_registry_go_grpc_proto",
+        "//intrinsic/assets/proto:installed_assets_go_grpc_proto",
         "@com_github_spf13_cobra//:go_default_library",
         "@com_google_cloud_go_longrunning//autogen/longrunningpb",
         "@org_golang_google_protobuf//proto",

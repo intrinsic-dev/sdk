@@ -20,8 +20,8 @@ import (
 	adgrpcpb "intrinsic/assets/proto/asset_deployment_go_grpc_proto"
 	adpb "intrinsic/assets/proto/asset_deployment_go_grpc_proto"
 	atpb "intrinsic/assets/proto/asset_type_go_proto"
+	iagrpcpb "intrinsic/assets/proto/installed_assets_go_grpc_proto"
 	"intrinsic/assets/version"
-	rrgrpcpb "intrinsic/resources/proto/resource_registry_go_grpc_proto"
 )
 
 const (
@@ -73,7 +73,7 @@ $ inctl service add ai.intrinsic.basler_camera \
 			}
 			defer conn.Close()
 
-			if err := version.Autofill(ctx, rrgrpcpb.NewResourceRegistryClient(conn), idv); err != nil {
+			if err := version.Autofill(ctx, iagrpcpb.NewInstalledAssetsClient(conn), idv); err != nil {
 				return err
 			}
 			idVersion, err := idutils.IDVersionFromProto(idv)
