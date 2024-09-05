@@ -99,43 +99,45 @@ func imagePbFromRef(imageRef string, imageName string, opts PushOptions) (*image
 	}, nil
 }
 
-func push(target string, image containerregistry.Image, imageName string, opts PushOptions) (*imagepb.Image, error) {
+func push(image containerregistry.Image, imageName string, opts PushOptions) (*imagepb.Image, error) {
 	targetType := imageutils.TargetType(opts.Type)
 	switch targetType {
 	case imageutils.Build, imageutils.Archive:
 		return pushImage(image, imageName, opts)
-	case imageutils.Image:
-		imageProto, err := imagePbFromRef(target, imageName, opts)
-		if err != nil {
-			return nil, err
-		}
-
-		sourceRegistry := imageProto.GetRegistry()
-		targetRegistry := opts.Registry
-		if strings.HasSuffix(targetRegistry, "/") {
-			targetRegistry = targetRegistry[:len(targetRegistry)-1]
-		}
-		if sourceRegistry == targetRegistry || targetRegistry == "" {
-			// Target image is already in the specified registry, so nothing to do.
-			return imageProto, nil
-		}
-
-		if opts.Tag == "" {
-			// We could probably recover the original tag, given the digest, but won't implement unless we
-			// need to.
-			if strings.HasPrefix(imageProto.GetTag(), "@") {
-				return nil, fmt.Errorf("tag is required when pushing an image with digest tag to a different registry")
-			}
-			if !strings.HasSuffix(imageProto.GetTag(), ":") {
-				return nil, fmt.Errorf("unexpected image proto tag: %s", imageProto.GetTag())
-			}
-			opts.Tag = imageProto.GetTag()[1:]
-		}
-
-		// Target is in a different registry, so we need to push the image to the specified registry.
-		return pushImage(image, imageName, opts)
 	}
 	return nil, fmt.Errorf("unimplemented target type: %v", targetType)
+}
+
+func pushFromRef(imgRef string, image containerregistry.Image, imageName string, opts PushOptions) (*imagepb.Image, error) {
+	imageProto, err := imagePbFromRef(imgRef, imageName, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	sourceRegistry := imageProto.GetRegistry()
+	targetRegistry := opts.Registry
+	if strings.HasSuffix(targetRegistry, "/") {
+		targetRegistry = targetRegistry[:len(targetRegistry)-1]
+	}
+	if sourceRegistry == targetRegistry || targetRegistry == "" {
+		// Target image is already in the specified registry, so nothing to do.
+		return imageProto, nil
+	}
+
+	if opts.Tag == "" {
+		// We could probably recover the original tag, given the digest, but won't implement unless we
+		// need to.
+		if strings.HasPrefix(imageProto.GetTag(), "@") {
+			return nil, fmt.Errorf("tag is required when pushing an image with digest tag to a different registry")
+		}
+		if !strings.HasSuffix(imageProto.GetTag(), ":") {
+			return nil, fmt.Errorf("unexpected image proto tag: %s", imageProto.GetTag())
+		}
+		opts.Tag = imageProto.GetTag()[1:]
+	}
+
+	// Target is in a different registry, so we need to push the image to the specified registry.
+	return pushImage(image, imageName, opts)
 }
 
 // PushSkill is a helper function that takes a target string and pushes the
@@ -144,8 +146,8 @@ func push(target string, image containerregistry.Image, imageName string, opts P
 // Returns the image and associated SkillInstallerParams.
 func PushSkill(target string, opts PushOptions) (*imagepb.Image, *imageutils.SkillInstallerParams, error) {
 	targetType := imageutils.TargetType(opts.Type)
-	if targetType != imageutils.Build && targetType != imageutils.Archive && targetType != imageutils.Image {
-		return nil, nil, fmt.Errorf("type must be in {%s,%s,%s}", imageutils.Build, imageutils.Archive, imageutils.Image)
+	if targetType != imageutils.Build && targetType != imageutils.Archive {
+		return nil, nil, fmt.Errorf("type must be in {%s,%s}", imageutils.Build, imageutils.Archive)
 	}
 
 	image, err := imageutils.GetImage(target, targetType, opts.Transferer)
@@ -156,7 +158,27 @@ func PushSkill(target string, opts PushOptions) (*imagepb.Image, *imageutils.Ski
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not extract labels from image object: %v", err)
 	}
-	imgpb, err := push(target, image, installerParams.ImageName, opts)
+	imgpb, err := push(image, installerParams.ImageName, opts)
+	if err != nil {
+		return nil, nil, err
+	}
+	return imgpb, installerParams, err
+}
+
+// PushSkillFromRef is a helper function that takes an image ref and pushes the
+// skill image to the container registry.
+//
+// Returns the image and associated SkillInstallerParams.
+func PushSkillFromRef(imgRef string, opts PushOptions) (*imagepb.Image, *imageutils.SkillInstallerParams, error) {
+	image, err := imageutils.GetImageFromRef(imgRef, opts.Transferer)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not read image: %v", err)
+	}
+	installerParams, err := imageutils.GetSkillInstallerParams(image)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not extract labels from image object: %v", err)
+	}
+	imgpb, err := pushFromRef(imgRef, image, installerParams.ImageName, opts)
 	if err != nil {
 		return nil, nil, err
 	}

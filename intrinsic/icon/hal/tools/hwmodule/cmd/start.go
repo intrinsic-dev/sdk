@@ -156,7 +156,7 @@ var startCmd = &cobra.Command{
 		ctx := cmd.Context()
 
 		// Get the path to the image's tarball.
-		imagePath, err := imageutil.GetImagePath(target, targetType)
+		imagePath, err := imageutils.GetImagePath(target, targetType)
 		if err != nil {
 			return fmt.Errorf("could not find valid image path: %w", err)
 		}
@@ -249,9 +249,9 @@ func init() {
 	startCmd.PersistentFlags().StringVar(&flagAuthPassword, "auth_password", "", "(optional) The password used to authenticate private container registry access.")
 	startCmd.PersistentFlags().StringVar(&flagInstallerAddress, "installer_address", "xfa.lan:17080", "The address of the installer service.")
 	startCmd.PersistentFlags().StringVar(&flagRegistryName, "registry_name", "", "The name of the registry where the hardware module image is to be pushed.")
-	startCmd.PersistentFlags().StringVar(&flagTargetType, "target_type", "build", `The target type {"build","image"}:
-  "build" expects a build target which this tool will use to create a docker container image.
-  "image" expects a file path pointing to an already-built image.`)
+	startCmd.PersistentFlags().StringVar(&flagTargetType, "target_type", "build", `The target type {"archive","build"}:
+  "archive" expects a file path pointing to an already-built image.
+  "build" expects a build target which this tool will use to create a docker container image.`)
 	startCmd.PersistentFlags().BoolVar(&flagSkipDirectUpload, "skip_direct_upload", false, "If true, the module will first be uploaded to a container registry before it is downloaded and installed on the cluster.")
 	startCmd.PersistentFlags().StringVar(&flagRtpcHostname, "rtpc_hostname", "", "The hostname of the rtpc node to install this module on.")
 	startCmd.PersistentFlags().StringVar(&flagHardwareModuleName, "hardware_module_name", "", "The name of the hw module, which should match the machine.xml config.")

@@ -344,7 +344,6 @@ func (cf *CmdFlags) AddFlagSideloadStartType() {
 %s	container image name`,
 		imageutils.Build,
 		imageutils.Archive,
-		imageutils.Image,
 	))
 }
 
@@ -364,7 +363,6 @@ func (cf *CmdFlags) AddFlagSideloadStopType(assetType string) {
 %s		%s name [deprecated: prefer to use %s]`,
 		imageutils.Build,
 		imageutils.Archive,
-		imageutils.Image,
 		imageutils.ID,
 		assetType,
 		imageutils.Name,

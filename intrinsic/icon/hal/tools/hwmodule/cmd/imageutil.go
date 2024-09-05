@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/v1"
 	"github.com/pkg/errors"
-	"intrinsic/assets/imageutils"
 )
 
 const (
@@ -19,16 +18,6 @@ const (
 // docker image that contains an ICON hardware module.
 type IconHardwareModuleInstallerParams struct {
 	ImageName string // the image name of the ICON HW Module
-}
-
-// GetImagePath returns the image path.
-func GetImagePath(target string, targetType imageutils.TargetType) (string, error) {
-	switch targetType {
-	case imageutils.Image:
-		return target, nil
-	default:
-		return imageutils.GetImagePath(target, targetType)
-	}
 }
 
 // GetIconHardwareModuleInstallerParams retrieves docker image labels that are needed by the installer.

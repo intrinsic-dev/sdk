@@ -33,11 +33,8 @@ $ inctl skill install --type=build //abc:skill.tar --registry=gcr.io/my-registry
 Upload skill image to a container registry, and install the skill
 $ inctl skill install --type=archive abc/skill.tar --registry=gcr.io/my-registry --cluster=my_cluster
 
-Install skill using an image that has already been pushed to the container registry
-$ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --cluster=my_cluster
-
 Use the solution flag to automatically resolve the cluster (requires the solution to run)
-$ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --solution=my-solution
+$ inctl skill install --type=archive abc/skill.tar --solution=my-solution
 `,
 	Args: cobra.ExactArgs(1),
 	Aliases: []string{
@@ -68,15 +65,7 @@ $ inctl skill install --type=image gcr.io/my-workcell/abc@sha256:20ab4f --soluti
 			return err
 		}
 		transfer := imagetransfer.RemoteTransferer(remoteOpt)
-		// if --type=image we are going to skip direct injection as image is already
-		// available in the repository and as such push is essentially no-op. Given
-		// than underlying code requires image inspection, command have to have
-		// access to given image and thus there should not be an issue to get
-		// image during installation. The main reason we are skipping here
-		// is that direct injection does not allow to read image from workcell
-		// thus making request of --type=image invalid from DI perspective.
-		if imageutils.TargetType(cmdFlags.GetFlagSideloadStartType()) != imageutils.Image &&
-			!cmdFlags.GetFlagSkipDirectUpload() {
+		if !cmdFlags.GetFlagSkipDirectUpload() {
 			opts := []directupload.Option{
 				directupload.WithDiscovery(directupload.NewFromConnection(conn)),
 				directupload.WithOutput(command.OutOrStdout()),

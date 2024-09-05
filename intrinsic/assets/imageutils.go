@@ -71,8 +71,6 @@ const (
 	Build TargetType = "build"
 	// Archive mode assumes the given target points to an already-built image
 	Archive TargetType = "archive"
-	// Image mode assumes the given target is an image name
-	Image TargetType = "image"
 	// Name mode assumes the target is the skill name (only used for stop)
 	Name TargetType = "name"
 	ID TargetType = "id"
@@ -283,19 +281,22 @@ func GetImage(target string, targetType TargetType, t imagetransfer.Transferer) 
 			return nil, fmt.Errorf("could not read image: %v", err)
 		}
 		return image, nil
-	case Image:
-		ref, err := name.ParseReference(target)
-		if err != nil {
-			return nil, fmt.Errorf("could not parse image reference %q: %v", target, err)
-		}
-		image, err := t.Read(ref)
-		if err != nil {
-			return nil, fmt.Errorf("could not access image %s: %v", ref.Name(), err)
-		}
-		return image, nil
 	default:
 		return nil, fmt.Errorf("unimplemented target type: %v", targetType)
 	}
+}
+
+// GetImageFromRef returns an Image from the given image reference.
+func GetImageFromRef(imgRef string, t imagetransfer.Transferer) (containerregistry.Image, error) {
+	ref, err := name.ParseReference(imgRef)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse image reference %q: %v", imgRef, err)
+	}
+	image, err := t.Read(ref)
+	if err != nil {
+		return nil, fmt.Errorf("could not access image %s: %v", ref.Name(), err)
+	}
+	return image, nil
 }
 
 func getOutputFiles(target string) ([]string, error) {
@@ -343,7 +344,7 @@ func SkillIDFromTarget(target string, targetType TargetType, t imagetransfer.Tra
 			return "", fmt.Errorf("could not extract a skill id from the given build target %s: %v", target, err)
 		}
 		return SkillIDFromTarget(archivePath, Archive, t)
-	case Archive, Image:
+	case Archive:
 		image, err := GetImage(target, targetType, t)
 		if err != nil {
 			return "", fmt.Errorf("could not read image: %v", err)

@@ -29,9 +29,6 @@ $ inctl skill uninstall --type=build //abc:skill.tar --context=minikube
 Stop a running skill using an already-built image file
 $ inctl skill uninstall --type=archive abc/skill.tar --context=minikube
 
-Stop a running skill using an already-pushed image
-$ inctl skill uninstall --type=image gcr.io/my-workcell/abc@sha256:20ab4f --context=minikube
-
 Use the solution flag to automatically resolve the context (requires the solution to run)
 $ inctl skill uninstall --type=archive abc/skill.tar --solution=my-solution
 
@@ -51,8 +48,8 @@ $ inctl skill uninstall --type=id skill
 		target := args[0]
 
 		targetType := imageutils.TargetType(cmdFlags.GetFlagSideloadStopType())
-		if targetType != imageutils.Build && targetType != imageutils.Archive && targetType != imageutils.Image && targetType != imageutils.ID && targetType != imageutils.Name {
-			return fmt.Errorf("type must be one of (%s, %s, %s, %s, %s)", imageutils.Build, imageutils.Archive, imageutils.Image, imageutils.ID, imageutils.Name)
+		if targetType != imageutils.Build && targetType != imageutils.Archive && targetType != imageutils.ID && targetType != imageutils.Name {
+			return fmt.Errorf("type must be one of (%s, %s, %s, %s)", imageutils.Build, imageutils.Archive, imageutils.ID, imageutils.Name)
 		}
 
 		ctx, conn, address, err := clientutils.DialClusterFromInctl(ctx, cmdFlags)
