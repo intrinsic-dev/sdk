@@ -2,7 +2,6 @@
 
 """Build rules for creating Skill artifacts."""
 
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@rules_python//python:defs.bzl", "py_binary")
 load("//bazel:container.bzl", "container_image")
 load("//bazel:python_oci_image.bzl", "python_oci_image")
@@ -354,8 +353,6 @@ def build_symlinks(skill_service_name, skill_service_config_name):
         "/skills/skill_service": native.package_name() + "/" + skill_service_name,
     }
 
-# Generate a file containing the Docker image labels. This only works for rules_oci, as
-# rules_docker does not support a file containing labels as input to docker_build.
 def _skill_labels_impl(ctx):
     skill_id = ctx.attr.skill_id[SkillIdInfo]
     outputfile = ctx.actions.declare_file(ctx.label.name + ".labels")
@@ -369,7 +366,6 @@ def _skill_labels_impl(ctx):
         outputs = [outputfile],
         command = cmd,
     )
-
     return DefaultInfo(files = depset([outputfile]))
 
 _skill_labels = rule(
@@ -518,28 +514,21 @@ def py_skill(
     )
 
     # BUG fully-qualified imports on Bzlmod: https://github.com/bazelbuild/rules_python/issues/1679
-    binary_path = "/" + native.package_name() + "/" + binary_name
-    binary_path_with_repo = "/ai_intrinsic_sdks~override/" + binary_path
+    package_path = native.package_name() + "/" if native.package_name() else ""
+    binary_path = "/" + package_path + binary_name
+    binary_path_with_repo = "/ai_intrinsic_sdks~override" + binary_path
     symlinks = {
-        "/skills/skill_service_config.proto.bin": "/" + native.package_name() + "/" + skill_service_config_name + ".pbbin",
+        "/skills/skill_service_config.proto.bin": package_path + skill_service_config_name + ".pbbin",
         "/skills/skill_service": binary_path_with_repo,
         binary_path_with_repo: binary_path,
         binary_path_with_repo + ".py": binary_path + ".py",
     }
 
-    labels_name = "_%s_labels" % name
+    labels = "_%s_labels" % name
     _skill_labels(
-        name = labels_name,
+        name = labels,
         skill_id = skill_id_name,
         visibility = ["//visibility:private"],
-        tags = ["manual", "avoid_dep"],
-    )
-
-    pkg_tar(
-        name = name + "_files_tar",
-        srcs = [skill_service_config_name],
-        include_runfiles = False,
-        strip_prefix = "/external/ai_intrinsic_sdks~override",
         tags = ["manual", "avoid_dep"],
     )
 
@@ -547,10 +536,13 @@ def py_skill(
         name = name,
         base = "@distroless_python3",
         binary = binary_name,
-        extra_tars = [name + "_files_tar"],
+        directory = "/skills",
+        data_path = "/",
+        files = [skill_service_config_name],
         symlinks = symlinks,
         workdir = "/",
-        labels = labels_name,
+        labels = labels,
+        **kwargs
     )
 
     skill_bundle_name = "%s_bundle" % name
