@@ -221,7 +221,7 @@ var releaseExamples = strings.Join(
 		`Upload and release a skill image to the skill catalog:
   $ inctl skill release --type=archive /path/to/skill.tar ...`,
 		`Upload and release a skill bundle to the skill catalog:
-  $ inctl skill release --type=bundle /path/to/skill_bundle.tar ...`,
+  $ inctl skill release --type=bundle /path/to/skill.bundle.tar ...`,
 	},
 	"\n\n",
 )

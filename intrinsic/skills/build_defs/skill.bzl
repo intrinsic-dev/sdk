@@ -290,7 +290,7 @@ def _skill_bundle_impl(ctx):
     fds = ctx.attr.manifest[SkillManifestInfo].file_descriptor_set
 
     inputs = depset([manifest, fds], transitive = [ctx.attr.image.files])
-    bundle_output = ctx.outputs.bundle_out
+    bundle_output = ctx.outputs.bundle
 
     args = ctx.actions.args().add(
         "--manifest",
@@ -336,14 +336,15 @@ _skill_bundle = rule(
             mandatory = True,
             providers = [SkillManifestInfo],
         ),
+        "bundle": attr.output(
+            mandatory = True,
+            doc = "The name of the output bundle file.",
+        ),
         "_skillbundlegen": attr.label(
             default = Label("//intrinsic/skills/build_defs:skillbundlegen"),
             cfg = "exec",
             executable = True,
         ),
-    },
-    outputs = {
-        "bundle_out": "%{name}.tar",
     },
 )
 
@@ -459,6 +460,7 @@ def cc_skill(
     _skill_bundle(
         name = skill_bundle_name,
         image = name + ".tar",
+        bundle = "%s.bundle.tar" % name,
         manifest = manifest,
     )
 
@@ -549,5 +551,6 @@ def py_skill(
     _skill_bundle(
         name = skill_bundle_name,
         image = name + ".tar",
+        bundle = "%s.bundle.tar" % name,
         manifest = manifest,
     )
