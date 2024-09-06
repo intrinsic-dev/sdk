@@ -38,6 +38,7 @@ go_library(
     name = "orgutil",
     srcs = ["orgutil.go"],
     deps = [
+        ":color",
         ":viperutil",
         "//intrinsic/tools/inctl/auth",
         "@com_github_pkg_errors//:go_default_library",

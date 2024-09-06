@@ -131,7 +131,6 @@ func TestWrapCmd(t *testing.T) {
 			t.Errorf("Unexpected error during test-run: %v", err)
 		}
 	})
-
 	t.Run("no-such-org", func(t *testing.T) {
 		// This one cannot be run in parallel as it touches the authStore
 		authStore = authtest.NewStoreForTest(t)

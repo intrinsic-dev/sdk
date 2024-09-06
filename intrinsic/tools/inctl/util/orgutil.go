@@ -182,6 +182,7 @@ func PreRunOrganizationOptional(cmd *cobra.Command, vipr *viper.Viper) error {
 func PreRunOrganization(cmd *cobra.Command, vipr *viper.Viper) error {
 	org := vipr.GetString(KeyOrganization)
 	project := vipr.GetString(KeyProject)
+
 	if project == "" && org == "" {
 		return errNoOrg
 	}
