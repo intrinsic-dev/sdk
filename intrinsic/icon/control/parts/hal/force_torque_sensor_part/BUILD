@@ -25,3 +25,8 @@ go_proto_library(
     ],
     deps = [":hal_force_torque_sensor_part_config_proto"],
 )
+
+cc_proto_library(
+    name = "hal_force_torque_sensor_part_config_cc_proto",
+    deps = [":hal_force_torque_sensor_part_config_proto"],
+)

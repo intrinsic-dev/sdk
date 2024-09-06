@@ -32,3 +32,11 @@ go_proto_library(
     ],
     deps = [":hal_arm_part_config_proto"],
 )
+
+cc_proto_library(
+    name = "hal_arm_part_config_cc_proto",
+    visibility = [
+        "//intrinsic/icon:__subpackages__",
+    ],
+    deps = [":hal_arm_part_config_proto"],
+)

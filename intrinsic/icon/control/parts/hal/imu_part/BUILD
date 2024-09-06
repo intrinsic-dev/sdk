@@ -26,3 +26,8 @@ go_proto_library(
     visibility = ["//visibility:private"],
     deps = [":hal_imu_part_config_proto"],
 )
+
+cc_proto_library(
+    name = "hal_imu_part_config_cc_proto",
+    deps = [":hal_imu_part_config_proto"],
+)

@@ -22,3 +22,8 @@ go_proto_library(
     visibility = ["//visibility:private"],
     deps = [":hal_adio_part_config_proto"],
 )
+
+cc_proto_library(
+    name = "hal_adio_part_config_cc_proto",
+    deps = [":hal_adio_part_config_proto"],
+)

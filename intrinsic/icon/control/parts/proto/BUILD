@@ -4,6 +4,10 @@
 
 load("//bazel:go_macros.bzl", "go_proto_library")
 
+package(default_visibility = [
+    "//visibility:public",
+])
+
 package_group(
     name = "icon",
     packages = [
