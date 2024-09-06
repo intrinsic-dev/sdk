@@ -462,6 +462,8 @@ def cc_skill(
         image = name + ".tar",
         bundle = "%s.bundle.tar" % name,
         manifest = manifest,
+        visibility = kwargs.get("visibility"),
+        testonly = kwargs.get("testonly"),
     )
 
 def py_skill(
@@ -553,4 +555,6 @@ def py_skill(
         image = name + ".tar",
         bundle = "%s.bundle.tar" % name,
         manifest = manifest,
+        visibility = kwargs.get("visibility"),
+        testonly = kwargs.get("testonly"),
     )
