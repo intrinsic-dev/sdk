@@ -14,6 +14,7 @@ message RegisterOrUpdateBehaviorTreeRequest {
 message RegisterOrUpdateBehaviorTreeResponse {}
 
 service BehaviorTreeRegistry {
+
   // Register a BehaviorTree skill in the skill registry.
   rpc RegisterOrUpdateBehaviorTree(RegisterOrUpdateBehaviorTreeRequest)
       returns (RegisterOrUpdateBehaviorTreeResponse) {}
