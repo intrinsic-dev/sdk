@@ -4,11 +4,6 @@ load("@rules_python//python:defs.bzl", "py_library", "py_test")
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(srcs = [
-    "robot_payload.py",
-    "robot_payload_test.py",
-])
-
 py_library(
     name = "robot_payload",
     srcs = ["robot_payload.py"],
