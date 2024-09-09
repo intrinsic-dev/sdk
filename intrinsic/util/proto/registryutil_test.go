@@ -105,6 +105,30 @@ func TestPopulateTypesFromFiles(t *testing.T) {
 
 }
 
+func TestPopulateTypesFromFilesBaseTypes(t *testing.T) {
+	aName := (&apb.A{}).ProtoReflect().Descriptor().FullName()
+
+	typesNoBase := new(protoregistry.Types)
+	if err := PopulateTypesFromFiles(typesNoBase, mustMakeFiles(t, diamondSet)); err != nil {
+		t.Errorf("PopulateTypesFromFiles(%v) = %v, want nil", diamondSet, err)
+	} else if msgType, err := typesNoBase.FindMessageByName(aName); err != nil {
+		t.Errorf("FindMessageByName(%v) = %v, want nil", aName, err)
+	} else if _, ok := msgType.New().Interface().(*apb.A); ok {
+		t.Errorf("PopulateTypesFromFiles() provided %T, expected dynamicpb.Message", msgType.New().Interface())
+	}
+
+	types := new(protoregistry.Types)
+	if err := PopulateTypesFromFilesWithOptions(types, mustMakeFiles(t, diamondSet), &PopulateTypesFromFilesOptions{
+		BaseTypes: protoregistry.GlobalTypes,
+	}); err != nil {
+		t.Errorf("PopulateTypesFromFilesWithOptions(%v) = %v, want nil", diamondSet, err)
+	} else if msgType, err := types.FindMessageByName(aName); err != nil {
+		t.Errorf("FindMessageByName(%v) = %v, want nil", aName, err)
+	} else if _, ok := msgType.New().Interface().(*apb.A); !ok {
+		t.Errorf("PopulateTypesFromFilesWithOptions() provided %T, expected apb.A", msgType.New().Interface())
+	}
+}
+
 func TestNewTypesFromFileDescriptorSet(t *testing.T) {
 	tests := []struct {
 		desc              string
@@ -162,6 +186,28 @@ func TestNewTypesFromFileDescriptorSet(t *testing.T) {
 		})
 	}
 
+}
+
+func TestNewTypesFromFileDescriptorSetBaseTypes(t *testing.T) {
+	aName := (&apb.A{}).ProtoReflect().Descriptor().FullName()
+
+	if typesNoBase, err := NewTypesFromFileDescriptorSet(diamondSet); err != nil {
+		t.Errorf("NewTypesFromFileDescriptorSet(%v) = %v, want nil", diamondSet, err)
+	} else if msgType, err := typesNoBase.FindMessageByName(aName); err != nil {
+		t.Errorf("FindMessageByName(%v) = %v, want nil", aName, err)
+	} else if _, ok := msgType.New().Interface().(*apb.A); ok {
+		t.Errorf("NewTypesFromFileDescriptorSetWithOptions() provided %T, expected dynamicpb.Message", msgType.New().Interface())
+	}
+
+	if types, err := NewTypesFromFileDescriptorSetWithOptions(diamondSet, &NewTypesFromFileDescriptorSetOptions{
+		BaseTypes: protoregistry.GlobalTypes,
+	}); err != nil {
+		t.Errorf("NewTypesFromFileDescriptorSetWithOptions(%v) = %v, want nil", diamondSet, err)
+	} else if msgType, err := types.FindMessageByName(aName); err != nil {
+		t.Errorf("FindMessageByName(%v) = %v, want nil", aName, err)
+	} else if _, ok := msgType.New().Interface().(*apb.A); !ok {
+		t.Errorf("NewTypesFromFileDescriptorSetWithOptions() provided %T, expected apb.A", msgType.New().Interface())
+	}
 }
 
 func TestReadTextAnyProtoWithResolver(t *testing.T) {
