@@ -131,6 +131,34 @@ func TestWrapCmd(t *testing.T) {
 			t.Errorf("Unexpected error during test-run: %v", err)
 		}
 	})
+	t.Run("org-env", func(t *testing.T) {
+		// This one cannot be run in parallel as it touches the authStore
+		authStore = authtest.NewStoreForTest(t)
+		authStore.WriteOrgInfo(&auth.OrgInfo{Project: "example-project", Organization: "intrinsic@example-project"})
+
+		vi := viper.New()
+		cmd := WrapCmd(&cobra.Command{
+			Run: func(*cobra.Command, []string) {
+				projectName := vi.GetString(KeyProject)
+				orgName := vi.GetString(KeyOrganization)
+
+				if projectName != "example-project" {
+					t.Errorf("Expected project to be example-project. Got: %q", projectName)
+				}
+
+				if orgName != "intrinsic" {
+					t.Errorf("Expect org to be intrinsic. Instead got: %q", orgName)
+				}
+			},
+		}, vi)
+
+		t.Setenv("INTRINSIC_ORG", "intrinsic@example-project")
+
+		if err := cmd.Execute(); err != nil {
+			t.Errorf("Unexpected error during test-run: %v", err)
+		}
+	})
+
 	t.Run("no-such-org", func(t *testing.T) {
 		// This one cannot be run in parallel as it touches the authStore
 		authStore = authtest.NewStoreForTest(t)
@@ -277,6 +305,62 @@ func TestWrapCmdOptional(t *testing.T) {
 		}, vi)
 
 		cmd.SetArgs([]string{"--org=otherorg"})
+		if err := cmd.Execute(); err != nil {
+			t.Errorf("Unexpected error during test-run: %v", err)
+		}
+	})
+	t.Run("org-env", func(t *testing.T) {
+		// This one cannot be run in parallel as it touches the authStore
+		authStore = authtest.NewStoreForTest(t)
+		authStore.WriteOrgInfo(&auth.OrgInfo{Project: "example-project", Organization: "intrinsic@example-project"})
+
+		vi := viper.New()
+		cmd := WrapCmdOptional(&cobra.Command{
+			Run: func(*cobra.Command, []string) {
+				projectName := vi.GetString(KeyProject)
+				orgName := vi.GetString(KeyOrganization)
+
+				if projectName != "example-project" {
+					t.Errorf("Expected project to be example-project. Got: %q", projectName)
+				}
+
+				if orgName != "intrinsic" {
+					t.Errorf("Expect org to be intrinsic. Instead got: %q", orgName)
+				}
+			},
+		}, vi)
+
+		t.Setenv("INTRINSIC_ORG", "intrinsic@example-project")
+		if err := cmd.Execute(); err != nil {
+			t.Errorf("Unexpected error during test-run: %v", err)
+		}
+	})
+
+	t.Run("org-env-flag-order-of-precedence", func(t *testing.T) {
+		// This one cannot be run in parallel as it touches the authStore
+		authStore = authtest.NewStoreForTest(t)
+		authStore.WriteOrgInfo(&auth.OrgInfo{Project: "flag-project", Organization: "intrinsic@flag-project"})
+		authStore.WriteOrgInfo(&auth.OrgInfo{Project: "env-project", Organization: "intrinsic@env-project"})
+
+		vi := viper.New()
+		cmd := WrapCmdOptional(&cobra.Command{
+			Run: func(*cobra.Command, []string) {
+				projectName := vi.GetString(KeyProject)
+				orgName := vi.GetString(KeyOrganization)
+
+				if projectName != "flag-project" {
+					t.Errorf("Expected project to be example-project. Got: %q", projectName)
+				}
+
+				if orgName != "intrinsic" {
+					t.Errorf("Expect org to be intrinsic. Instead got: %q", orgName)
+				}
+			},
+		}, vi)
+
+		t.Setenv("INTRINSIC_ORG", "intrinsic@env-project")
+		cmd.SetArgs([]string{"--org=intrinsic@flag-project"})
+
 		if err := cmd.Execute(); err != nil {
 			t.Errorf("Unexpected error during test-run: %v", err)
 		}
