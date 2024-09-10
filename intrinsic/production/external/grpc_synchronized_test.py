@@ -22,7 +22,9 @@ def parse_args():
 
 def main():
   args = parse_args()
-  assert 'name = "grpc", version = "1.66.0"' in args.module_bazel.read_text()
+  assert (
+      'name = "grpc", version = "1.66.0.bcr.2"' in args.module_bazel.read_text()
+  )
   assert "grpcio==1.66.0" in args.requirements_in.read_text()
   assert "grpcio==1.66.0" in args.requirements_txt.read_text()
 
