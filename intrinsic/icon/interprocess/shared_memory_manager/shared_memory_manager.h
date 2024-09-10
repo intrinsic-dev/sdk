@@ -68,11 +68,11 @@ class SharedMemoryManager final {
   // We need to clear other.memory_segments_ on moves in order to avoid
   // use-after-move bugs when accessing memory_segments_ in
   // ~SharedMemoryManager.
-  SharedMemoryManager(SharedMemoryManager&& other)
+  SharedMemoryManager(SharedMemoryManager&& other) noexcept
       : memory_segments_(std::move(other.memory_segments_)) {
     other.memory_segments_.clear();
   }
-  SharedMemoryManager& operator=(SharedMemoryManager&& other) {
+  SharedMemoryManager& operator=(SharedMemoryManager&& other) noexcept {
     memory_segments_ = std::move(other.memory_segments_);
     other.memory_segments_.clear();
     return *this;
