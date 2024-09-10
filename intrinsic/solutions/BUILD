@@ -419,6 +419,7 @@ py_library(
     srcs = ["pbt_registration.py"],
     srcs_version = "PY3",
     deps = [
+        ":behavior_tree",
         "//intrinsic/executive/proto:behavior_tree_py_pb2",
         "//intrinsic/skills/proto:behavior_tree_registry_py_pb2",
         "//intrinsic/skills/proto:behavior_tree_registry_py_pb2_grpc",

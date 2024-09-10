@@ -11,6 +11,7 @@ from intrinsic.executive.proto import behavior_tree_pb2
 from intrinsic.skills.proto import behavior_tree_registry_pb2
 from intrinsic.skills.proto import behavior_tree_registry_pb2_grpc
 from intrinsic.skills.proto import skill_registry_config_pb2
+from intrinsic.solutions import behavior_tree
 from intrinsic.util.grpc import error_handling
 
 
@@ -64,18 +65,25 @@ class BehaviorTreeRegistry:
 
     self._stub.RegisterOrUpdateBehaviorTree(request)
 
-  def sideload_behavior_tree(self, tree_proto: behavior_tree_pb2.BehaviorTree):
+  def sideload_behavior_tree(
+      self,
+      tree: behavior_tree_pb2.BehaviorTree | behavior_tree.BehaviorTree,
+  ):
     """Sideload a PBT.
 
     This will automatically generate a random version for the PBT's id version,
     so that the sideloaded PBT is registered as a new version in the registry.
 
     Args:
-      tree_proto: The PBT to sideload.
+      tree: The PBT to sideload.
 
     Raises:
       grpc.RpcError: When gRPC call fails.
     """
+    if isinstance(tree, behavior_tree.BehaviorTree):
+      tree_proto = tree.proto
+    else:
+      tree_proto = tree
     assert tree_proto.description
     skill_id = tree_proto.description.id
     version = str(uuid.uuid4()).replace('-', '_')
