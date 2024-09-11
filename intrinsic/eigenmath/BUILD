@@ -26,6 +26,10 @@ cc_library(
     deps = [
         ":eigenmath",
         ":rotation_utils",
+        "//intrinsic/icon/testing:realtime_annotations",
+        "//intrinsic/icon/utils:realtime_status",
+        "//intrinsic/icon/utils:realtime_status_or",
+        "//intrinsic/util/status:status_builder",
         "@com_gitlab_libeigen_eigen//:eigen",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",

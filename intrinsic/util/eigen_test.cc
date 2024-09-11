@@ -7,10 +7,10 @@
 
 #include <array>
 #include <cstddef>
+#include <limits>
 #include <string>
 #include <vector>
 
-#include "google/protobuf/repeated_field.h"
 #include "intrinsic/eigenmath/rotation_utils.h"
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/math/pose3.h"

@@ -78,7 +78,6 @@ cc_test(
         "//intrinsic/eigenmath:rotation_utils",
         "//intrinsic/math:pose3",
         "//intrinsic/util/testing:gtest_wrapper",
-        "@com_google_protobuf//:protobuf",
     ],
 )
 

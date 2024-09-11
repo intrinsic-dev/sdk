@@ -17,6 +17,10 @@
 #include "absl/status/status.h"
 #include "intrinsic/eigenmath/rotation_utils.h"
 #include "intrinsic/eigenmath/types.h"
+#include "intrinsic/icon/testing/realtime_annotations.h"
+#include "intrinsic/icon/utils/realtime_status.h"
+#include "intrinsic/icon/utils/realtime_status_or.h"
+#include "intrinsic/util/status/status_builder.h"
 
 namespace intrinsic {
 namespace eigenmath {
@@ -34,9 +38,68 @@ class SO3 {
 
   // Initializes with a rotation matrix
   //
-  // This function performs a singular value decomposition on the given matrix.
-  explicit SO3(const Matrix3<Scalar>& matrix) {
-    quaternion_ = OrthogonalizeRotationMatrix(matrix);
+  // If do_orthogonalize is set to true (default), the given matrix will be
+  // orthogonalized through a singular value decomposition.
+  explicit SO3(const Matrix3<Scalar>& matrix, bool do_orthogonalize = true) {
+    if (do_orthogonalize) {
+      quaternion_ = OrthogonalizeRotationMatrix(matrix);
+    } else {
+      quaternion_ = matrix;
+    }
+  }
+
+  // Creates a SO3 from `matrix`. This method is real-time safe.
+  // If do_orthogonalize is true (default), the matrix will be orthogonalized
+  // through a singular value decomposition.
+  // An error is returned if either
+  // - do_orthogonalize is true, but the derived rotation after
+  //   orthogonalization is not valid, or
+  // - do_orthogonalize is false and the given matrix is not orthogonal.
+  template <int OtherOptions = kDefaultOptions>
+  static icon::RealtimeStatusOr<SO3> FromMatrixRealtimeSafe(
+      const Matrix3<Scalar>& matrix,
+      bool do_orthogonalize = true) INTRINSIC_CHECK_REALTIME_SAFE {
+    Quaternion<OtherOptions> quaternion;
+    if (do_orthogonalize) {
+      quaternion = OrthogonalizeRotationMatrix(matrix);
+    } else {
+      quaternion = matrix;
+    }
+    if (!IsNormalizedQuaternion(quaternion)) {
+      return icon::InvalidArgumentError(
+          "Cannot create rotation from given matrix.");
+    }
+    return SO3(quaternion, kUnsafeCtor);
+  }
+
+  // Creates a SO3 from `matrix`. This method is not real-time safe but provides
+  // a detailed error message in case of failure.
+  // If do_orthogonalize is true (default), the matrix will be orthogonalized
+  // through a singular value decomposition.
+  // An error is returned if either
+  // - do_orthogonalize is true, but the derived rotation after
+  //   orthogonalization is not valid, or
+  // - do_orthogonalize is false and the given matrix is not orthogonal.
+  template <int OtherOptions = kDefaultOptions>
+  static absl::StatusOr<SO3> FromMatrix(const Matrix3<Scalar>& matrix,
+                                        bool do_orthogonalize = true) {
+    Quaternion<OtherOptions> quaternion;
+    if (do_orthogonalize) {
+      quaternion = OrthogonalizeRotationMatrix(matrix);
+    } else {
+      quaternion = matrix;
+    }
+    if (!IsNormalizedQuaternion(quaternion)) {
+      const Eigen::IOFormat inline_format(
+          Eigen::StreamPrecision, Eigen::DontAlignCols,
+          /*_coeffSeparator=*/", ", /*_rowSeparator=*/", ",
+          /*_rowPrefix=*/"[", /*_rowSuffix=*/"]",
+          /*_matPrefix=*/"[", /*_matSuffix=*/"].");
+      return intrinsic::InvalidArgumentErrorBuilder()
+             << "Cannot create rotation from matrix: "
+             << matrix.format(inline_format);
+    }
+    return SO3(quaternion, kUnsafeCtor);
   }
 
   // Initializes with RPY angles
@@ -66,19 +129,48 @@ class SO3 {
     }
   }
 
-  // Creates a SO3 from `quaternion` and returns an error if given quaternion
-  // cannot be normalized.
+  // Creates a SO3 from `quaternion`. This method is real-time safe.
+  // If do_normalize is true (default), the quaternion will be normalized.
+  // An error is returned if either
+  // - do_normalize is true, but the quaternion cannot be normalized, or
+  // - do_normalize is false and the quaternion is not normalized.
+  template <int OtherOptions = kDefaultOptions>
+  static icon::RealtimeStatusOr<SO3> FromQuaternionRealtimeSafe(
+      const Quaternion<OtherOptions>& quaternion,
+      bool do_normalize = true) INTRINSIC_CHECK_REALTIME_SAFE {
+    Quaternion<OtherOptions> quaternion_normalized = quaternion;
+    if (do_normalize) {
+      quaternion_normalized.normalize();
+    }
+    bool is_normalized = IsNormalizedQuaternion(quaternion_normalized);
+    if (!is_normalized) {
+      return icon::InvalidArgumentError(
+          "Cannot create rotation from quaternion. " +
+          ExplainUnNormalizedQuaternion(quaternion));
+    }
+    return SO3(quaternion_normalized, kUnsafeCtor);
+  }
+
+  // Creates a SO3 from `quaternion`. This method is not real-time safe but
+  // provides a detailed error message in case of failure.
+  // If do_normalize is true (default), the quaternion will be normalized.
+  // An error is returned if either
+  // - do_normalize is true, but the quaternion cannot be normalized, or
+  // - do_normalize is false and the quaternion is not normalized.
   template <int OtherOptions = kDefaultOptions>
   static absl::StatusOr<SO3> FromQuaternion(
-      const Quaternion<OtherOptions>& quaternion) {
-    Quaternion<OtherOptions> quaternion_normalized = quaternion.normalized();
+      const Quaternion<OtherOptions>& quaternion, bool do_normalize = true) {
+    Quaternion<OtherOptions> quaternion_normalized = quaternion;
+    if (do_normalize) {
+      quaternion_normalized.normalize();
+    }
     bool is_normalized = IsNormalizedQuaternion(quaternion_normalized);
     if (!is_normalized) {
       return absl::InvalidArgumentError(
           "Cannot create rotation from quaternion. " +
           ExplainUnNormalizedQuaternion(quaternion));
     }
-    return SO3(quaternion_normalized, /*do_normalize=*/false);
+    return SO3(quaternion_normalized, kUnsafeCtor);
   }
 
   // Conversion operator for other SO3 types with different Eigen::Options.
@@ -218,18 +310,6 @@ class SO3 {
   // Check whether the representation is normalized.
   bool IsNormalized() const { return IsNormalizedQuaternion(quaternion_); }
 
-  // Wait what the hell is 'intrinsic::eigenmath::SO3<ceres::Jet<double, 14>
-  // 'const ceres::Jet<double, 14>' to 'const std::wstring'
-  template <int OtherOptions = kDefaultOptions>
-  static std::string ExplainUnNormalizedQuaternion(
-      const Quaternion<OtherOptions>& quaternion) {
-    std::stringstream ss;
-    ss << std::scientific << std::setprecision(18)
-       << "Quaternion must be normalized (quaternion= " << quaternion
-       << ", quaternion.squaredNorm()= " << quaternion.squaredNorm() << ")";
-    return ss.str();
-  }
-
  private:
   Quaternion<Options> quaternion_;
 
@@ -241,6 +321,18 @@ class SO3 {
   EIGEN_DEVICE_FUNC SO3(const Quaternion<OtherOptions>& quaternion,
                         UnsafeCtorSignal /*unused*/)
       : quaternion_(quaternion) {}
+
+  // Generate a string explaining that the quaternion is not normalized. Used
+  // to create detailed error messages in constructor/ factory functions above.
+  template <int OtherOptions = kDefaultOptions>
+  static std::string ExplainUnNormalizedQuaternion(
+      const Quaternion<OtherOptions>& quaternion) {
+    std::stringstream ss;
+    ss << std::scientific << std::setprecision(18)
+       << "Quaternion must be normalized (quaternion= " << quaternion
+       << ", quaternion.squaredNorm()= " << quaternion.squaredNorm() << ")";
+    return ss.str();
+  }
 };
 
 // Outputs a SO3 to an ostream.
