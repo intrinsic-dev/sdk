@@ -269,7 +269,7 @@ func GetImagePath(target string, targetType TargetType) (string, error) {
 }
 
 // GetImage returns an Image from the given target and registry.
-func GetImage(target string, targetType TargetType, t imagetransfer.Transferer) (containerregistry.Image, error) {
+func GetImage(target string, targetType TargetType) (containerregistry.Image, error) {
 	switch targetType {
 	case Build, Archive:
 		imagePath, err := GetImagePath(target, targetType)
@@ -336,16 +336,16 @@ func GetArchiveFromBazelLabel(target string) (string, error) {
 }
 
 // SkillIDFromTarget gets the skill ID from the given target and registry.
-func SkillIDFromTarget(target string, targetType TargetType, t imagetransfer.Transferer) (string, error) {
+func SkillIDFromTarget(target string, targetType TargetType) (string, error) {
 	switch targetType {
 	case Build:
 		archivePath, err := GetArchiveFromBazelLabel(target)
 		if err != nil {
 			return "", fmt.Errorf("could not extract a skill id from the given build target %s: %v", target, err)
 		}
-		return SkillIDFromTarget(archivePath, Archive, t)
+		return SkillIDFromTarget(archivePath, Archive)
 	case Archive:
-		image, err := GetImage(target, targetType, t)
+		image, err := GetImage(target, targetType)
 		if err != nil {
 			return "", fmt.Errorf("could not read image: %v", err)
 		}

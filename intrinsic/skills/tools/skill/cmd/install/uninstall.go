@@ -7,12 +7,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/google/go-containerregistry/pkg/v1/google"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/spf13/cobra"
 	"intrinsic/assets/clientutils"
 	"intrinsic/assets/cmdutils"
-	"intrinsic/assets/imagetransfer"
 	"intrinsic/assets/imageutils"
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd"
@@ -58,7 +55,7 @@ $ inctl skill uninstall --type=id skill
 		}
 		defer conn.Close()
 
-		skillID, err := imageutils.SkillIDFromTarget(target, imageutils.TargetType(targetType), imagetransfer.RemoteTransferer(remote.WithAuthFromKeychain(google.Keychain)))
+		skillID, err := imageutils.SkillIDFromTarget(target, imageutils.TargetType(targetType))
 		if err != nil {
 			return fmt.Errorf("could not get skill ID: %v", err)
 		}

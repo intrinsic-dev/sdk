@@ -150,7 +150,7 @@ func PushSkill(target string, opts PushOptions) (*imagepb.Image, *imageutils.Ski
 		return nil, nil, fmt.Errorf("type must be in {%s,%s}", imageutils.Build, imageutils.Archive)
 	}
 
-	image, err := imageutils.GetImage(target, targetType, opts.Transferer)
+	image, err := imageutils.GetImage(target, targetType)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not read image: %v", err)
 	}

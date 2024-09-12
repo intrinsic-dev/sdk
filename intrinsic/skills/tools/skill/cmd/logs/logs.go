@@ -16,7 +16,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"intrinsic/assets/cmdutils"
-	"intrinsic/assets/imagetransfer"
 	"intrinsic/assets/imageutils"
 	"intrinsic/skills/tools/skill/cmd"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
@@ -78,7 +77,7 @@ type cmdParams struct {
 }
 
 func runLogsCmd(ctx context.Context, params *cmdParams, w io.Writer) error {
-	skillID, err := imageutils.SkillIDFromTarget(params.target, params.targetType, imagetransfer.NoOpTransferer{})
+	skillID, err := imageutils.SkillIDFromTarget(params.target, params.targetType)
 	if err != nil {
 		return fmt.Errorf("could not extract a skill id from the given target %s: %w", params.target, err)
 	}
