@@ -103,6 +103,35 @@ py_proto_library(
 )
 
 proto_library(
+    name = "scene_object_updates_proto",
+    srcs = ["scene_object_updates.proto"],
+    deps = [
+        "//intrinsic/math/proto:pose_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "scene_object_updates_cc_proto",
+    deps = [":scene_object_updates_proto"],
+)
+
+go_proto_library(
+    name = "scene_object_updates_go_proto",
+    go_deps = [
+        "//intrinsic/math/proto:pose_go_proto",
+    ],
+    deps = [":scene_object_updates_proto"],
+)
+
+py_proto_library(
+    name = "scene_object_updates_py_pb2",
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [":scene_object_updates_proto"],
+)
+
+proto_library(
     name = "simulation_spec_proto",
     srcs = ["simulation_spec.proto"],
 )
