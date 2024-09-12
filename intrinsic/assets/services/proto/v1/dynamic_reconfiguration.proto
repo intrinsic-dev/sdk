@@ -9,15 +9,6 @@ import "google/protobuf/any.proto";
 // Supports modifying the configuration of a Service without restarting it.
 service DynamicReconfiguration {
   // Applies a new Service configuration.
-  //
-  // If the Service cannot apply the specified configuration, then it should
-  // return:
-  //   FAILED_PRECONDITION
-  //     If the configuration is valid but cannot be applied dynamically. In
-  //     this case, Flowstate will fall back to applying the configuration by
-  //     restarting the Service;
-  //   INVALID_ARGUMENT
-  //     If the configuration is invalid.
   rpc ApplyConfiguration(ApplyConfigurationRequest)
       returns (ApplyConfigurationResponse) {}
 }
