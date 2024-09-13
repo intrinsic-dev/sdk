@@ -569,7 +569,7 @@ class Session:
 
     if response.status.code != grpc.StatusCode.OK.value[0]:
       self._raise_failed_response(
-          response.status, 'Adding actions failed with {}'
+          response.status, 'Adding reactions failed with {}'
       )
 
   def add_transition(
