@@ -27,7 +27,6 @@ go_library(
     name = "registry",
     srcs = ["registry.go"],
     deps = [
-        "//intrinsic/assets:imagetransfer",
         "//intrinsic/assets:imageutils",
         "//intrinsic/kubernetes/workcell_spec/proto:image_go_proto",
         "@com_github_google_go_containerregistry//pkg/name:go_default_library",

@@ -9,39 +9,23 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	containerregistry "github.com/google/go-containerregistry/pkg/v1"
-	"intrinsic/assets/imagetransfer"
 	"intrinsic/assets/imageutils"
 	imagepb "intrinsic/kubernetes/workcell_spec/proto/image_go_proto"
 )
 
 // PushOptions is used to configure Push
 type PushOptions struct {
-	// AuthUser is the optional username used to access the registry.
-	AuthUser string
-	// AuthPwd is the optional password used to authenticate registry access.
-	AuthPwd string
-	// Registry is the container registry to which to push the image.
-	Registry string
-	// Tag is the optional image tag to use.
-	//
-	// If empty, then imageutils.WithDefaultTag is used to determine the tag.
+	// RegistryOpts contains options for the container registry that the image is
+	// pushed to.
+	RegistryOpts imageutils.RegistryOptions
+	// Tag is the optional image tag to use. If empty, then
+	// imageutils.WithDefaultTag is used to determine the tag.
 	Tag string
-	// Type is the target type. See --type flag definition in start.go for info.
+	// Type is the target type. See TargetType constants defined in imageutils.
 	Type string
-	//
-	Transferer imagetransfer.Transferer
 }
 
 func pushImage(image containerregistry.Image, imageName string, opts PushOptions) (*imagepb.Image, error) {
-	reg := imageutils.RegistryOptions{
-		URI:        opts.Registry,
-		Transferer: opts.Transferer,
-		BasicAuth: imageutils.BasicAuth{
-			User: opts.AuthUser,
-			Pwd:  opts.AuthPwd,
-		},
-	}
-
 	var imgOpts imageutils.ImageOptions
 	if opts.Tag == "" {
 		var err error
@@ -56,7 +40,7 @@ func pushImage(image containerregistry.Image, imageName string, opts PushOptions
 		}
 	}
 
-	return imageutils.PushImage(image, imgOpts, reg)
+	return imageutils.PushImage(image, imgOpts, opts.RegistryOpts)
 }
 
 // imagePbFromRef returns an Image proto constructed from the target and
@@ -94,8 +78,8 @@ func imagePbFromRef(imageRef string, imageName string, opts PushOptions) (*image
 		Registry:     registry,
 		Name:         name,
 		Tag:          tag,
-		AuthUser:     opts.AuthUser,
-		AuthPassword: opts.AuthPwd,
+		AuthUser:     opts.RegistryOpts.BasicAuth.User,
+		AuthPassword: opts.RegistryOpts.BasicAuth.Pwd,
 	}, nil
 }
 
@@ -115,7 +99,7 @@ func pushFromRef(imgRef string, image containerregistry.Image, imageName string,
 	}
 
 	sourceRegistry := imageProto.GetRegistry()
-	targetRegistry := opts.Registry
+	targetRegistry := opts.RegistryOpts.URI
 	if strings.HasSuffix(targetRegistry, "/") {
 		targetRegistry = targetRegistry[:len(targetRegistry)-1]
 	}
@@ -170,7 +154,7 @@ func PushSkill(target string, opts PushOptions) (*imagepb.Image, *imageutils.Ski
 //
 // Returns the image and associated SkillInstallerParams.
 func PushSkillFromRef(imgRef string, opts PushOptions) (*imagepb.Image, *imageutils.SkillInstallerParams, error) {
-	image, err := imageutils.GetImageFromRef(imgRef, opts.Transferer)
+	image, err := imageutils.GetImageFromRef(imgRef, opts.RegistryOpts.Transferer)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not read image: %v", err)
 	}

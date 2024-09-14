@@ -277,10 +277,12 @@ var releaseCmd = &cobra.Command{
 			}
 
 			imgpb, _, err := registry.PushSkill(target, registry.PushOptions{
-				Registry:   imageutils.GetRegistry(project),
-				Tag:        imageTag,
-				Type:       targetType,
-				Transferer: transferer,
+				RegistryOpts: imageutils.RegistryOptions{
+					URI:        imageutils.GetRegistry(project),
+					Transferer: transferer,
+				},
+				Tag:  imageTag,
+				Type: targetType,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("could not push target %q to the container registry: %v", target, err)

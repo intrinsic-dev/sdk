@@ -84,11 +84,15 @@ $ inctl skill install --type=archive abc/skill.tar --solution=my-solution
 		log.Printf("Publishing skill image as %q", target)
 		authUser, authPwd := cmdFlags.GetFlagsRegistryAuthUserPassword()
 		imgpb, installerParams, err := registry.PushSkill(target, registry.PushOptions{
-			AuthUser:   authUser,
-			AuthPwd:    authPwd,
-			Registry:   flagRegistry,
-			Type:       cmdFlags.GetFlagSideloadStartType(),
-			Transferer: transfer,
+			RegistryOpts: imageutils.RegistryOptions{
+				URI:        flagRegistry,
+				Transferer: transfer,
+				BasicAuth: imageutils.BasicAuth{
+					User: authUser,
+					Pwd:  authPwd,
+				},
+			},
+			Type: cmdFlags.GetFlagSideloadStartType(),
 		})
 		if err != nil {
 			return fmt.Errorf("could not push target %q to the container registry: %v", target, err)
