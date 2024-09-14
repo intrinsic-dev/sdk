@@ -120,6 +120,48 @@ def _get_path_from_root(
   return '.'.join(reversed(names))
 
 
+def _get_transform_node_reference(
+    reference: Union[
+        object_world_ids.WorldObjectName,
+        object_world_resources.TransformNode,
+        object_world_refs_pb2.TransformNodeReference,
+    ],
+) -> object_world_refs_pb2.TransformNodeReference:
+  """Returns the TransformNodeReference for the given reference.
+
+  This helper is used to translate from the union to a concrete instance of
+  TransformNodeReference.
+
+  Args:
+    reference: The id of the transform node or a reference (by id or name) to
+      the transform node.
+
+  Returns:
+    A TransformNodeReference that can be used to address the input reference.
+  """
+  if isinstance(reference, str):
+    # This is the case if object_reference is a
+    # object_world_ids.WorldObjectName. To allow the usage with Python strings
+    # as argument in non type checked environments like jupyter it checks for
+    # type str here.
+    return object_world_refs_pb2.TransformNodeReference(
+        by_name=object_world_refs_pb2.TransformNodeReferenceByName(
+            object=object_world_refs_pb2.ObjectReferenceByName(
+                object_name=reference
+            )
+        )
+    )
+  elif isinstance(reference, object_world_refs_pb2.TransformNodeReference):
+    return reference
+  elif isinstance(reference, object_world_resources.TransformNode):
+    return reference.transform_node_reference
+  else:
+    raise TypeError(
+        'Only TransformNodeReference, TransformNode or WorldObjectName are '
+        'valid input types.'
+    )
+
+
 class ObjectWorldClient:
   """Provides access to a remote world in the world service.
 
@@ -443,8 +485,16 @@ class ObjectWorldClient:
   @error_handling.retry_on_grpc_unavailable
   def get_transform(
       self,
-      node_a: object_world_resources.TransformNode,
-      node_b: object_world_resources.TransformNode,
+      node_a: Union[
+          object_world_ids.WorldObjectName,
+          object_world_resources.TransformNode,
+          object_world_refs_pb2.TransformNodeReference,
+      ],
+      node_b: Union[
+          object_world_ids.WorldObjectName,
+          object_world_resources.TransformNode,
+          object_world_refs_pb2.TransformNodeReference,
+      ],
   ) -> data_types.Pose3:
     """Get the transform between two nodes in the world.
 
@@ -460,8 +510,8 @@ class ObjectWorldClient:
     response = self._stub.GetTransform(
         object_world_service_pb2.GetTransformRequest(
             world_id=self._world_id,
-            node_a=node_a.transform_node_reference,
-            node_b=node_b.transform_node_reference,
+            node_a=_get_transform_node_reference(node_a),
+            node_b=_get_transform_node_reference(node_b),
         )
     )
     return math_proto_conversion.pose_from_proto(response.a_t_b)
@@ -469,10 +519,24 @@ class ObjectWorldClient:
   @error_handling.retry_on_grpc_unavailable
   def update_transform(
       self,
-      node_a: object_world_resources.TransformNode,
-      node_b: object_world_resources.TransformNode,
+      node_a: Union[
+          object_world_ids.WorldObjectName,
+          object_world_resources.TransformNode,
+          object_world_refs_pb2.TransformNodeReference,
+      ],
+      node_b: Union[
+          object_world_ids.WorldObjectName,
+          object_world_resources.TransformNode,
+          object_world_refs_pb2.TransformNodeReference,
+      ],
       a_t_b: data_types.Pose3,
-      node_to_update: Optional[object_world_resources.TransformNode] = None,
+      node_to_update: Optional[
+          Union[
+              object_world_ids.WorldObjectName,
+              object_world_resources.TransformNode,
+              object_world_refs_pb2.TransformNodeReference,
+          ]
+      ] = None,
   ) -> None:
     """Updates the pose between two nodes.
 
@@ -503,14 +567,16 @@ class ObjectWorldClient:
     """
     request = object_world_updates_pb2.UpdateTransformRequest(
         world_id=self._world_id,
-        node_a=node_a.transform_node_reference,
-        node_b=node_b.transform_node_reference,
+        node_a=_get_transform_node_reference(node_a),
+        node_b=_get_transform_node_reference(node_b),
         a_t_b=math_proto_conversion.pose_to_proto(a_t_b),
         view=object_world_updates_pb2.ObjectView.BASIC,
     )
 
     if node_to_update is not None:
-      request.node_to_update.CopyFrom(node_to_update.transform_node_reference)
+      request.node_to_update.CopyFrom(
+          _get_transform_node_reference(node_to_update)
+      )
 
     self._stub.UpdateTransform(request)
 
