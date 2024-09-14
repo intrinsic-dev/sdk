@@ -330,7 +330,10 @@ func GetArchiveFromBazelLabel(target string) (string, error) {
 		return getOneOutputFile(target)
 	}
 	if strings.HasSuffix(target, "_image") {
-		return getOneOutputFile(strings.Join([]string{target, "tar"}, "."))
+		return getOneOutputFile(target + ".tar")
+	}
+	if strings.HasSuffix(target, "_image_bundle") {
+		return getOneOutputFile(strings.TrimSuffix(target, "_bundle") + ".tar")
 	}
 	return "", fmt.Errorf("given build target does not appear to be a skill image rule")
 }

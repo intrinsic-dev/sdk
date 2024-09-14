@@ -48,6 +48,24 @@ go_library(
 )
 
 go_library(
+    name = "skillio",
+    srcs = ["skillio.go"],
+    deps = [
+        ":registry",
+        "//intrinsic/assets:bundleio",
+        "//intrinsic/assets:idutils",
+        "//intrinsic/assets:imageutils",
+        "//intrinsic/kubernetes/workcell_spec/proto:image_go_proto",
+        "//intrinsic/skills/proto:processed_skill_manifest_go_proto",
+        "//intrinsic/skills/proto:skill_manifest_go_proto",
+        "//intrinsic/skills/tools/resource/cmd:bundleimages",
+        "//intrinsic/util/proto:protoio",
+        "@com_github_google_go_containerregistry//pkg/v1/tarball:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+    ],
+)
+
+go_library(
     name = "waitforskill",
     srcs = ["waitforskill.go"],
     deps = [
