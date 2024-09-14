@@ -12,6 +12,8 @@
 #include "absl/strings/str_cat.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "google/protobuf/duration.pb.h"
+#include "google/protobuf/timestamp.pb.h"
 
 namespace intrinsic {
 
