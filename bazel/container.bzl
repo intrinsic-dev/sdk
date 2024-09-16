@@ -3,20 +3,35 @@
 """Helpers for dealing with the rules_docker->rules_oci transition.
 ."""
 
-load("@rules_oci//oci:defs.bzl", "oci_image", _oci_tarball = "oci_tarball")
+load(
+    "@rules_oci//oci:defs.bzl",
+    "oci_image",
+    "oci_load",
+)
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
-container_tarball = _oci_tarball
+def container_tarball(name, **kwargs):
+    load_name = "%s_load" % name
+    oci_load(
+        name = load_name,
+        **kwargs
+    )
+
+    native.filegroup(
+        name = name,
+        srcs = [load_name],
+        output_group = "tarball",
+    )
 
 def _symlink_tarball_impl(ctx):
-    ctx.actions.symlink(output = ctx.outputs.output, target_file = ctx.file.src)
+    ctx.actions.symlink(output = ctx.outputs.output, target_file = ctx.attr.src[OutputGroupInfo].tarball.to_list()[0])
 
 _symlink_tarball = rule(
     implementation = _symlink_tarball_impl,
     doc = "Creates a symlink to tarball.tar in src's DefaultInfo at output",
     attrs = {
         "src": attr.label(
-            allow_single_file = [".tar"],
+            providers = [OutputGroupInfo],
             mandatory = True,
         ),
         "output": attr.output(),
@@ -120,7 +135,7 @@ def container_image(
 
     _symlink_tarball(
         name = "_%s_tarball_symlink" % name,
-        src = "_%s_tarball" % name,
+        src = "_%s_tarball_load" % name,
         output = "%s.tar" % name,
         compatible_with = kwargs.get("compatible_with"),
         visibility = kwargs.get("visibility"),

@@ -133,7 +133,7 @@ bazel_dep(name = "rules_java", version = "6.4.0")
 # Containers
 ##########
 
-bazel_dep(name = "rules_oci", version = "1.8.0")
+bazel_dep(name = "rules_oci", version = "2.0.0")
 
 extension_for_rules_oci = use_extension("//bazel:extension_for_rules_oci.bzl", "extension_for_rules_oci_ext")
 use_repo(extension_for_rules_oci, "distroless_base_amd64_oci")
