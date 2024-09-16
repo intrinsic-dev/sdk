@@ -5,15 +5,12 @@ package clientutils
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
-	"math"
-	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 
 
+	"intrinsic/assets/baseclientutils"
 	"intrinsic/assets/cmdutils"
 
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -38,38 +35,10 @@ const (
 	// See GetSkillCatalogProject for details.
 	TestProjectSpecificCatalogProject = "test-project-specific-catalog-project"
 
-	maxMsgSize = math.MaxInt64
-	// policy for retrying failed gRPC requests as documented here:
-	// https://pkg.go.dev/google.golang.org/grpc/examples/features/retry
-	// Note that the Ingress will return UNIMPLEMENTED if the server it wants to forward to
-	// is unavailable, so we also check for UNIMPLEMENTED.
-	retryPolicy = `{
-		"methodConfig": [{
-				"waitForReady": true,
-
-				"retryPolicy": {
-						"MaxAttempts": 4,
-						"InitialBackoff": ".5s",
-						"MaxBackoff": ".5s",
-						"BackoffMultiplier": 1.5,
-						"RetryableStatusCodes": [ "UNAVAILABLE", "RESOURCE_EXHAUSTED", "UNIMPLEMENTED"]
-				}
-		}]
-}`
-
 	defaultCatalogProject = "intrinsic-assets-prod"
 )
 
 var (
-	// BaseDialOptions are the base dial options for catalog clients.
-	BaseDialOptions = []grpc.DialOption{
-		grpc.WithDefaultServiceConfig(retryPolicy),
-		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(maxMsgSize),
-			grpc.MaxCallSendMsgSize(maxMsgSize),
-		),
-	}
-
 	catalogEndpointAddressRegex = regexp.MustCompile(`(^|/)www\.endpoints\.([^\.]+).cloud.goog`)
 	catalogAssetAddressRegex    = regexp.MustCompile(`(^|/)assets[-]?([^\.]*)\.intrinsic\.ai`)
 
@@ -78,9 +47,6 @@ var (
 		"dev": "dev",
 		"qa":  "staging",
 	}
-
-	// schemePattern matches a URL scheme according to https://github.com/grpc/grpc/blob/master/doc/naming.md.
-	schemePattern = regexp.MustCompile("^(?:dns|unix|unix-abstract|vsock|ipv4|ipv6):")
 )
 
 // DialCatalogOptions specifies the options for DialCatalog.
@@ -151,15 +117,15 @@ func DialCatalog(ctx context.Context, opts DialCatalogOptions) (*grpc.ClientConn
 		return nil, errors.Wrap(err, "cannot resolve address")
 	}
 
-	options := BaseDialOptions
-	if IsLocalAddress(opts.Address) { // Use insecure creds.
+	options := baseclientutils.BaseDialOptions()
+	if baseclientutils.IsLocalAddress(opts.Address) { // Use insecure creds.
 		options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	} else { // Use api-key creds.
 		rpcCreds, err := getAPIKeyPerRPCCredentials(opts.APIKey, opts.Project)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get api-key credentials")
 		}
-		tcOption, err := GetTransportCredentialsDialOption()
+		tcOption, err := baseclientutils.GetTransportCredentialsDialOption()
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get transport credentials")
 		}
@@ -180,46 +146,6 @@ func ResolveCatalogProject(project string) string {
 		return defaultCatalogProject
 	}
 	return project
-}
-
-// GetTransportCredentialsDialOption returns transport credentials from the system certificate pool.
-func GetTransportCredentialsDialOption() (grpc.DialOption, error) {
-	pool, err := x509.SystemCertPool()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to retrieve system cert pool")
-	}
-
-	return grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, "")), nil
-}
-
-// IsLocalAddress returns true if the address is a local address.
-func IsLocalAddress(address string) bool {
-	for _, localAddress := range []string{"127.0.0.1", "local", "xfa.lan"} {
-		if strings.Contains(address, localAddress) {
-			return true
-		}
-	}
-	return false
-}
-
-// UseInsecureCredentials determines whether insecure credentials can/should be used for the given
-// address.
-//
-// The dialer uses this internally to decide which credentials to provide.
-// If the input address is invalid, we default to not using insecure credentials.
-func UseInsecureCredentials(address string) bool {
-	// Matching a URL without a scheme is invalid. Default to the dns://. This is the same default
-	// Golang uses to dial targets.
-	if !schemePattern.MatchString(address) {
-		address = "dns://" + address
-	}
-	port := 443
-	if parsed, err := url.Parse(address); err == nil { // if NO error
-		if parsedPort, err := strconv.Atoi(parsed.Port()); err == nil { // if NO error
-			port = parsedPort
-		}
-	}
-	return port != 443
 }
 
 // RemoteOpt returns the remote option to use for the given flags.
@@ -340,8 +266,8 @@ func dialInfoCtx(ctx context.Context, params dialInfoParams) (context.Context, *
 		ctx = metadata.AppendToOutgoingContext(ctx, auth.OrgIDHeader, strings.Split(params.CredOrg, "@")[0])
 	}
 
-	if UseInsecureCredentials(params.Address) {
-		finalOpts := append(BaseDialOptions,
+	if baseclientutils.UseInsecureCredentials(params.Address) {
+		finalOpts := append(baseclientutils.BaseDialOptions(),
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		)
 		return ctx, &finalOpts, params.Address, nil
@@ -355,12 +281,12 @@ func dialInfoCtx(ctx context.Context, params dialInfoParams) (context.Context, *
 	if err != nil {
 		return nil, nil, "", fmt.Errorf("cannot retrieve connection credentials: %w", err)
 	}
-	tcOption, err := GetTransportCredentialsDialOption()
+	tcOption, err := baseclientutils.GetTransportCredentialsDialOption()
 	if err != nil {
 		return nil, nil, "", fmt.Errorf("cannot retrieve transport credentials: %w", err)
 	}
 
-	finalOpts := append(BaseDialOptions,
+	finalOpts := append(baseclientutils.BaseDialOptions(),
 		grpc.WithPerRPCCredentials(rpcCredentials),
 		tcOption,
 	)
@@ -404,7 +330,7 @@ func createCredentials(params dialInfoParams) (credentials.PerRPCCredentials, er
 		return configuration.GetCredentials(params.CredAlias)
 	}
 
-	if IsLocalAddress(params.Address) {
+	if baseclientutils.IsLocalAddress(params.Address) {
 		// local calls do not require any authentication
 		return nil, nil
 	}

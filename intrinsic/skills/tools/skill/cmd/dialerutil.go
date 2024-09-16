@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-	"intrinsic/assets/clientutils"
+	"intrinsic/assets/baseclientutils"
 	"intrinsic/tools/inctl/auth"
 )
 
@@ -125,7 +125,7 @@ func dialInfoCtx(ctx context.Context, params DialInfoParams) (context.Context, *
 	}
 
 	if UseInsecureCredentials(params.Address) {
-		finalOpts := append(clientutils.BaseDialOptions,
+		finalOpts := append(baseclientutils.BaseDialOptions(),
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		)
 		return ctx, &finalOpts, params.Address, nil
@@ -139,12 +139,12 @@ func dialInfoCtx(ctx context.Context, params DialInfoParams) (context.Context, *
 	if err != nil {
 		return nil, nil, "", fmt.Errorf("cannot retrieve connection credentials: %w", err)
 	}
-	tcOption, err := clientutils.GetTransportCredentialsDialOption()
+	tcOption, err := baseclientutils.GetTransportCredentialsDialOption()
 	if err != nil {
 		return nil, nil, "", fmt.Errorf("cannot retrieve transport credentials: %w", err)
 	}
 
-	finalOpts := append(clientutils.BaseDialOptions,
+	finalOpts := append(baseclientutils.BaseDialOptions(),
 		grpc.WithPerRPCCredentials(rpcCredentials),
 		tcOption,
 	)
@@ -186,7 +186,7 @@ func createCredentials(params DialInfoParams) (credentials.PerRPCCredentials, er
 		return configuration.GetCredentials(params.CredAlias)
 	}
 
-	if clientutils.IsLocalAddress(params.Address) {
+	if baseclientutils.IsLocalAddress(params.Address) {
 		// local calls do not require any authentication
 		return nil, nil
 	}

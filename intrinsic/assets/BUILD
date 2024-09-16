@@ -6,10 +6,24 @@ load("@rules_python//python:defs.bzl", "py_library")
 load("//bazel:go_macros.bzl", "go_library")
 
 go_library(
+    name = "baseclientutils",
+    srcs = ["baseclientutils.go"],
+    visibility = ["//intrinsic:internal_api_users"],
+    deps = [
+        "@com_github_pkg_errors//:go_default_library",
+        "@io_opencensus_go//plugin/ocgrpc:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//credentials:go_default_library",
+        "@org_golang_google_grpc//credentials/insecure:go_default_library",
+    ],
+)
+
+go_library(
     name = "clientutils",
     srcs = ["clientutils.go"],
     visibility = ["//intrinsic:internal_api_users"],
     deps = [
+        ":baseclientutils",
         ":cmdutils",
         "//intrinsic/frontend/cloud/api:clusterdiscovery_api_go_grpc_proto",
         "//intrinsic/frontend/cloud/api:solutiondiscovery_api_go_grpc_proto",

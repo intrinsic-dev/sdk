@@ -8,6 +8,7 @@ go_library(
     name = "install",
     srcs = ["install.go"],
     deps = [
+        "//intrinsic/assets:baseclientutils",
         "//intrinsic/assets:clientutils",
         "//intrinsic/assets:cmdutils",
         "//intrinsic/assets:idutils",
