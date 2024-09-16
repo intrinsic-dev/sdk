@@ -51,35 +51,10 @@ func NewFilesFromFileDescriptorSets(paths []string) (*protoregistry.Files, error
 	return files, nil
 }
 
-// NewTypesFromFileDescriptorSetOptions contains options for
-// NewTypesFromFileDescriptorSetWithOptions.
-type NewTypesFromFileDescriptorSetOptions struct {
-	// BaseTypes is a registry in which to look for existing types before falling back to generating a
-	// new type using dynamicpb.
-	//
-	// NOTE: Types are only matched by full name, rather than a full comparison of descriptors.
-	BaseTypes *protoregistry.Types
-}
-
-// NewTypesFromFileDescriptorSet creates a new protoregistry Types from a complete file descriptor
-// set.  Unresolved paths will result in an error.  A nil set returns a nil types.
-//
-// NOTE: Returned types will be generated using dynamicpb, regardless of whether the concrete type
-// is known (e.g., in the global registry).
+// NewTypesFromFileDescriptorSet creates a new protoregistry Types from a
+// complete file descriptor set.  Unresolved paths will result in an error.  A
+// nil set returns a nil types.
 func NewTypesFromFileDescriptorSet(set *descriptorpb.FileDescriptorSet) (*protoregistry.Types, error) {
-	return NewTypesFromFileDescriptorSetWithOptions(set, nil)
-}
-
-// NewTypesFromFileDescriptorSetWithOptions creates a new protoregistry Types from a complete file
-// descriptor set.  Unresolved paths will result in an error.  A nil set returns a nil types.
-//
-// NOTE: Returned types will be drawn from opts.BaseTypes if present and generated using dynamicpb
-// otherwise.
-func NewTypesFromFileDescriptorSetWithOptions(set *descriptorpb.FileDescriptorSet, opts *NewTypesFromFileDescriptorSetOptions) (*protoregistry.Types, error) {
-	if opts == nil {
-		opts = &NewTypesFromFileDescriptorSetOptions{}
-	}
-
 	if set == nil {
 		return new(protoregistry.Types), nil
 	}
@@ -90,48 +65,20 @@ func NewTypesFromFileDescriptorSetWithOptions(set *descriptorpb.FileDescriptorSe
 	}
 
 	types := new(protoregistry.Types)
-	if err := PopulateTypesFromFilesWithOptions(types, files, &PopulateTypesFromFilesOptions{
-		BaseTypes: opts.BaseTypes,
-	}); err != nil {
+	if err := PopulateTypesFromFiles(types, files); err != nil {
 		return nil, fmt.Errorf("failed to populate the registry: %v", err)
 	}
 
 	return types, nil
 }
 
-// PopulateTypesFromFilesOptions contains options for PopulateTypesFromFilesWithOptions.
-type PopulateTypesFromFilesOptions struct {
-	// BaseTypes is a registry in which to look for existing types before falling back to generating a
-	// new type using dynamicpb.
-	//
-	// NOTE: Types are only matched by full name, rather than a full comparison of descriptors.
-	BaseTypes *protoregistry.Types
-}
-
-// PopulateTypesFromFiles adds in all Messages, Enums, and Extensions held within a Files object
-// into the provided Type. `t“ may be modified prior to returning an error.  Types from `f“ that
-// already exist in `t` will be ignored.
-//
-// NOTE: Returned types will be generated using dynamicpb, regardless of whether the concrete type
-// is known (e.g., in the global registry).
+// PopulateTypesFromFiles adds in all Messages, Enums, and Extensions held
+// within a Files object into the provided Type.  t may be modified prior to
+// returning an error.  Types from f that already exist in t will be ignored.
 func PopulateTypesFromFiles(t *protoregistry.Types, f *protoregistry.Files) error {
-	return PopulateTypesFromFilesWithOptions(t, f, nil)
-}
-
-// PopulateTypesFromFilesWithOptions adds in all Messages, Enums, and Extensions held within a Files
-// object into the provided Type. `t“ may be modified prior to returning an error.  Types from `f“
-// that already exist in `t` will be ignored.
-//
-// NOTE: Returned types will be drawn from opts.BaseTypes if present and generated using dynamicpb
-// otherwise.
-func PopulateTypesFromFilesWithOptions(t *protoregistry.Types, f *protoregistry.Files, opts *PopulateTypesFromFilesOptions) error {
-	if opts == nil {
-		opts = &PopulateTypesFromFilesOptions{}
-	}
-
 	var topLevelErr error
 	f.RangeFiles(func(f protoreflect.FileDescriptor) bool {
-		if err := addFile(t, f, opts.BaseTypes); err != nil {
+		if err := addFile(t, f); err != nil {
 			topLevelErr = err
 			return false
 		}
@@ -140,41 +87,33 @@ func PopulateTypesFromFilesWithOptions(t *protoregistry.Types, f *protoregistry.
 	return topLevelErr
 }
 
-func addFile(t *protoregistry.Types, f protoreflect.FileDescriptor, baseTypes *protoregistry.Types) error {
-	if err := addMessagesRecursively(t, f.Messages(), baseTypes); err != nil {
+func addFile(t *protoregistry.Types, f protoreflect.FileDescriptor) error {
+	if err := addMessagesRecursively(t, f.Messages()); err != nil {
 		return err
 	}
-	if err := addEnums(t, f.Enums(), baseTypes); err != nil {
+	if err := addEnums(t, f.Enums()); err != nil {
 		return err
 	}
-	if err := addExtensions(t, f.Extensions(), baseTypes); err != nil {
+	if err := addExtensions(t, f.Extensions()); err != nil {
 		return err
 	}
 	return nil
 }
 
-func addMessagesRecursively(t *protoregistry.Types, ms protoreflect.MessageDescriptors, baseTypes *protoregistry.Types) error {
+func addMessagesRecursively(t *protoregistry.Types, ms protoreflect.MessageDescriptors) error {
 	for i := 0; i < ms.Len(); i++ {
 		m := ms.Get(i)
 		if _, err := t.FindMessageByName(m.FullName()); err == protoregistry.NotFound {
-			// Register the message type, looking first in the base registry and falling back to creating
-			// a dynamicpb type.
-			mt, err := baseTypes.FindMessageByName(m.FullName())
-			if err == protoregistry.NotFound {
-				mt = dynamicpb.NewMessageType(m)
-			} else if err != nil {
+			if err := t.RegisterMessage(dynamicpb.NewMessageType(m)); err != nil {
 				return err
 			}
-			if err := t.RegisterMessage(mt); err != nil {
+			if err := addEnums(t, m.Enums()); err != nil {
 				return err
 			}
-			if err := addEnums(t, m.Enums(), baseTypes); err != nil {
+			if err := addExtensions(t, m.Extensions()); err != nil {
 				return err
 			}
-			if err := addExtensions(t, m.Extensions(), baseTypes); err != nil {
-				return err
-			}
-			if err := addMessagesRecursively(t, m.Messages(), baseTypes); err != nil {
+			if err := addMessagesRecursively(t, m.Messages()); err != nil {
 				return err
 			}
 		} else if err != nil {
@@ -184,21 +123,11 @@ func addMessagesRecursively(t *protoregistry.Types, ms protoreflect.MessageDescr
 	return nil
 }
 
-func addEnums(t *protoregistry.Types, enums protoreflect.EnumDescriptors, baseTypes *protoregistry.Types) error {
+func addEnums(t *protoregistry.Types, enums protoreflect.EnumDescriptors) error {
 	for i := 0; i < enums.Len(); i++ {
 		enum := enums.Get(i)
 		if _, err := t.FindEnumByName(enum.FullName()); err == protoregistry.NotFound {
-			// Register the enum type, looking first in the global registry and falling back to
-			// creating a dynamicpb type.
-			et, err := baseTypes.FindEnumByName(enum.FullName())
-			if err == protoregistry.NotFound {
-				et = dynamicpb.NewEnumType(enum)
-			} else if err != nil {
-				return err
-			}
-			if err := t.RegisterEnum(et); err != nil {
-				return err
-			}
+			t.RegisterEnum(dynamicpb.NewEnumType(enum))
 		} else if err != nil {
 			return err
 		}
@@ -206,19 +135,11 @@ func addEnums(t *protoregistry.Types, enums protoreflect.EnumDescriptors, baseTy
 	return nil
 }
 
-func addExtensions(t *protoregistry.Types, exts protoreflect.ExtensionDescriptors, baseTypes *protoregistry.Types) error {
+func addExtensions(t *protoregistry.Types, exts protoreflect.ExtensionDescriptors) error {
 	for i := 0; i < exts.Len(); i++ {
 		ext := exts.Get(i)
 		if _, err := t.FindExtensionByName(ext.FullName()); err == protoregistry.NotFound {
-			// Register the extension type, looking first in the global registry and falling back to
-			// creating a dynamicpb type.
-			xt, err := baseTypes.FindExtensionByName(ext.FullName())
-			if err == protoregistry.NotFound {
-				xt = dynamicpb.NewExtensionType(ext)
-			} else if err != nil {
-				return err
-			}
-			if err := t.RegisterExtension(xt); err != nil {
+			if err := t.RegisterExtension(dynamicpb.NewExtensionType(ext)); err != nil {
 				return nil
 			}
 		} else if err != nil {
