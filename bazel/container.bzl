@@ -10,19 +10,6 @@ load(
 )
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
-def container_tarball(name, **kwargs):
-    load_name = "%s_load" % name
-    oci_load(
-        name = load_name,
-        **kwargs
-    )
-
-    native.filegroup(
-        name = name,
-        srcs = [load_name],
-        output_group = "tarball",
-    )
-
 def _symlink_tarball_impl(ctx):
     ctx.actions.symlink(output = ctx.outputs.output, target_file = ctx.attr.src[OutputGroupInfo].tarball.to_list()[0])
 
@@ -37,6 +24,21 @@ _symlink_tarball = rule(
         "output": attr.output(),
     },
 )
+
+def _container_tarball(name, image, **kwargs):
+    oci_load(
+        name = name,
+        image = image,
+        **kwargs
+    )
+    _symlink_tarball(
+        name = "%s_symlink" % name,
+        src = name,
+        output = "%s.tar" % image,
+        compatible_with = kwargs.get("compatible_with"),
+        visibility = kwargs.get("visibility"),
+        testonly = kwargs.get("testonly"),
+    )
 
 def container_layer(name, **kwargs):
     pkg_tar(
@@ -65,7 +67,7 @@ def container_image(
         **kwargs):
     """Wrapper for creating an oci_image from a rules_docker container_image target.
 
-    Will create both an oci_image ($name) and a container_tarball ($name.tar) target.
+    Will create both an oci_image ($name) and a _container_tarball ($name.tar) target.
 
     Note that it does not support the experimental_tarball_format attribute:
     - All tarballs created by this macro will be in .tar.gz format.
@@ -124,20 +126,12 @@ def container_image(
     package = native.package_name()
     if package:
         tag = "%s/%s" % (package, tag)
-    container_tarball(
+
+    _container_tarball(
         name = "_%s_tarball" % name,
         image = name,
         compatible_with = kwargs.get("compatible_with"),
         repo_tags = [tag],
-        visibility = kwargs.get("visibility"),
-        testonly = kwargs.get("testonly"),
-    )
-
-    _symlink_tarball(
-        name = "_%s_tarball_symlink" % name,
-        src = "_%s_tarball_load" % name,
-        output = "%s.tar" % name,
-        compatible_with = kwargs.get("compatible_with"),
         visibility = kwargs.get("visibility"),
         testonly = kwargs.get("testonly"),
     )
