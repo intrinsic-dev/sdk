@@ -71,8 +71,7 @@ const (
 	Build TargetType = "build"
 	// Archive mode assumes the given target points to an already-built image
 	Archive TargetType = "archive"
-	// Name mode assumes the target is the skill name (only used for stop)
-	Name TargetType = "name"
+	// ID mode assumes the target is the skill id (only used for stop)
 	ID TargetType = "id"
 )
 
@@ -357,7 +356,7 @@ func SkillIDFromTarget(target string, targetType TargetType) (string, error) {
 			return "", fmt.Errorf("could not extract installer parameters: %v", err)
 		}
 		return installerParams.SkillID, nil
-	case ID, Name:
+	case ID:
 		return target, nil
 	default:
 		return "", fmt.Errorf("unimplemented target type: %v", targetType)

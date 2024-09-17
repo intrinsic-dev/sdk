@@ -31,9 +31,6 @@ $ inctl skill uninstall --type=archive abc/skill.tar --solution=my-solution
 
 Stop a running skill by specifying its id
 $ inctl skill uninstall --type=id com.foo.skill
-
-Stop a running skill by specifying its name [deprecated]
-$ inctl skill uninstall --type=id skill
 `,
 	Args: cobra.ExactArgs(1),
 	Aliases: []string{
@@ -45,8 +42,8 @@ $ inctl skill uninstall --type=id skill
 		target := args[0]
 
 		targetType := imageutils.TargetType(cmdFlags.GetFlagSideloadStopType())
-		if targetType != imageutils.Build && targetType != imageutils.Archive && targetType != imageutils.ID && targetType != imageutils.Name {
-			return fmt.Errorf("type must be one of (%s, %s, %s, %s)", imageutils.Build, imageutils.Archive, imageutils.ID, imageutils.Name)
+		if targetType != imageutils.Build && targetType != imageutils.Archive && targetType != imageutils.ID {
+			return fmt.Errorf("type must be one of (%s, %s, %s)", imageutils.Build, imageutils.Archive, imageutils.ID)
 		}
 
 		ctx, conn, address, err := clientutils.DialClusterFromInctl(ctx, cmdFlags)

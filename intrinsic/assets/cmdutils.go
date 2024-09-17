@@ -274,7 +274,7 @@ func (cf *CmdFlags) GetFlagOrganization() string {
 
 // AddFlagRegistry adds a flag for the registry when side-loading an asset.
 func (cf *CmdFlags) AddFlagRegistry() {
-	cf.OptionalEnvString(KeyRegistry, "", fmt.Sprintf("The container registry address. This option is ignored when --%s=image.", KeyType))
+	cf.OptionalEnvString(KeyRegistry, "", fmt.Sprint("The container registry address."))
 }
 
 // GetFlagRegistry gets the value of the registry flag added by AddFlagRegistry.
@@ -310,9 +310,8 @@ func (cf *CmdFlags) GetFlagReleaseNotes() string {
 func (cf *CmdFlags) AddFlagSkillReleaseType() {
 	targetTypeDescriptions := []string{}
 
-	targetTypeDescriptions = append(targetTypeDescriptions, `"build": a build target that creates a skill image.`)
-	targetTypeDescriptions = append(targetTypeDescriptions, `"archive": a file path to an already-built image.`)
-	targetTypeDescriptions = append(targetTypeDescriptions, `"image": a container image name.`)
+	targetTypeDescriptions = append(targetTypeDescriptions, `"build": a build target that creates a skill.`)
+	targetTypeDescriptions = append(targetTypeDescriptions, `"archive": a file path to an already-built skill.`)
 
 	cf.RequiredString(
 		KeyType,
@@ -336,14 +335,15 @@ func (cf *CmdFlags) GetFlagSideloadContext() string {
 }
 
 // AddFlagSideloadStartType adds a flag for the type when starting an asset.
-func (cf *CmdFlags) AddFlagSideloadStartType() {
+func (cf *CmdFlags) AddFlagSideloadStartType(assetType string) {
 	cf.RequiredString(KeyType, fmt.Sprintf(
 		`The target's type:
-%s	build target that creates an image
-%s	file path pointing to an already-built image
-%s	container image name`,
+%-10s build target that creates a %s
+%-10s file path pointing to an already-built %s`,
 		imageutils.Build,
+		assetType,
 		imageutils.Archive,
+		assetType,
 	))
 }
 
@@ -356,18 +356,15 @@ func (cf *CmdFlags) GetFlagSideloadStartType() string {
 func (cf *CmdFlags) AddFlagSideloadStopType(assetType string) {
 	cf.RequiredString(KeyType, fmt.Sprintf(
 		`The target's type:
-%s	build target that creates an image
-%s	file path pointing to an already-built image
-%s	container image name
-%s		%s id
-%s		%s name [deprecated: prefer to use %s]`,
+%-10s build target that creates a %s
+%-10s file path pointing to an already-built %s
+%-10s %s id`,
 		imageutils.Build,
+		assetType,
 		imageutils.Archive,
-		imageutils.ID,
-		assetType,
-		imageutils.Name,
 		assetType,
 		imageutils.ID,
+		assetType,
 	))
 }
 

@@ -165,6 +165,6 @@ func init() {
 	cmdFlags.AddFlagRegistry()
 	cmdFlags.AddFlagsRegistryAuthUserPassword()
 	cmdFlags.AddFlagSideloadStartTimeout("skill")
-	cmdFlags.AddFlagSideloadStartType()
+	cmdFlags.AddFlagSideloadStartType("skill")
 	cmdFlags.AddFlagSkipDirectUpload("skill")
 }
