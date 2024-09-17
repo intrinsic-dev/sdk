@@ -85,7 +85,11 @@ class ObjectWorldClient {
   absl::StatusOr<WorldObject> GetObject(const WorldObject& object) const;
 
   // Returns all objects in the world.
-  absl::StatusOr<std::vector<WorldObject>> ListObjects() const;
+  // If query_objects is not empty, only objects that match the query will be
+  // returned in the result.
+  absl::StatusOr<std::vector<WorldObject>> ListObjects(
+      std::vector<intrinsic_proto::world::ObjectReference> query_objects = {})
+      const;
 
   // Returns all object names in the world.
   absl::StatusOr<std::vector<WorldObjectName>> ListObjectNames() const;

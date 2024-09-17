@@ -229,8 +229,18 @@ class ObjectWorldClient:
         world_object, self._stub
     )
 
-  def list_objects(self) -> List[object_world_resources.WorldObject]:
+  def list_objects(
+      self,
+      query_objects: Optional[
+          List[object_world_refs_pb2.ObjectReference]
+      ] = None,
+  ) -> List[object_world_resources.WorldObject]:
     """List all objects in the world service.
+
+    Args:
+      query_objects: Optional list of object references to use as a query. If
+        specified only objects that are in the query will be returned in the
+        result.
 
     Returns:
       A list with all objects in the world.
@@ -238,10 +248,10 @@ class ObjectWorldClient:
     response = self._stub.ListObjects(
         object_world_service_pb2.ListObjectsRequest(
             world_id=self._world_id,
+            query_objects=[] if query_objects is None else query_objects,
             view=object_world_updates_pb2.ObjectView.FULL,
         )
     )
-
     return [
         self._create_object_with_auto_type(world_object)
         for world_object in response.objects

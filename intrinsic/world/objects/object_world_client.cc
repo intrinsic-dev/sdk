@@ -269,11 +269,16 @@ absl::StatusOr<WorldObject> ObjectWorldClient::GetObject(
   return GetObject(object.Id());
 }
 
-absl::StatusOr<std::vector<WorldObject>> ObjectWorldClient::ListObjects()
-    const {
+absl::StatusOr<std::vector<WorldObject>> ObjectWorldClient::ListObjects(
+    std::vector<intrinsic_proto::world::ObjectReference> query_objects) const {
   intrinsic_proto::world::ListObjectsRequest request;
   request.set_world_id(world_id_);
   request.set_view(intrinsic_proto::world::ObjectView::FULL);
+
+  for (auto& query_object : query_objects) {
+    *request.add_query_objects() = std::move(query_object);
+  }
+
   grpc::ClientContext ctx;
   intrinsic_proto::world::ListObjectsResponse response;
   INTR_RETURN_IF_ERROR(ToAbslStatus(

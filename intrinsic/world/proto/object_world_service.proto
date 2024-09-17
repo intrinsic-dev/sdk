@@ -665,6 +665,9 @@ message ListObjectsRequest {
   // Id of the world to be queried.
   string world_id = 1;
 
+  // If not empty, only returns the objects that are in the given list.
+  repeated ObjectReference query_objects = 2;
+
   // Requested object view.
   ObjectView view = 3;
 }
