@@ -10,6 +10,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
@@ -183,7 +184,7 @@ class ActionDescriptor {
   const std::string action_type_name_;
   const ActionInstanceId action_id_;
   // Holds either a SlotPartMap, the name of a single Part to infer one from.
-  const absl::variant<SlotPartMap, std::string> slot_data_;
+  const std::variant<SlotPartMap, std::string> slot_data_;
   std::optional<google::protobuf::Any> fixed_params_;
   std::vector<ReactionDescriptor> reaction_descriptors_;
 };
