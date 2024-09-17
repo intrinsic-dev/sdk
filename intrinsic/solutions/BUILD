@@ -406,10 +406,28 @@ py_library(
     srcs = ["proto_building.py"],
     srcs_version = "PY3",
     deps = [
+        ":errors",
         "//intrinsic/executive/proto:proto_builder_py_pb2",
         "//intrinsic/executive/proto:proto_builder_py_pb2_grpc",
+        "//intrinsic/solutions/internal:skill_utils",
         "//intrinsic/util/grpc:error_handling",
         requirement("grpcio"),
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_test(
+    name = "proto_building_test",
+    srcs = ["proto_building_test.py"],
+    python_version = "PY3",
+    srcs_version = "PY3",
+    deps = [
+        ":behavior_tree",
+        ":errors",
+        ":proto_building",
+        "//intrinsic/executive/proto:proto_builder_py_pb2",
+        "//intrinsic/solutions/testing:compare",
+        "@com_google_absl_py//absl/testing:absltest",
         "@com_google_protobuf//:protobuf_python",
     ],
 )

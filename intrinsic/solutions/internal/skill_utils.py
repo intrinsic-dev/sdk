@@ -724,7 +724,7 @@ def _get_message_classes_for_files(
 
 # Workaround for compatibility with different protobuf versions to prevent
 # GetPrototype() from printing a warning if GetMessageClass() is available.
-def _get_message_class(msg: descriptor.Descriptor) -> Type[message.Message]:
+def get_message_class(msg: descriptor.Descriptor) -> Type[message.Message]:
   if hasattr(message_factory, "GetMessageClass"):
     return message_factory.GetMessageClass(msg)
   else:
@@ -795,7 +795,7 @@ def generate_proto_infra_from_filedescriptorset(
     _get_nested_classes(msg.DESCRIPTOR, name, additional_msg_classes)
 
   for key, msg in additional_msg_classes.items():
-    message_classes[key] = _get_message_class(msg)
+    message_classes[key] = get_message_class(msg)
   return desc_pool, message_classes
 
 
