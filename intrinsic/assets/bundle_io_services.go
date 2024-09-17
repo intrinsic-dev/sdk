@@ -3,7 +3,6 @@
 package bundleio
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -216,8 +215,12 @@ func WriteService(path string, opts WriteServiceOpts) error {
 	if opts.Manifest == nil {
 		return fmt.Errorf("opts.Manifest must not be nil")
 	}
-	var tarBuf bytes.Buffer
-	tw := tar.NewWriter(&tarBuf)
+	out, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open %q for writing: %w", path, err)
+	}
+	defer out.Close()
+	tw := tar.NewWriter(out)
 
 	opts.Manifest.Assets = new(smpb.ServiceAssets)
 	if opts.Descriptors != nil {
@@ -250,8 +253,5 @@ func WriteService(path string, opts WriteServiceOpts) error {
 		return err
 	}
 
-	if err := os.WriteFile(path, tarBuf.Bytes(), 0644); err != nil {
-		return fmt.Errorf("failed to write %q: %w", path, err)
-	}
 	return nil
 }

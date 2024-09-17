@@ -3,7 +3,6 @@
 package bundleio
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -247,8 +246,12 @@ func WriteSkill(path string, opts WriteSkillOpts) error {
 	if opts.ImageTar != "" && opts.PBT != "" {
 		return fmt.Errorf("opts.ImageTar and opts.PBT cannot both be set")
 	}
-	var tarBuf bytes.Buffer
-	tw := tar.NewWriter(&tarBuf)
+	out, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open %q for writing: %w", path, err)
+	}
+	defer out.Close()
+	tw := tar.NewWriter(out)
 
 	opts.Manifest.Assets = new(smpb.SkillAssets)
 	if opts.Descriptors != nil {
@@ -282,9 +285,6 @@ func WriteSkill(path string, opts WriteSkillOpts) error {
 	}
 	if err := tw.Close(); err != nil {
 		return err
-	}
-	if err := os.WriteFile(path, tarBuf.Bytes(), 0644); err != nil {
-		return fmt.Errorf("failed to write %q: %w", path, err)
 	}
 	return nil
 }
