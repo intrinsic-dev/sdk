@@ -192,3 +192,7 @@ message SkillManifest {
   // This skill's assets.
   SkillAssets assets = 12;
 }
+
+message SkillManifests {
+  repeated SkillManifest manifests = 1;
+}
