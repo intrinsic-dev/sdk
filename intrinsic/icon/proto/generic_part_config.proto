@@ -136,6 +136,9 @@ message GenericPayloadConfig {
 message GenericPayloadStateConfig {
   // Empty for now.
 }
+message GenericCartesianPositionStateConfig {
+  // Empty for now.
+}
 
 // Bundles all FeatureInterface-specific config values into a single message.
 message GenericPartConfig {
@@ -172,4 +175,6 @@ message GenericPartConfig {
   optional GenericProcessWrenchConfig process_wrench_config = 23;
   optional GenericPayloadConfig payload_config = 24;
   optional GenericPayloadStateConfig payload_state_config = 25;
+  optional GenericCartesianPositionStateConfig cartesian_position_state_config =
+      26;
 }

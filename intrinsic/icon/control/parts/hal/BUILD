@@ -32,6 +32,7 @@ proto_library(
         "//intrinsic/icon/control/parts/hal/arm_part:hal_arm_part_config_proto",
         "//intrinsic/icon/control/parts/hal/force_torque_sensor_part:hal_force_torque_sensor_part_config_proto",
         "//intrinsic/icon/control/parts/hal/imu_part:hal_imu_part_config_proto",
+        "//intrinsic/icon/control/parts/hal/laser_tracker_part:hal_laser_tracker_part_config_proto",
         "//intrinsic/icon/control/parts/hal/linear_gripper_part:hal_linear_gripper_part_config_proto",
         "//intrinsic/icon/control/parts/hal/rangefinder_part:hal_rangefinder_part_config_proto",
     ],

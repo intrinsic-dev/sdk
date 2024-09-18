@@ -1,0 +1,12 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.icon;
+
+import "intrinsic/icon/control/parts/hal/hal_part_config.proto";
+
+message HalLaserTrackerPartConfig {
+  // The laser_tracker_state hardware interface.
+  intrinsic_proto.icon.HardwareInterface laser_tracker_state = 1;
+}
