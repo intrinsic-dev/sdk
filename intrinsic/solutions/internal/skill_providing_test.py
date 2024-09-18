@@ -762,6 +762,59 @@ class SkillsTest(parameterized.TestCase):
     expected_proto.parameters.Pack(expected_parameters)
     compare.assertProto2Equal(self, expected_proto, skill.proto)
 
+  @parameterized.parameters(
+      {
+          'value_specification': blackboard_value.BlackboardValue(
+              {}, 'test', None, None
+          )
+      },
+      {'value_specification': cel.CelExpression('test')},
+  )
+  def test_gen_skill_with_blackboard_parameter_list(self, value_specification):
+    skill_registry, skill_registry_stub = (
+        _create_skill_registry_with_mock_stub()
+    )
+
+    skill_id = 'ai.intrinsic.my_skill'
+    resource_slot = 'a'
+    resource_name = 'some-name'
+    resource_capability = 'some-type'
+    resource_registry = self._utils.create_resource_registry_with_single_handle(
+        resource_name, resource_capability
+    )
+
+    skill_registry_stub.GetSkills.return_value = (
+        self._utils.create_get_skills_response(
+            skill_id=skill_id,
+            parameter_defaults=test_skill_params_pb2.TestMessage(),
+            resource_selectors={resource_slot: resource_capability},
+        )
+    )
+
+    skills = skill_providing.Skills(skill_registry, resource_registry)
+
+    my_skill = skills.ai.intrinsic.my_skill
+
+    skill = my_skill(repeated_submessages=[value_specification])
+
+    expected_proto = behavior_call_pb2.BehaviorCall(
+        skill_id=skill_id,
+        return_value_name=skill.proto.return_value_name,
+        assignments=[
+            behavior_call_pb2.BehaviorCall.ParameterAssignment(
+                parameter_path='repeated_submessages[0]',
+                cel_expression='test',
+            ),
+        ],
+    )
+    expected_proto.resources[resource_slot].handle = resource_name
+
+    expected_parameters = test_skill_params_pb2.TestMessage(
+        repeated_submessages=[test_skill_params_pb2.SubMessage()]
+    )
+    expected_proto.parameters.Pack(expected_parameters)
+    compare.assertProto2Equal(self, expected_proto, skill.proto)
+
   def test_gen_skill_with_map_parameter(self):
     skill_registry, skill_registry_stub = (
         _create_skill_registry_with_mock_stub()

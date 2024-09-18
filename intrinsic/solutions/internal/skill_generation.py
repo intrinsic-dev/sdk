@@ -741,7 +741,13 @@ class GeneratedSkill(provided.SkillBase):
               self._blackboard_params[param_name + "." + k] = v
 
           if isinstance(value, list):
-            if value and isinstance(value[0], skill_utils.MessageWrapper):
+            if value and (
+                isinstance(value[0], skill_utils.MessageWrapper)
+                or isinstance(value[0], blackboard_value.BlackboardValue)
+                or isinstance(value[0], cel.CelExpression)
+            ):
+              # Guard this check for list non-scalar list values to allow
+              # assigning a VectorNd from a list[float].
               if (
                   self._param_message.DESCRIPTOR.fields_by_name[
                       param_name
@@ -752,10 +758,16 @@ class GeneratedSkill(provided.SkillBase):
                     f"Cannot set field {param_name} to list, not a repeated"
                     " field"
                 )
-              for i, listelem in enumerate(value):
-                if isinstance(listelem, skill_utils.MessageWrapper):
-                  for k, v in listelem.blackboard_params.items():
-                    self._blackboard_params[param_name + f"[{i}]." + k] = v
+            for i, listelem in enumerate(value):
+              if isinstance(listelem, skill_utils.MessageWrapper):
+                for k, v in listelem.blackboard_params.items():
+                  self._blackboard_params[param_name + f"[{i}]." + k] = v
+              elif isinstance(listelem, blackboard_value.BlackboardValue):
+                self._blackboard_params[param_name + f"[{i}]"] = (
+                    listelem.value_access_path()
+                )
+              elif isinstance(listelem, cel.CelExpression):
+                self._blackboard_params[param_name + f"[{i}]"] = str(listelem)
 
           if isinstance(value, dict):
             field = self._param_message.DESCRIPTOR.fields_by_name[param_name]
