@@ -42,6 +42,8 @@ struct JointLimits {
 
   bool IsValid() const;
 
+  bool operator==(const JointLimits& other) const;
+
   // Limit vectors.
   eigenmath::VectorNd min_position;
   eigenmath::VectorNd max_position;

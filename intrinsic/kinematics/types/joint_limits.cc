@@ -263,4 +263,33 @@ absl::StatusOr<JointLimits> UpdateJointLimits(
   return out;
 }
 
+bool CompareDoubles(const double lhs, const double rhs) {
+  if (std::isinf(lhs) && std::isinf(rhs)) return true;
+  if (std::isnan(lhs) && std::isnan(rhs)) return true;
+  return lhs == rhs;
+}
+
+// Compares two vectors. Inf and NaN are considered equal.
+bool CompareVector(const eigenmath::VectorNd& vec1,
+                   const eigenmath::VectorNd& vec2) {
+  if (vec1.size() != vec2.size()) {
+    return false;
+  }
+  for (int i = 0; i < vec1.size(); ++i) {
+    if (!CompareDoubles(vec1[i], vec2[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool JointLimits::operator==(const JointLimits& other) const {
+  return CompareVector(min_position, other.min_position) &&
+         CompareVector(max_position, other.max_position) &&
+         CompareVector(max_velocity, other.max_velocity) &&
+         CompareVector(max_acceleration, other.max_acceleration) &&
+         CompareVector(max_jerk, other.max_jerk) &&
+         CompareVector(max_torque, other.max_torque);
+}
+
 }  // namespace intrinsic
