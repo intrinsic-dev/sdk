@@ -92,6 +92,7 @@ MotionPlannerClient::PlanTrajectory(
   result.lock_motion_id = response.has_lock_motion_id()
                               ? std::optional(response.lock_motion_id())
                               : std::nullopt;
+  result.logging_id = response.logging_id();
 
   return result;
 }

@@ -66,6 +66,9 @@ class MotionPlannerClient {
     // motion for loading later. Note this field is not set if this response is
     // from loading a locked motion.
     std::optional<std::string> lock_motion_id;
+
+    // Logging id generated for this request. Used for introspection.
+    std::string logging_id;
   };
 
   // Plans a trajectory for a given motion planning problem and robot.

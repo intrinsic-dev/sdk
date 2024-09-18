@@ -67,6 +67,10 @@ message TrajectoryPlanningResponse {
   // for loading later. Note this field is not set if this response is from
   // loading a locked motion.
   optional string lock_motion_id = 3;
+
+  // Logging id generated for this request. Can be used to retrieve details
+  // about the request for debugging.
+  string logging_id = 4;
 }
 
 message IkRequest {
