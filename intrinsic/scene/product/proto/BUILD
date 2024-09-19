@@ -42,6 +42,7 @@ proto_library(
         "//intrinsic/scene/proto:scene_object_proto",
         "//intrinsic/scene/proto:scene_object_updates_proto",
         "@com_google_protobuf//:empty_proto",
+        "@com_google_protobuf//:struct_proto",
     ],
 )
 
@@ -75,6 +76,7 @@ go_grpc_library(
         "//intrinsic/scene/proto:scene_object_go_proto",
         "//intrinsic/scene/proto:scene_object_updates_go_proto",
         "@org_golang_google_protobuf//types/known/emptypb",
+        "@org_golang_google_protobuf//types/known/structpb",
     ],
 )
 
