@@ -21,8 +21,8 @@ message EventSourceStatus {
     UNSET = 0;
     UPLOAD_PENDING = 1;
     UPLOADING = 2;
-    // reserved 3;
-    UPLOADED = 4;
+    UPLOADED = 3;
+    // reserved 4;
     UNCOMPLETABLE = 5;
     FAILED = 6;
   }
@@ -46,11 +46,11 @@ message EventSourceMetadata {
   // Total number of bytes of all messages from this event source.
   uint64 num_bytes = 6;
 
-  // Total number of uploaded bytes (for creating detailed progress messages).
-  uint64 uploaded_bytes = 7;
-
   // Total number of uploaded items (for creating detailed progress messages).
-  uint64 uploaded_log_items = 8;
+  uint64 uploaded_log_items = 7;
+
+  // Total number of uploaded bytes (for creating detailed progress messages).
+  uint64 uploaded_bytes = 8;
 }
 
 // Status to indicate overall bag input upload progress.
@@ -105,6 +105,9 @@ message BagMetadata {
 
   // The total number of bytes from all event sources.
   uint64 total_bytes = 12;
+
+  // The total number of uploaded log items from all event sources.
+  uint64 total_uploaded_log_items = 13;
 
   // The total number of uploaded bytes from all event sources.
   uint64 total_uploaded_bytes = 14;
