@@ -7,6 +7,7 @@ package intrinsic_proto.icon;
 import "intrinsic/icon/proto/cart_space.proto";
 import "intrinsic/icon/proto/io_block.proto";
 import "intrinsic/icon/proto/safety_status.proto";
+import "intrinsic/math/proto/pose.proto";
 import "intrinsic/math/proto/quaternion.proto";
 import "intrinsic/math/proto/vector3.proto";
 
@@ -92,6 +93,8 @@ message PartStatus {
 
   optional InertialMeasurementUnitState inertial_measurement_unit_status = 14;
 
+  optional CartesianPositionState cartesian_position_state = 16;
+
   reserved 3;
 }
 
@@ -153,4 +156,8 @@ message InertialMeasurementUnitState {
   intrinsic_proto.Vector3 angular_velocity = 2;
   // The sensed linear acceleration.
   intrinsic_proto.Vector3 linear_acceleration = 3;
+}
+
+message CartesianPositionState {
+  optional intrinsic_proto.Pose sensed_pose = 1;
 }
