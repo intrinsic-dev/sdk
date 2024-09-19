@@ -26,23 +26,23 @@ using ::testing::Le;
 
 TEST(PeriodicOperationTest, StartStop) {
   PeriodicOperation op(+[] {});
-  EXPECT_OK(op.Start());
-  EXPECT_OK(op.Stop());
+  EXPECT_THAT(op.Start(), ::absl_testing::IsOk());
+  EXPECT_THAT(op.Stop(), ::absl_testing::IsOk());
 }
 
 TEST(PeriodicOperationTest, StartStopTwice) {
   PeriodicOperation op(+[] {});
-  EXPECT_OK(op.Start());
-  EXPECT_OK(op.Stop());
-  EXPECT_OK(op.Start());
-  EXPECT_OK(op.Stop());
+  EXPECT_THAT(op.Start(), ::absl_testing::IsOk());
+  EXPECT_THAT(op.Stop(), ::absl_testing::IsOk());
+  EXPECT_THAT(op.Start(), ::absl_testing::IsOk());
+  EXPECT_THAT(op.Stop(), ::absl_testing::IsOk());
 }
 
 TEST(PeriodicOperationTest, TwoStartsAndAStop) {
   PeriodicOperation op(+[] {});
-  EXPECT_OK(op.Start());
-  EXPECT_OK(op.Start());
-  EXPECT_OK(op.Stop());
+  EXPECT_THAT(op.Start(), ::absl_testing::IsOk());
+  EXPECT_THAT(op.Start(), ::absl_testing::IsOk());
+  EXPECT_THAT(op.Stop(), ::absl_testing::IsOk());
 }
 
 void StartsAndStops(int num_starts, int num_stops) {
@@ -59,11 +59,11 @@ void StartsAndStops(int num_starts, int num_stops) {
   std::shuffle(starts_and_stops.begin(), starts_and_stops.end(),
                std::mt19937());
   for (auto &&f : starts_and_stops) {
-    EXPECT_OK(f());
+    EXPECT_THAT(f(), ::absl_testing::IsOk());
   }
 
   // If we ever started, then we must stop to make sure.
-  EXPECT_OK(op.Stop());
+  EXPECT_THAT(op.Stop(), ::absl_testing::IsOk());
 }
 TEST(PeriodicOperationTest, TestStartsAndStops) { StartsAndStops(5, 5); }
 
@@ -74,9 +74,9 @@ void RunsOnAPeriod(absl::Duration period, absl::Duration test_time) {
   PeriodicOperation op(counter, period);
 
   absl::Time op_start = absl::Now();
-  ASSERT_OK(op.Start());
+  ASSERT_THAT(op.Start(), ::absl_testing::IsOk());
   absl::SleepFor(test_time);
-  ASSERT_OK(op.Stop());
+  ASSERT_THAT(op.Stop(), ::absl_testing::IsOk());
   absl::Time op_end = absl::Now();
 
   int64_t period_ns = absl::ToInt64Nanoseconds(period);
@@ -100,13 +100,13 @@ TEST(PeriodicOperationTest, RunsOnDemand) {
   // test timeout.
   PeriodicOperation op(counter, absl::Hours(24));
 
-  ASSERT_OK(op.Start());
+  ASSERT_THAT(op.Start(), ::absl_testing::IsOk());
 
   op.RunNow();
   op.RunNow();
   op.RunNow();
 
-  ASSERT_OK(op.Stop());
+  ASSERT_THAT(op.Stop(), ::absl_testing::IsOk());
 
   // Once from initial `Start` call, thrice from `RunNow`.
   EXPECT_EQ(count, 4);
@@ -120,13 +120,13 @@ TEST(PeriodicOperationTest, RunsOnDemandWithoutBlocking) {
   // test timeout.
   PeriodicOperation op(counter, absl::Hours(24));
 
-  ASSERT_OK(op.Start());
+  ASSERT_THAT(op.Start(), ::absl_testing::IsOk());
 
   op.RunNowNonBlocking();
   op.RunNowNonBlocking();
   op.RunNowNonBlocking();
 
-  ASSERT_OK(op.Stop());
+  ASSERT_THAT(op.Stop(), ::absl_testing::IsOk());
 
   // We don't know when the execution thread will be scheduled between Start and
   // Stop, so we may drop some requests to run now. However, we know that it
@@ -154,11 +154,11 @@ void HandlesManyDemands(int num_blocking, int num_nonblocking) {
 
   std::shuffle(run_demands.begin(), run_demands.end(), std::mt19937());
 
-  ASSERT_OK(op.Start());
+  ASSERT_THAT(op.Start(), ::absl_testing::IsOk());
   for (auto &&f : run_demands) {
     f();
   }
-  ASSERT_OK(op.Stop());
+  ASSERT_THAT(op.Stop(), ::absl_testing::IsOk());
 
   // We expect to have run the op once for `Start` and at least as many times as
   // we have blocking requests.
@@ -180,7 +180,7 @@ TEST(PeriodicOperationTest, DoesntStarveOpOnDemand) {
   // test timeout.
   PeriodicOperation op(counter, absl::Hours(24));
 
-  ASSERT_OK(op.Start());
+  ASSERT_THAT(op.Start(), ::absl_testing::IsOk());
   op.RunNowNonBlocking();
 
   absl::Condition saw_count(+[](int *c) { return *c >= 2; }, &count);
@@ -188,7 +188,7 @@ TEST(PeriodicOperationTest, DoesntStarveOpOnDemand) {
     absl::MutexLock l(&count_mutex);
     count_mutex.Await(saw_count);
   }
-  ASSERT_OK(op.Stop());
+  ASSERT_THAT(op.Stop(), ::absl_testing::IsOk());
   EXPECT_EQ(count, 2);
 }
 

@@ -97,7 +97,7 @@ absl::Status PreviewSkill(SkillExecuteInterface& skill,
 //
 //      ExecuteRequest request = skill_test_factory.MakeExecuteRequest(params);
 //      ExecuteContext context = skill_test_factory.MakeExecuteContext({});
-//      ASSERT_OK(skill->Execute(request, context));
+//      ASSERT_THAT(skill->Execute(request, context), ::absl_testing::IsOk());
 //    }
 //
 // Example: Test that an Execute method supports cancellation.
@@ -114,8 +114,8 @@ absl::Status PreviewSkill(SkillExecuteInterface& skill,
 //      });
 //
 //      Thread cancel_skill([&canceller]() {
-//        ASSERT_OK(canceller.WaitForReady());
-//        ASSERT_OK(canceller.Cancel());
+//        ASSERT_THAT(canceller.WaitForReady(), ::absl_testing::IsOk());
+//        ASSERT_THAT(canceller.Cancel(), ::absl_testing::IsOk());
 //      });
 //
 //      auto result = skill->Execute(request, *context);
@@ -134,12 +134,13 @@ absl::Status PreviewSkill(SkillExecuteInterface& skill,
 //      SomeServiceImpl some_service;
 //      auto resource_handle = skill_test_factory.RunService(&some_service);
 //      EquipmentPack equipment;
-//      ASSERT_OK(equipment.Add("some_slot", resource_handle));
+//      ASSERT_THAT(equipment.Add("some_slot", resource_handle),
+//      ::absl_testing::IsOk());
 //
 //      ExecuteRequest request = skill_test_factory.MakeExecuteRequest(params);
 //      ExecuteContext context = skill_test_factory.MakeExecuteContext(
 //          {.equipment_pack = equipment});
-//      ASSERT_OK(skill->Execute(request, context));
+//      ASSERT_THAT(skill->Execute(request, context), ::absl_testing::IsOk());
 //    }
 //
 // Example: Test Preview method on a skill that has no dependencies in its
@@ -152,7 +153,7 @@ absl::Status PreviewSkill(SkillExecuteInterface& skill,
 //
 //      PreviewRequest request = skill_test_factory.MakePreviewRequest(params);
 //      PreviewContext context = skill_test_factory.MakePreviewContext({});
-//      ASSERT_OK(skill->Preview(request, context));
+//      ASSERT_THAT(skill->Preview(request, context), ::absl_testing::IsOk());
 //    }
 //
 class SkillTestFactory final {
