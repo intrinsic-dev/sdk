@@ -50,7 +50,7 @@ struct HardwareModuleRtSchedulingData {
 absl::StatusOr<HardwareModuleRtSchedulingData> SetupRtScheduling(
     const intrinsic_proto::icon::HardwareModuleConfig& module_config,
     absl::string_view shared_memory_namespace, bool use_realtime_scheduling,
-    std::optional<int> realtime_core);
+    std::optional<int> realtime_core, bool disable_malloc_guard);
 
 // Runs HWM runtime and the gRPC server and waits for runtime to shutdown as
 // signaled by system signals or the resource health service.

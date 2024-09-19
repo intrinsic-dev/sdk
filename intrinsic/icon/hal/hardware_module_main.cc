@@ -103,7 +103,10 @@ absl::StatusOr<HardwareModuleExitCode> ModuleMain(int argc, char** argv) {
         (auto [realtime_clock, server_thread_options, affinity_set]),
         intrinsic::icon::SetupRtScheduling(
             hwm_main_config->module_config, shared_memory_namespace,
-            hwm_main_config->use_realtime_scheduling, realtime_core));
+            /*use_realtime_scheduling=*/
+            hwm_main_config->use_realtime_scheduling, realtime_core,
+            /*disable_malloc_guard=*/
+            hwm_main_config->module_config.disable_malloc_guard()));
     cpu_affinity = {affinity_set.begin(), affinity_set.end()};
     LOG(INFO) << "Creating hardware module with config:\n"
               << hwm_main_config->module_config;

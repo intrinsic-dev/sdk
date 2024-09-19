@@ -64,7 +64,7 @@ absl::StatusOr<HardwareModuleMainConfig> LoadConfig(
 absl::StatusOr<HardwareModuleRtSchedulingData> SetupRtScheduling(
     const intrinsic_proto::icon::HardwareModuleConfig& module_config,
     absl::string_view shared_memory_namespace, bool use_realtime_scheduling,
-    std::optional<int> realtime_core) {
+    std::optional<int> realtime_core, bool disable_malloc_guard) {
   std::unique_ptr<intrinsic::icon::RealtimeClock> realtime_clock = nullptr;
   if (module_config.drives_realtime_clock()) {
     INTR_ASSIGN_OR_RETURN(realtime_clock,
