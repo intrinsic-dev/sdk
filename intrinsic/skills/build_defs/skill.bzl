@@ -282,7 +282,37 @@ _skill_id = rule(
     provides = [SkillIdInfo],
 )
 
-def _skill_bundle_impl(ctx):
+def _skill_labels_impl(ctx):
+    skill_id = ctx.attr.skill_id[SkillIdInfo]
+    outputfile = ctx.actions.declare_file(ctx.label.name + ".labels")
+    cmd = """
+    echo "ai.intrinsic.asset-id=$(cat {id_filename})" > {output}""".format(
+        id_filename = skill_id.id_filename.path,
+        output = outputfile.path,
+    )
+    ctx.actions.run_shell(
+        inputs = [skill_id.id_filename],
+        outputs = [outputfile],
+        command = cmd,
+    )
+    return DefaultInfo(files = depset([outputfile]))
+
+_skill_labels = rule(
+    implementation = _skill_labels_impl,
+    attrs = {
+        "skill_id": attr.label(
+            mandatory = True,
+            providers = [SkillIdInfo],
+        ),
+    },
+)
+
+SkillInfo = provider(
+    "provided by intrinsic_skill() rule",
+    fields = ["bundle_tar"],
+)
+
+def _intrinsic_skill_rule_impl(ctx):
     image_files = ctx.attr.image.files.to_list()
     if len(image_files) != 1:
         fail("image does not contain exactly 1 tar file")
@@ -322,10 +352,13 @@ def _skill_bundle_impl(ctx):
                 transitive_files = inputs,
             ),
         ),
+        SkillInfo(
+            bundle_tar = bundle_output,
+        ),
     ]
 
-_skill_bundle = rule(
-    implementation = _skill_bundle_impl,
+_intrinsic_skill_rule = rule(
+    implementation = _intrinsic_skill_rule_impl,
     attrs = {
         "image": attr.label(
             mandatory = True,
@@ -348,59 +381,19 @@ _skill_bundle = rule(
     },
 )
 
-def build_symlinks(skill_service_name, skill_service_config_name):
-    return {
-        "/skills/skill_service_config.proto.bin": native.package_name() + "/" + skill_service_config_name + ".pbbin",
-        "/skills/skill_service": native.package_name() + "/" + skill_service_name,
-    }
-
-def _skill_labels_impl(ctx):
-    skill_id = ctx.attr.skill_id[SkillIdInfo]
-    outputfile = ctx.actions.declare_file(ctx.label.name + ".labels")
-    cmd = """
-    echo "ai.intrinsic.asset-id=$(cat {id_filename})" > {output}""".format(
-        id_filename = skill_id.id_filename.path,
-        output = outputfile.path,
-    )
-    ctx.actions.run_shell(
-        inputs = [skill_id.id_filename],
-        outputs = [outputfile],
-        command = cmd,
-    )
-    return DefaultInfo(files = depset([outputfile]))
-
-_skill_labels = rule(
-    implementation = _skill_labels_impl,
-    attrs = {
-        "skill_id": attr.label(
-            mandatory = True,
-            providers = [SkillIdInfo],
-        ),
-    },
-)
-
-def cc_skill(
-        name,
-        deps,
-        manifest,
-        **kwargs):
+def _intrinsic_skill(name, image, manifest, **kwargs):
     """Creates cpp skill targets.
 
     Generates the following targets:
     * a skill container image target named 'name'.
 
     Args:
-      name: The name of the skill image to build, must end in "_image".
-      deps: The C++ dependencies of the skill service specific to this skill.
-            This is normally the cc_proto_library target for the skill's protobuf
-            schema and the cc_library target that declares the skill's create method,
-            which is specified in the skill's manifest.
+      name: The name of the skill image to build, must end in "_image"
+      image: Skill service image.
       manifest: A target that provides a SkillManifestInfo provider for the skill. This is normally
                 a skill_manifest() target.
       **kwargs: additional arguments passed to the container_image rule, such as visibility.
     """
-    if not name.endswith("_image"):
-        fail("cc_skill name must end in _image")
 
     skill_service_config_name = "_%s_skill_service_config" % name
     _skill_service_config_manifest(
@@ -421,6 +414,71 @@ def cc_skill(
         tags = ["manual", "avoid_dep"],
     )
 
+    labels = "_%s_labels" % name
+    _skill_labels(
+        name = labels,
+        skill_id = skill_id_name,
+        testonly = kwargs.get("testonly"),
+        visibility = ["//visibility:private"],
+        tags = ["manual", "avoid_dep"],
+    )
+
+    image_name = name
+    package_path = native.package_name() + "/" if native.package_name() else ""
+    container_image(
+        name = image_name,
+        base = image,
+        directory = "/skills",
+        files = [
+            skill_service_config_name,
+        ],
+        data_path = "/",
+        labels = labels,
+        symlinks = {
+            "/skills/skill_service_config.proto.bin": package_path + skill_service_config_name + ".pbbin",
+        },
+        **kwargs
+    )
+
+    skill_bundle_name = "%s_bundle" % name
+    _intrinsic_skill_rule(
+        name = skill_bundle_name,
+        image = image_name + ".tar",
+        manifest = manifest,
+        bundle = "%s.bundle.tar" % name,
+        visibility = kwargs.get("visibility"),
+        testonly = kwargs.get("testonly"),
+    )
+
+def build_symlinks(skill_service_name):
+    package_path = native.package_name() + "/" if native.package_name() else ""
+    return {
+        "/skills/skill_service": package_path + skill_service_name,
+    }
+
+def cc_skill(
+        name,
+        deps,
+        manifest,
+        **kwargs):
+    """Creates cpp skill targets.
+
+    Generates the following targets:
+    * a skill container image target named 'name'.
+
+    Args:
+      name: The name of the skill image to build, must end in "_image"
+      deps: The C++ dependencies of the skill service specific to this skill.
+            This is normally the cc_proto_library target for the skill's protobuf
+            schema and the cc_library target that declares the skill's create method,
+            which is specified in the skill's manifest.
+      manifest: A target that provides a SkillManifestInfo provider for the skill. This is normally
+                a skill_manifest() target.
+      **kwargs: additional arguments passed to the container_image rule, such as visibility.
+    """
+    if not name.endswith("_image"):
+        fail("cc_skill name must end in _image")
+
     skill_service_name = "_%s_service" % name
     _cc_skill_service(
         name = skill_service_name,
@@ -431,39 +489,26 @@ def cc_skill(
         tags = ["manual", "avoid_dep"],
     )
 
-    files = [
-        skill_service_config_name,
-        skill_service_name,
-    ]
-
-    labels = "_%s_labels" % name
-    _skill_labels(
-        name = labels,
-        skill_id = skill_id_name,
-        testonly = kwargs.get("testonly"),
-        visibility = ["//visibility:private"],
-        tags = ["manual", "avoid_dep"],
-    )
-
+    service_image_name = "_%s_service_image" % name
     container_image(
-        name = name,
+        name = service_image_name,
         base = Label("@distroless_base_amd64_oci"),
         directory = "/skills",
-        files = files,
+        files = [
+            skill_service_name,
+        ],
         data_path = "/",
-        labels = labels,
-        symlinks = build_symlinks(skill_service_name, skill_service_config_name),
-        **kwargs
+        symlinks = build_symlinks(skill_service_name),
+        compatible_with = kwargs.get("compatible_with"),
+        visibility = ["//visibility:private"],
+        testonly = kwargs.get("testonly"),
     )
 
-    skill_bundle_name = "%s_bundle" % name
-    _skill_bundle(
-        name = skill_bundle_name,
-        image = name + ".tar",
-        bundle = "%s.bundle.tar" % name,
+    _intrinsic_skill(
+        name = name,
+        image = service_image_name,
         manifest = manifest,
-        visibility = kwargs.get("visibility"),
-        testonly = kwargs.get("testonly"),
+        **kwargs
     )
 
 def py_skill(
@@ -487,25 +532,6 @@ def py_skill(
     if not name.endswith("_image"):
         fail("py_skill name must end in _image")
 
-    skill_service_config_name = "_%s_skill_service_config" % name
-    _skill_service_config_manifest(
-        name = skill_service_config_name,
-        manifest = manifest,
-        testonly = kwargs.get("testonly"),
-        visibility = ["//visibility:private"],
-        tags = ["manual", "avoid_dep"],
-    )
-
-    skill_id_name = "_%s_id" % name
-    _skill_id(
-        name = skill_id_name,
-        manifest = manifest,
-        id_filename = skill_id_name + ".id.txt",
-        testonly = kwargs.get("testonly"),
-        visibility = ["//visibility:private"],
-        tags = ["manual", "avoid_dep"],
-    )
-
     binary_name = "_%s_binary" % name
     _py_skill_service(
         name = binary_name,
@@ -522,39 +548,28 @@ def py_skill(
     binary_path = "/" + package_path + binary_name
     binary_path_with_repo = "/ai_intrinsic_sdks~override" + binary_path
     symlinks = {
-        "/skills/skill_service_config.proto.bin": package_path + skill_service_config_name + ".pbbin",
         "/skills/skill_service": binary_path_with_repo,
         binary_path_with_repo: binary_path,
         binary_path_with_repo + ".py": binary_path + ".py",
     }
 
-    labels = "_%s_labels" % name
-    _skill_labels(
-        name = labels,
-        skill_id = skill_id_name,
-        visibility = ["//visibility:private"],
-        tags = ["manual", "avoid_dep"],
-    )
-
+    service_image_name = "_%s_service_image" % name
     python_oci_image(
-        name = name,
+        name = service_image_name,
         base = "@distroless_python3",
         binary = binary_name,
         directory = "/skills",
         data_path = "/",
-        files = [skill_service_config_name],
         symlinks = symlinks,
         workdir = "/",
-        labels = labels,
-        **kwargs
+        compatible_with = kwargs.get("compatible_with"),
+        visibility = ["//visibility:private"],
+        testonly = kwargs.get("testonly"),
     )
 
-    skill_bundle_name = "%s_bundle" % name
-    _skill_bundle(
-        name = skill_bundle_name,
-        image = name + ".tar",
-        bundle = "%s.bundle.tar" % name,
+    _intrinsic_skill(
+        name = name,
+        image = service_image_name,
         manifest = manifest,
-        visibility = kwargs.get("visibility"),
-        testonly = kwargs.get("testonly"),
+        **kwargs
     )
