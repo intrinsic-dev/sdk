@@ -7,6 +7,7 @@ package intrinsic_proto.product;
 import "google/protobuf/empty.proto";
 import "intrinsic/scene/product/proto/product.proto";
 import "intrinsic/scene/proto/scene_object.proto";
+import "intrinsic/scene/proto/scene_object_updates.proto";
 
 // ProductService provides the means to work with products in a
 // Solution.
@@ -75,12 +76,19 @@ message UpdateProductRequest {
   string name = 1;
   oneof update {
     RenameProduct rename_product = 2;
+    UpdateProductGeometry update_product_geometry = 3;
   }
 }
 
 message RenameProduct {
   // The new name of the product.
   string new_name = 1;
+}
+
+message UpdateProductGeometry {
+  // // List of updates to the product geometry.
+  intrinsic_proto.scene_object.v1.SceneObjectInstanceUpdates
+      scene_object_instance_updates = 1;
 }
 
 message DeleteProductRequest {
