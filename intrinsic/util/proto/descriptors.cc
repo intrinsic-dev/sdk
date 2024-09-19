@@ -21,7 +21,8 @@ void AddFileAndImports(
         file_descriptors,
     const google::protobuf::FileDescriptor& current_file) {
   // Add current file.
-  if (!file_descriptors->insert({current_file.name(), &current_file}).second) {
+  if (!file_descriptors->try_emplace(current_file.name(), &current_file)
+           .second) {
     // There's already a file descriptor with that name, so the dependencies
     // will be there too. Bail out.
     return;
