@@ -28,3 +28,19 @@ cc_library(
         "@com_gitlab_libeigen_eigen//:eigen",
     ],
 )
+
+cc_library(
+    name = "flatbuffer_utils",
+    hdrs = ["flatbuffer_utils.h"],
+    deps = ["@com_github_google_flatbuffers//:runtime_cc"],
+)
+
+cc_test(
+    name = "flatbuffer_utils_test",
+    srcs = ["flatbuffer_utils_test.cc"],
+    deps = [
+        ":flatbuffer_utils",
+        "//intrinsic/icon/interprocess/shared_memory_manager:segment_info_fbs_cc",
+        "//intrinsic/util/testing:gtest_wrapper",
+    ],
+)
