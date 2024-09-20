@@ -12,6 +12,7 @@ go_library(
         "//intrinsic/assets:imageutils",
         "//intrinsic/skills/tools/skill/cmd",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
+        "//intrinsic/skills/tools/skill/cmd:skillio",
         "//intrinsic/skills/tools/skill/cmd:solutionutil",
         "//intrinsic/tools/inctl/auth",
         "@com_github_spf13_cobra//:go_default_library",

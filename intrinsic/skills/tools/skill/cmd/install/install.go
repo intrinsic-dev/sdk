@@ -18,23 +18,49 @@ import (
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd"
 	"intrinsic/skills/tools/skill/cmd/directupload"
-	"intrinsic/skills/tools/skill/cmd/registry"
+	"intrinsic/skills/tools/skill/cmd/skillio"
 	"intrinsic/skills/tools/skill/cmd/waitforskill"
 )
 
 var cmdFlags = cmdutils.NewCmdFlags()
 
+func installRequest(ps *skillio.ProcessedSkill, version string) (*installerpb.InstallContainerAddonRequest, error) {
+	if ps.ProcessedManifest != nil {
+		return &installerpb.InstallContainerAddonRequest{
+			Id:      ps.ID,
+			Version: version,
+			Type:    installerpb.AddonType_ADDON_TYPE_SKILL,
+			Images: []*imagepb.Image{
+				ps.ProcessedManifest.GetAssets().GetImage(),
+			},
+		}, nil
+	}
+
+	if ps.Image != nil {
+		return &installerpb.InstallContainerAddonRequest{
+			Id:      ps.ID,
+			Version: version,
+			Type:    installerpb.AddonType_ADDON_TYPE_SKILL,
+			Images: []*imagepb.Image{
+				ps.Image,
+			},
+		}, nil
+	}
+
+	return nil, fmt.Errorf("could not build a complete install skill request for %q: missing required information", ps.ID)
+}
+
 var installCmd = &cobra.Command{
 	Use:   "install --type=TYPE TARGET",
 	Short: "Install a skill",
 	Example: `Build a skill, upload it to a container registry, and install the skill
-$ inctl skill install --type=build //abc:skill.tar --registry=gcr.io/my-registry --cluster=my_cluster
+$ inctl skill install --type=build //abc:skill_bundle --registry=gcr.io/my-registry --cluster=my_cluster
 
-Upload skill image to a container registry, and install the skill
-$ inctl skill install --type=archive abc/skill.tar --registry=gcr.io/my-registry --cluster=my_cluster
+Upload skill image to a container registry, and install the skill bundle
+$ inctl skill install --type=archive abc/skill.bundle.tar --registry=gcr.io/my-registry --cluster=my_cluster
 
 Use the solution flag to automatically resolve the cluster (requires the solution to run)
-$ inctl skill install --type=archive abc/skill.tar --solution=my-solution
+$ inctl skill install --type=archive abc/skill.bundle.tar --solution=my-solution
 `,
 	Args: cobra.ExactArgs(1),
 	Aliases: []string{
@@ -81,9 +107,15 @@ $ inctl skill install --type=archive abc/skill.tar --solution=my-solution
 			transfer = directupload.NewTransferer(ctx, opts...)
 		}
 
-		log.Printf("Publishing skill image as %q", target)
+		// No deterministic data is available for generating the sideloaded version here. Use a random
+		// string instead to keep the version unique. Ideally we would probably use the digest of the
+		// skill image or similar.
+		version := fmt.Sprintf("0.0.1+%s", uuid.New())
+
 		authUser, authPwd := cmdFlags.GetFlagsRegistryAuthUserPassword()
-		imgpb, installerParams, err := registry.PushSkill(target, registry.PushOptions{
+		psOpts := skillio.ProcessSkillOpts{
+			Target:  target,
+			Version: version,
 			RegistryOpts: imageutils.RegistryOptions{
 				URI:        flagRegistry,
 				Transferer: transfer,
@@ -92,28 +124,51 @@ $ inctl skill install --type=archive abc/skill.tar --solution=my-solution
 					Pwd:  authPwd,
 				},
 			},
-			Type: cmdFlags.GetFlagSideloadStartType(),
-		})
-		if err != nil {
-			return fmt.Errorf("could not push target %q to the container registry: %v", target, err)
+			AllowMissingManifest: true,
+			DryRun:               false,
 		}
 
-		pkg, err := idutils.PackageFrom(installerParams.SkillID)
+		// Functions to prepare each install type.
+		archivePreparer := func() (*installerpb.InstallContainerAddonRequest, error) {
+			ps, err := skillio.ProcessFile(psOpts)
+			if err != nil {
+				return nil, err
+			}
+			return installRequest(ps, version)
+		}
+		buildPreparer := func() (*installerpb.InstallContainerAddonRequest, error) {
+			ps, err := skillio.ProcessBuildTarget(psOpts)
+			if err != nil {
+				return nil, err
+			}
+			return installRequest(ps, version)
+		}
+
+		installPreparers := map[string]func() (*installerpb.InstallContainerAddonRequest, error){
+			"archive": archivePreparer,
+			"build":   buildPreparer,
+		}
+
+		targetType := cmdFlags.GetFlagSideloadStartType()
+		// Prepare the install based on the specified install type.
+		prepareInstall, ok := installPreparers[targetType]
+		if !ok {
+			return fmt.Errorf("unknown install type %q", targetType)
+		}
+		req, err := prepareInstall()
+		if err != nil {
+			return err
+		}
+
+		pkg, err := idutils.PackageFrom(req.GetId())
 		if err != nil {
 			return fmt.Errorf("could not parse package from ID: %w", err)
 		}
-		name, err := idutils.NameFrom(installerParams.SkillID)
+		name, err := idutils.NameFrom(req.GetId())
 		if err != nil {
 			return fmt.Errorf("could not parse name from ID: %w", err)
 		}
-		// No deterministic data is available for generating the sideloaded version here. Use a random
-		// string instead to keep the version unique. Ideally we would probably use the digest of the
-		// skill image or similar.
-		version := fmt.Sprintf("0.0.1+%s", uuid.New())
 		idVersion, err := idutils.IDVersionFrom(pkg, name, version)
-		if err != nil {
-			return fmt.Errorf("could not create id_version: %w", err)
-		}
 		log.Printf("Installing skill %q", idVersion)
 
 		installerCtx := ctx
@@ -122,14 +177,7 @@ $ inctl skill install --type=archive abc/skill.tar --solution=my-solution
 			&imageutils.InstallContainerParams{
 				Address:    address,
 				Connection: conn,
-				Request: &installerpb.InstallContainerAddonRequest{
-					Id:      installerParams.SkillID,
-					Version: version,
-					Type:    installerpb.AddonType_ADDON_TYPE_SKILL,
-					Images: []*imagepb.Image{
-						imgpb,
-					},
-				},
+				Request:    req,
 			})
 		if err != nil {
 			return fmt.Errorf("could not install the skill: %w", err)
@@ -144,7 +192,7 @@ $ inctl skill install --type=archive abc/skill.tar --solution=my-solution
 		err = waitforskill.WaitForSkill(ctx,
 			&waitforskill.Params{
 				Connection:     conn,
-				SkillID:        installerParams.SkillID,
+				SkillID:        req.GetId(),
 				SkillIDVersion: idVersion,
 				WaitDuration:   timeout,
 			})

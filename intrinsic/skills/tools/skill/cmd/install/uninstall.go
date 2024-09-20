@@ -13,6 +13,7 @@ import (
 	"intrinsic/assets/imageutils"
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd"
+	"intrinsic/skills/tools/skill/cmd/skillio"
 )
 
 var cmdFlags = cmdutils.NewCmdFlags()
@@ -21,13 +22,13 @@ var uninstallCmd = &cobra.Command{
 	Use:   "uninstall --type=TYPE TARGET",
 	Short: "Remove a skill",
 	Example: `Stop a running skill using its build target
-$ inctl skill uninstall --type=build //abc:skill.tar --context=minikube
+$ inctl skill uninstall --type=build //abc:skill_bundle --context=minikube
 
 Stop a running skill using an already-built image file
-$ inctl skill uninstall --type=archive abc/skill.tar --context=minikube
+$ inctl skill uninstall --type=archive abc/skill.bundle.tar --context=minikube
 
 Use the solution flag to automatically resolve the context (requires the solution to run)
-$ inctl skill uninstall --type=archive abc/skill.tar --solution=my-solution
+$ inctl skill uninstall --type=archive abc/skill.bundle.tar --solution=my-solution
 
 Stop a running skill by specifying its id
 $ inctl skill uninstall --type=id com.foo.skill
@@ -46,16 +47,30 @@ $ inctl skill uninstall --type=id com.foo.skill
 			return fmt.Errorf("type must be one of (%s, %s, %s)", imageutils.Build, imageutils.Archive, imageutils.ID)
 		}
 
+		var skillID string
+		var err error
+		switch targetType {
+		case imageutils.Archive:
+			skillID, err = skillio.SkillIDFromArchive(target)
+			if err != nil {
+				return err
+			}
+		case imageutils.Build:
+			skillID, err = skillio.SkillIDFromBuildTarget(target)
+			if err != nil {
+				return err
+			}
+		case imageutils.ID:
+			skillID = target
+		default:
+			return fmt.Errorf("unimplemented target type: %v", targetType)
+		}
+
 		ctx, conn, address, err := clientutils.DialClusterFromInctl(ctx, cmdFlags)
 		if err != nil {
 			return err
 		}
 		defer conn.Close()
-
-		skillID, err := imageutils.SkillIDFromTarget(target, imageutils.TargetType(targetType))
-		if err != nil {
-			return fmt.Errorf("could not get skill ID: %v", err)
-		}
 
 		log.Printf("Removing skill %q", skillID)
 		if err := imageutils.RemoveContainer(ctx, &imageutils.RemoveContainerParams{

@@ -17,7 +17,7 @@ go_library(
         "//intrinsic/kubernetes/workcell_spec/proto:image_go_proto",
         "//intrinsic/kubernetes/workcell_spec/proto:installer_go_grpc_proto",
         "//intrinsic/skills/tools/skill/cmd",
-        "//intrinsic/skills/tools/skill/cmd:registry",
+        "//intrinsic/skills/tools/skill/cmd:skillio",
         "//intrinsic/skills/tools/skill/cmd:waitforskill",
         "//intrinsic/skills/tools/skill/cmd/directupload",
         "@com_github_pborman_uuid//:go_default_library",
@@ -34,6 +34,7 @@ go_library(
         "//intrinsic/assets:imageutils",
         "//intrinsic/kubernetes/workcell_spec/proto:installer_go_grpc_proto",
         "//intrinsic/skills/tools/skill/cmd",
+        "//intrinsic/skills/tools/skill/cmd:skillio",
         "@com_github_spf13_cobra//:go_default_library",
     ],
 )

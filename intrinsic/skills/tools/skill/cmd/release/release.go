@@ -24,12 +24,11 @@ import (
 	"intrinsic/assets/imageutils"
 	skillcataloggrpcpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillcatalogpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
-	psmpb "intrinsic/skills/proto/processed_skill_manifest_go_proto"
 	skillmanifestpb "intrinsic/skills/proto/skill_manifest_go_proto"
 	"intrinsic/skills/tools/resource/cmd/bundleimages"
 	skillCmd "intrinsic/skills/tools/skill/cmd"
 	"intrinsic/skills/tools/skill/cmd/directupload"
-	"intrinsic/skills/tools/skill/cmd/registry"
+	"intrinsic/skills/tools/skill/cmd/skillio"
 	"intrinsic/util/proto/protoio"
 )
 
@@ -177,18 +176,18 @@ func skillRequestFromManifest() (*skillcatalogpb.CreateSkillRequest, error) {
 type skillRequestFromBundleOpts struct {
 	flags      *cmdutils.CmdFlags
 	transferer imagetransfer.Transferer
-	target     string
+	path       string
 }
 
 func skillRequestFromBundle(opts skillRequestFromBundleOpts) (*skillcatalogpb.CreateSkillRequest, error) {
-	manifest, err := bundleio.ProcessSkill(opts.target, bundleio.ProcessSkillOpts{
+	manifest, err := bundleio.ProcessSkill(opts.path, bundleio.ProcessSkillOpts{
 		ImageProcessor: bundleimages.CreateImageProcessor(imageutils.RegistryOptions{
 			Transferer: opts.transferer,
 			URI:        imageutils.GetRegistry(clientutils.ResolveCatalogProjectFromInctl(opts.flags)),
 		}),
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "Could not read bundle file "+opts.target)
+		return nil, errors.Wrap(err, "Could not read bundle file "+opts.path)
 	}
 	return &skillcatalogpb.CreateSkillRequest{
 		ManifestType: &skillcatalogpb.CreateSkillRequest_ProcessedSkillManifest{
@@ -217,14 +216,43 @@ func remoteOpt() remote.Option {
 var releaseExamples = strings.Join(
 	[]string{
 		`Build a skill then upload and release it to the skill catalog:
-  $ inctl skill release --type=build //abc:skill.tar ...`,
+  $ inctl skill release --type=build //abc:skill_bundle ...`,
 		`Upload and release a skill image to the skill catalog:
-  $ inctl skill release --type=archive /path/to/skill.tar ...`,
-		`Upload and release a skill bundle to the skill catalog:
-  $ inctl skill release --type=bundle /path/to/skill.bundle.tar ...`,
+  $ inctl skill release --type=archive /path/to/skill.bundle.tar ...`,
 	},
 	"\n\n",
 )
+
+func releaseRequest(ps *skillio.ProcessedSkill) (*skillcatalogpb.CreateSkillRequest, error) {
+	if ps.ProcessedManifest != nil {
+		return &skillcatalogpb.CreateSkillRequest{
+			ManifestType: &skillcatalogpb.CreateSkillRequest_ProcessedSkillManifest{
+				ProcessedSkillManifest: ps.ProcessedManifest,
+			},
+			Version:      cmdFlags.GetFlagVersion(),
+			Default:      cmdFlags.GetFlagDefault(),
+			OrgPrivate:   cmdFlags.GetFlagOrgPrivate(),
+			ReleaseNotes: cmdFlags.GetFlagReleaseNotes(),
+		}, nil
+	}
+
+	if ps.Image != nil && ps.Manifest != nil {
+		return &skillcatalogpb.CreateSkillRequest{
+			ManifestType: &skillcatalogpb.CreateSkillRequest_Manifest{
+				Manifest: ps.Manifest,
+			},
+			DeploymentType: &skillcatalogpb.CreateSkillRequest_Image{
+				Image: ps.Image,
+			},
+			Version:      cmdFlags.GetFlagVersion(),
+			ReleaseNotes: cmdFlags.GetFlagReleaseNotes(),
+			Default:      cmdFlags.GetFlagDefault(),
+			OrgPrivate:   cmdFlags.GetFlagOrgPrivate(),
+		}, nil
+	}
+
+	return nil, fmt.Errorf("could not build a complete create skill request: missing required information")
+}
 
 var releaseCmd = &cobra.Command{
 	Use:     "release target",
@@ -260,69 +288,37 @@ var releaseCmd = &cobra.Command{
 			})
 		}
 
-		// Functions to prepare each release type.
-		pushSkillPreparer := func() (*skillcatalogpb.CreateSkillRequest, error) {
-			req, err := skillRequestFromManifest()
-			if err != nil {
-				return nil, err
-			}
-			imageTag, err := imageutils.GetAssetVersionImageTag("skill", cmdFlags.GetFlagVersion())
-			if err != nil {
-				return nil, err
-			}
-
-			if dryRun {
-				log.Printf("Skipping pushing skill %q to the container registry (dry-run)", target)
-				return req, nil
-			}
-
-			imgpb, _, err := registry.PushSkill(target, registry.PushOptions{
-				RegistryOpts: imageutils.RegistryOptions{
-					URI:        imageutils.GetRegistry(project),
-					Transferer: transferer,
-				},
-				Tag:  imageTag,
-				Type: targetType,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("could not push target %q to the container registry: %v", target, err)
-			}
-			req.DeploymentType = &skillcatalogpb.CreateSkillRequest_Image{Image: imgpb}
-			return req, nil
+		psOpts := skillio.ProcessSkillOpts{
+			Target:           target,
+			ManifestFilePath: cmdFlags.GetString(cmdutils.KeyManifestFile),
+			ManifestTarget:   cmdFlags.GetString(cmdutils.KeyManifestTarget),
+			Version:          cmdFlags.GetFlagVersion(),
+			RegistryOpts: imageutils.RegistryOptions{
+				URI:        imageutils.GetRegistry(project),
+				Transferer: transferer,
+			},
+			DryRun: dryRun,
 		}
-		bundlePreparer := func() (*skillcatalogpb.CreateSkillRequest, error) {
-			if dryRun {
-				manifest, err := bundleio.ReadSkillManifest(target)
-				if err != nil {
-					return nil, fmt.Errorf("failed to read skill manifest from bundle: %v", err)
-				}
-				log.Printf("Skipping pushing skill %q to the container registry (dry-run)", target)
-				return &skillcatalogpb.CreateSkillRequest{
-					ManifestType: &skillcatalogpb.CreateSkillRequest_ProcessedSkillManifest{
-						ProcessedSkillManifest: &psmpb.ProcessedSkillManifest{
-							Metadata: &psmpb.SkillMetadata{
-								Id: manifest.GetId(),
-							},
-						},
-					},
-					Version:      cmdFlags.GetFlagVersion(),
-					Default:      cmdFlags.GetFlagDefault(),
-					OrgPrivate:   cmdFlags.GetFlagOrgPrivate(),
-					ReleaseNotes: cmdFlags.GetFlagReleaseNotes(),
-				}, nil
+
+		// Functions to prepare each install type.
+		archivePreparer := func() (*skillcatalogpb.CreateSkillRequest, error) {
+			ps, err := skillio.ProcessFile(psOpts)
+			if err != nil {
+				return nil, err
 			}
-			return skillRequestFromBundle(skillRequestFromBundleOpts{
-				flags:      cmdFlags,
-				transferer: transferer,
-				target:     target,
-			})
+			return releaseRequest(ps)
+		}
+		buildPreparer := func() (*skillcatalogpb.CreateSkillRequest, error) {
+			ps, err := skillio.ProcessBuildTarget(psOpts)
+			if err != nil {
+				return nil, err
+			}
+			return releaseRequest(ps)
 		}
 
 		releasePreparers := map[string]func() (*skillcatalogpb.CreateSkillRequest, error){
-			"archive": pushSkillPreparer,
-			"build":   pushSkillPreparer,
-			"image":   pushSkillPreparer,
-			"bundle":  bundlePreparer,
+			"archive": archivePreparer,
+			"build":   buildPreparer,
 		}
 
 		// Prepare the release based on the specified release type.
