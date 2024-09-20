@@ -13,6 +13,8 @@ message SceneObjectInstanceUpdate {
   oneof update {
     EntityPoseUpdate entity_pose = 1;
     CreateFrameUpdate create_frame = 2;
+    // Only allowed to delete frames.
+    DeleteEntityUpdate delete_entity = 3;
   }
 }
 
@@ -45,4 +47,27 @@ message CreateFrameUpdate {
 
   // We can optionally mark this frame as an attachment frame when creating it.
   bool designate_as_attachment_frame = 4;
+}
+
+message DeleteEntityUpdate {
+  // The entity to be deleted.
+  string entity_name = 1;
+
+  enum ChildPolicy {
+    // Same as CHILD_POLICY_FAIL_IF_PRESENT.
+    CHILD_POLICY_UNSPECIFIED = 0;
+    // If the entity has children we will fail to delete it.
+    CHILD_POLICY_FAIL_IF_PRESENT = 1;
+    // If the entity has children we will delete them all recursively down.
+    CHILD_POLICY_DELETE_RECURSIVELY = 2;
+    // If the entity has children, they will be reparented to the parent of the
+    // deleted entity maintaining the same pose to it as is currently set. If we
+    // have a chain of entities A -> B -> C, and B -> D, where A is the parent
+    // of B and B is the parent of C and D. When we delete B with this setting,
+    // we will reparent C and D to A and maintain the same A_t_C and A_t_D poses
+    // as was present before the delete.
+    CHILD_POLICY_REPARENT_CHILDREN = 3;
+  }
+  // Specify what to do with the children of the deleted entity if any exist.
+  ChildPolicy child_policy = 2;
 }
