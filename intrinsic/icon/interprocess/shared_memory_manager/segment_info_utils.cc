@@ -34,6 +34,19 @@ std::vector<std::string> GetNamesFromSegmentInfo(
   return names;
 }
 
+std::vector<std::string> GetNamesFromFileDescriptorNames(
+    const FileDescriptorNames& file_descriptor_names) {
+  std::vector<std::string> names;
+  names.reserve(file_descriptor_names.size());
+
+  for (uint32_t i = 0; i < file_descriptor_names.size(); ++i) {
+    names.emplace_back(
+        InterfaceNameFromSegment(*file_descriptor_names.names()->Get(i)));
+  }
+
+  return names;
+}
+
 std::vector<std::string> GetRequiredInterfaceNamesFromSegmentInfo(
     const SegmentInfo& segment_info) {
   std::vector<std::string> names;

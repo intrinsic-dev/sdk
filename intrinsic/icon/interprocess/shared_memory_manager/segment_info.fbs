@@ -19,3 +19,15 @@ struct SegmentInfo {
   // a true fixed size datatype.
   names:[SegmentName:200];
 }
+
+// List of names of file descriptors that are shared in a single message via
+// a domain socket.
+// Size of the `names` array is limited by the kernel constant SCM_MAX_FD,
+// which is 253, or 255 in kernels before 2.6.38, the maximum number of
+// file descriptors that can be shared in one call to sendmsg.
+struct FileDescriptorNames {
+  // Current size of the `names` array.
+  size:uint32;
+  // Names of Shared Memory Segments.
+  names:[SegmentName:200];
+}

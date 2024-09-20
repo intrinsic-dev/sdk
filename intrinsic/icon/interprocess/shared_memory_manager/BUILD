@@ -88,3 +88,53 @@ cc_library(
         "@com_google_absl//absl/types:span",
     ],
 )
+
+cc_library(
+    name = "domain_socket_server",
+    srcs = ["domain_socket_server.cc"],
+    hdrs = ["domain_socket_server.h"],
+    deps = [
+        ":domain_socket_utils",
+        ":segment_info_fbs_cc",
+        "//intrinsic/util/status:status_macros",
+        "//intrinsic/util/thread",
+        "//intrinsic/util/thread:thread_options",
+        "@com_google_absl//absl/cleanup",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
+        "@or_tools//ortools/base:file",
+        "@or_tools//ortools/base:path",
+    ],
+)
+
+cc_library(
+    name = "domain_socket_utils",
+    srcs = ["domain_socket_utils.cc"],
+    hdrs = ["domain_socket_utils.h"],
+    deps = [
+        ":segment_info_fbs_cc",
+        ":segment_info_utils",
+        "//intrinsic/icon/flatbuffers:flatbuffer_utils",
+        "//intrinsic/util/status:status_macros",
+        "@com_google_absl//absl/cleanup",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/time",
+        "@or_tools//ortools/base:file",
+        "@or_tools//ortools/base:path",
+    ],
+)
