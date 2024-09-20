@@ -79,17 +79,19 @@ type ProcessedSkill struct {
 	Manifest          *smpb.SkillManifest
 	Image             *ipb.Image
 	ProcessedManifest *psmpb.ProcessedSkillManifest
+	ID                string
 }
 
 // ProcessSkillOpts contains options for ProcessFile and ProcessBuildTarget
 // functions.
 type ProcessSkillOpts struct {
-	Target           string
-	ManifestFilePath string
-	ManifestTarget   string
-	Version          string
-	RegistryOpts     imageutils.RegistryOptions
-	DryRun           bool
+	Target               string
+	ManifestFilePath     string
+	ManifestTarget       string
+	Version              string
+	RegistryOpts         imageutils.RegistryOptions
+	AllowMissingManifest bool
+	DryRun               bool
 }
 
 func processBundleFile(opts ProcessSkillOpts) (*ProcessedSkill, error) {
@@ -98,6 +100,10 @@ func processBundleFile(opts ProcessSkillOpts) (*ProcessedSkill, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to read skill manifest from bundle: %v", err)
 		}
+		id, err := idutils.IDFromProto(manifest.GetId())
+		if err != nil {
+			return nil, fmt.Errorf("invalid ID in manifest: %v", err)
+		}
 		log.Printf("Skipping pushing skill %q to the container registry (dry-run)", opts.Target)
 		return &ProcessedSkill{
 			ProcessedManifest: &psmpb.ProcessedSkillManifest{
@@ -105,6 +111,7 @@ func processBundleFile(opts ProcessSkillOpts) (*ProcessedSkill, error) {
 					Id: manifest.GetId(),
 				},
 			},
+			ID: id,
 		}, nil
 	}
 
@@ -114,26 +121,48 @@ func processBundleFile(opts ProcessSkillOpts) (*ProcessedSkill, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not read bundle file "+opts.Target)
 	}
+	id, err := idutils.IDFromProto(manifest.GetMetadata().GetId())
+	if err != nil {
+		return nil, fmt.Errorf("invalid ID in manifest: %v", err)
+	}
 	return &ProcessedSkill{
 		ProcessedManifest: manifest,
+		ID:                id,
 	}, nil
 }
 
 func processContainerImageFile(opts ProcessSkillOpts) (*ProcessedSkill, error) {
-	if opts.ManifestFilePath == "" && opts.ManifestTarget == "" {
-		return nil, fmt.Errorf("either ManifestFilePath or ManifestTarget must be provided when using container image skills")
-	}
-	manifestFilePath := opts.ManifestFilePath
-	if opts.ManifestTarget != "" {
-		var err error
-		if manifestFilePath, err = buildTarget(opts.ManifestTarget); err != nil {
-			return nil, fmt.Errorf("cannot build manifest target %q: %v", opts.ManifestTarget, err)
+	var manifest *smpb.SkillManifest
+	var id string
+	if !opts.AllowMissingManifest {
+		if opts.ManifestFilePath == "" && opts.ManifestTarget == "" {
+			return nil, fmt.Errorf("either ManifestFilePath or ManifestTarget must be provided when using container image skills")
 		}
-	}
 
-	manifest := new(smpb.SkillManifest)
-	if err := protoio.ReadBinaryProto(manifestFilePath, manifest); err != nil {
-		return nil, fmt.Errorf("cannot read proto file %q: %v", manifestFilePath, err)
+		manifestFilePath := opts.ManifestFilePath
+		if opts.ManifestTarget != "" {
+			var err error
+			if manifestFilePath, err = buildTarget(opts.ManifestTarget); err != nil {
+				return nil, fmt.Errorf("cannot build manifest target %q: %v", opts.ManifestTarget, err)
+			}
+		}
+
+		manifest = &smpb.SkillManifest{}
+		if err := protoio.ReadBinaryProto(manifestFilePath, manifest); err != nil {
+			return nil, fmt.Errorf("cannot read proto file %q: %v", manifestFilePath, err)
+		}
+
+		var err error
+		id, err = idutils.IDFromProto(manifest.GetId())
+		if err != nil {
+			return nil, fmt.Errorf("invalid ID in manifest: %v", err)
+		}
+	} else {
+		var err error
+		id, err = imageutils.SkillIDFromTarget(opts.Target, imageutils.Archive)
+		if err != nil {
+			return nil, fmt.Errorf("could not get skill ID from skill container image: %v", err)
+		}
 	}
 
 	imageTag, err := imageutils.GetAssetVersionImageTag("skill", opts.Version)
@@ -145,6 +174,7 @@ func processContainerImageFile(opts ProcessSkillOpts) (*ProcessedSkill, error) {
 		log.Printf("Skipping pushing skill %q to the container registry (dry-run)", opts.Target)
 		return &ProcessedSkill{
 			Manifest: manifest,
+			ID:       id,
 		}, nil
 	}
 
@@ -159,6 +189,7 @@ func processContainerImageFile(opts ProcessSkillOpts) (*ProcessedSkill, error) {
 	return &ProcessedSkill{
 		Manifest: manifest,
 		Image:    imgpb,
+		ID:       id,
 	}, nil
 }
 
@@ -182,12 +213,13 @@ func ProcessBuildTarget(opts ProcessSkillOpts) (*ProcessedSkill, error) {
 	}
 
 	return ProcessFile(ProcessSkillOpts{
-		Target:           path,
-		ManifestFilePath: opts.ManifestFilePath,
-		ManifestTarget:   opts.ManifestTarget,
-		Version:          opts.Version,
-		RegistryOpts:     opts.RegistryOpts,
-		DryRun:           opts.DryRun,
+		Target:               path,
+		ManifestFilePath:     opts.ManifestFilePath,
+		ManifestTarget:       opts.ManifestTarget,
+		Version:              opts.Version,
+		RegistryOpts:         opts.RegistryOpts,
+		AllowMissingManifest: opts.AllowMissingManifest,
+		DryRun:               opts.DryRun,
 	})
 }
 
