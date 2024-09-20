@@ -13,6 +13,13 @@ namespace intrinsic {
 
 /// google::protobuf::Timestamp.
 
+// Returns the minimum valid timestamp.
+google::protobuf::Timestamp MinTimestamp();
+
+// Returns the maximum valid timestamp.
+google::protobuf::Timestamp MaxTimestamp();
+
+// Returns the current time as a google::protobuf::Timestamp.
 google::protobuf::Timestamp GetCurrentTimeProto();
 
 // Converts an absl::Time to a google::protobuf::Timestamp.

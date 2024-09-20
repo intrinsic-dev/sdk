@@ -83,6 +83,20 @@ absl::Status ValidateProtoTimestampMembers(int64_t sec, int32_t ns) {
 
 }  // namespace
 
+google::protobuf::Timestamp MinTimestamp() {
+  google::protobuf::Timestamp timestamp;
+  timestamp.set_seconds(kMinProtoTimestamp.tv_sec);
+  timestamp.set_nanos(kMinProtoTimestamp.tv_nsec);
+  return timestamp;
+}
+
+google::protobuf::Timestamp MaxTimestamp() {
+  google::protobuf::Timestamp timestamp;
+  timestamp.set_seconds(kMaxProtoTimestamp.tv_sec);
+  timestamp.set_nanos(kMaxProtoTimestamp.tv_nsec);
+  return timestamp;
+}
+
 google::protobuf::Timestamp GetCurrentTimeProto() {
   absl::StatusOr<google::protobuf::Timestamp> time = FromAbslTime(absl::Now());
   if (!time.ok()) {
