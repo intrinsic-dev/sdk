@@ -96,7 +96,8 @@ absl::Status PreviewSkill(SkillExecuteInterface& skill,
 //      MySkillParams params;
 //
 //      ExecuteRequest request = skill_test_factory.MakeExecuteRequest(params);
-//      ExecuteContext context = skill_test_factory.MakeExecuteContext({});
+//      std::unique_ptr<ExecuteContext> context =
+//        skill_test_factory.MakeExecuteContext({});
 //      ASSERT_THAT(skill->Execute(request, context), ::absl_testing::IsOk());
 //    }
 //
@@ -109,9 +110,8 @@ absl::Status PreviewSkill(SkillExecuteInterface& skill,
 //
 //      ExecuteRequest request = skill_test_factory.MakeExecuteRequest(params);
 //      SkillCancellationManager canceller(absl::Seconds(10));
-//      ExecuteContext context = skill_test_factory.MakeExecuteContext({
-//        .canceller = &canceller
-//      });
+//      std::unique_ptr<ExecuteContext> context =
+//        skill_test_factory.MakeExecuteContext({.canceller = &canceller});
 //
 //      Thread cancel_skill([&canceller]() {
 //        ASSERT_THAT(canceller.WaitForReady(), ::absl_testing::IsOk());
@@ -138,8 +138,8 @@ absl::Status PreviewSkill(SkillExecuteInterface& skill,
 //      ::absl_testing::IsOk());
 //
 //      ExecuteRequest request = skill_test_factory.MakeExecuteRequest(params);
-//      ExecuteContext context = skill_test_factory.MakeExecuteContext(
-//          {.equipment_pack = equipment});
+//      std::unique_ptr<ExecuteContext> context =
+//        skill_test_factory.MakeExecuteContext({.equipment_pack = equipment});
 //      ASSERT_THAT(skill->Execute(request, context), ::absl_testing::IsOk());
 //    }
 //
@@ -152,7 +152,8 @@ absl::Status PreviewSkill(SkillExecuteInterface& skill,
 //      MySkillParams params;
 //
 //      PreviewRequest request = skill_test_factory.MakePreviewRequest(params);
-//      PreviewContext context = skill_test_factory.MakePreviewContext({});
+//      std::unique_ptr<PreviewContext> context =
+//        skill_test_factory.MakePreviewContext({});
 //      ASSERT_THAT(skill->Preview(request, context), ::absl_testing::IsOk());
 //    }
 //
