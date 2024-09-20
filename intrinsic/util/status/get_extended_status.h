@@ -6,6 +6,7 @@
 #include <optional>
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "google/rpc/status.pb.h"
 #include "grpcpp/support/status.h"
 #include "intrinsic/util/status/extended_status.pb.h"

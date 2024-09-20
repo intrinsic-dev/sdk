@@ -18,6 +18,7 @@
 #include "absl/log/log_sink.h"
 #include "absl/status/status.h"
 #include "absl/strings/cord.h"
+#include "absl/strings/str_format.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "intrinsic/icon/release/source_location.h"
