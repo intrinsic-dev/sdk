@@ -5,10 +5,13 @@
 #include <memory>
 #include <vector>
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "intrinsic/resources/proto/resource_handle.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/skills/proto/skills.pb.h"
+#include "intrinsic/util/grpc/channel.h"
 #include "intrinsic/util/grpc/connection_params.h"
 #include "intrinsic/util/status/status_macros.h"
 

@@ -15,6 +15,7 @@
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/internal/execute_context_view.h"
+#include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/util/proto_time.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/world/proto/object_world_updates.pb.h"

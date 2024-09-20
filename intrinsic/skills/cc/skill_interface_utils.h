@@ -7,6 +7,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "google/protobuf/any.pb.h"
 #include "google/protobuf/message.h"
 #include "intrinsic/skills/cc/equipment_pack.h"
 #include "intrinsic/skills/cc/skill_interface.h"

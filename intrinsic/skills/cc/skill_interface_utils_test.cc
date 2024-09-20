@@ -20,6 +20,7 @@
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/internal/preview_context_impl.h"
 #include "intrinsic/skills/proto/prediction.pb.h"
+#include "intrinsic/skills/proto/skill_service.pb.h"
 #include "intrinsic/skills/testing/echo_skill.pb.h"
 #include "intrinsic/skills/testing/skill_test_utils.h"
 #include "intrinsic/util/status/status_macros.h"
