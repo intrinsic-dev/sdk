@@ -56,6 +56,7 @@ cc_library(
         ":memory_segment",
         ":segment_header",
         ":segment_info_fbs_cc",
+        "//intrinsic/icon/flatbuffers:flatbuffer_utils",
         "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log",

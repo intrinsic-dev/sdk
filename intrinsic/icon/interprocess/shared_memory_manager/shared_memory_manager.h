@@ -14,7 +14,6 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/string_view.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/memory_segment.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_header.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_info.fbs.h"

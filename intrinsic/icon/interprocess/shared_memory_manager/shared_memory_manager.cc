@@ -25,6 +25,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "intrinsic/icon/flatbuffers/flatbuffer_utils.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/memory_segment.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_header.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_info.fbs.h"
@@ -32,10 +33,15 @@
 
 namespace intrinsic::icon {
 
+using ::intrinsic_fbs::FlatbufferArrayNumElements;
+
 inline constexpr mode_t kShmMode = 0644;
 // Max string size as defined in `segment_info.fbs`
-inline constexpr uint32_t kMaxSegmentStringSize = 255;
-inline constexpr uint32_t kMaxSegmentSize = 200;
+inline constexpr size_t kMaxSegmentStringSize =
+    FlatbufferArrayNumElements(&intrinsic::icon::SegmentName::value);
+
+inline constexpr size_t kMaxSegmentSize =
+    FlatbufferArrayNumElements(&intrinsic::icon::SegmentInfo::names);
 
 namespace {
 absl::Status VerifyName(absl::string_view name) {
