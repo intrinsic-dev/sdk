@@ -103,8 +103,16 @@ func RunInitCmd(params *InitCmdParams) (InitSuccessMessage, error) {
 	if strings.HasSuffix(SDKRepository, ".git") {
 		SDKRepository = strings.TrimSuffix(SDKRepository, ".git")
 	}
+
 	// Change any slashes in the SDK version to dashes. (b/362500909)
-	SDKStripPrefix := "sdk-" + strings.ReplaceAll(params.SdkVersion, "/", "-") + "/"
+	SDKVersion := strings.ReplaceAll(params.SdkVersion, "/", "-")
+
+	// In the case that a version tag is used (eg "v1.2.3"), GitHub will strip the "v" prefix.
+	if strings.HasPrefix(SDKVersion, "v") {
+		SDKVersion = strings.TrimPrefix(SDKVersion, "v")
+	}
+
+	SDKStripPrefix := "sdk-" + SDKVersion + "/"
 
 	templateParams := &templateParams{
 		WorkspaceName:          filepath.Base(workspaceRoot),
