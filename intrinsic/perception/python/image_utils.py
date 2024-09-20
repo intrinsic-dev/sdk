@@ -49,6 +49,8 @@ def image_buffer_encoding(
     return "PNG"
   elif encoding == image_buffer_pb2.ENCODING_WEBP:
     return "WEBP"
+  elif encoding == image_buffer_pb2.ENCODING_YUV420P:
+    return "YUV420P"
   else:
     raise ValueError(
         f"Encoding not supported: {image_buffer_pb2.Encoding.Name(encoding)}."
@@ -67,6 +69,8 @@ def _get_image_buffer_encoding(
     return image_buffer_pb2.ENCODING_PNG
   elif encoding == "WEBP":
     return image_buffer_pb2.ENCODING_WEBP
+  elif encoding == "YUV420P":
+    return image_buffer_pb2.ENCODING_YUV420P
   else:
     raise ValueError(f"Encoding not supported: {encoding}.")
 

@@ -13,6 +13,7 @@ enum Encoding {
   ENCODING_JPEG = 1;         // JPG compression
   ENCODING_PNG = 2;          // PNG compression
   ENCODING_WEBP = 3;         // WEBP compression
+  ENCODING_YUV420P = 4;      // YUV420P colorspace
 }
 
 // The underlying core component type of a pixel.
