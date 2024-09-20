@@ -89,7 +89,7 @@ py_library(
 )
 
 cc_library(
-    name = "no_op_skill",
+    name = "no_op_skill_cc",
     testonly = False,
     srcs = ["no_op_skill.cc"],
     hdrs = ["no_op_skill.h"],

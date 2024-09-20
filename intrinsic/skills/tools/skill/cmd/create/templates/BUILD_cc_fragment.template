@@ -20,7 +20,7 @@ skill_manifest(
 )
 
 cc_library(
-    name = "{{.SkillNameSnakeCase}}",
+    name = "{{.SkillNameSnakeCase}}_cc",
     srcs = ["{{.SkillNameSnakeCase}}.cc"],
     hdrs = ["{{.SkillNameSnakeCase}}.h"],
     deps = [
@@ -38,10 +38,10 @@ cc_library(
 )
 
 cc_skill(
-    name = "{{.SkillNameSnakeCase}}_image",
+    name = "{{.SkillNameSnakeCase}}",
     manifest = ":{{.SkillNameSnakeCase}}_cc_manifest",
     deps = [
-      ":{{.SkillNameSnakeCase}}",
+      ":{{.SkillNameSnakeCase}}_cc",
       ":{{.SkillNameSnakeCase}}_cc_proto",
     ]
 )

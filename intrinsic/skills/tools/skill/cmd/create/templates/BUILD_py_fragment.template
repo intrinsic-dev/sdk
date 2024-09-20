@@ -20,7 +20,7 @@ skill_manifest(
 )
 
 py_library(
-    name = "{{.SkillNameSnakeCase}}",
+    name = "{{.SkillNameSnakeCase}}_py",
     srcs = ["{{.SkillNameSnakeCase}}.py"],
     srcs_version = "PY3",
     deps = [
@@ -39,17 +39,17 @@ py_test(
     name = "{{.SkillNameSnakeCase}}_test",
     srcs = ["{{.SkillNameSnakeCase}}_test.py"],
     deps = [
-        ":{{.SkillNameSnakeCase}}",
+        ":{{.SkillNameSnakeCase}}_py",
     ],
     main = "{{.SkillNameSnakeCase}}_test.py",
     size = "small",
 )
 
 py_skill(
-    name = "{{.SkillNameSnakeCase}}_image",
+    name = "{{.SkillNameSnakeCase}}",
     manifest = ":{{.SkillNameSnakeCase}}_py_manifest",
     deps = [
-      ":{{.SkillNameSnakeCase}}",
+      ":{{.SkillNameSnakeCase}}_py",
       ":{{.SkillNameSnakeCase}}_py_pb2",
     ]
 )

@@ -320,7 +320,7 @@ def _intrinsic_skill_rule_impl(ctx):
     fds = ctx.attr.manifest[SkillManifestInfo].file_descriptor_set
 
     inputs = depset([manifest, fds], transitive = [ctx.attr.image.files])
-    bundle_output = ctx.outputs.bundle
+    bundle_output = ctx.outputs.bundle_out
 
     args = ctx.actions.args().add(
         "--manifest",
@@ -369,15 +369,14 @@ _intrinsic_skill_rule = rule(
             mandatory = True,
             providers = [SkillManifestInfo],
         ),
-        "bundle": attr.output(
-            mandatory = True,
-            doc = "The name of the output bundle file.",
-        ),
         "_skillbundlegen": attr.label(
             default = Label("//intrinsic/skills/build_defs:skillbundlegen"),
             cfg = "exec",
             executable = True,
         ),
+    },
+    outputs = {
+        "bundle_out": "%{name}.bundle.tar",
     },
 )
 
@@ -388,13 +387,12 @@ def _intrinsic_skill(name, image, manifest, **kwargs):
     * a skill container image target named 'name'.
 
     Args:
-      name: The name of the skill image to build, must end in "_image"
+      name: The name of the skill to build
       image: Skill service image.
       manifest: A target that provides a SkillManifestInfo provider for the skill. This is normally
                 a skill_manifest() target.
       **kwargs: additional arguments passed to the container_image rule, such as visibility.
     """
-
     skill_service_config_name = "_%s_skill_service_config" % name
     _skill_service_config_manifest(
         name = skill_service_config_name,
@@ -423,7 +421,7 @@ def _intrinsic_skill(name, image, manifest, **kwargs):
         tags = ["manual", "avoid_dep"],
     )
 
-    image_name = name
+    image_name = "%s_image" % name
     package_path = native.package_name() + "/" if native.package_name() else ""
     container_image(
         name = image_name,
@@ -440,12 +438,10 @@ def _intrinsic_skill(name, image, manifest, **kwargs):
         **kwargs
     )
 
-    skill_bundle_name = "%s_bundle" % name
     _intrinsic_skill_rule(
-        name = skill_bundle_name,
+        name = name,
         image = image_name + ".tar",
         manifest = manifest,
-        bundle = "%s.bundle.tar" % name,
         visibility = kwargs.get("visibility"),
         testonly = kwargs.get("testonly"),
     )
@@ -467,7 +463,7 @@ def cc_skill(
     * a skill container image target named 'name'.
 
     Args:
-      name: The name of the skill image to build, must end in "_image"
+      name: The name of the skill to build
       deps: The C++ dependencies of the skill service specific to this skill.
             This is normally the cc_proto_library target for the skill's protobuf
             schema and the cc_library target that declares the skill's create method,
@@ -476,9 +472,6 @@ def cc_skill(
                 a skill_manifest() target.
       **kwargs: additional arguments passed to the container_image rule, such as visibility.
     """
-    if not name.endswith("_image"):
-        fail("cc_skill name must end in _image")
-
     skill_service_name = "_%s_service" % name
     _cc_skill_service(
         name = skill_service_name,
@@ -522,16 +515,13 @@ def py_skill(
     * a skill container image target named 'name'.
 
     Args:
-      name: The name of the skill image to build, must end in "_image".
+      name: The name of the skill to build
       manifest: A target that provides a SkillManifestInfo provider for the skill. This is normally
                 a skill_manifest() target.
       deps: The Python library dependencies of the skill. This is normally at least the python
             proto library for the skill and the skill implementation.
       **kwargs: additional arguments passed to the container_image rule, such as visibility.
     """
-    if not name.endswith("_image"):
-        fail("py_skill name must end in _image")
-
     binary_name = "_%s_binary" % name
     _py_skill_service(
         name = binary_name,

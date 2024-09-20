@@ -18,7 +18,7 @@ skill_manifest(
 )
 
 cc_skill(
-    name = "no_op_skill_cc_image",
+    name = "no_op_skill_cc",
     manifest = ":no_op_skill_cc_manifest",
     # Allow use of this image in tests of asset and skill tooling.
     visibility = [
@@ -26,7 +26,7 @@ cc_skill(
         "//intrinsic/skills:__subpackages__",
     ],
     deps = [
-        "//intrinsic/skills/testing:no_op_skill",
+        "//intrinsic/skills/testing:no_op_skill_cc",
         "//intrinsic/skills/testing:no_op_skill_cc_proto",
     ],
 )
@@ -38,7 +38,7 @@ skill_manifest(
 )
 
 py_skill(
-    name = "no_op_skill_py_new_image",
+    name = "no_op_skill_py_new",
     manifest = ":no_op_skill_py_manifest",
     # Allow use of this image in tests of skill tooling.
     deps = [
