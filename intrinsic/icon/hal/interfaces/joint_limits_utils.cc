@@ -2,14 +2,23 @@
 
 #include "intrinsic/icon/hal/interfaces/joint_limits_utils.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
+#include "flatbuffers/detached_buffer.h"
+#include "flatbuffers/flatbuffer_builder.h"
 #include "flatbuffers/vector.h"
 #include "intrinsic/icon/hal/hardware_interface_handle.h"
 #include "intrinsic/icon/hal/interfaces/joint_limits.fbs.h"
+#include "intrinsic/icon/utils/fixed_str_cat.h"
+#include "intrinsic/icon/utils/realtime_status.h"
+#include "intrinsic/icon/utils/realtime_status_macro.h"
+#include "intrinsic/kinematics/types/joint_limits.h"
 #include "intrinsic/kinematics/types/joint_limits.pb.h"
 #include "intrinsic/util/status/status_macros.h"
 
@@ -37,31 +46,78 @@ flatbuffers::DetachedBuffer BuildJointLimits(uint32_t num_dof) {
 
 namespace intrinsic::icon {
 
-// Checks that a RepeatedField<double> of a protobuf and a Vector<double> from a
+// Checks that a absl::Span<double> and a Vector<double> from a
 // flatbuffer have the same size. The field name is only used for the error
 // message if sizes are not equal. Returns InvalidArgumentError otherwise.
-absl::Status CheckSizeEqual(
-    const ::google::protobuf::RepeatedField<double>& pb_field,
-    const flatbuffers::Vector<double>& fb_field, absl::string_view field_name) {
+RealtimeStatus CheckSizeEqual(absl::Span<const double> field,
+                              const flatbuffers::Vector<double>& fb_field,
+                              absl::string_view field_name) {
   int fb_num_joints = fb_field.size();
-  int pb_num_joints = pb_field.size();
-  if (fb_num_joints != pb_num_joints) {
-    return absl::InvalidArgumentError(
-        absl::StrFormat("JointLimits Flatbuffer expects %i joints but "
-                        "the field '%s' of the protobuf contains %i values",
-                        fb_num_joints, field_name, pb_num_joints));
+  int num_joints = field.size();
+  if (fb_num_joints != num_joints) {
+    return InvalidArgumentError(FixedStrCat<RealtimeStatus::kMaxMessageLength>(
+        "JointLimits Flatbuffer expects ", fb_num_joints,
+        " joints but the field '", field_name, "' contains ", num_joints,
+        " values"));
   }
-  return absl::OkStatus();
+  return OkStatus();
 }
 
-absl::Status ToFlatbufferWithSizeCheck(
-    const ::google::protobuf::RepeatedField<double>& pb_field,
-    flatbuffers::Vector<double>& fb_field, absl::string_view field_name) {
-  INTR_RETURN_IF_ERROR(CheckSizeEqual(pb_field, fb_field, field_name));
+RealtimeStatus ToFlatbufferWithSizeCheck(absl::Span<const double> field,
+                                         flatbuffers::Vector<double>& fb_field,
+                                         absl::string_view field_name) {
+  INTRINSIC_RT_RETURN_IF_ERROR(CheckSizeEqual(field, fb_field, field_name));
   for (int i = 0; i < fb_field.size(); i++) {
-    fb_field.Mutate(i, pb_field.Get(i));
+    fb_field.Mutate(i, field.at(i));
   }
-  return absl::OkStatus();
+  return OkStatus();
+}
+
+RealtimeStatus CopyTo(const JointLimits& limits,
+                      intrinsic_fbs::JointLimits& fb_limits) {
+  INTRINSIC_RT_RETURN_IF_ERROR(ToFlatbufferWithSizeCheck(
+      limits.min_position, *fb_limits.mutable_min_position(), "min_position"));
+  INTRINSIC_RT_RETURN_IF_ERROR(ToFlatbufferWithSizeCheck(
+      limits.max_position, *fb_limits.mutable_max_position(), "max_position"));
+  INTRINSIC_RT_RETURN_IF_ERROR(ToFlatbufferWithSizeCheck(
+      limits.max_velocity, *fb_limits.mutable_max_velocity(), "max_velocity"));
+  INTRINSIC_RT_RETURN_IF_ERROR(ToFlatbufferWithSizeCheck(
+      limits.max_acceleration, *fb_limits.mutable_max_acceleration(),
+      "max_acceleration"));
+  INTRINSIC_RT_RETURN_IF_ERROR(ToFlatbufferWithSizeCheck(
+      limits.max_jerk, *fb_limits.mutable_max_jerk(), "max_jerk"));
+  INTRINSIC_RT_RETURN_IF_ERROR(ToFlatbufferWithSizeCheck(
+      limits.max_torque, *fb_limits.mutable_max_effort(), "max_effort"));
+
+  fb_limits.mutate_has_velocity_limits(true);
+  fb_limits.mutate_has_acceleration_limits(true);
+  fb_limits.mutate_has_jerk_limits(true);
+  fb_limits.mutate_has_effort_limits(true);
+
+  return OkStatus();
+}
+
+RealtimeStatus CopyTo(const intrinsic_fbs::JointLimits& fb_limits,
+                      JointLimits& limits) {
+  const size_t num_joints = fb_limits.min_position()->size();
+  INTRINSIC_RT_RETURN_IF_ERROR(limits.SetSize(num_joints));
+  for (int i = 0; i < num_joints; ++i) {
+    limits.min_position[i] = fb_limits.min_position()->Get(i);
+    limits.max_position[i] = fb_limits.max_position()->Get(i);
+    if (fb_limits.has_velocity_limits()) {
+      limits.max_velocity[i] = fb_limits.max_velocity()->Get(i);
+    }
+    if (fb_limits.has_acceleration_limits()) {
+      limits.max_acceleration[i] = fb_limits.max_acceleration()->Get(i);
+    }
+    if (fb_limits.has_jerk_limits()) {
+      limits.max_jerk[i] = fb_limits.max_jerk()->Get(i);
+    }
+    if (fb_limits.has_effort_limits()) {
+      limits.max_torque[i] = fb_limits.max_effort()->Get(i);
+    }
+  }
+  return OkStatus();
 }
 
 absl::Status ParseProtoJointLimits(

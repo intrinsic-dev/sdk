@@ -155,12 +155,17 @@ cc_library(
     deps = [
         ":joint_limits_fbs_cc",
         "//intrinsic/icon/hal:hardware_interface_handle",
+        "//intrinsic/icon/utils:fixed_str_cat",
+        "//intrinsic/icon/utils:realtime_status",
+        "//intrinsic/icon/utils:realtime_status_macro",
+        "//intrinsic/kinematics/types:joint_limits",
         "//intrinsic/kinematics/types:joint_limits_cc_proto",
         "//intrinsic/util/status:status_macros",
         "@com_github_google_flatbuffers//:flatbuffers",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
