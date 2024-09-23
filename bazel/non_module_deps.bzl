@@ -59,6 +59,7 @@ def _non_module_deps_impl(ctx):  # @unused
 
     ################################
     # Google OSS replacement files #
+    #      go/insrc-g3-to-oss      #
     ################################
 
     XLS_COMMIT = "507b33b5bdd696adb7933a6617b65c70e46d4703"  # 2024-03-06
