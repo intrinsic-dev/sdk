@@ -45,6 +45,9 @@ message ClusterDescription {
   // one of the running states (e.g., SOLUTION_STATE_RUNNING_IN_SIM). Equal to
   // SOLUTION_STATE_UNSPECIFIED if no solution is running.
   SolutionState solution_state = 9;
+
+  // The Display Name of the cluster used by the frontend.
+  string display_name = 10;
 }
 
 message ListClusterDescriptionsRequest {

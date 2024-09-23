@@ -26,6 +26,7 @@ type ListClusterDescriptionsResponse struct {
 func (res *ListClusterDescriptionsResponse) MarshalJSON() ([]byte, error) {
 	type cluster struct {
 		ClusterName string `json:"clusterName,omitempty"`
+		DisplayName string `json:"displayName,omitempty"`
 		K8sContext  string `json:"k8sContext,omitempty"`
 		Region      string `json:"region,omitempty"`
 		CanDoSim    bool   `json:"canDoSim,omitempty"`
@@ -36,6 +37,7 @@ func (res *ListClusterDescriptionsResponse) MarshalJSON() ([]byte, error) {
 	for i, c := range res.m.Clusters {
 		clusters[i] = cluster{
 			ClusterName: c.GetClusterName(),
+			DisplayName: c.GetDisplayName(),
 			K8sContext:  c.GetK8SContext(),
 			Region:      c.GetRegion(),
 			CanDoSim:    c.GetCanDoSim(),
@@ -50,13 +52,13 @@ func (res *ListClusterDescriptionsResponse) MarshalJSON() ([]byte, error) {
 
 // String converts a ListClusterDescriptionsResponse to a string
 func (res *ListClusterDescriptionsResponse) String() string {
-	const formatString = "%-35s %-10s %s"
+	const formatString = "%-35s %-10s %s %s"
 	lines := []string{}
-	lines = append(lines, fmt.Sprintf(formatString, "Name", "Region", "K8S Context"))
+	lines = append(lines, fmt.Sprintf(formatString, "Name", "Region", "K8S Context", "Display Name"))
 	for _, c := range res.m.Clusters {
 		lines = append(
 			lines,
-			fmt.Sprintf(formatString, c.GetClusterName(), c.GetRegion(), c.GetK8SContext()))
+			fmt.Sprintf(formatString, c.GetClusterName(), c.GetRegion(), c.GetK8SContext(), c.GetDisplayName()))
 	}
 	return strings.Join(lines, "\n")
 }
