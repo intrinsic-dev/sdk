@@ -310,11 +310,11 @@ func (cf *CmdFlags) GetFlagReleaseNotes() string {
 func (cf *CmdFlags) AddFlagSkillReleaseType() {
 	targetTypeDescriptions := []string{}
 
-	targetTypeDescriptions = append(targetTypeDescriptions, `"build": a build target that creates a skill.`)
-	targetTypeDescriptions = append(targetTypeDescriptions, `"archive": a file path to an already-built skill.`)
+	targetTypeDescriptions = append(targetTypeDescriptions, `"archive": a file path to a skill bundle file.`)
 
-	cf.RequiredString(
+	cf.OptionalString(
 		KeyType,
+		string(imageutils.Archive),
 		fmt.Sprintf("The type of target that is being specified. One of the following:\n   %s", strings.Join(targetTypeDescriptions, "\n   ")),
 	)
 }
@@ -336,12 +336,9 @@ func (cf *CmdFlags) GetFlagSideloadContext() string {
 
 // AddFlagSideloadStartType adds a flag for the type when starting an asset.
 func (cf *CmdFlags) AddFlagSideloadStartType(assetType string) {
-	cf.RequiredString(KeyType, fmt.Sprintf(
+	cf.OptionalString(KeyType, string(imageutils.Archive), fmt.Sprintf(
 		`The target's type:
-%-10s build target that creates a %s
-%-10s file path pointing to an already-built %s`,
-		imageutils.Build,
-		assetType,
+%-10s file path pointing to a %s bundle file`,
 		imageutils.Archive,
 		assetType,
 	))
@@ -354,14 +351,11 @@ func (cf *CmdFlags) GetFlagSideloadStartType() string {
 
 // AddFlagSideloadStopType adds a flag for the type when stopping an asset.
 func (cf *CmdFlags) AddFlagSideloadStopType(assetType string) {
-	cf.RequiredString(KeyType, fmt.Sprintf(
+	cf.OptionalString(KeyType, string(imageutils.ID), fmt.Sprintf(
 		`The target's type:
-%-10s build target that creates a %s
-%-10s file path pointing to an already-built %s
+%-10s build target that creates a %s bundle file
 %-10s %s id`,
 		imageutils.Build,
-		assetType,
-		imageutils.Archive,
 		assetType,
 		imageutils.ID,
 		assetType,

@@ -24,12 +24,6 @@ var uninstallCmd = &cobra.Command{
 	Example: `Stop a running skill using its build target
 $ inctl skill uninstall --type=build //abc:skill_bundle --context=minikube
 
-Stop a running skill using an already-built image file
-$ inctl skill uninstall --type=archive abc/skill.bundle.tar --context=minikube
-
-Use the solution flag to automatically resolve the context (requires the solution to run)
-$ inctl skill uninstall --type=archive abc/skill.bundle.tar --solution=my-solution
-
 Stop a running skill by specifying its id
 $ inctl skill uninstall --type=id com.foo.skill
 `,
@@ -43,8 +37,8 @@ $ inctl skill uninstall --type=id com.foo.skill
 		target := args[0]
 
 		targetType := imageutils.TargetType(cmdFlags.GetFlagSideloadStopType())
-		if targetType != imageutils.Build && targetType != imageutils.Archive && targetType != imageutils.ID {
-			return fmt.Errorf("type must be one of (%s, %s, %s)", imageutils.Build, imageutils.Archive, imageutils.ID)
+		if targetType != imageutils.Build && targetType != imageutils.ID {
+			return fmt.Errorf("type must be one of (%s, %s)", imageutils.Build, imageutils.ID)
 		}
 
 		var skillID string

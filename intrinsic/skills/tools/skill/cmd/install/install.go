@@ -53,10 +53,7 @@ func installRequest(ps *skillio.ProcessedSkill, version string) (*installerpb.In
 var installCmd = &cobra.Command{
 	Use:   "install --type=TYPE TARGET",
 	Short: "Install a skill",
-	Example: `Build a skill, upload it to a container registry, and install the skill
-$ inctl skill install --type=build //abc:skill_bundle --registry=gcr.io/my-registry --cluster=my_cluster
-
-Upload skill image to a container registry, and install the skill bundle
+	Example: `Upload skill image to a container registry, and install the skill
 $ inctl skill install --type=archive abc/skill.bundle.tar --registry=gcr.io/my-registry --cluster=my_cluster
 
 Use the solution flag to automatically resolve the cluster (requires the solution to run)
@@ -70,6 +67,11 @@ $ inctl skill install --type=archive abc/skill.bundle.tar --solution=my-solution
 	RunE: func(command *cobra.Command, args []string) error {
 		ctx := command.Context()
 		target := args[0]
+
+		targetType := imageutils.TargetType(cmdFlags.GetFlagSideloadStartType())
+		if targetType != imageutils.Archive {
+			return fmt.Errorf("type must be %s", imageutils.Archive)
+		}
 
 		timeout, timeoutStr, err := cmdFlags.GetFlagSideloadStartTimeout()
 		if err != nil {
@@ -149,9 +151,8 @@ $ inctl skill install --type=archive abc/skill.bundle.tar --solution=my-solution
 			"build":   buildPreparer,
 		}
 
-		targetType := cmdFlags.GetFlagSideloadStartType()
 		// Prepare the install based on the specified install type.
-		prepareInstall, ok := installPreparers[targetType]
+		prepareInstall, ok := installPreparers[cmdFlags.GetFlagSideloadStartType()]
 		if !ok {
 			return fmt.Errorf("unknown install type %q", targetType)
 		}

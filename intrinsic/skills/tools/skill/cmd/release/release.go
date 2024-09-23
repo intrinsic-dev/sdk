@@ -215,8 +215,6 @@ func remoteOpt() remote.Option {
 
 var releaseExamples = strings.Join(
 	[]string{
-		`Build a skill then upload and release it to the skill catalog:
-  $ inctl skill release --type=build //abc:skill_bundle ...`,
 		`Upload and release a skill image to the skill catalog:
   $ inctl skill release --type=archive /path/to/skill.bundle.tar ...`,
 	},
@@ -308,17 +306,9 @@ var releaseCmd = &cobra.Command{
 			}
 			return releaseRequest(ps)
 		}
-		buildPreparer := func() (*skillcatalogpb.CreateSkillRequest, error) {
-			ps, err := skillio.ProcessBuildTarget(psOpts)
-			if err != nil {
-				return nil, err
-			}
-			return releaseRequest(ps)
-		}
 
 		releasePreparers := map[string]func() (*skillcatalogpb.CreateSkillRequest, error){
 			"archive": archivePreparer,
-			"build":   buildPreparer,
 		}
 
 		// Prepare the release based on the specified release type.

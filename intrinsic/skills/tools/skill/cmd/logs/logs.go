@@ -259,6 +259,11 @@ var logsCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		target := args[0]
 
+		targetType := imageutils.TargetType(cmdFlags.GetString(cmdutils.KeyType))
+		if targetType != imageutils.Build && targetType != imageutils.ID {
+			return fmt.Errorf("type must be one of (%s, %s)", imageutils.Build, imageutils.ID)
+		}
+
 		// we do not care about value, but about presence
 		_, verboseDebug = os.LookupEnv(verboseDebugEnvName)
 		verboseOut = cmd.OutOrStderr()
@@ -296,7 +301,7 @@ var logsCmd = &cobra.Command{
 		}
 
 		return runLogsCmd(ctx, &cmdParams{
-			targetType:  imageutils.TargetType(cmdFlags.GetString(cmdutils.KeyType)),
+			targetType:  targetType,
 			target:      target,
 			frontendURL: createFrontendURL(project, cluster),
 			follow:      cmdFlags.GetBool(keyFollow),
@@ -315,9 +320,13 @@ func init() {
 	cmdFlags.OptionalEnvString(cmdutils.KeyContext, "", "The Kubernetes cluster to use.")
 	cmdFlags.OptionalEnvString(cmdutils.KeySolution, "", "The solution to use.")
 
-	cmdFlags.RequiredString(cmdutils.KeyType, fmt.Sprintf(`The target's type:
-%s	skill id
-%s	build target of the skill image`, imageutils.ID, imageutils.Build))
+	cmdFlags.OptionalString(cmdutils.KeyType, string(imageutils.ID), fmt.Sprintf(
+		`The target's type:
+%-10s build target that creates a skill bundle file
+%-10s skill id`,
+		imageutils.Build,
+		imageutils.ID,
+	))
 	cmdFlags.OptionalBool(keyFollow, false, "Whether to follow the skill logs.")
 	cmdFlags.OptionalBool(keyTimestamps, false, "Whether to include timestamps on each log line.")
 	cmdFlags.OptionalInt(keyTailLines, 10, "The number of recent log lines to display. An input number less than 0 shows all log lines.")
