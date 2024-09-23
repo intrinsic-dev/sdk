@@ -26,8 +26,10 @@
 #include "absl/synchronization/notification.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "intrinsic/icon/hal/get_hardware_interface.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/domain_socket_utils.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_info.fbs.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/thread/thread.h"
 #include "intrinsic/util/thread/thread_options.h"
@@ -311,6 +313,21 @@ DomainSocketServer::PrepareMessages(
   }
 
   return messages;
+}
+
+absl::Status DomainSocketServer::AddSegmentInfoServeShmDescriptors(
+    SharedMemoryManager& shared_memory_manager) {
+  // SegmentInfo is expected by
+  // intrinsic/icon/hal/hardware_module_proxy.h
+  // It can in theory be replaced by the SegmentInfo shared in the data of the
+  // domain socket message.
+  INTR_RETURN_IF_ERROR(shared_memory_manager.AddSegment<SegmentInfo>(
+      /*name=*/hal::kModuleInfoName, /**must_be_used=*/false,
+      shared_memory_manager.GetSegmentInfo(),
+      /*type_id=*/hal::kModuleInfoName));
+
+  return ServeShmDescriptors(
+      shared_memory_manager.SegmentNameToFileDescriptorMap());
 }
 
 absl::Status DomainSocketServer::ServeShmDescriptors(

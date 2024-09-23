@@ -39,6 +39,7 @@ cc_library(
     ],
     deps = [
         "//intrinsic/icon/interprocess:binary_futex",
+        "//intrinsic/icon/interprocess/shared_memory_manager:domain_socket_utils",
         "//intrinsic/icon/interprocess/shared_memory_manager:memory_segment",
         "//intrinsic/icon/utils:realtime_status",
         "//intrinsic/icon/utils:realtime_status_macro",

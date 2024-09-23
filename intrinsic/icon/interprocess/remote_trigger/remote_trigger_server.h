@@ -35,11 +35,12 @@ using RemoteTriggerServerCallback = std::function<void(void)>;
 // process) to trigger a request at the same time.
 class RemoteTriggerServer final {
  public:
-  // Creates a new server instance on a specified server id.
+  // Creates a new server instance named `server_memory_name` on `shm_manager`.
   // When the server is signaled, it executes the callback and signals a
   // response back to the client when done.
   static absl::StatusOr<RemoteTriggerServer> Create(
-      const MemoryName& server_memory_name,
+      intrinsic::icon::SharedMemoryManager& shm_manager,
+      absl::string_view server_memory_name,
       RemoteTriggerServerCallback&& callback);
 
   // This class is move-only.
@@ -91,19 +92,17 @@ class RemoteTriggerServer final {
   // completed.
   void Run();
 
-  RemoteTriggerServer(const MemoryName& server_memory_name,
+  RemoteTriggerServer(absl::string_view server_memory_name,
                       RemoteTriggerServerCallback&& callback,
-                      SharedMemoryManager&& shm_manager,
                       ReadOnlyMemorySegment<BinaryFutex>&& request_futex,
                       ReadWriteMemorySegment<BinaryFutex>&& response_futex);
 
-  MemoryName server_memory_name_;
+  std::string server_memory_name_;
   RemoteTriggerServerCallback callback_;
   // initialize to `false`, indicating the system is currently stopped.
   std::atomic<bool> is_running_{false};
   // The interprocess signaling is done via two semaphores shared between a
   // server and its clients.
-  SharedMemoryManager shm_manager_;
   ReadOnlyMemorySegment<BinaryFutex> request_futex_;
   ReadWriteMemorySegment<BinaryFutex> response_futex_;
 

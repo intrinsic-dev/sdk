@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <memory>
 #include <string>
 #include <typeinfo>
 #include <utility>
@@ -13,7 +14,10 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/domain_socket_utils.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/memory_segment.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_header.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_info.fbs.h"
@@ -32,10 +36,12 @@ inline void AssertSharedMemoryCompatibility() {
                 "pointer types are not supported as shm segments");
 }
 
-// The `SharedMemoryManager` creates and administers a set of shared memory
-// segments. It allocates the memory with a given name which has to adhere to a
-// POSIX shared memory naming convention (c.f.
-// https://man7.org/linux/man-pages/man3/shm_open.3.html).
+// The `SharedMemoryManager` creates and administers a set of anonymous shared
+// memory segments.
+//
+// Creates segments as anonymous files using `memfd_create` (see
+// https://man7.org/linux/man-pages/man2/memfd_create.2.html).
+//
 // Each allocated segmented is prefixed with a `SegmentHeader` to store some
 // meta information about the allocated segment such as a reference counting.
 // The overall data layout of each segment looks thus like the following:
@@ -57,9 +63,18 @@ class SharedMemoryManager final {
     // A value of true indicates that this segment needs to be used
     // by ICON.
     bool must_be_used;
+    // The file descriptor of the anonymous memory.
+    int fd = -1;
   };
 
-  SharedMemoryManager() = default;
+  // Creates a new `SharedMemoryManager`.
+  // Returns an error of the module name is empty.
+  // Returns unique_ptr because that allows taking stable references e.g. for
+  // intrinsic/icon/hal/hardware_interface_registry.h.
+  static absl::StatusOr<std::unique_ptr<SharedMemoryManager>> Create(
+      absl::string_view shared_memory_namespace, absl::string_view module_name);
+
+  SharedMemoryManager() = delete;
 
   // This class is move-only.
   SharedMemoryManager(const SharedMemoryManager& other) = delete;
@@ -76,15 +91,36 @@ class SharedMemoryManager final {
     other.memory_segments_.clear();
     return *this;
   }
+  // Closes all shared memory segments.
   ~SharedMemoryManager();
+
+  // Provides  access to the shared memory location specified by `segment_name`.
+  // Returns NotFoundError if no such segment has been added.
+  // Forwards mapping errors.
+  template <class MemorySegmentT>
+  absl::StatusOr<MemorySegmentT> Get(absl::string_view segment_name) const {
+    static_assert(
+        std::is_base_of_v<::intrinsic::icon::MemorySegment, MemorySegmentT>,
+        "Template parameter for SharedMemoryManager::Get() must inherit from "
+        "::intrinsic::icon::MemorySegment");
+    return MemorySegmentT::Get(segment_name_to_file_descriptor_map_,
+                               segment_name);
+  }
+
+  // Reference to the internal map of segment names to file descriptors.
+  // Contains the names and file descriptors of all segments that are currently
+  // registered with the SharedMemoryManager.
+  // For tests where no HardwareModule Proxy is used.
+  const SegmentNameToFileDescriptorMap& SegmentNameToFileDescriptorMap() const {
+    return segment_name_to_file_descriptor_map_;
+  }
 
   // Allocates a shared memory segment for the type `T` and initializes it with
   // the default value of `T`.
   // The type must be trivially copyable and not a pointer type; other types
   // fail to compile.
-  // The name for the segment has to be POSIX conform, in which the length is
-  // not to exceed 255 character and it has to contain a leading forward slash
-  // `/`. No further slashes are allowed after the first one.
+  // The name for the segment should be POSIX conform, in which the length is
+  // not to exceed 255 characters.
   // The value of `must_be_used` indicates whether this segment needs to be
   // used by ICON.
   // Similarly, one can optionally pass in a type identifier string to uniquely
@@ -93,18 +129,19 @@ class SharedMemoryManager final {
   // typeid. Please note that the compiler generated default is not defined by
   // the C++ standard and thus may not conform across process boundaries with
   // different compilers.
-  // Returns `absl::InvalidArgumentError` if the name is not POSIX
-  // conform, Returns `absl::AlreadyExistsError` if the shared memory segment
-  // with this name already exists, Returns `absl::InternalError` if the
-  // underlying POSIX call fails, Returns `absl::OkStatus` is the shared memory
-  // segment was successfully allocated.
+  // Returns `absl::InvalidArgumentError` if the name is not valid.
+  // Returns `absl::AlreadyExistsError` if the shared memory segment
+  // with this name already exists
+  // Returns `absl::InternalError` if the underlying POSIX call fails.
+  // Returns `absl::OkStatus` is the shared memory segment was successfully
+  // allocated.
   template <class T>
-  absl::Status AddSegmentWithDefaultValue(const MemoryName& name,
+  absl::Status AddSegmentWithDefaultValue(absl::string_view name,
                                           bool must_be_used) {
     return AddSegmentWithDefaultValue<T>(name, must_be_used, typeid(T).name());
   }
   template <class T>
-  absl::Status AddSegmentWithDefaultValue(const MemoryName& name,
+  absl::Status AddSegmentWithDefaultValue(absl::string_view name,
                                           bool must_be_used,
                                           const std::string& type_id) {
     AssertSharedMemoryCompatibility<T>();
@@ -118,12 +155,12 @@ class SharedMemoryManager final {
   // Besides the initialized value for the segment, this function behaves
   // exactly like `AddSegment` above.
   template <class T>
-  absl::Status AddSegment(const MemoryName& name, bool must_be_used,
+  absl::Status AddSegment(absl::string_view name, bool must_be_used,
                           const T& value) {
     return AddSegment<T>(name, must_be_used, value, typeid(T).name());
   }
   template <class T>
-  absl::Status AddSegment(const MemoryName& name, bool must_be_used,
+  absl::Status AddSegment(absl::string_view name, bool must_be_used,
                           const T& value, const std::string& type_id) {
     AssertSharedMemoryCompatibility<T>();
     INTR_RETURN_IF_ERROR(InitSegment(name, must_be_used,
@@ -131,13 +168,13 @@ class SharedMemoryManager final {
     return SetSegmentValue(name, value);
   }
   template <class T>
-  absl::Status AddSegment(const MemoryName& name, bool must_be_used,
+  absl::Status AddSegment(absl::string_view name, bool must_be_used,
                           T&& value) {
     return AddSegment<T>(name, must_be_used, std::forward<T>(value),
                          typeid(T).name());
   }
   template <class T>
-  absl::Status AddSegment(const MemoryName& name, bool must_be_used, T&& value,
+  absl::Status AddSegment(absl::string_view name, bool must_be_used, T&& value,
                           const std::string& type_id) {
     INTR_RETURN_IF_ERROR(InitSegment(name, must_be_used,
                                      SegmentTraits<T>::kSegmentSize, type_id));
@@ -145,10 +182,10 @@ class SharedMemoryManager final {
   }
 
   // Allocates a generic memory segment for a byte (uint8_t) array of size `n`.
-  absl::Status AddSegment(const MemoryName& name, bool must_be_used, size_t n) {
+  absl::Status AddSegment(absl::string_view name, bool must_be_used, size_t n) {
     return AddSegment(name, must_be_used, n, typeid(uint8_t).name());
   }
-  absl::Status AddSegment(const MemoryName& name, bool must_be_used, size_t n,
+  absl::Status AddSegment(absl::string_view name, bool must_be_used, size_t n,
                           const std::string& type_id) {
     INTR_RETURN_IF_ERROR(InitSegment(name, must_be_used, n, type_id));
     return absl::OkStatus();
@@ -157,7 +194,7 @@ class SharedMemoryManager final {
   // Returns the `SegmentHeader` belonging to the shared memory segment
   // specified by the given name.
   // Returns null pointer if the segment with the given name does not exist.
-  const SegmentHeader* GetSegmentHeader(const MemoryName& name);
+  const SegmentHeader* GetSegmentHeader(absl::string_view name);
 
   // Returns the value belonging to the shared memory segment specified by the
   // given name.
@@ -166,7 +203,7 @@ class SharedMemoryManager final {
   // Note, the type `T` has to match the type with which the segment was
   // originally created. This function leads to undefined behavior otherwise.
   template <class T>
-  const T* GetSegmentValue(const MemoryName& name) {
+  const T* GetSegmentValue(absl::string_view name) {
     return reinterpret_cast<T*>(GetRawValue(name));
   }
 
@@ -176,21 +213,21 @@ class SharedMemoryManager final {
   // Note, the type `T` has to match the type with which the segment was
   // originally created. This function leads to undefined behavior otherwise.
   template <class T>
-  absl::Status SetSegmentValue(const MemoryName& name, const T& new_value) {
+  absl::Status SetSegmentValue(absl::string_view name, const T& new_value) {
     uint8_t* value = GetRawValue(name);
     if (value == nullptr) {
       return absl::NotFoundError(
-          absl::StrCat("memory segment not found: ", name.GetName()));
+          absl::StrCat("memory segment not found: ", name));
     }
     *reinterpret_cast<T*>(value) = new_value;
     return absl::OkStatus();
   }
   template <class T>
-  absl::Status SetSegmentValue(const MemoryName& name, T&& new_value) {
+  absl::Status SetSegmentValue(absl::string_view name, T&& new_value) {
     uint8_t* value = GetRawValue(name);
     if (value == nullptr) {
       return absl::NotFoundError(
-          absl::StrCat("memory segment not found: ", name.GetName()));
+          absl::StrCat("memory segment not found: ", name));
     }
     *reinterpret_cast<T*>(value) = std::forward<T>(new_value);
     return absl::OkStatus();
@@ -202,27 +239,42 @@ class SharedMemoryManager final {
   // a flatbuffer (or any other serialized data struct) into a shared memory
   // segment. Prefer accessing the values via `GetSegmentValue` or
   // `SetSegmentValue` for type safety.
-  uint8_t* GetRawValue(const MemoryName& name);
+  uint8_t* GetRawValue(absl::string_view name);
 
   // Returns a list of names for all registered shared memory segments.
-  std::vector<MemoryName> GetRegisteredMemoryNames() const;
+  std::vector<std::string> GetRegisteredMemoryNames() const;
 
   // Returns a SegmentInfo struct containing the list of registered memory
   // segments.
   SegmentInfo GetSegmentInfo() const;
 
+  // Name of the module owning this SharedMemoryManager.
+  std::string ModuleName() const;
+
+  // Namespace for the shared memory interfaces using this SharedMemoryManager.
+  std::string SharedMemoryNamespace() const;
+
  private:
-  absl::Status InitSegment(const MemoryName& name, bool must_be_used,
+  explicit SharedMemoryManager(absl::string_view module_name,
+                               absl::string_view shared_memory_namespace);
+
+  absl::Status InitSegment(absl::string_view name, bool must_be_used,
                            size_t segment_size, const std::string& type_id);
 
-  uint8_t* GetRawHeader(const MemoryName& name);
+  uint8_t* GetRawHeader(absl::string_view name);
 
-  uint8_t* GetRawSegment(const MemoryName& name);
+  uint8_t* GetRawSegment(absl::string_view name);
+
+  // Can be generated from memory_segments_, but it's more efficient to simply
+  // update the map when a new segment is added.
+  icon::SegmentNameToFileDescriptorMap segment_name_to_file_descriptor_map_;
 
   // We not only store the name of the each initialized segment, but also a
   // pointer to its allocated memory. That way we can later on provide
   // introspection tools around all allocated memory in the system.
-  absl::flat_hash_map<MemoryName, MemorySegmentInfo> memory_segments_;
+  absl::flat_hash_map<std::string, MemorySegmentInfo> memory_segments_;
+  std::string module_name_;
+  std::string shared_memory_namespace_;
 };
 
 }  // namespace intrinsic::icon

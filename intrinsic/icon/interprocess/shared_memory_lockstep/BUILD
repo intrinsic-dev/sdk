@@ -12,6 +12,7 @@ cc_library(
     ],
     deps = [
         "//intrinsic/icon/interprocess/shared_memory_manager",
+        "//intrinsic/icon/interprocess/shared_memory_manager:domain_socket_utils",
         "//intrinsic/icon/interprocess/shared_memory_manager:memory_segment",
         "//intrinsic/util/status:status_macros",
         "//intrinsic/util/thread:lockstep",

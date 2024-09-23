@@ -16,7 +16,7 @@
 #include "intrinsic/icon/hal/hardware_module_util.h"
 #include "intrinsic/icon/hal/proto/hardware_module_config.pb.h"
 #include "intrinsic/icon/hal/realtime_clock.h"
-#include "intrinsic/util/thread/thread.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
 #include "intrinsic/util/thread/thread_options.h"
 
 namespace intrinsic::icon {
@@ -49,7 +49,7 @@ struct HardwareModuleRtSchedulingData {
 
 absl::StatusOr<HardwareModuleRtSchedulingData> SetupRtScheduling(
     const intrinsic_proto::icon::HardwareModuleConfig& module_config,
-    absl::string_view shared_memory_namespace, bool use_realtime_scheduling,
+    SharedMemoryManager& shm_manager, bool use_realtime_scheduling,
     std::optional<int> realtime_core, bool disable_malloc_guard);
 
 // Runs HWM runtime and the gRPC server and waits for runtime to shutdown as

@@ -42,6 +42,7 @@ def hardware_module_binary(
             Label("//intrinsic/icon/hal:hardware_module_runtime"),
             Label("//intrinsic/icon/hal:hardware_module_util"),
             Label("//intrinsic/icon/hal:module_config"),
+            Label("//intrinsic/icon/interprocess/shared_memory_manager"),
             Label("//intrinsic/icon/release/portable:init_xfa_absl"),
             Label("//intrinsic/icon/release:file_helpers"),
             Label("//intrinsic/icon/utils:shutdown_signals"),

@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -21,12 +22,13 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "intrinsic/icon/flatbuffers/flatbuffer_utils.h"
-#include "intrinsic/icon/interprocess/shared_memory_manager/memory_segment.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/domain_socket_utils.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_header.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_info.fbs.h"
 #include "intrinsic/util/status/status_macros.h"
@@ -35,12 +37,11 @@ namespace intrinsic::icon {
 
 using ::intrinsic_fbs::FlatbufferArrayNumElements;
 
-inline constexpr mode_t kShmMode = 0644;
 // Max string size as defined in `segment_info.fbs`
 inline constexpr size_t kMaxSegmentStringSize =
     FlatbufferArrayNumElements(&intrinsic::icon::SegmentName::value);
 
-inline constexpr size_t kMaxSegmentSize =
+inline constexpr size_t kMaxNumberOfSegments =
     FlatbufferArrayNumElements(&intrinsic::icon::SegmentInfo::names);
 
 namespace {
@@ -48,31 +49,23 @@ absl::Status VerifyName(absl::string_view name) {
   if (name.empty()) {
     return absl::InvalidArgumentError("Shm segment name cannot be empty.");
   }
-  if (name[0] != '/') {
-    return absl::InvalidArgumentError(absl::StrCat(
-        "Shm segment name \"", name, "\" must start with a forward slash."));
-  }
   if (name.size() >= kMaxSegmentStringSize) {
     return absl::InvalidArgumentError(
         absl::StrCat("Shm segment name \"", name, "\" can't exceed ",
                      (kMaxSegmentStringSize - 1), " characters."));
   }
-  if (std::find(name.begin() + 1, name.end(), '/') != name.end()) {
+
+  if (std::find(name.begin(), name.end(), '/') != name.end()) {
     return absl::InvalidArgumentError(absl::StrCat(
-        "Shm segment name \"", name,
-        "\" can't have further forward slashes except the first one."));
+        "Shm segment name \"", name, "\" can't have forward slashes."));
   }
 
   return absl::OkStatus();
 }
 
-absl::Status VerifyName(const MemoryName& name) {
-  return VerifyName(name.GetName());
-}
-
 SegmentInfo SegmentInfoFromHashMap(
     const absl::flat_hash_map<
-        MemoryName, SharedMemoryManager::MemorySegmentInfo>& segments) {
+        std::string, SharedMemoryManager::MemorySegmentInfo>& segments) {
   SegmentInfo segment_info(segments.size());
   uint32_t index = 0;
   for (const auto& [memory_name, buf] : segments) {
@@ -81,7 +74,7 @@ SegmentInfo SegmentInfoFromHashMap(
     // fbs doesn't have char as datatype, only int8_t which is byte compatible.
     auto* data = reinterpret_cast<char*>(segment.mutable_value()->Data());
     std::memset(data, '\0', kMaxSegmentStringSize);
-    absl::SNPrintF(data, kMaxSegmentStringSize, "%s", memory_name.GetName());
+    absl::SNPrintF(data, kMaxSegmentStringSize, "%s", memory_name);
     segment_info.mutable_names()->Mutate(index, segment);
     ++index;
   }
@@ -90,31 +83,57 @@ SegmentInfo SegmentInfoFromHashMap(
 }
 }  // namespace
 
+SharedMemoryManager::SharedMemoryManager(
+    absl::string_view module_name, absl::string_view shared_memory_namespace)
+    : module_name_(std::string(module_name)),
+      shared_memory_namespace_(std::string(shared_memory_namespace)) {}
+
+// static
+absl::StatusOr<std::unique_ptr<SharedMemoryManager>>
+SharedMemoryManager::Create(absl::string_view shared_memory_namespace,
+                            absl::string_view module_name) {
+  if (module_name.empty()) {
+    return absl::InvalidArgumentError("Module name can't be empty.");
+  }
+
+  return absl::WrapUnique(new SharedMemoryManager(
+      /*module_name=*/module_name,
+      /*shared_memory_namespace=*/shared_memory_namespace));
+}
+
 SharedMemoryManager::~SharedMemoryManager() {
   // unlink all created shm segments
   for (const auto& segment : memory_segments_) {
     auto* header = reinterpret_cast<SegmentHeader*>(segment.second.data);
+    int fd = segment.second.fd;
+    const std::string segment_name = segment.first;
+
     // We've used placement new during the initialization. We have to call the
     // destructor explicitly to cleanup.
     header->~SegmentHeader();
-    shm_unlink(segment.first.GetName());
+
+    if (close(fd) == -1) {
+      LOG(WARNING) << "Failed to close shm_fd for '" << segment_name
+                   << "'. with error: " << strerror(errno)
+                   << ". Continuing anyways.";
+    }
   }
 }
 
 const SegmentHeader* SharedMemoryManager::GetSegmentHeader(
-    const MemoryName& name) {
+    absl::string_view name) {
   uint8_t* header = GetRawHeader(name);
   return reinterpret_cast<SegmentHeader*>(header);
 }
 
-absl::Status SharedMemoryManager::InitSegment(const MemoryName& name,
+absl::Status SharedMemoryManager::InitSegment(absl::string_view name,
                                               bool must_be_used,
                                               size_t segment_size,
                                               const std::string& type_id) {
-  if (memory_segments_.size() >= kMaxSegmentSize) {
+  if (memory_segments_.size() >= kMaxNumberOfSegments) {
     return absl::ResourceExhaustedError(
-        absl::StrCat("Unable to add \"", name.GetName(), "\". Max size of ",
-                     kMaxSegmentSize, " segments exceeded."));
+        absl::StrCat("Unable to add \"", name, "\". Max number of segments (",
+                     kMaxNumberOfSegments, ") exceeded."));
   }
   if (type_id.size() > SegmentHeader::TypeInfo::kMaxSize) {
     return absl::InvalidArgumentError(
@@ -123,107 +142,48 @@ absl::Status SharedMemoryManager::InitSegment(const MemoryName& name,
   }
   if (memory_segments_.contains(name)) {
     return absl::AlreadyExistsError(
-        absl::StrCat("Shm segment \"", name.GetName(), "\" exists already."));
+        absl::StrCat("Shm segment \"", name, "\" exists already."));
   }
   INTR_RETURN_IF_ERROR(VerifyName(name));
 
-  auto shm_fd = shm_open(name.GetName(), O_CREAT | O_EXCL | O_RDWR, kShmMode);
-  bool reusing_segment = false;
-  if (shm_fd == -1 && errno == EEXIST) {
-    LOG(WARNING) << "The shared memory segment \"" << name.GetName()
-                 << "\" already exists. It will be reused.";
-    shm_fd = shm_open(name.GetName(), O_CREAT | O_RDWR, kShmMode);
-    reusing_segment = true;
-  }
+  // Creates an anonymous memory segment and stores the fd
+  // https://man7.org/linux/man-pages/man2/memfd_create.2.html
+  // Default flags are O_RDWR | O_LARGEFILE.
+  int shm_fd = memfd_create(name.data(), 0);
   if (shm_fd == -1) {
     return absl::InternalError(
-        absl::StrCat("Unable to open shared memory segment \"", name.GetName(),
+        absl::StrCat("Failed to create shm segment \"", name,
                      "\" with error: ", strerror(errno), "."));
   }
 
-  if (reusing_segment) {
-    // Checks the size of the existing segment as additional safeguard against
-    // version mismatches.
-    struct stat file_attributes;
-    if (fstat(shm_fd, &file_attributes) == -1) {
-      return absl::InternalError(absl::StrCat(
-          "Fstat failed for shared memory segment \"", name.GetName(),
-          "\" with error: ", strerror(errno), "."));
-    }
-    if (file_attributes.st_size != segment_size) {
-      LOG(ERROR) << "Size mismatch for existing shared memory segment \""
-                 << name.GetName() << "\" Expected " << segment_size
-                 << " bytes got " << file_attributes.st_size
-                 << " bytes. This can be caused by a version mismatch between "
-                    "resources. Ensure you are using the latest version of all "
-                    "resources involved.";
-      // return absl::FailedPreconditionError(absl::StrCat(
-      //     "Size mismatch for existing shared memory segment \"",
-      //     name.GetName(),
-      //     "\" Expected ", segment_size, " bytes got ",
-      //     file_attributes.st_size, " bytes. This can be caused by a version
-      //     mismatch between resources. " "Ensure you are using the latest
-      //     version of all resources " "involved."));
-      //   }
-      // } else if (ftruncate(shm_fd, segment_size) == -1) {
-      //   // Resizes new shm segments.
-      //   return absl::InternalError(
-      //       absl::StrCat("Unable to resize shared memory segment \"",
-      //                    name.GetName(), "\" with error: ", strerror(errno),
-      //                    "."));
-    }
-  }
   if (ftruncate(shm_fd, segment_size) == -1) {
     // Resizes new shm segments.
     return absl::InternalError(
-        absl::StrCat("Unable to resize shared memory segment \"",
-                     name.GetName(), "\" with error: ", strerror(errno), "."));
+        absl::StrCat("Unable to resize shared memory segment \"", name,
+                     "\" with error: ", strerror(errno), "."));
   }
   auto* data = static_cast<uint8_t*>(mmap(
       nullptr, segment_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0));
   if (data == nullptr) {
     return absl::InternalError(
-        absl::StrCat("Unable to map shared memory segment \"", name.GetName(),
+        absl::StrCat("Unable to map shared memory segment \"", name,
                      "\" with error: ", strerror(errno), "."));
   }
-
-  // The fd can be closed after a call to mmap() without affecting the
-  // mapping.
-  if (close(shm_fd) == -1) {
-    LOG(WARNING) << "Failed to close shm_fd for \"" << name.GetName()
-                 << "\". with error: " << strerror(errno)
-                 << ". Continuing anyways.";
-  }
-
-  if (reusing_segment) {
-    // Checks the version information of the header. fd is already closed so
-    // we can simply return an error.
-    const auto* existing_header = reinterpret_cast<const SegmentHeader*>(data);
-    QCHECK_NE(existing_header, nullptr);
-    // No segfault because the version is the first member.
-    const size_t expected_version = SegmentHeader::ExpectedVersion();
-    const size_t existing_version = existing_header->Version();
-    if (expected_version != existing_version) {
-      LOG(ERROR) << "Incompatible version of shared memory segment \""
-                 << name.GetName() << "\" Expected [" << expected_version
-                 << "] got [" << existing_version
-                 << "]. Ensure you are using the latest version of all "
-                    "resources involved.";
-    }
-  }
-
+  const std::string name_str(name);
+  segment_name_to_file_descriptor_map_.insert({name_str, shm_fd});
   // We use a placement new operator here to initialize the "raw" segment
   // data correctly.
   new (data) SegmentHeader(type_id);
-  memory_segments_.insert({name, {.data = data, .must_be_used = must_be_used}});
+  memory_segments_.insert(
+      {name_str, {.data = data, .must_be_used = must_be_used, .fd = shm_fd}});
   return absl::OkStatus();
 }
 
-uint8_t* SharedMemoryManager::GetRawHeader(const MemoryName& name) {
+uint8_t* SharedMemoryManager::GetRawHeader(absl::string_view name) {
   return GetRawSegment(name);
 }
 
-uint8_t* SharedMemoryManager::GetRawValue(const MemoryName& name) {
+uint8_t* SharedMemoryManager::GetRawValue(absl::string_view name) {
   auto* data = GetRawSegment(name);
   if (data == nullptr) {
     return data;
@@ -231,7 +191,7 @@ uint8_t* SharedMemoryManager::GetRawValue(const MemoryName& name) {
   return data + sizeof(SegmentHeader);
 }
 
-uint8_t* SharedMemoryManager::GetRawSegment(const MemoryName& name) {
+uint8_t* SharedMemoryManager::GetRawSegment(absl::string_view name) {
   auto result = memory_segments_.find(name);
   if (result == memory_segments_.end()) {
     return nullptr;
@@ -239,13 +199,19 @@ uint8_t* SharedMemoryManager::GetRawSegment(const MemoryName& name) {
   return result->second.data;
 }
 
-std::vector<MemoryName> SharedMemoryManager::GetRegisteredMemoryNames() const {
-  std::vector<MemoryName> result;
+std::vector<std::string> SharedMemoryManager::GetRegisteredMemoryNames() const {
+  std::vector<std::string> result;
   result.reserve(memory_segments_.size());
   for (const auto& [name, unused] : memory_segments_) {
     result.push_back(name);
   }
   return result;
+}
+
+std::string SharedMemoryManager::ModuleName() const { return module_name_; }
+
+std::string SharedMemoryManager::SharedMemoryNamespace() const {
+  return shared_memory_namespace_;
 }
 
 SegmentInfo SharedMemoryManager::GetSegmentInfo() const {

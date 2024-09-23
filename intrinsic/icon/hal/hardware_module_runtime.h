@@ -16,6 +16,8 @@
 #include "intrinsic/icon/hal/interfaces/hardware_module_state.fbs.h"
 #include "intrinsic/icon/hal/interfaces/icon_state.fbs.h"
 #include "intrinsic/icon/interprocess/remote_trigger/remote_trigger_server.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/domain_socket_server.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
 #include "intrinsic/util/thread/thread.h"
 
 namespace intrinsic::icon {
@@ -39,8 +41,13 @@ namespace intrinsic::icon {
 // ReadStatus/ApplyCommand.
 class HardwareModuleRuntime final {
  public:
-  // Default constructor.
-  HardwareModuleRuntime();
+  // HardwareModuleRuntime is move only.
+  HardwareModuleRuntime() = delete;
+
+  // The copy operations are implicitly deleted, explicitly deleting for
+  // visibility.
+  HardwareModuleRuntime(const HardwareModuleRuntime&) = delete;
+  HardwareModuleRuntime& operator=(const HardwareModuleRuntime&) = delete;
 
   // Destructor.
   // Stops any ongoing threads and servers.
@@ -50,12 +57,17 @@ class HardwareModuleRuntime final {
   HardwareModuleRuntime(HardwareModuleRuntime&& other);
   HardwareModuleRuntime& operator=(HardwareModuleRuntime&& other);
 
+  // Creates a HardwareModuleRuntime taking ownership of the
+  // `shared_memory_manager` and `hardware_module`.
+  // Forwards errors from creating the DomainSocketServer for exposing the
+  // shared memory segments across process boundaries.
   static absl::StatusOr<HardwareModuleRuntime> Create(
+      std::unique_ptr<SharedMemoryManager> shared_memory_manager,
       HardwareModule hardware_module);
 
   // Starts the execution of the module.
   // The module services will be run asynchronously in their own thread, which
-  // can be parametrized by the thread options.
+  // can be parametrized by `is_realtime` and `cpu_affinity`.
   // `server_builder` gives the hardware module the possibility to register gRPC
   // services.
   absl::Status Run(grpc::ServerBuilder& server_builder,
@@ -82,17 +94,30 @@ class HardwareModuleRuntime final {
   GetHardwareModuleState() const;
 
  private:
-  HardwareModuleRuntime(HardwareModule hardware_module,
-                        HardwareInterfaceRegistry interface_registry);
+  // All parameters are move only.
+  HardwareModuleRuntime(
+      HardwareModule hardware_module,
+      HardwareInterfaceRegistry interface_registry,
+      std::unique_ptr<SharedMemoryManager> shared_memory_manager,
+      std::unique_ptr<DomainSocketServer> domain_socket_server);
 
   // Before calling `Run`, we once have to connect the runtime instance to the
   // rest of the ICON IPC. We internally call this in the `Create` function
   // after we've initialized our object. That way we can connect our service
   // callbacks correctly to class member instances (i.e. `PartRegistry`).
   absl::Status Connect();
-
   HardwareInterfaceRegistry interface_registry_;
+  // Closes the shared memory file descriptors that it owns on destruction, so
+  // it must go before hardware_module_ and domain_socket_server_:
+  std::unique_ptr<SharedMemoryManager> shared_memory_manager_;
+  // Reads and writes from/to hardware interfaces that live in shared memory.
   HardwareModule hardware_module_;
+  // Exposes shared memory segments to other processes. We can't stop those
+  // processes from keeping references after shared_memory_manager_ closes the
+  // file descriptors, but at least we can prevent new clients from accessing
+  // the shared memory by destroying domain_socket_server_ before
+  // shared_menory_manager_.
+  std::unique_ptr<DomainSocketServer> domain_socket_server_;
 
   class CallbackHandler;
   std::unique_ptr<CallbackHandler> callback_handler_;

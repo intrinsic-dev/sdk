@@ -53,6 +53,7 @@ cc_library(
         "-lrt",
     ],
     deps = [
+        ":domain_socket_utils",
         ":memory_segment",
         ":segment_header",
         ":segment_info_fbs_cc",
@@ -61,7 +62,9 @@ cc_library(
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -76,6 +79,7 @@ cc_library(
         "memory_segment.h",
     ],
     deps = [
+        ":domain_socket_utils",
         ":segment_header",
         "//intrinsic/icon/utils:core_time",
         "//intrinsic/util/status:status_macros",
@@ -84,8 +88,6 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -96,6 +98,8 @@ cc_library(
     deps = [
         ":domain_socket_utils",
         ":segment_info_fbs_cc",
+        ":shared_memory_manager",
+        "//intrinsic/icon/hal:hardware_interface_registry",
         "//intrinsic/util/status:status_macros",
         "//intrinsic/util/thread",
         "//intrinsic/util/thread:thread_options",

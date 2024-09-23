@@ -6,15 +6,11 @@
 #include <stdint.h>
 
 #include <memory>
-#include <string>
-#include <string_view>
 
 #include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "intrinsic/icon/control/realtime_clock_interface.h"
-#include "intrinsic/icon/hal/get_hardware_interface.h"
 #include "intrinsic/icon/interprocess/shared_memory_lockstep/shared_memory_lockstep.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/memory_segment.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
@@ -39,13 +35,12 @@ struct RealtimeClockUpdate {
 // over shared memory.
 class RealtimeClock : public RealtimeClockInterface {
  public:
-  // Creates a RealtimeClock using memory
-  // segments named `LockstepSegmentName(memory_namespace,
-  // hardware_module_name)` and `RealtimeClockStepSegmentName(memory_namespace,
-  // hardware_module_name)`.
+  // Creates a RealtimeClock using memory segments with names specified by
+  // `kRealtimeClockLockstepInterfaceName` and
+  // `kRealtimeClockUpdateInterfaceName` by registering the respective segment
+  // on `shm_manager`.
   static absl::StatusOr<std::unique_ptr<RealtimeClock>> Create(
-      absl::string_view memory_namespace,
-      absl::string_view hardware_module_name);
+      SharedMemoryManager& shm_manager);
 
   // This class is non-moveable and non-copyable to ensure that custom
   // destructor logic only ever runs once.
@@ -78,30 +73,11 @@ class RealtimeClock : public RealtimeClockInterface {
   // communicates the cycle start time.
   RealtimeClock(
       SharedMemoryLockstep lockstep,
-      ReadWriteMemorySegment<RealtimeClockUpdate> realtime_clock_update,
-      SharedMemoryManager shm_manager);
+      ReadWriteMemorySegment<RealtimeClockUpdate> realtime_clock_update);
 
   SharedMemoryLockstep lockstep_;
   ReadWriteMemorySegment<RealtimeClockUpdate> update_;
-  SharedMemoryManager shm_manager_;
 };
-
-// Returns the canonical name for a shared memory lockstep segment, based on a
-// hardware module name.
-inline MemoryName LockstepSegmentName(absl::string_view memory_namespace,
-                                      absl::string_view hardware_module_name) {
-  return MemoryName(memory_namespace, hardware_module_name,
-                    kRealtimeClockLockstepInterfaceName);
-}
-
-// Returns the canonical name for a RealtimeClockUpdate shared memory segment,
-// based on a hardware module name.
-inline MemoryName RealtimeClockUpdateSegmentName(
-    absl::string_view memory_namespace,
-    absl::string_view hardware_module_name) {
-  return MemoryName(memory_namespace, hardware_module_name,
-                    kRealtimeClockUpdateInterfaceName);
-}
 
 }  // namespace intrinsic::icon
 

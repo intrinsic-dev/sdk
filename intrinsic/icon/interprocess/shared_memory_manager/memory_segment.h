@@ -7,79 +7,17 @@
 #include <stdint.h>
 
 #include <string>
-#include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "absl/types/span.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/domain_socket_utils.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_header.h"
 #include "intrinsic/icon/utils/clock.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon {
-namespace hal {
-static constexpr char kDelimiter[] = "__";
-
-// Internal helper to get a list of segment names from a list of memory location
-// names.
-//
-// Returns InternalError if the name does not follow the norm of
-// '/<module_name>__<segment_name>'.
-inline static absl::StatusOr<std::vector<std::string>>
-SegmentNamesFromMemoryNames(absl::Span<const std::string> memory_names) {
-  std::vector<std::string> segment_names;
-  segment_names.reserve(memory_names.size());
-
-  for (auto& name : memory_names) {
-    // A typical shared memory location looks like
-    // `/some_module__some_interface`. This is split by `__` and takes the
-    // latter part.
-    std::vector<absl::string_view> split_location =
-        absl::StrSplit(name, hal::kDelimiter);
-    if (split_location.size() != 2) {
-      return absl::InternalError(
-          absl::StrCat("Exported shared memory location '", name,
-                       "' does not adhere to norm of '/<module_name>",
-                       hal::kDelimiter, "<segment_name>'"));
-    }
-    segment_names.push_back(std::string(split_location[1]));
-  }
-  return segment_names;
-}
-
-}  // namespace hal
-
-// A strong type for filenames of shared memory segments. Ensures that the
-// filename follows a pattern "/namespacemodule__operation" and this format is
-// defined only here.
-struct MemoryName {
-  MemoryName(absl::string_view shm_namespace, absl::string_view module_name) {
-    name = absl::StrFormat("/%s%s", shm_namespace, module_name);
-  }
-  MemoryName(absl::string_view shm_namespace, absl::string_view module_name,
-             absl::string_view operation) {
-    name = absl::StrFormat("/%s%s%s%s", shm_namespace, module_name,
-                           hal::kDelimiter, operation);
-  }
-  const char* GetName() const { return name.c_str(); }
-  void Append(absl::string_view suffix) { name.append(suffix); }
-  template <typename H>
-  friend H AbslHashValue(H h, const MemoryName& m) {
-    return H::combine(std::move(h), m.name);
-  }
-  bool operator==(const MemoryName& rhs) const {
-    return (this->name == rhs.name);
-  }
-
- private:
-  std::string name;
-};
 
 // Base class for handling a generic, untyped shared memory segment.
 // Each memory segment has to be created and initialized by a
@@ -108,11 +46,16 @@ class MemorySegment {
  protected:
   MemorySegment() = default;
 
-  // Access the shared memory location.
+  // Accesses the shared memory location with `name`.
   // Returns a pointer to the untyped memory segment and maps it into
-  // user-space. Fails if the shared memory segment with the given name was not
-  // previously allocated by the `SharedMemoryManager`.
-  static absl::StatusOr<uint8_t*> Get(const MemoryName& name, size_t size);
+  // user-space.
+  // Returns NotFoundError if the shared memory segment with the given
+  // name is not in `segment_name_to_file_descriptor_map` e.g. not previously
+  // allocated by a `SharedMemoryManager`.
+  // Returns InternalError if mapping the segment fails.
+  static absl::StatusOr<uint8_t*> Get(
+      const SegmentNameToFileDescriptorMap& segment_name_to_file_descriptor_map,
+      absl::string_view name, size_t segment_size);
 
   // Returns the SegmentHeader of the shared memory segment.
   SegmentHeader* HeaderPointer();
@@ -121,14 +64,14 @@ class MemorySegment {
   uint8_t* Value();
   const uint8_t* Value() const;
 
-  MemorySegment(const MemoryName& name, uint8_t* segment);
+  MemorySegment(absl::string_view name, uint8_t* segment);
   MemorySegment(const MemorySegment& other) noexcept;
   MemorySegment& operator=(const MemorySegment& other) noexcept = default;
   MemorySegment(MemorySegment&& other) noexcept;
   MemorySegment& operator=(MemorySegment&& other) noexcept = default;
 
  private:
-  MemoryName name_ = MemoryName("", "");
+  std::string name_ = "";
 
   // The segment header as well as the actual payload (value) are located in the
   // same shared memory segment. We separate the pointers by a simple offset.
@@ -140,14 +83,19 @@ class MemorySegment {
 template <class T>
 class ReadOnlyMemorySegment final : public MemorySegment {
  public:
-  // Gets read-only access to a shared memory segment specified by a name.
-  // Returns `absl::InternalError` if a POSIX call to access the shared memory
-  // failed.
-  static absl::StatusOr<ReadOnlyMemorySegment> Get(const MemoryName& name) {
+  // Gets read-only access to a shared memory segment called `segment_name`.
+  // Returns NotFoundError if the shared memory segment with the given
+  // name is not in `segment_name_to_file_descriptor_map` e.g. not previously
+  // allocated by a `SharedMemoryManager`.
+  // Returns InternalError if mapping the segment fails.
+  static absl::StatusOr<ReadOnlyMemorySegment> Get(
+      const SegmentNameToFileDescriptorMap& segment_name_to_file_descriptor_map,
+      absl::string_view segment_name) {
     INTR_ASSIGN_OR_RETURN(
         uint8_t* segment,
-        MemorySegment::Get(name, SegmentTraits<T>::kSegmentSize));
-    return ReadOnlyMemorySegment<T>(name, segment);
+        MemorySegment::Get(segment_name_to_file_descriptor_map, segment_name,
+                           SegmentTraits<T>::kSegmentSize));
+    return ReadOnlyMemorySegment<T>(segment_name, segment);
   }
 
   ReadOnlyMemorySegment() = default;
@@ -171,7 +119,7 @@ class ReadOnlyMemorySegment final : public MemorySegment {
   const uint8_t* GetRawValue() const { return Value(); }
 
  private:
-  ReadOnlyMemorySegment(const MemoryName& name, uint8_t* segment)
+  ReadOnlyMemorySegment(absl::string_view name, uint8_t* segment)
       : MemorySegment(name, segment) {
     HeaderPointer()->IncrementReaderRefCount();
   }
@@ -185,18 +133,23 @@ class ReadOnlyMemorySegment final : public MemorySegment {
 // shared memory segment, there might also be a race between a single writer and
 // a single reader in which the reader might potentially read an inconsistent
 // value while the writer updates it. It's therefore the application's
-// responsiblity to guarantee a safe execution when featuring multiple writers.
+// responsibility to guarantee a safe execution when featuring multiple writers.
 template <class T>
 class ReadWriteMemorySegment final : public MemorySegment {
  public:
-  // Gets read-write access to a shared memory segment specified by a name.
-  // Returns `absl::InternalError` if a POSIX call to access the shared memory
-  // failed.
-  static absl::StatusOr<ReadWriteMemorySegment> Get(const MemoryName& name) {
+  // Gets read-write access to a shared memory segment called `segment_name`.
+  // Returns NotFoundError if the shared memory segment with the given
+  // name is not in `segment_name_to_file_descriptor_map` e.g. not previously
+  // allocated by a `SharedMemoryManager`.
+  // Returns InternalError if mapping the segment fails.
+  static absl::StatusOr<ReadWriteMemorySegment> Get(
+      const SegmentNameToFileDescriptorMap& segment_name_to_file_descriptor_map,
+      absl::string_view segment_name) {
     INTR_ASSIGN_OR_RETURN(
         uint8_t* segment,
-        MemorySegment::Get(name, SegmentTraits<T>::kSegmentSize));
-    return ReadWriteMemorySegment<T>(name, segment);
+        MemorySegment::Get(segment_name_to_file_descriptor_map, segment_name,
+                           SegmentTraits<T>::kSegmentSize));
+    return ReadWriteMemorySegment<T>(segment_name, segment);
   }
 
   ReadWriteMemorySegment() = default;
@@ -225,7 +178,7 @@ class ReadWriteMemorySegment final : public MemorySegment {
   void SetValue(const T& value) { *reinterpret_cast<T*>(Value()) = value; }
 
  private:
-  ReadWriteMemorySegment(const MemoryName& name, uint8_t* segment)
+  ReadWriteMemorySegment(absl::string_view name, uint8_t* segment)
       : MemorySegment(name, segment) {
     HeaderPointer()->IncrementWriterRefCount();
   }

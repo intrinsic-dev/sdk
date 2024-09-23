@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <functional>
+#include <string>
 #include <utility>
 
 #include "absl/status/status.h"
@@ -23,51 +24,49 @@
 namespace intrinsic::icon {
 
 absl::StatusOr<RemoteTriggerServer> RemoteTriggerServer::Create(
-    const MemoryName& server_memory_name,
+    intrinsic::icon::SharedMemoryManager& shm_manager,
+    absl::string_view server_memory_name,
     RemoteTriggerServerCallback&& callback) {
-  MemoryName request_memory = server_memory_name;
-  request_memory.Append(kSemRequestSuffix);
-  MemoryName response_memory = server_memory_name;
-  response_memory.Append(kSemResponseSuffix);
-  intrinsic::icon::SharedMemoryManager shm_manager;
+  std::string request_memory_name =
+      absl::StrCat(server_memory_name, kSemRequestSuffix);
+  std::string response_memory_name =
+      absl::StrCat(server_memory_name, kSemResponseSuffix);
+
   INTR_RETURN_IF_ERROR(shm_manager.AddSegment(
-      request_memory, /*must_be_used=*/false, BinaryFutex()));
+      request_memory_name, /*must_be_used=*/false, BinaryFutex()));
   INTR_RETURN_IF_ERROR(shm_manager.AddSegment(
-      response_memory, /*must_be_used=*/false, BinaryFutex()));
+      response_memory_name, /*must_be_used=*/false, BinaryFutex()));
+
   INTR_ASSIGN_OR_RETURN(
       auto request_futex,
-      ReadOnlyMemorySegment<BinaryFutex>::Get(request_memory));
-  INTR_ASSIGN_OR_RETURN(
-      auto response_futex,
-      ReadWriteMemorySegment<BinaryFutex>::Get(response_memory));
+      shm_manager.Get<ReadOnlyMemorySegment<BinaryFutex>>(request_memory_name));
+
+  INTR_ASSIGN_OR_RETURN(auto response_futex,
+                        shm_manager.Get<ReadWriteMemorySegment<BinaryFutex>>(
+                            response_memory_name));
 
   return RemoteTriggerServer(
       server_memory_name, std::forward<RemoteTriggerServerCallback>(callback),
-      std::move(shm_manager), std::move(request_futex),
-      std::move(response_futex));
+      std::move(request_futex), std::move(response_futex));
 }
 
 RemoteTriggerServer::RemoteTriggerServer(
-    const MemoryName& server_memory_name,
-    RemoteTriggerServerCallback&& callback, SharedMemoryManager&& shm_manager,
+    absl::string_view server_memory_name,
+    RemoteTriggerServerCallback&& callback,
     ReadOnlyMemorySegment<BinaryFutex>&& request_futex,
     ReadWriteMemorySegment<BinaryFutex>&& response_futex)
     : server_memory_name_(server_memory_name),
       callback_(std::forward<RemoteTriggerServerCallback>(callback)),
-      shm_manager_(std::forward<decltype(shm_manager)>(shm_manager)),
       request_futex_(std::forward<decltype(request_futex)>(request_futex)),
       response_futex_(std::forward<decltype(response_futex)>(response_futex)) {}
 
 RemoteTriggerServer::RemoteTriggerServer(RemoteTriggerServer&& other) noexcept
-    : server_memory_name_(MemoryName("", "")) {
+    : server_memory_name_("") {
   // Make sure that moved server is no longer running.
   other.Stop();
-
-  server_memory_name_ =
-      std::exchange(other.server_memory_name_, MemoryName("", ""));
+  server_memory_name_ = std::exchange(other.server_memory_name_, "");
   callback_ = std::exchange(other.callback_, nullptr);
   is_running_.store(false);
-  shm_manager_ = std::exchange(other.shm_manager_, SharedMemoryManager());
   request_futex_ =
       std::exchange(other.request_futex_, ReadOnlyMemorySegment<BinaryFutex>());
   response_futex_ = std::exchange(other.response_futex_,
@@ -80,11 +79,9 @@ RemoteTriggerServer& RemoteTriggerServer::operator=(
     // Make sure that moved server is no longer running.
     other.Stop();
 
-    server_memory_name_ =
-        std::exchange(other.server_memory_name_, MemoryName("", ""));
+    server_memory_name_ = std::exchange(other.server_memory_name_, "");
     callback_ = std::exchange(other.callback_, nullptr);
     is_running_.store(false);
-    shm_manager_ = std::exchange(other.shm_manager_, SharedMemoryManager());
     request_futex_ = std::exchange(other.request_futex_,
                                    ReadOnlyMemorySegment<BinaryFutex>());
     response_futex_ = std::exchange(other.response_futex_,

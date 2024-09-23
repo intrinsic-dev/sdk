@@ -13,7 +13,7 @@
 #include "intrinsic/icon/hardware_modules/sim_bus/sim_bus_hardware_module.pb.h"
 #include "intrinsic/icon/utils/realtime_guard.h"
 #include "intrinsic/util/proto/any.h"
-#include "intrinsic/util/thread/thread.h"
+#include "intrinsic/util/thread/thread_options.h"
 
 namespace intrinsic::icon {
 namespace internal {

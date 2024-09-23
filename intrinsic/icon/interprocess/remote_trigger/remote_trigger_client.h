@@ -4,7 +4,6 @@
 #define INTRINSIC_ICON_INTERPROCESS_REMOTE_TRIGGER_REMOTE_TRIGGER_CLIENT_H_
 
 #include <atomic>
-#include <memory>
 #include <string>
 
 #include "absl/status/status.h"
@@ -12,6 +11,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "intrinsic/icon/interprocess/binary_futex.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/domain_socket_utils.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/memory_segment.h"
 #include "intrinsic/icon/utils/realtime_status.h"
 #include "intrinsic/icon/utils/realtime_status_or.h"
@@ -85,27 +85,25 @@ class RemoteTriggerClient {
     std::atomic<bool>* request_started_ = nullptr;
   };
 
-  // Creates a new client instance on a specified server id.
+  // Creates a new client instance on `server_name`.
   // By default, the client tries to automatically connect to an existing server
   // instance and fails if it can't connect. We can set the `auto_connect`
   // argument to false to create an unconnected client instance.
   // In order to trigger an execution on the server, we have to explicitly call
   // `Connect()` before in order to establish a working connection.
+  // All file descriptors used by the RemoteTriggerClient (`server_name`
+  // request, and `server_name` response. Suffix defined in
+  // intrinsic/icon/interprocess/remote_trigger/remote_trigger_constants.h)
+  // need to be present and valid in `segment_name_to_file_descriptor_map`.
   static absl::StatusOr<RemoteTriggerClient> Create(
-      const MemoryName& server_name, bool auto_connect = true);
+      const SegmentNameToFileDescriptorMap& segment_name_to_file_descriptor_map,
+      absl::string_view server_name);
 
   // This class is move-only.
   RemoteTriggerClient(RemoteTriggerClient& other) = delete;
   RemoteTriggerClient& operator=(RemoteTriggerClient& other) = delete;
   RemoteTriggerClient(RemoteTriggerClient&& other) noexcept;
   RemoteTriggerClient& operator=(RemoteTriggerClient&& other) noexcept;
-
-  // Manually connects to the server specified during construction.
-  // One must call `Connect()` explicitly if the client instance was created
-  // with the `auto_connect` flag set to `false`. If the client is already
-  // connected, this function returns immediately and the connection remains
-  // untouched. Returns an error state if it can't connect to the server.
-  absl::Status Connect();
 
   // Indicates whether a connection to the server_id was successfully
   // established.
@@ -130,13 +128,15 @@ class RemoteTriggerClient {
   RealtimeStatusOr<AsyncRequest> TriggerAsync();
 
  private:
-  explicit RemoteTriggerClient(const MemoryName& server_name);
+  RemoteTriggerClient(absl::string_view server_name,
+                      const SegmentNameToFileDescriptorMap&
+                          segment_name_to_file_descriptor_map);
 
-  RemoteTriggerClient(const MemoryName& server_name,
-                      ReadWriteMemorySegment<BinaryFutex>&& request_futex,
-                      ReadOnlyMemorySegment<BinaryFutex>&& response_futex);
+  // Connects to the server specified during construction.
+  absl::Status Connect();
 
-  MemoryName server_name_;
+  std::string server_name_;
+  SegmentNameToFileDescriptorMap segment_name_to_file_descriptor_map_;
   // The interprocess signaling is done via two semaphores shared between a
   // server and its clients.
   ReadWriteMemorySegment<BinaryFutex> request_futex_;

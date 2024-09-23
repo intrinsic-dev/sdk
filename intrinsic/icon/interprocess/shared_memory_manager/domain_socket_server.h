@@ -14,6 +14,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/domain_socket_utils.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
 #include "intrinsic/util/thread/thread.h"
 
 namespace intrinsic::icon {
@@ -109,6 +110,14 @@ class DomainSocketServer {
   // them.
   absl::Status ServeShmDescriptors(const SegmentNameToFileDescriptorMap&
                                        segment_name_to_file_descriptor_map);
+
+  // Adds the special Segment `SegmentInfo` to the `shared_memory_manager` and
+  // starts the server to serve the file descriptors for all segments previously
+  // added to `shared_memory_manager`.
+  // Any segments added to `shared_memory_manager` after this call will not be
+  // served.
+  absl::Status AddSegmentInfoServeShmDescriptors(
+      SharedMemoryManager& shared_memory_manager);
 
  private:
   // Contains all the data that is sent over the socket.

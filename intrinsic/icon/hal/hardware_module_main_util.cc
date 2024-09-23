@@ -33,6 +33,7 @@
 #include "intrinsic/icon/hal/hardware_module_util.h"
 #include "intrinsic/icon/hal/proto/hardware_module_config.pb.h"
 #include "intrinsic/icon/hal/realtime_clock.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
 #include "intrinsic/icon/release/file_helpers.h"
 #include "intrinsic/icon/utils/clock.h"
 #include "intrinsic/icon/utils/duration.h"
@@ -63,13 +64,12 @@ absl::StatusOr<HardwareModuleMainConfig> LoadConfig(
 
 absl::StatusOr<HardwareModuleRtSchedulingData> SetupRtScheduling(
     const intrinsic_proto::icon::HardwareModuleConfig& module_config,
-    absl::string_view shared_memory_namespace, bool use_realtime_scheduling,
+    SharedMemoryManager& shm_manager, bool use_realtime_scheduling,
     std::optional<int> realtime_core, bool disable_malloc_guard) {
   std::unique_ptr<intrinsic::icon::RealtimeClock> realtime_clock = nullptr;
   if (module_config.drives_realtime_clock()) {
     INTR_ASSIGN_OR_RETURN(realtime_clock,
-                          intrinsic::icon::RealtimeClock::Create(
-                              shared_memory_namespace, module_config.name()));
+                          intrinsic::icon::RealtimeClock::Create(shm_manager));
   }
 
   absl::StatusOr<absl::flat_hash_set<int>> affinity_set =

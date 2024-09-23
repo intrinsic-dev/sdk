@@ -29,6 +29,7 @@
 #include "intrinsic/icon/hal/hardware_module_util.h"
 #include "intrinsic/icon/hal/module_config.h"
 #include "intrinsic/icon/hal/proto/hardware_module_config.pb.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
 #include "intrinsic/icon/release/portable/init_xfa.h"
 #include "intrinsic/icon/utils/shutdown_signals.h"
 #include "intrinsic/logging/data_logger_client.h"
@@ -100,9 +101,15 @@ absl::StatusOr<HardwareModuleExitCode> ModuleMain(int argc, char** argv) {
     }
 
     INTR_ASSIGN_OR_RETURN(
+        auto shm_manager,
+        SharedMemoryManager::Create(
+            /*shared_memory_namespace=*/shared_memory_namespace,
+            /*module_name=*/hwm_main_config->module_config.name()));
+
+    INTR_ASSIGN_OR_RETURN(
         (auto [realtime_clock, server_thread_options, affinity_set]),
         intrinsic::icon::SetupRtScheduling(
-            hwm_main_config->module_config, shared_memory_namespace,
+            hwm_main_config->module_config, *shm_manager,
             /*use_realtime_scheduling=*/
             hwm_main_config->use_realtime_scheduling, realtime_core,
             /*disable_malloc_guard=*/
@@ -111,6 +118,7 @@ absl::StatusOr<HardwareModuleExitCode> ModuleMain(int argc, char** argv) {
     LOG(INFO) << "Creating hardware module with config:\n"
               << hwm_main_config->module_config;
     runtime = intrinsic::icon::HardwareModuleRuntime::Create(
+        std::move(shm_manager),
         intrinsic::icon::hardware_module_registry::CreateInstance(
             intrinsic::icon::ModuleConfig(
                 hwm_main_config->module_config, shared_memory_namespace,

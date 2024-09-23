@@ -34,7 +34,9 @@
 #include "intrinsic/icon/hal/interfaces/hardware_module_state_utils.h"
 #include "intrinsic/icon/hal/interfaces/icon_state.fbs.h"
 #include "intrinsic/icon/interprocess/remote_trigger/remote_trigger_server.h"
-#include "intrinsic/icon/interprocess/shared_memory_manager/memory_segment.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/domain_socket_server.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/domain_socket_utils.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
 #include "intrinsic/icon/testing/realtime_annotations.h"
 #include "intrinsic/icon/utils/async_buffer.h"
 #include "intrinsic/icon/utils/async_request.h"
@@ -602,23 +604,40 @@ class HardwareModuleRuntime::CallbackHandler final {
 };
 
 absl::StatusOr<HardwareModuleRuntime> HardwareModuleRuntime::Create(
+    std::unique_ptr<SharedMemoryManager> shared_memory_manager,
     HardwareModule hardware_module) {
-  INTR_ASSIGN_OR_RETURN(
-      auto interface_registry,
-      HardwareInterfaceRegistry::Create(hardware_module.config));
-  HardwareModuleRuntime runtime(std::move(hardware_module),
-                                std::move(interface_registry));
+  // Locks the name used by this module. Ensures only a single instance can
+  // run at a time. Fails if the lock can't be acquired within the timeout.
+  INTR_ASSIGN_OR_RETURN(auto domain_socket_server,
+                        DomainSocketServer::Create(
+                            /*socket_directory=*/SocketDirectoryFromNamespace(
+                                shared_memory_manager->SharedMemoryNamespace()),
+                            /*module_name=*/shared_memory_manager->ModuleName(),
+                            DomainSocketServer::kDefaultLockAcquireTimeout));
+
+  // C++ allows evaluating function parameters in any order, and we move
+  // shared_memory_manager into one of the parameters of the
+  // HardwareModuleRuntime constructor below. Because we can't be sure when this
+  // happens in relation to the other parameters, we can't create
+  // HardwareInterfaceRegistry "in-place", or its constructor might access the
+  // moved-from unique_ptr that shared_memory_manager leaves behind.
+  auto registry = HardwareInterfaceRegistry(*shared_memory_manager);
+  HardwareModuleRuntime runtime(std::move(hardware_module), std::move(registry),
+                                std::move(shared_memory_manager),
+                                std::move(domain_socket_server));
   INTR_RETURN_IF_ERROR(runtime.Connect());
   return runtime;
 }
 
-HardwareModuleRuntime::HardwareModuleRuntime() = default;
-
 HardwareModuleRuntime::HardwareModuleRuntime(
     HardwareModule hardware_module,
-    HardwareInterfaceRegistry interface_registry)
+    HardwareInterfaceRegistry interface_registry,
+    std::unique_ptr<SharedMemoryManager> shared_memory_manager,
+    std::unique_ptr<DomainSocketServer> domain_socket_server)
     : interface_registry_(std::move(interface_registry)),
+      shared_memory_manager_(std::move(shared_memory_manager)),
       hardware_module_(std::move(hardware_module)),
+      domain_socket_server_(std::move(domain_socket_server)),
       callback_handler_(nullptr),
       activate_server_(nullptr),
       deactivate_server_(nullptr),
@@ -646,9 +665,10 @@ HardwareModuleRuntime::~HardwareModuleRuntime() {
 }
 
 HardwareModuleRuntime::HardwareModuleRuntime(HardwareModuleRuntime&& other)
-    : interface_registry_(std::exchange(other.interface_registry_,
-                                        HardwareInterfaceRegistry())),
+    : interface_registry_(std::move(other.interface_registry_)),
+      shared_memory_manager_(std::move(other.shared_memory_manager_)),
       hardware_module_(std::exchange(other.hardware_module_, HardwareModule())),
+      domain_socket_server_(std::move(other.domain_socket_server_)),
       callback_handler_(std::exchange(other.callback_handler_, nullptr)),
       activate_server_(std::exchange(other.activate_server_, nullptr)),
       deactivate_server_(std::exchange(other.deactivate_server_, nullptr)),
@@ -671,9 +691,10 @@ HardwareModuleRuntime& HardwareModuleRuntime::operator=(
   if (&other == this) {
     return *this;
   }
-  interface_registry_ =
-      std::exchange(other.interface_registry_, HardwareInterfaceRegistry());
+  interface_registry_ = std::move(other.interface_registry_);
+  shared_memory_manager_ = std::move(other.shared_memory_manager_);
   hardware_module_ = std::exchange(other.hardware_module_, HardwareModule());
+  domain_socket_server_ = std::move(other.domain_socket_server_),
   callback_handler_ = std::exchange(other.callback_handler_, nullptr);
   activate_server_ = std::exchange(other.activate_server_, nullptr);
   deactivate_server_ = std::exchange(other.deactivate_server_, nullptr);
@@ -709,14 +730,10 @@ absl::Status HardwareModuleRuntime::Connect() {
       interface_registry_.AdvertiseInterface<intrinsic_fbs::IconState>(
           kIconStateInterfaceName));
 
-  absl::string_view memory_namespace =
-      hardware_module_.config.GetSharedMemoryNamespace();
-
   INTR_ASSIGN_OR_RETURN(
       auto activate_server,
       RemoteTriggerServer::Create(
-          MemoryName(memory_namespace, hardware_module_.config.GetName(),
-                     "activate"),
+          *shared_memory_manager_, "activate",
           std::bind(&HardwareModuleRuntime::CallbackHandler::OnActivate,
                     callback_handler_.get())));
   activate_server_ =
@@ -725,8 +742,7 @@ absl::Status HardwareModuleRuntime::Connect() {
   INTR_ASSIGN_OR_RETURN(
       auto deactivate_server,
       RemoteTriggerServer::Create(
-          MemoryName(memory_namespace, hardware_module_.config.GetName(),
-                     "deactivate"),
+          *shared_memory_manager_, "deactivate",
           std::bind(&HardwareModuleRuntime::CallbackHandler::OnDeactivate,
                     callback_handler_.get())));
   deactivate_server_ =
@@ -735,8 +751,7 @@ absl::Status HardwareModuleRuntime::Connect() {
   INTR_ASSIGN_OR_RETURN(
       auto prepare_server,
       RemoteTriggerServer::Create(
-          MemoryName(memory_namespace, hardware_module_.config.GetName(),
-                     "prepare"),
+          *shared_memory_manager_, "prepare",
           std::bind(&HardwareModuleRuntime::CallbackHandler::OnPrepare,
                     callback_handler_.get())));
   prepare_server_ =
@@ -745,8 +760,7 @@ absl::Status HardwareModuleRuntime::Connect() {
   INTR_ASSIGN_OR_RETURN(
       auto enable_motion_server,
       RemoteTriggerServer::Create(
-          MemoryName(memory_namespace, hardware_module_.config.GetName(),
-                     "enable_motion"),
+          *shared_memory_manager_, "enable_motion",
           std::bind(&HardwareModuleRuntime::CallbackHandler::OnEnableMotion,
                     callback_handler_.get())));
   enable_motion_server_ =
@@ -755,8 +769,7 @@ absl::Status HardwareModuleRuntime::Connect() {
   INTR_ASSIGN_OR_RETURN(
       auto disable_motion_server,
       RemoteTriggerServer::Create(
-          MemoryName(memory_namespace, hardware_module_.config.GetName(),
-                     "disable_motion"),
+          *shared_memory_manager_, "disable_motion",
           std::bind(&HardwareModuleRuntime::CallbackHandler::OnDisableMotion,
                     callback_handler_.get())));
   disable_motion_server_ =
@@ -765,8 +778,7 @@ absl::Status HardwareModuleRuntime::Connect() {
   INTR_ASSIGN_OR_RETURN(
       auto clear_faults_server,
       RemoteTriggerServer::Create(
-          MemoryName(memory_namespace, hardware_module_.config.GetName(),
-                     "clear_faults"),
+          *shared_memory_manager_, "clear_faults",
           std::bind(&HardwareModuleRuntime::CallbackHandler::OnClearFaults,
                     callback_handler_.get())));
   clear_faults_server_ =
@@ -775,8 +787,7 @@ absl::Status HardwareModuleRuntime::Connect() {
   INTR_ASSIGN_OR_RETURN(
       auto read_status_server,
       RemoteTriggerServer::Create(
-          MemoryName(memory_namespace, hardware_module_.config.GetName(),
-                     "read_status"),
+          *shared_memory_manager_, "read_status",
           std::bind(&HardwareModuleRuntime::CallbackHandler::OnReadStatus,
                     callback_handler_.get())));
   read_status_server_ =
@@ -785,8 +796,7 @@ absl::Status HardwareModuleRuntime::Connect() {
   INTR_ASSIGN_OR_RETURN(
       auto apply_command_server,
       RemoteTriggerServer::Create(
-          MemoryName(memory_namespace, hardware_module_.config.GetName(),
-                     "apply_command"),
+          *shared_memory_manager_, "apply_command",
           std::bind(&HardwareModuleRuntime::CallbackHandler::OnApplyCommand,
                     callback_handler_.get())));
   apply_command_server_ =
@@ -820,10 +830,17 @@ absl::Status HardwareModuleRuntime::Run(grpc::ServerBuilder& server_builder,
   if (!init_status.ok()) {
     LOG(ERROR) << "Initializing the module failed with: " << init_status;
   }
-  // AdvertiseHardwareInfo is required so that ICON can connect to the module
-  // and read the init failure.
-  INTR_RETURN_IF_ERROR(
-      set_init_failed_on_error(interface_registry_.AdvertiseHardwareInfo()));
+
+  if (!domain_socket_server_) {
+    return absl::InternalError(
+        "Run was called, but domain_socket_server_ is nullptr. This should "
+        "never happen.");
+  }
+  // Segments added after this call will not be visible to DomainSocketServer
+  // and its clients (like ICON).
+  INTR_RETURN_IF_ERROR(domain_socket_server_->AddSegmentInfoServeShmDescriptors(
+      *shared_memory_manager_));
+
   // Ensures that no methods on the uninitialized module can be called.
   INTR_RETURN_IF_ERROR(init_status);
 

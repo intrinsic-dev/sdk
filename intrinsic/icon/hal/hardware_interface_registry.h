@@ -6,6 +6,8 @@
 #include <cstddef>
 #include <string>
 
+#include "absl/base/attributes.h"
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -13,23 +15,34 @@
 #include "intrinsic/icon/hal/get_hardware_interface.h"
 #include "intrinsic/icon/hal/hardware_interface_handle.h"
 #include "intrinsic/icon/hal/hardware_interface_traits.h"
-#include "intrinsic/icon/hal/module_config.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
 #include "intrinsic/icon/testing/realtime_annotations.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::icon {
 
+// Hardware Modules use the HardwareInterfaceRegistry to advertise their
+// interfaces.
+//
+// See the documentation on the various Advertise functions for details, and
+// note in particular the distinction between strict and non-strict interfaces.
 class HardwareInterfaceRegistry {
  public:
-  HardwareInterfaceRegistry() = default;
-  explicit HardwareInterfaceRegistry(absl::string_view memory_namespace);
+  HardwareInterfaceRegistry() = delete;
+  ~HardwareInterfaceRegistry() = default;
 
-  // Creates a new registry for hardware interfaces.
-  // Fails if the module config doesn't contain all necessary details, such as
-  // the module name.
-  static absl::StatusOr<HardwareInterfaceRegistry> Create(
-      const ModuleConfig& module_config);
+  // This class is move-only.
+  HardwareInterfaceRegistry(const HardwareInterfaceRegistry& other) = delete;
+  HardwareInterfaceRegistry& operator=(const HardwareInterfaceRegistry& other) =
+      delete;
+  HardwareInterfaceRegistry(HardwareInterfaceRegistry&& other) = default;
+  HardwareInterfaceRegistry& operator=(HardwareInterfaceRegistry&& other) =
+      default;
+
+  // Constructs a new registry for hardware interfaces.
+  // `shared_memory_manager` must outlive the return value of this function.
+  explicit HardwareInterfaceRegistry(
+      SharedMemoryManager& shared_memory_manager ABSL_ATTRIBUTE_LIFETIME_BOUND);
 
   // Advertises a new hardware interface given an interface type and a set of
   // arguments used to initialize this interface.
@@ -44,9 +57,8 @@ class HardwareInterfaceRegistry {
   AdvertiseInterface(absl::string_view interface_name, ArgsT... args) {
     INTR_RETURN_IF_ERROR(AdvertiseInterfaceT<HardwareInterfaceT>(
         interface_name, /*must_be_used=*/false, args...));
-    return GetInterfaceHandle<HardwareInterfaceT>(
-        module_config_.GetSharedMemoryNamespace(), module_config_.GetName(),
-        interface_name);
+    return icon::GetInterfaceHandle<HardwareInterfaceT>(*shm_manager_,
+                                                        interface_name);
   }
 
   // Advertises a new mutable hardware interface.
@@ -58,9 +70,8 @@ class HardwareInterfaceRegistry {
   AdvertiseMutableInterface(absl::string_view interface_name, ArgsT... args) {
     INTR_RETURN_IF_ERROR(AdvertiseInterfaceT<HardwareInterfaceT>(
         interface_name, /*must_be_used=*/false, args...));
-    return GetMutableInterfaceHandle<HardwareInterfaceT>(
-        module_config_.GetSharedMemoryNamespace(), module_config_.GetName(),
-        interface_name);
+    return icon::GetMutableInterfaceHandle<HardwareInterfaceT>(*shm_manager_,
+                                                               interface_name);
   }
 
   // Prefer AdvertiseMutableStrictInterface.
@@ -72,9 +83,8 @@ class HardwareInterfaceRegistry {
         hardware_interface_traits::TypeID<HardwareInterfaceT>::kTypeString;
     INTR_RETURN_IF_ERROR(AdvertiseInterfaceT(
         interface_name, /*must_be_used=*/false, message_buffer, type_id));
-    return GetMutableInterfaceHandle<HardwareInterfaceT>(
-        module_config_.GetSharedMemoryNamespace(), module_config_.GetName(),
-        interface_name);
+    return icon::GetMutableInterfaceHandle<HardwareInterfaceT>(*shm_manager_,
+                                                               interface_name);
   }
 
   // Advertises a new strict hardware interface using the interface type and a
@@ -96,9 +106,8 @@ class HardwareInterfaceRegistry {
   AdvertiseStrictInterface(absl::string_view interface_name, ArgsT... args) {
     INTR_RETURN_IF_ERROR(AdvertiseInterfaceT<HardwareInterfaceT>(
         interface_name, /*must_be_used=*/true, args...));
-    return GetStrictInterfaceHandle<HardwareInterfaceT>(
-        module_config_.GetSharedMemoryNamespace(), module_config_.GetName(),
-        interface_name);
+    return icon::GetStrictInterfaceHandle<HardwareInterfaceT>(*shm_manager_,
+                                                              interface_name);
   }
 
   // Advertises a new mutable strict hardware interface using the interface type
@@ -121,9 +130,8 @@ class HardwareInterfaceRegistry {
                                   ArgsT... args) {
     INTR_RETURN_IF_ERROR(AdvertiseInterfaceT<HardwareInterfaceT>(
         interface_name, /*must_be_used=*/true, args...));
-    return GetMutableStrictInterfaceHandle<HardwareInterfaceT>(
-        module_config_.GetSharedMemoryNamespace(), module_config_.GetName(),
-        interface_name);
+    return icon::GetMutableStrictInterfaceHandle<HardwareInterfaceT>(
+        *shm_manager_, interface_name);
   }
 
   template <class HardwareInterfaceT>
@@ -135,33 +143,43 @@ class HardwareInterfaceRegistry {
         hardware_interface_traits::TypeID<HardwareInterfaceT>::kTypeString;
     INTR_RETURN_IF_ERROR(AdvertiseInterfaceT(
         interface_name, /*must_be_used=*/true, message_buffer, type_id));
-    return GetMutableStrictInterfaceHandle<HardwareInterfaceT>(
-        module_config_.GetSharedMemoryNamespace(), module_config_.GetName(),
-        interface_name);
+    return icon::GetMutableStrictInterfaceHandle<HardwareInterfaceT>(
+        *shm_manager_, interface_name);
   }
 
-  // Writes the currently advertised and registered interfaces in a module
-  // specific location in shared memory.
-  // This function is usually called once after the initialization is done so
-  // that other processes can dynamically lookup interfaces from this module.
-  absl::Status AdvertiseHardwareInfo();
+  // Convenience function that returns a handle to a registered interface.
+  template <class HardwareInterfaceT>
+  absl::StatusOr<HardwareInterfaceHandle<HardwareInterfaceT>>
+  GetInterfaceHandle(absl::string_view interface_name) const {
+    return icon::GetInterfaceHandle<HardwareInterfaceT>(*shm_manager_,
+                                                        interface_name);
+  }
+
+  // Convenience function that returns a mutable handle to a registered
+  // interface.
+  template <class HardwareInterfaceT>
+  absl::StatusOr<MutableHardwareInterfaceHandle<HardwareInterfaceT>>
+  GetMutableInterfaceHandle(absl::string_view interface_name) const {
+    return icon::GetMutableInterfaceHandle<HardwareInterfaceT>(*shm_manager_,
+                                                               interface_name);
+  }
 
   // Returns the number of registered interfaces.
-  size_t Size() const { return shm_manager_.GetRegisteredMemoryNames().size(); }
+  size_t Size() const {
+    return shm_manager_->GetRegisteredMemoryNames().size();
+  }
 
   // Name of the module owning this registry.
   std::string ModuleName() const INTRINSIC_NON_REALTIME_ONLY {
-    return module_config_.GetName();
+    return shm_manager_->ModuleName();
   }
 
   // Namespace for the shared memory interfaces using this registry.
   std::string SharedMemoryNamespace() const INTRINSIC_NON_REALTIME_ONLY {
-    return std::string(module_config_.GetSharedMemoryNamespace());
+    return shm_manager_->SharedMemoryNamespace();
   }
 
  private:
-  explicit HardwareInterfaceRegistry(const ModuleConfig& module_config);
-
   // The parameter `must_be_used` tells ICON that this interface needs to be
   // used in its configuration.
   template <class HardwareInterfaceT, typename... ArgsT>
@@ -185,8 +203,7 @@ class HardwareInterfaceRegistry {
                                    const flatbuffers::DetachedBuffer& buffer,
                                    absl::string_view type_id);
 
-  ModuleConfig module_config_;
-  intrinsic::icon::SharedMemoryManager shm_manager_;
+  SharedMemoryManager* shm_manager_;
 };
 
 }  // namespace intrinsic::icon

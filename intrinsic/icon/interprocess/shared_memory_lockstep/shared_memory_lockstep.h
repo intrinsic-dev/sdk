@@ -18,7 +18,7 @@ namespace intrinsic::icon {
 //
 class SharedMemoryLockstep {
  public:
-  // Null SharedMemoryLockstep. Derefencing this will check-fail. This allows
+  // Null SharedMemoryLockstep. Dereferencing this will check-fail. This allows
   // value semantics / move to work.
   SharedMemoryLockstep() : memory_segment_(), lockstep_(nullptr) {}
 
@@ -64,13 +64,14 @@ class SharedMemoryLockstep {
 // and is stored in a segment named `memory_name`. The `manager` must outlive
 // the returned SharedMemoryLockstep.
 absl::StatusOr<SharedMemoryLockstep> CreateSharedMemoryLockstep(
-    SharedMemoryManager& manager, const MemoryName& memory_name);
+    SharedMemoryManager& manager, absl::string_view memory_name);
 
-// Obtains a SharedMemoryLockstep that is stored in a shared memory segment
-// named `memory_name`. The SharedMemoryManager that created the memory segment
-// must outlive the returned SharedMemoryLockstep.
+// Convenience method for tests.
+// Returns a SharedMemoryLockstep in a shared memory segment named
+// `memory_name` that was created on `manager`.
+// The `manager` must outlive the returned SharedMemoryLockstep.
 absl::StatusOr<SharedMemoryLockstep> GetSharedMemoryLockstep(
-    const MemoryName& memory_name);
+    const SharedMemoryManager& manager, absl::string_view memory_name);
 
 }  // namespace intrinsic::icon
 

@@ -5,7 +5,6 @@
 #include <stdint.h>
 
 #include <memory>
-#include <string>
 #include <utility>
 
 #include "absl/log/check.h"
@@ -31,11 +30,9 @@ static constexpr absl::Duration kStartUpLockstepTimeout = absl::Minutes(1);
 
 RealtimeClock::RealtimeClock(
     SharedMemoryLockstep lockstep,
-    ReadWriteMemorySegment<RealtimeClockUpdate> realtime_clock_update,
-    SharedMemoryManager shm_manager)
+    ReadWriteMemorySegment<RealtimeClockUpdate> realtime_clock_update)
     : lockstep_(std::move(lockstep)),
-      update_(std::move(realtime_clock_update)),
-      shm_manager_(std::move(shm_manager)) {
+      update_(std::move(realtime_clock_update)) {
   // This matches the first EndOperationA in TickBlockingWithTimeout. See
   // comments in TickBlockingWithTimeout.
   // During startup it might take several seconds until both sides of the
@@ -86,27 +83,23 @@ RealtimeStatus RealtimeClock::Reset(absl::Duration timeout) {
 }
 
 absl::StatusOr<std::unique_ptr<RealtimeClock>> RealtimeClock::Create(
-    absl::string_view memory_namespace,
-    absl::string_view hardware_module_name) {
+    SharedMemoryManager& shm_manager) {
   INTRINSIC_ASSERT_NON_REALTIME();
-  MemoryName lockstep_name =
-      LockstepSegmentName(memory_namespace, hardware_module_name);
-  SharedMemoryManager shm_manager;
   INTR_ASSIGN_OR_RETURN(SharedMemoryLockstep lockstep,
-                        CreateSharedMemoryLockstep(shm_manager, lockstep_name));
+                        CreateSharedMemoryLockstep(
+                            shm_manager, kRealtimeClockLockstepInterfaceName));
 
-  MemoryName update_name =
-      RealtimeClockUpdateSegmentName(memory_namespace, hardware_module_name);
   INTR_RETURN_IF_ERROR(
       shm_manager.AddSegmentWithDefaultValue<icon::RealtimeClockUpdate>(
-          update_name, /*must_be_used=*/false));
+          kRealtimeClockUpdateInterfaceName, /*must_be_used=*/false));
 
   INTR_ASSIGN_OR_RETURN(
       ReadWriteMemorySegment<RealtimeClockUpdate> update,
-      ReadWriteMemorySegment<RealtimeClockUpdate>::Get(update_name));
+      shm_manager.Get<ReadWriteMemorySegment<RealtimeClockUpdate>>(
+          kRealtimeClockUpdateInterfaceName));
 
-  return absl::WrapUnique(new RealtimeClock(
-      std::move(lockstep), std::move(update), std::move(shm_manager)));
+  return absl::WrapUnique(
+      new RealtimeClock(std::move(lockstep), std::move(update)));
 }
 
 }  // namespace intrinsic::icon

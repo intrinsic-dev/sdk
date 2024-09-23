@@ -3,18 +3,19 @@
 #include "intrinsic/icon/interprocess/remote_trigger/remote_trigger_client.h"
 
 #include <atomic>
-#include <memory>
 #include <string>
 #include <utility>
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "intrinsic/icon/interprocess/binary_futex.h"
 #include "intrinsic/icon/interprocess/remote_trigger/remote_trigger_constants.h"
+#include "intrinsic/icon/interprocess/shared_memory_manager/domain_socket_utils.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/memory_segment.h"
 #include "intrinsic/icon/utils/realtime_status.h"
 #include "intrinsic/icon/utils/realtime_status_macro.h"
@@ -78,27 +79,24 @@ RealtimeStatus RemoteTriggerClient::AsyncRequest::WaitUntil(
 }
 
 absl::StatusOr<RemoteTriggerClient> RemoteTriggerClient::Create(
-    const MemoryName& server_name, bool auto_connect) {
-  RemoteTriggerClient client(server_name);
-  if (auto_connect) {
-    INTR_RETURN_IF_ERROR(client.Connect());
-  }
+    const SegmentNameToFileDescriptorMap& segment_name_to_file_descriptor_map,
+    absl::string_view server_name) {
+  RemoteTriggerClient client(server_name, segment_name_to_file_descriptor_map);
+  INTR_RETURN_IF_ERROR(client.Connect());
   return client;
 }
 
-RemoteTriggerClient::RemoteTriggerClient(const MemoryName& server_name)
-    : server_name_(server_name) {}
-
 RemoteTriggerClient::RemoteTriggerClient(
-    const MemoryName& server_name,
-    ReadWriteMemorySegment<BinaryFutex>&& request_futex,
-    ReadOnlyMemorySegment<BinaryFutex>&& response_futex)
+    absl::string_view server_name,
+    const SegmentNameToFileDescriptorMap& segment_name_to_file_descriptor_map)
     : server_name_(server_name),
-      request_futex_(std::forward<decltype(request_futex)>(request_futex)),
-      response_futex_(std::forward<decltype(response_futex)>(response_futex)) {}
+      segment_name_to_file_descriptor_map_(
+          segment_name_to_file_descriptor_map) {}
 
 RemoteTriggerClient::RemoteTriggerClient(RemoteTriggerClient&& other) noexcept
-    : server_name_(std::exchange(other.server_name_, MemoryName("", ""))),
+    : server_name_(std::exchange(other.server_name_, "")),
+      segment_name_to_file_descriptor_map_(
+          std::exchange(other.segment_name_to_file_descriptor_map_, {})),
       request_futex_(std::exchange(other.request_futex_,
                                    ReadWriteMemorySegment<BinaryFutex>())),
       response_futex_(std::exchange(other.response_futex_,
@@ -108,7 +106,9 @@ RemoteTriggerClient::RemoteTriggerClient(RemoteTriggerClient&& other) noexcept
 RemoteTriggerClient& RemoteTriggerClient::operator=(
     RemoteTriggerClient&& other) noexcept {
   if (this != &other) {
-    server_name_ = std::exchange(other.server_name_, MemoryName("", ""));
+    server_name_ = std::exchange(other.server_name_, "");
+    segment_name_to_file_descriptor_map_ =
+        std::exchange(other.segment_name_to_file_descriptor_map_, {});
     request_futex_ = std::exchange(other.request_futex_,
                                    ReadWriteMemorySegment<BinaryFutex>());
     response_futex_ = std::exchange(other.response_futex_,
@@ -122,15 +122,18 @@ absl::Status RemoteTriggerClient::Connect() {
   if (IsConnected()) {
     return absl::OkStatus();
   }
-  MemoryName request_memory = server_name_;
-  request_memory.Append(kSemRequestSuffix);
-  MemoryName response_memory = server_name_;
-  response_memory.Append(kSemResponseSuffix);
+  std::string request_memory_name =
+      absl::StrCat(server_name_, kSemRequestSuffix);
+  std::string response_memory_name =
+      absl::StrCat(server_name_, kSemResponseSuffix);
   INTR_ASSIGN_OR_RETURN(
-      request_futex_, ReadWriteMemorySegment<BinaryFutex>::Get(request_memory));
+      request_futex_,
+      ReadWriteMemorySegment<BinaryFutex>::Get(
+          segment_name_to_file_descriptor_map_, request_memory_name));
   INTR_ASSIGN_OR_RETURN(
       response_futex_,
-      ReadOnlyMemorySegment<BinaryFutex>::Get(response_memory));
+      ReadOnlyMemorySegment<BinaryFutex>::Get(
+          segment_name_to_file_descriptor_map_, response_memory_name));
   return absl::OkStatus();
 }
 
