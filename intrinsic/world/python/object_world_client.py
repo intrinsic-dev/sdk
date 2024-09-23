@@ -1335,7 +1335,7 @@ class ObjectWorldClient:
       CreateObjectError: If the call to the ObjectWorldService fails.
     """
     metadata_any = any_pb2.Any()
-    metadata_any.Pack(product_metadata)
+    metadata_any.Pack(product_metadata or struct_pb2.Struct())
     product_name_any = any_pb2.Any()
     product_name_any.Pack(wrappers_pb2.StringValue(value=product_name))
     req = object_world_updates_pb2.CreateObjectRequest(
