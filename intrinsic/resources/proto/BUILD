@@ -14,8 +14,6 @@ proto_library(
     srcs = ["resource_registry.proto"],
     deps = [
         ":resource_handle_proto",
-        "//intrinsic/assets/proto:metadata_proto",
-        "//intrinsic/assets/proto:view_proto",
         "@com_google_protobuf//:any_proto",
     ],
 )
