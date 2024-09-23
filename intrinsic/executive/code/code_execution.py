@@ -31,9 +31,172 @@ def _to_proto_filename(proto_module: str) -> str:
   return proto_filename.replace(".", "/").replace("_pb2", ".proto")
 
 
+def _proto_full_name(pkg: str, symbol_name: str) -> str:
+  """Creates a full name for a proto symbol in a package.
+
+  Args:
+    pkg: The proto package the symbol is in (e.g., my_proto_pkg)
+    symbol_name: The name of the proto symbol (e.g., TestMessage)
+
+  Returns:
+    Full name of the proto symbol (e.g., my_proto_pkg.TestMessage)
+  """
+  if not pkg:
+    return symbol_name
+  return pkg + "." + symbol_name
+
+
+def _create_symbol_to_file(
+    file_descriptor_set: descriptor_pb2.FileDescriptorSet,
+) -> dict[str, str]:
+  """Computes a map from a proto symbol to its file name in the default pool.
+
+  The input file descriptor set is only used to define the symbols to look at,
+  but not to determine in which file they are defined. The function looks for
+  file names in the default pool.
+
+  Thus only proto symbols that are already in the default pool will be recorded.
+  It is not an error if a symbol in file_descriptor_set is not in the default
+  pool.
+
+  Args:
+    file_descriptor_set: A FileDescriptorSet, where every known symbol will be
+      recorded in the map
+
+  Returns:
+    A map from the full name of a proto symbol to the file it is in the default
+    pool
+  """
+  symbol_to_file: dict[str, str] = {}
+  for file in file_descriptor_set.file:
+    for get_symbol_field in [
+        lambda file_descriptor: file_descriptor.message_type,
+        lambda file_descriptor: file_descriptor.enum_type,
+        lambda file_descriptor: file_descriptor.service,
+        lambda file_descriptor: file_descriptor.extension,
+    ]:
+      for symbol in get_symbol_field(file):
+        # for message_type in file.message_type:
+        full_name = _proto_full_name(file.package, symbol.name)
+        try:
+          default_file_descriptor = (
+              descriptor_pool.Default().FindFileContainingSymbol(full_name)
+          )
+          default_file_name = default_file_descriptor.name
+          symbol_to_file[full_name] = default_file_name
+        except KeyError:
+          # Symbol not in default pool. This is OK as the purpose of the
+          # function is to find matching files in the default pool and then
+          # later make sure these are compatible. If there is no entry in the
+          # default pool, there can be no incompatibility.
+          continue
+  return symbol_to_file
+
+
+def _create_default_paths(
+    file_descriptor_set: descriptor_pb2.FileDescriptorSet,
+    symbol_to_file: dict[str, str],
+) -> dict[str, str]:
+  """Maps file names in file_descriptor_set to file names in the default pool.
+
+  Args:
+    file_descriptor_set: The file_descriptor_set to compute the path map for.
+    symbol_to_file: A mapping from proto symbols to default pool file names
+
+  Returns:
+    A mapping from file names in file_descriptor_set to file names in the
+    default pool.
+  """
+  # Go through each message/proto symbol in each file of the new file descriptor
+  # set and record in which file that symbol is defined in the default pool
+  # given by symbol_to_file. If there is no entry the respective file descriptor
+  # is new (e.g., the parameter message) and its default path is its own file
+  # path.
+  path_to_default_path: dict[str, str] = {}
+  for file in file_descriptor_set.file:
+    default_path_for_file = ""
+    for get_symbol_field in [
+        lambda file_descriptor: file_descriptor.message_type,
+        lambda file_descriptor: file_descriptor.enum_type,
+        lambda file_descriptor: file_descriptor.service,
+        lambda file_descriptor: file_descriptor.extension,
+    ]:
+      for symbol in get_symbol_field(file):
+        # for message_type in file.message_type:
+        full_name = _proto_full_name(file.package, symbol.name)
+        if full_name in symbol_to_file:
+          # Assuming if there is a message with the same full name, it is
+          # actually the same message.
+          # Note that this will fail horribly if this assumption is violated and
+          # a message with the same name has different content.
+          path = symbol_to_file[full_name]
+          if not default_path_for_file:
+            default_path_for_file = path
+          if default_path_for_file != path:
+            raise TypeError(
+                "Found inconsistent path in new file descriptor set in file"
+                f" {file.name}. The message {full_name} is contained in"
+                f" {path} in the default pool, but another message in"
+                f" {file.name} in the default pool was in"
+                f" {default_path_for_file}"
+            )
+    # fallback case if this is a new file descriptor
+    if not default_path_for_file:
+      default_path_for_file = file.name
+    path_to_default_path[file.name] = default_path_for_file
+    # Also register the default path as that obviously matches. This covers the
+    # cases, where during recursive calls the file descriptor set already has
+    # been adapted to default paths.
+    path_to_default_path[default_path_for_file] = default_path_for_file
+  return path_to_default_path
+
+
+def _create_compatible_file_descriptor_set(
+    new_file_descriptor_set: descriptor_pb2.FileDescriptorSet,
+    path_to_default_path: dict[str, str],
+) -> descriptor_pb2.FileDescriptorSet:
+  """Makes the passed FileDescriptorSet compatible with the default pool.
+
+  Args:
+    new_file_descriptor_set: A file descriptor set with paths reference in
+      path_to_default_path
+    path_to_default_path: Mapping from paths in new_file_descriptor_set to paths
+      in file descriptors in the default pool
+
+  Returns:
+    A new file descriptor set with file names and dependencies adapted to have
+    the same file names as in the default pool.
+  """
+  # Update the new file descriptor set to a compatible one.
+  # Replace each file name and each dependency by the mapping in
+  # path_to_default_path of what it would be in the default pool.
+  # Note: This is the same logic as in
+  # ProtobufManager::CreateCompatibleFileDescriptorSet.
+  compatible_file_descriptor_set = descriptor_pb2.FileDescriptorSet()
+  compatible_file_descriptor_set.CopyFrom(new_file_descriptor_set)
+  for file in compatible_file_descriptor_set.file:
+    if file.name != path_to_default_path[file.name]:
+      print(
+          f"Adapted default file path for {file.name} to"
+          f" {path_to_default_path[file.name]}"
+      )
+    file.name = path_to_default_path[file.name]
+    for i, dep in enumerate(file.dependency):
+      if dep != path_to_default_path[dep]:
+        print(
+            f"Adapted default dependency file path for {dep} to"
+            f" {path_to_default_path[dep]}"
+        )
+        file.dependency[i] = path_to_default_path[dep]
+
+  return compatible_file_descriptor_set
+
+
 def import_from_file_descriptor_set(
     module_name: str,
     file_descriptor_set: descriptor_pb2.FileDescriptorSet,
+    symbol_to_file: dict[str, str] | None = None,
+    path_to_default_path: dict[str, str] | None = None,
 ) -> types.ModuleType:
   """Imports a proto module from the given file descriptor set.
 
@@ -60,9 +223,16 @@ def import_from_file_descriptor_set(
   environment must be equivalent or else things can break when importing "a_pb2"
   from the file descriptor set.
 
+  It is OK to leave symbol_to_file and path_to_default_path empty for the
+  initial call on the input file_descriptor_set. In that case these will be
+  created.
+
   Args:
     module_name: The name of the proto module to import. Must end with "_pb2".
     file_descriptor_set: The file descriptor set to import missing modules from.
+    symbol_to_file: A map from proto symbol full name to the file name it is in
+    path_to_default_path: Mapping from a file name to the respective file in the
+      default pool
 
   Returns:
     The imported module.
@@ -81,6 +251,21 @@ def import_from_file_descriptor_set(
     # Regular import failed, import from the file descriptor set.
     pass
 
+  if symbol_to_file is None:
+    symbol_to_file = _create_symbol_to_file(file_descriptor_set)
+  if path_to_default_path is None:
+    path_to_default_path = _create_default_paths(
+        file_descriptor_set, symbol_to_file
+    )
+
+  # Before adding this descriptor set: Modify all paths (file names and
+  # dependencies) if the same symbols are present in the default pool, but under
+  # another file name. If it is, use the file name of the proto file in the
+  # default pool. This assumes that the definitions are compatible.
+  file_descriptor_set = _create_compatible_file_descriptor_set(
+      file_descriptor_set, path_to_default_path
+  )
+
   file_name = _to_proto_filename(module_name)
 
   try:
@@ -98,6 +283,8 @@ def import_from_file_descriptor_set(
     import_from_file_descriptor_set(
         _to_proto_module(dependency_file_name),
         file_descriptor_set,
+        symbol_to_file,
+        path_to_default_path,
     )
 
   # Add file descriptor to the default descriptor pool (just like in a generated
@@ -144,9 +331,7 @@ def _find_module_containing_message(
   """
   for file in file_descriptor_set.file:
     for message_type in file.message_type:
-      full_message_name = (
-          file.package + "." if file.package else ""
-      ) + message_type.name
+      full_message_name = _proto_full_name(file.package, message_type.name)
       if full_message_name == message_full_name:
         return _to_proto_module(file.name)
 

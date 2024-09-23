@@ -13,6 +13,7 @@ from intrinsic.executive.code import code_execution
 from intrinsic.math.proto import point_pb2
 from intrinsic.skills.python import basic_compute_context
 from intrinsic.solutions.testing import compare
+from intrinsic.world.proto import object_world_refs_pb2
 from intrinsic.world.python import object_world_client
 
 # Backup of the "initial state" of the import cache.
@@ -76,34 +77,116 @@ class CodeExecutionTest(absltest.TestCase):
     #    otherwise the message creation would fail.
     my_proto_pb2.MyParams(my_str="foo", my_point=point_pb2.Point(x=1, y=2, z=3))
 
-  def test_import_from_file_descriptor_set_fails_for_wrong_file_path(self):
+  def test_import_from_file_descriptor_set_imports_well_known_types(self):
     file_descriptor_set = text_format.Parse(
         """
+        file {
+          name: "some/other/path/preserve_this.proto"
+          package: "intrinsic_proto"
+          syntax: "proto3"
+          message_type {
+            name: "CustomMessage"
+            field {
+              name: "my_string"
+              number: 1
+              label: LABEL_OPTIONAL
+              type: TYPE_STRING
+            }
+          }
+        }
         file {
           name: "some/other/path/point.proto"
           package: "intrinsic_proto"
           syntax: "proto3"
+          # Messages without fields defined here, test would fail
+          # if this file was used.
           message_type {
             name: "Point"
           }
         }
         file {
-          name: "my_folder/my_proto.proto"
-          package: "my_protos"
+          name: "some/other/path/world_stuff.proto"
+          package: "intrinsic_proto.world"
+          syntax: "proto3"
+          # Messages without fields defined here, test would fail
+          # if this file was used.
+          message_type {
+            name: "ObjectReference"
+          }
+        }
+        file {
+          name: "my_folder/my_proto_wkt.proto"
+          package: "my_protos_wkt"
+          dependency: "some/other/path/preserve_this.proto"
           dependency: "some/other/path/point.proto"
+          dependency: "some/other/path/world_stuff.proto"
+          message_type {
+            name: "MyParams"
+            field {
+              name: "my_point"
+              number: 1
+              label: LABEL_OPTIONAL
+              type: TYPE_MESSAGE
+              type_name: ".intrinsic_proto.Point"
+            }
+            field {
+              name: "my_str"
+              number: 2
+              label: LABEL_OPTIONAL
+              type: TYPE_STRING
+            }
+            field {
+              name: "object"
+              number: 3
+              label: LABEL_OPTIONAL
+              type: TYPE_MESSAGE
+              type_name: ".intrinsic_proto.world.ObjectReference"
+            }
+            field {
+              name: "custom"
+              number: 4
+              label: LABEL_OPTIONAL
+              type: TYPE_MESSAGE
+              type_name: ".intrinsic_proto.CustomMessage"
+            }
+          }
           syntax: "proto3"
         }""",
         descriptor_pb2.FileDescriptorSet(),
     )
 
-    with self.assertRaisesRegex(TypeError, "intrinsic_proto.Point"):
-      # This should fail because the file descriptor set contains point.proto
-      # under a different path (some/other/path/point.proto) than the current
-      # Python environment (intrinsic/math/proto/point.proto) and we have
-      # imported the latter already at the top.
-      code_execution.import_from_file_descriptor_set(
-          "my_folder.my_proto_pb2", file_descriptor_set
-      )
+    my_proto_wkt_pb2 = code_execution.import_from_file_descriptor_set(
+        "my_folder.my_proto_wkt_pb2", file_descriptor_set
+    )
+
+    self.assertIsNotNone(my_proto_wkt_pb2.DESCRIPTOR)
+
+    # Assert that creating a MyParams does not fail. If the following succeeds,
+    # then:
+    #  - my_proto_pb2 must have been created from the file descriptor set since
+    #    there exists no corresponding "file" it could have been imported from.
+    #  - point_pb2 must have been imported from the corresponding file since the
+    #    corresponding "file" in the file descriptor set is empty.
+    #  - my_proto_pb2 and point_pb2 must be using the same descriptor pool since
+    #    otherwise the message creation would fail.
+    my_proto_wkt_pb2.MyParams(
+        my_str="foo",
+        my_point=point_pb2.Point(x=1, y=2, z=3),
+        object=object_world_refs_pb2.ObjectReference(
+            by_name=object_world_refs_pb2.ObjectReferenceByName(
+                object_name="foo"
+            )
+        ),
+    )
+
+    # Also test the same for the custom message. The additional
+    # import_from_file_descriptor_set call here will just import the
+    # preserve_this_pb2 package from the modules cache created by the call
+    # above.
+    preserve_this_pb2 = code_execution.import_from_file_descriptor_set(
+        "some.other.path.preserve_this_pb2", file_descriptor_set
+    )
+    preserve_this_pb2.CustomMessage(my_string="test")
 
   def test_import_from_file_descriptor_set_fails_for_invalid_input(self):
     file_descriptor_set = descriptor_pb2.FileDescriptorSet()

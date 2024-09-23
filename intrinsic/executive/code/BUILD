@@ -28,6 +28,7 @@ py_test(
         "//intrinsic/math/proto:point_py_pb2",
         "//intrinsic/skills/python:basic_compute_context",
         "//intrinsic/solutions/testing:compare",
+        "//intrinsic/world/proto:object_world_refs_py_pb2",
         "//intrinsic/world/python:object_world_client",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_protobuf//:protobuf_python",
