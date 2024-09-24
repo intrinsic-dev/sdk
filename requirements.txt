@@ -866,7 +866,17 @@ numpy==1.26.4 \
     #   -r requirements.in
     #   contourpy
     #   matplotlib
+    #   opencv-python-headless
     #   pandas
+opencv-python-headless==4.10.0.84 \
+    --hash=sha256:377d08a7e48a1405b5e84afcbe4798464ce7ee17081c1c23619c8b398ff18295 \
+    --hash=sha256:46071015ff9ab40fccd8a163da0ee14ce9846349f06c6c8c0f2870856ffa45db \
+    --hash=sha256:5ae454ebac0eb0a0b932e3406370aaf4212e6a3fdb5038cc86c7aea15a6851da \
+    --hash=sha256:9092404b65458ed87ce932f613ffbb1106ed2c843577501e5768912360fc50ec \
+    --hash=sha256:a4f4bcb07d8f8a7704d9c8564c224c8b064c63f430e95b61ac0bffaa374d330e \
+    --hash=sha256:afcf28bd1209dd58810d33defb622b325d3cbe49dcd7a43a902982c33e5fad05 \
+    --hash=sha256:f2017c6101d7c2ef8d7bc3b414c37ff7f54d64413a1847d89970b6b7069b4e1a
+    # via -r requirements.in
 overrides==7.7.0 \
     --hash=sha256:55158fa3d93b98cc75299b1e67078ad9003ca27945c76162c1c0766d6f91820a \
     --hash=sha256:c7ed9d062f78b8e4c1a7b70bd8796b35ead4d9f510227ef9c5dc7626c60d7e49
