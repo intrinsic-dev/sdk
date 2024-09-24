@@ -533,16 +533,6 @@ def py_skill(
         tags = ["manual", "avoid_dep"],
     )
 
-    # BUG fully-qualified imports on Bzlmod: https://github.com/bazelbuild/rules_python/issues/1679
-    package_path = native.package_name() + "/" if native.package_name() else ""
-    binary_path = "/" + package_path + binary_name
-    binary_path_with_repo = "/ai_intrinsic_sdks~override" + binary_path
-    symlinks = {
-        "/skills/skill_service": binary_path_with_repo,
-        binary_path_with_repo: binary_path,
-        binary_path_with_repo + ".py": binary_path + ".py",
-    }
-
     service_image_name = "_%s_service_image" % name
     python_oci_image(
         name = service_image_name,
@@ -550,7 +540,7 @@ def py_skill(
         binary = binary_name,
         directory = "/skills",
         data_path = "/",
-        symlinks = symlinks,
+        symlinks = build_symlinks(binary_name),
         workdir = "/",
         compatible_with = kwargs.get("compatible_with"),
         visibility = ["//visibility:private"],

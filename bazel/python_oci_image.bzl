@@ -2,7 +2,7 @@
 
 """Helpers for dealing with Python docker images."""
 
-load("@aspect_bazel_lib//lib:tar.bzl", "mtree_spec", "tar")
+load("@aspect_bazel_lib//lib:tar.bzl", "mtree_mutate", "mtree_spec", "tar")
 load(
     "//bazel:container.bzl",
     "container_image",
@@ -28,6 +28,8 @@ def python_oci_image(
       **kwargs: extra arguments to pass on to the oci_image target.
     """
 
+    layers = []
+
     # Produce the manifest for a tar file of our py_binary, but don't tar it up yet, so we can split
     # into fine-grained layers for better docker performance.
     mtree_spec(
@@ -38,10 +40,29 @@ def python_oci_image(
     # ADDITION: Handle local_repository sub repos by removing '../' and ' external/' from paths.
     # Without this the resulting image manifest is malformed and tools like dive cannot open the image.
     native.genrule(
-        name = name + "_tar_manifest",
+        name = name + "_tar_manifest_filtered",
         srcs = [":" + name + "_tar_manifest_raw"],
-        outs = [name + "_tar_manifest.spec"],
+        outs = [name + "_tar_manifest_filtered.spec"],
         cmd = "sed -e 's/^\\.\\.\\///' $< | sed -e 's/ external\\///g' >$@",
+    )
+
+    # Apply mutations for path prefixes
+    mtree_mutate(
+        name = name + "_tar_manifest_prefix",
+        mtree = ":" + name + "_tar_manifest_filtered",
+        # BUG: https://github.com/bazel-contrib/bazel-lib/issues/946
+        # strip_prefix = kwargs.pop("data_path", None),
+        package_dir = kwargs.pop("directory", None),
+        # BUG: https://github.com/bazel-contrib/bazel-lib/pull/948
+        awk_script = Label("@aspect_bazel_lib//lib/private:modify_mtree.awk"),
+    )
+
+    # Workaround unsupported "strip_prefix"
+    native.genrule(
+        name = name + "_tar_manifest",
+        srcs = [":" + name + "_tar_manifest_prefix"],
+        outs = [name + "_tar_manifest.spec"],
+        cmd = "sed -e 's,^/,,' $< >$@",
     )
 
     # One layer with only the python interpreter.
@@ -62,6 +83,7 @@ def python_oci_image(
         mtree = ":" + name + "_interpreter_tar_manifest",
         compress = "gzip",
     )
+    layers.append(":" + name + "_interpreter_layer")
 
     # Attempt to match all external (3P) dependencies. Since these can come in as either
     # `requirement` or native Bazel deps, do our best to guess the runfiles path.
@@ -82,6 +104,7 @@ def python_oci_image(
         mtree = ":" + name + "_packages_tar_manifest",
         compress = "gzip",
     )
+    layers.append(":" + name + "_packages_layer")
 
     # Any lines that didn't match one of the two grep above...
     native.genrule(
@@ -98,14 +121,14 @@ def python_oci_image(
         mtree = ":" + name + "_app_tar_manifest",
         compress = "gzip",
     )
+    layers.append(":" + name + "_app_layer")
+
+    if extra_tars:
+        layers.extend(extra_tars)
 
     container_image(
         name = name,
-        layers = [
-            ":" + name + "_interpreter_layer",
-            ":" + name + "_packages_layer",
-            ":" + name + "_app_layer",
-        ] + (extra_tars if extra_tars else []),
+        layers = layers,
         symlinks = symlinks,
         **kwargs
     )
