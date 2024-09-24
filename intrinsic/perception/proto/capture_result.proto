@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package intrinsic_proto.perception;
 
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "intrinsic/perception/proto/sensor_image.proto";
 
@@ -16,4 +17,7 @@ message CaptureResult {
   google.protobuf.Timestamp capture_at = 1;
   // Images for each of the captured sensors
   repeated SensorImage sensor_images = 2;
+  // Duration needed to capture all images excluding post processing like HDR.
+  // Not all camera drivers will provide it.
+  optional google.protobuf.Duration capture_duration = 3;
 }

@@ -269,6 +269,7 @@ proto_library(
     srcs = ["capture_result.proto"],
     deps = [
         ":sensor_image",
+        "@com_google_protobuf//:duration_proto",
         "@com_google_protobuf//:timestamp_proto",
     ],
 )
