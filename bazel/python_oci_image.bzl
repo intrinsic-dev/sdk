@@ -73,7 +73,7 @@ def python_oci_image(
         name = name + "_packages_tar_manifest",
         srcs = [":" + name + "_tar_manifest"],
         outs = [name + "_packages_tar_manifest.spec"],
-        cmd = "grep -v '{}' $< | grep '{}' >$@".format(PY_INTERPRETER_REGEX, PACKAGES_REGEX),
+        cmd = "if ! grep -v '{}' $< | grep '{}' >$@; then touch $@; fi".format(PY_INTERPRETER_REGEX, PACKAGES_REGEX),
     )
 
     tar(
