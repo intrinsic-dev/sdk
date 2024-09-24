@@ -11,6 +11,7 @@ load(
 def python_oci_image(
         name,
         binary,
+        base = Label("@distroless_python3"),
         extra_tars = None,
         symlinks = None,
         **kwargs):
@@ -22,11 +23,17 @@ def python_oci_image(
 
     Args:
       name: name of the image.
+      base: base image to use.
       binary: the py_binary target.
       extra_tars: additional layers to add to the image with e.g. supporting files.
       symlinks: if specified, symlinks to add to the final image (analogous to rules_docker container_image#sylinks).
       **kwargs: extra arguments to pass on to the oci_image target.
     """
+
+    binary_label = native.package_relative_label(binary)
+    binary_path = "/" + binary_label.package + "/" + binary_label.name
+    if kwargs.get("cmd") == None:
+        kwargs["cmd"] = [kwargs.get("directory", "") + binary_path]
 
     layers = []
 
@@ -128,6 +135,7 @@ def python_oci_image(
 
     container_image(
         name = name,
+        base = base,
         layers = layers,
         symlinks = symlinks,
         **kwargs

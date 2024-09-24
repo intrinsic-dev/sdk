@@ -3,6 +3,7 @@
 """Helpers for dealing with the rules_docker->rules_oci transition.
 ."""
 
+load("@container_structure_test//:defs.bzl", "container_structure_test")
 load(
     "@rules_oci//oci:defs.bzl",
     "oci_image",
@@ -56,6 +57,7 @@ def container_layer(name, **kwargs):
 def container_image(
         name,
         base = None,
+        cmd = None,
         data_path = None,
         directory = None,
         entrypoint = None,
@@ -118,6 +120,7 @@ def container_image(
         base = base,
         tars = layers,
         entrypoint = entrypoint,
+        cmd = cmd,
         labels = labels,
         **kwargs
     )
@@ -127,11 +130,42 @@ def container_image(
     if package:
         tag = "%s/%s" % (package, tag)
 
+    tarball_name = "_%s_tarball" % name
     _container_tarball(
-        name = "_%s_tarball" % name,
+        name = tarball_name,
         image = name,
         compatible_with = kwargs.get("compatible_with"),
         repo_tags = [tag],
         visibility = kwargs.get("visibility"),
         testonly = kwargs.get("testonly"),
     )
+
+    path_under_test = None
+    if entrypoint != None and len(entrypoint) > 0 and (entrypoint[0].startswith("/") or entrypoint[0].startswith("intrinsic")):
+        path_under_test = entrypoint[0]
+    if cmd != None and len(cmd) > 0 and (cmd[0].startswith("/") or cmd[0].startswith("intrinsic")):
+        path_under_test = cmd[0]
+    if path_under_test != None:
+        test_config_name = "_%s_test_config" % name
+        test_config_template = """schemaVersion: "2.0.0"
+
+fileExistenceTests:
+- name: "Entrypoint existence test"
+  path: "{}"
+  shouldExist: true
+  isExecutableBy: "owner"
+        """.format(path_under_test)
+        native.genrule(
+            name = test_config_name,
+            srcs = [],
+            outs = ["_%s_test_config.yaml" % name],
+            cmd = "echo '{}' > $@".format(test_config_template),
+            tools = [],
+        )
+        container_structure_test(
+            name = "_%s_test" % name,
+            timeout = "eternal",
+            configs = [test_config_name],
+            driver = "tar",
+            image = "%s.tar" % name,
+        )
