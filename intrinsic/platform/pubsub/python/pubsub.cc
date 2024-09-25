@@ -7,15 +7,17 @@
 #include <pybind11/pytypes.h>
 #include <pybind11/stl.h>
 
-#include <functional>
 #include <memory>
+#include <new>
 #include <string_view>
 #include <utility>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 #include "google/protobuf/message.h"
+#include "intrinsic/platform/pubsub/kvstore.h"
 #include "intrinsic/platform/pubsub/publisher.h"
 #include "intrinsic/platform/pubsub/subscription.h"
 #include "pybind11_abseil/no_throw_status.h"
@@ -74,6 +76,16 @@ absl::StatusOr<Subscription> CreateSubscription(
                                       std::move(err_callback));
 }
 
+absl::StatusOr<KeyValueStore> CreateKeyValueStore(PubSub* self) {
+  return self->KeyValueStore();
+}
+
+absl::StatusOr<std::unique_ptr<google::protobuf::Any>> Get(
+    KeyValueStore* self, const std::string& key, const NamespaceConfig& config,
+    int timeout) {
+  return self->Get(key, config, absl::Seconds(timeout));
+}
+
 struct PySubscriptionDeleter {
   void operator()(Subscription* s) {
     // To avoid deadlock, the call to Zenoh.imw_destroy_subscription() needs to
@@ -127,7 +139,8 @@ PYBIND11_MODULE(pubsub, m) {
            pybind11::arg("error_callback") = nullptr)
       .def("CreateSubscription", &CreateSubscription, pybind11::arg("topic"),
            pybind11::arg("exemplar"), pybind11::arg("msg_callback") = nullptr,
-           pybind11::arg("error_callback") = nullptr);
+           pybind11::arg("error_callback") = nullptr)
+      .def("KeyValueStore", &CreateKeyValueStore);
 
   pybind11::class_<Publisher>(m, "Publisher")
       .def("Publish",
@@ -136,9 +149,35 @@ PYBIND11_MODULE(pubsub, m) {
            pybind11::arg("message"))
       .def("TopicName", &Publisher::TopicName);
 
+  pybind11::class_<NamespaceConfig>(m, "NamespaceConfig")
+      .def(pybind11::init<>())
+      .def_readwrite("add_workcell_namespace",
+                     &NamespaceConfig::add_workcell_namespace)
+      .def_readwrite("add_solution_id_namespace",
+                     &NamespaceConfig::add_solution_id_namespace)
+      .def_readwrite("environment", &NamespaceConfig::environment)
+      .def_readwrite("version", &NamespaceConfig::version);
+
+  pybind11::class_<WildcardQueryConfig>(m, "WildcardQueryConfig")
+      .def(pybind11::init<>())
+      .def_readwrite("workcell", &WildcardQueryConfig::workcell)
+      .def_readwrite("solution_id", &WildcardQueryConfig::solution_id)
+      .def_readwrite("environment", &WildcardQueryConfig::environment)
+      .def_readwrite("version", &WildcardQueryConfig::version);
+
+  pybind11::class_<KeyValueStore>(m, "KeyValueStore")
+      .def("Set", &KeyValueStore::Set, pybind11::arg("key"),
+           pybind11::arg("value"), pybind11::arg("config") = NamespaceConfig{})
+      .def("Get", &Get, pybind11::arg("key"),
+           pybind11::arg("config") = NamespaceConfig{},
+           pybind11::arg("timeout") = 10)
+      .def("GetAll", &KeyValueStore::GetAll, pybind11::arg("key"),
+           pybind11::arg("config") = WildcardQueryConfig{},
+           pybind11::arg("callback") = nullptr);
+
   // The python GIL does not need to be locked during the entire destructor
   // of this class. Instead, the custom deleter provided during its
-  // construction will acquite the GIL only during the deletion of the
+  // construction will acquire the GIL only during the deletion of the
   // SubscriptionData object, which holds the Python callback.
   pybind11::class_<Subscription,
                    std::unique_ptr<Subscription, PySubscriptionDeleter>>(
