@@ -203,9 +203,8 @@ absl::StatusOr<bool> PubSub::KeyexprIncludes(absl::string_view left,
   }
 }
 
-absl::StatusOr<std::unique_ptr<intrinsic::KeyValueStore>>
-PubSub::KeyValueStore() const {
-  return absl::UnimplementedError("Not implemented");
+absl::StatusOr<intrinsic::KeyValueStore> PubSub::KeyValueStore() const {
+  return intrinsic::KeyValueStore();
 }
 
 }  // namespace intrinsic

@@ -10,9 +10,12 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 #include "google/protobuf/any.pb.h"
 
 namespace intrinsic {
+
+constexpr absl::Duration kDefaultGetTimeout = absl::Seconds(10);
 
 // Used to namespace a key in the KVStore. This is useful to prevent collisions.
 // See go/intrinsic-kv-store for more details. If add_workcell_namespace is
@@ -51,7 +54,8 @@ class KeyValueStore {
   // with this method, use the GetAll method instead. If wildcard queries are
   // sent, an error will be returned.
   absl::StatusOr<std::unique_ptr<google::protobuf::Any>> Get(
-      absl::string_view key, const NamespaceConfig& config);
+      absl::string_view key, const NamespaceConfig& config,
+      absl::Duration timeout = kDefaultGetTimeout);
 
   // For a given key and WildcardQueryConfig, the KeyValueCallback will be
   // invoked for each key that matches the expression.

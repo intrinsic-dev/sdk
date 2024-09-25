@@ -137,6 +137,7 @@ void ZenohHandle::Initialize() {
   GET_FUNCTION_PTR(handle, imw_destroy_queryable);
   GET_FUNCTION_PTR(handle, imw_queryable_reply);
   GET_FUNCTION_PTR(handle, imw_query);
+  GET_FUNCTION_PTR(handle, imw_set);
 }
 
 absl::StatusOr<std::string> ZenohHandle::add_topic_prefix(
@@ -147,6 +148,16 @@ absl::StatusOr<std::string> ZenohHandle::add_topic_prefix(
     return absl::StrCat("in", topic);
   } else {
     return absl::StrCat("in/", topic);
+  }
+}
+
+absl::StatusOr<std::string> ZenohHandle::add_key_prefix(absl::string_view key) {
+  if (key.empty()) {
+    return absl::InvalidArgumentError("Empty key string");
+  } else if (key[0] == '/') {
+    return absl::InvalidArgumentError("Key can't start with /");
+  } else {
+    return absl::StrCat("kv_store/", key);
   }
 }
 

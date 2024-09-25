@@ -209,8 +209,7 @@ class PubSub {
 
   // Returns a KeyValueStore implementation. This is only supported when
   // building with Zenoh. See go/intrinsic-kv-store for more details.
-  absl::StatusOr<std::unique_ptr<intrinsic::KeyValueStore>> KeyValueStore()
-      const;
+  absl::StatusOr<intrinsic::KeyValueStore> KeyValueStore() const;
 
  private:
   static void HandleError(const SubscriptionErrorCallback& error_callback,

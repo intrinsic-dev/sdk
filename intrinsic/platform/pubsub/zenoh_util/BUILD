@@ -41,6 +41,14 @@ cc_library(
     name = "zenoh_helpers",
     srcs = ["zenoh_helpers.cc"],
     hdrs = ["zenoh_helpers.h"],
+    visibility = [
+        "//intrinsic/platform/pubsub:__subpackages__",
+    ],
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:string_view",
+    ],
 )
 
 cc_library(

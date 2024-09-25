@@ -4,7 +4,6 @@
 #define INTRINSIC_PLATFORM_PUBSUB_ZENOH_UTIL_ZENOH_HANDLE_H_
 
 #include <cstddef>
-#include <cstdint>
 #include <functional>
 #include <string>
 #include <type_traits>
@@ -94,6 +93,10 @@ struct ZenohHandle {
                                const size_t reply_bytes_len)>
       imw_queryable_reply;
 
+  std::add_pointer_t<imw_ret_t(const char *keyexpr, const void *bytes,
+                               const size_t bytes_len)>
+      imw_set;
+
   std::add_pointer_t<imw_ret_t(
       const char *keyexpr, imw_query_callback_fn *callback,
       const void *query_payload, const size_t query_payload_len,
@@ -103,6 +106,7 @@ struct ZenohHandle {
   std::add_pointer_t<const char *const()> imw_version;
 
   static absl::StatusOr<std::string> add_topic_prefix(absl::string_view topic);
+  static absl::StatusOr<std::string> add_key_prefix(absl::string_view key);
   static absl::StatusOr<std::string> remove_topic_prefix(
       absl::string_view topic);
 
