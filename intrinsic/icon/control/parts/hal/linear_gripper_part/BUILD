@@ -1,8 +1,8 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-# Libraries related to Realtime Control Layer Parts.
-
 load("//bazel:go_macros.bzl", "go_proto_library")
+
+# Libraries related to Realtime Control Layer Parts.
 
 package(default_visibility = [
     "//visibility:public",
