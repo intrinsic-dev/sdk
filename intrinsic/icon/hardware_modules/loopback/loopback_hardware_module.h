@@ -10,7 +10,6 @@
 #include "intrinsic/icon/control/realtime_clock_interface.h"
 #include "intrinsic/icon/control/safety/safety_messages.fbs.h"
 #include "intrinsic/icon/control/safety/safety_messages_utils.h"
-#include "intrinsic/icon/hal/command_validator.h"
 #include "intrinsic/icon/hal/hardware_interface_handle.h"
 #include "intrinsic/icon/hal/hardware_interface_registry.h"
 #include "intrinsic/icon/hal/hardware_interface_traits.h"
@@ -77,13 +76,12 @@ class LoopbackHardwareModule final
   intrinsic::icon::MutableHardwareInterfaceHandle<
       intrinsic_fbs::JointAccelerationState>
       joint_acceleration_state_;
-  intrinsic::icon::HardwareInterfaceHandle<intrinsic_fbs::JointPositionCommand>
+  intrinsic::icon::StrictHardwareInterfaceHandle<
+      intrinsic_fbs::JointPositionCommand>
       joint_position_command_;
   intrinsic::icon::MutableHardwareInterfaceHandle<
       intrinsic::safety::messages::SafetyStatusMessage>
       safety_status_;
-
-  intrinsic::icon::Validator command_validator_;
 
   std::atomic<ModuleState> module_state_;
   static_assert(decltype(module_state_)::is_always_lock_free);

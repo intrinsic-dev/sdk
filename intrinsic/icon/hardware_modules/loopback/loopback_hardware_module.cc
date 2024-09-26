@@ -10,7 +10,6 @@
 #include "absl/time/time.h"
 #include "intrinsic/icon/control/safety/extern/safety_status.fbs.h"
 #include "intrinsic/icon/control/safety/safety_messages.fbs.h"
-#include "intrinsic/icon/hal/command_validator.h"
 #include "intrinsic/icon/hal/hardware_interface_registry.h"
 #include "intrinsic/icon/hal/hardware_interface_traits.h"
 #include "intrinsic/icon/hal/hardware_module_init_context.h"
@@ -34,7 +33,6 @@ namespace loopback_module {
 
 using ::intrinsic::icon::OkStatus;
 using ::intrinsic::icon::RealtimeStatus;
-using ::intrinsic::icon::Validator;
 using ::intrinsic::safety::messages::ButtonStatus;
 using ::intrinsic::safety::messages::ModeOfSafeOperation;
 using ::intrinsic::safety::messages::RequestedBehavior;
@@ -91,7 +89,7 @@ absl::Status LoopbackHardwareModule::Init(
 
   INTR_ASSIGN_OR_RETURN(
       joint_position_command_,
-      interface_registry.AdvertiseInterface<JointPositionCommand>(
+      interface_registry.AdvertiseStrictInterface<JointPositionCommand>(
           "joint_position_command", num_dofs_));
   INTR_ASSIGN_OR_RETURN(
       joint_position_state_,
@@ -114,9 +112,6 @@ absl::Status LoopbackHardwareModule::Init(
           /*estop_button_status=*/ButtonStatus::UNKNOWN,
           /*enable_button_status=*/ButtonStatus::UNKNOWN,
           /*requested_behavior=*/RequestedBehavior::UNKNOWN));
-
-  INTR_ASSIGN_OR_RETURN(command_validator_,
-                        Validator::Create(interface_registry));
 
   module_state_ = ModuleState::kInactive;
 
@@ -185,11 +180,12 @@ absl::Status LoopbackHardwareModule::Shutdown() {
 }
 
 RealtimeStatus LoopbackHardwareModule::ApplyCommand() {
-  INTRINSIC_RT_RETURN_IF_ERROR(
-      command_validator_.WasUpdatedThisCycle(joint_position_command_));
+  // Do not command a position if the command was not updated this cycle.
+  INTRINSIC_RT_ASSIGN_OR_RETURN(const auto joint_position_command,
+                                joint_position_command_.Value());
   for (int i = 0; i < num_dofs_; ++i) {
     joint_position_state_->mutable_position()->Mutate(
-        i, joint_position_command_->position()->Get(i));
+        i, joint_position_command->position()->Get(i));
     joint_velocity_state_->mutable_velocity()->Mutate(i, 0.0);
     joint_acceleration_state_->mutable_acceleration()->Mutate(i, 0.0);
   }

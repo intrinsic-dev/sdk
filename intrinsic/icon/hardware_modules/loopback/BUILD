@@ -25,7 +25,6 @@ cc_library(
         "//intrinsic/icon/control/safety:safety_messages_fbs_cc",
         "//intrinsic/icon/control/safety:safety_messages_fbs_utils",
         "//intrinsic/icon/control/safety/extern:safety_status_fbs_cc",
-        "//intrinsic/icon/hal:command_validator",
         "//intrinsic/icon/hal:hardware_interface_handle",
         "//intrinsic/icon/hal:hardware_interface_registry",
         "//intrinsic/icon/hal:hardware_interface_traits",
