@@ -1,0 +1,18 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto;
+
+import "intrinsic/math/proto/quaternion.proto";
+import "intrinsic/math/proto/vector3.proto";
+
+// The min/max values cannot exceed -pi/+pi, and the reference quaternion should
+// be chosen from the relevant endeffector pose, which is rarely the identity
+// quaternion.
+message RotationalLimits {
+  // units in radians
+  intrinsic_proto.Vector3 min_rotation_angle = 1;
+  intrinsic_proto.Vector3 max_rotation_angle = 2;
+  intrinsic_proto.Quaternion reference_quaternion_for_min_max = 3;
+}

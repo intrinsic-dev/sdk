@@ -66,6 +66,25 @@ proto_library(
     srcs = ["dynamic_limits_check_mode.proto"],
 )
 
+proto_library(
+    name = "rotational_limits_proto",
+    srcs = ["rotational_limits.proto"],
+    deps = [
+        "//intrinsic/math/proto:quaternion_proto",
+        "//intrinsic/math/proto:vector3_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "rotational_limits_cc_proto",
+    deps = [":rotational_limits_proto"],
+)
+
+py_proto_library(
+    name = "rotational_limits_py_pb2",
+    deps = [":rotational_limits_proto"],
+)
+
 cc_proto_library(
     name = "dynamic_limits_check_mode_cc_proto",
     deps = [":dynamic_limits_check_mode_proto"],
