@@ -19,6 +19,7 @@ cc_library(
     ],
     copts = ["-D_GNU_SOURCE"],
     deps = [
+        ":sysinfo",
         ":thread_options",
         "//intrinsic/icon/testing:realtime_annotations",
         "//intrinsic/icon/utils:log",  # buildcleaner: keep
@@ -134,5 +135,7 @@ cc_library(
     name = "sysinfo",
     srcs = ["sysinfo.cc"],
     hdrs = ["sysinfo.h"],
-    deps = ["@com_google_absl//absl/time"],
+    deps = [
+        "@com_google_absl//absl/time",
+    ],
 )
