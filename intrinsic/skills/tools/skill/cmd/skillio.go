@@ -264,5 +264,9 @@ func SkillIDFromArchive(path string) (string, error) {
 
 // SkillIDFromBuildTarget extracts the skill ID from a build target.
 func SkillIDFromBuildTarget(target string) (string, error) {
-	return imageutils.SkillIDFromTarget(target, imageutils.Build)
+	path, err := buildTarget(target)
+	if err != nil {
+		return "", err
+	}
+	return SkillIDFromArchive(path)
 }

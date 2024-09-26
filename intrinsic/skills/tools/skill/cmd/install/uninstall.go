@@ -44,11 +44,6 @@ $ inctl skill uninstall --type=id com.foo.skill
 		var skillID string
 		var err error
 		switch targetType {
-		case imageutils.Archive:
-			skillID, err = skillio.SkillIDFromArchive(target)
-			if err != nil {
-				return err
-			}
 		case imageutils.Build:
 			skillID, err = skillio.SkillIDFromBuildTarget(target)
 			if err != nil {
