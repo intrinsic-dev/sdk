@@ -48,7 +48,6 @@ def get_skill_service_config_from_manifest(
   with open(manifest_pbbin_filename, "rb") as f:
     manifest = skill_manifest_pb2.SkillManifest.FromString(f.read())
 
-  service_config.skill_name = manifest.id.name
   if manifest.options.HasField("cancellation_ready_timeout"):
     service_config.execution_service_options.cancellation_ready_timeout.CopyFrom(
         manifest.options.cancellation_ready_timeout

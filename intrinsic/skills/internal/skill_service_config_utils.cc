@@ -64,8 +64,6 @@ GetSkillServiceConfigFromManifest(
     std::optional<absl::string_view> version) {
   intrinsic_proto::skills::SkillServiceConfig service_config;
 
-  service_config.set_skill_name(manifest.id().name());
-
   if (manifest.options().has_cancellation_ready_timeout()) {
     *service_config.mutable_execution_service_options()
          ->mutable_cancellation_ready_timeout() =
@@ -92,8 +90,6 @@ GetSkillServiceConfigFromManifest(
     const google::protobuf::FileDescriptorSet& return_type_descriptor_set,
     std::optional<absl::string_view> version) {
   intrinsic_proto::skills::SkillServiceConfig service_config;
-
-  service_config.set_skill_name(manifest.id().name());
 
   if (manifest.options().has_cancellation_ready_timeout()) {
     *service_config.mutable_execution_service_options()
