@@ -12,6 +12,8 @@ message MotionPlannerConfiguration {
   // seconds.
   optional google.protobuf.Duration timeout_sec = 1;
 
+  optional double path_planning_step_size = 4;
+
   // Configuration for saving or loading this motion.
   optional LockMotionConfiguration lock_motion_configuration = 3;
 

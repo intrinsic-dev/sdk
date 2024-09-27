@@ -38,6 +38,7 @@ const MotionPlannerClient::MotionPlanningOptions&
 MotionPlannerClient::MotionPlanningOptions::Defaults() {
   static const auto* defaults = new MotionPlannerClient::MotionPlanningOptions({
       .path_planning_time_out = 30,
+      .path_planning_step_size = std::nullopt,
       .compute_swept_volume = false,
       .lock_motion_configuration = std::nullopt,
   });
@@ -71,6 +72,10 @@ MotionPlannerClient::PlanTrajectory(
   const int64_t s = request.motion_planner_config().timeout_sec().seconds();
   request.mutable_motion_planner_config()->mutable_timeout_sec()->set_nanos(
       (options.path_planning_time_out - s) * 1e9);
+  if (options.path_planning_step_size.has_value()) {
+    request.mutable_motion_planner_config()->set_path_planning_step_size(
+        *options.path_planning_step_size);
+  }
   if (options.lock_motion_configuration.has_value()) {
     *request.mutable_motion_planner_config()
          ->mutable_lock_motion_configuration() =

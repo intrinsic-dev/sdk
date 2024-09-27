@@ -78,11 +78,13 @@ class MotionPlanningOptions:
 
   Attributes:
     path_planning_time_out: Timeout for path planning algorithms.
+    path_planning_step_size: Maximum step size deployed during path planning.
     lock_motion_configuration: Optional configuration for saving or loading a
       motion.
   """
 
   path_planning_time_out: int = 30
+  path_planning_step_size: float | None = None
   lock_motion_configuration: (
       motion_planner_config_pb2.LockMotionConfiguration | None
   ) = None
@@ -135,6 +137,11 @@ class MotionPlannerClient:
     request.motion_planner_config.timeout_sec.seconds = (
         options.path_planning_time_out
     )
+
+    if options.path_planning_step_size is not None:
+      request.motion_planner_config.path_planning_step_size = (
+          options.path_planning_step_size
+      )
     if options.lock_motion_configuration:
       request.motion_planner_config.lock_motion_configuration.CopyFrom(
           options.lock_motion_configuration

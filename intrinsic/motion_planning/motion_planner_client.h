@@ -44,6 +44,8 @@ class MotionPlannerClient {
     // Timeout for path planning algorithms.
     double path_planning_time_out = 30;
 
+    std::optional<double> path_planning_step_size = std::nullopt;
+
     // Optionally generate and return the swept volume for the computed path.
     bool compute_swept_volume = false;
 
