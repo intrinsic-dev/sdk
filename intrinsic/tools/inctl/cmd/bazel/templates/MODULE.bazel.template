@@ -66,5 +66,10 @@ switched_rules.use_languages(
 use_repo(switched_rules, "com_google_googleapis_imports")
 
 # OCI images
-extension_for_rules_oci = use_extension("@ai_intrinsic_sdks//bazel:extension_for_rules_oci.bzl", "extension_for_rules_oci_ext")
-use_repo(extension_for_rules_oci, "distroless_python3")
+bazel_dep(name = "rules_oci", version = "2.0.0")
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+use_repo(
+    oci,
+    "distroless_base",
+    "distroless_python3",
+)

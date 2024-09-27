@@ -136,9 +136,24 @@ bazel_dep(name = "rules_java", version = "6.4.0")
 bazel_dep(name = "rules_oci", version = "2.0.0")
 bazel_dep(name = "container_structure_test", version = "1.16.0")
 
-extension_for_rules_oci = use_extension("//bazel:extension_for_rules_oci.bzl", "extension_for_rules_oci_ext")
-use_repo(extension_for_rules_oci, "distroless_base_amd64_oci")
-use_repo(extension_for_rules_oci, "distroless_python3")
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+oci.pull(
+    name = "distroless_base",
+    digest = "sha256:b31a6e02605827e77b7ebb82a0ac9669ec51091edd62c2c076175e05556f4ab9",
+    image = "gcr.io/distroless/base",
+    platforms = ["linux/amd64"],
+)
+oci.pull(
+    name = "distroless_python3",
+    digest = "sha256:baac841d0711ecbb673fa410a04793f876a242a6ca801d148ef867f02745b156",
+    image = "gcr.io/distroless/python3",
+    platforms = ["linux/amd64"],
+)
+use_repo(
+    oci,
+    "distroless_base",
+    "distroless_python3",
+)
 
 ############################
 # Missing Google OSS files #

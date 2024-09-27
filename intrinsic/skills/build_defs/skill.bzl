@@ -485,7 +485,7 @@ def cc_skill(
     service_image_name = "_%s_service_image" % name
     container_image(
         name = service_image_name,
-        base = Label("@distroless_base_amd64_oci"),
+        base = Label("@distroless_base"),
         directory = "/skills",
         files = [
             skill_service_name,
