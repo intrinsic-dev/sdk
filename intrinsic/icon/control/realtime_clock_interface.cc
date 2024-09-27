@@ -2,6 +2,11 @@
 
 #include "intrinsic/icon/control/realtime_clock_interface.h"
 
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
+#include "intrinsic/icon/utils/clock.h"
+#include "intrinsic/icon/utils/realtime_status.h"
+
 namespace intrinsic::icon {
 
 RealtimeStatus RealtimeClockInterface::TickBlockingWithTimeout(
