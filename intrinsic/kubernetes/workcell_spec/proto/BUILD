@@ -29,8 +29,6 @@ proto_library(
     deps = [
         ":image_proto",
         "//intrinsic/assets/proto:id_proto",
-        "//intrinsic/assets/services/proto:service_manifest_proto",
-        "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:empty_proto",
         "@com_google_protobuf//:timestamp_proto",
     ],
@@ -40,12 +38,7 @@ go_proto_library(
     name = "installer_go_proto",
     go_deps = [
         ":image_go_proto",
-        "//intrinsic/assets/proto:asset_type_go_proto",
-        "//intrinsic/assets/proto:asset_tag_go_proto",
-        "//intrinsic/assets/proto:documentation_go_proto",
         "//intrinsic/assets/proto:id_go_proto",
-        "//intrinsic/assets/proto:vendor_go_proto",
-        "//intrinsic/assets/services/proto:service_manifest_go_proto",
     ],
     deps = [":installer_proto"],
 )
@@ -55,13 +48,9 @@ go_grpc_library(
     srcs = [":installer_proto"],
     deps = [
         ":image_go_proto",
-        ":installer_go_proto",
-        "//intrinsic/assets/proto:asset_tag_go_proto",
-        "//intrinsic/assets/proto:asset_type_go_proto",
-        "//intrinsic/assets/proto:documentation_go_proto",
         "//intrinsic/assets/proto:id_go_proto",
-        "//intrinsic/assets/proto:vendor_go_proto",
-        "//intrinsic/assets/services/proto:service_manifest_go_proto",
+        "@org_golang_google_protobuf//types/known/emptypb",
+        "@org_golang_google_protobuf//types/known/timestamppb",
     ],
 )
 
