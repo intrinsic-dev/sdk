@@ -6,12 +6,15 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <type_traits>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "google/protobuf/any.pb.h"
+#include "google/protobuf/message.h"
 
 namespace intrinsic {
 
@@ -45,10 +48,23 @@ using KeyValueCallback =
 
 class KeyValueStore {
  public:
+  friend class PubSub;
+
   // Sets the value for the given key. A key can't include any of the following
   // characters: /, *, ?, #, [ and ].
-  absl::Status Set(absl::string_view key, const google::protobuf::Any& value,
-                   const NamespaceConfig& config);
+  template <typename T>
+  absl::Status Set(absl::string_view key, T&& value,
+                   const NamespaceConfig& config)
+    requires(
+        std::is_base_of_v<google::protobuf::Message, std::remove_cvref_t<T>>)
+  {
+    google::protobuf::Any any;
+    if (!any.PackFrom(std::forward<T>(value))) {
+      return absl::InternalError(
+          absl::StrCat("Failed to pack value for the key: ", key));
+    }
+    return SetAny(key, any, config);
+  }
 
   // Returns the value for the given key. Wildcard queries are not supported
   // with this method, use the GetAll method instead. If wildcard queries are
@@ -61,6 +77,14 @@ class KeyValueStore {
   // invoked for each key that matches the expression.
   absl::Status GetAll(absl::string_view key, const WildcardQueryConfig& config,
                       KeyValueCallback callback);
+
+ private:
+  // Sets the value for the given key. A key can't include any of the following
+  // characters: /, *, ?, #, [ and ].
+  absl::Status SetAny(absl::string_view key, const google::protobuf::Any& value,
+                      const NamespaceConfig& config);
+
+  KeyValueStore() = default;
 };
 
 }  // namespace intrinsic

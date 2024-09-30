@@ -19,9 +19,9 @@
 
 namespace intrinsic {
 
-absl::Status KeyValueStore::Set(absl::string_view key,
-                                const google::protobuf::Any& value,
-                                const NamespaceConfig& config) {
+absl::Status KeyValueStore::SetAny(absl::string_view key,
+                                   const google::protobuf::Any& value,
+                                   const NamespaceConfig& config) {
   INTR_RETURN_IF_ERROR(intrinsic::ValidZenohKeyexpr(key));
   absl::StatusOr<std::string> prefixed_name = ZenohHandle::add_key_prefix(key);
   if (!prefixed_name.ok()) {
