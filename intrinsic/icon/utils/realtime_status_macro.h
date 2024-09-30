@@ -156,9 +156,9 @@ class RealtimeStatusToBool {
 // Internal helpers for if statement.
 #define INTRINSIC_RT_STATUS_MACROS_IMPL_IF_1_(_Then, _Else) _Then
 #define INTRINSIC_RT_STATUS_MACROS_IMPL_IF_0_(_Then, _Else) _Else
-#define INTRINSIC_RT_STATUS_MACROS_IMPL_IF_(_Cond, _Then, _Else)             \
-  INTRINSIC_STATUS_MACROS_CONCAT(INTRINSIC_RT_STATUS_MACROS_IMPL_IF_, _Cond) \
-  (_Then, _Else)
+#define INTRINSIC_RT_STATUS_MACROS_IMPL_IF_(_Cond, _Then, _Else)              \
+  INTRINSIC_STATUS_MACROS_CONCAT(INTRINSIC_RT_STATUS_MACROS_IMPL_IF_, _Cond)( \
+      _Then, _Else)
 
 // Expands to 1_ if the input is parenthesized. Otherwise expands to 0_.
 #define INTRINSIC_RT_STATUS_MACROS_IMPL_IS_PARENTHESIZED_(...) \
