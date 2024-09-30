@@ -24,6 +24,22 @@ import (
 	"intrinsic/skills/tools/skill/cmd/directupload"
 )
 
+const (
+	policyList = "\"add_new_only\" and \"update_unused\""
+)
+
+func asPolicy(value string) (iapb.UpdatePolicy, error) {
+	switch value {
+	case "":
+		return iapb.UpdatePolicy_UPDATE_POLICY_UNSPECIFIED, nil
+	case "add_new_only":
+		return iapb.UpdatePolicy_UPDATE_POLICY_ADD_NEW_ONLY, nil
+	case "update_unused":
+		return iapb.UpdatePolicy_UPDATE_POLICY_UPDATE_UNUSED, nil
+	}
+	return iapb.UpdatePolicy_UPDATE_POLICY_UNSPECIFIED, fmt.Errorf("%q provided for --%v is invalid; valid values are %v", value, cmdutils.KeyPolicy, policyList)
+}
+
 // GetCommand returns a command to install (sideload) the service bundle.
 func GetCommand() *cobra.Command {
 	flags := cmdutils.NewCmdFlags()
@@ -48,6 +64,11 @@ func GetCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			target := args[0]
+
+			policy, err := asPolicy(flags.GetFlagPolicy())
+			if err != nil {
+				return err
+			}
 
 			ctx, conn, address, err := clientutils.DialClusterFromInctl(ctx, flags)
 			if err != nil {
@@ -97,6 +118,7 @@ func GetCommand() *cobra.Command {
 
 			// This needs an authorized context to pull from the catalog if not available.
 			op, err := client.CreateInstalledAssets(authCtx, &iapb.CreateInstalledAssetsRequest{
+				Policy: policy,
 				Assets: []*iapb.CreateInstalledAssetsRequest_Asset{
 					&iapb.CreateInstalledAssetsRequest_Asset{
 						Variant: &iapb.CreateInstalledAssetsRequest_Asset_Service{
@@ -137,6 +159,7 @@ func GetCommand() *cobra.Command {
 	flags.AddFlagRegistry()
 	flags.AddFlagsRegistryAuthUserPassword()
 	flags.AddFlagSkipDirectUpload("service")
+	flags.OptionalString(cmdutils.KeyPolicy, "", fmt.Sprintf("The update policy to be used to install the provided asset. Can be %v", policyList))
 
 	return cmd
 }

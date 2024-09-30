@@ -55,6 +55,9 @@ const (
 	KeyOrgPrivate = "org_private"
 	// KeyOrganization is used as central flag name for passing an organization name to inctl.
 	KeyOrganization = orgutil.KeyOrganization
+	// KeyPolicy defines the flag used to specify the policy option when
+	// interacting with the installed asset service.
+	KeyPolicy = "policy"
 	// KeyProject is used as central flag name for passing a project name to inctl.
 	KeyProject = orgutil.KeyProject
 	// KeyRegistry is the name of the registry flag.
@@ -244,6 +247,12 @@ func (cf *CmdFlags) AddFlagOrgPrivate() {
 // GetFlagOrgPrivate gets the value of the org_private flag added by AddFlagOrgPrivate.
 func (cf *CmdFlags) GetFlagOrgPrivate() bool {
 	return cf.GetBool(KeyOrgPrivate)
+}
+
+// GetFlagPolicy gets the value of the policy flag.  This flag must be added manually by the
+// utility.
+func (cf *CmdFlags) GetFlagPolicy() string {
+	return cf.GetString(KeyPolicy)
 }
 
 // AddFlagsProjectOrg adds both the project and org flag, including the necessary handling.
