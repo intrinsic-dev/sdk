@@ -1,0 +1,36 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.services;
+
+import "google/protobuf/struct.proto";
+import "intrinsic/scene/product/proto/product.proto";
+import "intrinsic/scene/proto/scene_object.proto";
+
+service ProductReader {
+  // Gets the product data necessary to create a WorldObject in a skill.
+  rpc GetProductData(GetProductDataRequest) returns (GetProductDataResponse);
+
+  // Lists all products in the solution.
+  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
+}
+
+message GetProductDataRequest {
+  // Unique name of the product within this solution
+  string name = 1;
+}
+
+message GetProductDataResponse {
+  // The fully configured SceneObject that represents the geometry of this
+  // product.
+  intrinsic_proto.scene_object.v1.SceneObject scene_object = 1;
+  // Metadata associated with the product.
+  google.protobuf.Struct metadata = 2;
+}
+
+message ListProductsRequest {}
+
+message ListProductsResponse {
+  repeated intrinsic_proto.product.Product products = 1;
+}
