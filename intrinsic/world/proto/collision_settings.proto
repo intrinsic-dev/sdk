@@ -12,8 +12,9 @@ import "intrinsic/world/proto/object_world_refs.proto";
 // below.
 message ObjectOrEntityReference {
   oneof type {
-    intrinsic_proto.world.ObjectReference object = 1;
-    intrinsic_proto.world.EntityReference entity = 2;
+    ObjectReference object = 1;
+    EntityReference entity = 2;
+    ObjectReferenceWithEntityFilter object_with_filter = 3;
   }
 }
 
