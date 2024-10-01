@@ -10,7 +10,9 @@ message EventSourceWithTypeHints {
   string event_source = 1;  // Sanitized.
 
   // Type information for Intrinsic protos and ROS message types respectively.
-  // Used as hints for translation orverification.
+  // Used as hints for translation or verification.
+  //
+  // Not in use yet.
   optional string intrinsic_typename = 6;
   optional string ros_typename = 7;
 }
