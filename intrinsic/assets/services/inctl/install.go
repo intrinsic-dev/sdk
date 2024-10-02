@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	policyList = "\"add_new_only\" and \"update_unused\""
+	policyList = "\"add_new_only\", \"update_unused\", and \"update_compatible\""
 )
 
 func asPolicy(value string) (iapb.UpdatePolicy, error) {
@@ -36,6 +36,8 @@ func asPolicy(value string) (iapb.UpdatePolicy, error) {
 		return iapb.UpdatePolicy_UPDATE_POLICY_ADD_NEW_ONLY, nil
 	case "update_unused":
 		return iapb.UpdatePolicy_UPDATE_POLICY_UPDATE_UNUSED, nil
+	case "update_compatible":
+		return iapb.UpdatePolicy_UPDATE_POLICY_UPDATE_COMPATIBLE, nil
 	}
 	return iapb.UpdatePolicy_UPDATE_POLICY_UNSPECIFIED, fmt.Errorf("%q provided for --%v is invalid; valid values are %v", value, cmdutils.KeyPolicy, policyList)
 }

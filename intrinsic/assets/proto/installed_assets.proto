@@ -72,6 +72,10 @@ enum UpdatePolicy {
   UPDATE_POLICY_ADD_NEW_ONLY = 10;
   // Only update assets if they are currently unused.
   UPDATE_POLICY_UPDATE_UNUSED = 20;
+  // Only update assets if all are considered reasonably compatible. This may
+  // allow backwards incompatible changes if it will not cause problems for the
+  // solution.  If an asset is unused, then any update will be allow.
+  UPDATE_POLICY_UPDATE_COMPATIBLE = 50;
 }
 
 message CreateInstalledAssetsRequest {
