@@ -120,6 +120,8 @@ message RobotKinematicsUpdate {
 
 // Specifies the properties for a simple single-entity object.
 message ObjectSpecForSingleEntityObject {
+  string entity_local_name = 4;
+
   // The geometry component associated with the object's entity.
   intrinsic_proto.world.GeometryComponent geometry_component = 3;
 }
