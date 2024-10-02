@@ -24,6 +24,7 @@
 #include "intrinsic/skills/cc/skill_interface.h"
 #include "intrinsic/skills/cc/skill_logging_context.h"
 #include "intrinsic/skills/internal/execute_context_impl.h"
+#include "intrinsic/skills/internal/get_footprint_context_impl.h"
 #include "intrinsic/skills/internal/preview_context_impl.h"
 #include "intrinsic/skills/proto/skill_manifest.pb.h"
 #include "intrinsic/world/objects/object_world_client.h"
@@ -67,6 +68,15 @@ PreviewRequest SkillTestFactory::MakePreviewRequest(
     ::google::protobuf::Message* param_defaults) {
   // clang-format off
   return PreviewRequest(
+      params, param_defaults);
+  // clang-format on
+}
+
+GetFootprintRequest SkillTestFactory::MakeGetFootprintRequest(
+    const ::google::protobuf::Message& params,
+    ::google::protobuf::Message* param_defaults) {
+  // clang-format off
+  return GetFootprintRequest(
       params, param_defaults);
   // clang-format on
 }
@@ -140,6 +150,27 @@ std::unique_ptr<PreviewContext> SkillTestFactory::MakePreviewContext(
                                            motion_planner_service),
       world::ObjectWorldClient(initializer.world_id,
                                object_world_service)
+  );
+  // clang-format on
+}
+
+std::unique_ptr<GetFootprintContext> SkillTestFactory::MakeGetFootprintContext(
+    const GetFootprintContextInitializer& initializer) {
+  auto motion_planner_service = MaybeMock<MotionPlannerService::StubInterface,
+                                          MockMotionPlannerServiceStub>(
+      initializer.motion_planner_service);
+
+  auto object_world_service =
+      MaybeMock<ObjectWorldService::StubInterface, MockObjectWorldServiceStub>(
+          initializer.object_world_service);
+
+  // clang-format off
+  return std::make_unique<GetFootprintContextImpl>(
+      initializer.equipment_pack.value_or(EquipmentPack()),
+      motion_planning::MotionPlannerClient(initializer.world_id,
+                                          motion_planner_service),
+      world::ObjectWorldClient(initializer.world_id,
+                              object_world_service)
   );
   // clang-format on
 }

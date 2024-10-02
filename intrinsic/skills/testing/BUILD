@@ -140,6 +140,7 @@ cc_library(
         "//intrinsic/skills/cc:skill_interface",
         "//intrinsic/skills/cc:skill_logging_context",
         "//intrinsic/skills/internal:execute_context_impl",
+        "//intrinsic/skills/internal:get_footprint_context_impl",
         "//intrinsic/skills/internal:preview_context_impl",
         "//intrinsic/skills/proto:skill_manifest_cc_proto",
         "//intrinsic/util/status:status_macros",

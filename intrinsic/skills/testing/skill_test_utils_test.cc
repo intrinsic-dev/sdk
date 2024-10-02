@@ -201,6 +201,35 @@ TEST(SkillTestFactory, MakePreviewContextProvideAlmostEverything) {
   EXPECT_TRUE(context->object_world().ListObjects().ok());
 }
 
+TEST(SkillTestFactory, MakeGetFootprintContextProvideAlmostEverything) {
+  auto canceller =
+      std::make_shared<SkillCancellationManager>(absl::ZeroDuration());
+  auto equipment_pack = EquipmentPack();
+  ASSERT_TRUE(equipment_pack.Add("foo", {}).ok());
+  auto logging_context = SkillLoggingContext{
+      .skill_id = "bar",
+  };
+  auto motion_planner_service =
+      std::make_shared<MockMotionPlannerServiceStub>();
+  auto object_world_service = std::make_shared<MockObjectWorldServiceStub>();
+
+  auto skill_test_factory = SkillTestFactory();
+
+  auto context = skill_test_factory.MakeGetFootprintContext({
+      .equipment_pack = equipment_pack,
+      .motion_planner_service = motion_planner_service,
+      .object_world_service = object_world_service,
+  });
+
+  EXPECT_TRUE(equipment_pack.GetHandle("foo").ok());
+  EXPECT_CALL(*motion_planner_service, ClearCache(_, _, _))
+      .WillOnce(Return(grpc::Status::OK));
+  EXPECT_TRUE(context->motion_planner().ClearCache().ok());
+  EXPECT_CALL(*object_world_service, ListObjects(_, _, _))
+      .WillOnce(Return(grpc::Status::OK));
+  EXPECT_TRUE(context->object_world().ListObjects().ok());
+}
+
 TEST(SkillTestFactory, MakePreviewContextProvideWorldId) {
   auto skill_test_factory = SkillTestFactory();
   auto context = skill_test_factory.MakePreviewContext({.world_id = "foobar"});

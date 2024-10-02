@@ -157,6 +157,22 @@ absl::Status PreviewSkill(SkillExecuteInterface& skill,
 //      ASSERT_THAT(skill->Preview(request, context), ::absl_testing::IsOk());
 //    }
 //
+// Example: Test GetFootprint method on a skill that has no dependencies in its
+//          manifest.
+//
+//    TEST(MySkillTest, GetFootprint) {
+//      auto skill_test_factory = SkillTestFactory();
+//      auto skill = MySkill::CreateSkill();
+//      MySkillParams params;
+//
+//      GetFootprintRequest request =
+//      skill_test_factory.MakeGetFootprintRequest(params);
+//      std::unique_ptr<GetFootprintContext> context =
+//        skill_test_factory.MakeGetFootprintContext({});
+//      ASSERT_THAT(skill->GetFootprint(request, context),
+//      ::absl_testing::IsOk());
+//    }
+//
 class SkillTestFactory final {
  public:
   SkillTestFactory();
@@ -180,6 +196,15 @@ class SkillTestFactory final {
   //
   // See `PreviewRequest` for the meanings of the arguments to this function.
   PreviewRequest MakePreviewRequest(
+      const ::google::protobuf::Message& params,
+      ::google::protobuf::Message* param_defaults = nullptr);
+
+  // Creates a `GetFootprintRequest` for testing a skill's GetFootprint()
+  // method.
+  //
+  // See `GetFootprintRequest` for the meanings of the arguments to this
+  // function.
+  GetFootprintRequest MakeGetFootprintRequest(
       const ::google::protobuf::Message& params,
       ::google::protobuf::Message* param_defaults = nullptr);
 
@@ -252,6 +277,29 @@ class SkillTestFactory final {
   // function.
   std::unique_ptr<PreviewContext> MakePreviewContext(
       const PreviewContextInitializer& initializer);
+
+  // Initializes a `GetFootprintContext` for testing a skill's GetFootprint()
+  // method.
+  //
+  // All fields are optional. See `ExecuteContextInitializer` for the usage
+  // of the fields as they are the same for `GetFootprintContextInitializer`.
+  struct GetFootprintContextInitializer {
+    std::optional<EquipmentPack> equipment_pack;
+    std::string world_id = "fake_world";
+    std::shared_ptr<
+        intrinsic_proto::motion_planning::MotionPlannerService::StubInterface>
+        motion_planner_service;
+    std::shared_ptr<intrinsic_proto::world::ObjectWorldService::StubInterface>
+        object_world_service;
+  };
+
+  // Creates a `GetFootprintContext` for testing a skill's GetFootprint()
+  // method.
+  //
+  // See `GetFootprintContextInitializer` to learn how to pass arguments to this
+  // function.
+  std::unique_ptr<GetFootprintContext> MakeGetFootprintContext(
+      const GetFootprintContextInitializer& initializer);
 
  private:
   std::vector<std::unique_ptr<::grpc::Server>> servers_;
