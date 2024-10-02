@@ -92,9 +92,13 @@ var portalToAccounts = map[string]string{
 }
 
 func queryForAPIKey(ctx context.Context, writer io.Writer, in *bufio.Reader, organization, project string) (string, error) {
-	portal := flowstateDomain[loginParams.GetString(orgutil.KeyEnvironment)]
+	env := loginParams.GetString(orgutil.KeyEnvironment)
+	if env == "" {
+		env = orgutil.ProdEnvironment
+	}
+	portal := flowstateDomain[env]
 	if portal == "" {
-		return "", fmt.Errorf("unknown environment %q", loginParams.GetString(orgutil.KeyEnvironment))
+		return "", fmt.Errorf("unknown environment %q", env)
 	}
 	authorizationURL := fmt.Sprintf(projectTokenURLFmt, portal, project)
 	if organization != "" {
@@ -126,9 +130,13 @@ func queryForAPIKey(ctx context.Context, writer io.Writer, in *bufio.Reader, org
 // If optionalOrg is set, it will be used as a filter to only return projects the given organization
 // is part of.
 func queryProjectsForAPIKey(ctx context.Context, apiKey string, optionalOrg string) ([]string, error) {
-	portal := flowstateDomain[loginParams.GetString(orgutil.KeyEnvironment)]
+	env := loginParams.GetString(orgutil.KeyEnvironment)
+	if env == "" {
+		env = orgutil.ProdEnvironment
+	}
+	portal := flowstateDomain[env]
 	if portal == "" {
-		return nil, fmt.Errorf("unknown environment %q", loginParams.GetString(orgutil.KeyEnvironment))
+		return nil, fmt.Errorf("unknown environment %q", env)
 	}
 	address := fmt.Sprintf("dns:///%s:443", portalToAccounts[portal])
 	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
@@ -246,7 +254,7 @@ func init() {
 	flags.StringP(orgutil.KeyOrganization, "", "", "Name of the Intrinsic organization to authorize for")
 	flags.Bool(keyNoBrowser, false, "Disables attempt to open login URL in browser automatically")
 	flags.Bool(keyBatch, false, "Suppresses command prompts and assume Yes or default as an answer. Use with shell scripts.")
-	flags.StringP(orgutil.KeyEnvironment, "", orgutil.ProdEnvironment, fmt.Sprintf("Auth environment to use. This should be one of %q, %q or %q. %q is used by default. See http://go/intrinsic-users#environments for the compatible environment corresponding to a cloud project.", orgutil.ProdEnvironment, orgutil.StagingEnvironment, orgutil.DevEnvironment, orgutil.ProdEnvironment))
+	flags.String(orgutil.KeyEnvironment, "", fmt.Sprintf("Auth environment to use. This should be one of %q, %q or %q. %q is used by default. See http://go/intrinsic-users#environments for the compatible environment corresponding to a cloud project.", orgutil.ProdEnvironment, orgutil.StagingEnvironment, orgutil.DevEnvironment, orgutil.ProdEnvironment))
 	flags.MarkHidden(orgutil.KeyEnvironment)
 	flags.MarkHidden(orgutil.KeyProject)
 

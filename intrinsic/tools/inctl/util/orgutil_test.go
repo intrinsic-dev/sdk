@@ -435,7 +435,7 @@ func TestValidateEnvironmentErrors(t *testing.T) {
 	}{
 		{
 			desc:    "empty",
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			desc:    "prod",

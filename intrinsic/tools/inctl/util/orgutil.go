@@ -122,7 +122,8 @@ func makeOrgNotFound(inner error, org string) error {
 func ValidateEnvironment(vipr *viper.Viper) error {
 	env := vipr.GetString(KeyEnvironment)
 	if env == "" {
-		return fmt.Errorf("--%s needs to be set", KeyEnvironment)
+		// Ignore if not set.
+		return nil
 	}
 	switch env {
 	case ProdEnvironment, StagingEnvironment, DevEnvironment:
