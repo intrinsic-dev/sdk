@@ -12,6 +12,8 @@ cc_library(
         "//intrinsic/icon/utils:log",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/log:globals",
+        "@com_google_absl//absl/log:initialize",
     ],
 )
 
@@ -20,8 +22,9 @@ cc_test(
     srcs = ["init_xfa_test.cc"],
     deps = [
         ":init_xfa_absl",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "@com_google_absl//absl/base:log_severity",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:globals",
         "@com_google_absl//absl/strings",
     ],
 )

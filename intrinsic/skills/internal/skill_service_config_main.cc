@@ -2,8 +2,10 @@
 
 #include <string>
 
+#include "absl/base/log_severity.h"
 #include "absl/flags/flag.h"
 #include "absl/log/check.h"
+#include "absl/log/globals.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "google/protobuf/descriptor.pb.h"
@@ -53,6 +55,8 @@ absl::Status MainImpl() {
 
 int main(int argc, char** argv) {
   InitXfa(argv[0], argc, argv);
+  // We change the stderr log threshold to minimize log spam in our build tools.
+  absl::SetStderrThreshold(absl::LogSeverityAtLeast::kWarning);
   QCHECK_OK(intrinsic::skills::MainImpl());
   return 0;
 }
