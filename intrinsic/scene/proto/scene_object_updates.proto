@@ -5,6 +5,7 @@ syntax = "proto3";
 package intrinsic_proto.scene_object.v1;
 
 import "intrinsic/math/proto/pose.proto";
+import "intrinsic/scene/proto/object_properties.proto";
 
 // Similar to SceneObjectUpdate but restricted in the types of updates that can
 // be performed.
@@ -15,6 +16,7 @@ message SceneObjectInstanceUpdate {
     CreateFrameUpdate create_frame = 2;
     // Only allowed to delete frames.
     DeleteEntityUpdate delete_entity = 3;
+    SetNamedConfigurationsUpdate set_named_configurations = 4;
   }
 }
 
@@ -70,4 +72,17 @@ message DeleteEntityUpdate {
   }
   // Specify what to do with the children of the deleted entity if any exist.
   ChildPolicy child_policy = 2;
+}
+
+// Updates the named configurations on the scene object.
+message SetNamedConfigurationsUpdate {
+  // If set, this will clear all named configurations on the scene object.
+  bool clear_all_named_configurations = 1;
+
+  // The named configurations to remove from the scene object.
+  repeated string named_configurations_to_remove = 2;
+
+  // The named configurations to set on the scene object. If a named
+  // configuration already exists with the same name, it will be overwritten.
+  repeated NamedConfiguration named_configurations_to_set = 3;
 }

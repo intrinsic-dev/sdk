@@ -13,6 +13,11 @@ message Kinematics {
   // Optional cartesian limits.
   optional CartesianLimits limits = 1;
 
+  // A set of named configurations for the robot. Can be used to specify
+  // interesting robot configurations that may have some human meaning.
+  // For example, "home" or "maintenance".
+  repeated NamedConfiguration named_configurations = 3;
+
 }
 
 // Cartesian limits.
@@ -29,4 +34,12 @@ message CartesianLimits {
   double max_rotational_velocity = 9;
   double max_rotational_acceleration = 10;
   double max_rotational_jerk = 11;
+}
+// A named configuration for a kinematic object.
+message NamedConfiguration {
+  // The name of the configuration.
+  string name = 1;
+
+  // A map of joint names to joint positions for this configuration.
+  map<string, double> joint_positions = 2;
 }
