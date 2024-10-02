@@ -5,7 +5,9 @@
 from unittest import mock
 
 from absl.testing import absltest
+from google.protobuf import any_pb2
 from google.protobuf import struct_pb2
+from google.protobuf import wrappers_pb2
 from intrinsic.scene.proto import scene_object_pb2
 from intrinsic.world.proto import geometry_component_pb2
 from intrinsic.world.proto import object_world_service_pb2
@@ -21,20 +23,28 @@ class ObjectWorldClientTest(absltest.TestCase):
     self._geometry_service_stub = mock.MagicMock()
 
   def _create_object_proto(
-      self, *, name: str = '', object_id: str = '', world_id: str = ''
+      self,
+      *,
+      name: str = '',
+      object_id: str = '',
+      world_id: str = '',
+      user_data=None,
   ) -> object_world_service_pb2.Object:
     return object_world_service_pb2.Object(
         world_id=world_id,
         name=name,
         name_is_global_alias=True,
         id=object_id,
-        object_component=object_world_service_pb2.ObjectComponent(),
+        object_component=object_world_service_pb2.ObjectComponent(
+            user_data=user_data
+        ),
     )
 
   def test_get_object(self):
-    self._stub.GetObject.return_value = self._create_object_proto(
+    my_object = self._create_object_proto(
         name='my_object', object_id='15', world_id='world'
     )
+    self._stub.GetObject.return_value = my_object
     world_client = object_world_client.ObjectWorldClient(
         'world', self._stub, self._geometry_service_stub
     )
@@ -68,9 +78,10 @@ class ObjectWorldClientTest(absltest.TestCase):
     self.assertEqual(world_client.my_object.id, '15')
 
   def test_create_geometry(self):
-    self._stub.CreateObject.return_value = self._create_object_proto(
+    my_object = self._create_object_proto(
         name='foo', object_id='23', world_id='world'
     )
+    self._stub.CreateObject.return_value = my_object
     world_client = object_world_client.ObjectWorldClient(
         'world', self._stub, self._geometry_service_stub
     )
@@ -79,10 +90,30 @@ class ObjectWorldClientTest(absltest.TestCase):
         geometry_component=geometry_component_pb2.GeometryComponent(),
     )
 
+  def test_create_geometry_object_with_user_data(self):
+    my_user_data_any = any_pb2.Any()
+    my_user_data_any.Pack(wrappers_pb2.StringValue(value='my_value'))
+    my_object = self._create_object_proto(
+        name='bar',
+        object_id='79',
+        world_id='world',
+        user_data={'my_key': my_user_data_any},
+    )
+    self._stub.CreateObject.return_value = my_object
+    world_client = object_world_client.ObjectWorldClient(
+        'world', self._stub, self._geometry_service_stub
+    )
+    world_client.create_geometry_object(
+        object_name='bar',
+        geometry_component=geometry_component_pb2.GeometryComponent(),
+        user_data={'my_key': my_user_data_any},
+    )
+
   def test_create_object_from_product_part(self):
-    self._stub.CreateObject.return_value = self._create_object_proto(
+    my_object = self._create_object_proto(
         name='foo', object_id='23', world_id='world'
     )
+    self._stub.CreateObject.return_value = my_object
     world_client = object_world_client.ObjectWorldClient(
         'world', self._stub, self._geometry_service_stub
     )

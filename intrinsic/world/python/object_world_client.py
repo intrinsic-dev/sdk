@@ -7,7 +7,7 @@ Python.
 """
 
 import re
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Dict, List, Mapping, Optional, Tuple, Union, cast
 import warnings
 
 from google.protobuf import any_pb2
@@ -1401,6 +1401,7 @@ class ObjectWorldClient:
       geometry_component: geometry_component_pb2.GeometryComponent,
       parent: Optional[object_world_resources.WorldObject] = None,
       parent_object_t_created_object: data_types.Pose3 = data_types.Pose3(),
+      user_data: Mapping[str, any_pb2.Any] | None = None,
   ) -> None:
     """Adds a geometry object to the world.
 
@@ -1410,6 +1411,7 @@ class ObjectWorldClient:
       parent: The parent object the new object will be attached to.
       parent_object_t_created_object: The transform between the parent object
         and the new object.
+      user_data: Arbitrary data to be attached to the object.
     """
     req = object_world_updates_pb2.CreateObjectRequest(
         world_id=self._world_id,
@@ -1421,6 +1423,7 @@ class ObjectWorldClient:
         create_single_entity_object=object_world_updates_pb2.ObjectSpecForSingleEntityObject(
             geometry_component=geometry_component
         ),
+        user_data=user_data,
     )
 
     if parent is not None:
