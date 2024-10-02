@@ -29,6 +29,8 @@ message HalArmPartConfig {
   // `payload_state` requires a `payload_command` to be present.
   // `payload_command` can be used independently.
   HardwareInterface payload_state = 22;
+  // The system limits are written to this hardware interface.
+  HardwareInterface joint_system_limits = 23;
 
   // If present, the kinematics model name needs to correspond to one of the
   // kinematics models available via KinematicsService. Which models are
