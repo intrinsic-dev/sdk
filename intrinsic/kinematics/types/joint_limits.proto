@@ -26,13 +26,62 @@ message JointLimits {
 // the fields are "the same", they have different usage.
 //   * Any field may be not provided (or empty) in which case no update is made
 //     to the JointLimits this update is applied on.
-//   * Any field that is not empty, must have the same size as the field it
-//     replaces in JointLimits.
+//   * Any field that is not empty will replace the original value.  It must
+//     have the same size as the field it replaces in JointLimits.
 message JointLimitsUpdate {
+  // Lower joint position limits allow to restrict the object joint movement in
+  // joint space. Each joint of the object has lower (min) and upper (max)
+  // limits. The specified limits need to be within the object limits.
   optional RepeatedDouble min_position = 1;
+  // Upper joint position limits allow to restrict the object joint movement in
+  // joint space. Each joint of the object has lower (min) and upper (max)
+  // limits. The specified limits need to be within the object limits.
   optional RepeatedDouble max_position = 2;
+  // Maximum joint velocity limits per joint. Units are in meters, radians, or
+  // degrees per second. When not specified, the limits of the object will be
+  // used.
   optional RepeatedDouble max_velocity = 3;
+  // Max joint acceleration limits per joint. Units are in meters, radians, or
+  // degrees per second^2. When not specified, the acceleration limits from the
+  // object limits will be used.
   optional RepeatedDouble max_acceleration = 4;
+  // Maximum joint jerk limits for the object. Units are in meters, radians, or
+  // degrees per second^3. When not specified, the jerk limits from the object
+  // limits will be used.
   optional RepeatedDouble max_jerk = 5;
+  // Maximum joint jerk limits for the object. When not specified, the effort
+  // limits from the object limits will be used.
   optional RepeatedDouble max_effort = 6;
+}
+
+// Specifies an update to apply on top of a existing limits. While the fields
+// are "the same" as the normal limit protos, they have different usage.
+//   * Any field may be not provided (or empty) in which case no update is made
+//     to the limits this update is applied on.
+//   * Any field that is not empty will replace the original value.  It must
+//     have the same size as the field it replaces in limits.
+message JointLimitUpdate {
+  // Lower joint position limits allow to restrict the object joint movement in
+  // joint space. Each joint of the object has lower (min) and upper (max)
+  // limits. The specified limits need to be within the object limits.
+  optional double min_position = 1;
+  // Upper joint position limits allow to restrict the object joint movement in
+  // joint space. Each joint of the object has lower (min) and upper (max)
+  // limits. The specified limits need to be within the object limits.
+  optional double max_position = 2;
+  // Maximum joint velocity limits per joint. Units are in meters, radians, or
+  // degrees per second. When not specified, the limits of the object will be
+  // used.
+  optional double max_velocity = 3;
+  // Max joint acceleration limits per joint. Units are in meters, radians, or
+  // degrees per second^2. When not specified, the acceleration limits from the
+  // object limits will be used.
+  optional double max_acceleration = 4;
+  // Maximum joint jerk limits for the object. Units are in meters, radians, or
+  // degrees per second^3. When not specified, the jerk limits from the object
+  // limits will be used.
+  optional double max_jerk = 5;
+  // Maximum joint jerk limits for the object. When not specified, the effort
+  // limits from the object limits will be used.
+  optional double max_effort = 6;
 }
