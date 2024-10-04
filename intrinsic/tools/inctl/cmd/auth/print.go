@@ -54,10 +54,24 @@ var makeHTTPClient = func() *http.Client { // for unit-tests
 	return &http.Client{}
 }
 
+var printAccessTokenHelp = `
+Print an access token.
+
+Can be used to authenticate with the Flowstate API.
+
+Example:
+
+		inctl auth print-access-token --project=intrinsic-prod-us
+
+Example (curl):
+
+		curl -s -X GET -H "Authorization: Bearer $(inctl auth print-access-token --project intrinsic-prod-us)" https://flowstate.intrinsic.ai/api/v1/cloud-projects-orgs -H 'Content-Type: application/json'
+`
+
 var printAccessTokenCmd = &cobra.Command{
 	Use:   "print-access-token",
 	Short: "Print an access token.",
-	Long:  "Print an access token.",
+	Long:  printAccessTokenHelp,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
@@ -80,7 +94,7 @@ var printAccessTokenCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to get ID token : %v", err)
 		}
-		cmd.Printf(resp.IDToken)
+		cmd.Printf("%s", resp.IDToken)
 		return nil
 	},
 }
