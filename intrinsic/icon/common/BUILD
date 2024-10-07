@@ -14,7 +14,7 @@ cc_library(
 cc_library(
     name = "id_types",
     hdrs = ["id_types.h"],
-    deps = ["//intrinsic/third_party/intops:strong_int"],
+    deps = ["//intrinsic/production/external/intops:strong_int"],
 )
 
 cc_library(
@@ -34,7 +34,7 @@ cc_library(
     hdrs = ["part_properties.h"],
     deps = [
         "//intrinsic/icon/proto:service_cc_proto",
-        "//intrinsic/third_party/intops:strong_int",
+        "//intrinsic/production/external/intops:strong_int",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

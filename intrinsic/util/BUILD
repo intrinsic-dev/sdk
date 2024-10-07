@@ -25,7 +25,7 @@ cc_test(
 cc_library(
     name = "atomic_sequence_num",
     hdrs = ["atomic_sequence_num.h"],
-    deps = ["//intrinsic/third_party/intops:strong_int"],
+    deps = ["//intrinsic/production/external/intops:strong_int"],
 )
 
 cc_library(

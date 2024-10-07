@@ -5,7 +5,7 @@ package(default_visibility = ["//visibility:public"])
 copy_and_rename = "\n".join([
     "cp $< $@",
     # Replace XLS with INTRINSIC.
-    "sed -i 's/XLS_COMMON_/INTRINSIC_THIRD_PARTY_INTOPS_/g' $@",
+    "sed -i 's/XLS_COMMON_/INTRINSIC_PRODUCTION_EXTERNAL_INTOPS_/g' $@",
     "sed -i 's/xls/intrinsic/g' $@",
     "sed -i 's/XLS_DEFINE/DEFINE/g' $@",
 ])

@@ -21,7 +21,7 @@
 #include <atomic>
 #include <type_traits>
 
-#include "intrinsic/third_party/intops/strong_int.h"
+#include "intrinsic/production/external/intops/strong_int.h"
 
 namespace intrinsic {
 

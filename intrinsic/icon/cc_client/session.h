@@ -37,7 +37,7 @@
 #include "intrinsic/icon/release/source_location.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/platform/common/buffers/realtime_write_queue.h"
-#include "intrinsic/third_party/intops/strong_int.h"
+#include "intrinsic/production/external/intops/strong_int.h"
 #include "intrinsic/util/atomic_sequence_num.h"
 #include "intrinsic/util/grpc/channel_interface.h"
 #include "intrinsic/util/thread/thread.h"

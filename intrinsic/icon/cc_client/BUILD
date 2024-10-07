@@ -68,7 +68,7 @@ cc_library(
         "//intrinsic/icon/release:source_location",
         "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/platform/common/buffers:realtime_write_queue",
-        "//intrinsic/third_party/intops:strong_int",
+        "//intrinsic/production/external/intops:strong_int",
         "//intrinsic/util:atomic_sequence_num",
         "//intrinsic/util:proto_time",
         "//intrinsic/util/grpc:channel_interface",
