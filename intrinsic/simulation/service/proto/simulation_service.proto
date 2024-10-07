@@ -17,6 +17,7 @@ service SimulationService {
   // affected components such as ICON are in a working state.
   rpc ResetSimulation(ResetSimulationRequest) returns (google.protobuf.Empty) {
   }
+
 }
 
 // Request for resetting the current simulation.
