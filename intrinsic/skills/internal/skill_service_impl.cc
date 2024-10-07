@@ -428,7 +428,7 @@ grpc::Status SkillProjectorServiceImpl::GetFootprint(
   return ::grpc::Status::OK;
 }
 
-// intrinsic:*:insert
+
 grpc::Status SkillProjectorServiceImpl::Predict(
     grpc::ServerContext* context,
     const intrinsic_proto::skills::PredictRequest* req,
