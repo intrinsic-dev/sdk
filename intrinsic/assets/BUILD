@@ -1,6 +1,6 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-# Common code for assets (e.g., skills, resources).
+# Common code for assets.
 
 load("@rules_python//python:defs.bzl", "py_library")
 load("//bazel:go_macros.bzl", "go_library")
@@ -161,6 +161,7 @@ go_library(
     ],
     visibility = ["//intrinsic:internal_api_users"],
     deps = [
+        "//intrinsic/assets/proto:asset_type_go_proto",
         "//intrinsic/assets/proto:id_go_proto",
         "//intrinsic/assets/services/proto:service_manifest_go_proto",
         "//intrinsic/kubernetes/workcell_spec/proto:image_go_proto",
