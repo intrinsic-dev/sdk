@@ -2,6 +2,8 @@
 
 #include "intrinsic/icon/hardware_modules/loopback/loopback_hardware_module.h"
 
+#include <memory>
+
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
@@ -25,6 +27,8 @@
 #include "intrinsic/icon/utils/realtime_guard.h"
 #include "intrinsic/icon/utils/realtime_status.h"
 #include "intrinsic/icon/utils/realtime_status_macro.h"
+#include "intrinsic/math/gaussian_noise.h"
+#include "intrinsic/util/proto_time.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/thread/thread.h"
 #include "intrinsic/util/thread/thread_options.h"
@@ -43,7 +47,8 @@ using ::intrinsic_fbs::JointPositionState;
 using ::intrinsic_fbs::JointVelocityState;
 
 void LoopbackHardwareModule::RuntimeLoop() {
-  static const intrinsic::Duration roundtrip = intrinsic::Milliseconds(1);
+  const intrinsic::Duration roundtrip(
+      absl::ToChronoNanoseconds(cycle_duration_));
   LOG(ERROR) << "Entering runtime loop";
   while (module_state_ != ModuleState::kShutdown) {
     auto cycle_start_time = intrinsic::Clock::Now();
@@ -87,6 +92,10 @@ absl::Status LoopbackHardwareModule::Init(
   num_dofs_ = loopback_config.has_num_dof() ? loopback_config.num_dof() : 6;
   LOG(INFO) << "Configuring loopback module for " << num_dofs_ << " DOF";
 
+  noise_generator_ = std::make_unique<intrinsic::GaussianGenerator>(
+      bitgen_, /*mean=*/0.0,
+      loopback_config.sensed_joint_position_noise_stddev_rad());
+
   INTR_ASSIGN_OR_RETURN(
       joint_position_command_,
       interface_registry.AdvertiseStrictInterface<JointPositionCommand>(
@@ -120,6 +129,11 @@ absl::Status LoopbackHardwareModule::Init(
     LOG(INFO) << "ICON is driving the loopback hardware module clock.";
   } else {
     LOG(INFO) << "The loopback hardware module is driving ICON's clock.";
+
+    INTR_ASSIGN_OR_RETURN(
+        cycle_duration_,
+        intrinsic::ToAbslDuration(loopback_config.cycle_duration()));
+
     intrinsic::ThreadOptions thread_options = config.GetIconThreadOptions();
     thread_options.SetName("LoopbackHardwareModuleThread");
 
@@ -184,9 +198,15 @@ RealtimeStatus LoopbackHardwareModule::ApplyCommand() {
   INTRINSIC_RT_ASSIGN_OR_RETURN(const auto joint_position_command,
                                 joint_position_command_.Value());
   for (int i = 0; i < num_dofs_; ++i) {
+    double velocity = (joint_position_command->position()->Get(i) -
+                       joint_position_state_->position()->Get(i)) /
+                      absl::ToDoubleSeconds(cycle_duration_);
+
     joint_position_state_->mutable_position()->Mutate(
-        i, joint_position_command->position()->Get(i));
-    joint_velocity_state_->mutable_velocity()->Mutate(i, 0.0);
+        i, joint_position_command->position()->Get(i) +
+               noise_generator_->Generate());
+    joint_velocity_state_->mutable_velocity()->Mutate(
+        i, velocity + noise_generator_->Generate());
     joint_acceleration_state_->mutable_acceleration()->Mutate(i, 0.0);
   }
   return OkStatus();

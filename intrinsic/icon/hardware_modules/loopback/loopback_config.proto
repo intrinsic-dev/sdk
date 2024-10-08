@@ -4,7 +4,17 @@ syntax = "proto3";
 
 package intrinsic_proto.icon;
 
+import "google/protobuf/duration.proto";
+
 message LoopbackConfig {
   // Number of degrees of freedom. Defaults to 6 if not specified.
   optional int32 num_dof = 1;
+
+  // Standard deviation of the noise added to the sensed joint positions and
+  // velocities. Defaults to 0 if not specified. Unit is rad.
+  optional double sensed_joint_position_noise_stddev_rad = 2;
+
+  // The cycle duration of the loopback module. Used to compute the sensed
+  // velocity and to tick the realtime clock if it is driven by the module.
+  google.protobuf.Duration cycle_duration = 3;
 }

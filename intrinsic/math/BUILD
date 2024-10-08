@@ -40,6 +40,17 @@ cc_library(
 )
 
 cc_library(
+    name = "gaussian_noise",
+    srcs = ["gaussian_noise.cc"],
+    hdrs = ["gaussian_noise.h"],
+    deps = [
+        "//intrinsic/eigenmath",
+        "@com_google_absl//absl/random:bit_gen_ref",
+        "@com_google_absl//absl/random:distributions",
+    ],
+)
+
+cc_library(
     name = "twist",
     srcs = ["twist.cc"],
     hdrs = ["twist.h"],

@@ -5,20 +5,22 @@
 
 #include <atomic>
 #include <cstdint>
+#include <memory>
 
+#include "absl/random/random.h"
 #include "absl/status/status.h"
+#include "absl/time/time.h"
 #include "intrinsic/icon/control/realtime_clock_interface.h"
 #include "intrinsic/icon/control/safety/safety_messages.fbs.h"
 #include "intrinsic/icon/control/safety/safety_messages_utils.h"
 #include "intrinsic/icon/hal/hardware_interface_handle.h"
-#include "intrinsic/icon/hal/hardware_interface_registry.h"
 #include "intrinsic/icon/hal/hardware_interface_traits.h"
 #include "intrinsic/icon/hal/hardware_module_init_context.h"
 #include "intrinsic/icon/hal/hardware_module_interface.h"
 #include "intrinsic/icon/hal/interfaces/joint_command.fbs.h"
 #include "intrinsic/icon/hal/interfaces/joint_state.fbs.h"
-#include "intrinsic/icon/hal/module_config.h"
 #include "intrinsic/icon/utils/realtime_status.h"
+#include "intrinsic/math/gaussian_noise.h"
 #include "intrinsic/util/thread/thread.h"
 
 namespace loopback_module {
@@ -85,6 +87,11 @@ class LoopbackHardwareModule final
 
   std::atomic<ModuleState> module_state_;
   static_assert(decltype(module_state_)::is_always_lock_free);
+
+  absl::BitGen bitgen_;
+  std::unique_ptr<intrinsic::GaussianGenerator> noise_generator_;
+
+  absl::Duration cycle_duration_;
 };
 
 }  // namespace loopback_module
