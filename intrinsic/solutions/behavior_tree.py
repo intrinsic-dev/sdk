@@ -2026,16 +2026,22 @@ class NodeWithChildren(Node):
     if not children:
       self.children = []
     else:
-      self.children: List[Node] = [  # pytype: disable=annotation-type-mismatch  # always-use-return-annotations
-          _transform_to_optional_node(x) for x in children
-      ]
+      self.children: List[Node] = (
+          [  # pytype: disable=annotation-type-mismatch  # always-use-return-annotations
+              _transform_to_optional_node(x) for x in children
+          ]
+      )
     super().__init__()
 
   def set_children(self, *children: Node) -> Node:
     if isinstance(children[0], list):
-      self.children = [_transform_to_optional_node(x) for x in children[0]]  # pytype: disable=annotation-type-mismatch  # always-use-return-annotations
+      self.children = [
+          _transform_to_optional_node(x) for x in children[0]
+      ]  # pytype: disable=annotation-type-mismatch  # always-use-return-annotations
     else:
-      self.children = [_transform_to_optional_node(x) for x in children]  # pytype: disable=annotation-type-mismatch  # always-use-return-annotations
+      self.children = [
+          _transform_to_optional_node(x) for x in children
+      ]  # pytype: disable=annotation-type-mismatch  # always-use-return-annotations
 
     return self
 
@@ -2946,7 +2952,9 @@ class Loop(Node):
         protos.append(value)
       elif isinstance(value, skill_utils.MessageWrapper):
         if value.wrapped_message is not None:
-          protos.append(value.wrapped_message)  # pytype: disable=container-type-mismatch
+          protos.append(
+              value.wrapped_message
+          )  # pytype: disable=container-type-mismatch
       elif isinstance(value, object_world_resources.WorldObject):
         wo: object_world_resources.WorldObject = value
         protos.append(wo.reference)
