@@ -15,7 +15,7 @@ import "intrinsic/executive/proto/run_metadata.proto";
 // The Executive is responsible for executing and monitoring Behavior Trees.
 //
 // Given the declarative description in the form of a behavior tree, the
-// Executive executes the tree according to the defined semantics, for example
+// Executive executes the tree according to the defined semantics, for example,
 // by executing one child after the other for a sequence node. As part of the
 // execution it invokes skills according to the skill API contract.
 //
