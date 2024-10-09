@@ -39,8 +39,6 @@ namespace {
 constexpr LazyRE2 kSemverRegex = {
     R"reg(^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$)reg"};
 
-}  // namespace
-
 void StripSourceCodeInfo(
     google::protobuf::FileDescriptorSet& file_descriptor_set) {
   for (google::protobuf::FileDescriptorProto& file :
@@ -49,33 +47,23 @@ void StripSourceCodeInfo(
   }
 }
 
-namespace {
-
-struct MessageData {
-  std::string message_full_name;
-  const google::protobuf::FileDescriptorSet& file_descriptor_set;
-};
-
 // Add file descriptor set for a skill's parameter and clear source code info.
-absl::Status AddParameterDescription(
-    const MessageData& parameter_data,
-    std::unique_ptr<google::protobuf::Message> default_value,
-    intrinsic_proto::skills::Skill& skill_proto) {
-  intrinsic_proto::skills::ParameterDescription& parameter_description =
-      *skill_proto.mutable_parameter_description();
+absl::StatusOr<intrinsic_proto::skills::ParameterDescription>
+CreateParameterDescription(
+    const intrinsic_proto::skills::ParameterMetadata& metadata,
+    const google::protobuf::FileDescriptorSet& file_descriptor_set) {
+  intrinsic_proto::skills::ParameterDescription description;
 
-  parameter_description.set_parameter_message_full_name(
-      parameter_data.message_full_name);
+  description.set_parameter_message_full_name(metadata.message_full_name());
 
-  if (default_value != nullptr) {
-    parameter_description.mutable_default_value()->PackFrom(*default_value);
+  if (metadata.has_default_value()) {
+    *description.mutable_default_value() = metadata.default_value();
   }
 
-  *parameter_description.mutable_parameter_descriptor_fileset() =
-      parameter_data.file_descriptor_set;
+  *description.mutable_parameter_descriptor_fileset() = file_descriptor_set;
+
   SourceCodeInfoView source_code_info;
-  if (absl::Status status =
-          source_code_info.InitStrict(parameter_data.file_descriptor_set);
+  if (absl::Status status = source_code_info.InitStrict(file_descriptor_set);
       !status.ok()) {
     if (status.code() == absl::StatusCode::kInvalidArgument) {
       return status;
@@ -83,35 +71,30 @@ absl::Status AddParameterDescription(
     if (status.code() == absl::StatusCode::kNotFound) {
       LOG(INFO) << "parameter FileDescriptorSet missing source_code_info, "
                    "comment map will be empty.";
-      return absl::OkStatus();
+      return description;
     }
   }
 
   INTR_ASSIGN_OR_RETURN(
-      *parameter_description.mutable_parameter_field_comments(),
-      source_code_info.GetNestedFieldCommentMap(
-          parameter_data.message_full_name));
-  StripSourceCodeInfo(
-      *parameter_description.mutable_parameter_descriptor_fileset());
+      *description.mutable_parameter_field_comments(),
+      source_code_info.GetNestedFieldCommentMap(metadata.message_full_name()));
+  StripSourceCodeInfo(*description.mutable_parameter_descriptor_fileset());
 
-  return absl::OkStatus();
+  return description;
 }
 
 // Add file descriptor set for a skill's return and clear source code info.
-absl::Status AddReturnValueDescription(
-    const MessageData& return_value_data,
-    intrinsic_proto::skills::Skill& skill_proto) {
-  intrinsic_proto::skills::ReturnValueDescription& return_value_description =
-      *skill_proto.mutable_return_value_description();
+absl::StatusOr<intrinsic_proto::skills::ReturnValueDescription>
+CreateReturnDescription(
+    const intrinsic_proto::skills::ReturnMetadata& metadata,
+    const google::protobuf::FileDescriptorSet& file_descriptor_set) {
+  intrinsic_proto::skills::ReturnValueDescription description;
 
-  return_value_description.set_return_value_message_full_name(
-      return_value_data.message_full_name);
+  description.set_return_value_message_full_name(metadata.message_full_name());
 
-  *return_value_description.mutable_descriptor_fileset() =
-      return_value_data.file_descriptor_set;
+  *description.mutable_descriptor_fileset() = file_descriptor_set;
   SourceCodeInfoView source_code_info;
-  if (absl::Status status =
-          source_code_info.InitStrict(return_value_data.file_descriptor_set);
+  if (absl::Status status = source_code_info.InitStrict(file_descriptor_set);
       !status.ok()) {
     if (status.code() == absl::StatusCode::kInvalidArgument) {
       return status;
@@ -119,35 +102,16 @@ absl::Status AddReturnValueDescription(
     if (status.code() == absl::StatusCode::kNotFound) {
       LOG(INFO) << "return type FileDescriptorSet missing source_code_info, "
                    "comment map will be empty.";
-      return absl::OkStatus();
+      return description;
     }
   }
 
   INTR_ASSIGN_OR_RETURN(
-      *return_value_description.mutable_return_value_field_comments(),
-      source_code_info.GetNestedFieldCommentMap(
-          return_value_data.message_full_name));
-  StripSourceCodeInfo(*return_value_description.mutable_descriptor_fileset());
+      *description.mutable_return_value_field_comments(),
+      source_code_info.GetNestedFieldCommentMap(metadata.message_full_name()));
+  StripSourceCodeInfo(*description.mutable_descriptor_fileset());
 
-  return absl::OkStatus();
-}
-
-absl::Status AddFileDescriptorSetWithoutSourceCodeInfo(
-    std::unique_ptr<MessageData> parameter_data,
-    std::unique_ptr<MessageData> return_value_data,
-    std::unique_ptr<google::protobuf::Message> default_parameter_value,
-    intrinsic_proto::skills::Skill& skill_proto) {
-  if (parameter_data != nullptr) {
-    INTR_RETURN_IF_ERROR(AddParameterDescription(
-        *parameter_data, std::move(default_parameter_value), skill_proto));
-  }
-
-  if (return_value_data != nullptr) {
-    INTR_RETURN_IF_ERROR(
-        AddReturnValueDescription(*return_value_data, skill_proto));
-  }
-
-  return absl::OkStatus();
+  return description;
 }
 
 }  // namespace
@@ -179,27 +143,19 @@ absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
   skill.mutable_execution_options()->set_supports_cancellation(
       manifest.options().supports_cancellation());
 
-  INTR_RETURN_IF_ERROR(AddFileDescriptorSetWithoutSourceCodeInfo(
-      manifest.has_parameter()
-          ? absl::WrapUnique<MessageData>(new MessageData{
-                .message_full_name = manifest.parameter().message_full_name(),
-                .file_descriptor_set = parameter_file_descriptor_set,
-            })
-          : nullptr,
-      manifest.has_return_type()
-          ? absl::WrapUnique<MessageData>(new MessageData{
-                .message_full_name = manifest.return_type().message_full_name(),
-                .file_descriptor_set = return_value_file_descriptor_set,
-            })
-          : nullptr,
-      nullptr, skill));
-
   if (manifest.has_parameter()) {
-    if (manifest.parameter().has_default_value()) {
-      *skill.mutable_parameter_description()->mutable_default_value() =
-          manifest.parameter().default_value();
-    }
+    INTR_ASSIGN_OR_RETURN(
+        *skill.mutable_parameter_description(),
+        CreateParameterDescription(manifest.parameter(),
+                                   parameter_file_descriptor_set));
   }
+  if (manifest.has_return_type()) {
+    INTR_ASSIGN_OR_RETURN(
+        *skill.mutable_return_value_description(),
+        CreateReturnDescription(manifest.return_type(),
+                                return_value_file_descriptor_set));
+  }
+
   return skill;
 }
 
