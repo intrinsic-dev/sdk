@@ -31,5 +31,5 @@ message KinematicsComponent {
   intrinsic_proto.Vector3 axis = 11;
 
   // GetDof() and SetDof()-style functions operate on this value.
-  double raw_value = 3;
+  optional double raw_value = 3;
 }
