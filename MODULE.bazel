@@ -108,7 +108,6 @@ llvm = use_extension(
 llvm.toolchain(
     llvm_version = "18.1.4",
 )
-
 llvm.sysroot(
     label = "@com_googleapis_storage_chrome_linux_amd64_sysroot//:all_files",
     targets = ["linux-x86_64"],
