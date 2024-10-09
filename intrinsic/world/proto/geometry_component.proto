@@ -7,6 +7,13 @@ package intrinsic_proto.world;
 import "intrinsic/geometry/service/geometry_storage_refs.proto";
 import "intrinsic/math/proto/matrix.proto";
 
+// Runtime options for a Geometry.
+message GeometryOptions {
+  // If set, the octree will be filled on the inside when constructing the
+  // octree for distance queries.
+  optional bool fill_inside_for_distance_queries = 1;
+}
+
 // Component indicating the owning Entity has geometry (e.g. collision, visual,
 // etc.).
 message GeometryComponent {
@@ -26,6 +33,8 @@ message GeometryComponent {
 
     // A 4x4 affine transform matrix from reference frame to shape
     intrinsic_proto.Matrixd ref_t_shape_aff = 4;
+    // Runtime options for this geometry.
+    GeometryOptions options = 7;
   }
 
   // Used for the value type in proto map below.
