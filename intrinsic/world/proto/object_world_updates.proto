@@ -424,7 +424,6 @@ message UpdateObjectPropertiesRequest {
 
 // Request to update advanced properties of an entity such as its optional
 // components.
-// Next tag: 6
 message UpdateEntityPropertiesRequest {
   // Id of the world to be updated.
   string world_id = 1;
@@ -444,6 +443,7 @@ message UpdateEntityPropertiesRequest {
   // new physics component if none exists or otherwise overrides the existing
   // physics component.
   intrinsic_proto.world.PhysicsComponent physics_component = 3;
+
 }
 
 message CreateFrameRequest {
