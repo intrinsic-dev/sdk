@@ -9,7 +9,6 @@ from typing import List, Optional
 
 import grpc
 from intrinsic.perception.proto import camera_config_pb2
-from intrinsic.perception.proto import camera_params_pb2
 from intrinsic.perception.proto import camera_settings_pb2
 from intrinsic.perception.proto import capture_result_pb2
 from intrinsic.perception.service.proto import camera_server_pb2
@@ -187,56 +186,3 @@ class CameraClient:
         setting=setting,
     )
     self._camera_stub.UpdateCameraSetting(request)
-
-  def read_camera_params(self) -> camera_params_pb2.CameraParams:
-    """Returns a camera's intrinsic and distortion parameters.
-
-    The request may result in a NotFound error in which case the camera is
-    uncalibrated.
-
-    Returns:
-      A camera_params_pb2.CameraParams with the intrinsic and distortion
-      parameters.
-
-    Raises:
-      grpc.RpcError: A gRPC error occurred.
-    """
-    request = camera_server_pb2.ReadCameraParamsRequest(
-        camera_handle=self._camera_handle,
-    )
-    response = self._camera_stub.ReadCameraParams(request)
-    return response.camera_params
-
-  def update_camera_params(
-      self, camera_params: camera_params_pb2.CameraParams
-  ) -> None:
-    """Sets a camera's intrinsic and distortion parameters.
-
-    The function will also adapt the camera's image resolution to the dimensions
-    which are specified in the provided parameters.
-
-    Args:
-      camera_params: A camera_params_pb2.CameraParams with the intrinsic and
-        distortion parameters to update to.
-
-    Raises:
-      grpc.RpcError: A gRPC error occurred.
-    """
-    request = camera_server_pb2.UpdateCameraParamsRequest(
-        camera_handle=self._camera_handle,
-        camera_params=camera_params,
-    )
-    self._camera_stub.UpdateCameraParams(request)
-
-  def clear_camera_params(self) -> None:
-    """Removes camera parameters.
-
-    This effectively turns the camera into an "uncalibrated" state.
-
-    Raises:
-      grpc.RpcError: A gRPC error occurred.
-    """
-    request = camera_server_pb2.ClearCameraParamsRequest(
-        camera_handle=self._camera_handle,
-    )
-    self._camera_stub.ClearCameraParams(request)

@@ -8,7 +8,6 @@ import "google/protobuf/duration.proto";
 import "intrinsic/math/proto/pose.proto";
 import "intrinsic/perception/proto/camera_config.proto";
 import "intrinsic/perception/proto/camera_identifier.proto";
-import "intrinsic/perception/proto/camera_params.proto";
 import "intrinsic/perception/proto/camera_settings.proto";
 import "intrinsic/perception/proto/capture_result.proto";
 import "intrinsic/perception/proto/dimensions.proto";
@@ -75,23 +74,6 @@ service CameraServer {
   //   are using the same camera.
   rpc UpdateCameraSetting(UpdateCameraSettingRequest)
       returns (UpdateCameraSettingResponse) {}
-
-  // Returns a camera's intrinsic and distortion parameters.
-  // The request may result in a NotFound error in which case the camera is
-  // uncalibrated.
-  rpc ReadCameraParams(ReadCameraParamsRequest)
-      returns (ReadCameraParamsResponse) {}
-
-  // Sets a camera's intrinsic and distortion parameters.
-  // The function will also adapt the camera's image resolution to the
-  // dimensions which are specified in the provided parameters.
-  rpc UpdateCameraParams(UpdateCameraParamsRequest)
-      returns (UpdateCameraParamsResponse) {}
-
-  // Removes camera parameters.
-  // This effectively turns the camera into an "uncalibrated" state.
-  rpc ClearCameraParams(ClearCameraParamsRequest)
-      returns (ClearCameraParamsResponse) {}
 }
 
 // In the future, this proto may contain a filter property to specify which
@@ -241,27 +223,6 @@ message UpdateCameraSettingRequest {
 // The response for setting camera parameters. This is currently a  mere
 // placeholder for future response values.
 message UpdateCameraSettingResponse {}
-
-message ReadCameraParamsRequest {
-  string camera_handle = 1;
-}
-
-message ReadCameraParamsResponse {
-  CameraParams camera_params = 1;
-}
-
-message UpdateCameraParamsRequest {
-  string camera_handle = 1;
-  CameraParams camera_params = 2;
-}
-
-message UpdateCameraParamsResponse {}
-
-message ClearCameraParamsRequest {
-  string camera_handle = 1;
-}
-
-message ClearCameraParamsResponse {}
 
 message DescribeCameraRequest {
   string camera_handle = 1;

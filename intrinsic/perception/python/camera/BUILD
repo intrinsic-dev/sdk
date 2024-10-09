@@ -45,7 +45,6 @@ py_library(
     srcs_version = "PY3",
     deps = [
         "//intrinsic/perception/proto:camera_config_py_pb2",
-        "//intrinsic/perception/proto:camera_params_py_pb2",
         "//intrinsic/perception/proto:camera_settings_py_pb2",
         "//intrinsic/perception/proto:capture_result_py_pb2",
         "//intrinsic/perception/service/proto:camera_server_py_pb2",
@@ -66,7 +65,6 @@ py_library(
         "//intrinsic/hardware/proto:settings_py_pb2",
         "//intrinsic/math/python:pose3",
         "//intrinsic/perception/proto:camera_config_py_pb2",
-        "//intrinsic/perception/proto:camera_params_py_pb2",
         "//intrinsic/resources/proto:resource_handle_py_pb2",
         "//intrinsic/skills/proto:equipment_py_pb2",
         "//intrinsic/skills/python:proto_utils",

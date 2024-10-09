@@ -16,7 +16,6 @@ proto_library(
         "//intrinsic/math/proto:pose_proto",
         "//intrinsic/perception/proto:camera_config",
         "//intrinsic/perception/proto:camera_identifier_proto",
-        "//intrinsic/perception/proto:camera_params_proto",
         "//intrinsic/perception/proto:camera_settings_proto",
         "//intrinsic/perception/proto:capture_result_proto",
         "//intrinsic/perception/proto:dimensions_proto",

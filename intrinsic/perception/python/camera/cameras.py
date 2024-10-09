@@ -13,7 +13,6 @@ import grpc
 from intrinsic.hardware.proto import settings_pb2
 from intrinsic.math.python import pose3
 from intrinsic.perception.proto import camera_config_pb2
-from intrinsic.perception.proto import camera_params_pb2
 from intrinsic.perception.python.camera import camera_client
 from intrinsic.perception.python.camera import data_classes
 from intrinsic.resources.proto import resource_handle_pb2
@@ -722,51 +721,4 @@ class Camera:
       self._client.update_camera_setting(setting=setting)
     except grpc.RpcError as e:
       logging.warning("Could not update camera setting.")
-      raise e
-
-  def read_camera_params(self) -> data_classes.CameraParams:
-    """Read the camera params.
-
-    Returns:
-      The current camera parameters, including the configured resolution, camera
-        intrinsics, and optionally distortion parameters if calibrated.
-
-    Raises:
-      grpc.RpcError: A gRPC error occurred.
-    """
-    try:
-      camera_params_proto = self._client.read_camera_params()
-      return data_classes.CameraParams(camera_params_proto)
-    except grpc.RpcError as e:
-      logging.warning("Could not read camera params.")
-      raise e
-
-  def update_camera_params(
-      self, camera_params: camera_params_pb2.CameraParams
-  ) -> None:
-    """Update the camera params.
-
-    Args:
-      camera_params: The desired camera params containing resolution, camera
-        intrinsics, and optionally distortion parameters.
-
-    Raises:
-      grpc.RpcError: A gRPC error occurred.
-    """
-    try:
-      self._client.update_camera_params(camera_params=camera_params)
-    except grpc.RpcError as e:
-      logging.warning("Could not update camera params.")
-      raise e
-
-  def clear_camera_params(self) -> None:
-    """Clear the camera params.
-
-    Raises:
-      grpc.RpcError: A gRPC error occurred.
-    """
-    try:
-      self._client.clear_camera_params()
-    except grpc.RpcError as e:
-      logging.warning("Could not clear camera params.")
       raise e
