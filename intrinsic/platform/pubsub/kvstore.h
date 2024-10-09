@@ -78,6 +78,9 @@ class KeyValueStore {
   absl::Status GetAll(absl::string_view key, const WildcardQueryConfig& config,
                       KeyValueCallback callback);
 
+  // Deletes the key from the KVStore.
+  absl::Status Delete(absl::string_view key, const NamespaceConfig& config);
+
  private:
   // Sets the value for the given key. A key can't include any of the following
   // characters: /, *, ?, #, [ and ].

@@ -20,6 +20,7 @@
 #include "intrinsic/platform/pubsub/kvstore.h"
 #include "intrinsic/platform/pubsub/publisher.h"
 #include "intrinsic/platform/pubsub/subscription.h"
+#include "pybind11/cast.h"
 #include "pybind11_abseil/no_throw_status.h"
 #include "pybind11_abseil/status_casters.h"
 #include "pybind11_protobuf/native_proto_caster.h"
@@ -174,7 +175,9 @@ PYBIND11_MODULE(pubsub, m) {
            pybind11::arg("timeout") = 10)
       .def("GetAll", &KeyValueStore::GetAll, pybind11::arg("key"),
            pybind11::arg("config") = WildcardQueryConfig{},
-           pybind11::arg("callback") = nullptr);
+           pybind11::arg("callback") = nullptr)
+      .def("Delete", &KeyValueStore::Delete, pybind11::arg("key"),
+           pybind11::arg("config") = NamespaceConfig{});
 
   // The python GIL does not need to be locked during the entire destructor
   // of this class. Instead, the custom deleter provided during its

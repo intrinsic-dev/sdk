@@ -100,4 +100,17 @@ absl::Status KeyValueStore::GetAll(absl::string_view keyexpr,
   return absl::OkStatus();
 }
 
+absl::Status KeyValueStore::Delete(absl::string_view key,
+                                   const NamespaceConfig& config) {
+  INTR_RETURN_IF_ERROR(intrinsic::ValidZenohKey(key));
+  INTR_ASSIGN_OR_RETURN(absl::StatusOr<std::string> prefixed_name,
+                        ZenohHandle::add_key_prefix(key));
+  imw_ret_t ret = Zenoh().imw_delete_keyexpr(prefixed_name->c_str());
+  if (ret != IMW_OK) {
+    return absl::InternalError(
+        absl::StrFormat("Error deleting a key, return code: %d", ret));
+  }
+  return absl::OkStatus();
+}
+
 }  // namespace intrinsic
