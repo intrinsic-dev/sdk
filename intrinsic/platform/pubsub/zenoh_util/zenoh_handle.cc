@@ -138,6 +138,7 @@ void ZenohHandle::Initialize() {
   GET_FUNCTION_PTR(handle, imw_queryable_reply);
   GET_FUNCTION_PTR(handle, imw_query);
   GET_FUNCTION_PTR(handle, imw_set);
+  GET_FUNCTION_PTR(handle, imw_delete_keyexpr);
 }
 
 absl::StatusOr<std::string> ZenohHandle::add_topic_prefix(

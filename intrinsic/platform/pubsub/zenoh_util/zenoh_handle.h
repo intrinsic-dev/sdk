@@ -103,6 +103,8 @@ struct ZenohHandle {
       void *user_context)>
       imw_query;
 
+  std::add_pointer_t<imw_ret_t(const char *keyexp)> imw_delete_keyexpr;
+
   std::add_pointer_t<const char *const()> imw_version;
 
   static absl::StatusOr<std::string> add_topic_prefix(absl::string_view topic);
