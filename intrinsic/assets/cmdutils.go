@@ -45,8 +45,6 @@ const (
 	KeyFilter = "filter"
 	// KeyIgnoreExisting is the name of the flag to ignore AlreadyExists errors.
 	KeyIgnoreExisting = "ignore_existing"
-	// KeyInstallerAddress is the name of the installer address flag.
-	KeyInstallerAddress = "installer_address"
 	// KeyManifestFile is the file path to the manifest binary.
 	KeyManifestFile = "manifest_file"
 	// KeyManifestTarget is the build target to the skill manifest.
@@ -179,19 +177,6 @@ When not running the cluster on localhost, this should be the address of the rel
 // AddFlagAddress.
 func (cf *CmdFlags) GetFlagAddress() string {
 	return cf.GetString(KeyAddress)
-}
-
-// AddFlagInstallerAddress adds a flag for the installer service address.
-func (cf *CmdFlags) AddFlagInstallerAddress() {
-	cf.OptionalEnvString(KeyInstallerAddress, "xfa.lan:17080", `The address of the installer service.
-When not running the cluster on localhost, this should be the address of the relay
-(e.g.: dns:///www.endpoints.<gcp_project_name>.cloud.goog:443).`)
-}
-
-// GetFlagInstallerAddress gets th value of the installer address flag added by
-// AddFlagInstallerAddress.
-func (cf *CmdFlags) GetFlagInstallerAddress() string {
-	return cf.GetString(KeyInstallerAddress)
 }
 
 // AddFlagsAddressClusterSolution adds flags for the address, cluster, and solution when installing
@@ -335,7 +320,7 @@ func (cf *CmdFlags) GetFlagSkillReleaseType() string {
 
 // AddFlagSideloadContext adds a flag for the context when side-loading an asset.
 func (cf *CmdFlags) AddFlagSideloadContext() {
-	cf.OptionalEnvString(KeyContext, "", fmt.Sprintf("The Kubernetes cluster to use. Required unless using localhost for %s.", KeyInstallerAddress))
+	cf.OptionalEnvString(KeyContext, "", fmt.Sprintf("The Kubernetes cluster to use. Required unless using localhost for %s.", KeyAddress))
 }
 
 // GetFlagSideloadContext gets the value of the context flag added by AddFlagSideloadContext.
