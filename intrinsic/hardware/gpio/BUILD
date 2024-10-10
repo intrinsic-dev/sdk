@@ -1,5 +1,6 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
+load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 load("//bazel:go_macros.bzl", "go_proto_library")
 
@@ -54,4 +55,13 @@ go_proto_library(
 cc_proto_library(
     name = "gpio_service_cc_proto",
     deps = [":gpio_service_proto"],
+)
+
+cc_grpc_library(
+    name = "gpio_service_cc_grpc_proto",
+    srcs = [":gpio_service_proto"],
+    generate_mocks = True,
+    grpc_only = True,
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [":gpio_service_cc_proto"],
 )

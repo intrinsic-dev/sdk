@@ -71,6 +71,11 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "exit_code",
+    hdrs = ["exit_code.h"],
+)
+
 go_binary(
     name = "init_hwm",
     srcs = ["init_hwm.go"],
