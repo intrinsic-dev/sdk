@@ -3,6 +3,7 @@
 #ifndef INTRINSIC_ICON_HAL_INTERFACES_JOINT_COMMAND_UTILS_H_
 #define INTRINSIC_ICON_HAL_INTERFACES_JOINT_COMMAND_UTILS_H_
 
+#include "flatbuffers/detached_buffer.h"
 #include "flatbuffers/flatbuffers.h"
 #include "intrinsic/icon/hal/interfaces/joint_command.fbs.h"
 

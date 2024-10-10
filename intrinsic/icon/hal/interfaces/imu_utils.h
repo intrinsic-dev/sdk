@@ -3,6 +3,7 @@
 #ifndef INTRINSIC_ICON_HAL_INTERFACES_IMU_UTILS_H_
 #define INTRINSIC_ICON_HAL_INTERFACES_IMU_UTILS_H_
 
+#include "flatbuffers/detached_buffer.h"
 #include "flatbuffers/flatbuffers.h"
 #include "intrinsic/icon/hal/interfaces/imu.fbs.h"
 
