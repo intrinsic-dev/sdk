@@ -169,11 +169,10 @@ func ProcessSkill(path string, opts ProcessSkillOpts) (*psmpb.ProcessedSkillMani
 		Assets: processedAssets,
 	}
 	m := &psmpb.SkillMetadata{
-		Id:                    manifest.GetId(),
-		Vendor:                manifest.GetVendor(),
-		Documentation:         manifest.GetDocumentation(),
-		ExtendedDocumentation: manifest.GetExtendedDocumentation(),
-		DisplayName:           manifest.GetDisplayName(),
+		Id:            manifest.GetId(),
+		Vendor:        manifest.GetVendor(),
+		Documentation: manifest.GetDocumentation(),
+		DisplayName:   manifest.GetDisplayName(),
 	}
 	// We do this to avoid adding empty sub messages.
 	if !proto.Equal(m, &psmpb.SkillMetadata{}) {

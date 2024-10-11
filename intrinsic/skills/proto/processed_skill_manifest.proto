@@ -20,14 +20,10 @@ message SkillMetadata {
   // Documentation about the skill which will be shown to users. This field
   // should contain the description of the skill as a summary.
   intrinsic_proto.assets.Documentation documentation = 3;
-  // Extended documentation about the skill which will be shown to users.
-  // This field contains additional information about the skill that is used
-  // by automatic skill documentation generation tools. It is optional and can
-  // be left empty. However, only skills that specify this field will be
-  // included in automatic skill documentation generation.
-  optional ExtendedDocumentation extended_documentation = 4;
   // The display name of the skill to be shown in the UI.
   string display_name = 5;
+
+  reserved 4;
 }
 
 message SkillDetails {
