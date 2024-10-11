@@ -168,7 +168,4 @@ service InstallerService {
   // Removes a (eg. 3rd party) container addon from the cluster
   rpc RemoveContainerAddon(RemoveContainerAddonRequest)
       returns (google.protobuf.Empty) {}
-  // Uninstalls a service from the cluster.
-  rpc UninstallService(UninstallServiceRequest)
-      returns (google.protobuf.Empty) {}
 }
