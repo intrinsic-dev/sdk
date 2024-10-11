@@ -6,3 +6,4 @@ bazel-sdk
 bazel-out
 bazel-testlogs
 .release_version
+MODULE.bazel.lock
