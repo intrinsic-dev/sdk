@@ -183,7 +183,7 @@ func (cf *CmdFlags) GetFlagAddress() string {
 // or working with installed assets.
 func (cf *CmdFlags) AddFlagsAddressClusterSolution() {
 	cf.OptionalString(KeyAddress, "", "Internal flag to directly set the API server address.")
-	cf.OptionalString(KeyCluster, "", "The target Kubernetes cluster.")
+	cf.OptionalEnvString(KeyCluster, "", "The target Kubernetes cluster.")
 	cf.OptionalEnvString(KeySolution, "", "The target solution. Must be deployed.")
 
 	cf.cmd.MarkFlagsMutuallyExclusive(KeyCluster, KeySolution)
