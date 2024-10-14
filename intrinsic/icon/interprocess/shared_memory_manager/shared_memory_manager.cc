@@ -122,7 +122,7 @@ SharedMemoryManager::~SharedMemoryManager() {
 
 const SegmentHeader* SharedMemoryManager::GetSegmentHeader(
     absl::string_view name) {
-  uint8_t* header = GetRawHeader(name);
+  uint8_t* header = GetRawSegment(name);
   return reinterpret_cast<SegmentHeader*>(header);
 }
 
@@ -189,10 +189,6 @@ absl::Status SharedMemoryManager::InitSegment(absl::string_view name,
   memory_segments_.insert(
       {name_str, {.data = data, .must_be_used = must_be_used, .fd = shm_fd}});
   return absl::OkStatus();
-}
-
-uint8_t* SharedMemoryManager::GetRawHeader(absl::string_view name) {
-  return GetRawSegment(name);
 }
 
 uint8_t* SharedMemoryManager::GetRawValue(absl::string_view name) {

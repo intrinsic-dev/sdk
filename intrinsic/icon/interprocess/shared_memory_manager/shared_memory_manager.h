@@ -233,7 +233,9 @@ class SharedMemoryManager final {
     return absl::OkStatus();
   }
 
-  // Returns a pointer to the untyped shared memory value.
+  // Returns a pointer to the untyped payload in the shared memory segment.
+  // Memory layout is described in
+  // intrinsic/icon/interprocess/shared_memory_manager/segment_header.h
   // This function might be used when access to the underlying generic memory
   // location is needed, e.g. via `std::memcpy`. One typical use case is to copy
   // a flatbuffer (or any other serialized data struct) into a shared memory
@@ -261,8 +263,10 @@ class SharedMemoryManager final {
   absl::Status InitSegment(absl::string_view name, bool must_be_used,
                            size_t segment_size, const std::string& type_id);
 
-  uint8_t* GetRawHeader(absl::string_view name);
-
+  // Returns a pointer to the start of the memory segment.
+  // The SegmentHeader of this segment lives at the address this pointer
+  // indicates.
+  // Returns nullptr if the segment with the given name does not exist.
   uint8_t* GetRawSegment(absl::string_view name);
 
   // Can be generated from memory_segments_, but it's more efficient to simply
