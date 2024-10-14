@@ -162,13 +162,25 @@ absl::Status SharedMemoryManager::InitSegment(absl::string_view name,
         absl::StrCat("Unable to resize shared memory segment \"", name,
                      "\" with error: ", strerror(errno), "."));
   }
-  auto* data = static_cast<uint8_t*>(mmap(
-      nullptr, segment_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0));
+
+  auto* data =
+      static_cast<uint8_t*>(mmap(nullptr, segment_size, PROT_READ | PROT_WRITE,
+                                 MAP_SHARED | MAP_LOCKED, shm_fd, 0));
   if (data == nullptr) {
     return absl::InternalError(
         absl::StrCat("Unable to map shared memory segment \"", name,
                      "\" with error: ", strerror(errno), "."));
   }
+
+  // Additionally locking the pages as recommended by
+  // https://man7.org/linux/man-pages/man2/mmap.2.html, because major faults are
+  // not acceptable after the initialization of the mapping.
+  if (mlock(/*__addr=*/data, /*__len=*/segment_size) != 0) {
+    return absl::InternalError(
+        absl::StrCat("Unable to mlock shared memory segment \"", name,
+                     "\" with error: ", strerror(errno), "."));
+  }
+
   const std::string name_str(name);
   segment_name_to_file_descriptor_map_.insert({name_str, shm_fd});
   // We use a placement new operator here to initialize the "raw" segment

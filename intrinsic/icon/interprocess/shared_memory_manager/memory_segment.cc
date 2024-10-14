@@ -54,12 +54,22 @@ absl::StatusOr<uint8_t*> MemorySegment::Get(
   }
 
   // Note: This mapping survives closing the file descriptor.
-  uint8_t* data = static_cast<uint8_t*>(mmap(
-      nullptr, segment_size, PROT_WRITE | PROT_READ, MAP_SHARED, shm_fd, 0));
+  uint8_t* data =
+      static_cast<uint8_t*>(mmap(nullptr, segment_size, PROT_WRITE | PROT_READ,
+                                 MAP_SHARED | MAP_LOCKED, shm_fd, 0));
   if (data == nullptr) {
     return absl::InternalError(
         absl::StrCat("Unable to map shared memory segment: ", name, " [",
                      strerror(errno), "]"));
+  }
+
+  // Additionally locking the pages as recommended by
+  // https://man7.org/linux/man-pages/man2/mmap.2.html, because major faults are
+  // not acceptable after the initialization of the mapping.
+  if (mlock(/*__addr=*/data, /*__len=*/segment_size) != 0) {
+    return absl::InternalError(
+        absl::StrCat("Unable to mlock shared memory segment \"", name,
+                     "\" with error: ", strerror(errno), "."));
   }
 
   return data;
