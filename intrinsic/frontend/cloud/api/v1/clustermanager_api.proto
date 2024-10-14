@@ -11,6 +11,7 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "intrinsic/frontend/cloud/api/clusterdeletion_api.proto";
+import "intrinsic/util/status/extended_status.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 // Clusterwide states that describe the overall state of the cluster.
@@ -50,7 +51,7 @@ enum UpdateState {
 // This is the publicly accessible subset of the intrinsic_proto.config.Cluster
 // object.
 //
-// next number is 23
+// next number is 24
 message Cluster {
   // name shown to admins - globally unique
   string cluster_name = 1;
@@ -72,6 +73,7 @@ message Cluster {
   UpdateState update_state = 17;  // update status (running/pending/fault/...)
   repeated IPCNode ipc_nodes = 21;
   IntrinsicBaseManager intrinsic_base_manager = 22;
+  repeated intrinsic_proto.status.ExtendedStatus extended_statuses = 23;
   // removed fields:
   reserved 10, 11, 12;
   reserved "is_public", "is_mine", "is_shared";
