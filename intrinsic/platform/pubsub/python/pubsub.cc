@@ -8,6 +8,7 @@
 #include <pybind11/stl.h>
 
 #include <memory>
+#include <string>
 #include <string_view>
 #include <utility>
 
@@ -81,10 +82,11 @@ absl::StatusOr<KeyValueStore> CreateKeyValueStore(PubSub* self) {
   return self->KeyValueStore();
 }
 
-absl::StatusOr<std::unique_ptr<google::protobuf::Any>> Get(
-    KeyValueStore* self, const std::string& key, const NamespaceConfig& config,
-    int timeout) {
-  return self->Get(key, config, absl::Seconds(timeout));
+absl::StatusOr<google::protobuf::Any> Get(KeyValueStore* self,
+                                          const std::string& key,
+                                          const NamespaceConfig& config,
+                                          int timeout) {
+  return self->Get<google::protobuf::Any>(key, config, absl::Seconds(timeout));
 }
 
 struct PySubscriptionDeleter {

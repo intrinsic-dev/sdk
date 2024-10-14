@@ -20,9 +20,9 @@
 
 namespace intrinsic {
 
-absl::Status KeyValueStore::SetAny(absl::string_view key,
-                                   const google::protobuf::Any& value,
-                                   const NamespaceConfig& config) {
+absl::Status KeyValueStore::Set(absl::string_view key,
+                                const google::protobuf::Any& value,
+                                const NamespaceConfig& config) {
   INTR_RETURN_IF_ERROR(intrinsic::ValidZenohKeyexpr(key));
   absl::StatusOr<std::string> prefixed_name = ZenohHandle::add_key_prefix(key);
   if (!prefixed_name.ok()) {
@@ -39,25 +39,27 @@ absl::Status KeyValueStore::SetAny(absl::string_view key,
   return absl::OkStatus();
 }
 
-absl::StatusOr<std::unique_ptr<google::protobuf::Any>> KeyValueStore::Get(
+absl::StatusOr<google::protobuf::Any> KeyValueStore::GetAny(
     absl::string_view key, const NamespaceConfig& config,
     absl::Duration timeout) {
   INTR_RETURN_IF_ERROR(intrinsic::ValidZenohKey(key));
   INTR_ASSIGN_OR_RETURN(absl::StatusOr<std::string> prefixed_name,
                         ZenohHandle::add_key_prefix(key));
-  auto value = std::make_unique<google::protobuf::Any>();
+  google::protobuf::Any value;
   absl::Notification notif;
   absl::Status lambda_status = absl::OkStatus();
+  // We can capture all variables by reference because we wait for the
+  // callback's termination before returning from the synchronous Get() method.
+  // This ensures that all local variables will outlive the callback.
   auto callback = std::make_unique<imw_callback_functor_t>(
-      [value = value.get(), notif = &notif, lambda_status = &lambda_status](
-          const char* keyexpr, const void* response_bytes,
+      [&](const char* keyexpr, const void* response_bytes,
           const size_t response_bytes_len) {
-        bool ok = value->ParseFromString(absl::string_view(
+        bool ok = value.ParseFromString(absl::string_view(
             static_cast<const char*>(response_bytes), response_bytes_len));
         if (!ok) {
-          *lambda_status = absl::InternalError("Failed to parse response");
+          lambda_status = absl::InternalError("Failed to parse response");
         }
-        notif->Notify();
+        notif.Notify();
       });
   imw_ret ret = Zenoh().imw_query(prefixed_name->c_str(), zenoh_static_callback,
                                   nullptr, 0, callback.get());
