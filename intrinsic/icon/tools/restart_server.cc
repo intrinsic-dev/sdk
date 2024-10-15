@@ -16,10 +16,8 @@
 #include "intrinsic/util/status/status_macros.h"
 
 ABSL_FLAG(std::string, server, "xfa.lan:17080", "Address of the ICON Server");
-ABSL_FLAG(
-    std::string, instance, "",
-    "Optional name of the ICON instance. Use this to select a specific ICON "
-    "instance if multiple ones are running behind an ingress server.");
+ABSL_FLAG(std::string, instance, "robot_controller",
+          "Name of the ICON service/resource instance.");
 
 const char* UsageString() {
   return R"(
