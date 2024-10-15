@@ -37,7 +37,7 @@ const SegmentHeader& MemorySegment::Header() const {
   return *header_;
 }
 
-absl::StatusOr<uint8_t*> MemorySegment::Get(
+absl::StatusOr<MemorySegment::SegmentDescriptor> MemorySegment::Get(
     const SegmentNameToFileDescriptorMap& segment_name_to_file_descriptor_map,
     absl::string_view name) {
   int shm_fd = -1;
@@ -64,20 +64,22 @@ absl::StatusOr<uint8_t*> MemorySegment::Get(
         absl::StrCat("Failed to read size of segment '", name,
                      "'. 'fstat' failed with:", strerror(errno)));
   }
-  auto file_size = shared_memory_stats.st_size;
+  SegmentDescriptor segment_info;
+
+  segment_info.size = shared_memory_stats.st_size;
 
   // The segment needs to be at least the size of a SegmentHeader!
-  if (file_size <= sizeof(SegmentHeader)) {
+  if (segment_info.size <= sizeof(SegmentHeader)) {
     return absl::InternalError(
         absl::StrCat("Shared memory segment ", name,
                      " must be bigger than the SegmentHeader."));
   }
 
   // Note: This mapping survives closing the file descriptor.
-  uint8_t* data =
-      static_cast<uint8_t*>(mmap(nullptr, file_size, PROT_WRITE | PROT_READ,
-                                 MAP_SHARED | MAP_LOCKED, shm_fd, 0));
-  if (data == nullptr) {
+  segment_info.segment_start = static_cast<uint8_t*>(
+      mmap(nullptr, segment_info.size, PROT_WRITE | PROT_READ,
+           MAP_SHARED | MAP_LOCKED, shm_fd, 0));
+  if (segment_info.segment_start == nullptr) {
     return absl::InternalError(
         absl::StrCat("Unable to map shared memory segment: ", name, " [",
                      strerror(errno), "]"));
@@ -86,13 +88,14 @@ absl::StatusOr<uint8_t*> MemorySegment::Get(
   // Additionally locking the pages as recommended by
   // https://man7.org/linux/man-pages/man2/mmap.2.html, because major faults are
   // not acceptable after the initialization of the mapping.
-  if (mlock(/*__addr=*/data, /*__len=*/file_size) != 0) {
+  if (mlock(/*__addr=*/segment_info.segment_start,
+            /*__len=*/segment_info.size) != 0) {
     return absl::InternalError(
         absl::StrCat("Unable to mlock shared memory segment \"", name,
                      "\" with error: ", strerror(errno), "."));
   }
 
-  return data;
+  return segment_info;
 }
 
 MemorySegment::MemorySegment(absl::string_view name, uint8_t* segment)

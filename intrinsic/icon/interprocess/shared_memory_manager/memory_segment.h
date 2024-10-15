@@ -10,7 +10,9 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/domain_socket_utils.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_header.h"
@@ -26,6 +28,18 @@ namespace intrinsic::icon {
 // create these.
 class MemorySegment {
  public:
+  // Shared memory layout is: SegmentHeader | Data.
+  struct SegmentDescriptor {
+    // The starting address of the shared memory segment. Points to the
+    // SegmentHeader.
+    // Shared memory layout is described in:
+    // intrinsic/icon/interprocess/shared_memory_manager/segment_header.h
+    uint8_t* segment_start;
+    // The size of the shared memory segment. This is the size of the entire
+    // segment, including the SegmentHeader.
+    size_t size;
+  };
+
   // Returns whether the memory segment is initialized and points to a valid
   // shared memory location. Returns false if the segment class is default
   // constructed.
@@ -46,14 +60,16 @@ class MemorySegment {
  protected:
   MemorySegment() = default;
 
-  // Accesses the shared memory location with `name`.
-  // Returns a pointer to the untyped memory segment and maps it into
+  // Accesses the shared memory location with `name` and maps it into
   // user-space.
+  // Returns the pointer and the size of the shared memory segment.
   // Returns NotFoundError if the shared memory segment with the given
   // name is not in `segment_name_to_file_descriptor_map` e.g. not previously
   // allocated by a `SharedMemoryManager`.
-  // Returns InternalError if mapping the segment fails.
-  static absl::StatusOr<uint8_t*> Get(
+  // Returns InternalError if mapping the segment fails, or if the size of the
+  // segment is too small to hold a SegmentHeader and at least one byte of
+  // payload.
+  static absl::StatusOr<SegmentDescriptor> Get(
       const SegmentNameToFileDescriptorMap& segment_name_to_file_descriptor_map,
       absl::string_view name);
 
@@ -87,14 +103,24 @@ class ReadOnlyMemorySegment final : public MemorySegment {
   // Returns NotFoundError if the shared memory segment with the given
   // name is not in `segment_name_to_file_descriptor_map` e.g. not previously
   // allocated by a `SharedMemoryManager`.
-  // Returns InternalError if mapping the segment fails.
+  // Returns InternalError if mapping the segment fails, or if the size of the
+  // segment is too small to hold a SegmentHeader and at least sizeof(T) bytes.
   static absl::StatusOr<ReadOnlyMemorySegment> Get(
       const SegmentNameToFileDescriptorMap& segment_name_to_file_descriptor_map,
       absl::string_view segment_name) {
     INTR_ASSIGN_OR_RETURN(
-        uint8_t* segment,
+        SegmentDescriptor segment_info,
         MemorySegment::Get(segment_name_to_file_descriptor_map, segment_name));
-    return ReadOnlyMemorySegment<T>(segment_name, segment);
+    // Check is only accurate for flat data types, but at
+    // least checks a lower bound.
+    size_t minimal_size = sizeof(T) + sizeof(SegmentHeader);
+    if (segment_info.size < minimal_size) {
+      return absl::InternalError(absl::StrCat(
+          "Shared memory segment '", segment_name, "' of size ",
+          segment_info.size, "bytes must be >= ", minimal_size, "bytes."));
+    }
+
+    return ReadOnlyMemorySegment<T>(segment_name, segment_info.segment_start);
   }
 
   ReadOnlyMemorySegment() = default;
@@ -140,14 +166,25 @@ class ReadWriteMemorySegment final : public MemorySegment {
   // Returns NotFoundError if the shared memory segment with the given
   // name is not in `segment_name_to_file_descriptor_map` e.g. not previously
   // allocated by a `SharedMemoryManager`.
-  // Returns InternalError if mapping the segment fails.
+  // Returns InternalError if mapping the segment fails, or if the size of the
+  // segment is too small to hold a SegmentHeader and at least sizeof(T) bytes.
   static absl::StatusOr<ReadWriteMemorySegment> Get(
       const SegmentNameToFileDescriptorMap& segment_name_to_file_descriptor_map,
       absl::string_view segment_name) {
     INTR_ASSIGN_OR_RETURN(
-        uint8_t* segment,
+        SegmentDescriptor segment_info,
         MemorySegment::Get(segment_name_to_file_descriptor_map, segment_name));
-    return ReadWriteMemorySegment<T>(segment_name, segment);
+
+    // Check is only accurate for flat data types, but at least checks a lower
+    // bound.
+    size_t minimal_size = sizeof(T) + sizeof(SegmentHeader);
+    if (segment_info.size < minimal_size) {
+      return absl::InternalError(absl::StrCat(
+          "Shared memory segment '", segment_name, "' of size ",
+          segment_info.size, "bytes must be >= ", minimal_size, "bytes."));
+    }
+
+    return ReadWriteMemorySegment<T>(segment_name, segment_info.segment_start);
   }
 
   ReadWriteMemorySegment() = default;
