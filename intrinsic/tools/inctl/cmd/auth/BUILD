@@ -14,6 +14,7 @@ go_library(
         "revoke.go",
     ],
     deps = [
+        "//intrinsic/config:environments",
         "//intrinsic/kubernetes/accounts/service/api:discoveryv1api_go_grpc_proto",
         "//intrinsic/skills/tools/skill/cmd:dialerutil",
         "//intrinsic/tools/inctl/auth",

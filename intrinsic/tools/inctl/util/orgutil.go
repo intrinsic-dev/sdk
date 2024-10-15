@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	env "intrinsic/config/environments"
 	"intrinsic/tools/inctl/auth"
 	"intrinsic/tools/inctl/util/viperutil"
 )
@@ -24,12 +25,6 @@ const (
 	//
 	// The environment can be one of prod, staging or dev.
 	KeyEnvironment = "env"
-	// ProdEnvironment is the value for KeyEnvironment for the prod environment.
-	ProdEnvironment = "prod"
-	// StagingEnvironment is the value for KeyEnvironment for the staging environment.
-	StagingEnvironment = "staging"
-	// DevEnvironment is the value for KeyEnvironment for the dev environment.
-	DevEnvironment = "dev"
 )
 
 var (
@@ -120,16 +115,16 @@ func makeOrgNotFound(inner error, org string) error {
 
 // ValidateEnvironment validates the environment value in a cobra command.
 func ValidateEnvironment(vipr *viper.Viper) error {
-	env := vipr.GetString(KeyEnvironment)
-	if env == "" {
+	e := vipr.GetString(KeyEnvironment)
+	if e == "" {
 		// Ignore if not set.
 		return nil
 	}
-	switch env {
-	case ProdEnvironment, StagingEnvironment, DevEnvironment:
+	switch e {
+	case env.Prod, env.Staging, env.Dev:
 		return nil
 	default:
-		return fmt.Errorf("invalid --%s value %q. It must be one of %s, %s or %s", KeyEnvironment, env, ProdEnvironment, StagingEnvironment, DevEnvironment)
+		return fmt.Errorf("invalid --%s value %q. It must be one of %v", KeyEnvironment, e, strings.Join(env.All, ", "))
 	}
 }
 

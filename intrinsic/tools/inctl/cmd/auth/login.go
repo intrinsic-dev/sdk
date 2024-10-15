@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/exp/maps"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	env "intrinsic/config/environments"
 	accdiscoverv1grpcpb "intrinsic/kubernetes/accounts/service/api/discoveryv1api_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/auth"
@@ -38,12 +39,7 @@ const (
 
 // Exposed for testing
 var (
-	queryProjects   = queryProjectsForAPIKey
-	flowstateDomain = map[string]string{
-		orgutil.ProdEnvironment:    "flowstate.intrinsic.ai",
-		orgutil.StagingEnvironment: "flowstate-qa.intrinsic.ai",
-		orgutil.DevEnvironment:     "flowstate-dev.intrinsic.ai",
-	}
+	queryProjects = queryProjectsForAPIKey
 )
 
 var loginParams *viper.Viper
@@ -82,23 +78,14 @@ func readAPIKeyFromPipe(reader *bufio.Reader) (string, error) {
 	return "", nil
 }
 
-var portalToAccounts = map[string]string{
-	"portal.intrinsic.ai":        "accounts.intrinsic.ai",
-	"portal-qa.intrinsic.ai":     "accounts-qa.intrinsic.ai",
-	"portal-dev.intrinsic.ai":    "accounts-dev.intrinsic.ai",
-	"flowstate.intrinsic.ai":     "accounts.intrinsic.ai",
-	"flowstate-qa.intrinsic.ai":  "accounts-qa.intrinsic.ai",
-	"flowstate-dev.intrinsic.ai": "accounts-dev.intrinsic.ai",
-}
-
 func queryForAPIKey(ctx context.Context, writer io.Writer, in *bufio.Reader, organization, project string) (string, error) {
-	env := loginParams.GetString(orgutil.KeyEnvironment)
-	if env == "" {
-		env = orgutil.ProdEnvironment
+	e := loginParams.GetString(orgutil.KeyEnvironment)
+	if e == "" {
+		e = env.FromComputeProject(project)
 	}
-	portal := flowstateDomain[env]
+	portal := env.PortalDomain(e)
 	if portal == "" {
-		return "", fmt.Errorf("unknown environment %q", env)
+		return "", fmt.Errorf("unknown environment %q", e)
 	}
 	authorizationURL := fmt.Sprintf(projectTokenURLFmt, portal, project)
 	if organization != "" {
@@ -130,15 +117,15 @@ func queryForAPIKey(ctx context.Context, writer io.Writer, in *bufio.Reader, org
 // If optionalOrg is set, it will be used as a filter to only return projects the given organization
 // is part of.
 func queryProjectsForAPIKey(ctx context.Context, apiKey string, optionalOrg string) ([]string, error) {
-	env := loginParams.GetString(orgutil.KeyEnvironment)
-	if env == "" {
-		env = orgutil.ProdEnvironment
+	e := loginParams.GetString(orgutil.KeyEnvironment)
+	if e == "" {
+		e = env.Prod
 	}
-	portal := flowstateDomain[env]
+	portal := env.PortalDomain(e)
 	if portal == "" {
-		return nil, fmt.Errorf("unknown environment %q", env)
+		return nil, fmt.Errorf("unknown environment %q", e)
 	}
-	address := fmt.Sprintf("dns:///%s:443", portalToAccounts[portal])
+	address := fmt.Sprintf("dns:///%s:443", env.AccountsDomain(e))
 	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
 		Address:   address,
 		CredToken: apiKey,
@@ -254,7 +241,7 @@ func init() {
 	flags.StringP(orgutil.KeyOrganization, "", "", "Name of the Intrinsic organization to authorize for")
 	flags.Bool(keyNoBrowser, false, "Disables attempt to open login URL in browser automatically")
 	flags.Bool(keyBatch, false, "Suppresses command prompts and assume Yes or default as an answer. Use with shell scripts.")
-	flags.String(orgutil.KeyEnvironment, "", fmt.Sprintf("Auth environment to use. This should be one of %q, %q or %q. %q is used by default. See http://go/intrinsic-users#environments for the compatible environment corresponding to a cloud project.", orgutil.ProdEnvironment, orgutil.StagingEnvironment, orgutil.DevEnvironment, orgutil.ProdEnvironment))
+	flags.String(orgutil.KeyEnvironment, "", fmt.Sprintf("Auth environment to use. This should be one of %v. %q is used by default. See http://go/intrinsic-users#environments for the compatible environment corresponding to a cloud project.", strings.Join(env.All, ", "), env.Prod))
 	flags.MarkHidden(orgutil.KeyEnvironment)
 	flags.MarkHidden(orgutil.KeyProject)
 

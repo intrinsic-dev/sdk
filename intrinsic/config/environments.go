@@ -56,6 +56,9 @@ const (
 	AssetsDomainProd = "assets.intrinsic.ai"
 )
 
+// All is the list of all environments.
+var All = []string{Prod, Staging, Dev}
+
 // FromDomain returns the environment for the given domain of portal, accounts or assets projects.
 func FromDomain(domain string) (string, error) {
 	switch domain {
