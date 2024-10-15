@@ -18,6 +18,8 @@
 #include "intrinsic/icon/hal/hardware_module_registry.h"
 #include "intrinsic/icon/hal/interfaces/joint_command.fbs.h"
 #include "intrinsic/icon/hal/interfaces/joint_command_utils.h"
+#include "intrinsic/icon/hal/interfaces/joint_limits.fbs.h"
+#include "intrinsic/icon/hal/interfaces/joint_limits_utils.h"
 #include "intrinsic/icon/hal/interfaces/joint_state.fbs.h"
 #include "intrinsic/icon/hal/interfaces/joint_state_utils.h"
 #include "intrinsic/icon/hal/module_config.h"
@@ -112,7 +114,12 @@ absl::Status LoopbackHardwareModule::Init(
       joint_acceleration_state_,
       interface_registry.AdvertiseMutableInterface<JointAccelerationState>(
           "joint_acceleration_state", num_dofs_));
-
+  if (loopback_config.advertise_system_limits_interface()) {
+    INTR_ASSIGN_OR_RETURN(
+        joint_system_limits_,
+        interface_registry.AdvertiseStrictInterface<intrinsic_fbs::JointLimits>(
+            "joint_system_limits", num_dofs_));
+  }
   INTR_ASSIGN_OR_RETURN(
       safety_status_,
       interface_registry.AdvertiseMutableInterface<SafetyStatusMessage>(
@@ -249,6 +256,10 @@ INTRINSIC_ADD_HARDWARE_INTERFACE(intrinsic_fbs::JointAccelerationState,
 INTRINSIC_ADD_HARDWARE_INTERFACE(intrinsic_fbs::JointTorqueState,
                                  intrinsic_fbs::BuildJointTorqueState,
                                  "intrinsic_fbs.JointTorqueState")
+
+INTRINSIC_ADD_HARDWARE_INTERFACE(intrinsic_fbs::JointLimits,
+                                 intrinsic_fbs::BuildJointLimits,
+                                 "intrinsic_fbs.JointLimits")
 
 }  // namespace hardware_interface_traits
 }  // namespace intrinsic::icon

@@ -17,4 +17,7 @@ message LoopbackConfig {
   // The cycle duration of the loopback module. Used to compute the sensed
   // velocity and to tick the realtime clock if it is driven by the module.
   google.protobuf.Duration cycle_duration = 3;
+
+  // Whether to advertise the joint system limits interface. Defaults to false.
+  bool advertise_system_limits_interface = 4;
 }

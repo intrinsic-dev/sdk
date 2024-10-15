@@ -6,6 +6,7 @@
 #include <atomic>
 #include <cstdint>
 #include <memory>
+#include <optional>
 
 #include "absl/random/random.h"
 #include "absl/status/status.h"
@@ -18,6 +19,7 @@
 #include "intrinsic/icon/hal/hardware_module_init_context.h"
 #include "intrinsic/icon/hal/hardware_module_interface.h"
 #include "intrinsic/icon/hal/interfaces/joint_command.fbs.h"
+#include "intrinsic/icon/hal/interfaces/joint_limits.fbs.h"
 #include "intrinsic/icon/hal/interfaces/joint_state.fbs.h"
 #include "intrinsic/icon/utils/realtime_status.h"
 #include "intrinsic/math/gaussian_noise.h"
@@ -81,6 +83,9 @@ class LoopbackHardwareModule final
   intrinsic::icon::StrictHardwareInterfaceHandle<
       intrinsic_fbs::JointPositionCommand>
       joint_position_command_;
+  std::optional<intrinsic::icon::StrictHardwareInterfaceHandle<
+      intrinsic_fbs::JointLimits>>
+      joint_system_limits_;
   intrinsic::icon::MutableHardwareInterfaceHandle<
       intrinsic::safety::messages::SafetyStatusMessage>
       safety_status_;

@@ -35,6 +35,8 @@ cc_library(
         "//intrinsic/icon/hal:module_config",
         "//intrinsic/icon/hal/interfaces:joint_command_fbs_cc",
         "//intrinsic/icon/hal/interfaces:joint_command_fbs_utils",
+        "//intrinsic/icon/hal/interfaces:joint_limits_fbs_cc",
+        "//intrinsic/icon/hal/interfaces:joint_limits_fbs_utils",
         "//intrinsic/icon/hal/interfaces:joint_state_fbs_cc",
         "//intrinsic/icon/hal/interfaces:joint_state_fbs_utils",
         "//intrinsic/icon/utils:core_time",
