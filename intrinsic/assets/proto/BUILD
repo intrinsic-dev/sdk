@@ -265,6 +265,7 @@ proto_library(
     srcs = ["installed_assets.proto"],
     visibility = [
         "//intrinsic/kubernetes/api_relay:__subpackages__",
+        "//intrinsic/world/service:__subpackages__",
     ],
     deps = [
         ":asset_type_proto",
