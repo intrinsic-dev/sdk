@@ -78,6 +78,11 @@ message MotionPlanningError {
   repeated int32 segment_id = 3;
 }
 
+// `CollisionError` corresponds to an error generated when a collision is
+// detected during planning. This message holds the collision debug information,
+// the collision settings used, and the context where the error occurs.
+// One `CollisionError` message can hold multiple collision debug messages, i.e.
+// multiple collision checks.
 message CollisionError {
   repeated CollisionDebug collision_debug = 1;
   // Collision settings used for the collision checker.
@@ -114,7 +119,7 @@ message IKError {
   optional ErrorContext.Type error_context = 3;
 }
 
-// FinePathIKError corresponds to an error that is generated during path
+// `FinePathIKError` corresponds to an error that is generated during path
 // planning when using the FinePathIK planner which computes the inverse
 // kinematics on a finely interpolated Cartesian path. This message holds the
 // previous and current IK solution, hint for the IK solution.
@@ -132,7 +137,7 @@ message FinePathIKError {
   optional ErrorContext.Type error_context = 7;
 }
 
-// LinearCartesianMotionPathPlannerError corresponds to an error generated
+// `LinearCartesianMotionPathPlannerError` corresponds to an error generated
 // during path planning when planning for linear cartesian motions. This message
 // holds the target joint positions that the planner tries to plan for and the
 // final joint positions it was able to reach.
@@ -147,7 +152,7 @@ message LinearCartesianMotionPathPlannerError {
   optional ErrorContext.Type error_context = 5;
 }
 
-// JointLimitsError corresponds to an error generated when the joint limits
+// `JointLimitsError` corresponds to an error generated when the joint limits
 // are violated during planning.
 message JointLimitError {
   string error_message = 1;
