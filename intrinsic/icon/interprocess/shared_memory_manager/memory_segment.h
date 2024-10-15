@@ -55,7 +55,7 @@ class MemorySegment {
   // Returns InternalError if mapping the segment fails.
   static absl::StatusOr<uint8_t*> Get(
       const SegmentNameToFileDescriptorMap& segment_name_to_file_descriptor_map,
-      absl::string_view name, size_t segment_size);
+      absl::string_view name);
 
   // Returns the SegmentHeader of the shared memory segment.
   SegmentHeader* HeaderPointer();
@@ -93,8 +93,7 @@ class ReadOnlyMemorySegment final : public MemorySegment {
       absl::string_view segment_name) {
     INTR_ASSIGN_OR_RETURN(
         uint8_t* segment,
-        MemorySegment::Get(segment_name_to_file_descriptor_map, segment_name,
-                           SegmentTraits<T>::kSegmentSize));
+        MemorySegment::Get(segment_name_to_file_descriptor_map, segment_name));
     return ReadOnlyMemorySegment<T>(segment_name, segment);
   }
 
@@ -147,8 +146,7 @@ class ReadWriteMemorySegment final : public MemorySegment {
       absl::string_view segment_name) {
     INTR_ASSIGN_OR_RETURN(
         uint8_t* segment,
-        MemorySegment::Get(segment_name_to_file_descriptor_map, segment_name,
-                           SegmentTraits<T>::kSegmentSize));
+        MemorySegment::Get(segment_name_to_file_descriptor_map, segment_name));
     return ReadWriteMemorySegment<T>(segment_name, segment);
   }
 

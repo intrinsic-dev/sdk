@@ -128,7 +128,7 @@ const SegmentHeader* SharedMemoryManager::GetSegmentHeader(
 
 absl::Status SharedMemoryManager::InitSegment(absl::string_view name,
                                               bool must_be_used,
-                                              size_t segment_size,
+                                              size_t payload_size,
                                               const std::string& type_id) {
   if (memory_segments_.size() >= kMaxNumberOfSegments) {
     return absl::ResourceExhaustedError(
@@ -156,11 +156,27 @@ absl::Status SharedMemoryManager::InitSegment(absl::string_view name,
                      "\" with error: ", strerror(errno), "."));
   }
 
+  const auto segment_size = sizeof(SegmentHeader) + payload_size;
   if (ftruncate(shm_fd, segment_size) == -1) {
     // Resizes new shm segments.
     return absl::InternalError(
         absl::StrCat("Unable to resize shared memory segment \"", name,
                      "\" with error: ", strerror(errno), "."));
+  }
+
+  struct stat shared_memory_stats;
+  if (fstat(shm_fd, &shared_memory_stats) != 0) {
+    // Return an error and forward errno
+    return absl::InternalError(
+        absl::StrCat("Failed to read size of segment \"", name,
+                     "\". 'fstat' failed with:", strerror(errno)));
+  }
+  // The opening logic depends on the size of the segment.
+  if (shared_memory_stats.st_size != segment_size) {
+    return absl::InternalError(absl::StrCat(
+        "The size of the shared memory segment \"", name, "\" of ",
+        shared_memory_stats.st_size, "bytes is not the expected size of ",
+        segment_size, "bytes."));
   }
 
   auto* data =

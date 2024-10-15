@@ -145,8 +145,7 @@ class SharedMemoryManager final {
                                           bool must_be_used,
                                           const std::string& type_id) {
     AssertSharedMemoryCompatibility<T>();
-    INTR_RETURN_IF_ERROR(InitSegment(name, must_be_used,
-                                     SegmentTraits<T>::kSegmentSize, type_id));
+    INTR_RETURN_IF_ERROR(InitSegment(name, must_be_used, sizeof(T), type_id));
     return SetSegmentValue(name, T());
   }
 
@@ -163,8 +162,7 @@ class SharedMemoryManager final {
   absl::Status AddSegment(absl::string_view name, bool must_be_used,
                           const T& value, const std::string& type_id) {
     AssertSharedMemoryCompatibility<T>();
-    INTR_RETURN_IF_ERROR(InitSegment(name, must_be_used,
-                                     SegmentTraits<T>::kSegmentSize, type_id));
+    INTR_RETURN_IF_ERROR(InitSegment(name, must_be_used, sizeof(T), type_id));
     return SetSegmentValue(name, value);
   }
   template <class T>
@@ -176,18 +174,22 @@ class SharedMemoryManager final {
   template <class T>
   absl::Status AddSegment(absl::string_view name, bool must_be_used, T&& value,
                           const std::string& type_id) {
-    INTR_RETURN_IF_ERROR(InitSegment(name, must_be_used,
-                                     SegmentTraits<T>::kSegmentSize, type_id));
+    INTR_RETURN_IF_ERROR(InitSegment(name, must_be_used, sizeof(T), type_id));
     return SetSegmentValue(name, std::forward<T>(value));
   }
 
-  // Allocates a generic memory segment for a byte (uint8_t) array of size `n`.
-  absl::Status AddSegment(absl::string_view name, bool must_be_used, size_t n) {
-    return AddSegment(name, must_be_used, n, typeid(uint8_t).name());
+  // Allocates a generic memory segment with a byte (uint8_t) array payload of
+  // `payload_size` bytes.
+  absl::Status AddSegment(absl::string_view name, bool must_be_used,
+                          size_t payload_size) {
+    return AddSegment(name, must_be_used, payload_size, typeid(uint8_t).name());
   }
-  absl::Status AddSegment(absl::string_view name, bool must_be_used, size_t n,
-                          const std::string& type_id) {
-    INTR_RETURN_IF_ERROR(InitSegment(name, must_be_used, n, type_id));
+  // Allocates a memory segment of type `type_id` with a payload of
+  // `payload_size` bytes.
+  absl::Status AddSegment(absl::string_view name, bool must_be_used,
+                          size_t payload_size, const std::string& type_id) {
+    INTR_RETURN_IF_ERROR(
+        InitSegment(name, must_be_used, payload_size, type_id));
     return absl::OkStatus();
   }
 
@@ -260,8 +262,13 @@ class SharedMemoryManager final {
   explicit SharedMemoryManager(absl::string_view module_name,
                                absl::string_view shared_memory_namespace);
 
+  // Creates an anonymous shared memory segment with the given name and the size
+  // of SegmentHeader + `payload_size`.
+  // The SegmentHeader is initialized with the given `type_id`.
+  // Returns `absl::InternalError` if any of the underlying
+  // POSIX calls fail.
   absl::Status InitSegment(absl::string_view name, bool must_be_used,
-                           size_t segment_size, const std::string& type_id);
+                           size_t payload_size, const std::string& type_id);
 
   // Returns a pointer to the start of the memory segment.
   // The SegmentHeader of this segment lives at the address this pointer
