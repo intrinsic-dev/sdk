@@ -57,6 +57,7 @@ cc_library(
     name = "grpc",
     srcs = ["grpc.cc"],
     hdrs = ["grpc.h"],
+    visibility = ["//visibility:public"],
     deps = [
         "//intrinsic/icon/release:grpc_time_support",
         "//intrinsic/util/status:status_conversion_grpc",
