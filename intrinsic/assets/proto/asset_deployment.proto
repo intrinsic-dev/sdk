@@ -60,25 +60,12 @@ service AssetDeploymentService {
   rpc CreateSkillFromCatalog(CreateSkillFromCatalogRequest)
       returns (google.longrunning.Operation) {}
 
-  // Deletes a previously installed skill.
-  // On success, `response` field of `Operation` is set to
-  // `DeleteSkillResponse`.
-  rpc DeleteSkill(DeleteSkillRequest) returns (google.longrunning.Operation) {}
-
   // Gets the latest state of a long-running operation.  Clients can use this
   // method to poll the operation result, similar to `GetOperation` in
   // `google.longrunning.Operations` service:
   // https://github.com/googleapis/googleapis/blob/master/google/longrunning/operations.proto
   rpc GetOperation(google.longrunning.GetOperationRequest)
       returns (google.longrunning.Operation) {}
-
-  // Lists operations that match the specified filter in the request, similar to
-  // `ListOperations` in `google.longrunning.Operations` service:
-  // https://github.com/googleapis/googleapis/blob/master/google/longrunning/operations.proto
-  // - `name` should be one of: `skill`, `resource`.
-  // - `filter` should be one of: `add`, `delete`, `replace`.
-  rpc ListOperations(google.longrunning.ListOperationsRequest)
-      returns (google.longrunning.ListOperationsResponse) {}
 }
 
 message ResourceConfiguration {
