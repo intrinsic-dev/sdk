@@ -84,9 +84,8 @@ class SourceCodeInfoPresentTest(absltest.TestCase):
 
   def test_can_construct_classes(self):
     desc_pool = _create_descriptor_pool(self._file_descriptor_set)
-    msg_factory = message_factory.MessageFactory(pool=desc_pool)
     for file_proto in self._file_descriptor_set.file:
-      msg_factory.GetMessages([file_proto.name])
+      message_factory.GetMessageClassesForFiles([file_proto.name], desc_pool)
 
 
 if __name__ == '__main__':
