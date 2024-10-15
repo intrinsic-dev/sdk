@@ -199,6 +199,19 @@ func IDProtoFrom(pkg string, name string) (*idpb.Id, error) {
 	return &idpb.Id{Name: name, Package: pkg}, nil
 }
 
+// NewIDProto constructs a new ID proto from a full id string.  A valid id is
+// formatted as in IsID.
+func NewIDProto(id string) (*idpb.Id, error) {
+	matches, err := getNamedMatches(id, idRegex, []string{"name", "package"})
+	if err != nil {
+		return nil, fmt.Errorf("%q is not a valid asset id", id)
+	}
+	return &idpb.Id{
+		Name:    matches["name"],
+		Package: matches["package"],
+	}, nil
+}
+
 // IDFromProto creates an id string from an Id proto message.
 //
 // Ids are formatted as in IsId.
