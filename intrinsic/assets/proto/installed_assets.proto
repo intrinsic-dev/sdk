@@ -21,6 +21,15 @@ service InstalledAssets {
   rpc GetInstalledAsset(GetInstalledAssetRequest) returns (InstalledAsset);
 
   // Installs the specified asset into the solution.
+  rpc CreateInstalledAsset(CreateInstalledAssetRequest)
+      returns (google.longrunning.Operation) {
+    option (google.longrunning.operation_info) = {
+      metadata_type: "CreateInstalledAssetMetadata"
+      response_type: "InstalledAsset"
+    };
+  }
+
+  // Installs the specified assets into the solution.
   rpc CreateInstalledAssets(CreateInstalledAssetsRequest)
       returns (google.longrunning.Operation) {
     option (google.longrunning.operation_info) = {
@@ -30,6 +39,15 @@ service InstalledAssets {
   }
 
   // Uninstalls the specified asset from the solution.
+  rpc DeleteInstalledAsset(DeleteInstalledAssetRequest)
+      returns (google.longrunning.Operation) {
+    option (google.longrunning.operation_info) = {
+      metadata_type: "DeleteInstalledAssetMetadata"
+      response_type: "google.protobuf.Empty"
+    };
+  }
+
+  // Uninstalls the specified assets from the solution.
   rpc DeleteInstalledAssets(DeleteInstalledAssetsRequest)
       returns (google.longrunning.Operation) {
     option (google.longrunning.operation_info) = {
@@ -78,6 +96,19 @@ enum UpdatePolicy {
   UPDATE_POLICY_UPDATE_COMPATIBLE = 50;
 }
 
+message CreateInstalledAssetRequest {
+  message Asset {
+    oneof variant {
+      intrinsic_proto.services.ProcessedServiceManifest service = 2;
+    }
+  }
+
+  Asset asset = 1;
+  UpdatePolicy policy = 2;
+}
+
+message CreateInstalledAssetMetadata {}
+
 message CreateInstalledAssetsRequest {
   message Asset {
     oneof variant {
@@ -96,6 +127,20 @@ message CreateInstalledAssetsResponse {
   // installation.
   repeated InstalledAsset installed_assets = 1;
 }
+
+enum DeletePolicy {
+  // Use a default policy, which may change with platform updates.
+  POLICY_UNSPECIFIED = 0;
+  // Reject a request to delete an asset that is currently in use.
+  POLICY_REJECT_USED = 10;
+}
+
+message DeleteInstalledAssetRequest {
+  Id asset = 1;
+  DeletePolicy policy = 2;
+}
+
+message DeleteInstalledAssetMetadata {}
 
 message DeleteInstalledAssetsRequest {
   enum Policy {
