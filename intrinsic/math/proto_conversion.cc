@@ -76,7 +76,16 @@ absl::StatusOr<intrinsic::Pose> FromProto(const Pose& pose) {
         std::sqrt(squared_norm), normalized_quat.x(), normalized_quat.y(),
         normalized_quat.z(), normalized_quat.w()));
   }
-  return intrinsic::Pose(quaternion, FromProto(pose.position()),
+
+  intrinsic::eigenmath::Vector3d position = FromProto(pose.position());
+  if (position.hasNaN()) {
+    return absl::InvalidArgumentError(
+        absl::StrFormat("Failed to create Pose from proto which contains a "
+                        "nan position values: {%.17f, %.17f, %.17f}",
+                        position.x(), position.y(), position.z()));
+  }
+
+  return intrinsic::Pose(quaternion, position,
                          intrinsic::eigenmath::kDoNotNormalize);
 }
 
