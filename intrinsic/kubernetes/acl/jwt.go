@@ -15,6 +15,7 @@ import (
 // Data defines our relevant subset of the oauth standard plus our custom claims.
 // Extend with more attributes when needed.
 type Data struct {
+	UserID        string `json:"user_id"`
 	Aud           string `json:"aud"`
 	Email         string `json:"email"`
 	EmailVerified bool   `json:"email_verified"`
