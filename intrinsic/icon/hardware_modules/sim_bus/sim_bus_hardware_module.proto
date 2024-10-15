@@ -6,6 +6,7 @@ package intrinsic_proto.icon;
 
 import "google/protobuf/duration.proto";
 import "intrinsic/icon/server/config/dio_config.proto";
+import "intrinsic/simulation/gazebo/plugins/sim_hardware_module_config.proto";
 
 message SimDioConfig {
   string type_name = 1;
@@ -156,4 +157,7 @@ message SimBusModuleConfig {
   // Overrides world server address (in hostname:port format). Only use this for
   // testing!
   optional string world_server_address_testonly = 8;
+
+  // Configuration values that are exclusive to GazeboHwm
+  optional intrinsic_proto.sim.SimHardwareModuleConfig new_sim_api_config = 9;
 }

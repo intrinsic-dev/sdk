@@ -9,13 +9,17 @@ proto_library(
     srcs = ["sim_bus_hardware_module.proto"],
     deps = [
         "//intrinsic/icon/server/config:dio_config_proto",
+        "//intrinsic/simulation/gazebo/plugins:sim_hardware_module_config_proto",
         "@com_google_protobuf//:duration_proto",
     ],
 )
 
 go_proto_library(
     name = "sim_bus_hardware_module_go_proto",
-    go_deps = ["//intrinsic/icon/server/config:dio_config_go_proto"],
+    go_deps = [
+        "//intrinsic/icon/server/config:dio_config_go_proto",
+        "//intrinsic/simulation/gazebo/plugins:sim_hardware_module_config_go_proto",
+    ],
     deps = [":sim_bus_hardware_module_proto"],
 )
 

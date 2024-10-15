@@ -1,0 +1,267 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.sim;
+
+message ObjectNameAndJointName {
+  string world_object_name = 1;
+  string joint_name = 2;
+}
+
+// Describes a set of joints that act as a unit (for example, a robot arm or
+// gripper). The joints might be part of different models, so we describe each
+// one using a tuple of (Intrinsic World) object name and joint name.
+message JointGroup {
+  message JointList {
+    // Order matters here! Any hardware interfaces that use a JointGroup expose
+    // the joints in the same order they appear here.
+    repeated ObjectNameAndJointName joints = 1;
+  }
+  oneof group_descriptor {
+    // The simplest way to describe a joint group: All joints from a given
+    // (Intrinsic World) object, in the order they appear in the SDF.
+    string name_of_object_with_joints_in_implicit_order = 1;
+    // For more complex cases, i.e. if your JointGroup spans multiple (Intrinsic
+    // World) objects, or you want to customize the index order of joints.
+    JointList joint_list = 2;
+  }
+}
+
+// All Joint* and KinematicChain* message types contain a `joint_group_name`
+// that references a key in SimHardwareModuleConfig::joint_groups.
+// They use the information from the corresponding JointGroup to populate a
+// hardware interface.
+
+// Accepts joint position commands (aka setpoints) and applies them to the
+// simulated joints in the group `joint_group_name`. If your HWM has this, it
+// should probably also have JointPositionStateInterface,
+// JointVelocityStateInterface and JointAccelerationStateInterface!
+//
+// The most common name for this interface on real robots is
+// "joint_position_command". The simulated hardware module uses this name when
+// `manual_hardware_interfaces` is unset.
+message JointPositionCommandInterface {
+  string joint_group_name = 1;
+  // If true, this interface is strict.
+  // This means the hardware module faults if it does not receive a command
+  // every cycle that it is enabled.
+  bool strict = 2;
+}
+
+// Reports the current simulated position of the joints in `joint_group_name`
+//
+// The most common name for this interface on real robots is
+// "joint_position_state". The simulated hardware module uses this name when
+// `manual_hardware_interfaces` is unset.
+message JointPositionStateInterface {
+  string joint_group_name = 1;
+}
+
+// Reports the current simulated velocity of the joints in `joint_group_name`
+//
+// The most common name for this interface on real robots is
+// "joint_velocity_state". The simulated hardware module uses this name when
+// `manual_hardware_interfaces` is unset.
+message JointVelocityStateInterface {
+  string joint_group_name = 1;
+}
+
+// Reports the current simulated acceleration of the joints in
+// `joint_group_name`
+//
+// The most common name for this interface on real robots is
+// "joint_acceleration_state". The simulated hardware module uses this name when
+// `manual_hardware_interfaces` is unset.
+message JointAccelerationStateInterface {
+  string joint_group_name = 1;
+}
+
+// Accepts joint torque commands (aka setpoints) and applies them to the
+// simulated joints in the group `joint_group_name`. It's very unusual for a HWM
+// to have this, but not JointPositionCommand. If you do configure your HWM that
+// way, expect trouble!
+//
+// The most common name for this interface on real robots is
+// "joint_torque_command". The simulated hardware module uses this name when
+// `manual_hardware_interfaces` is unset.
+message JointTorqueCommandInterface {
+  string joint_group_name = 1;
+  // If true, this interface is strict.
+  // This means the hardware module faults if it does not receive a command
+  // every cycle that it is enabled.
+  bool strict = 2;
+}
+
+// Reports the current simulated torque of the joints in `joint_group_name`
+//
+// The most common name for this interface on real robots is
+// "joint_torque_state". The simulated hardware module uses this name when
+// `manual_hardware_interfaces` is unset.
+message JointTorqueStateInterface {
+  string joint_group_name = 1;
+}
+
+// Takes an updated end-effector payload for the given joint group. This is a
+// no-op in sim, but for the sake of consistency you should still have it if the
+// real robot does.
+//
+// The most common name for this interface on real robots is
+// "payload_command". The simulated hardware module uses this name when
+// `manual_hardware_interfaces` is unset.
+message KinematicChainPayloadCommandInterface {
+  string joint_group_name = 1;
+}
+
+// Reports the current end-effector payload for the given joint group. This
+// doesn't do much in sim, but for the sake of consistency you should still have
+// it if the real robot does.
+//
+// The most common name for this interface on real robots is
+// "payload_state". The simulated hardware module uses this name when
+// `manual_hardware_interfaces` is unset.
+message KinematicChainPayloadStateInterface {
+  string joint_group_name = 1;
+}
+
+// Takes an updated end-effector process wrench for the given joint group. This
+// is a no-op in sim, but for the sake of consistency you should still have it
+// if the real robot does.
+//
+// The most common name for this interface on real robots is
+// "process_wrench_command". The simulated hardware module uses this name when
+// `manual_hardware_interfaces` is unset.
+message KinematicChainProcessWrenchCommandInterface {
+  string joint_group_name = 1;
+}
+
+// Reports the state of digital input block `input_block_name` on the (Intrinsic
+// World) object `name_of_object_with_digital_input`.
+//
+// In most cases, the interface name should match `input_block_name` (or
+// `name_of_object_with_digital_input` if that object only has a single input
+// block), but double-check the real HWM configuration to make sure the
+// simulated input interface has the same name as the real one.
+//
+// If `manual_hardware_interfaces` is unset, the simulated hardware module
+// usee the input block name as the hardware interface name.
+message DigitalInputInterface {
+  string name_of_object_with_digital_input = 1;
+  // You can omit this if `name_of_object_with_digital_input` only has a single
+  // input block.
+  optional string input_block_name = 2;
+}
+
+// Accepts commands of digital input block `output_block_name` on the (Intrinsic
+// World) object `name_of_object_with_digital_output`.
+//
+// In most cases, the interface name should match `output_block_name` (or
+// `name_of_object_with_digital_output` if that object only has a output block),
+// but double-check the real HWM configuration to make sure the simulated output
+// interface has the same name as the real one.
+//
+// If `manual_hardware_interfaces` is unset, the simulated hardware module
+// usee the output block name as the hardware interface name.
+message DigitalOutputInterface {
+  string name_of_object_with_digital_output = 1;
+  // You can omit this if `name_of_object_with_digital_input` only has a single
+  // output block.
+  optional string output_block_name = 2;
+}
+
+// Analog inputs aren't simulated, so there are no further parameters. Just make
+// sure that if your real robot has an analog input, the simulated HWM does too.
+message AnalogInputInterface {}
+
+// Analog outputs aren't simulated, so there are no further parameters. Just
+// make sure that if your real robot has an analog output, the simulated HWM
+// does too.
+message AnalogOutputInterface {}
+
+// Accepts (retare) commands for the force/torque sensor `ft_sensor_name` on the
+// (Intrinsic World) object `name_of_object_with_force_torque_sensor`.
+//
+// In most cases, the interface name should match `ft_sensor_name` (or
+// `name_of_object_with_force_torque_sensor` if that object only has a single
+// sensor), but double-check the real HWM configuration to make sure the
+// simulated interface has the same name as the real one.
+//
+// The most common name for this interface on real robots is
+// "force_torque_command". The simulated hardware module uses this name when
+// `manual_hardware_interfaces` is unset.
+message ForceTorqueCommandInterface {
+  string name_of_object_with_force_torque_sensor = 1;
+  // You can omit this if `name_of_object_with_force_torque_sensor` only has a
+  // single F/T sensor.
+  optional string ft_sensor_name = 2;
+}
+
+// Reports the current sensor value from the force/torque sensor
+// `ft_sensor_name` on the (Intrinsic World) object
+// `name_of_object_with_force_torque_sensor`.
+//
+// In most cases, the interface name should match `ft_sensor_name` (or
+// `name_of_object_with_force_torque_sensor` if that object only has a single
+// sensor), but double-check the real HWM configuration to make sure the
+// simulated interface has the same name as the real one.
+//
+// The most common name for this interface on real robots is
+// "force_torque_status". The simulated hardware module uses this name when
+// `manual_hardware_interfaces` is unset.
+message ForceTorqueStatusInterface {
+  string name_of_object_with_force_torque_sensor = 1;
+  // You can omit this if `name_of_object_with_force_torque_sensor` only has a
+  // single F/T sensor.
+  optional string ft_sensor_name = 2;
+}
+
+message SimHardwareInterface {
+  oneof interface {
+    JointPositionCommandInterface joint_position_command = 1;
+    JointPositionStateInterface joint_position_state = 2;
+    JointVelocityStateInterface joint_velocity_state = 3;
+    JointAccelerationStateInterface joint_acceleration_state = 4;
+    JointTorqueCommandInterface joint_torque_command = 5;
+    JointTorqueStateInterface joint_torque_state = 6;
+    KinematicChainPayloadCommandInterface payload_command = 7;
+    KinematicChainPayloadStateInterface payload_state = 8;
+    KinematicChainProcessWrenchCommandInterface process_wrench_command = 9;
+
+    DigitalInputInterface digital_input = 10;
+    DigitalOutputInterface digital_output = 11;
+    AnalogInputInterface analog_input = 12;
+    AnalogOutputInterface analog_output = 13;
+    ForceTorqueCommandInterface force_torque_command = 14;
+    ForceTorqueStatusInterface force_torque_status = 15;
+  }
+}
+
+// Configuration values for a simulated hardware module (HWM). Ideally, this
+// should be empty for most hardware modules, since the simulated HWM can infer
+// much of this information.
+message SimHardwareModuleConfig {
+  // A map from JointGroup name to JointGroup. The elements of
+  // `manual_hardware_interfaces` can refer to the entries in this map, so that
+  // users can be sure that different hardware interfaces that are supposed to
+  // act on the same set of joints actually do.
+  map<string, JointGroup> joint_groups = 9;
+
+  // In many cases, a simulated hardware module (HWM) can infer what hardware
+  // interfaces it should expose and what names those interfaces should have.
+  //
+  // In some situations (like when simulating an EtherCAT bus with many
+  // SubordinateDevices), the simulated HWM needs additional information. In
+  // those situations, users should set `manual_hardware_interfaces`. This
+  // disables any automatic configuration, so that the interface names in
+  // `manual_hardware_interfaces` are the only ones that exist, and there are no
+  // name collisions.
+  //
+  //
+  // The keys in this map are the hardware interface names that the HWM exposes
+  // to ICON. Note that each hardware interface name must be unique (at least
+  // within a single HWM), *regardless of the type of the interface*. That is,
+  // it is not possible to, for example, have both a JointPositionCommand and
+  // DigitalOutputCommand interface called "default", hence this mixed-type map
+  // container.
+  map<string, SimHardwareInterface> manual_hardware_interfaces = 10;
+}
