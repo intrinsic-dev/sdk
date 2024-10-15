@@ -182,12 +182,6 @@ class alignas(64) SegmentHeader final {
   uint64_t updated_at_cycle_ = 0;
 };
 
-template <class T>
-struct SegmentTraits {
-  static constexpr size_t kSegmentSize = sizeof(SegmentHeader) + sizeof(T);
-  static constexpr size_t kDataOffset = sizeof(SegmentHeader);
-};
-
 }  // namespace intrinsic::icon
 
 #endif  // INTRINSIC_ICON_INTERPROCESS_SHARED_MEMORY_MANAGER_SEGMENT_HEADER_H_
