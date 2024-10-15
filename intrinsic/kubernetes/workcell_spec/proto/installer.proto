@@ -6,7 +6,6 @@ package intrinsic_proto.workcell_spec.v1;
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "intrinsic/assets/proto/id.proto";
 import "intrinsic/kubernetes/workcell_spec/proto/image.proto";
 
 message GetInstalledSpecResponse {
@@ -141,11 +140,6 @@ message RemoveContainerAddonRequest {
 
 message InstallContainerAddonsRequest {
   repeated InstallContainerAddonRequest requests = 1;
-}
-
-message UninstallServiceRequest {
-  // Versioned ID of the installed service.
-  intrinsic_proto.assets.IdVersion id_version = 1;
 }
 
 service InstallerService {

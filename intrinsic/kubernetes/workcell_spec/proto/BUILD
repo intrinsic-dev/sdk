@@ -28,7 +28,6 @@ proto_library(
     srcs = ["installer.proto"],
     deps = [
         ":image_proto",
-        "//intrinsic/assets/proto:id_proto",
         "@com_google_protobuf//:empty_proto",
         "@com_google_protobuf//:timestamp_proto",
     ],
@@ -36,10 +35,7 @@ proto_library(
 
 go_proto_library(
     name = "installer_go_proto",
-    go_deps = [
-        ":image_go_proto",
-        "//intrinsic/assets/proto:id_go_proto",
-    ],
+    go_deps = [":image_go_proto"],
     deps = [":installer_proto"],
 )
 
@@ -48,7 +44,6 @@ go_grpc_library(
     srcs = [":installer_proto"],
     deps = [
         ":image_go_proto",
-        "//intrinsic/assets/proto:id_go_proto",
         "@org_golang_google_protobuf//types/known/emptypb",
         "@org_golang_google_protobuf//types/known/timestamppb",
     ],
