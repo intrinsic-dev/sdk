@@ -75,3 +75,11 @@ func IntToAssetType(i int32) (atypepb.AssetType, error) {
 	}
 	return atypepb.AssetType(i), nil
 }
+
+// EnumFromString returns an AssetViewType from a string.
+func EnumFromString(t string) (atypepb.AssetType, error) {
+	if i, exists := atypepb.AssetType_value[t]; exists {
+		return atypepb.AssetType(i), nil
+	}
+	return atypepb.AssetType_ASSET_TYPE_UNSPECIFIED, fmt.Errorf("unknown asset type: %q", t)
+}
