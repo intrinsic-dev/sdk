@@ -98,22 +98,34 @@ absl::StatusOr<MemorySegment::SegmentDescriptor> MemorySegment::Get(
   return segment_info;
 }
 
-MemorySegment::MemorySegment(absl::string_view name, uint8_t* segment)
+MemorySegment::MemorySegment(absl::string_view name, SegmentDescriptor segment)
     : name_(name),
-      header_(reinterpret_cast<SegmentHeader*>(segment)),
-      value_(segment + sizeof(SegmentHeader)) {}
+      header_(reinterpret_cast<SegmentHeader*>(segment.segment_start)),
+      value_(segment.segment_start + sizeof(SegmentHeader)),
+      size_(segment.size) {}
 
 MemorySegment::MemorySegment(const MemorySegment& other) noexcept
-    : name_(other.name_), header_(other.header_), value_(other.value_) {}
+    : name_(other.name_),
+      header_(other.header_),
+      value_(other.value_),
+      size_(other.size_) {}
 
 MemorySegment::MemorySegment(MemorySegment&& other) noexcept
     : name_(std::exchange(other.name_, "")),
       header_(std::exchange(other.header_, nullptr)),
-      value_(std::exchange(other.value_, nullptr)) {}
+      value_(std::exchange(other.value_, nullptr)),
+      size_(std::exchange(other.size_, 0)) {}
 
 SegmentHeader* MemorySegment::HeaderPointer() { return header_; }
 
 uint8_t* MemorySegment::Value() { return value_; }
 const uint8_t* MemorySegment::Value() const { return value_; }
+
+size_t MemorySegment::ValueSize() const {
+  if (!IsValid() || (sizeof(SegmentHeader) > size_)) {
+    return 0;
+  }
+  return size_ - sizeof(SegmentHeader);
+}
 
 }  // namespace intrinsic::icon

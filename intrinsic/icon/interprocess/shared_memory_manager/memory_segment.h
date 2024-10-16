@@ -21,7 +21,6 @@
 
 namespace intrinsic::icon {
 
-// Base class for handling a generic, untyped shared memory segment.
 // Each memory segment has to be created and initialized by a
 // `SharedMemoryManager`. The Read-Only as well as Read-Write memory segment
 // classes below only provide an access handle to these segments, but don't
@@ -57,6 +56,10 @@ class MemorySegment {
     HeaderPointer()->UpdatedAt(time, current_cycle);
   }
 
+  // Returns the size of the value stored in the shared memory segment.
+  // Returns 0 if the segment is invalid.
+  size_t ValueSize() const;
+
  protected:
   MemorySegment() = default;
 
@@ -80,7 +83,7 @@ class MemorySegment {
   uint8_t* Value();
   const uint8_t* Value() const;
 
-  MemorySegment(absl::string_view name, uint8_t* segment);
+  MemorySegment(absl::string_view name, SegmentDescriptor segment);
   MemorySegment(const MemorySegment& other) noexcept;
   MemorySegment& operator=(const MemorySegment& other) noexcept = default;
   MemorySegment(MemorySegment&& other) noexcept;
@@ -93,7 +96,32 @@ class MemorySegment {
   // same shared memory segment. We separate the pointers by a simple offset.
   SegmentHeader* header_ = nullptr;
   uint8_t* value_ = nullptr;
+  // The size of the shared memory segment. This is the size of the entire
+  // segment, including the SegmentHeader.
+  size_t size_ = 0;
 };
+
+// Checks that the size of the shared memory segment is big enough to
+// hold a SegmentHeader and at least sizeof(T) bytes.
+// This check is only accurate for trivially_copyable data types like flatbuffer
+// structs. The validity of flatbuffer tables is checked in
+// intrinsic/icon/hal/get_hardware_interface.h.
+// The parameter `segment_size` is the size of the entire
+// shared memory segment, including the SegmentHeader.
+// The parameter `segment_name` is only used for error reporting.
+// Returns InternalError if `segment_size` is too small to hold <T>.
+template <class T>
+absl::Status SharedMemorySegmentFitsLowerSizeBound(
+    absl::string_view segment_name, size_t segment_size) {
+  const size_t minimal_size = sizeof(T) + sizeof(SegmentHeader);
+  if (segment_size < minimal_size) {
+    return absl::InternalError(absl::StrCat(
+        "Shared memory segment '", segment_name, "' of size ", segment_size,
+        "bytes must be >= ", minimal_size,
+        "bytes. This can be due to a version mismatch of your resources."));
+  }
+  return absl::OkStatus();
+}
 
 // Read-Only access to a shared memory segment of type `T`.
 template <class T>
@@ -111,16 +139,10 @@ class ReadOnlyMemorySegment final : public MemorySegment {
     INTR_ASSIGN_OR_RETURN(
         SegmentDescriptor segment_info,
         MemorySegment::Get(segment_name_to_file_descriptor_map, segment_name));
-    // Check is only accurate for flat data types, but at
-    // least checks a lower bound.
-    size_t minimal_size = sizeof(T) + sizeof(SegmentHeader);
-    if (segment_info.size < minimal_size) {
-      return absl::InternalError(absl::StrCat(
-          "Shared memory segment '", segment_name, "' of size ",
-          segment_info.size, "bytes must be >= ", minimal_size, "bytes."));
-    }
+    INTR_RETURN_IF_ERROR(SharedMemorySegmentFitsLowerSizeBound<T>(
+        segment_name, segment_info.size));
 
-    return ReadOnlyMemorySegment<T>(segment_name, segment_info.segment_start);
+    return ReadOnlyMemorySegment<T>(segment_name, segment_info);
   }
 
   ReadOnlyMemorySegment() = default;
@@ -144,7 +166,7 @@ class ReadOnlyMemorySegment final : public MemorySegment {
   const uint8_t* GetRawValue() const { return Value(); }
 
  private:
-  ReadOnlyMemorySegment(absl::string_view name, uint8_t* segment)
+  ReadOnlyMemorySegment(absl::string_view name, SegmentDescriptor segment)
       : MemorySegment(name, segment) {
     HeaderPointer()->IncrementReaderRefCount();
   }
@@ -175,16 +197,10 @@ class ReadWriteMemorySegment final : public MemorySegment {
         SegmentDescriptor segment_info,
         MemorySegment::Get(segment_name_to_file_descriptor_map, segment_name));
 
-    // Check is only accurate for flat data types, but at least checks a lower
-    // bound.
-    size_t minimal_size = sizeof(T) + sizeof(SegmentHeader);
-    if (segment_info.size < minimal_size) {
-      return absl::InternalError(absl::StrCat(
-          "Shared memory segment '", segment_name, "' of size ",
-          segment_info.size, "bytes must be >= ", minimal_size, "bytes."));
-    }
+    INTR_RETURN_IF_ERROR(SharedMemorySegmentFitsLowerSizeBound<T>(
+        segment_name, segment_info.size));
 
-    return ReadWriteMemorySegment<T>(segment_name, segment_info.segment_start);
+    return ReadWriteMemorySegment<T>(segment_name, segment_info);
   }
 
   ReadWriteMemorySegment() = default;
@@ -213,7 +229,7 @@ class ReadWriteMemorySegment final : public MemorySegment {
   void SetValue(const T& value) { *reinterpret_cast<T*>(Value()) = value; }
 
  private:
-  ReadWriteMemorySegment(absl::string_view name, uint8_t* segment)
+  ReadWriteMemorySegment(absl::string_view name, SegmentDescriptor segment)
       : MemorySegment(name, segment) {
     HeaderPointer()->IncrementWriterRefCount();
   }

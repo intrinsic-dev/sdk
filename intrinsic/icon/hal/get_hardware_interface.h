@@ -3,6 +3,8 @@
 #ifndef INTRINSIC_ICON_HAL_GET_HARDWARE_INTERFACE_H_
 #define INTRINSIC_ICON_HAL_GET_HARDWARE_INTERFACE_H_
 
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
@@ -11,6 +13,8 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "flatbuffers/table.h"
+#include "flatbuffers/verifier.h"
 #include "intrinsic/icon/hal/hardware_interface_handle.h"
 #include "intrinsic/icon/hal/hardware_interface_traits.h"
 #include "intrinsic/icon/hal/icon_state_register.h"  // IWYU pragma: keep
@@ -53,6 +57,43 @@ absl::Status SegmentHeaderIsValid(const SegmentHeader& segment_header,
   return absl::OkStatus();
 }
 
+// This function verifies that flatbuffer tables are internally consistent by
+// running the flatbuffer verifier if `HardwareInterfaceT` is a flatbuffer
+// table. The verifier checks all offsets, all sizes of fields, and null
+// termination of strings to ensure that when a buffer is accessed, all reads
+// will end up inside the buffer.
+// Skips verification for all other types because they are either a flatbuffer
+// struct (and those don't support verification), or not a flatbuffer.
+// For those types MemorySegment::Get() already performs all the checking we
+// can do. For flatbuffer structs, that simpler check is correct, but for
+// non-flatbuffer types, it might not be.
+//
+// `HardwareInterfaceT` is the type of the data stored in the shared memory
+// segment.
+//
+// The parameter `buffer` is a pointer to the start of the payload of a hardware
+// interface's shared memory segment.
+// The parameter `buffer_size` is the size of the buffer.
+// The parameter `interface_name` is only used for error reporting.
+//
+// Returns InvalidArgumentError if `HardwareInterfaceT` is a flatbuffer table,
+// but the buffer failed verification.
+template <class HardwareInterfaceT>
+absl::Status FlatbufferIsValid(const uint8_t* buffer, size_t buffer_size,
+                               absl::string_view interface_name) {
+  // Only run verifier if `HardwareInterfaceT` is a flatbuffer table.
+  if constexpr (std::is_base_of_v<flatbuffers::Table, HardwareInterfaceT>) {
+    flatbuffers::Verifier verifier(/*buf=*/buffer,
+                                   /*size*/ buffer_size);
+    if (!verifier.VerifyBuffer<HardwareInterfaceT>()) {
+      return absl::InvalidArgumentError(absl::StrCat(
+          "Flatbuffer verification failed for interface '", interface_name,
+          "'. This can be due to a version mismatch of your resources."));
+    }
+  }
+  return absl::OkStatus();
+}
+
 // Returns a handle to a HardwareInterfaceT.
 // The HardwareInterfaceT must be registered with the
 // INTRINSIC_ADD_HARDWARE_INTERFACE macro.
@@ -68,6 +109,8 @@ GetInterfaceHandle(
 
   INTR_RETURN_IF_ERROR(SegmentHeaderIsValid<HardwareInterfaceT>(
       ro_segment.Header(), interface_name));
+  INTR_RETURN_IF_ERROR(FlatbufferIsValid<HardwareInterfaceT>(
+      ro_segment.GetRawValue(), ro_segment.ValueSize(), interface_name));
 
   return HardwareInterfaceHandle<HardwareInterfaceT>(std::move(ro_segment));
 }
@@ -87,6 +130,8 @@ GetMutableInterfaceHandle(
 
   INTR_RETURN_IF_ERROR(SegmentHeaderIsValid<HardwareInterfaceT>(
       rw_segment.Header(), interface_name));
+  INTR_RETURN_IF_ERROR(FlatbufferIsValid<HardwareInterfaceT>(
+      rw_segment.GetRawValue(), rw_segment.ValueSize(), interface_name));
 
   return MutableHardwareInterfaceHandle<HardwareInterfaceT>(
       std::move(rw_segment));
@@ -106,6 +151,8 @@ GetInterfaceHandle(const SharedMemoryManager& shared_memory_manager,
 
   INTR_RETURN_IF_ERROR(SegmentHeaderIsValid<HardwareInterfaceT>(
       ro_segment.Header(), interface_name));
+  INTR_RETURN_IF_ERROR(FlatbufferIsValid<HardwareInterfaceT>(
+      ro_segment.GetRawValue(), ro_segment.ValueSize(), interface_name));
 
   return HardwareInterfaceHandle<HardwareInterfaceT>(std::move(ro_segment));
 }
@@ -124,6 +171,8 @@ GetMutableInterfaceHandle(const SharedMemoryManager& shared_memory_manager,
 
   INTR_RETURN_IF_ERROR(SegmentHeaderIsValid<HardwareInterfaceT>(
       rw_segment.Header(), interface_name));
+  INTR_RETURN_IF_ERROR(FlatbufferIsValid<HardwareInterfaceT>(
+      rw_segment.GetRawValue(), rw_segment.ValueSize(), interface_name));
 
   return MutableHardwareInterfaceHandle<HardwareInterfaceT>(
       std::move(rw_segment));
