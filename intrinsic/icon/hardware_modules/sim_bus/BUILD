@@ -2,7 +2,9 @@
 
 load("//bazel:go_macros.bzl", "go_proto_library")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = [
+    "//visibility:public",
+])
 
 proto_library(
     name = "sim_bus_hardware_module_proto",
