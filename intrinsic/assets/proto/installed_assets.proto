@@ -99,6 +99,7 @@ enum UpdatePolicy {
 message CreateInstalledAssetRequest {
   message Asset {
     oneof variant {
+      IdVersion catalog = 1;
       intrinsic_proto.services.ProcessedServiceManifest service = 2;
     }
   }
@@ -112,6 +113,7 @@ message CreateInstalledAssetMetadata {}
 message CreateInstalledAssetsRequest {
   message Asset {
     oneof variant {
+      IdVersion catalog = 1;
       intrinsic_proto.services.ProcessedServiceManifest service = 2;
     }
   }
