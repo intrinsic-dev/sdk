@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package intrinsic_proto.scene_object.v1;
 
+import "intrinsic/kinematics/types/joint_limits.proto";
 import "intrinsic/math/proto/pose.proto";
 import "intrinsic/scene/proto/object_properties.proto";
 
@@ -17,6 +18,7 @@ message SceneObjectInstanceUpdate {
     // Only allowed to delete frames.
     DeleteEntityUpdate delete_entity = 3;
     SetNamedConfigurationsUpdate set_named_configurations = 4;
+    UpdateJointsRequest update_joints = 5;
   }
 }
 
@@ -85,4 +87,23 @@ message SetNamedConfigurationsUpdate {
   // The named configurations to set on the scene object. If a named
   // configuration already exists with the same name, it will be overwritten.
   repeated NamedConfiguration named_configurations_to_set = 3;
+}
+
+// Updates the joint positions or limits on the scene object.
+message UpdateJointsRequest {
+  // If non-empty, new joint positions in degrees (for revolute joints) or
+  // meters (for prismatic joints) that should be applied.  At least one
+  // of 'joint_positions', 'joint_application_limits', 'joint_system_limits'
+  // must be set.
+  map<string, double> joint_positions = 1;
+
+  // If non-empty, new joint application limits that should be applied. At least
+  // one of 'joint_positions', 'joint_application_limits', 'joint_system_limits'
+  // must be set.
+  map<string, intrinsic_proto.JointLimitUpdate> joint_application_limits = 2;
+
+  // If non-empty, new joint system limits that should be applied. At least one
+  // of 'joint_positions', 'joint_application_limits', 'joint_system_limits'
+  // must be set.
+  map<string, intrinsic_proto.JointLimitUpdate> joint_system_limits = 3;
 }

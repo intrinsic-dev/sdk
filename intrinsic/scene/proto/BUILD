@@ -107,6 +107,7 @@ proto_library(
     srcs = ["scene_object_updates.proto"],
     deps = [
         ":object_properties_proto",
+        "//intrinsic/kinematics/types:joint_limits_proto",
         "//intrinsic/math/proto:pose_proto",
     ],
 )
@@ -120,6 +121,7 @@ go_proto_library(
     name = "scene_object_updates_go_proto",
     go_deps = [
         ":object_properties_go_proto",
+        "//intrinsic/kinematics/types:joint_limits_go_proto",
         "//intrinsic/math/proto:pose_go_proto",
     ],
     deps = [":scene_object_updates_proto"],
