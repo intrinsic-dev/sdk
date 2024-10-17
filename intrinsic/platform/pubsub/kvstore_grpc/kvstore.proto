@@ -1,0 +1,38 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.kvstore;
+
+import "google/protobuf/any.proto";
+
+message GetRequest {
+  string key = 1;
+}
+
+message GetResponse {
+  google.protobuf.Any value = 1;
+}
+
+message SetRequest {
+  string key = 1;
+  google.protobuf.Any value = 2;
+}
+
+message SetResponse {}
+
+message DeleteRequest {
+  string key = 1;
+}
+
+message DeleteResponse {}
+
+// A GRPC wrapper around the zenohd key-value store.
+service KVStore {
+  // Get a value from the store.
+  rpc Get(GetRequest) returns (GetResponse) {}
+  // Set a value in the store.
+  rpc Set(SetRequest) returns (SetResponse) {}
+  // Delete a value from the store.
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+}
