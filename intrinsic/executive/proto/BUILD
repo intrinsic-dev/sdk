@@ -253,6 +253,18 @@ py_proto_library(
     deps = [":executive_state_proto"],
 )
 
+# log_items
+proto_library(
+    name = "log_items_proto",
+    srcs = ["log_items.proto"],
+    deps = ["@com_google_googleapis//google/longrunning:operations_proto"],
+)
+
+py_proto_library(
+    name = "log_items_py_pb2",
+    deps = [":log_items_proto"],
+)
+
 # annotations
 proto_library(
     name = "annotations_proto",

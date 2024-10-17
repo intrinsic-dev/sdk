@@ -1,0 +1,12 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+import "google/longrunning/operations.proto";
+
+// Message to log an operation snapshot.
+message LoggedOperation {
+  google.longrunning.Operation operation = 1;
+}
