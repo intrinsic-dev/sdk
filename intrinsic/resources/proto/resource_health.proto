@@ -10,6 +10,24 @@ message ResourceHealthStatusRequest {}
 message ResourceHealthStatusResponse {
   // Current operational status of the resource instance.
   intrinsic_proto.resources.OperationalStatus status = 1;
+  // Capabilities of the resource instance.
+  ResourceHealthCapabilities capabilities = 2;
+}
+
+// Capabilities of the resource instance.
+// Capabilities are optional for backwards compatibility. If not set, the
+// capability is expected to be supported.
+message ResourceHealthCapabilities {
+  optional Capability enable_disable_capability = 1;
+  optional Capability clear_faults_capability = 2;
+}
+
+message Capability {
+  // Whether the resource instance supports the capability.
+  bool supported = 1;
+  // A human-readable description of the capability or why it may not be
+  // supported.
+  string description = 2;
 }
 
 message ResourceEnableRequest {}
