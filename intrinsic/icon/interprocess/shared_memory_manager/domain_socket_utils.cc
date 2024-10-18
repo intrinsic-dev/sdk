@@ -205,8 +205,8 @@ absl::StatusOr<domain_socket_internal::ShmDescriptors> GetSingleMessage(
   // // single message.
   if (received_bytes_sum != kExpectedBytes) {
     return absl::InternalError(absl::StrCat("Received ", received_bytes_sum,
-                                            " bytes. Expected [",
-                                            kExpectedBytes, "]."));
+                                            " bytes. Expected ", kExpectedBytes,
+                                            " bytes"));
   }
 
   if (descriptors.transfer_data.domain_socket_protocol_version !=
@@ -228,20 +228,21 @@ absl::StatusOr<domain_socket_internal::ShmDescriptors> GetSingleMessage(
   }
 
   if (cmsg->cmsg_len != CMSG_LEN(kNumNames * sizeof(int))) {
-    return absl::InternalError(absl::StrCat(
-        "Control message has wrong size. Expected [",
-        CMSG_LEN(kNumNames * sizeof(int)), "] got [", cmsg->cmsg_len, "]."));
+    return absl::InternalError(
+        absl::StrCat("Unexpected size of control message. Expected ",
+                     CMSG_LEN(kNumNames * sizeof(int)), " bytes got ",
+                     cmsg->cmsg_len, " bytes"));
   }
 
   if (cmsg->cmsg_level != SOL_SOCKET) {
     return absl::InternalError(
-        absl::StrCat("Control message has wrong level. Expected [", SOL_SOCKET,
-                     "] got [", cmsg->cmsg_level, "]."));
+        absl::StrCat("Unexpected level of control message. Expected ",
+                     SOL_SOCKET, " got ", cmsg->cmsg_level));
   }
   if (cmsg->cmsg_type != SCM_RIGHTS) {
     return absl::InternalError(
-        absl::StrCat("Control message has wrong type. Expected [", SCM_RIGHTS,
-                     "] got [", cmsg->cmsg_type, "]."));
+        absl::StrCat("Unexpected type of control message. Expected '",
+                     SCM_RIGHTS, "' got '", cmsg->cmsg_type, "'"));
   }
   descriptors.file_descriptors_in_order.resize(kNumNames);
   // https://man7.org/linux/man-pages/man7/unix.7.html
