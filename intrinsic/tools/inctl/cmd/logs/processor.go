@@ -81,9 +81,13 @@ func createEndpoint(ctx context.Context, params *cmdParams) (*endpoint, error) {
 		localAddress = params.onpremAddress
 	} else { // cloud route
 		var err error
-		clusterName, err = getClusterName(ctx, params)
-		if err != nil {
-			return nil, fmt.Errorf("could not resolve solution to cluster: %w", err)
+		if params.context != "" { // if context is set, use it as the cluster name
+			clusterName = params.context
+		} else {
+			clusterName, err = getClusterName(ctx, params)
+			if err != nil {
+				return nil, fmt.Errorf("could not resolve solution to cluster: %w", err)
+			}
 		}
 	}
 

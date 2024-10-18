@@ -141,6 +141,7 @@ func init() {
 
 	cmdFlags.OptionalEnvString(cmdutils.KeySolution, "", "Solution ID from which logs will be read.")
 	cmdFlags.OptionalEnvString(cmdutils.KeyContext, "", fmt.Sprintf("The Kubernetes cluster to use or localhost if used with --%s", cmdutils.KeyAddress))
+	cmdFlags.MarkHidden(cmdutils.KeyContext)
 	cmdFlags.AddFlagAddress()
 	cmdFlags.OptionalString(cmdutils.KeyTimeout, "300s", "Maximum time to wait to receive logs.")
 	cmdFlags.OptionalBool(keyPrefixType, false, "Prefixes each log line with the type of origin as follows [srv] for service, [skl] for skill and [res] for sesource")
