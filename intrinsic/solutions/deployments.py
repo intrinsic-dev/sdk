@@ -30,6 +30,7 @@ from intrinsic.frontend.cloud.api import solutiondiscovery_api_pb2_grpc
 from intrinsic.kubernetes.workcell_spec.proto import installer_pb2
 from intrinsic.kubernetes.workcell_spec.proto import installer_pb2_grpc
 from intrinsic.resources.client import resource_registry_client
+from intrinsic.scene.product.client import product_client as product_client_mod
 from intrinsic.skills.client import skill_registry_client
 from intrinsic.solutions import auth
 from intrinsic.solutions import dialerutil
@@ -44,6 +45,7 @@ from intrinsic.solutions import providers
 from intrinsic.solutions import simulation
 from intrinsic.solutions import userconfig
 from intrinsic.solutions import worlds
+from intrinsic.solutions.internal import products as products_mod
 from intrinsic.solutions.internal import resources as resources_mod
 from intrinsic.solutions.internal import skill_providing
 from intrinsic.solutions.internal import stubs
@@ -84,6 +86,7 @@ class Solution:
     executive: Executive instance to communicate with executive.
     skills: Wrapper to easily access skills.
     resources: Provides access to resources.
+    products: Provides access to products.
     simulator: Simulator instance for controlling simulation.
     errors: Exposes error reports from executions.
     pose_estimators: Optional. Wrapper to access pose estimators.
@@ -107,6 +110,7 @@ class Solution:
   is_simulated: bool
   executive: execution.Executive
   resources: providers.ResourceProvider
+  products: providers.ProductProvider
   world: worlds.ObjectWorld
   simulator: Optional[simulation.Simulation]
   skills: providers.SkillProvider
@@ -125,6 +129,7 @@ class Solution:
       executive: execution.Executive,
       skill_registry: skill_registry_client.SkillRegistryClient,
       resource_registry: resource_registry_client.ResourceRegistryClient,
+      product_client: product_client_mod.ProductClient,
       object_world: worlds.ObjectWorld,
       simulator: Optional[simulation.Simulation],
       errors: error_processing.ErrorsLoader,
@@ -139,7 +144,9 @@ class Solution:
     self.executive = executive
     self._skill_registry = skill_registry
     self._resource_registry = resource_registry
+    self._product_client = product_client
     self.resources = resources_mod.Resources(self._resource_registry)
+    self.products = products_mod.Products(self._product_client)
 
     self.world: worlds.ObjectWorld = object_world
     self.simulator: Optional[simulation.Simulation] = simulator
@@ -221,6 +228,8 @@ class Solution:
         grpc_channel
     )
 
+    product_client = product_client_mod.ProductClient.connect(grpc_channel)
+
     object_world = worlds.ObjectWorld.connect(_WORLD_ID, grpc_channel)
 
     pose_estimators = None
@@ -242,6 +251,7 @@ class Solution:
         executive,
         skill_registry,
         resource_registry,
+        product_client,
         object_world,
         simulator,
         error_loader,

@@ -9,7 +9,9 @@ from typing import Any, Dict, Iterator, List, Set, Type, Union
 
 from google.protobuf import descriptor
 from google.protobuf import message
+from google.protobuf import struct_pb2
 from intrinsic.resources.proto import resource_handle_pb2
+from intrinsic.scene.proto import scene_object_pb2
 from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions import blackboard_value
 from intrinsic.solutions import cel
@@ -386,4 +388,31 @@ class SkillPackage(abc.ABC):
   @abc.abstractmethod
   def __dir__(self) -> list[str]:
     """Returns the list of available skill classes or child skill packages."""
+    ...
+
+
+class Product(abc.ABC):
+  """An abstract interface for a Product.
+
+  A Product is a named entity composed from a SceneObject and some metadata.
+
+  Attributes:
+    name: The name of the product.
+    scene_object: The SceneObject describing the geometry of the product.
+    metadata: The metadata associated with the product.
+  """
+
+  @property
+  @abc.abstractmethod
+  def name(self) -> str:
+    ...
+
+  @property
+  @abc.abstractmethod
+  def scene_object(self) -> scene_object_pb2.SceneObject:
+    ...
+
+  @property
+  @abc.abstractmethod
+  def metadata(self) -> struct_pb2.Struct:
     ...

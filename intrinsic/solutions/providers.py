@@ -67,6 +67,28 @@ class ResourceProvider(abc.ABC):
     ...
 
 
+class ProductProvider(abc.ABC):
+  """A dict-like container for products."""
+
+  @abc.abstractmethod
+  def __getitem__(self, name: str) -> provided.Product:
+    """Returns the product for the given name."""
+    ...
+
+  @abc.abstractmethod
+  def __getattr__(self, name: str) -> provided.Product:
+    """Returns the product for the given name."""
+    ...
+
+  @abc.abstractmethod
+  def __dir__(self) -> list[str]:
+    """Returns the names of the stored products in sorted order.
+
+    Only returns names which are valid Python identifiers.
+    """
+    ...
+
+
 class SkillProvider(abc.ABC):
   """A container that provides access to the skills of a solution.
 
