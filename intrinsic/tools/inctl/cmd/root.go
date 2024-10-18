@@ -27,6 +27,8 @@ import (
 const (
 	// ClusterCmdName is the name of the `inctl cluster` command.
 	ClusterCmdName = "cluster"
+	// DataCmdName is the name of the `inctl data` command.
+	DataCmdName = "data"
 	// ProcessCmdName is the name of the `inctl process` command.
 	ProcessCmdName = "process"
 	// ServiceCmdName is the name of the `inctl service` command.
