@@ -611,26 +611,3 @@ cc_library(
         "@com_google_protobuf//:protobuf",
     ],
 )
-
-cc_binary(
-    name = "skill_service_config_main",
-    srcs = ["skill_service_config_main.cc"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":skill_service_config_utils",
-        "//intrinsic/assets/proto:id_cc_proto",
-        "//intrinsic/icon/release:file_helpers",
-        "//intrinsic/icon/release/portable:init_xfa_absl",
-        "//intrinsic/skills/proto:skill_manifest_cc_proto",
-        "//intrinsic/skills/proto:skill_service_config_cc_proto",
-        "//intrinsic/skills/proto:skills_cc_proto",
-        "//intrinsic/util/status:status_macros",
-        "@com_google_absl//absl/base:log_severity",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/log:globals",
-        "@com_google_absl//absl/status",
-        "@com_google_protobuf//:protobuf",
-    ],
-)

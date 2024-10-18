@@ -225,7 +225,7 @@ _skill_service_config_manifest = rule(
     attrs = {
         "_skill_service_config_gen": attr.label(
             executable = True,
-            default = Label("//intrinsic/skills/internal:skill_service_config_main"),
+            default = Label("//intrinsic/skills/build_defs:skillserviceconfiggen_main"),
             cfg = "exec",
         ),
         "manifest": attr.label(

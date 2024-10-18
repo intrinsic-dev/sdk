@@ -162,3 +162,9 @@ cc_library(
         "@com_google_protobuf//:protobuf",
     ],
 )
+
+go_library(
+    name = "sourcecodeinfoview",
+    srcs = ["source_code_info_view.go"],
+    deps = ["@io_bazel_rules_go//proto/wkt:descriptor_go_proto"],
+)

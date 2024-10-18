@@ -4,6 +4,7 @@
 
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 load("@rules_python//python:defs.bzl", "py_library")
+load("//bazel:go_macros.bzl", "go_proto_library")
 
 package(
     default_testonly = True,
@@ -64,6 +65,14 @@ py_proto_library(
     visibility = [
         "//intrinsic/skills/build_defs/tests:__pkg__",
         "//intrinsic/skills/internal:__pkg__",
+    ],
+    deps = [":no_op_skill_proto"],
+)
+
+go_proto_library(
+    name = "no_op_skill_go_proto",
+    visibility = [
+        "//intrinsic/skills/build_defs:__pkg__",
     ],
     deps = [":no_op_skill_proto"],
 )

@@ -216,6 +216,15 @@ py_proto_library(
     deps = [":skill_service_config_proto"],
 )
 
+go_proto_library(
+    name = "skill_service_config_go_proto",
+    go_deps = [
+        ":skills_go_proto",
+        "//intrinsic/assets/proto:status_spec_go_proto",
+    ],
+    deps = [":skill_service_config_proto"],
+)
+
 proto_library(
     name = "skill_registry_config_proto",
     srcs = ["skill_registry_config.proto"],
