@@ -143,6 +143,12 @@ oci.pull(
     platforms = ["linux/amd64"],
 )
 oci.pull(
+    name = "distroless_cc",
+    digest = "sha256:3310655aac0d85eb9d579792387af1ff3eb7a1667823478be58020ab0e0d97a8",
+    image = "gcr.io/distroless/cc",
+    platforms = ["linux/amd64"],
+)
+oci.pull(
     name = "distroless_python3",
     digest = "sha256:1b8a214aad17b69de4d08638754c250be842890c0fb94f40e7acf5c0b30c451b",
     image = "gcr.io/distroless/python3",
@@ -151,6 +157,7 @@ oci.pull(
 use_repo(
     oci,
     "distroless_base",
+    "distroless_cc",
     "distroless_python3",
 )
 
