@@ -2,18 +2,15 @@
 
 # Add requirements you need for bazel py_* rules here.
 #
-# Generate requirements.txt with
-#   pip install pip-tools
-#   pip-compile requirements.in > \
-#               requirements.txt
+# Generate requirements.txt with:
+ pipx run --spec pip-compile requirements.in > requirements.txt
 #
 # Reference the dependencies with:
 #
-# load("@pip//:requirements.bzl", "requirement")
 # py_library(
 #   ...
 #   deps = [
-#     requirement("numpy"),
+#     @pip//numpy,
 #   ],
 # )
 
