@@ -28,10 +28,7 @@ cc_library(
     name = "echo_skill",
     srcs = ["echo_skill.cc"],
     hdrs = ["echo_skill.h"],
-    visibility = [
-        "//intrinsic/skills/internal:__pkg__",
-        "//intrinsic/skills/python:__pkg__",
-    ],
+    visibility = ["//intrinsic/skills/internal:__pkg__"],
     deps = [
         ":echo_skill_cc_proto",
         "//intrinsic/skills/cc:skill_interface",
