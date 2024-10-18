@@ -19,6 +19,7 @@ message SceneObjectInstanceUpdate {
     DeleteEntityUpdate delete_entity = 3;
     SetNamedConfigurationsUpdate set_named_configurations = 4;
     UpdateJointsRequest update_joints = 5;
+    CartesianLimitsUpdate cartesian_limits = 6;
   }
 }
 
@@ -106,4 +107,22 @@ message UpdateJointsRequest {
   // of 'joint_positions', 'joint_application_limits', 'joint_system_limits'
   // must be set.
   map<string, intrinsic_proto.JointLimitUpdate> joint_system_limits = 3;
+}
+
+// Cartesian limits to use as overrides.
+// If not set, the existing limits will be unchanged.
+message CartesianLimitsUpdate {
+  // Units are meters or radians per s, s^2, or s^3.
+  repeated double min_translational_position = 1;
+  repeated double max_translational_position = 2;
+  repeated double min_translational_velocity = 3;
+  repeated double max_translational_velocity = 4;
+  repeated double min_translational_acceleration = 5;
+  repeated double max_translational_acceleration = 6;
+  repeated double min_translational_jerk = 7;
+  repeated double max_translational_jerk = 8;
+
+  optional double max_rotational_velocity = 9;
+  optional double max_rotational_acceleration = 10;
+  optional double max_rotational_jerk = 11;
 }
