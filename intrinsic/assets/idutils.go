@@ -221,6 +221,13 @@ func IDFromProto(id *idpb.Id) (string, error) {
 	return IDFrom(id.GetPackage(), id.GetName())
 }
 
+// IDFromProtoUnchecked creates an id string from an Id proto message, but does
+// no validation.  This should be used in cases where validation has already
+// been done and conversion between APIs or for mapping is required.
+func IDFromProtoUnchecked(p *idpb.Id) string {
+	return fmt.Sprintf("%s.%s", p.GetPackage(), p.GetName())
+}
+
 // IDVersionFrom creates an id_version from package, name, and version strings.
 //
 // Id_versions are formatted as in IsIdVersion.
@@ -288,6 +295,14 @@ func IDOrIDVersionProtoFrom(str string) (*idpb.IdVersion, error) {
 // Returns an error if `package`, `name`, or `version` fields are not valid.
 func IDVersionFromProto(idVersion *idpb.IdVersion) (string, error) {
 	return IDVersionFrom(idVersion.GetId().GetPackage(), idVersion.GetId().GetName(), idVersion.GetVersion())
+}
+
+// IDVersionFromProtoUnchecked creates an id version string from an IdVersion
+// proto message, but does no validation.  This should be used in cases where
+// validation has already been done and conversion between APIs or for mapping
+// is required.
+func IDVersionFromProtoUnchecked(p *idpb.IdVersion) string {
+	return fmt.Sprintf("%s.%s.%s", p.GetId().GetPackage(), p.GetId().GetName(), p.GetVersion())
 }
 
 // NameFrom returns the name part of an id or id_version.
