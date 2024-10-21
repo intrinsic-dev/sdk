@@ -6,6 +6,7 @@
 
 #include "absl/log/log.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "google/protobuf/descriptor.pb.h"
 #include "intrinsic/assets/proto/id.pb.h"
@@ -14,6 +15,7 @@
 #include "intrinsic/skills/internal/skill_proto_utils.h"
 #include "intrinsic/skills/proto/skill_manifest.pb.h"
 #include "intrinsic/skills/proto/skill_service_config.pb.h"
+#include "intrinsic/util/log_lines.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::skills {
@@ -28,7 +30,8 @@ GetSkillServiceConfig(absl::string_view skill_service_config_filename) {
         service_config,
         intrinsic::GetBinaryProto<intrinsic_proto::skills::SkillServiceConfig>(
             skill_service_config_filename));
-    LOG(INFO) << "\nUsing skill configuration proto:\n" << service_config;
+    LOG_LINES(INFO, absl::StrCat("\nUsing skill configuration proto:\n",
+                                 service_config));
   }
   return service_config;
 }
