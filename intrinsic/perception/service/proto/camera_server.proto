@@ -44,6 +44,7 @@ service CameraServer {
 
   // Returns the current frame from the specified camera.
   rpc GetFrame(GetFrameRequest) returns (GetFrameResponse) {
+    option deprecated = true;
   }
 
   // Reads and returns the access mode of a specific setting from a camera.
@@ -135,6 +136,8 @@ message CaptureResponse {
 }
 
 message GetFrameRequest {
+  option deprecated = true;
+
   // The handle of the camera from which a frame is requested.
   string camera_handle = 1;
 
@@ -163,6 +166,8 @@ message GetFrameRequest {
 }
 
 message GetFrameResponse {
+  option deprecated = true;
+
   Frame frame = 1;
 }
 

@@ -13,6 +13,8 @@ import "intrinsic/perception/proto/image_buffer.proto";
 // are registered to each other, i.e. the same intrinsic parameters apply to the
 // RGB and Gray images as well as the depth image.
 message Frame {
+  option deprecated = true;
+
   google.protobuf.Timestamp acquisition_time = 1;
 
   // For uncalibrated frames, the camera parameters are not present.
