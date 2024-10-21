@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <iostream>
 #include <ostream>
+#include <sstream>
 
 #include "Eigen/Core"
 #include "absl/base/attributes.h"
@@ -216,6 +217,13 @@ class Pose3 {
       const Pose3<OtherScalar, OtherOptions>& rhs) const {
     Pose3<Scalar> result(*this);
     return result *= rhs;
+  }
+
+  template <typename Sink>
+  friend void AbslStringify(Sink& sink, const Pose3<Scalar, Options>& p) {
+    std::stringstream ss;
+    ss << p;
+    sink.Append(ss.str());
   }
 
   template <typename H>
