@@ -44,6 +44,7 @@
 #include "intrinsic/icon/utils/fixed_string.h"
 #include "intrinsic/icon/utils/log.h"
 #include "intrinsic/icon/utils/realtime_status.h"
+#include "intrinsic/icon/utils/realtime_status_macro.h"
 #include "intrinsic/platform/common/buffers/rt_promise.h"
 #include "intrinsic/platform/common/buffers/rt_queue.h"
 #include "intrinsic/platform/common/buffers/rt_queue_multi_writer.h"
@@ -331,18 +332,35 @@ class HardwareModuleRuntime::CallbackHandler final {
     }
 
     const bool state_changed = hardware_module_state_code_ != state;
+    // We need to copy the string, since we potentially create a new string in
+    // the if-block.
+    RealtimeStatus::MessageType fault_reason_string = fault_reason;
     if (state_changed) {
-      CheckAndTriggerDisabledTransitionHook(hardware_module_state_code_);
+      if (auto status = CheckAndTriggerDisabledTransitionHook(
+              hardware_module_state_code_);
+          !status.ok()) {
+        if (state != intrinsic_fbs::StateCode::kInitFailed &&
+            state != intrinsic_fbs::StateCode::kFatallyFaulted &&
+            state != intrinsic_fbs::StateCode::kFaulted) {
+          // Only set the state to faulted, if it is not already faulted. So
+          // that we do not overwrite the original fault reason.
+          INTRINSIC_RT_LOG(ERROR)
+              << "PUBLIC: Disabled() failed: " << status.message();
+          fault_reason_string =
+              RealtimeStatus::StrCat("Disabled() failed: ", status.message());
+          state = intrinsic_fbs::StateCode::kFaulted;
+        }
+      }
     }
     hardware_module_state_code_ = state;
     hardware_module_state_update_time_ = Clock::Now();
     intrinsic_fbs::SetState(shared_memory_hardware_module_state_, state,
-                            fault_reason);
+                            fault_reason_string);
     // Publish the state for non-rt threads. We can use it here without a lock
     // since this function should not be called in parallel.
     auto& hwm_state_buffer = ABSL_TS_UNCHECKED_READ(hwm_state_buffer_);
     intrinsic_fbs::SetState(hwm_state_buffer.GetFreeBuffer(), state,
-                            fault_reason);
+                            fault_reason_string);
     hwm_state_buffer.CommitFreeBuffer();
     return state_changed;
   }
@@ -544,22 +562,15 @@ class HardwareModuleRuntime::CallbackHandler final {
   // Checks if `from` state is `kMotionEnabled` and, if so, calls `Disabled()`
   // on the hardware module. It only needs to check the `from` state, since
   // `Disabled()` needs to be called for every transition from `kMotionEnabled`.
-  // Must be called from the rt thread and just after `SetStateDirectly()`.
-  void CheckAndTriggerDisabledTransitionHook(intrinsic_fbs::StateCode from)
-      INTRINSIC_CHECK_REALTIME_SAFE {
+  RealtimeStatus CheckAndTriggerDisabledTransitionHook(
+      intrinsic_fbs::StateCode from) INTRINSIC_CHECK_REALTIME_SAFE {
     if (from == intrinsic_fbs::StateCode::kMotionEnabled) {
       {
-        if (auto status = instance_->Disabled(); !status.ok()) {
-          SetStateDirectly(
-              intrinsic_fbs::StateCode::kFaulted,
-              RealtimeStatus::StrCat("Disabled() callback failed: ",
-                                     status.message()),
-              /*force=*/false, /*silent=*/true);
-        } else {
-          INTRINSIC_RT_LOG(INFO) << "Motion Disabled";
-        }
+        INTRINSIC_RT_RETURN_IF_ERROR(instance_->Disabled());
+        INTRINSIC_RT_LOG(INFO) << "Motion Disabled";
       }
     }
+    return OkStatus();
   }
 
   HardwareModuleInterface* instance_;

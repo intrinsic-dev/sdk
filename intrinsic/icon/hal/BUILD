@@ -192,6 +192,7 @@ cc_library(
         "//intrinsic/icon/utils:fixed_string",
         "//intrinsic/icon/utils:realtime_guard",
         "//intrinsic/icon/utils:realtime_status",
+        "//intrinsic/icon/utils:realtime_status_macro",
         "//intrinsic/platform/common/buffers:rt_promise",
         "//intrinsic/platform/common/buffers:rt_queue",
         "//intrinsic/platform/common/buffers:rt_queue_multi_writer",
