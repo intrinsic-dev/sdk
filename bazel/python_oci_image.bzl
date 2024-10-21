@@ -8,26 +8,19 @@ load(
     "container_image",
 )
 
-def python_oci_image(
-        name,
-        binary,
-        base = Label("@distroless_python3"),
-        extra_tars = None,
-        symlinks = None,
-        **kwargs):
-    """Wrapper for creating a oci_image from a py_binary target.
+def python_layers(name, binary, **kwargs):
+    """Create list of layers for a py_binary target.
 
-    Will create both an oci_image ($name) and a container_tarball ($name.tar) target.
+    In insrc, we use three layers for the interpreter, third-party dependencies, and application code.
 
-    The setup is inspired by https://github.com/aspect-build/bazel-examples/blob/main/oci_python_image/hello_world/BUILD.bazel.
+    The setup is adapted from https://github.com/aspect-build/bazel-examples/blob/main/oci_python_image/py_layer.bzl.
 
     Args:
-      name: name of the image.
-      base: base image to use.
-      binary: the py_binary target.
-      extra_tars: additional layers to add to the image with e.g. supporting files.
-      symlinks: if specified, symlinks to add to the final image (analogous to rules_docker container_image#sylinks).
-      **kwargs: extra arguments to pass on to the oci_image target.
+        name: prefix for generated targets, to ensure they are unique within the package
+        binary: the py_binary target.
+        **kwargs: extra arguments to pass on to the layers.
+    Returns:
+        a list of labels for the layers, which are tar files
     """
 
     binary_label = native.package_relative_label(binary)
@@ -129,6 +122,32 @@ def python_oci_image(
         compress = "gzip",
     )
     layers.append(":" + name + "_app_layer")
+
+    return layers
+
+def python_oci_image(
+        name,
+        binary,
+        base = Label("@distroless_python3"),
+        extra_tars = None,
+        symlinks = None,
+        **kwargs):
+    """Wrapper for creating a oci_image from a py_binary target.
+
+    Will create both an oci_image ($name) and a container_tarball ($name.tar) target.
+
+    The setup is inspired by https://github.com/aspect-build/bazel-examples/blob/main/oci_python_image/hello_world/BUILD.bazel.
+
+    Args:
+      name: name of the image.
+      base: base image to use.
+      binary: the py_binary target.
+      extra_tars: additional layers to add to the image with e.g. supporting files.
+      symlinks: if specified, symlinks to add to the final image (analogous to rules_docker container_image#sylinks).
+      **kwargs: extra arguments to pass on to the oci_image target.
+    """
+
+    layers = python_layers(name, binary, **kwargs)
 
     if extra_tars:
         layers.extend(extra_tars)
