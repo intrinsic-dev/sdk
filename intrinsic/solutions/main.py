@@ -12,7 +12,6 @@ from intrinsic.solutions import errors
 from intrinsic.solutions import execution
 from intrinsic.solutions import perception
 from intrinsic.solutions import pose_estimation
-from intrinsic.solutions import ppr
 from intrinsic.solutions import providers
 from intrinsic.solutions import simulation
 from intrinsic.solutions import worlds

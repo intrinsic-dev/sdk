@@ -333,7 +333,6 @@ py_library(
         ":execution",
         ":perception",
         ":pose_estimation",
-        ":ppr",
         ":providers",
         ":simulation",
         ":worlds",
@@ -395,12 +394,6 @@ py_test(
         "//intrinsic/resources/proto:resource_registry_py_pb2",
         "@com_google_absl_py//absl/testing:absltest",
     ],
-)
-
-py_library(
-    name = "ppr",
-    srcs = ["ppr.py"],
-    deps = ["//intrinsic/config/proto:ppr_refs_py_pb2"],
 )
 
 py_library(
@@ -567,7 +560,6 @@ py_library(
     srcs = ["worlds.py"],
     srcs_version = "PY3",
     deps = [
-        ":ppr",
         ":utils",
         "//intrinsic/geometry/service:geometry_service_py_pb2_grpc",
         "//intrinsic/math/python:data_types",
@@ -577,7 +569,6 @@ py_library(
         "//intrinsic/world/proto:object_world_refs_py_pb2",
         "//intrinsic/world/proto:object_world_service_py_pb2_grpc",
         "//intrinsic/world/python:object_world_client",
-        "//intrinsic/world/python:object_world_ids",
         "//intrinsic/world/python:object_world_resources",
         requirement("grpcio"),
     ],

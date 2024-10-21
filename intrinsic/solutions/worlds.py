@@ -9,13 +9,11 @@ from intrinsic.geometry.service import geometry_service_pb2_grpc
 from intrinsic.math.python import data_types
 from intrinsic.math.python import proto_conversion as math_proto_conversion
 from intrinsic.motion_planning.proto import motion_target_pb2
-from intrinsic.solutions import ppr
 from intrinsic.solutions import utils
 from intrinsic.world.proto import collision_settings_pb2
 from intrinsic.world.proto import object_world_refs_pb2
 from intrinsic.world.proto import object_world_service_pb2_grpc
 from intrinsic.world.python import object_world_client
-from intrinsic.world.python import object_world_ids
 from intrinsic.world.python import object_world_resources
 
 TransformNodeTypes = Union[
@@ -70,32 +68,6 @@ class ObjectWorldExternal(object_world_client.ObjectWorldClient):
     stub = object_world_service_pb2_grpc.ObjectWorldServiceStub(grpc_channel)
     geometry_stub = geometry_service_pb2_grpc.GeometryServiceStub(grpc_channel)
     return cls(world_id, stub, geometry_stub)
-
-  def create_object_from_product_part(  # pytype: disable=signature-mismatch  # overriding-parameter-count-checks
-      self,
-      *,
-      part: ppr.ProductPart,
-      object_name: object_world_ids.WorldObjectName,
-      parent: Optional[object_world_resources.WorldObject] = None,
-      parent_object_t_created_object: Optional[
-          data_types.Pose3
-      ] = data_types.Pose3(),
-  ) -> None:
-    """Adds a product part as object to the world.
-
-    Arguments:
-      part: The ProductPart to add.
-      object_name: The name of the newly created object.
-      parent: The parent object the new product object will be attached to.
-      parent_object_t_created_object: The transform between the parent object
-        and the new product object.
-    """
-    super().create_object_from_product_part(
-        product_part_name=part.name,
-        object_name=object_name,
-        parent=parent,
-        parent_object_t_created_object=parent_object_t_created_object,
-    )
 
 
 ObjectWorld = ObjectWorldExternal
