@@ -115,6 +115,17 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "log_lines",
+    srcs = ["log_lines.cc"],
+    hdrs = ["log_lines.h"],
+    deps = [
+        "@com_google_absl//absl/base:log_severity",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 go_library(
     name = "runfiles",
     srcs = ["runfiles.go"],
