@@ -6,9 +6,7 @@ The ObjectWorldClient is used to access all elements in the object world in
 Python.
 """
 
-import re
 from typing import Dict, List, Mapping, Optional, Tuple, Union, cast
-import warnings
 
 from google.protobuf import any_pb2
 from google.protobuf import struct_pb2
@@ -1248,66 +1246,6 @@ class ObjectWorldClient:
       self, request: object_world_updates_pb2.CreateObjectRequest
   ) -> object_world_service_pb2.Object:
     return self._stub.CreateObject(request)
-
-  def create_object_from_product_part(
-      self,
-      *,
-      product_part_name: str,
-      object_name: object_world_ids.WorldObjectName,
-      parent: Optional[object_world_resources.WorldObject] = None,
-      parent_object_t_created_object: data_types.Pose3 = data_types.Pose3(),
-  ) -> None:
-    """Adds a product part as object to the world.
-
-    Arguments:
-      product_part_name: The name of the product type which is added. It is
-        defined in the product document.
-      object_name: The name of the newly created object.
-      parent: The parent object the new product object will be attached to.
-      parent_object_t_created_object: The transform between the parent object
-        and the new product object.
-
-    Raises:
-      ProductPartDoesNotExistError: If the call to the ObjectWorldService fails
-        because a product part with the specified name does not exist.
-    """
-    warnings.warn(
-        'create_object_from_product_part is deprecated. Use'
-        ' create_object_from_product instead.',
-        DeprecationWarning,
-    )
-
-    req = object_world_updates_pb2.CreateObjectRequest(
-        world_id=self._world_id,
-        name=object_name,
-        name_is_global_alias=True,
-        parent_object_t_created_object=math_proto_conversion.pose_to_proto(
-            parent_object_t_created_object
-        ),
-        create_from_product=object_world_updates_pb2.ObjectSpecFromProduct(
-            product_part_name=product_part_name
-        ),
-    )
-
-    if parent is not None:
-      req.parent_object.reference.CopyFrom(parent.reference)
-    else:
-      req.parent_object.reference.id = object_world_ids.ROOT_OBJECT_ID
-    req.parent_object.entity_filter.CopyFrom(INCLUDE_FINAL_ENTITY)
-
-    try:
-      self._call_create_object(request=req)
-    except grpc.RpcError as err:
-      # Raise a custom error for non-existent product parts, so the user can
-      # handle it rather than a gRPC error.
-      if re.search(
-          rf'The product part with the name [\'"]{product_part_name}[\'"] '
-          r'can not be found',
-          str(err),
-      ):
-        raise ProductPartDoesNotExistError(err) from err
-
-      raise
 
   def create_object_from_product(
       self,
