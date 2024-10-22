@@ -8,6 +8,7 @@ go_library(
     name = "auth",
     srcs = [
         "auth.go",
+        "debuginfo.go",
         "list.go",
         "login.go",
         "print.go",
