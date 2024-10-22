@@ -722,13 +722,8 @@ def _get_message_classes_for_files(
     return msg_factory.GetMessages(files)
 
 
-# Workaround for compatibility with different protobuf versions to prevent
-# GetPrototype() from printing a warning if GetMessageClass() is available.
 def get_message_class(msg: descriptor.Descriptor) -> Type[message.Message]:
-  if hasattr(message_factory, "GetMessageClass"):
-    return message_factory.GetMessageClass(msg)
-  else:
-    return message_factory.MessageFactory().GetPrototype(msg)
+  return message_factory.GetMessageClass(msg)
 
 
 def determine_failed_generate_proto_infra_from_filedescriptorset(
