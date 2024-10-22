@@ -21,8 +21,9 @@ service CameraServer {
   // Returns all available cameras connected on the server side.
   // Note: Today, the camera does not return active instances to cameras. If
   // this functionality is required, is could be implemented by adding a
-  // 'filter' property to the ListCamerasRequest.
-  rpc ListCameras(ListCamerasRequest) returns (ListCamerasResponse) {}
+  // 'filter' property to the ListAvailableCamerasRequest.
+  rpc ListAvailableCameras(ListAvailableCamerasRequest)
+      returns (ListAvailableCamerasResponse) {}
 
   // Creates a camera with the specified configuration on the server side and
   // returns a handle to it. In case the camera has already been created with
@@ -82,9 +83,9 @@ service CameraServer {
 // differentiate between physical cameras connected to the system and cameras
 // which are already instantiated on the server side. In addition one could add
 // filtering options to only list cameras of a specific driver.
-message ListCamerasRequest {}
+message ListAvailableCamerasRequest {}
 
-message ListCamerasResponse {
+message ListAvailableCamerasResponse {
   // A list of unique camera identifiers. These can be used to create a
   // CameraConfig which is required during camera creation.
   repeated CameraIdentifier camera_identifiers = 1;
