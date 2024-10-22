@@ -13,9 +13,9 @@ import "intrinsic/perception/proto/capture_result.proto";
 import "intrinsic/perception/proto/dimensions.proto";
 import "intrinsic/perception/proto/distortion_params.proto";
 import "intrinsic/perception/proto/frame.proto";
-import "intrinsic/perception/proto/frame_post_processing.proto";
 import "intrinsic/perception/proto/image_buffer.proto";
 import "intrinsic/perception/proto/intrinsic_params.proto";
+import "intrinsic/perception/proto/post_processing.proto";
 
 service CameraServer {
   // Returns all available cameras connected on the server side.
@@ -128,7 +128,7 @@ message CaptureRequest {
   // Additional global (applied to all sensor images) post processing options on
   // whether the image should be undistorted, cropped, resized and encoding
   // formats.
-  optional FramePostProcessing post_processing = 4;
+  optional PostProcessing post_processing = 4;
 }
 
 message CaptureResponse {
@@ -155,7 +155,7 @@ message GetFrameRequest {
 
   // Additional post processing options on whether the image should be
   // undistorted, cropped, resized and encoding formats.
-  optional FramePostProcessing post_processing = 3;
+  optional PostProcessing post_processing = 3;
 
   // Optional. Request data only for the following sensor ids. Empty returns
   // data from all sensors.

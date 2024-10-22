@@ -72,8 +72,8 @@ py_proto_library(
 )
 
 proto_library(
-    name = "frame_post_processing_proto",
-    srcs = ["frame_post_processing.proto"],
+    name = "post_processing_proto",
+    srcs = ["post_processing.proto"],
     deps = [
         ":dimensions_proto",
         ":image_buffer_proto",
@@ -81,8 +81,8 @@ proto_library(
 )
 
 py_proto_library(
-    name = "frame_post_processing_py_pb2",
-    deps = [":frame_post_processing_proto"],
+    name = "post_processing_py_pb2",
+    deps = [":post_processing_proto"],
 )
 
 proto_library(
@@ -389,8 +389,8 @@ py_proto_library(
 )
 
 cc_proto_library(
-    name = "frame_post_processing_cc_proto",
-    deps = ["frame_post_processing_proto"],
+    name = "post_processing_cc_proto",
+    deps = ["post_processing_proto"],
 )
 
 cc_proto_library(

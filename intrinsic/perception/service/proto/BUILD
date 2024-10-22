@@ -20,10 +20,10 @@ proto_library(
         "//intrinsic/perception/proto:capture_result_proto",
         "//intrinsic/perception/proto:dimensions_proto",
         "//intrinsic/perception/proto:distortion_params_proto",
-        "//intrinsic/perception/proto:frame_post_processing_proto",
         "//intrinsic/perception/proto:frame_proto",
         "//intrinsic/perception/proto:image_buffer_proto",
         "//intrinsic/perception/proto:intrinsic_params_proto",
+        "//intrinsic/perception/proto:post_processing_proto",
         "@com_google_protobuf//:duration_proto",
     ],
 )
