@@ -709,17 +709,10 @@ def set_fields_in_msg(
   return params_set
 
 
-# Workaround for compatibility with different protobuf versions to prevent
-# GetMessages() from printing a warning if GetMessageClassesForFiles() is
-# available.
 def _get_message_classes_for_files(
     files: List[str], desc_pool: descriptor_pool.DescriptorPool
 ) -> Dict[str, Type[message.Message]]:
-  if hasattr(message_factory, "GetMessageClassesForFiles"):
-    return message_factory.GetMessageClassesForFiles(files, desc_pool)
-  else:
-    msg_factory = message_factory.MessageFactory(pool=desc_pool)
-    return msg_factory.GetMessages(files)
+  return message_factory.GetMessageClassesForFiles(files, desc_pool)
 
 
 def get_message_class(msg: descriptor.Descriptor) -> Type[message.Message]:
