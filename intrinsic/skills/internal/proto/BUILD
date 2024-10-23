@@ -1,10 +1,10 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
+# Protos for internal skill framework types.
+
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_proto_library")
-
-# Protos for internal skill framework types.
 
 package(default_visibility = [
     "//visibility:public",
