@@ -9,6 +9,7 @@ import (
 
 	"flag"
 	log "github.com/golang/glog"
+	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"intrinsic/assets/idutils"
 	"intrinsic/assets/metadatafieldlimits"
@@ -16,6 +17,7 @@ import (
 	smpb "intrinsic/skills/proto/skill_manifest_go_proto"
 	"intrinsic/util/proto/protoio"
 	"intrinsic/util/proto/registryutil"
+	"intrinsic/util/proto/sourcecodeinfoview"
 )
 
 var (
@@ -58,6 +60,17 @@ func validateManifest(m *smpb.SkillManifest, types *protoregistry.Types) error {
 	return nil
 }
 
+func pruneSourceCodeInfo(m *smpb.SkillManifest, fds *dpb.FileDescriptorSet) {
+	var fullNames []string
+	if name := m.GetParameter().GetMessageFullName(); name != "" {
+		fullNames = append(fullNames, name)
+	}
+	if name := m.GetReturnType().GetMessageFullName(); name != "" {
+		fullNames = append(fullNames, name)
+	}
+	sourcecodeinfoview.PruneSourceCodeInfo(fullNames, fds)
+}
+
 func createSkillManifest() error {
 	var fds []string
 	if *flagFileDescriptorSets != "" {
@@ -83,6 +96,8 @@ func createSkillManifest() error {
 	if err := protoio.WriteBinaryProto(*flagOutput, m, protoio.WithDeterministic(true)); err != nil {
 		return fmt.Errorf("could not write skill manifest proto: %v", err)
 	}
+
+	pruneSourceCodeInfo(m, set)
 	if err := protoio.WriteBinaryProto(*flagFileDescriptorSetOut, set, protoio.WithDeterministic(true)); err != nil {
 		return fmt.Errorf("could not write file descriptor set proto: %v", err)
 	}

@@ -5,9 +5,11 @@ package sourcecodeinfoview
 
 import (
 	"fmt"
-	slice "slices"
+	"slices"
 
 	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"google.golang.org/protobuf/reflect/protodesc"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // GetNestedFieldCommentMap returns a mapping of fully qualified messages and fields to the leading comments of those fields.
@@ -16,14 +18,6 @@ func GetNestedFieldCommentMap(protoDescriptors *dpb.FileDescriptorSet, messageFu
 	if len(protoDescriptors.GetFile()) == 0 {
 		return nil, fmt.Errorf("a FileDescriptorSet is required, but %v was given instead", protoDescriptors)
 	}
-
-	// Validate that we have source code info to work with
-	for _, file := range protoDescriptors.GetFile() {
-		if file.GetSourceCodeInfo() == nil {
-			return nil, fmt.Errorf("file %v has no source code info", file.GetName())
-		}
-	}
-
 	// key: fully qualified name of message or field; value: leading comments
 	nestedLeadingComments := make(map[string]string)
 
@@ -60,7 +54,7 @@ func GetNestedFieldCommentMap(protoDescriptors *dpb.FileDescriptorSet, messageFu
 					if typeName[0] == '.' {
 						typeName = typeName[1:]
 					}
-					if !slice.Contains(deps, typeName) {
+					if !slices.Contains(deps, typeName) {
 						deps = append(deps, typeName)
 					}
 				}
@@ -86,7 +80,7 @@ func GetNestedFieldCommentMap(protoDescriptors *dpb.FileDescriptorSet, messageFu
 	for len(fullNameQueue) > 0 {
 		var currentFullName string
 		currentFullName, fullNameQueue = fullNameQueue[0], fullNameQueue[1:]
-		if slice.Contains(namesToKeep, currentFullName) {
+		if slices.Contains(namesToKeep, currentFullName) {
 			continue
 		}
 		namesToKeep = append(namesToKeep, currentFullName)
@@ -94,17 +88,131 @@ func GetNestedFieldCommentMap(protoDescriptors *dpb.FileDescriptorSet, messageFu
 			namesToKeep = append(namesToKeep, f)
 		}
 		for _, dep := range messageDependencies[currentFullName] {
-			if !slice.Contains(fullNameQueue, dep) {
+			if !slices.Contains(fullNameQueue, dep) {
 				fullNameQueue = append(fullNameQueue, dep)
 			}
 		}
 	}
 	// Filter anything we don't want to keep.
 	for name := range nestedLeadingComments {
-		if !slice.Contains(namesToKeep, name) {
+		if !slices.Contains(namesToKeep, name) {
 			delete(nestedLeadingComments, name)
 		}
 	}
 
 	return nestedLeadingComments, nil
+}
+
+func toString(file string, path protoreflect.SourcePath) string {
+	return fmt.Sprintf("%s %s", file, path.String())
+}
+
+func addMessageDependencies(index int, md protoreflect.MessageDescriptor, graph map[string]map[string]struct{}, paths map[string]struct{}) {
+	filePath := md.ParentFile().Path()
+	from := string(md.FullName())
+	for i := 0; i < md.Fields().Len(); i++ {
+		fd := md.Fields().Get(i)
+		sourcePath := md.ParentFile().SourceLocations().ByDescriptor(fd).Path
+		paths[toString(filePath, sourcePath)] = struct{}{}
+		if fd.Kind() == protoreflect.MessageKind {
+			to := string(fd.Message().FullName())
+			if _, exists := graph[from]; !exists {
+				graph[from] = map[string]struct{}{}
+			}
+			graph[from][to] = struct{}{}
+		}
+	}
+
+	for i := 0; i < md.Messages().Len(); i++ {
+		nested := md.Messages().Get(i)
+		sourcePath := md.ParentFile().SourceLocations().ByDescriptor(nested).Path
+		paths[toString(filePath, sourcePath)] = struct{}{}
+		addMessageDependencies(index, nested, graph, paths)
+	}
+}
+
+func dependencyGraph(fds *dpb.FileDescriptorSet) (map[string]map[string]struct{}, map[string]struct{}, error) {
+	// A map between full message names to set of direct dependencies.
+	graph := map[string]map[string]struct{}{}
+	// A set of descriptor location "paths" that we need to retain. These paths
+	// currently hold message, nested messages, and message field descriptors. All
+	// other sources will be pruned.
+	pathsWithFile := map[string]struct{}{}
+
+	files, err := protodesc.NewFiles(fds)
+	if err != nil {
+		return nil, nil, err
+	}
+	files.RangeFiles(func(f protoreflect.FileDescriptor) bool {
+		for i := 0; i < f.Messages().Len(); i++ {
+			md := f.Messages().Get(i)
+			sourcePath := f.SourceLocations().ByDescriptor(md).Path
+			pathsWithFile[toString(f.Path(), sourcePath)] = struct{}{}
+			addMessageDependencies(i, md, graph, pathsWithFile)
+		}
+		return true
+	})
+	return graph, pathsWithFile, nil
+}
+
+func allDependencies(fullNames []string, graph map[string]map[string]struct{}) map[string]struct{} {
+	deps := map[string]struct{}{}
+	stack := slices.Clone(fullNames)
+	for len(stack) > 0 {
+		popped := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		if _, exists := deps[popped]; !exists {
+			deps[popped] = struct{}{}
+			neighbors, _ := graph[popped]
+			for fn := range neighbors {
+				stack = append(stack, fn)
+			}
+		}
+	}
+	return deps
+}
+
+func anyMessageInDepSet(file *dpb.FileDescriptorProto, depSet map[string]struct{}) bool {
+	pkg := file.GetPackage()
+	for _, mt := range file.GetMessageType() {
+		fullName := pkg + "." + mt.GetName()
+		if _, exists := depSet[fullName]; exists {
+			return true
+		}
+	}
+	return false
+}
+
+// PruneSourceCodeInfo removes comments and other source code information. It
+// always retains comments that are needed by the passed in list of message type
+// names and their transitive dependencies. Leading detached comments are
+// always removed.
+func PruneSourceCodeInfo(fullNames []string, fds *dpb.FileDescriptorSet) error {
+	depGraph, pathsWithFile, err := dependencyGraph(fds)
+	if err != nil {
+		return err
+	}
+	depSet := allDependencies(fullNames, depGraph)
+
+	for _, file := range fds.GetFile() {
+		// We keep comments in any file that contains at least one message that
+		// belong to the set of transitive dependencies.
+		if !anyMessageInDepSet(file, depSet) {
+			file.SourceCodeInfo = nil
+			continue
+		}
+
+		// Remove all leading detached comments and spans as we do not need them.
+		locations := file.GetSourceCodeInfo().GetLocation()
+		for _, l := range locations {
+			l.LeadingDetachedComments = nil
+		}
+
+		// Remove source locations that don't point to a proto message location.
+		file.GetSourceCodeInfo().Location = slices.DeleteFunc(locations, func(l *dpb.SourceCodeInfo_Location) bool {
+			_, exists := pathsWithFile[toString(file.GetName(), protoreflect.SourcePath(l.Path))]
+			return !exists
+		})
+	}
+	return nil
 }

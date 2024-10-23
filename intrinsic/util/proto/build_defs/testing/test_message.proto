@@ -28,7 +28,10 @@ message TestMessageB {
   // A submessage
   SubMessage submessage = 1;
 
+  // A submessage with a leading detached comment.
+
   SubMessage submessage_no_comment = 2;
 
   SubMessageB submesage_b = 3;
+  // Above is a submessage with a trailing comment.
 }

@@ -166,5 +166,9 @@ cc_library(
 go_library(
     name = "sourcecodeinfoview",
     srcs = ["source_code_info_view.go"],
-    deps = ["@io_bazel_rules_go//proto/wkt:descriptor_go_proto"],
+    deps = [
+        "@io_bazel_rules_go//proto/wkt:descriptor_go_proto",
+        "@org_golang_google_protobuf//reflect/protodesc:go_default_library",
+        "@org_golang_google_protobuf//reflect/protoreflect:go_default_library",
+    ],
 )
