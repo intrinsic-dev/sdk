@@ -53,6 +53,9 @@ class MotionPlannerClient {
     std::optional<intrinsic_proto::motion_planning::LockMotionConfiguration>
         lock_motion_configuration = std::nullopt;
 
+    // If true, the cache will not check for fuzzy matches. Default to false.
+    bool skip_fuzzy_cache_check = false;
+
     // Returns the default set of options to use with the plan path requests.
     static const MotionPlanningOptions& Defaults();
   };

@@ -17,6 +17,9 @@ message MotionPlannerConfiguration {
   // Configuration for saving or loading this motion.
   optional LockMotionConfiguration lock_motion_configuration = 3;
 
+  // If true, the cache will not check for fuzzy matches. Default to false.
+  optional bool skip_fuzzy_cache_check = 5;
+
   reserved 2;
   reserved "use_projection_onto_constraint_manifold";
 }

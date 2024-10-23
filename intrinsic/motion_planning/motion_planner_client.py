@@ -81,6 +81,7 @@ class MotionPlanningOptions:
     path_planning_step_size: Maximum step size deployed during path planning.
     lock_motion_configuration: Optional configuration for saving or loading a
       motion.
+    skip_fuzzy_cache_check: If true, the cache will not check for fuzzy matches.
   """
 
   path_planning_time_out: int = 30
@@ -88,6 +89,7 @@ class MotionPlanningOptions:
   lock_motion_configuration: (
       motion_planner_config_pb2.LockMotionConfiguration | None
   ) = None
+  skip_fuzzy_cache_check: bool = False
 
 
 class MotionPlannerClient:

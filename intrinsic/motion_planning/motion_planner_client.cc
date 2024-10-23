@@ -41,6 +41,7 @@ MotionPlannerClient::MotionPlanningOptions::Defaults() {
       .path_planning_step_size = std::nullopt,
       .compute_swept_volume = false,
       .lock_motion_configuration = std::nullopt,
+      .skip_fuzzy_cache_check = false,
   });
 
   return *defaults;
