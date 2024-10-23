@@ -9,7 +9,11 @@ import (
 	"net"
 
 	"github.com/spf13/cobra"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/util/orgutil"
+
+	accdiscoverv1grpcpb "intrinsic/kubernetes/accounts/service/api/discoveryv1api_go_grpc_proto"
 )
 
 var (
@@ -38,15 +42,15 @@ var printDebugInfoCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
-		debugAuthStore(flagOrg)
 		for _, domain := range domains {
 			debugDomain(ctx, domain)
 		}
+		debugAuthStore(ctx, flagOrg)
 		return nil
 	},
 }
 
-func debugAuthStore(org string) {
+func debugAuthStore(ctx context.Context, org string) {
 	fmt.Printf("Configuration for org %s: ", org)
 	orgInfo, err := authStore.ReadOrgInfo(org)
 	if err != nil {
@@ -71,6 +75,7 @@ func debugAuthStore(org string) {
 	}
 	fmt.Println("OK")
 	fmt.Printf("API Key Length: %d\n", len(cred.APIKey))
+	debugAccountsDiscovery(ctx, cred.APIKey, "accounts.intrinsic.ai")
 }
 
 func debugDomain(ctx context.Context, domain string) {
@@ -115,4 +120,32 @@ func debugDNS(ctx context.Context, domain string) {
 	}
 	fmt.Println("OK")
 	fmt.Printf("DNS (%q): Addresses: %v\n", domain, addrs)
+}
+
+func debugAccountsDiscovery(ctx context.Context, apiKey, domain string) {
+	addr := fmt.Sprintf("dns:///%s:443", domain)
+	fmt.Printf("Organizations Discovery (%q):\n", addr)
+	fmt.Printf(" Connection: ")
+	ctx, conn, err := dialerutil.DialConnectionCtx(ctx, dialerutil.DialInfoParams{
+		Address:   addr,
+		CredToken: apiKey,
+	})
+	if err != nil {
+		fmt.Printf("ERROR (%v)\n", err)
+		return
+	}
+	defer conn.Close()
+	fmt.Println("OK")
+	fmt.Printf(" ListOrganizations: ")
+	client := accdiscoverv1grpcpb.NewAccountsDiscoveryServiceClient(conn)
+	resp, err := client.ListOrganizations(ctx, &emptypb.Empty{})
+	if err != nil {
+		fmt.Printf("ERROR (%v)\n", err)
+		return
+	}
+	fmt.Println("OK")
+	fmt.Printf(" Organizations (%d):\n", len(resp.GetOrganizations()))
+	for _, org := range resp.GetOrganizations() {
+		fmt.Printf("  %s on %s\n", org.GetName(), org.GetProject())
+	}
 }
