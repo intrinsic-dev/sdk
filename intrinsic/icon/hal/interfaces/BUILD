@@ -216,3 +216,94 @@ cc_library(
         "@com_github_google_flatbuffers//:flatbuffers",
     ],
 )
+
+flatbuffers_library(
+    name = "robot_payload_fbs",
+    srcs = [
+        "robot_payload.fbs",
+    ],
+    deps = [
+        "//intrinsic/icon/flatbuffers:matrix_types_fbs",
+        "//intrinsic/icon/flatbuffers:transform_types_fbs",
+    ],
+)
+
+cc_flatbuffers_library(
+    name = "robot_payload_fbs_cc",
+    deps = [":robot_payload_fbs"],
+)
+
+cc_library(
+    name = "robot_payload_utils",
+    srcs = ["robot_payload_utils.cc"],
+    hdrs = ["robot_payload_utils.h"],
+    deps = [
+        ":robot_payload_fbs_cc",
+        "//intrinsic/eigenmath",
+        "//intrinsic/icon/control/parts:realtime_robot_payload",
+        "//intrinsic/icon/flatbuffers:control_types_utils",
+        "//intrinsic/icon/flatbuffers:matrix_types_fbs_cc",
+        "//intrinsic/icon/flatbuffers:matrix_types_utils",
+        "//intrinsic/icon/flatbuffers:transform_types_fbs_cc",
+        "//intrinsic/icon/utils:realtime_status",
+        "//intrinsic/icon/utils:realtime_status_macro",
+        "//intrinsic/math:pose3",
+        "//intrinsic/world/robot_payload",
+        "//intrinsic/world/robot_payload:robot_payload_base",
+        "@com_github_google_flatbuffers//:runtime_cc",
+    ],
+)
+
+flatbuffers_library(
+    name = "payload_command_fbs",
+    srcs = [
+        "payload_command.fbs",
+    ],
+    deps = [
+        ":robot_payload_fbs",
+    ],
+)
+
+cc_flatbuffers_library(
+    name = "payload_command_fbs_cc",
+    deps = [":payload_command_fbs"],
+)
+
+cc_library(
+    name = "payload_command_utils",
+    srcs = ["payload_command_utils.cc"],
+    hdrs = ["payload_command_utils.h"],
+    deps = [
+        ":payload_command_fbs_cc",
+        ":robot_payload_fbs_cc",
+        ":robot_payload_utils",
+        "@com_github_google_flatbuffers//:runtime_cc",
+    ],
+)
+
+flatbuffers_library(
+    name = "payload_state_fbs",
+    srcs = [
+        "payload_state.fbs",
+    ],
+    deps = [
+        ":robot_payload_fbs",
+    ],
+)
+
+cc_flatbuffers_library(
+    name = "payload_state_fbs_cc",
+    deps = [":payload_state_fbs"],
+)
+
+cc_library(
+    name = "payload_state_utils",
+    srcs = ["payload_state_utils.cc"],
+    hdrs = ["payload_state_utils.h"],
+    deps = [
+        ":payload_state_fbs_cc",
+        ":robot_payload_fbs_cc",
+        ":robot_payload_utils",
+        "@com_github_google_flatbuffers//:runtime_cc",
+    ],
+)

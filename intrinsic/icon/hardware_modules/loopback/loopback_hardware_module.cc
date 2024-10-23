@@ -3,6 +3,7 @@
 #include "intrinsic/icon/hardware_modules/loopback/loopback_hardware_module.h"
 
 #include <memory>
+#include <optional>
 
 #include "absl/log/log.h"
 #include "absl/status/status.h"
@@ -22,6 +23,11 @@
 #include "intrinsic/icon/hal/interfaces/joint_limits_utils.h"
 #include "intrinsic/icon/hal/interfaces/joint_state.fbs.h"
 #include "intrinsic/icon/hal/interfaces/joint_state_utils.h"
+#include "intrinsic/icon/hal/interfaces/payload_command.fbs.h"
+#include "intrinsic/icon/hal/interfaces/payload_command_utils.h"
+#include "intrinsic/icon/hal/interfaces/payload_state.fbs.h"
+#include "intrinsic/icon/hal/interfaces/payload_state_utils.h"
+#include "intrinsic/icon/hal/interfaces/robot_payload_utils.h"
 #include "intrinsic/icon/hal/module_config.h"
 #include "intrinsic/icon/hardware_modules/loopback/loopback_config.pb.h"
 #include "intrinsic/icon/utils/clock.h"
@@ -34,6 +40,7 @@
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/thread/thread.h"
 #include "intrinsic/util/thread/thread_options.h"
+#include "intrinsic/world/robot_payload/robot_payload_base.h"
 
 namespace loopback_module {
 
@@ -114,12 +121,22 @@ absl::Status LoopbackHardwareModule::Init(
       joint_acceleration_state_,
       interface_registry.AdvertiseMutableInterface<JointAccelerationState>(
           "joint_acceleration_state", num_dofs_));
+  INTR_ASSIGN_OR_RETURN(
+      payload_command_,
+      interface_registry.AdvertiseInterface<intrinsic_fbs::PayloadCommand>(
+          "payload_command"));
+  INTR_ASSIGN_OR_RETURN(
+      payload_state_,
+      interface_registry.AdvertiseMutableInterface<intrinsic_fbs::PayloadState>(
+          "payload_state"));
+
   if (loopback_config.advertise_system_limits_interface()) {
     INTR_ASSIGN_OR_RETURN(
         joint_system_limits_,
         interface_registry.AdvertiseStrictInterface<intrinsic_fbs::JointLimits>(
             "joint_system_limits", num_dofs_));
   }
+
   INTR_ASSIGN_OR_RETURN(
       safety_status_,
       interface_registry.AdvertiseMutableInterface<SafetyStatusMessage>(
@@ -176,6 +193,19 @@ RealtimeStatus LoopbackHardwareModule::Deactivate() {
 
 absl::Status LoopbackHardwareModule::EnableMotion() {
   LOG(INFO) << "Enabling motion on loopback hardware module";
+
+  std::optional<intrinsic::RobotPayloadBase> full_payload;
+  INTR_RETURN_IF_ERROR(
+      intrinsic::icon::CopyTo(*payload_command_->full_payload(), full_payload));
+
+  if (full_payload.has_value()) {
+    LOG(INFO) << "Setting custom payload: " << *full_payload;
+  }
+  // Copy the commanded payload to the state. If no payload was commanded, it is
+  // nullopt.
+  INTR_RETURN_IF_ERROR(intrinsic_fbs::CopyTo(
+      full_payload, *payload_state_->mutable_full_payload()));
+
   module_state_ = ModuleState::kMotionEnabled;
   return absl::OkStatus();
 }
@@ -256,6 +286,14 @@ INTRINSIC_ADD_HARDWARE_INTERFACE(intrinsic_fbs::JointAccelerationState,
 INTRINSIC_ADD_HARDWARE_INTERFACE(intrinsic_fbs::JointTorqueState,
                                  intrinsic_fbs::BuildJointTorqueState,
                                  "intrinsic_fbs.JointTorqueState")
+
+INTRINSIC_ADD_HARDWARE_INTERFACE(intrinsic_fbs::PayloadCommand,
+                                 intrinsic_fbs::BuildPayloadCommand,
+                                 "intrinsic_fbs.PayloadCommand")
+
+INTRINSIC_ADD_HARDWARE_INTERFACE(intrinsic_fbs::PayloadState,
+                                 intrinsic_fbs::BuildPayloadState,
+                                 "intrinsic_fbs.PayloadState")
 
 INTRINSIC_ADD_HARDWARE_INTERFACE(intrinsic_fbs::JointLimits,
                                  intrinsic_fbs::BuildJointLimits,

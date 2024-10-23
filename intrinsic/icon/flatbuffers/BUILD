@@ -14,6 +14,27 @@ cc_flatbuffers_library(
     deps = [":transform_types_fbs"],
 )
 
+flatbuffers_library(
+    name = "matrix_types_fbs",
+    srcs = ["matrix_types.fbs"],
+)
+
+cc_flatbuffers_library(
+    name = "matrix_types_fbs_cc",
+    deps = [":matrix_types_fbs"],
+)
+
+cc_library(
+    name = "matrix_types_utils",
+    srcs = ["matrix_types_utils.cc"],
+    hdrs = ["matrix_types_utils.h"],
+    deps = [
+        ":matrix_types_fbs_cc",
+        "//intrinsic/eigenmath",
+        "@com_github_google_flatbuffers//:runtime_cc",
+    ],
+)
+
 cc_library(
     name = "transform_types",
     srcs = [
@@ -25,6 +46,46 @@ cc_library(
     deps = [
         ":transform_types_fbs_cc",
         "@com_github_google_flatbuffers//:flatbuffers",
+        "@com_gitlab_libeigen_eigen//:eigen",
+    ],
+)
+
+cc_library(
+    name = "control_types_utils",
+    srcs = [
+        "control_types_copy.cc",
+        "control_types_view.cc",
+    ],
+    hdrs = [
+        "control_types_copy.h",
+        "control_types_view.h",
+    ],
+    deps = [
+        ":transform_types",
+        ":transform_types_fbs_cc",
+        ":transform_utils",
+        "//intrinsic/eigenmath",
+        "//intrinsic/math:pose3",
+        "//intrinsic/math:twist",
+        "@com_github_google_flatbuffers//:runtime_cc",
+    ],
+)
+
+cc_library(
+    name = "transform_utils",
+    srcs = [
+        "transform_copy.cc",
+        "transform_view.cc",
+    ],
+    hdrs = [
+        "transform_copy.h",
+        "transform_view.h",
+    ],
+    deps = [
+        ":transform_types",
+        ":transform_types_fbs_cc",
+        "//intrinsic/eigenmath",
+        "@com_github_google_flatbuffers//:runtime_cc",
         "@com_gitlab_libeigen_eigen//:eigen",
     ],
 )

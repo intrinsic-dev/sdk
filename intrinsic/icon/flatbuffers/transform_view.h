@@ -8,14 +8,6 @@
 #include "flatbuffers/vector.h"
 #include "intrinsic/eigenmath/types.h"
 #include "intrinsic/icon/flatbuffers/transform_types.fbs.h"
-#include "intrinsic/icon/flatbuffers/transform_types.h"
-
-#define MUTATE_VECTORND(message, field)                      \
-  ::intrinsic_fbs::ViewAs<::intrinsic::eigenmath::VectorNd>( \
-      (message)->mutable_##field())
-
-#define VIEW_VECTORND(message, field) \
-  ::intrinsic_fbs::ViewAs<::intrinsic::eigenmath::VectorNd>((message)->field())
 
 namespace intrinsic_fbs {
 

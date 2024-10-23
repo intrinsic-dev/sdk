@@ -21,6 +21,8 @@
 #include "intrinsic/icon/hal/interfaces/joint_command.fbs.h"
 #include "intrinsic/icon/hal/interfaces/joint_limits.fbs.h"
 #include "intrinsic/icon/hal/interfaces/joint_state.fbs.h"
+#include "intrinsic/icon/hal/interfaces/payload_command.fbs.h"
+#include "intrinsic/icon/hal/interfaces/payload_state.fbs.h"
 #include "intrinsic/icon/utils/realtime_status.h"
 #include "intrinsic/math/gaussian_noise.h"
 #include "intrinsic/util/thread/thread.h"
@@ -83,6 +85,10 @@ class LoopbackHardwareModule final
   intrinsic::icon::StrictHardwareInterfaceHandle<
       intrinsic_fbs::JointPositionCommand>
       joint_position_command_;
+  intrinsic::icon::HardwareInterfaceHandle<intrinsic_fbs::PayloadCommand>
+      payload_command_;
+  intrinsic::icon::MutableHardwareInterfaceHandle<intrinsic_fbs::PayloadState>
+      payload_state_;
   std::optional<intrinsic::icon::StrictHardwareInterfaceHandle<
       intrinsic_fbs::JointLimits>>
       joint_system_limits_;

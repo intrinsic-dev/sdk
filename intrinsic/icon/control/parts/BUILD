@@ -21,3 +21,22 @@ cc_library(
         "@com_google_absl//absl/types:span",
     ],
 )
+
+cc_library(
+    name = "realtime_robot_payload",
+    srcs = ["realtime_robot_payload.cc"],
+    hdrs = ["realtime_robot_payload.h"],
+    visibility = ["//intrinsic/icon:__subpackages__"],
+    deps = [
+        "//intrinsic/eigenmath",
+        "//intrinsic/icon/utils:fixed_str_cat",
+        "//intrinsic/icon/utils:fixed_string",
+        "//intrinsic/icon/utils:realtime_status_macro",
+        "//intrinsic/icon/utils:realtime_status_or",
+        "//intrinsic/kinematics:validate_link_parameters",
+        "//intrinsic/kinematics/types:to_fixed_string",
+        "//intrinsic/math:pose3",
+        "//intrinsic/world/proto:robot_payload_cc_proto",
+        "//intrinsic/world/robot_payload:robot_payload_base",
+    ],
+)
