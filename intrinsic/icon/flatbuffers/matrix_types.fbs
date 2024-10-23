@@ -1,0 +1,8 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+
+namespace intrinsic_fbs;
+
+struct Matrix3d {
+  values: [double:9];
+}
