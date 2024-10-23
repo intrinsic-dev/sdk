@@ -2,6 +2,8 @@
 
 # PubSub adapters implementations.
 
+load("//bazel:go_macros.bzl", "go_proto_library")
+
 package(default_visibility = ["//visibility:public"])
 
 proto_library(
@@ -15,5 +17,10 @@ proto_library(
 
 cc_proto_library(
     name = "pubsub_cc_proto",
+    deps = [":pubsub_proto"],
+)
+
+go_proto_library(
+    name = "pubsub_go_proto",
     deps = [":pubsub_proto"],
 )
