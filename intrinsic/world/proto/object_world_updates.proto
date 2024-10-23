@@ -136,7 +136,8 @@ message ObjectSpecFromSceneObject {
   // should avoid storing keys in this format.
   map<string, string> user_data = 2;
 
-  // Optional name of the product that this object is instantiated from.
+  reserved 3;
+  reserved "product_name";
 }
 
 // Request to create an object. This is currently limited to a very simple use
