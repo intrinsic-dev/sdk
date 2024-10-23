@@ -35,7 +35,10 @@ message ExtendedStatus {
   StatusCode status_code = 1;
   Severity severity = 2;
 
-  // One-line summary that can be used as a headline to describe the error
+  // One-line summary that can be used as a headline to describe the error.
+  //
+  // More guidance:
+  // https://flowstate.intrinsic.ai/docs/guides/build_with_code/extended_status_guide/
   string title = 3;
 
   // Time when the error occurred that produced the extended status
@@ -43,6 +46,11 @@ message ExtendedStatus {
 
   repeated ExtendedStatus context = 5;
 
+  // An actionable report of the error, intended for either the
+  // developers/owners (internal) or the user of a component (external).
+  //
+  // More guidance:
+  // https://flowstate.intrinsic.ai/docs/guides/build_with_code/extended_status_guide/
   message Report {
     string message = 1;
     string instructions = 2;
@@ -62,13 +70,14 @@ message ExtendedStatus {
 
   optional Relations related_to = 6;
 
-  // Internal report only available to developers/owners of the component. It is
-  // the responsibility of the emitter of the extended status to determine when
-  // to include an internal report. A criterion could be, for example, that the
-  // component is run in one of the component's vendor's orgs.
+  // Internal report intended for developers/owners of the component, but
+  // visible to all if they expand it in the UI. It is the responsibility of the
+  // emitter of the extended status to determine when to include an internal
+  // report. A criterion could be, for example, that the component is run in one
+  // of the component's vendor's orgs.
   optional Report internal_report = 10;
 
-  // This report is available to external users, e.g., callers of a component
-  // even if they are from a different org.
+  // This report is shown to external users, e.g., callers of a component even
+  // if they are from a different org.
   optional Report external_report = 11;
 }
