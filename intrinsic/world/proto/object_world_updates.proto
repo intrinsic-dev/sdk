@@ -126,13 +126,6 @@ message ObjectSpecForSingleEntityObject {
   intrinsic_proto.world.GeometryComponent geometry_component = 3;
 }
 
-// Specifies to create an object by instantiating a ProductPart.
-message ObjectSpecFromProduct {
-  // Name of the product part in the Product document of the running
-  // application.
-  string product_part_name = 1;
-}
-
 // Specifies to create an object by instantiating a SceneObject.
 message ObjectSpecFromSceneObject {
   // SceneObject to be used to create the object.
@@ -184,7 +177,6 @@ message CreateObjectRequest {
   oneof object_spec {
     ObjectSpecForSingleEntityObject create_single_entity_object = 5;
     ObjectSpecFromSceneObject create_from_scene_object = 12;
-    ObjectSpecFromProduct create_from_product = 8;
   }
 
   // User data to be attached to the object.
@@ -194,6 +186,9 @@ message CreateObjectRequest {
 
   // Requested object view for the returned, created object.
   ObjectView view = 7;
+
+  reserved "create_from_product";
+  reserved 8;
 }
 
 message CreateObjectsRequest {
