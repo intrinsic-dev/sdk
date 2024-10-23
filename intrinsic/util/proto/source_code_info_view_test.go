@@ -124,6 +124,12 @@ func TestPruningDoesNotAffectGetNestedFieldCommentMap(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Unexpected error %v", err)
 			}
+
+			// Non-Intrinsic code should be stripped out.
+			delete(want, "google.protobuf.Duration")
+			delete(want, "google.protobuf.Duration.nanos")
+			delete(want, "google.protobuf.Duration.seconds")
+
 			if diff := cmp.Diff(want, got); diff != "" {
 				t.Errorf("GetNestedFieldCommentMap(_, %q) returned an unexpected diff (-want +got): %v", tc.messageName, diff)
 			}
@@ -235,7 +241,7 @@ func TestPruneSourceCodeInfo(t *testing.T) {
 			name:      "intrinsic.build_def.testing.TestMessage",
 			fullNames: []string{"intrinsic.build_def.testing.TestMessage"},
 			want: map[string]bool{
-				"google/protobuf/duration.proto":                                 true,
+				"google/protobuf/duration.proto":                                 false,
 				"intrinsic/util/proto/build_defs/testing/test_message.proto":     true,
 				"intrinsic/util/proto/build_defs/testing/test_message_dep.proto": true,
 			},
@@ -277,11 +283,11 @@ func TestPruneSourceCodeInfo(t *testing.T) {
 			hasComments := map[string]bool{}
 			for _, f := range fds.GetFile() {
 				hasComments[f.GetName()] = len(f.GetSourceCodeInfo().GetLocation()) > 0
-				// for _, l := range f.GetSourceCodeInfo().GetLocation() {
-				// 	if l.LeadingDetachedComments != nil {
-				// 		t.Errorf("PruneSourceCodeInfo(%v) did not remove all detached comments", tc.fullNames)
-				// 	}
-				// }
+				for _, l := range f.GetSourceCodeInfo().GetLocation() {
+					if l.LeadingDetachedComments != nil {
+						t.Errorf("PruneSourceCodeInfo(%v) did not remove all detached comments", tc.fullNames)
+					}
+				}
 			}
 			if diff := cmp.Diff(tc.want, hasComments); diff != "" {
 				t.Errorf("PruneSourceCodeInfo(%v) made an unexpected diff (-want +got): %v", tc.fullNames, diff)

@@ -195,6 +195,7 @@ func PruneSourceCodeInfo(fullNames []string, fds *dpb.FileDescriptorSet) error {
 	depSet := allDependencies(fullNames, depGraph)
 
 	for _, file := range fds.GetFile() {
+
 		// We keep comments in any file that contains at least one message that
 		// belong to the set of transitive dependencies.
 		if !anyMessageInDepSet(file, depSet) {
