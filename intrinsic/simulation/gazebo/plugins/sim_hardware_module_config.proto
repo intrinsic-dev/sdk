@@ -150,6 +150,10 @@ message DigitalInputInterface {
   // You can omit this if `name_of_object_with_digital_input` only has a single
   // input block.
   optional string input_block_name = 2;
+  // Optional aliases for the individual bits of the digital input block (LSB
+  // is at index 0). Bits that aren't in this map get an auto-generated name
+  // based on their bit index.
+  map<uint32, string> bit_number_to_alias = 3;
 }
 
 // Accepts commands of digital input block `output_block_name` on the (Intrinsic
@@ -167,6 +171,10 @@ message DigitalOutputInterface {
   // You can omit this if `name_of_object_with_digital_input` only has a single
   // output block.
   optional string output_block_name = 2;
+  // Optional aliases for the individual bits of the digital output block (LSB
+  // is at index 0). Bits that aren't in this map get an auto-generated name
+  // based on their bit index.
+  map<uint32, string> bit_number_to_alias = 3;
 }
 
 // Analog inputs aren't simulated, so there are no further parameters. Just make
