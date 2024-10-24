@@ -3,10 +3,14 @@
 package cluster
 
 import (
+	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -52,15 +56,23 @@ func (res *ListClusterDescriptionsResponse) MarshalJSON() ([]byte, error) {
 
 // String converts a ListClusterDescriptionsResponse to a string
 func (res *ListClusterDescriptionsResponse) String() string {
-	const formatString = "%-35s %-10s %s %s"
-	lines := []string{}
-	lines = append(lines, fmt.Sprintf(formatString, "Name", "Region", "K8S Context", "Display Name"))
+	// Sort by display name to match IPC managers's default sort.
+	clusters := make([]*clusterdiscoverygrpcpb.ClusterDescription, len(res.m.Clusters))
+	copy(clusters, res.m.Clusters)
+	slices.SortFunc(clusters, func(a, b *clusterdiscoverygrpcpb.ClusterDescription) int {
+		return cmp.Compare(a.GetDisplayName(), b.GetDisplayName())
+	})
+
+	b := new(bytes.Buffer)
+	w := tabwriter.NewWriter(b,
+		/*minwidth=*/ 1 /*tabwidth=*/, 1 /*padding=*/, 1 /*padchar=*/, ' ' /*flags=*/, 0)
+	fmt.Fprintf(w, "%s\t%s\t%s\n", "Display Name", "ID", "Region")
 	for _, c := range res.m.Clusters {
-		lines = append(
-			lines,
-			fmt.Sprintf(formatString, c.GetClusterName(), c.GetRegion(), c.GetK8SContext(), c.GetDisplayName()))
+		fmt.Fprintf(w, "%s\t%s\t%s\n", c.GetDisplayName(), c.GetClusterName(), c.GetRegion())
 	}
-	return strings.Join(lines, "\n")
+	w.Flush()
+	// Remove the trailing newline as the pretty-printer wrapper will add one.
+	return strings.TrimSuffix(b.String(), "\n")
 }
 
 func fetchAndPrintClusters(ctx context.Context, conn *grpc.ClientConn, prtr printer.Printer) error {
