@@ -24,6 +24,8 @@ using ::intrinsic_proto::performance::analysis::proto::PerformanceMetrics;
 // contexts.
 class MetricsLogger {
  public:
+  // Constructs a MetricsLogger that exports metrics to a topic with
+  // `module_name`.
   explicit MetricsLogger(std::string module_name);
 
   ~MetricsLogger();

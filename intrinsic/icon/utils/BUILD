@@ -135,6 +135,7 @@ cc_library(
         "//intrinsic/util/thread",
         "//intrinsic/util/thread:thread_options",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_protobuf//:protobuf",
     ],
 )

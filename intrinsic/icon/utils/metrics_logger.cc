@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "google/protobuf/struct.pb.h"
 #include "intrinsic/logging/data_logger_client.h"
 #include "intrinsic/logging/proto/log_item.pb.h"
