@@ -22,3 +22,9 @@ message StatusSpec {
   // useful error recovery strategies).
   string recovery_instructions = 3;
 }
+
+// A collection of status specs.
+// This message is used for standalone files that contain status specs.
+message StatusSpecs {
+  repeated StatusSpec status_info = 1;
+}
