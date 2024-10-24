@@ -105,6 +105,4 @@ def get_encoded_frame(frame: Frame) -> str:
   plt.savefig(tmp_file)
   plt.close()
 
-  return base64.b64encode(tmp_file.getbuffer()).decode(
-      'ascii'
-  )  # pytype: disable=wrong-arg-types
+  return base64.b64encode(tmp_file.getbuffer()).decode('ascii')  # pytype: disable=wrong-arg-types

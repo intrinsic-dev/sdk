@@ -186,8 +186,6 @@ class RequiredMetadataInterceptor(grpc.ServerInterceptor):
       continuation: Callable[[grpc.HandlerCallDetails], grpc.RpcMethodHandler],
       handler_call_details: grpc.HandlerCallDetails,
   ) -> Optional[grpc.RpcMethodHandler]:
-    if self._has_required_metadata(
-        handler_call_details.invocation_metadata
-    ):  # pytype: disable=attribute-error
+    if self._has_required_metadata(handler_call_details.invocation_metadata):  # pytype: disable=attribute-error
       return continuation(handler_call_details)
     return None

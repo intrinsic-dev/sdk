@@ -44,16 +44,6 @@ service AssetDeploymentService {
     };
   }
 
-  // Update all existing resource instance with an updated version of the
-  // resource type. On success, `response` field of `Operation` is set to
-  // `google.protobuf.Empty`.
-  rpc UpdateResourceVersion(UpdateResourceVersionRequest)
-      returns (google.longrunning.Operation) {
-    option (google.longrunning.operation_info) = {
-      response_type: "google.protobuf.Empty"
-    };
-  }
-
   // Installs a skill from the skill catalog.
   // On success, the `response` field of `Operation` is set to
   // `CreateSkillFromCatalogResponse`.
@@ -166,19 +156,6 @@ message UpdateResourceRequest {
   string world_id = 2;
 }
 
-message UpdateResourceVersionRequest {
-  // The current versioned identifier for the asset being updated.
-  IdVersion current_id_version = 1;
-
-  // The updated version for the asset. This asset must have already been
-  // installed before making this call.
-  string updated_version = 2;
-
-  // World ID where we will update this asset. If left unset, no world
-  // operations will be performed.
-  string world_id = 3;
-}
-
 message CreateSkillFromCatalogRequest {
   // Versioned identifier of the skill to be installed. The skill should be
   // present in the catalog.
@@ -187,15 +164,5 @@ message CreateSkillFromCatalogRequest {
 
 message CreateSkillFromCatalogResponse {
   // Identifier of the skill that was installed.
-  string skill_id = 1;
-}
-
-message DeleteSkillRequest {
-  // Identifier of the skill to be deleted.
-  string skill_id = 1;
-}
-
-message DeleteSkillResponse {
-  // Identifier of the skill that was deleted.
   string skill_id = 1;
 }
