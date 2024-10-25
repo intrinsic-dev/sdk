@@ -160,9 +160,9 @@ message DigitalInputInterface {
 // World) object `name_of_object_with_digital_output`.
 //
 // In most cases, the interface name should match `output_block_name` (or
-// `name_of_object_with_digital_output` if that object only has a output block),
-// but double-check the real HWM configuration to make sure the simulated output
-// interface has the same name as the real one.
+// `name_of_object_with_digital_output` if that object only has a single output
+// block), but double-check the real HWM configuration to make sure the
+// simulated output interface has the same name as the real one.
 //
 // If `manual_hardware_interfaces` is unset, the simulated hardware module
 // usee the output block name as the hardware interface name.
@@ -179,12 +179,16 @@ message DigitalOutputInterface {
 
 // Analog inputs aren't simulated, so there are no further parameters. Just make
 // sure that if your real robot has an analog input, the simulated HWM does too.
-message AnalogInputInterface {}
+message AnalogInputInterface {
+  uint32 num_inputs = 1;
+}
 
 // Analog outputs aren't simulated, so there are no further parameters. Just
 // make sure that if your real robot has an analog output, the simulated HWM
 // does too.
-message AnalogOutputInterface {}
+message AnalogOutputInterface {
+  uint32 num_outputs = 1;
+}
 
 // Accepts (retare) commands for the force/torque sensor `ft_sensor_name` on the
 // (Intrinsic World) object `name_of_object_with_force_torque_sensor`.
