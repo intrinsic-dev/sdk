@@ -34,6 +34,7 @@
 
 #include <memory>
 #include <ostream>  // NOLINT
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -173,6 +174,13 @@ class StringType {
 
   friend std::ostream& operator<<(std::ostream& os, const StringType& s) {
     return DispatchOstream(os, s.t_, Rank0{});
+  }
+
+  template <typename Sink>
+  friend void AbslStringify(Sink& sink, const StringType& s) {
+    std::stringstream ss;
+    ss << s;
+    sink.Append(ss.str());
   }
 
  private:
