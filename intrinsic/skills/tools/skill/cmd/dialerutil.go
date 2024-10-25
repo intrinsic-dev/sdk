@@ -57,12 +57,13 @@ func InputHash(input string) string {
 
 // DialInfoParams specifies the options for configuring the connection to a cloud/on-prem cluster.
 type DialInfoParams struct {
-	Address   string // The address of a cloud/on-prem cluster
-	Cluster   string // The name of the server to install to
-	CredName  string // The name of the credentials to load from auth.Store
-	CredAlias string // Optional alias for key to load
-	CredOrg   string // Optional the org-id header to set
-	CredToken string // Optional the credential value itself. This bypasses the store
+	Address     string // The address of a cloud/on-prem cluster
+	Cluster     string // The name of the server to install to
+	CredName    string // The name of the credentials to load from auth.Store
+	CredAlias   string // Optional alias for key to load
+	CredOrg     string // Optional the org-id header to set
+	CredToken   string // Optional the credential value itself. This bypasses the store
+	UseIDTokens bool   // Optional instructions to convert APIKeys to IDTokens on the fly.
 }
 
 // ErrCredentialsRequired indicates that the credential name is not set in the
@@ -171,19 +172,31 @@ func UseInsecureCredentials(address string) bool {
 
 func createCredentials(params DialInfoParams) (credentials.PerRPCCredentials, error) {
 	if params.CredToken != "" {
-		return &auth.ProjectToken{APIKey: params.CredToken}, nil
+		projectToken := &auth.ProjectToken{APIKey: params.CredToken}
+		if params.UseIDTokens {
+			return projectToken.AsIDTokenCredentials()
+		}
+		return projectToken, nil
 	}
 
 	if params.CredName != "" {
-		configuration, err := auth.NewStore().GetConfiguration(params.CredName)
+		configuration, err := auth.DefaultStore.GetConfiguration(params.CredName)
 		if err != nil {
 			return nil, &ErrCredentialsNotFound{Err: err, CredentialName: params.CredName}
 		}
 
-		if params.CredAlias == "" {
-			return configuration.GetDefaultCredentials()
+		credAlias := auth.AliasDefaultToken
+		if params.CredAlias != "" {
+			credAlias = params.CredAlias
 		}
-		return configuration.GetCredentials(params.CredAlias)
+		projectToken, err := configuration.GetCredentials(credAlias)
+		if err != nil {
+			return nil, &ErrCredentialsNotFound{Err: err, CredentialName: credAlias}
+		}
+		if params.UseIDTokens {
+			return projectToken.AsIDTokenCredentials()
+		}
+		return projectToken, nil
 	}
 
 	if baseclientutils.IsLocalAddress(params.Address) {

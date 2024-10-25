@@ -15,6 +15,7 @@ import (
 	"time"
 
 	log "github.com/golang/glog"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -33,6 +34,8 @@ const (
 	directoryMode  os.FileMode = 0700
 	fileMode       os.FileMode = 0600
 	writeFileFlags             = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+
+	tokenExchangeServer = "accounts.intrinsic.ai"
 )
 
 // RFC3339Time is type alias to correct (un)marshaling time.Time in RFC3339 format
@@ -106,6 +109,18 @@ func (p *ProjectToken) HTTPAuthorization(req *http.Request) (*http.Request, erro
 	return req, p.Validate()
 }
 
+// AsIDTokenCredentials allows converting Intrinsic API Tokens to Google ID Tokens
+// on the fly as [credentials.PerRPCCredentials] implementation.
+// This is useful for contacting services which don't accept Intrinsic API Tokens,
+// but we want to use this infrastructure to authorize users to them.
+func (p *ProjectToken) AsIDTokenCredentials() (credentials.PerRPCCredentials, error) {
+	tsc, err := NewTokensServiceClient(http.DefaultClient, tokenExchangeServer)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token exchange: %w", err)
+	}
+	return NewAPIKeyTokenSource(p.APIKey, tsc), nil
+}
+
 // ProjectConfiguration contains list of API tokens related to given project
 type ProjectConfiguration struct {
 	Name string `json:"name"`
@@ -164,6 +179,9 @@ type Store struct {
 	// GetConfigDirFx is an indirection allowing to use custom config dirs in tests.
 	GetConfigDirFx func() (string, error)
 }
+
+// DefaultStore is default instance of [Store]
+var DefaultStore = NewStore()
 
 // NewStore returns a new Store instance.
 func NewStore() *Store {
