@@ -10,14 +10,6 @@ load("@rules_python//python:defs.bzl", "py_library")
 
 package(default_visibility = ["//intrinsic/skills:__subpackages__"])
 
-exports_files(
-    [
-    ],
-    visibility = [
-        "//visibility:public",
-    ],
-)
-
 py_library(
     name = "basic_compute_context_impl_py",
     srcs = ["basic_compute_context_impl.py"],
