@@ -56,6 +56,15 @@ message DiversityRankerParams {
 }
 
 message IkCollisionCheckerParams {
+  // Name of the end-of-arm-tooling. E.g., `suction_gripper`. Used
+  // for disabling collisions between the gripper and the target object at
+  // grasp pose. If None, disable all collisions when
+  // `check_collision_at_grasp_pose` is True.
+  optional string eoat_name = 5;
+
+  // Name of the ranker. Default to ik_collision_checker.
+  optional string name = 6;
+
   // Joint limits used in grasp/pregrasp pose IK checks.
   optional intrinsic_proto.JointLimitsUpdate joint_limits = 1;
 
