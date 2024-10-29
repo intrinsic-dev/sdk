@@ -248,6 +248,10 @@ func callEndpoint(ctx context.Context, method string, endpoint *url.URL, authTok
 	if err != nil {
 		return "", fmt.Errorf("request to target failed: %w", err)
 	}
+	if response.StatusCode == http.StatusNotFound {
+		resourceName := endpoint.Query().Get(paramResourceID)
+		return "", fmt.Errorf("'%s' is not found, please check the provided name is correct", resourceName)
+	}
 	if response.StatusCode != http.StatusOK {
 		printResponse(response)
 		return "", fmt.Errorf("unexpected response: %s", response.Status)
