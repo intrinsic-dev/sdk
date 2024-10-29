@@ -13,6 +13,7 @@ bzl_library(
     srcs = ["services.bzl"],
     visibility = ["//visibility:private"],
     deps = [
+        "//intrinsic/util/proto/build_defs:descriptor_set",
         "@bazel_skylib//rules:common_settings",
     ],
 )
@@ -26,6 +27,8 @@ go_library(
         "//intrinsic/assets/services/proto:service_manifest_go_proto",
         "//intrinsic/util/proto:protoio",
         "//intrinsic/util/proto:registryutil",
+        "//intrinsic/util/proto:sourcecodeinfoview",
+        "@io_bazel_rules_go//proto/wkt:descriptor_go_proto",
         "@org_golang_google_protobuf//types/known/anypb",
     ],
 )

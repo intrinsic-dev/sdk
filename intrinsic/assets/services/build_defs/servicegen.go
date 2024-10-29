@@ -9,12 +9,14 @@ import (
 	"slices"
 	"strings"
 
+	dpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	"intrinsic/assets/bundleio"
 	"intrinsic/assets/idutils"
 	smpb "intrinsic/assets/services/proto/service_manifest_go_proto"
 	"intrinsic/util/proto/protoio"
 	"intrinsic/util/proto/registryutil"
+	"intrinsic/util/proto/sourcecodeinfoview"
 )
 
 // ServiceData holds the data needed to create a service bundle.
@@ -74,6 +76,26 @@ func validateImageTars(manifest *smpb.ServiceManifest, imgTarsList []string) err
 	return nil
 }
 
+func pruneSourceCodeInfo(defaultConfig *anypb.Any, fds *dpb.FileDescriptorSet) error {
+	if fds == nil {
+		return nil
+	}
+
+	var fullNames []string
+	if defaultConfig != nil {
+		typeURLParts := strings.Split(defaultConfig.GetTypeUrl(), "/")
+		if len(typeURLParts) < 1 {
+			return fmt.Errorf("cannot extract default proto name from type URL: %v", defaultConfig.GetTypeUrl())
+		}
+		fullNames = append(fullNames, typeURLParts[len(typeURLParts)-1])
+	}
+
+	// Note that a nil default config will cause all source code info fields to be
+	// stripped out.
+	sourcecodeinfoview.PruneSourceCodeInfo(fullNames, fds)
+	return nil
+}
+
 // CreateService bundles the data needed for software services.
 func CreateService(d *ServiceData) error {
 	m := new(smpb.ServiceManifest)
@@ -116,6 +138,9 @@ func CreateService(d *ServiceData) error {
 		return fmt.Errorf("unable to retrieve image tars: %v", err)
 	}
 
+	if err := pruneSourceCodeInfo(defaultConfig, set); err != nil {
+		return fmt.Errorf("unable to process source code info: %v", err)
+	}
 	if err := bundleio.WriteService(d.OutputBundle, bundleio.WriteServiceOpts{
 		Manifest:    m,
 		Descriptors: set,

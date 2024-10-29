@@ -5,6 +5,7 @@ Bazel rules for service types.
 """
 
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
+load("//intrinsic/util/proto/build_defs:descriptor_set.bzl", "ProtoSourceCodeInfo", "gen_source_code_info_descriptor_set")
 
 ServiceTypeInfo = provider(
     "provided by intrinsic_service() rule",
@@ -37,7 +38,7 @@ def _intrinsic_service_impl(ctx):
         basenames[file.basename] = None
 
     transitive_descriptor_sets = depset(transitive = [
-        f[ProtoInfo].transitive_descriptor_sets
+        f[ProtoSourceCodeInfo].transitive_descriptor_sets
         for f in ctx.attr.deps
     ])
     transitive_inputs.append(transitive_descriptor_sets)
@@ -104,6 +105,7 @@ intrinsic_service = rule(
         ),
         "deps": attr.label_list(
             providers = [ProtoInfo],
+            aspects = [gen_source_code_info_descriptor_set],
         ),
         "_servicegen": attr.label(
             default = Label("//intrinsic/assets/services/build_defs:servicegen_main"),
