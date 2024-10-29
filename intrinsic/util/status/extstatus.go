@@ -7,8 +7,10 @@ package extstatus
 
 import (
 	"fmt"
+	"time"
 
 	statuspb "google.golang.org/genproto/googleapis/rpc/status"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	ctxpb "intrinsic/logging/proto/context_go_proto"
 
 	"google.golang.org/grpc/codes"
@@ -39,12 +41,15 @@ type ExtendedStatus struct {
 // access to a LogContext add it to the status to enable querying additional
 // data.
 type Info struct {
-	Title             string
-	InternalMessage   string
-	ExternalMessage   string
-	Context           []*estpb.ExtendedStatus
-	ContextFromErrors []error
-	LogContext        *ctxpb.Context
+	Timestamp            *time.Time
+	Title                string
+	InternalMessage      string
+	InternalInstructions string
+	ExternalMessage      string
+	ExternalInstructions string
+	Context              []*estpb.ExtendedStatus
+	ContextFromErrors    []error
+	LogContext           *ctxpb.Context
 }
 
 // New creates an ExtendedStatus with the given StatusCode (component + numeric code).
@@ -54,11 +59,22 @@ func New(component string, code uint32, info *Info) *ExtendedStatus {
 	if info.Title != "" {
 		p.Title = info.Title
 	}
-	if info.InternalMessage != "" {
-		p.InternalReport = &estpb.ExtendedStatus_Report{Message: info.InternalMessage}
+	if info.InternalMessage != "" || info.InternalInstructions != "" {
+		p.InternalReport = &estpb.ExtendedStatus_Report{
+			Message:      info.InternalMessage,
+			Instructions: info.InternalInstructions,
+		}
 	}
-	if info.ExternalMessage != "" {
-		p.ExternalReport = &estpb.ExtendedStatus_Report{Message: info.ExternalMessage}
+	if info.ExternalMessage != "" || info.ExternalInstructions != "" {
+		p.ExternalReport = &estpb.ExtendedStatus_Report{
+			Message:      info.ExternalMessage,
+			Instructions: info.ExternalInstructions,
+		}
+	}
+	if info.Timestamp != nil {
+		p.Timestamp = timestamppb.New(*info.Timestamp)
+	} else {
+		p.Timestamp = timestamppb.Now()
 	}
 	for _, context := range info.Context {
 		p.Context = append(p.Context, context)

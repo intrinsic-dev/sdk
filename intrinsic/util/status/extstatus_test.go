@@ -164,7 +164,10 @@ func TestExtendedStatus(t *testing.T) {
 	for _, test := range tests {
 		// Note the subtest here
 		t.Run(test.name, func(t *testing.T) {
-			if diff := cmp.Diff(test.want, test.got.Proto(), protocmp.Transform()); diff != "" {
+			if diff := cmp.Diff(test.want, test.got.Proto(),
+				protocmp.Transform(),
+				protocmp.IgnoreFields(&estpb.ExtendedStatus{}, "timestamp"),
+			); diff != "" {
 				t.Errorf("%s returned unexpected diff (-want +got):\n%s", test.name, diff)
 			}
 		})
@@ -198,7 +201,10 @@ func TestNewError(t *testing.T) {
 		t.Fatalf("Failed to convert error back to ExtendedStatus.")
 	}
 
-	if diff := cmp.Diff(want, es.Proto(), protocmp.Transform()); diff != "" {
+	if diff := cmp.Diff(want, es.Proto(),
+		protocmp.Transform(),
+		protocmp.IgnoreFields(&estpb.ExtendedStatus{}, "timestamp"),
+	); diff != "" {
 		t.Errorf("NewError/FromError returned unexpected diff (-want +got):\n%s", diff)
 	}
 
@@ -218,7 +224,10 @@ func TestErrorGRPCStatus(t *testing.T) {
 			Component: "ai.intrinsic.test", Code: 3465},
 		Title: "test error"}
 
-	if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+	if diff := cmp.Diff(want, got,
+		protocmp.Transform(),
+		protocmp.IgnoreFields(&estpb.ExtendedStatus{}, "timestamp"),
+	); diff != "" {
 		t.Errorf("GRPCStatus returned unexpected diff (-want +got):\n%s", diff)
 	}
 }
@@ -336,7 +345,10 @@ func TestGrpcServiceCall(t *testing.T) {
 		StatusCode: &estpb.StatusCode{
 			Component: "ai.intrinsic.test", Code: 9876},
 		Title: "Error Title"}
-	if diff := cmp.Diff(want, extSt.Proto(), protocmp.Transform()); diff != "" {
+	if diff := cmp.Diff(want, extSt.Proto(),
+		protocmp.Transform(),
+		protocmp.IgnoreFields(&estpb.ExtendedStatus{}, "timestamp"),
+	); diff != "" {
 		t.Errorf("FromGRPCError(%v) returned unexpected diff (-want +got):\n%s", err, diff)
 	}
 }
