@@ -29,7 +29,7 @@ func TestExtendedStatus(t *testing.T) {
 		want *estpb.ExtendedStatus
 	}{
 		{"New",
-			New("ai.intrinsic.test", 2342, &Info{}),
+			New("ai.intrinsic.test", 2342),
 			&estpb.ExtendedStatus{StatusCode: &estpb.StatusCode{
 				Component: "ai.intrinsic.test", Code: 2342}}},
 		{"FromProto",
@@ -48,46 +48,46 @@ func TestExtendedStatus(t *testing.T) {
 					Message: "Ext Msg",
 				}}},
 		{"SetTitle",
-			New("ai.intrinsic.test", 2342, &Info{Title: "title"}),
+			New("ai.intrinsic.test", 2342, WithTitle("title")),
 			&estpb.ExtendedStatus{
 				StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 2342},
 				Title: "title"}},
 		{"SetTitleFormat",
-			New("ai.intrinsic.test", 2342, &Info{Title: fmt.Sprintf("title %s", "foo")}),
+			New("ai.intrinsic.test", 2342, WithTitle(fmt.Sprintf("title %s", "foo"))),
 			&estpb.ExtendedStatus{
 				StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 2342},
 				Title: "title foo"}},
 		{"SetExternalReportMessage",
-			New("ai.intrinsic.test", 2342, &Info{ExternalMessage: "m1"}),
+			New("ai.intrinsic.test", 2342, WithExternalMessage("m1")),
 			&estpb.ExtendedStatus{
 				StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 2342},
 				ExternalReport: &estpb.ExtendedStatus_Report{Message: "m1"}}},
 		{"SetExternalReportMessageFormat",
-			New("ai.intrinsic.test", 2342, &Info{ExternalMessage: fmt.Sprintf("msg %s", "foo")}),
+			New("ai.intrinsic.test", 2342, WithExternalMessage(fmt.Sprintf("msg %s", "foo"))),
 			&estpb.ExtendedStatus{
 				StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 2342},
 				ExternalReport: &estpb.ExtendedStatus_Report{Message: "msg foo"}}},
 		{"SetInternalReportMessage",
-			New("ai.intrinsic.test", 2342, &Info{InternalMessage: "m2"}),
+			New("ai.intrinsic.test", 2342, WithInternalMessage("m2")),
 			&estpb.ExtendedStatus{
 				StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 2342},
 				InternalReport: &estpb.ExtendedStatus_Report{Message: "m2"}}},
 		{"SetInternalReportMessageFormat",
-			New("ai.intrinsic.test", 2342, &Info{InternalMessage: fmt.Sprintf("msg %s", "bar")}),
+			New("ai.intrinsic.test", 2342, WithInternalMessage(fmt.Sprintf("msg %s", "bar"))),
 			&estpb.ExtendedStatus{
 				StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 2342},
 				InternalReport: &estpb.ExtendedStatus_Report{Message: "msg bar"}}},
 		{"AddContext",
-			New("ai.intrinsic.test", 2342, &Info{Context: []*estpb.ExtendedStatus{
-				{StatusCode: &estpb.StatusCode{
+			New("ai.intrinsic.test", 2342, WithContextProto(&estpb.ExtendedStatus{
+				StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.backend_service", Code: 4534},
-					ExternalReport: &estpb.ExtendedStatus_Report{Message: "backend unhappy"}}}}),
+				ExternalReport: &estpb.ExtendedStatus_Report{Message: "backend unhappy"}})),
 			&estpb.ExtendedStatus{
 				StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 2342},
@@ -97,13 +97,13 @@ func TestExtendedStatus(t *testing.T) {
 						ExternalReport: &estpb.ExtendedStatus_Report{Message: "backend unhappy"}},
 				}}},
 		{"AddMultipleContexts",
-			New("ai.intrinsic.test", 2342, &Info{Context: []*estpb.ExtendedStatus{
+			New("ai.intrinsic.test", 2342, WithContextProtos([]*estpb.ExtendedStatus{
 				{StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.backend_service", Code: 4534},
 					ExternalReport: &estpb.ExtendedStatus_Report{Message: "backend unhappy"}},
 				{StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.backend_service_2", Code: 4444},
-					ExternalReport: &estpb.ExtendedStatus_Report{Message: "other backend unhappy"}}}}),
+					ExternalReport: &estpb.ExtendedStatus_Report{Message: "other backend unhappy"}}})),
 			&estpb.ExtendedStatus{
 				StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 2342},
@@ -116,10 +116,9 @@ func TestExtendedStatus(t *testing.T) {
 						ExternalReport: &estpb.ExtendedStatus_Report{Message: "other backend unhappy"}},
 				}}},
 		{"AddContextFromError",
-			New("ai.intrinsic.test", 2342, &Info{
-				ContextFromErrors: []error{
-					NewError("ai.intrinsic.backend_service", 4534,
-						&Info{ExternalMessage: "backend unhappy"})}}),
+			New("ai.intrinsic.test", 2342, WithContextFromError(
+				NewError("ai.intrinsic.backend_service", 4534,
+					WithExternalMessage("backend unhappy")))),
 			&estpb.ExtendedStatus{
 				StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 2342},
@@ -129,12 +128,11 @@ func TestExtendedStatus(t *testing.T) {
 						ExternalReport: &estpb.ExtendedStatus_Report{Message: "backend unhappy"}},
 				}}},
 		{"AddContextFromMultipleErrors",
-			New("ai.intrinsic.test", 2342, &Info{
-				ContextFromErrors: []error{
-					NewError("ai.intrinsic.backend_service", 4534,
-						&Info{ExternalMessage: "backend unhappy"}),
-					NewError("ai.intrinsic.backend_service_2", 4444,
-						&Info{ExternalMessage: "other backend unhappy"})}}),
+			New("ai.intrinsic.test", 2342, WithContextFromErrors([]error{
+				NewError("ai.intrinsic.backend_service", 4534,
+					WithExternalMessage("backend unhappy")),
+				NewError("ai.intrinsic.backend_service_2", 4444,
+					WithExternalMessage("other backend unhappy"))})),
 			&estpb.ExtendedStatus{
 				StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 2342},
@@ -147,10 +145,10 @@ func TestExtendedStatus(t *testing.T) {
 						ExternalReport: &estpb.ExtendedStatus_Report{Message: "other backend unhappy"}},
 				}}},
 		{"SetLogContext",
-			New("ai.intrinsic.test", 2342, &Info{LogContext: &ctxpb.Context{
+			New("ai.intrinsic.test", 2342, WithLogContext(&ctxpb.Context{
 				ExecutiveSessionId:    1,
 				ExecutivePlanId:       2,
-				ExecutivePlanActionId: 3}}),
+				ExecutivePlanActionId: 3})),
 			&estpb.ExtendedStatus{
 				StatusCode: &estpb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 2342},
@@ -176,7 +174,7 @@ func TestExtendedStatus(t *testing.T) {
 }
 
 func TestErrorInterface(t *testing.T) {
-	es := New("ai.intrinsic.test", 3465, &Info{Title: "test error"})
+	es := New("ai.intrinsic.test", 3465, WithTitle("test error"))
 	err := es.Err()
 
 	if err.Error() != "ai.intrinsic.test:3465: test error" {
@@ -185,8 +183,7 @@ func TestErrorInterface(t *testing.T) {
 }
 
 func TestNewError(t *testing.T) {
-	err := NewError("ai.intrinsic.test", 3465, &Info{
-		Title: "test error", InternalMessage: "Something went wrong"})
+	err := NewError("ai.intrinsic.test", 3465, WithTitle("test error"), WithInternalMessage("Something went wrong"))
 
 	if err.Error() != "ai.intrinsic.test:3465: test error" {
 		t.Errorf("Got error %s, want: test error", err.Error())
@@ -211,7 +208,7 @@ func TestNewError(t *testing.T) {
 }
 
 func TestErrorGRPCStatus(t *testing.T) {
-	es := New("ai.intrinsic.test", 3465, &Info{Title: "test error"})
+	es := New("ai.intrinsic.test", 3465, WithTitle("test error"))
 	gs := es.Err().(*Error).GRPCStatus()
 
 	if len(gs.Details()) != 1 {
@@ -232,8 +229,22 @@ func TestErrorGRPCStatus(t *testing.T) {
 	}
 }
 
+func TestErrorGRPCStatusCustomCode(t *testing.T) {
+	es := New("ai.intrinsic.test", 3465,
+		WithTitle("test error"), WithGrpcCode(codes.InvalidArgument))
+	gs := es.Err().(*Error).GRPCStatus()
+
+	if gs.Code() != codes.InvalidArgument {
+		t.Errorf("Got code %v, want %v", gs.Code(), codes.InvalidArgument)
+	}
+
+	if len(gs.Details()) != 1 {
+		t.Errorf("Got %d details, want 1", len(gs.Details()))
+	}
+}
+
 func TestErrorIs(t *testing.T) {
-	err := New("ai.intrinsic.test", 3465, &Info{Title: "test error"}).Err()
+	err := New("ai.intrinsic.test", 3465, WithTitle("test error")).Err()
 	err1 := &Error{es: &ExtendedStatus{s: &estpb.ExtendedStatus{
 		StatusCode: &estpb.StatusCode{
 			Component: "ai.intrinsic.test", Code: 3465},
@@ -313,7 +324,7 @@ func TestFromGRPCFunctionsSkipUnrelatedDetails(t *testing.T) {
 type failService struct{}
 
 func (s *failService) FailingMethod(ctx context.Context, req *emptypb.Empty) (*emptypb.Empty, error) {
-	return nil, New("ai.intrinsic.test", 9876, &Info{Title: "Error Title"}).Err()
+	return nil, New("ai.intrinsic.test", 9876, WithTitle("Error Title")).Err()
 }
 
 func TestGrpcServiceCall(t *testing.T) {

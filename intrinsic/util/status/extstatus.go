@@ -10,13 +10,12 @@ import (
 	"time"
 
 	statuspb "google.golang.org/genproto/googleapis/rpc/status"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	ctxpb "intrinsic/logging/proto/context_go_proto"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	estpb "intrinsic/util/status/extended_status_go_proto"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	contextpb "intrinsic/logging/proto/context_go_proto"
+	espb "intrinsic/util/status/extended_status_go_proto"
 )
 
 // The ExtendedStatus wrapper implements a builder pattern to collect status information.
@@ -29,79 +28,198 @@ import (
 //	              &extstatus.Info{Title: "Failed to ...",
 //	                              ExternalMessage: "External report"})
 type ExtendedStatus struct {
-	s *estpb.ExtendedStatus
+	s        *espb.ExtendedStatus
+	grpcCode codes.Code
 }
 
-// The Info struct enables to pass additional information for an ExtendedStatus.
+// The newOptions struct enables to pass additional information for New*.
 //
 // It is strongly advised to always set Title and ExternalMessage if the error
 // is expected to reach an end user (really, just always set this to something
 // legible). The InternalMessage can contain more detailed information which
 // potentially only developers require to analyze an error. Whenever you have
 // access to a LogContext add it to the status to enable querying additional
-// data.
-type Info struct {
-	Timestamp            *time.Time
-	Title                string
-	InternalMessage      string
-	InternalInstructions string
-	ExternalMessage      string
-	ExternalInstructions string
-	Context              []*estpb.ExtendedStatus
-	ContextFromErrors    []error
-	LogContext           *ctxpb.Context
+// data. You may use the GrpcCode in the context of a GrpcCall, i.e., if the
+// exxtended status is expected to be converted to a GRPCStatus eventually.
+type newOptions struct {
+	timestamp            *time.Time
+	title                string
+	internalMessage      string
+	internalInstructions string
+	externalMessage      string
+	externalInstructions string
+	context              []*espb.ExtendedStatus
+	logContext           *contextpb.Context
+	grpcCode             codes.Code
 }
 
-// New creates an ExtendedStatus with the given StatusCode (component + numeric code).
-func New(component string, code uint32, info *Info) *ExtendedStatus {
-	p := &estpb.ExtendedStatus{StatusCode: &estpb.StatusCode{
-		Code: code, Component: component}}
-	if info.Title != "" {
-		p.Title = info.Title
+// NewOption is a function type for modifying newOptions.
+type NewOption func(*newOptions)
+
+// WithTimestamp returns an option function to set the timestamp on the created extended status.
+func WithTimestamp(timestamp time.Time) NewOption {
+	return func(o *newOptions) {
+		o.timestamp = &timestamp
 	}
-	if info.InternalMessage != "" || info.InternalInstructions != "" {
-		p.InternalReport = &estpb.ExtendedStatus_Report{
-			Message:      info.InternalMessage,
-			Instructions: info.InternalInstructions,
+}
+
+// WithTitle returns an option function to set the title on the created extended status.
+func WithTitle(title string) NewOption {
+	return func(o *newOptions) {
+		o.title = title
+	}
+}
+
+// WithInternalMessage returns an option function to set the internal report message on the created extended status.
+func WithInternalMessage(message string) NewOption {
+	return func(o *newOptions) {
+		o.internalMessage = message
+	}
+}
+
+// WithInternalInstructions returns an option function to set the internal instructions on the created extended status.
+func WithInternalInstructions(instructions string) NewOption {
+	return func(o *newOptions) {
+		o.internalInstructions = instructions
+	}
+}
+
+// WithExternalMessage returns an option function to set the external report message on the created extended status.
+func WithExternalMessage(message string) NewOption {
+	return func(o *newOptions) {
+		o.externalMessage = message
+	}
+}
+
+// WithExternalInstructions returns an option function to set the external instructions on the created extended status.
+func WithExternalInstructions(instructions string) NewOption {
+	return func(o *newOptions) {
+		o.externalInstructions = instructions
+	}
+}
+
+// WithLogContext returns an option function to set the log context extended status.
+func WithLogContext(logContext *contextpb.Context) NewOption {
+	return func(o *newOptions) {
+		o.logContext = proto.Clone(logContext).(*contextpb.Context)
+	}
+}
+
+// WithContextProto returns an option function to add a context from proto to the created extended status.
+func WithContextProto(context *espb.ExtendedStatus) NewOption {
+	return func(o *newOptions) {
+		o.context = append(o.context, proto.Clone(context).(*espb.ExtendedStatus))
+	}
+}
+
+// WithContext returns an option function to add a context to the created extended status.
+func WithContext(context *ExtendedStatus) NewOption {
+	return func(o *newOptions) {
+		o.context = append(o.context, proto.Clone(context.Proto()).(*espb.ExtendedStatus))
+	}
+}
+
+// WithContexts returns an option function to add contexts to the created extended status.
+func WithContexts(contexts []*ExtendedStatus) NewOption {
+	return func(o *newOptions) {
+		for _, context := range contexts {
+			o.context = append(o.context, proto.Clone(context.Proto()).(*espb.ExtendedStatus))
 		}
 	}
-	if info.ExternalMessage != "" || info.ExternalInstructions != "" {
-		p.ExternalReport = &estpb.ExtendedStatus_Report{
-			Message:      info.ExternalMessage,
-			Instructions: info.ExternalInstructions,
+}
+
+// WithContextProtos returns an option function to add context protos to the created extended status.
+func WithContextProtos(contexts []*espb.ExtendedStatus) NewOption {
+	return func(o *newOptions) {
+		for _, context := range contexts {
+			o.context = append(o.context, proto.Clone(context).(*espb.ExtendedStatus))
 		}
 	}
-	if info.Timestamp != nil {
-		p.Timestamp = timestamppb.New(*info.Timestamp)
-	} else {
-		p.Timestamp = timestamppb.Now()
-	}
-	for _, context := range info.Context {
-		p.Context = append(p.Context, context)
-	}
-	for _, errContext := range info.ContextFromErrors {
-		context, ok := FromError(errContext)
+}
+
+// WithContextFromError returns an option function to add an error as context to the created extended status.
+func WithContextFromError(err error) NewOption {
+	return func(o *newOptions) {
+		context, ok := FromError(err)
 		if !ok {
 			// Failed to convert error to extended status, do it the
 			// "old-fashioned" way from the error interface
-			context = New("unknown-downstream", 0, &Info{Title: errContext.Error()})
+			context = New("unknown-downstream", 0, WithTitle(err.Error()))
 		}
-		p.Context = append(p.Context, context.Proto())
+		o.context = append(o.context, context.Proto())
 	}
-	if info.LogContext != nil {
-		p.RelatedTo = &estpb.ExtendedStatus_Relations{LogContext: info.LogContext}
+}
+
+// WithContextFromErrors returns an option function to add errors as context to the created extended status.
+func WithContextFromErrors(errs []error) NewOption {
+	return func(o *newOptions) {
+		for _, err := range errs {
+			context, ok := FromError(err)
+			if !ok {
+				// Failed to convert error to extended status, do it the
+				// "old-fashioned" way from the error interface
+				context = New("unknown-downstream", 0, WithTitle(err.Error()))
+			}
+			o.context = append(o.context, context.Proto())
+		}
 	}
-	return &ExtendedStatus{s: p}
+}
+
+// WithGrpcCode sets code to be used when the error is used in a gRPC context.
+// If this is set, calling GRPCStatus on the error will use the given code as
+// the generic gRPC error code.
+func WithGrpcCode(code codes.Code) NewOption {
+	return func(o *newOptions) {
+		o.grpcCode = code
+	}
+}
+
+// New creates an ExtendedStatus with the given StatusCode (component + numeric code).
+func New(component string, code uint32, options ...NewOption) *ExtendedStatus {
+	p := &espb.ExtendedStatus{StatusCode: &espb.StatusCode{
+		Code: code, Component: component}}
+
+	opts := newOptions{grpcCode: codes.Internal}
+
+	for _, optFunc := range options {
+		optFunc(&opts)
+	}
+
+	p.Title = opts.title
+	if opts.internalMessage != "" || opts.internalInstructions != "" {
+		p.InternalReport = &espb.ExtendedStatus_Report{
+			Message:      opts.internalMessage,
+			Instructions: opts.internalInstructions,
+		}
+	}
+	if opts.externalMessage != "" || opts.externalInstructions != "" {
+		p.ExternalReport = &espb.ExtendedStatus_Report{
+			Message:      opts.externalMessage,
+			Instructions: opts.externalInstructions,
+		}
+	}
+	if opts.timestamp != nil {
+		p.Timestamp = timestamppb.New(*opts.timestamp)
+	} else {
+		p.Timestamp = timestamppb.Now()
+	}
+	for _, context := range opts.context {
+		p.Context = append(p.Context, context)
+	}
+	if opts.logContext != nil {
+		p.RelatedTo = &espb.ExtendedStatus_Relations{LogContext: opts.logContext}
+	}
+	return &ExtendedStatus{s: p, grpcCode: opts.grpcCode}
 }
 
 // NewError creates an ExtendedStatus wrapped in an error.
-func NewError(component string, code uint32, info *Info) error {
-	return New(component, code, info).Err()
+func NewError(component string, code uint32, options ...NewOption) error {
+	return New(component, code, options...).Err()
 }
 
 // FromProto creates a new ExtendedStatus from a given ExtendedStatus proto.
-func FromProto(es *estpb.ExtendedStatus) *ExtendedStatus {
-	return &ExtendedStatus{s: proto.Clone(es).(*estpb.ExtendedStatus)}
+func FromProto(es *espb.ExtendedStatus) *ExtendedStatus {
+	return &ExtendedStatus{s: proto.Clone(es).(*espb.ExtendedStatus)}
 }
 
 // FromError tries to convert an error to an ExtendedStatus. This may fail (and
@@ -151,7 +269,7 @@ func FromGRPCStatus(s *status.Status) (es *ExtendedStatus, ok bool) {
 		return nil, false
 	}
 	for _, detail := range details {
-		extendedStatus, ok := detail.(*estpb.ExtendedStatus)
+		extendedStatus, ok := detail.(*espb.ExtendedStatus)
 		if !ok {
 			continue
 		}
@@ -163,7 +281,7 @@ func FromGRPCStatus(s *status.Status) (es *ExtendedStatus, ok bool) {
 
 // GRPCStatus converts to and returns a gRPC status.
 func (e *ExtendedStatus) GRPCStatus() *status.Status {
-	st := status.New(codes.Internal, e.s.GetTitle())
+	st := status.New(e.grpcCode, e.s.GetTitle())
 	ds, err := st.WithDetails(e.s)
 	if err != nil {
 		return st
@@ -172,7 +290,7 @@ func (e *ExtendedStatus) GRPCStatus() *status.Status {
 }
 
 // Proto returns the contained ExtendedStatus proto.
-func (e *ExtendedStatus) Proto() *estpb.ExtendedStatus {
+func (e *ExtendedStatus) Proto() *espb.ExtendedStatus {
 	return e.s
 }
 
