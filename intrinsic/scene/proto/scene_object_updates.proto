@@ -20,6 +20,7 @@ message SceneObjectInstanceUpdate {
     SetNamedConfigurationsUpdate set_named_configurations = 4;
     UpdateJointsRequest update_joints = 5;
     CartesianLimitsUpdate cartesian_limits = 6;
+    RenameEntityUpdate rename_entity = 7;
   }
 }
 
@@ -125,4 +126,11 @@ message CartesianLimitsUpdate {
   optional double max_rotational_velocity = 9;
   optional double max_rotational_acceleration = 10;
   optional double max_rotational_jerk = 11;
+}
+message RenameEntityUpdate {
+  // The entity to be renamed.
+  string entity_name = 1;
+
+  // The new name to give the entity.
+  string new_entity_name = 2;
 }
