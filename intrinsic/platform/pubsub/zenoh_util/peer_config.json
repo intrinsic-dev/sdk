@@ -18,7 +18,7 @@
     "gossip": {
       "enabled": true,
       "multihop": true,
-      "autoconnect": { "peer": "peer|router" }
+      "autoconnect": { "peer": ["peer", "router"] }
     }
   },
   "plugins": {

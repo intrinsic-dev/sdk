@@ -178,7 +178,7 @@ absl::StatusOr<bool> PubSub::KeyexprIntersects(absl::string_view left,
   switch (result) {
     case 0:
       return true;
-    case -1:
+    case 1:
       return false;
     default:
       return absl::InvalidArgumentError("A key expression is invalid");
@@ -196,7 +196,7 @@ absl::StatusOr<bool> PubSub::KeyexprIncludes(absl::string_view left,
   switch (result) {
     case 0:
       return true;
-    case -1:
+    case 1:
       return false;
     default:
       return absl::InvalidArgumentError("A key expression is invalid");
