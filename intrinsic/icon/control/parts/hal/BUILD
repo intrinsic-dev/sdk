@@ -1,5 +1,6 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
+load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 load("//bazel:go_macros.bzl", "go_proto_library")
 
 # Generic functionality for all hal parts.

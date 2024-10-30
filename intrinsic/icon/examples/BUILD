@@ -1,5 +1,7 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
+load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
+
 package(default_visibility = ["//visibility:public"])
 
 cc_library(

@@ -1,5 +1,6 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
+load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 load("//intrinsic/icon/hal/bzl:hardware_module_binary.bzl", "hardware_module_binary")
 load("//intrinsic/icon/hal/bzl:hardware_module_image.bzl", "hardware_module_image")
 
