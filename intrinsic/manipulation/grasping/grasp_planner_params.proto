@@ -52,13 +52,6 @@ message BaseGraspPlannerParams {
   // Ranker specific parameters.
   optional intrinsic_proto.grasping.GraspRankersParams rankers_params = 8;
 
-  // The name of the gripper object in world, e.g., `picobot_gripper`.
-  // Used to disable collisions between gripper and the target object. This
-  // needs to be the root entity of the gripper, *not* the tool frame.
-  // If unspecified, then either all collisions are disabled or all are enabled
-  // depending on `IkCollisionCheckerParams.check_collision_at_grasp_pose`.
-  optional string eoat_name = 9;
-
   // Use this to specify target picking zone and perform zone-based grasp
   // planning. This is only used if `objects` is empty
   optional intrinsic_proto.manipulation.OrientedBoundingBoxWorkspace
@@ -69,4 +62,7 @@ message BaseGraspPlannerParams {
 
   // The maximum number of recently executed grasps to consider in planning.
   optional int32 max_num_recent_grasps = 12;
+
+  reserved 9;
+  reserved "eoat_name";
 }
