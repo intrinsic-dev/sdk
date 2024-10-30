@@ -44,7 +44,7 @@ var projectLayouts = map[string]projectFolder{
 	"python": projectFolder{
 		buildTemplateFilename: "BUILD_py_fragment.template",
 		buildozerCommands: []string{
-			"new_load @rules_proto//proto:defs.bzl proto_library",
+			"new_load @com_google_protobuf//bazel:proto_library.bzl proto_library",
 			"new_load @com_github_grpc_grpc//bazel:python_rules.bzl py_proto_library",
 			"new_load @ai_intrinsic_sdks//bazel:skills.bzl py_skill",
 			"new_load @ai_intrinsic_sdks//bazel:skills.bzl skill_manifest",
@@ -71,7 +71,7 @@ var projectLayouts = map[string]projectFolder{
 	"cpp": projectFolder{
 		buildTemplateFilename: "BUILD_cc_fragment.template",
 		buildozerCommands: []string{
-			"new_load @rules_proto//proto:defs.bzl proto_library",
+			"new_load @com_google_protobuf//bazel:proto_library.bzl proto_library",
 			"new_load @rules_cc//cc:defs.bzl cc_proto_library",
 			"new_load @ai_intrinsic_sdks//bazel:skills.bzl cc_skill",
 			"new_load @ai_intrinsic_sdks//bazel:skills.bzl skill_manifest",
