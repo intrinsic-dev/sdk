@@ -88,6 +88,12 @@ message IkCollisionCheckerParams {
 message StraightLineCheckerParams {
   // Cartesian limits used in checking trajectory between pregrasp and grasp.
   optional intrinsic_proto.icon.CartesianLimits cartesian_limits = 1;
+
+  // Name of the ranker. Default to straight_line_checker.
+  optional string name = 3;
+
+  // Time limit to compute trajectory. Default to 10 seconds.
+  optional int32 traj_planning_timeout_sec = 4;
 }
 
 message HeightRankerParams {
