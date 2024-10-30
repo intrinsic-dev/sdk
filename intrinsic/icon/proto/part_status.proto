@@ -7,6 +7,7 @@ package intrinsic_proto.icon;
 import "intrinsic/icon/proto/cart_space.proto";
 import "intrinsic/icon/proto/io_block.proto";
 import "intrinsic/icon/proto/safety_status.proto";
+import "intrinsic/icon/proto/types.proto";
 import "intrinsic/math/proto/pose.proto";
 import "intrinsic/math/proto/quaternion.proto";
 import "intrinsic/math/proto/vector3.proto";
@@ -140,6 +141,9 @@ message RobotStatus {
   // This field is optional so we can internally test whether it is being set,
   // but users can expect this field to always be populated.
   optional int64 timestamp_ns = 5;
+
+  // The operational status of the robot's server.
+  intrinsic_proto.icon.OperationalStatus operational_status = 6;
 
   reserved 1;
 }

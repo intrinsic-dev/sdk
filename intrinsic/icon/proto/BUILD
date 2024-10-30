@@ -86,6 +86,7 @@ proto_library(
         ":cart_space_proto",
         ":io_block_proto",
         ":safety_status_proto",
+        ":types_proto",
         "//intrinsic/math/proto:pose_proto",
         "//intrinsic/math/proto:quaternion_proto",
         "//intrinsic/math/proto:vector3_proto",
