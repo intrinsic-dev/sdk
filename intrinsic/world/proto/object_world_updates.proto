@@ -536,12 +536,19 @@ message UpdateFramePropertiesRequest {
 // Request to update the transform 'a_t_b' between 'node_a' and 'node_b' in
 // the transform tree (a node can be a frame or an object). If 'node_a' or
 // 'node_b' reference an object, the returned transform is with respect to the
-// origin of the referenced object.
+// origin (root entity) of the referenced object.
 //
 // If 'node_a' and 'node_b' are not neighbors in the transform tree (i.e.
 // 'node_a' is not a child of 'node_b' and 'node_b' is not a child of 'node_a'),
 // then only the pose between the given node 'node_to_update' and its parent is
-// updated so that the overall transform 'a_t_b' matches the desired one.
+// updated so that the overall transform 'a_t_b' matches the desired one. Note,
+// the 'node_to_update' must be an ancestor of either 'node_a' or 'node_b', but
+// not both.
+//
+// 'node_a' and 'node_b' may be further refined within the object to include
+// entities that are neither the root entity nor a frame. In this case, if
+// 'node_to_update' is unset, then the child node between 'node_a' and 'node_b'
+// must either be the root entity of an object or a frame.
 //  Next ID: 10
 message UpdateTransformRequest {
   // Id of the world to be updated.
@@ -559,9 +566,10 @@ message UpdateTransformRequest {
   // Optional node_b filter to further specify the entity within the node.
   ObjectEntityFilter node_b_filter = 8;
 
-  // Optional transform node whose pose (between itself and its parent) shall be
-  // updated. Can be left out if 'node_a' and 'node_b' are neighbors in the
-  // transform tree, then the pose of the child node will be updated.
+  // Transform node whose pose (between itself and its parent) shall be
+  // updated. May be unset if 'node_a' and 'node_b' are neighbors in the
+  // transform tree, then the pose of the child node will be updated. Must not
+  // be set to an ancestor of both 'node_a' and 'node_b'.
   TransformNodeReference node_to_update = 4;
 
   // The desired transform between the two nodes 'node_a' and 'node_b' or their
