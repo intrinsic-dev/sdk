@@ -121,4 +121,7 @@ message TopDownGraspRankerParams {
   // than 45 degrees top-down are scored 0. See `TopDownGraspRanker` for
   // details.
   float top_down_score_threshold = 1;
+
+  // Name of the ranker. Default to top_down_grasp_ranker.
+  optional string name = 2;
 }
