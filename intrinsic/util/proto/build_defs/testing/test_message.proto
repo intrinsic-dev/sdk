@@ -35,3 +35,21 @@ message TestMessageB {
   SubMessageB submesage_b = 3;
   // Above is a submessage with a trailing comment.
 }
+
+// A test service
+service TestService {
+  // Retrieves information.
+  rpc GetInfo(GetInfoRequest) returns (GetInfoResponse);
+}
+
+// A test request message
+message GetInfoRequest {
+  // The item's name.
+  string name = 1;
+
+  // A submessage
+  SubMessage submessage = 2;
+}
+
+// A test response message
+message GetInfoResponse {}

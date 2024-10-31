@@ -153,6 +153,13 @@ func TestDependencyGraph(t *testing.T) {
 			"intrinsic.build_def.testing.SubMessage":  {},
 			"intrinsic.build_def.testing.SubMessageB": {},
 		},
+		"intrinsic.build_def.testing.TestService": map[string]struct{}{
+			"intrinsic.build_def.testing.GetInfoRequest":  {},
+			"intrinsic.build_def.testing.GetInfoResponse": {},
+		},
+		"intrinsic.build_def.testing.GetInfoRequest": map[string]struct{}{
+			"intrinsic.build_def.testing.SubMessage": {},
+		},
 	}
 	if diff := cmp.Diff(wanted, got); diff != "" {
 		t.Errorf("dependencyGraph() returned an unexpected diff (-want +got): %v", diff)
@@ -201,6 +208,31 @@ func TestAllDependencies(t *testing.T) {
 			fullNames: []string{"intrinsic.build_def.testing.SubMessageB"},
 			want: map[string]struct{}{
 				"intrinsic.build_def.testing.SubMessageB": {},
+			},
+		},
+		{
+			name:      "intrinsic.build_def.testing.TestService",
+			fullNames: []string{"intrinsic.build_def.testing.TestService"},
+			want: map[string]struct{}{
+				"intrinsic.build_def.testing.TestService":     {},
+				"intrinsic.build_def.testing.GetInfoRequest":  {},
+				"intrinsic.build_def.testing.GetInfoResponse": {},
+				"intrinsic.build_def.testing.SubMessage":      {},
+			},
+		},
+		{
+			name:      "intrinsic.build_def.testing.GetInfoRequest",
+			fullNames: []string{"intrinsic.build_def.testing.GetInfoRequest"},
+			want: map[string]struct{}{
+				"intrinsic.build_def.testing.GetInfoRequest": {},
+				"intrinsic.build_def.testing.SubMessage":     {},
+			},
+		},
+		{
+			name:      "intrinsic.build_def.testing.GetInfoResponse",
+			fullNames: []string{"intrinsic.build_def.testing.GetInfoResponse"},
+			want: map[string]struct{}{
+				"intrinsic.build_def.testing.GetInfoResponse": {},
 			},
 		},
 		{
@@ -267,6 +299,33 @@ func TestPruneSourceCodeInfo(t *testing.T) {
 		{
 			name:      "intrinsic.build_def.testing.SubMessageB",
 			fullNames: []string{"intrinsic.build_def.testing.SubMessageB"},
+			want: map[string]bool{
+				"google/protobuf/duration.proto":                                 false,
+				"intrinsic/util/proto/build_defs/testing/test_message.proto":     true,
+				"intrinsic/util/proto/build_defs/testing/test_message_dep.proto": false,
+			},
+		},
+		{
+			name:      "intrinsic.build_def.testing.TestService",
+			fullNames: []string{"intrinsic.build_def.testing.TestService"},
+			want: map[string]bool{
+				"google/protobuf/duration.proto":                                 false,
+				"intrinsic/util/proto/build_defs/testing/test_message.proto":     true,
+				"intrinsic/util/proto/build_defs/testing/test_message_dep.proto": true,
+			},
+		},
+		{
+			name:      "intrinsic.build_def.testing.GetInfoRequest",
+			fullNames: []string{"intrinsic.build_def.testing.GetInfoRequest"},
+			want: map[string]bool{
+				"google/protobuf/duration.proto":                                 false,
+				"intrinsic/util/proto/build_defs/testing/test_message.proto":     true,
+				"intrinsic/util/proto/build_defs/testing/test_message_dep.proto": true,
+			},
+		},
+		{
+			name:      "intrinsic.build_def.testing.GetInfoResponse",
+			fullNames: []string{"intrinsic.build_def.testing.GetInfoResponse"},
 			want: map[string]bool{
 				"google/protobuf/duration.proto":                                 false,
 				"intrinsic/util/proto/build_defs/testing/test_message.proto":     true,

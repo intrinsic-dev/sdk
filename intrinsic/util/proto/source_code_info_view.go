@@ -107,6 +107,13 @@ func toString(file string, path protoreflect.SourcePath) string {
 	return fmt.Sprintf("%s %s", file, path.String())
 }
 
+func addEdge(from string, to string, graph map[string]map[string]struct{}) {
+	if _, exists := graph[from]; !exists {
+		graph[from] = map[string]struct{}{}
+	}
+	graph[from][to] = struct{}{}
+}
+
 func addMessageDependencies(index int, md protoreflect.MessageDescriptor, graph map[string]map[string]struct{}, paths map[string]struct{}) {
 	filePath := md.ParentFile().Path()
 	from := string(md.FullName())
@@ -116,10 +123,7 @@ func addMessageDependencies(index int, md protoreflect.MessageDescriptor, graph 
 		paths[toString(filePath, sourcePath)] = struct{}{}
 		if fd.Kind() == protoreflect.MessageKind {
 			to := string(fd.Message().FullName())
-			if _, exists := graph[from]; !exists {
-				graph[from] = map[string]struct{}{}
-			}
-			graph[from][to] = struct{}{}
+			addEdge(from, to, graph)
 		}
 	}
 
@@ -128,6 +132,26 @@ func addMessageDependencies(index int, md protoreflect.MessageDescriptor, graph 
 		sourcePath := md.ParentFile().SourceLocations().ByDescriptor(nested).Path
 		paths[toString(filePath, sourcePath)] = struct{}{}
 		addMessageDependencies(index, nested, graph, paths)
+	}
+}
+
+func addServiceDependencies(index int, sd protoreflect.ServiceDescriptor, graph map[string]map[string]struct{}, paths map[string]struct{}) {
+	filePath := sd.ParentFile().Path()
+	from := string(sd.FullName())
+	for i := 0; i < sd.Methods().Len(); i++ {
+		md := sd.Methods().Get(i)
+		sourcePath := sd.ParentFile().SourceLocations().ByDescriptor(md).Path
+		paths[toString(filePath, sourcePath)] = struct{}{}
+
+		// Add the method's input proto.
+		im := md.Input()
+		to := string(im.FullName())
+		addEdge(from, to, graph)
+
+		// Add the method's output proto.
+		om := md.Output()
+		to = string(om.FullName())
+		addEdge(from, to, graph)
 	}
 }
 
@@ -149,6 +173,12 @@ func dependencyGraph(fds *dpb.FileDescriptorSet) (map[string]map[string]struct{}
 			sourcePath := f.SourceLocations().ByDescriptor(md).Path
 			pathsWithFile[toString(f.Path(), sourcePath)] = struct{}{}
 			addMessageDependencies(i, md, graph, pathsWithFile)
+		}
+		for i := 0; i < f.Services().Len(); i++ {
+			sd := f.Services().Get(i)
+			sourcePath := f.SourceLocations().ByDescriptor(sd).Path
+			pathsWithFile[toString(f.Path(), sourcePath)] = struct{}{}
+			addServiceDependencies(i, sd, graph, pathsWithFile)
 		}
 		return true
 	})
