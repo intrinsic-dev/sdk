@@ -1,0 +1,52 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_objects;
+
+import "intrinsic/assets/proto/asset_tag.proto";
+import "intrinsic/assets/proto/documentation.proto";
+import "intrinsic/assets/proto/id.proto";
+import "intrinsic/assets/proto/vendor.proto";
+import "intrinsic/scene/proto/scene_object.proto";
+
+message SceneObjectMetadata {
+  // The scene object's id.
+  intrinsic_proto.assets.Id id = 1;
+  // The scene object's vendor.
+  intrinsic_proto.assets.Vendor vendor = 2;
+  // Documentation about the scene object which will be shown to users.
+  intrinsic_proto.assets.Documentation documentation = 3;
+  // The display name of this scene object to be shown in UIs.
+  string display_name = 4;
+  // A tag identifying the category of the scene object.
+  intrinsic_proto.assets.AssetTag asset_tag = 5;
+}
+
+message SceneObjectAssets {
+  // The filenames of the gzf files used in the scene object definition.
+  repeated string gzf_geometry_filenames = 1;
+
+  // The name of the root scene object specified by the given gzf files.
+  // This is optional if there is only one gzf file; The most common case.
+  string root_scene_object_name = 2;
+}
+
+message SceneObjectManifest {
+  // Metadata associated with this scene object (e.g., id, documentation, etc.)
+  SceneObjectMetadata metadata = 1;
+  // Scene Object's assets (e.g. geometric representation).
+  SceneObjectAssets assets = 2;
+}
+
+message ProcessedSceneObjectAssets {
+  intrinsic_proto.scene_object.v1.SceneObject scene_object_model = 1;
+}
+
+message ProcessedSceneObjectManifest {
+  // Metadata associated with this scene object (e.g., id, documentation, etc.)
+  SceneObjectMetadata metadata = 1;
+  // The processed version of the scene object assets.
+  // Currently, this is the same as SceneObjectAssets.
+  ProcessedSceneObjectAssets assets = 2;
+}

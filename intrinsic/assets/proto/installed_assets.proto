@@ -8,6 +8,7 @@ import "google/longrunning/operations.proto";
 import "intrinsic/assets/proto/asset_type.proto";
 import "intrinsic/assets/proto/id.proto";
 import "intrinsic/assets/proto/metadata.proto";
+import "intrinsic/assets/scene_objects/proto/scene_object_manifest.proto";
 import "intrinsic/assets/services/proto/service_manifest.proto";
 
 // Service to manage the installation of assets.
@@ -101,6 +102,8 @@ message CreateInstalledAssetRequest {
     oneof variant {
       IdVersion catalog = 1;
       intrinsic_proto.services.ProcessedServiceManifest service = 2;
+      intrinsic_proto.scene_objects.ProcessedSceneObjectManifest scene_object =
+          3;
     }
   }
 
@@ -115,6 +118,8 @@ message CreateInstalledAssetsRequest {
     oneof variant {
       IdVersion catalog = 1;
       intrinsic_proto.services.ProcessedServiceManifest service = 2;
+      intrinsic_proto.scene_objects.ProcessedSceneObjectManifest scene_object =
+          3;
     }
   }
 
