@@ -40,6 +40,7 @@ proto_library(
     srcs = ["product_service.proto"],
     deps = [
         ":product_proto",
+        "//intrinsic/assets/proto:id_proto",
         "//intrinsic/scene/proto:scene_object_proto",
         "//intrinsic/scene/proto:scene_object_updates_proto",
         "@com_google_protobuf//:empty_proto",
@@ -63,6 +64,7 @@ go_proto_library(
     name = "product_service_go_proto",
     go_deps = [
         ":product_go_proto",
+        "//intrinsic/assets/proto:id_go_proto",
         "//intrinsic/scene/proto:scene_object_go_proto",
         "//intrinsic/scene/proto:scene_object_updates_go_proto",
     ],
@@ -74,6 +76,7 @@ go_grpc_library(
     srcs = [":product_service_proto"],
     deps = [
         ":product_go_proto",
+        "//intrinsic/assets/proto:id_go_proto",
         "//intrinsic/scene/proto:scene_object_go_proto",
         "//intrinsic/scene/proto:scene_object_updates_go_proto",
         "@org_golang_google_protobuf//types/known/emptypb",

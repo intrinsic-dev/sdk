@@ -6,6 +6,7 @@ package intrinsic_proto.product;
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
+import "intrinsic/assets/proto/id.proto";
 import "intrinsic/scene/product/proto/product.proto";
 import "intrinsic/scene/proto/scene_object.proto";
 import "intrinsic/scene/proto/scene_object_updates.proto";
@@ -43,6 +44,11 @@ message CreateProductRequest {
     // The scene file to create the product from.
     ProductSceneFileData scene_file = 2;
 
+    // The scene object to create the product from.
+    intrinsic_proto.scene_object.v1.SceneObject scene_object = 3;
+
+    // The id version of the product to create from.
+    intrinsic_proto.assets.IdVersion id_version = 4;
   }
 
   // The default product configuration.
