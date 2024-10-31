@@ -62,6 +62,20 @@ class ObjectWorldResourcesTest(absltest.TestCase):
         object_world_ids.WorldObjectName('example'),
     )
 
+  def test_object_name_is_global_alias(self):
+    object_proto = self._create_world_object_proto(name='example')
+    object_proto.name_is_global_alias = True
+    self.assertTrue(
+        self._create_world_object(object_proto).name_is_global_alias
+    )
+
+  def test_object_name_is_not_global_alias(self):
+    object_proto = self._create_world_object_proto(name='example')
+    object_proto.name_is_global_alias = False
+    self.assertFalse(
+        self._create_world_object(object_proto).name_is_global_alias
+    )
+
   def test_object_id(self):
     object_proto = self._create_world_object_proto(object_id='5')
 
@@ -385,6 +399,7 @@ my_object: WorldObject(id=15)
             'get_frame',
             'id',
             'name',
+            'name_is_global_alias',
             'parent',
             'parent_id',
             'parent_name',

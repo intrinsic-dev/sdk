@@ -304,6 +304,11 @@ class WorldObject(TransformNode):
     return object_world_ids.WorldObjectName(self._proto.name)
 
   @property
+  def name_is_global_alias(self) -> bool:
+    """Returns true if the object's name is a globally unique alias."""
+    return self._proto.name_is_global_alias
+
+  @property
   def frame_ids(self) -> List[object_world_ids.ObjectWorldResourceId]:
     return [
         object_world_ids.ObjectWorldResourceId(frame.id)
