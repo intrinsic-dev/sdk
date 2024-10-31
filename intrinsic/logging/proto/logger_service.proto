@@ -182,6 +182,9 @@ message CreateLocalRecordingRequest {
   // A human-readable description of the recording, to make it easier to
   // identify in the frontend.
   string description = 3;
+
+  // The event sources to include in the recording, as regex patterns.
+  repeated string event_sources_to_record = 4;
 }
 
 message CreateLocalRecordingResponse {
