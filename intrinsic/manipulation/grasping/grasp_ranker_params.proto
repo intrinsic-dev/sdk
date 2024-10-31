@@ -53,6 +53,9 @@ message DiversityRankerParams {
   // `min_score` for a grasp.
   // Defaults to +inf.
   optional float distance_threshold_z_in_meters = 3;
+
+  // Name of the ranker. Default to diversity_grasp_ranker.
+  optional string name = 4;
 }
 
 message IkCollisionCheckerParams {
