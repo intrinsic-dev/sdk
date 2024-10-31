@@ -13,8 +13,9 @@
 
 namespace intrinsic {
 
-constexpr char kTypeUrlPrefix[] = "type.googleapis.com/";
-constexpr char kTypeUrlSeparator = '/';
+constexpr std::string_view kIntrinsicTypeUrlPrefix = "type.intrinsic.ai/";
+constexpr std::string_view kTypeUrlPrefix = "type.googleapis.com/";
+constexpr std::string_view kTypeUrlSeparator = "/";
 
 inline std::string AddTypeUrlPrefix(std::string_view proto_type) {
   if (proto_type.find(kTypeUrlPrefix) == 0) {
