@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 from google.protobuf import descriptor_pb2
-from google.protobuf import descriptor_pool
 from google.protobuf import message as protobuf_message
 import grpc
 from intrinsic.executive.proto import proto_builder_pb2
@@ -13,6 +12,7 @@ from intrinsic.executive.proto import proto_builder_pb2_grpc
 from intrinsic.solutions import errors as solutions_errors
 from intrinsic.solutions.internal import skill_utils
 from intrinsic.util.grpc import error_handling
+from intrinsic.util.proto import descriptors
 
 
 class ProtoBuilder:
@@ -202,9 +202,7 @@ class ProtoBuilder:
     )
 
     # 3. Construct the message out of the file descriptor set
-    desc_pool = descriptor_pool.DescriptorPool()
-    for file_descriptor_proto in file_descriptor_set.file:
-      desc_pool.Add(file_descriptor_proto)
+    desc_pool = descriptors.create_descriptor_pool(file_descriptor_set)
     message_type = desc_pool.FindMessageTypeByName(package + "." + name)
     assert message_type is not None
 

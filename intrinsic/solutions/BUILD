@@ -406,6 +406,8 @@ py_library(
         "//intrinsic/executive/proto:proto_builder_py_pb2_grpc",
         "//intrinsic/solutions/internal:skill_utils",
         "//intrinsic/util/grpc:error_handling",
+        "//intrinsic/util/proto:descriptors",
+        "//intrinsic/util/proto:descriptors_py",
         requirement("grpcio"),
         "@com_google_protobuf//:protobuf_python",
     ],
