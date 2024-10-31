@@ -15,6 +15,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "absl/types/span.h"
 #include "grpcpp/channel.h"
 #include "intrinsic/logging/proto/log_item.pb.h"
 #include "intrinsic/logging/proto/logger_service.grpc.pb.h"
@@ -121,22 +122,6 @@ class StructuredLoggingClient {
   absl::StatusOr<LogItem> GetMostRecentItem(
       absl::string_view event_source) const;
 
-  // Writes all log files of the specified 'event_sources' to GCS.
-  // Might be throttled per-event-source if called too frequently.
-  //
-  // Returns absl::ResourceExhaustedError if any sync for any event source was
-  // throttled.
-  absl::StatusOr<std::vector<std::string>> ABSL_MUST_USE_RESULT
-  SyncAndRotateLogs(const std::vector<std::string>& event_sources) const;
-
-  // Writes all log files to GCS.
-  // Might be throttled per-event-source if called too frequently.
-  //
-  // Returns absl::ResourceExhaustedError if any sync for any event source was
-  // throttled.
-  absl::StatusOr<std::vector<std::string>> ABSL_MUST_USE_RESULT
-  SyncAndRotateLogs() const;
-
   // Set the logging configuration for an event_source
   absl::Status SetLogOptions(
       const std::map<std::string, intrinsic_proto::data_logger::LogOptions>&
@@ -145,6 +130,22 @@ class StructuredLoggingClient {
   // Get the logging configuration for an event_source
   absl::StatusOr<LogOptions> GetLogOptions(
       absl::string_view event_source) const;
+
+  // Writes all log files of the specified 'event_sources' to GCS.
+  // Might be throttled per-event-source if called too frequently.
+  //
+  // Returns absl::ResourceExhaustedError if any sync for any event source was
+  // throttled.
+  absl::StatusOr<std::vector<std::string>> ABSL_MUST_USE_RESULT
+  SyncAndRotateLogs(absl::Span<const absl::string_view> event_sources) const;
+
+  // Writes all log files to GCS.
+  // Might be throttled per-event-source if called too frequently.
+  //
+  // Returns absl::ResourceExhaustedError if any sync for any event source was
+  // throttled.
+  absl::StatusOr<std::vector<std::string>> ABSL_MUST_USE_RESULT
+  SyncAndRotateLogs() const;
 
  private:
   // Use of pimpl / firewall idiom to hide gRPC details.
