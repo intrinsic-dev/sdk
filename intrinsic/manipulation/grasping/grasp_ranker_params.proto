@@ -108,11 +108,15 @@ message HeightRankerParams {
 }
 
 message VisibilityRankerParams {
-  // Use visibility as a metric to rank grasps.
-  bool use_visibility_ranker = 1;
   // Minimum detection visibility in range [0,1] for a grasp to be considered
   // valid.
   float visibility_threshold = 2;
+
+  // Name of the ranker. Default to visibility_grasp_ranker.
+  optional string name = 3;
+
+  reserved 1;
+  reserved "use_visibility_ranker";
 }
 
 message TopDownGraspRankerParams {
