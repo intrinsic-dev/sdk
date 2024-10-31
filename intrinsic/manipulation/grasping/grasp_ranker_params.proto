@@ -103,6 +103,8 @@ message HeightRankerParams {
   // Maximum expected height (in meters) of an object when grasping, expressed
   // in root frame.
   float max_grasp_height = 2;
+  // Name of the ranker. Default to height_grasp_ranker.
+  optional string name = 3;
 }
 
 message VisibilityRankerParams {
