@@ -319,7 +319,8 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
     return std::forward<Adaptor>(adaptor)(*this);
   }
   template <typename Adaptor>
-  auto With(Adaptor&& adaptor) && -> decltype(std::forward<Adaptor>(adaptor)(
+  ABSL_MUST_USE_RESULT auto
+  With(Adaptor&& adaptor) && -> decltype(std::forward<Adaptor>(adaptor)(
       std::move(*this))) {
     return std::forward<Adaptor>(adaptor)(std::move(*this));
   }
