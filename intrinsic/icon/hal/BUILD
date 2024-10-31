@@ -167,9 +167,7 @@ cc_library(
 cc_library(
     name = "hardware_module_runtime",
     srcs = ["hardware_module_runtime.cc"],
-    hdrs = [
-        "hardware_module_runtime.h",
-    ],
+    hdrs = ["hardware_module_runtime.h"],
     deps = [
         ":hardware_interface_handle",
         ":hardware_interface_registry",
@@ -234,9 +232,7 @@ cc_library(
 cc_library(
     name = "realtime_clock",
     srcs = ["realtime_clock.cc"],
-    hdrs = [
-        "realtime_clock.h",
-    ],
+    hdrs = ["realtime_clock.h"],
     deps = [
         "//intrinsic/icon/control:realtime_clock_interface",
         "//intrinsic/icon/interprocess/shared_memory_lockstep",

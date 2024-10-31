@@ -43,22 +43,24 @@
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/thread/thread_options.h"
 #include "intrinsic/util/thread/util.h"
+
 namespace intrinsic::icon {
 
 absl::StatusOr<HardwareModuleMainConfig> LoadConfig(
     absl::string_view module_config_file,
     absl::string_view runtime_context_file, bool use_realtime_scheduling) {
   if (module_config_file.empty()) {
-    LOG(ERROR) << "PUBLIC: Expected --module_config_file=<path>";
-    return absl::InvalidArgumentError(
-        "No config file specified. Please run the execution with "
-        "--module_config_file=<path>/<to>/config.pbtxt");
+    LOG(ERROR) << "PUBLIC: Expected "
+      << "--module_config_file=<path>";
+    return absl::InvalidArgumentError("No config file "
+      "specified. Please run the execution with "
+      "--module_config_file=<path>/<to>/config.pbtxt");
   }
-  intrinsic_proto::icon::HardwareModuleConfig module_config;
-  INTR_RETURN_IF_ERROR(
-      intrinsic::GetTextProto(module_config_file, module_config));
+  intrinsic_proto::icon::HardwareModuleConfig config;
+  INTR_RETURN_IF_ERROR(intrinsic::GetTextProto(
+    module_config_file, config));
   return HardwareModuleMainConfig{
-      .module_config = module_config,
+      .module_config = config,
       .use_realtime_scheduling = use_realtime_scheduling};
 }
 
@@ -161,7 +163,6 @@ RunRuntimeWithGrpcServerAndWaitForShutdown(
   }
 
   std::optional<HardwareModuleExitCode> exit_code;
-
   std::optional<int> grpc_server_port = std::nullopt;
   if (cli_grpc_server_port.has_value()) {
     grpc_server_port = cli_grpc_server_port;
