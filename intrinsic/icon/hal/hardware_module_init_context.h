@@ -26,6 +26,13 @@ class HardwareModuleInitContext {
         server_builder_(server_builder),
         module_config_(config) {}
   ~HardwareModuleInitContext() = default;
+  // Delete copy and move constructors since this class contains temporary
+  // objects which are deleted after the hardware module is initialized.
+  // Hardware modules should not be able to copy or move this class.
+  HardwareModuleInitContext(const HardwareModuleInitContext&) = delete;
+  HardwareModuleInitContext& operator=(const HardwareModuleInitContext&) =
+      delete;
+  HardwareModuleInitContext& operator=(HardwareModuleInitContext&&) = delete;
 
   // Returns the interface registry for this Hardware Module to register
   // interfaces.
