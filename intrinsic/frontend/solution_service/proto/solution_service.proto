@@ -9,6 +9,7 @@ import "intrinsic/frontend/solution_service/proto/status.proto";
 
 // Manages the running solution.
 service SolutionService {
+
   // Gets the status of the running solution.
   rpc GetStatus(GetStatusRequest) returns (Status);
 
