@@ -564,9 +564,6 @@ message UpdateTransformRequest {
   // transform tree, then the pose of the child node will be updated.
   TransformNodeReference node_to_update = 4;
 
-  // Optional node_b filter to further specify the entity within the node.
-  ObjectEntityFilter node_to_update_filter = 9;
-
   // The desired transform between the two nodes 'node_a' and 'node_b' or their
   // respective entity based on the given filters.
   intrinsic_proto.Pose a_t_b = 5;
@@ -574,4 +571,7 @@ message UpdateTransformRequest {
   // Requested object view for the returned, updated object in case the update
   // node is an object (see 'node_to_update').
   ObjectView view = 6;
+
+  reserved 9;
+  reserved "node_to_update_filter";
 }

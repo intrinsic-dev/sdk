@@ -230,7 +230,6 @@ class ObjectWorldClient {
                                const TransformNode& node_b,
                                const ObjectEntityFilter& node_b_filter,
                                const TransformNode& node_to_update,
-                               const ObjectEntityFilter& node_to_update_filter,
                                const Pose3d& a_t_b);
 
   // Sets the joint positions of the given kinematic object to the given values.

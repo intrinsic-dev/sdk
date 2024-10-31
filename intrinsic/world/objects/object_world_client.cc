@@ -106,16 +106,10 @@ absl::Status CallUpdateTransform(
     std::optional<ObjectEntityFilter> node_a_filter,
     ObjectWorldResourceId node_b_id,
     std::optional<ObjectEntityFilter> node_b_filter,
-    std::optional<ObjectWorldResourceId> node_to_update_id,
-    std::optional<ObjectEntityFilter> node_to_update_filter, Pose3d a_t_b,
+    std::optional<ObjectWorldResourceId> node_to_update_id, Pose3d a_t_b,
     const std::string& world_id,
     intrinsic_proto::world::ObjectWorldService::StubInterface&
         object_world_service) {
-  if (!node_to_update_id.has_value() && node_to_update_filter.has_value()) {
-    LOG(WARNING) << "Specified a node_to_update_filter but did not specify a "
-                    "node_to_update_id. This may have been an error.";
-  }
-
   grpc::ClientContext ctx;
   intrinsic_proto::world::UpdateTransformRequest request;
   request.set_world_id(world_id);
@@ -126,9 +120,6 @@ absl::Status CallUpdateTransform(
   }
   if (node_b_filter.has_value()) {
     *request.mutable_node_b_filter() = node_b_filter->ToProto();
-  }
-  if (node_to_update_filter.has_value()) {
-    *request.mutable_node_to_update_filter() = node_to_update_filter->ToProto();
   }
   if (node_to_update_id.has_value()) {
     request.mutable_node_to_update()->set_id(node_to_update_id->value());
@@ -533,27 +524,25 @@ absl::Status ObjectWorldClient::UpdateTransform(const TransformNode& node_a,
                                                 const TransformNode& node_b,
                                                 const Pose3d& a_t_b) {
   return CallUpdateTransform(node_a.Id(), std::nullopt, node_b.Id(),
-                             std::nullopt, std::nullopt, std::nullopt, a_t_b,
-                             world_id_, *object_world_service_);
+                             std::nullopt, std::nullopt, a_t_b, world_id_,
+                             *object_world_service_);
 }
 
 absl::Status ObjectWorldClient::UpdateTransform(
     const TransformNode& node_a, const TransformNode& node_b,
     const TransformNode& node_to_update, const Pose3d& a_t_b) {
   return CallUpdateTransform(node_a.Id(), std::nullopt, node_b.Id(),
-                             std::nullopt, node_to_update.Id(), std::nullopt,
-                             a_t_b, world_id_, *object_world_service_);
+                             std::nullopt, node_to_update.Id(), a_t_b,
+                             world_id_, *object_world_service_);
 }
 
 absl::Status ObjectWorldClient::UpdateTransform(
     const TransformNode& node_a, const ObjectEntityFilter& node_a_filter,
     const TransformNode& node_b, const ObjectEntityFilter& node_b_filter,
-    const TransformNode& node_to_update,
-    const ObjectEntityFilter& node_to_update_filter, const Pose3d& a_t_b) {
+    const TransformNode& node_to_update, const Pose3d& a_t_b) {
   return CallUpdateTransform(node_a.Id(), node_a_filter, node_b.Id(),
-                             node_b_filter, node_to_update.Id(),
-                             node_to_update_filter, a_t_b, world_id_,
-                             *object_world_service_);
+                             node_b_filter, node_to_update.Id(), a_t_b,
+                             world_id_, *object_world_service_);
 }
 
 absl::Status ObjectWorldClient::UpdateJointPositions(
