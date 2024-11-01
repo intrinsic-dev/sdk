@@ -59,6 +59,12 @@ cc_proto_library(
 )
 
 proto_library(
+    name = "opcua_gpio_service_config_proto",
+    srcs = ["opcua_gpio_service_config.proto"],
+    visibility = ["//intrinsic:__subpackages__"],
+)
+
+proto_library(
     name = "realtime_control_service_gpio_config_proto",
     srcs = ["realtime_control_service_gpio_config.proto"],
     visibility = ["//intrinsic:__subpackages__"],

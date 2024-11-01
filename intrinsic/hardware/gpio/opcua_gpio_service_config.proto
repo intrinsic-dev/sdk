@@ -1,0 +1,40 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.gpio;
+
+// Configuration for Opcua GPIO service that can be set when packaged as a
+// resource
+message OpcuaGpioServiceConfig {
+  message OpcuaNodes {
+    // Node ids formatted via the opcua xml standard
+    repeated string node_id = 1;
+  }
+  // Full address of the remote opcua server to connect to
+  string opcua_server_address = 1;
+  OpcuaNodes opcua_nodes = 2;
+
+  // Optional authentication to connect to the opcua server.
+  optional string username = 3;
+  optional string password = 4 [debug_redact = true];
+
+  // Optional encryption to connect to the opcua server.
+  //
+  // If any of these are specified, the client will attempt to connect with
+  // signing and encryption.
+  optional string cert_file = 5;
+  optional string private_key_file = 6;
+  // application_uri MUST match with the "urn:..." name in the "X509v3 Subject
+  // Alternative Name" section of the client cert (including the "urn:" prefix,
+  // but not the "URI:" prefix in front of that).
+  //
+  // You can see the names in the cert with something like:
+  //   openssl x509 -in server_cert.der -inform der -text
+  //
+  // The other names (dns, ip address) do not seem to matter. You can transfer
+  // the cert and private key to a different machine and it appears to work
+  // fine.
+  optional string application_uri = 7;
+  repeated string trusted_certificate_filepaths = 8;
+}
