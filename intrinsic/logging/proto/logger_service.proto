@@ -199,10 +199,9 @@ message ListLocalRecordingsRequest {
   // Optionally allow users to specify an ending bound for the recording list.
   optional google.protobuf.Timestamp end_time = 2;
 
-  // Optionally allow users to specify whether to return a summary of the
-  // recordings or the full metadata, which includes statistics for each
-  // event source.
-  optional bool only_summary_metadata = 3;
+  // Allow users to specify whether to return a summary of the recordings or the
+  // full metadata, which includes statistics for each event source.
+  bool only_summary_metadata = 3;
 
   // Optionally allow users to retrieve specific Bag IDs
   // If no Bag ID's are provided, all bags will be returned that are in
