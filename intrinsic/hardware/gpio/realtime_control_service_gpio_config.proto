@@ -1,0 +1,14 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.gpio;
+
+// Configuration for Realtime Control Service GPIO service.
+message RealtimeControlServiceGpioConfig {
+  // The name of the Realtime Control Service instance.
+  string service_instance_name = 1;
+  // List of ADIO parts to interact with. The parts must be present in the
+  // specified RTCS instance.
+  repeated string parts = 2;
+}

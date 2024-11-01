@@ -58,6 +58,12 @@ cc_proto_library(
     deps = [":gpio_service_proto"],
 )
 
+proto_library(
+    name = "realtime_control_service_gpio_config_proto",
+    srcs = ["realtime_control_service_gpio_config.proto"],
+    visibility = ["//intrinsic:__subpackages__"],
+)
+
 cc_grpc_library(
     name = "gpio_service_cc_grpc_proto",
     srcs = [":gpio_service_proto"],
