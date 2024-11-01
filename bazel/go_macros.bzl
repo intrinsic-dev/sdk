@@ -8,7 +8,7 @@ load("@io_bazel_rules_go//proto:def.bzl", _go_grpc_library = "go_grpc_library", 
 go_binary = _go_binary
 go_library = _go_library
 
-def go_grpc_library(name, deps, srcs, **kwargs):
+def go_grpc_library(name, srcs, deps = None, **kwargs):
     _go_grpc_library(
         name = name,
         deps = deps,
