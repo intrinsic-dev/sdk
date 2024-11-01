@@ -7,6 +7,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -260,6 +261,51 @@ StructuredLoggingClient::SyncAndRotateLogs() const {
       std::make_move_iterator(response.event_sources().begin()),
       std::make_move_iterator(response.event_sources().end())};
   return synced_event_sources;
+}
+
+absl::StatusOr<intrinsic_proto::data_logger::BagMetadata>
+StructuredLoggingClient::CreateLocalRecording(
+    absl::Time start_time, absl::Time end_time, absl::string_view description,
+    absl::Span<const absl::string_view> event_sources_to_record) const {
+  intrinsic_proto::data_logger::CreateLocalRecordingRequest request;
+  INTR_RETURN_IF_ERROR(FromAbslTime(start_time, request.mutable_start_time()));
+  INTR_RETURN_IF_ERROR(FromAbslTime(end_time, request.mutable_end_time()));
+  request.set_description(description);
+  *request.mutable_event_sources_to_record() = {event_sources_to_record.begin(),
+                                                event_sources_to_record.end()};
+
+  grpc::ClientContext context;
+  intrinsic_proto::data_logger::CreateLocalRecordingResponse response;
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      impl_->stub->CreateLocalRecording(&context, request, &response)));
+  return response.bag();
+}
+
+// List recordings stored locally.
+absl::StatusOr<std::vector<intrinsic_proto::data_logger::BagMetadata>>
+StructuredLoggingClient::ListLocalRecordings(
+    std::optional<absl::Time> start_time, std::optional<absl::Time> end_time,
+    bool only_summary_metadata,
+    absl::Span<const absl::string_view> bag_ids) const {
+  intrinsic_proto::data_logger::ListLocalRecordingsRequest request;
+  if (start_time.has_value()) {
+    INTR_RETURN_IF_ERROR(
+        FromAbslTime(*start_time, request.mutable_start_time()));
+  }
+  if (end_time.has_value()) {
+    INTR_RETURN_IF_ERROR(FromAbslTime(*end_time, request.mutable_end_time()));
+  }
+  request.set_only_summary_metadata(only_summary_metadata);
+  *request.mutable_bag_ids() = {bag_ids.begin(), bag_ids.end()};
+
+  grpc::ClientContext context;
+  intrinsic_proto::data_logger::ListLocalRecordingsResponse response;
+  INTR_RETURN_IF_ERROR(ToAbslStatus(
+      impl_->stub->ListLocalRecordings(&context, request, &response)));
+  std::vector<intrinsic_proto::data_logger::BagMetadata> bags{
+      std::make_move_iterator(response.bags().begin()),
+      std::make_move_iterator(response.bags().end())};
+  return bags;
 }
 
 }  // namespace intrinsic
