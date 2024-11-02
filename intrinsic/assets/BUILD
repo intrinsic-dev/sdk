@@ -3,7 +3,7 @@
 # Common code for assets.
 
 load("@rules_python//python:defs.bzl", "py_library")
-load("//bazel:go_macros.bzl", "go_library")
+load("//bazel:go_macros.bzl", "go_library", "go_test")
 
 go_library(
     name = "baseclientutils",
@@ -170,6 +170,37 @@ go_library(
         "//intrinsic/util/archive:tartooling",
         "@io_bazel_rules_go//proto/wkt:descriptor_go_proto",
         "@org_golang_google_protobuf//proto",
+        "@org_golang_google_protobuf//types/known/anypb",
+    ],
+)
+
+go_test(
+    name = "bundleio_test",
+    srcs = [
+        "bundle_io_services_test.go",
+        "bundle_io_skills_test.go",
+        "bundle_io_test.go",
+    ],
+    library = ":bundleio",
+    deps = [
+        "//intrinsic/assets/proto:asset_type_go_proto",
+        "//intrinsic/assets/proto:id_go_proto",
+        "//intrinsic/assets/proto:status_spec_go_proto",
+        "//intrinsic/assets/services/proto:service_http_config_go_proto",
+        "//intrinsic/assets/services/proto:service_manifest_go_proto",
+        "//intrinsic/executive/proto:behavior_tree_go_proto",
+        "//intrinsic/kubernetes/workcell_spec/proto:image_go_proto",
+        "//intrinsic/resources/proto:resource_manifest_go_proto",
+        "//intrinsic/scene/proto:scene_object_go_proto",
+        "//intrinsic/skills/proto:processed_skill_manifest_go_proto",
+        "//intrinsic/skills/proto:skill_manifest_go_proto",
+        "//intrinsic/util/archive:tartooling",
+        "//intrinsic/world/proto:world_fragment_go_proto",
+        "@com_github_google_go_cmp//cmp:go_default_library",
+        "@com_github_google_go_cmp//cmp/cmpopts:go_default_library",
+        "@io_bazel_rules_go//proto/wkt:descriptor_go_proto",
+        "@org_golang_google_protobuf//proto",
+        "@org_golang_google_protobuf//testing/protocmp:go_default_library",
         "@org_golang_google_protobuf//types/known/anypb",
     ],
 )

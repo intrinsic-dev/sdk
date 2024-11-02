@@ -2,7 +2,7 @@
 
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
-load("//bazel:go_macros.bzl", "go_library")
+load("//bazel:go_macros.bzl", "go_library", "go_test")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -40,5 +40,18 @@ go_binary(
         ":servicegen",
         "//intrinsic/production:intrinsic",
         "@com_github_golang_glog//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "servicegen_test",
+    srcs = ["servicegen_test.go"],
+    library = ":servicegen",
+    deps = [
+        "//intrinsic/assets/proto:id_go_proto",
+        "//intrinsic/assets/proto:vendor_go_proto",
+        "//intrinsic/assets/services/proto:service_manifest_go_proto",
+        "@com_github_google_go_cmp//cmp:go_default_library",
+        "@com_github_google_go_cmp//cmp/cmpopts:go_default_library",
     ],
 )

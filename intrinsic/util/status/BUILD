@@ -6,7 +6,7 @@ load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
-load("//bazel:go_macros.bzl", "go_grpc_library", "go_library", "go_proto_library")
+load("//bazel:go_macros.bzl", "go_grpc_library", "go_library", "go_proto_library", "go_test")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -421,6 +421,26 @@ go_library(
         "@org_golang_google_grpc//status:go_default_library",
         "@org_golang_google_protobuf//proto",
         "@org_golang_google_protobuf//types/known/timestamppb",
+    ],
+)
+
+go_test(
+    name = "extstatus_test",
+    srcs = ["extstatus_test.go"],
+    library = ":extstatus",
+    deps = [
+        ":extended_status_go_proto",
+        ":test_service_go_grpc_proto",
+        "//intrinsic/logging/proto:context_go_proto",
+        "//intrinsic/testing:grpctest",
+        "@com_github_google_go_cmp//cmp:go_default_library",
+        "@org_golang_google_genproto_googleapis_rpc//errdetails",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//credentials/local:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
+        "@org_golang_google_protobuf//testing/protocmp:go_default_library",
+        "@org_golang_google_protobuf//types/known/emptypb",
     ],
 )
 

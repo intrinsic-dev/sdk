@@ -1,6 +1,6 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-load("//bazel:go_macros.bzl", "go_library")
+load("//bazel:go_macros.bzl", "go_library", "go_test")
 
 package(default_visibility = ["//intrinsic/tools/inctl:__subpackages__"])
 
@@ -29,4 +29,10 @@ go_library(
         "@org_golang_google_grpc//codes:go_default_library",
         "@org_golang_google_grpc//status:go_default_library",
     ],
+)
+
+go_test(
+    name = "device_test",
+    srcs = ["register_test.go"],
+    library = ":device",
 )

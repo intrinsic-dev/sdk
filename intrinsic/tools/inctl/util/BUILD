@@ -1,6 +1,6 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-load("//bazel:go_macros.bzl", "go_library")
+load("//bazel:go_macros.bzl", "go_library", "go_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -42,6 +42,19 @@ go_library(
         ":viperutil",
         "//intrinsic/config:environments",
         "//intrinsic/tools/inctl/auth",
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_spf13_cobra//:go_default_library",
+        "@com_github_spf13_viper//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "orgutil_test",
+    srcs = ["orgutil_test.go"],
+    library = ":orgutil",
+    deps = [
+        "//intrinsic/tools/inctl/auth",
+        "//intrinsic/tools/inctl/auth:authtest",
         "@com_github_pkg_errors//:go_default_library",
         "@com_github_spf13_cobra//:go_default_library",
         "@com_github_spf13_viper//:go_default_library",

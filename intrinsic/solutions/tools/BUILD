@@ -2,7 +2,7 @@
 
 # Tools for working with the solution building libraries.
 
-load("//bazel:go_macros.bzl", "go_library")
+load("//bazel:go_macros.bzl", "go_library", "go_test")
 
 go_library(
     name = "pythonserializer",
@@ -17,5 +17,20 @@ go_library(
         "@org_golang_google_protobuf//reflect/protodesc:go_default_library",
         "@org_golang_google_protobuf//reflect/protoreflect:go_default_library",
         "@org_golang_google_protobuf//reflect/protoregistry:go_default_library",
+    ],
+)
+
+go_test(
+    name = "pythonserializer_test",
+    srcs = ["pythonserializer_test.go"],
+    library = ":pythonserializer",
+    deps = [
+        "//intrinsic/executive/proto:behavior_tree_go_proto",
+        "//intrinsic/skills/proto:skills_go_proto",
+        "//intrinsic/solutions/tools/proto:my_msg_go_proto",
+        "@com_github_google_go_cmp//cmp:go_default_library",
+        "@io_bazel_rules_go//proto/wkt:descriptor_go_proto",
+        "@org_golang_google_protobuf//encoding/prototext:go_default_library",
+        "@org_golang_google_protobuf//reflect/protodesc:go_default_library",
     ],
 )
