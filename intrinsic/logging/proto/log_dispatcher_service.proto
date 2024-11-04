@@ -240,6 +240,10 @@ message GetCloudLogItemsRequest {
 
   // Session is bound to organization_id.
   string organization_id = 6;
+
+  // Set to true if blob payloads are to be omitted from the response. Note that
+  // blob_ids will still be populated regardless of this setting.
+  bool omit_blob_payloads = 7;
 }
 
 message GetCloudLogItemsResponse {
