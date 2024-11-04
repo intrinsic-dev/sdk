@@ -131,7 +131,7 @@ absl::Status SourceCodeInfoView::GetNestedFieldCommentMap(
     // Add leading comments for this field, i.e., the comments above the field.
     INTR_ASSIGN_OR_RETURN(std::string comment,
                           GetLeadingCommentsByFieldName(field->full_name()));
-    comment_map.insert({field->full_name(), comment});
+    comment_map.emplace(field->full_name(), comment);
 
     // Recursively process the message type of the field.
     const google::protobuf::FieldDescriptor* field_to_recursively_process =
@@ -153,7 +153,7 @@ absl::Status SourceCodeInfoView::GetNestedFieldCommentMap(
         INTR_ASSIGN_OR_RETURN(
             std::string comment,
             GetLeadingCommentsByMessageType(msg_descriptor->full_name()));
-        comment_map.insert({msg_descriptor->full_name(), comment});
+        comment_map.emplace(msg_descriptor->full_name(), comment);
         INTR_RETURN_IF_ERROR(
             GetNestedFieldCommentMap(msg_descriptor, comment_map));
       }
