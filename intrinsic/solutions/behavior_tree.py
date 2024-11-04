@@ -3941,6 +3941,7 @@ class BehaviorTree:
     self.name: str = name or ''
     self.root: Optional[Node] = root
     self._description = None
+    self._return_value_expression = None
 
   def __repr__(self) -> str:
     """Converts a BT into a compact, human-readable string representation.
@@ -3977,6 +3978,8 @@ class BehaviorTree:
       proto_object.tree_id = self.tree_id
     if self._description is not None:
       proto_object.description.CopyFrom(self._description)
+    if self._return_value_expression is not None:
+      proto_object.return_value_expression = self._return_value_expression
     return proto_object
 
   @classmethod
@@ -3993,6 +3996,12 @@ class BehaviorTree:
     if proto_object.HasField('tree_id'):
       bt.tree_id = proto_object.tree_id
     bt.root = Node.create_from_proto(proto_object.root)
+    if proto_object.HasField('description'):
+      bt._description = skills_pb2.Skill()
+      bt._description.CopyFrom(proto_object.description)
+    if proto_object.HasField('return_value_expression'):
+      bt._return_value_expression = proto_object.return_value_expression
+
     return bt
 
   def generate_and_set_unique_id(self) -> str:

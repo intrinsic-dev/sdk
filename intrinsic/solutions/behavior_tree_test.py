@@ -227,6 +227,50 @@ class BehaviorTreeMadeParametrizableTest(absltest.TestCase):
           ],
       )
 
+  def test_to_proto_and_from_proto(self):
+    """Tests if behavior tree conversion to/from proto representation works."""
+    bt1 = bt.BehaviorTree('test')
+
+    bt1.initialize_pbt_with_protos(
+        skill_id='alpha',
+        display_name='Alpha',
+        parameter_proto=test_message_pb2.TestMessage,
+    )
+    bt1._return_value_expression = '42'
+    bt1.set_root(bt.Sequence())  # Empty root.
+
+    test_message_fds = descriptor_pb2.FileDescriptorSet()
+    test_message_fds.CopyFrom(
+        bt1.proto.description.parameter_description.parameter_descriptor_fileset
+    )
+
+    my_proto = behavior_tree_pb2.BehaviorTree()
+    my_proto.name = 'test'
+    my_proto.root.CopyFrom(bt.Sequence().proto)
+
+    my_proto.description.parameter_description.parameter_descriptor_fileset.CopyFrom(
+        test_message_fds
+    )
+    my_proto.description.parameter_description.parameter_message_full_name = (
+        'intrinsic_proto.executive.TestMessage'
+    )
+    my_proto.description.id = 'alpha'
+    my_proto.description.display_name = 'Alpha'
+    my_proto.return_value_expression = '42'
+
+    compare.assertProto2Equal(
+        self,
+        bt1.proto,
+        my_proto,
+        ignored_fields=['tree_id', 'root.id', 'root.sequence.children.id'],
+    )
+    compare.assertProto2Equal(
+        self,
+        bt.BehaviorTree.create_from_proto(my_proto).proto,
+        my_proto,
+        ignored_fields=['tree_id', 'root.id', 'root.sequence.children.id'],
+    )
+
 
 class BehaviorTreeTest(parameterized.TestCase):
   """Tests the method functions of BehaviorTree."""
