@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package intrinsic_proto.solution.v1;
 
+import "google/protobuf/empty.proto";
 import "intrinsic/executive/proto/behavior_tree.proto";
 import "intrinsic/frontend/solution_service/proto/status.proto";
 
@@ -20,6 +21,18 @@ service SolutionService {
   // Lists behavior trees from the running solution.
   rpc ListBehaviorTrees(ListBehaviorTreesRequest)
       returns (ListBehaviorTreesResponse);
+
+  // Creates a new behavior tree in the running solution.
+  rpc CreateBehaviorTree(CreateBehaviorTreeRequest)
+      returns (intrinsic_proto.executive.BehaviorTree);
+
+  // Updates an existing behavior tree in the running solution.
+  rpc UpdateBehaviorTree(UpdateBehaviorTreeRequest)
+      returns (intrinsic_proto.executive.BehaviorTree);
+
+  // Deletes a behavior tree in the running solution.
+  rpc DeleteBehaviorTree(DeleteBehaviorTreeRequest)
+      returns (google.protobuf.Empty);
 }
 
 message GetStatusRequest {
@@ -65,4 +78,25 @@ enum BehaviorTreeView {
 
   // Include the full contents of the behavior tree.
   BEHAVIOR_TREE_VIEW_FULL = 2;
+}
+
+message CreateBehaviorTreeRequest {
+  // The ID (`name`) to use for the behavior tree. Must always be specified.
+  // This is also sometimes called the "process name". The name must be unique
+  // within the running solution and should ideally be meaningful to the user.
+  string behavior_tree_id = 1;
+
+  // The behavior tree to create. The `name` field will be ignored.
+  intrinsic_proto.executive.BehaviorTree behavior_tree = 2;
+}
+
+message UpdateBehaviorTreeRequest {
+  // The updated behavior tree. The `name` field is used to identify the
+  // behavior tree to update.
+  intrinsic_proto.executive.BehaviorTree behavior_tree = 1;
+}
+
+message DeleteBehaviorTreeRequest {
+  // The name of the behavior tree to delete.
+  string name = 1;
 }

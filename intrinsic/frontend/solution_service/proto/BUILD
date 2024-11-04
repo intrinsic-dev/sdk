@@ -11,6 +11,7 @@ proto_library(
     deps = [
         ":status_proto",
         "//intrinsic/executive/proto:behavior_tree_proto",
+        "@com_google_protobuf//:empty_proto",
     ],
 )
 
@@ -29,6 +30,7 @@ go_grpc_library(
     deps = [
         ":status_go_proto",
         "//intrinsic/executive/proto:behavior_tree_go_proto",
+        "@org_golang_google_protobuf//types/known/emptypb",
     ],
 )
 
