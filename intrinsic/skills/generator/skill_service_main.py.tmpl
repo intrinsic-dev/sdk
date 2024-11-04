@@ -14,6 +14,7 @@ from intrinsic.skills.internal import single_skill_factory as skill_factory
 from intrinsic.skills.internal import skill_init
 from intrinsic.skills.internal import skill_service_config_utils
 from intrinsic.skills.proto import skill_service_config_pb2
+from intrinsic.util.status import status_specs
 {{- range .PythonModules }}
 import {{ . }}
 {{- end }}
@@ -78,6 +79,9 @@ def main(argv):
   service_config = skill_service_config_utils.get_skill_service_config(
       _SKILL_SERVICE_CONFIG_FILENAME.value
   )
+
+  status_specs.init_once(service_config.skill_description.id,
+                         status_specs = list(service_config.status_info))
 
   skill_rt_data = runtime_data.get_runtime_data_from(
       skill_service_config = service_config,

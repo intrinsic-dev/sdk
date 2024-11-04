@@ -14,6 +14,7 @@
 #include "intrinsic/skills/internal/skill_init.h"
 #include "intrinsic/skills/internal/skill_service_config_utils.h"
 #include "intrinsic/util/grpc/grpc.h"
+#include "intrinsic/util/status/status_specs.h"
 // clang-format off
 {{- range .CCHeaderPaths }}
 #include "{{ . }}"
@@ -47,6 +48,7 @@ ABSL_FLAG(bool, opencensus_tracing, true, "Dummy flag, do not use");
 
 namespace {
 
+using ::intrinsic::InitExtendedStatusSpecs;
 using ::intrinsic::skills::GetSkillServiceConfig;
 using ::intrinsic::skills::SkillInit;
 using ::intrinsic::skills::internal::GetRuntimeDataFrom;
@@ -64,6 +66,10 @@ int main(int argc, char** argv) {
   QCHECK_OK(service_config.status())
       << "Failed to read skill service config at: "
       << absl::GetFlag(FLAGS_skill_service_config_filename);
+
+  QCHECK_OK(InitExtendedStatusSpecs(service_config->skill_description().id(),
+                                    service_config->status_info()))
+      << "Failed to initialize status specs from config";
 
   // clang-format off
   absl::StatusOr<SkillRuntimeData> runtime_data = GetRuntimeDataFrom(
