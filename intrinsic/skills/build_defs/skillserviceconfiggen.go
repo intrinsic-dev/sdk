@@ -32,7 +32,7 @@ func createParameterDescription(metadata *smpb.ParameterMetadata, skillProtoDesc
 	description.ParameterDescriptorFileset = proto.Clone(skillProtoDescriptor).(*dpb.FileDescriptorSet)
 
 	var err error
-	description.ParameterFieldComments, err = sciv.GetNestedFieldCommentMap(skillProtoDescriptor, metadata.GetMessageFullName())
+	description.ParameterFieldComments, err = sciv.NestedFieldCommentMap(skillProtoDescriptor, metadata.GetMessageFullName())
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func createReturnDescription(metadata *smpb.ReturnMetadata, skillProtoDescriptor
 
 	description.DescriptorFileset = proto.Clone(skillProtoDescriptor).(*dpb.FileDescriptorSet)
 	var err error
-	description.ReturnValueFieldComments, err = sciv.GetNestedFieldCommentMap(skillProtoDescriptor, metadata.GetMessageFullName())
+	description.ReturnValueFieldComments, err = sciv.NestedFieldCommentMap(skillProtoDescriptor, metadata.GetMessageFullName())
 	if err != nil {
 		return nil, err
 	}
