@@ -232,6 +232,46 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "status_specs",
+    srcs = ["status_specs.cc"],
+    hdrs = ["status_specs.h"],
+    deps = [
+        ":extended_status_cc_proto",
+        ":status_builder",
+        "//intrinsic/assets/proto:status_spec_cc_proto",
+        "//intrinsic/logging/proto:context_cc_proto",
+        "//intrinsic/util:proto_time",
+        "@com_google_absl//absl/base:no_destructor",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/time",
+        "@com_google_protobuf//:protobuf_lite",
+        "@or_tools//ortools/base:file",
+    ],
+)
+
+cc_test(
+    name = "status_specs_test",
+    srcs = ["status_specs_test.cc"],
+    deps = [
+        ":extended_status_cc_proto",
+        ":status_builder",
+        ":status_macros",
+        ":status_specs",
+        "//intrinsic/assets/proto:status_spec_cc_proto",
+        "//intrinsic/util/proto:parse_text_proto",
+        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:status_payload_matchers",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/time",
+    ],
+)
+
 cc_test(
     name = "get_extended_status_test",
     srcs = ["get_extended_status_test.cc"],
@@ -383,6 +423,30 @@ py_library(
     deps = [":status_exception"],
 )
 
+py_library(
+    name = "status_specs_py",
+    srcs = ["status_specs.py"],
+    deps = [
+        ":extended_status_py_pb2",
+        ":status_exception",
+        "//intrinsic/assets/proto:status_spec_py_pb2",
+        requirement("grpcio"),
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_test(
+    name = "status_specs_py_test",
+    srcs = ["status_specs_py_test.py"],
+    deps = [
+        ":extended_status_py_pb2",
+        ":status_specs_py",
+        "//intrinsic/assets/proto:status_spec_py_pb2",
+        "//intrinsic/solutions/testing:compare",
+        "@com_google_absl_py//absl/testing:absltest",
+    ],
+)
+
 py_test(
     name = "status_matcher_test",
     srcs = ["status_matcher_test.py"],
@@ -463,5 +527,33 @@ go_grpc_library(
     visibility = ["//intrinsic/util/status:__pkg__"],
     deps = [
         "@org_golang_google_protobuf//types/known/emptypb",
+    ],
+)
+
+go_library(
+    name = "statusspecs",
+    srcs = ["statusspecs.go"],
+    deps = [
+        ":extended_status_go_proto",
+        ":extstatus",
+        "//intrinsic/assets/proto:status_spec_go_proto",
+        "//intrinsic/logging/proto:context_go_proto",
+        "@com_github_golang_glog//:go_default_library",
+        "@org_golang_google_protobuf//proto",
+    ],
+)
+
+go_test(
+    name = "statusspecs_test",
+    srcs = ["statusspecs_test.go"],
+    library = ":statusspecs",
+    deps = [
+        ":extended_status_go_proto",
+        ":extstatus",
+        "//intrinsic/assets/proto:status_spec_go_proto",
+        "//intrinsic/logging/proto:context_go_proto",
+        "@com_github_google_go_cmp//cmp:go_default_library",
+        "@org_golang_google_protobuf//testing/protocmp:go_default_library",
+        "@org_golang_google_protobuf//types/known/timestamppb",
     ],
 )
