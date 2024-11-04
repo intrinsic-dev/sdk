@@ -7,6 +7,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "absl/base/attributes.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "intrinsic/icon/utils/realtime_guard.h"
@@ -65,8 +66,8 @@ class Thread {
   // `args...`. The function 'f' and the provided `args...` must be bind-able to
   // an absl::AnyInvocable<void()>.
   template <typename Function, typename... Args>
-  absl::StatusOr<Thread> Create(const ThreadOptions& options, Function&& f,
-                                Args&&... args) {
+  static absl::StatusOr<Thread> Create(const ThreadOptions& options,
+                                       Function&& f, Args&&... args) {
     INTRINSIC_ASSERT_NON_REALTIME();
     INTR_ASSIGN_OR_RETURN(std::thread thread,
                           CreateThread(options, std::forward<Function>(f),
@@ -144,6 +145,7 @@ class Thread {
 };
 
 template <typename Function, typename... Args>
+ABSL_DEPRECATED("Use Thread::Create() instead.")
 absl::Status Thread::Start(const ThreadOptions& options, Function&& f,
                            Args&&... args) {
   INTRINSIC_ASSERT_NON_REALTIME();

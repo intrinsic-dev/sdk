@@ -2,7 +2,7 @@
 
 #include "intrinsic/util/thread/periodic.h"
 
-#include <memory>
+#include <optional>
 #include <utility>
 
 #include "absl/base/thread_annotations.h"
@@ -19,9 +19,13 @@ namespace intrinsic {
 
 PeriodicOperation::PeriodicOperation(absl::AnyInvocable<void()> f)
     : PeriodicOperation(std::move(f), absl::ZeroDuration()) {}
+
 PeriodicOperation::PeriodicOperation(absl::AnyInvocable<void()> f,
                                      absl::Duration period)
-    : PeriodicOperation(ThreadOptions(), std::move(f), period) {}
+    : executor_thread_options_(std::nullopt),
+      operation_(std::move(f)),
+      period_(period) {}
+
 PeriodicOperation::PeriodicOperation(const ThreadOptions& options,
                                      absl::AnyInvocable<void()> f,
                                      absl::Duration period)
@@ -32,14 +36,22 @@ PeriodicOperation::PeriodicOperation(const ThreadOptions& options,
 absl::Status PeriodicOperation::Start() {
   absl::MutexLock l(&mutex_);
   // Executor already started?
-  if (operation_executor_ != nullptr) {
+  if (operation_executor_.Joinable()) {
     return absl::OkStatus();
   }
   run_executor_thread_ = true;
   run_now_request_ = true;  // Run at least once.
-  operation_executor_ = std::make_unique<intrinsic::Thread>();
-  INTR_RETURN_IF_ERROR(operation_executor_->Start(
-      executor_thread_options_, &PeriodicOperation::ExecutorLoop, this));
+
+  // This branch ensures that we only spin up a RT thread if the user explicitly
+  // requested it by providing a ThreadOptions.
+  if (executor_thread_options_.has_value()) {
+    INTR_ASSIGN_OR_RETURN(
+        operation_executor_,
+        Thread::Create(*executor_thread_options_,
+                       &PeriodicOperation::ExecutorLoop, this));
+  } else {
+    operation_executor_ = Thread(&PeriodicOperation::ExecutorLoop, this);
+  }
 
   // Wait for the last start time to be something more recent than infinite
   // past, which would indicate the start of our first operation.
@@ -55,15 +67,15 @@ absl::Status PeriodicOperation::Start() {
 absl::Status PeriodicOperation::Stop() {
   absl::MutexLock l(&mutex_);
   // Executor not running?
-  if (operation_executor_ == nullptr) {
+  if (!operation_executor_.Joinable()) {
     return absl::OkStatus();
   }
 
   run_executor_thread_ = false;
   mutex_.Unlock();
-  operation_executor_->Join();
+  operation_executor_.RequestStop();
+  operation_executor_.Join();
   mutex_.Lock();
-  operation_executor_.reset(nullptr);
   return absl::OkStatus();
 }
 
@@ -88,7 +100,7 @@ void PeriodicOperation::RunNow() {
 
   absl::Condition wait_until_ran(
       +[](WaitUntilRanProps* props) ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
-        return props->op->operation_executor_ == nullptr ||
+        return !props->op->operation_executor_.Joinable() ||
                props->op->last_operation_start_time_ > props->last_op_time;
       },
       &props);

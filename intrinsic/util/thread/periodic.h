@@ -3,15 +3,13 @@
 #ifndef INTRINSIC_UTIL_THREAD_PERIODIC_H_
 #define INTRINSIC_UTIL_THREAD_PERIODIC_H_
 
-#include <atomic>
-#include <memory>
+#include <optional>
 #include <utility>
 
 #include "absl/base/thread_annotations.h"
 #include "absl/functional/any_invocable.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
-#include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
 #include "intrinsic/util/thread/thread.h"
 #include "intrinsic/util/thread/thread_options.h"
@@ -73,7 +71,8 @@ class PeriodicOperation {
  private:
   absl::Mutex mutex_;
 
-  ThreadOptions executor_thread_options_;
+  std::optional<ThreadOptions> executor_thread_options_;
+
   absl::AnyInvocable<void()> operation_;
   absl::Duration period_;
 
@@ -84,7 +83,7 @@ class PeriodicOperation {
 
   absl::Time last_operation_start_time_ ABSL_GUARDED_BY(mutex_) =
       absl::InfinitePast();
-  std::unique_ptr<Thread> operation_executor_;
+  Thread operation_executor_;
 };
 
 }  // namespace intrinsic
