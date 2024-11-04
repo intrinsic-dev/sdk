@@ -1,7 +1,6 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
-load("//bazel:go_macros.bzl", "go_test")
 
 package(default_visibility = [
     "//visibility:public",
@@ -76,10 +75,4 @@ py_test(
 cc_test(
     name = "hello_world_cc_test",
     srcs = ["hello_world.cc"],
-)
-
-go_test(
-    name = "helloworld_test",
-    size = "small",
-    srcs = ["helloworld_test.go"],
 )

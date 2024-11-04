@@ -9,9 +9,6 @@ bzl_library(
     name = "build_defs_bzl",
     srcs = ["build_defs.bzl"],
     visibility = ["//visibility:private"],
-    deps = [
-        "//intrinsic/testing/dockerized_test_executor:delegated_test",
-    ],
 )
 
 go_library(
