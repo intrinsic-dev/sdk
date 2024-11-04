@@ -35,7 +35,9 @@ const (
 	fileMode       os.FileMode = 0600
 	writeFileFlags             = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
 
-	tokenExchangeServer = "accounts.intrinsic.ai"
+	// tokenExchangeServer is the address of the token exchange server.
+	// Points to the GRPC gateway.
+	tokenExchangeServer = "flowstate.intrinsic.ai"
 )
 
 // RFC3339Time is type alias to correct (un)marshaling time.Time in RFC3339 format
