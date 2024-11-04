@@ -25,8 +25,6 @@ def python_layers(name, binary, **kwargs):
 
     binary_label = native.package_relative_label(binary)
     binary_path = "/" + binary_label.package + "/" + binary_label.name
-    if kwargs.get("cmd") == None:
-        kwargs["cmd"] = [kwargs.get("directory", "") + binary_path]
 
     layers = []
 
@@ -147,7 +145,13 @@ def python_oci_image(
       **kwargs: extra arguments to pass on to the oci_image target.
     """
 
-    layers = python_layers(name, binary, **kwargs)
+    layer_kwargs = {key: value for key, value in kwargs.items() if key in ["compatible_with", "data_path", "directory", "testonly", "visibility"]}
+    layers = python_layers(name, binary, **layer_kwargs)
+
+    binary_label = native.package_relative_label(binary)
+    binary_path = "/" + binary_label.package + "/" + binary_label.name
+    if kwargs.get("cmd") == None:
+        kwargs["cmd"] = [kwargs.get("directory", "") + binary_path]
 
     if extra_tars:
         layers.extend(extra_tars)
