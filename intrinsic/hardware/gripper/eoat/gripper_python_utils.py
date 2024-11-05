@@ -32,7 +32,7 @@ class Gripper(metaclass=abc.ABCMeta):
 
     Returns:
       Whether clear faults was successful.
-    """
+    """  # pytype: disable=bad-return-type
 
   @abc.abstractmethod
   def grasp(self) -> None:
