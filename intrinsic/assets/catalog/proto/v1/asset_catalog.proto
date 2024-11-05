@@ -1,0 +1,152 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.catalog.v1;
+
+import "intrinsic/assets/proto/asset_tag.proto";
+import "intrinsic/assets/proto/asset_type.proto";
+import "intrinsic/assets/proto/id.proto";
+import "intrinsic/assets/proto/metadata.proto";
+import "intrinsic/assets/proto/view.proto";
+import "intrinsic/assets/services/proto/service_manifest.proto";
+import "intrinsic/skills/proto/processed_skill_manifest.proto";
+
+// Provides access to assets in the asset catalog.
+service AssetCatalog {
+  // Gets (a view of) the specified asset.
+  rpc GetAsset(GetAssetRequest) returns (Asset);
+
+  // Lists (views of) assets that satisfy the specified constraints.
+  rpc ListAssets(ListAssetsRequest) returns (ListAssetsResponse);
+
+  // Adds a new version of an asset to the catalog.
+  rpc CreateAsset(CreateAssetRequest) returns (Asset);
+
+  // Clears the default version of the specified asset.
+  rpc ClearDefault(ClearDefaultRequest) returns (ClearDefaultResponse);
+}
+
+// A specific version of an asset in the catalog.
+message Asset {
+  message ServiceMetadata {
+    // The list of gRPC service names that the service exposes.
+    repeated string service_proto_prefixes = 1;
+  }
+  message ServiceDeploymentData {
+    // The service manifest.
+    intrinsic_proto.services.ProcessedServiceManifest manifest = 1;
+  }
+  message SkillDeploymentData {
+    // The skill manifest
+    intrinsic_proto.skills.ProcessedSkillManifest manifest = 1;
+  }
+  message AssetDeploymentData {
+    oneof asset_specific_deployment_data {
+      ServiceDeploymentData service_specific_deployment_data = 1;
+      SkillDeploymentData skill_specific_deployment_data = 2;
+    }
+  }
+
+  // General metadata that apply to all assets.
+  intrinsic_proto.assets.Metadata metadata = 1;
+
+  oneof asset_specific_metadata {
+    ServiceMetadata service_specific_metadata = 2;
+  }
+
+  // Asset deployment data.
+  AssetDeploymentData deployment_data = 3;
+}
+
+message GetAssetRequest {
+  oneof asset_id {
+    // The asset ID. Uses the default version of the asset.
+    intrinsic_proto.assets.Id id = 1;
+
+    // The asset ID and version.
+    intrinsic_proto.assets.IdVersion id_version = 2;
+  }
+
+  // The asset's type.
+  intrinsic_proto.assets.AssetType asset_type = 3;
+
+  // The type of view to return. Defaults to ASSET_VIEW_TYPE_BASIC.
+  AssetViewType view = 4;
+}
+
+message ListAssetsRequest {
+  // Used to filter returned assets.
+  message AssetFilter {
+    // Filter assets by type (OR).
+    repeated intrinsic_proto.assets.AssetType asset_types = 1;
+
+    // Filter assets by exact ID.
+    optional string id = 2;
+
+    // Filter assets by display name (case-insensitive substring search).
+    optional string display_name = 3;
+
+    // Filter assets by asset tag.
+    intrinsic_proto.assets.AssetTag asset_tag = 4;
+
+    // Only return default versions of assets.
+    optional bool only_default = 5;
+  }
+
+  // Maximum number of assets to return (fewer may be returned).
+  //
+  // If unspecified (or set to 0), defaults to 20.
+  //
+  // The maximum value is 200; Larger values will be coerced to the maximum.
+  int64 page_size = 1;
+
+  // A page token received from a previous `ListAssets` call. Provide this token
+  // to retrieve the next page of results.
+  //
+  // When paginating, all other parameters provided to `ListAssets` must match
+  // the call that provided the page token.
+  //
+  // If unspecified, up to the first `page_size` matching assets will be
+  // returned.
+  string page_token = 2;
+
+  // The type of view to return. Defaults to ASSET_VIEW_TYPE_BASIC.
+  AssetViewType view = 3;
+
+  // Optional filter to apply to the query to retrieve a filtered list of
+  // assets.
+  optional AssetFilter strict_filter = 4;
+}
+
+message ListAssetsResponse {
+  // The assets that satisfied the request.
+  repeated Asset assets = 1;
+
+  // A token that can be sent as `ListAssetsRequest.page_token` to retrieve the
+  // next page of results.
+  //
+  // If this field is empty, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+message CreateAssetRequest {
+  // The asset to create.
+  Asset asset = 1;
+
+  // True if this version of the asset should be hidden from users who aren't a
+  // member of the organization that owns the asset.
+  //
+  // Cannot be true if the asset is the default version.
+  optional bool org_private = 2;
+}
+
+message ClearDefaultRequest {
+  // The asset ID.
+  intrinsic_proto.assets.Id id = 1;
+
+  // The asset's type.
+  intrinsic_proto.assets.AssetType asset_type = 3;
+}
+
+message ClearDefaultResponse {}

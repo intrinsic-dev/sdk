@@ -1,0 +1,7 @@
+# Copyright 2023 Intrinsic Innovation LLC
+
+# proto-file: google/protobuf/any.proto
+# proto-message: Any
+[type.googleapis.com/intrinsic_proto.services.CalculatorConfig] {
+reverse_order: false
+}

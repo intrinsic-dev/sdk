@@ -1,0 +1,31 @@
+# Copyright 2023 Intrinsic Innovation LLC
+
+# proto-file: intrinsic/assets/services/proto/service_manifest.proto
+# proto-message: intrinsic_proto.services.ServiceManifest
+
+metadata {
+  id {
+    package: "ai.intrinsic"
+    name: "calculator_service"
+  }
+  vendor {
+    display_name: "Intrinsic"
+  }
+  documentation {
+    description: "A simple 4-function calculator service."
+  }
+  display_name: "Calculator"
+}
+service_def {
+  service_proto_prefixes: "/intrinsic_proto.services.Calculator/"
+  real_spec {
+    image {
+      archive_filename: "calculator-image.tar"
+    }
+  }
+  sim_spec {
+    image {
+      archive_filename: "calculator-image.tar"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.services;
+
+enum CalculatorOperation {
+  CALCULATOR_OPERATION_UNSPECIFIED = 0;
+  CALCULATOR_OPERATION_ADD = 1;
+  CALCULATOR_OPERATION_MULTIPLY = 2;
+  CALCULATOR_OPERATION_SUBTRACT = 3;
+  CALCULATOR_OPERATION_DIVIDE = 4;
+}
+
+message CalculatorConfig {
+  // True to reverse the order of operands when calculating (i.e., y then x
+  // rather than x then y).
+  bool reverse_order = 1;
+}
+
+message CalculatorRequest {
+  CalculatorOperation operation = 1;
+  int64 x = 2;
+  int64 y = 3;
+}
+
+message CalculatorResponse {
+  int64 result = 1;
+}
+
+// This demonstrates how to use a custom service.
+service Calculator {
+  // Calculate performs basic calculator operations on two input numbers.
+  rpc Calculate(CalculatorRequest) returns (CalculatorResponse) {}
+}
