@@ -157,7 +157,8 @@ message GetLogOptionsResponse {
 }
 
 message SyncRequest {
-  // The event_sources to sync and rotate LogItems for.
+  // The event_sources to sync and rotate LogItems for, as regex patterns.
+  // Used only if `sync_all` is false.
   repeated string event_sources = 1;
 
   // If true, requests to sync and rotate logs of all event sources
