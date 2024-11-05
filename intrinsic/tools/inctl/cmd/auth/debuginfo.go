@@ -5,12 +5,18 @@ package auth
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
+	"net/http"
+	"strings"
 
 	"github.com/spf13/cobra"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
+	"intrinsic/tools/inctl/auth"
 	"intrinsic/tools/inctl/util/orgutil"
 
 	accdiscoverv1grpcpb "intrinsic/kubernetes/accounts/service/api/discoveryv1api_go_grpc_proto"
@@ -76,6 +82,7 @@ func debugAuthStore(ctx context.Context, org string) {
 	fmt.Println("OK")
 	fmt.Printf("API Key Length: %d\n", len(cred.APIKey))
 	debugAccountsDiscovery(ctx, cred.APIKey, "accounts.intrinsic.ai")
+	debugUserRecord(ctx, "flowstate.intrinsic.ai", cred.APIKey)
 }
 
 func debugDomain(ctx context.Context, domain string) {
@@ -120,6 +127,52 @@ func debugDNS(ctx context.Context, domain string) {
 	}
 	fmt.Println("OK")
 	fmt.Printf("DNS (%q): Addresses: %v\n", domain, addrs)
+}
+
+func debugUserRecord(ctx context.Context, addr string, apiKey string) {
+	fmt.Printf("Token Exchange (%q): ", addr)
+	cl, err := auth.NewTokensServiceClient(&http.Client{}, addr)
+	if err != nil {
+		fmt.Printf("ERROR (%v)\n", err)
+		return
+	}
+	fmt.Println("OK")
+	fmt.Printf(" Exchanging Token: ")
+	resp, err := cl.Token(ctx, apiKey)
+	if err != nil {
+		fmt.Printf("ERROR (%v)\n", err)
+		return
+	}
+	fmt.Println("OK")
+	fmt.Printf(" Decoding token: ")
+	pl, err := decodePayload(resp)
+	if err != nil {
+		fmt.Printf("ERROR (%v)\n", err)
+		return
+	}
+	dat := map[string]any{}
+	err = json.Unmarshal(pl, &dat)
+	if err != nil {
+		fmt.Printf("ERROR (%v)\n", err)
+		return
+	}
+	fmt.Println("OK")
+	fmt.Printf(" JWT: \n")
+	for k, v := range dat {
+		fmt.Printf("  %s: %+v\n", k, v)
+	}
+}
+
+func decodePayload(jwtk string) ([]byte, error) {
+	parts := strings.Split(jwtk, ".")
+	if len(parts) != 3 {
+		return nil, errors.New("invalid JWT, token must have 3 parts")
+	}
+	d, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode JWT payload section: %v", err)
+	}
+	return d, nil
 }
 
 func debugAccountsDiscovery(ctx context.Context, apiKey, domain string) {
