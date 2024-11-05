@@ -364,8 +364,8 @@ var runCmd = &cobra.Command{
 // clusterUpgradeCmd is the base command to query the upgrade state
 var clusterUpgradeCmd = &cobra.Command{
 	Use:   "upgrade",
-	Short: "Upgrade",
-	Long:  "Upgrade Intrinsic software on target cluster.",
+	Short: "Upgrade Intrinsic software on target cluster",
+	Long:  "Upgrade Intrinsic software (OS and intrinsic-base) on target cluster.",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		ctx := cmd.Context()
