@@ -3,12 +3,18 @@
 #ifndef INTRINSIC_UTIL_STATUS_STATUS_MACROS_H_
 #define INTRINSIC_UTIL_STATUS_STATUS_MACROS_H_
 
+#include <type_traits>  // IWYU pragma: export
 #include <utility>
 
 #include "absl/base/optimization.h"
 #include "intrinsic/icon/release/source_location.h"
 #include "intrinsic/util/status/status_builder.h"  // IWYU pragma: export
 #include "intrinsic/util/status/status_macros.h"
+
+namespace grpc {
+// Forward declare to enable checking if gRPC status macros should be used.
+class Status;
+}  // namespace grpc
 
 // Evaluates an expression that produces a `absl::Status`. If the status is not
 // ok, returns it from the current function.
@@ -41,12 +47,17 @@
 //     INTR_RETURN_IF_ERROR(foo.Method(args...));
 //     return absl::OkStatus();
 //   }
-#define INTR_RETURN_IF_ERROR(expr)                                    \
-  INTR_STATUS_MACROS_IMPL_ELSE_BLOCKER_                               \
-  if (auto status_macro_internal_adaptor =                            \
-          ::intrinsic::status_macro_internal::StatusAdaptorForMacros( \
-              (expr), INTRINSIC_LOC)) {                               \
-  } else /* NOLINT */                                                 \
+#define INTR_RETURN_IF_ERROR(expr)                                         \
+  INTR_STATUS_MACROS_IMPL_ELSE_BLOCKER_                                    \
+  if (auto status_macro_internal_adaptor =                                 \
+          ::intrinsic::status_macro_internal::StatusAdaptorForMacros(      \
+              (expr), INTRINSIC_LOC)) {                                    \
+    static_assert(                                                         \
+        !std::is_same<typename std::remove_cvref<decltype(expr)>::type,    \
+                      ::grpc::Status>::value,                              \
+        "Use ToAbslStatus if you want to return absl::Status, or "         \
+        "INTR_RETURN_IF_ERROR_GRPC if you want to return a grpc::Status"); \
+  } else /* NOLINT */                                                      \
     return status_macro_internal_adaptor.Consume()
 
 // Executes an expression `rexpr` that returns a `StatusOr<T>`. On OK, moves its
@@ -139,6 +150,12 @@
 #define INTR_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(statusor, lhs, rexpr,        \
                                                   error_expression)            \
   auto statusor = (rexpr);                                                     \
+  static_assert(                                                               \
+      !std::is_same<                                                           \
+          typename std::remove_cvref<decltype(statusor.status())>::type,       \
+          ::grpc::Status>::value,                                              \
+      "Use ToAbslStatus if you want to return absl::Status, or "               \
+      "INTR_ASSIGN_OR_RETURN_GRPC if you want to return a grpc::Status");      \
   if (ABSL_PREDICT_FALSE(!statusor.ok())) {                                    \
     ::intrinsic::StatusBuilder _(std::move(statusor).status(), INTRINSIC_LOC); \
     (void)_; /* error_expression is allowed to not use this variable */        \
