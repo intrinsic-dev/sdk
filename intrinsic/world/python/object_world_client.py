@@ -1247,6 +1247,65 @@ class ObjectWorldClient:
   ) -> object_world_service_pb2.Object:
     return self._stub.CreateObject(request)
 
+  def create_object(
+      self,
+      *,
+      object_name: object_world_ids.WorldObjectName,
+      geometry_spec: Union[
+          scene_object_pb2.SceneObject,
+          geometry_component_pb2.GeometryComponent,
+      ],
+      parent: Optional[object_world_resources.WorldObject] = None,
+      parent_object_t_created_object: data_types.Pose3 = data_types.Pose3(),
+      user_data: Mapping[str, any_pb2.Any] | None = None,
+  ) -> None:
+    """Adds a new object to the world.
+
+    Arguments:
+      object_name: The name of the newly created object.
+      geometry_spec: The geometry information for the new object. Can be either
+        a SceneObject or a GeometryComponent.
+      parent: The parent object the new product object will be attached to.
+      parent_object_t_created_object: The transform between the parent object
+        and the new product object.
+      user_data: Arbitrary data to be attached to the object.
+
+    Raises:
+      CreateObjectError: If the call to the ObjectWorldService fails.
+      TypeError: If the geometry_spec is neither a SceneObject nor a
+        GeometryComponent.
+    """
+
+    # First construct the common parts of the request.
+    req = object_world_updates_pb2.CreateObjectRequest(
+        world_id=self._world_id,
+        name=object_name,
+        name_is_global_alias=True,
+        parent_object_t_created_object=math_proto_conversion.pose_to_proto(
+            parent_object_t_created_object
+        ),
+        user_data=user_data,
+    )
+
+    if parent is not None:
+      req.parent_object.reference.CopyFrom(parent.reference)
+    else:
+      req.parent_object.reference.id = object_world_ids.ROOT_OBJECT_ID
+    req.parent_object.entity_filter.CopyFrom(INCLUDE_FINAL_ENTITY)
+
+    # Handle different geometry types
+    if isinstance(geometry_spec, scene_object_pb2.SceneObject):
+      req.create_from_scene_object.scene_object.CopyFrom(geometry_spec)
+    elif isinstance(geometry_spec, geometry_component_pb2.GeometryComponent):
+      req.create_single_entity_object.geometry_component.CopyFrom(geometry_spec)
+    else:
+      raise TypeError(f'Unsupported geometry type: {type(geometry_spec)}')
+
+    try:
+      self._call_create_object(request=req)
+    except grpc.RpcError as err:
+      raise CreateObjectError(f'Create object failed: {err}') from err
+
   def create_object_from_product(
       self,
       *,
@@ -1276,34 +1335,16 @@ class ObjectWorldClient:
     metadata_any.Pack(product_metadata or struct_pb2.Struct())
     product_name_any = any_pb2.Any()
     product_name_any.Pack(wrappers_pb2.StringValue(value=product_name))
-    req = object_world_updates_pb2.CreateObjectRequest(
-        world_id=self._world_id,
-        name=object_name,
-        name_is_global_alias=True,
-        parent_object_t_created_object=math_proto_conversion.pose_to_proto(
-            parent_object_t_created_object
-        ),
-        create_from_scene_object=object_world_updates_pb2.ObjectSpecFromSceneObject(
-            scene_object=scene_object,
-        ),
+    self.create_object(
+        object_name=object_name,
+        parent=parent,
+        parent_object_t_created_object=parent_object_t_created_object,
+        geometry_spec=scene_object,
         user_data={
             PRODUCT_NAME_KEY: product_name_any,
             PRODUCT_METADATA_KEY: metadata_any,
         },
     )
-
-    if parent is not None:
-      req.parent_object.reference.CopyFrom(parent.reference)
-    else:
-      req.parent_object.reference.id = object_world_ids.ROOT_OBJECT_ID
-    req.parent_object.entity_filter.CopyFrom(INCLUDE_FINAL_ENTITY)
-
-    try:
-      self._call_create_object(request=req)
-    except grpc.RpcError as err:
-      raise CreateObjectError(
-          f"Create object from product '{product_name}' failed: {err}"
-      ) from err
 
   def register_geometry(
       self,
@@ -1350,27 +1391,17 @@ class ObjectWorldClient:
       parent_object_t_created_object: The transform between the parent object
         and the new object.
       user_data: Arbitrary data to be attached to the object.
+
+    Raises:
+      CreateObjectError: If the call to the ObjectWorldService fails.
     """
-    req = object_world_updates_pb2.CreateObjectRequest(
-        world_id=self._world_id,
-        name=object_name,
-        name_is_global_alias=True,
-        parent_object_t_created_object=math_proto_conversion.pose_to_proto(
-            parent_object_t_created_object
-        ),
-        create_single_entity_object=object_world_updates_pb2.ObjectSpecForSingleEntityObject(
-            geometry_component=geometry_component
-        ),
+    self.create_object(
+        object_name=object_name,
+        parent=parent,
+        parent_object_t_created_object=parent_object_t_created_object,
+        geometry_spec=geometry_component,
         user_data=user_data,
     )
-
-    if parent is not None:
-      req.parent_object.reference.CopyFrom(parent.reference)
-    else:
-      req.parent_object.reference.id = object_world_ids.ROOT_OBJECT_ID
-    req.parent_object.entity_filter.CopyFrom(INCLUDE_FINAL_ENTITY)
-
-    self._call_create_object(request=req)
 
   @error_handling.retry_on_grpc_unavailable
   def batch_update(
