@@ -12,6 +12,7 @@ message GeometryOptions {
   // If set, the octree will be filled on the inside when constructing the
   // octree for distance queries.
   optional bool fill_inside_for_distance_queries = 1;
+
 }
 
 // Component indicating the owning Entity has geometry (e.g. collision, visual,
