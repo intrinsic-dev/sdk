@@ -9,7 +9,9 @@ import "intrinsic/icon/proto/joint_space.proto";
 import "intrinsic/manipulation/grasping/grasp.proto";
 import "intrinsic/manipulation/grasping/grasp_execution_planner_params.proto";
 import "intrinsic/manipulation/grasping/grasp_planner_params.proto";
+import "intrinsic/manipulation/grasping/grasp_ranker_params.proto";
 import "intrinsic/manipulation/proto/workspace.proto";
+import "intrinsic/world/proto/object_world_refs.proto";
 
 // Parameters to plan grasps by the GraspPlannerService
 message GPSPlanGraspsParams {
@@ -116,6 +118,30 @@ message GraspPlannerServiceConfig {
   int64 max_cache_size_per_group = 3;
 }
 
+message RankGraspsRequest {
+  // The grasps to rank and filter.
+  repeated intrinsic_proto.grasping.Grasp grasps = 1;
+  // The robot name to use for ranking.
+  string robot_name = 2;
+  // The tool frame to use for ranking.
+  intrinsic_proto.world.TransformNodeReference tool_frame = 3;
+  // Parameters for grasp rankers.
+  intrinsic_proto.grasping.GraspRankersParams rankers_params = 4;
+  // Recently attempted grasps. Includes both succeeded and failed ones.
+  repeated intrinsic_proto.grasping.AttemptedGrasp recent_grasps = 5;
+  // The world used to rank grasps.
+  string world_id = 6;
+  // Grasps with a score lower than this are filtered
+  float score_threshold = 7;
+  optional int32 max_num_grasps = 8;
+  // Returns if at least one valid grasp is found among the input grasps and the
+  // timeout has reached. Note that this is not a hard time constraint - for
+  // example, if the timeout is reached but no grasps are found, the ranker
+  // continues until either one valid grasp is found or all candidate grasps are
+  // determined invalid. Defaults to inf if not specified.
+  optional float grasp_ranking_soft_timeout_in_sec = 9;
+}
+
 service GraspPlannerService {
   // Construct and register a grasp planner
   rpc RegisterGraspPlanner(RegisterGraspPlannerRequest)
@@ -125,6 +151,9 @@ service GraspPlannerService {
       returns (google.protobuf.Empty) {}
   // Plan grasps
   rpc PlanGrasps(PlanGraspsRequest)
+      returns (intrinsic_proto.grasping.GraspPlan) {}
+  // Rank grasps
+  rpc RankGrasps(RankGraspsRequest)
       returns (intrinsic_proto.grasping.GraspPlan) {}
   // Notify grasp results
   rpc NotifyGraspResults(NotifyGraspResultsRequest)
