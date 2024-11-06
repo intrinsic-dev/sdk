@@ -38,7 +38,10 @@ cc_library(
 cc_library(
     name = "thread",
     srcs = ["thread.cc"],
-    hdrs = ["thread.h"],
+    hdrs = [
+        "rt_thread.h",
+        "thread.h",
+    ],
     deps = [
         ":stop_token",
         ":thread_options",

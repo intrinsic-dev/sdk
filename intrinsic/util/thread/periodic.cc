@@ -12,6 +12,7 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "intrinsic/util/status/status_macros.h"
+#include "intrinsic/util/thread/rt_thread.h"
 #include "intrinsic/util/thread/thread.h"
 #include "intrinsic/util/thread/thread_options.h"
 
@@ -47,8 +48,8 @@ absl::Status PeriodicOperation::Start() {
   if (executor_thread_options_.has_value()) {
     INTR_ASSIGN_OR_RETURN(
         operation_executor_,
-        Thread::Create(*executor_thread_options_,
-                       &PeriodicOperation::ExecutorLoop, this));
+        CreateRealtimeThread(*executor_thread_options_,
+                             &PeriodicOperation::ExecutorLoop, this));
   } else {
     operation_executor_ = Thread(&PeriodicOperation::ExecutorLoop, this);
   }

@@ -48,6 +48,12 @@ class Thread {
     SaveStopToken();
   }
 
+  explicit Thread(std::thread&& thread) noexcept
+      : stop_source_{StopSource{}}, thread_impl_(std::move(thread)) {
+    INTRINSIC_ASSERT_NON_REALTIME();
+    SaveStopToken();
+  }
+
   // Movable.
   Thread(Thread&&);
   Thread& operator=(Thread&& other);
@@ -60,20 +66,6 @@ class Thread {
   // Not copyable
   Thread(const Thread&) = delete;
   Thread& operator=(const Thread&) = delete;
-
-  // Creates a new thread of execution with the specified `options`. The
-  // function `f` is run in the created thread of execution with the arguments
-  // `args...`. The function 'f' and the provided `args...` must be bind-able to
-  // an absl::AnyInvocable<void()>.
-  template <typename Function, typename... Args>
-  static absl::StatusOr<Thread> Create(const ThreadOptions& options,
-                                       Function&& f, Args&&... args) {
-    INTRINSIC_ASSERT_NON_REALTIME();
-    INTR_ASSIGN_OR_RETURN(std::thread thread,
-                          CreateThread(options, std::forward<Function>(f),
-                                       std::forward<Args>(args)...));
-    return Thread{std::move(thread)};
-  }
 
   // Starts a thread of execution with the specified `options`. The function `f`
   // is run in the created thread of execution with the arguments `args...`. The
@@ -110,11 +102,6 @@ class Thread {
   Id GetId() const noexcept;
 
  private:
-  explicit Thread(std::thread&& thread) noexcept
-      : stop_source_{StopSource{}}, thread_impl_(std::move(thread)) {
-    SaveStopToken();
-  }
-
   template <typename Function, typename... Args>
   static std::thread InitThread(const StopSource& ss, Function&& f,
                                 Args&&... args) {
@@ -145,16 +132,17 @@ class Thread {
 };
 
 template <typename Function, typename... Args>
-ABSL_DEPRECATED("Use Thread::Create() instead.")
+ABSL_DEPRECATED("Use CreateRealtimeThread() instead.")
 absl::Status Thread::Start(const ThreadOptions& options, Function&& f,
                            Args&&... args) {
   INTRINSIC_ASSERT_NON_REALTIME();
   if (thread_impl_.joinable()) {
     return absl::FailedPreconditionError("Thread can only be Start()ed once.");
   }
-  INTR_ASSIGN_OR_RETURN(*this,
-                        Thread::Create(options, std::forward<Function>(f),
-                                       std::forward<Args>(args)...));
+  INTR_ASSIGN_OR_RETURN(std::thread thread,
+                        CreateThread(options, std::forward<Function>(f),
+                                     std::forward<Args>(args)...));
+  *this = Thread(std::move(thread));
   return absl::OkStatus();
 }
 
