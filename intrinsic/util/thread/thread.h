@@ -132,7 +132,7 @@ class Thread {
 };
 
 template <typename Function, typename... Args>
-ABSL_DEPRECATED("Use CreateRealtimeThread() instead.")
+ABSL_DEPRECATED("Use CreateRealtimeCapableThread() instead.")
 absl::Status Thread::Start(const ThreadOptions& options, Function&& f,
                            Args&&... args) {
   INTRINSIC_ASSERT_NON_REALTIME();

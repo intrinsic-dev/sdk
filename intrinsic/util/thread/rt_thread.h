@@ -15,9 +15,17 @@
 
 namespace intrinsic {
 
+// Creates a thread that is capable of running realtime code.
+//
+// The underlying thread is only truly an RT thread if the ThreadOptions
+// specify it. For additional details on the threads which are created by this
+// function, please see the ThreadOptions documentation.
+// Note: When default constructed ThreadOptions are used consider to just use a
+// plain intrinsic::Thread.
 template <typename Function, typename... Args>
-absl::StatusOr<Thread> CreateRealtimeThread(const ThreadOptions& options,
-                                            Function&& f, Args&&... args) {
+absl::StatusOr<Thread> CreateRealtimeCapableThread(const ThreadOptions& options,
+                                                   Function&& f,
+                                                   Args&&... args) {
   INTRINSIC_ASSERT_NON_REALTIME();
   INTR_ASSIGN_OR_RETURN(std::thread thread,
                         CreateThread(options, std::forward<Function>(f),

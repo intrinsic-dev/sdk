@@ -48,8 +48,8 @@ absl::Status PeriodicOperation::Start() {
   if (executor_thread_options_.has_value()) {
     INTR_ASSIGN_OR_RETURN(
         operation_executor_,
-        CreateRealtimeThread(*executor_thread_options_,
-                             &PeriodicOperation::ExecutorLoop, this));
+        CreateRealtimeCapableThread(*executor_thread_options_,
+                                    &PeriodicOperation::ExecutorLoop, this));
   } else {
     operation_executor_ = Thread(&PeriodicOperation::ExecutorLoop, this);
   }
