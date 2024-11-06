@@ -16,6 +16,8 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 	btpb "intrinsic/executive/proto/behavior_tree_go_proto"
 	execgrpcpb "intrinsic/executive/proto/executive_service_go_grpc_proto"
+	sgrpcpb "intrinsic/frontend/solution_service/proto/solution_service_go_grpc_proto"
+	spb "intrinsic/frontend/solution_service/proto/solution_service_go_grpc_proto"
 	skillregistrygrpcpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
 	"intrinsic/tools/inctl/util/orgutil"
 	"intrinsic/util/proto/registryutil"
@@ -88,6 +90,8 @@ func newBinaryDeserializer() *binarySerializer {
 type setProcessParams struct {
 	exC          execgrpcpb.ExecutiveServiceClient
 	srC          skillregistrygrpcpb.SkillRegistryClient
+	soC          sgrpcpb.SolutionServiceClient
+	name         string
 	format       string
 	content      []byte
 	clearTreeID  bool
@@ -120,8 +124,17 @@ func setProcess(ctx context.Context, params *setProcessParams) error {
 
 	clearTree(bt, params.clearTreeID, params.clearNodeIDs)
 
-	if err := setBT(ctx, params.exC, bt); err != nil {
-		return errors.Wrapf(err, "could not set behavior tree")
+	if params.name == "" {
+		if err := setBT(ctx, params.exC, bt); err != nil {
+			return errors.Wrapf(err, "could not set active behavior tree")
+		}
+	} else {
+		if _, err := params.soC.CreateBehaviorTree(ctx, &spb.CreateBehaviorTreeRequest{
+			BehaviorTreeId: params.name,
+			BehaviorTree:   bt,
+		}); err != nil {
+			return errors.Wrapf(err, "could not create behavior tree in the solution")
+		}
 	}
 
 	return nil
@@ -130,12 +143,28 @@ func setProcess(ctx context.Context, params *setProcessParams) error {
 var processSetCmd = &cobra.Command{
 	Use:   "set",
 	Short: "Set process (behavior tree) of a solution. ",
-	Long: `Set the active process (behavior tree) of a currently deployed solution.
+	Long: `Set the process (behavior tree) of a currently deployed solution.
 
-Example:
+There are two main operation modes. The first one is to set the "active" process
+in the executive. This prepares the process for execution. This is the default
+behavior if no name is provided as the first argument.
+
 inctl process set --solution my-solution --cluster my-cluster --input_file /tmp/my-process.textproto [--process_format textproto|binaryproto]
-`,
-	Args: cobra.ExactArgs(0),
+
+---
+
+Alternatively, the process can be added to the solution. The command will do
+this if you specify a name for the process as the first argument. This makes the
+process available in the list of processes in the Flowstate frontend. The
+process will NOT be loaded into the executive. It can instead be executed by
+selecting it in the frontend and running from there.
+
+Note: The name you provide as an argument will be set as the "name" field in the
+process regardless of the value that may or may not already be present. If there
+is already a process with the same name this will fail.
+
+inctl process set name_to_store_with --solution my-solution --cluster my-cluster --input_file /tmp/my-process.textproto [--process_format textproto|binaryproto]`,
+	Args: cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if flagInputFile == "" {
 			return fmt.Errorf("--input_file must be specified")
@@ -159,7 +188,9 @@ inctl process set --solution my-solution --cluster my-cluster --input_file /tmp/
 		if err = setProcess(ctx, &setProcessParams{
 			exC:          execgrpcpb.NewExecutiveServiceClient(conn),
 			srC:          skillregistrygrpcpb.NewSkillRegistryClient(conn),
+			soC:          sgrpcpb.NewSolutionServiceClient(conn),
 			content:      content,
+			name:         args[0],
 			format:       flagProcessFormat,
 			clearTreeID:  flagClearTreeID,
 			clearNodeIDs: flagClearNodeIDs,
@@ -167,7 +198,11 @@ inctl process set --solution my-solution --cluster my-cluster --input_file /tmp/
 			return errors.Wrapf(err, "could not set BT")
 		}
 
-		fmt.Println("BT loaded successfully to the executive. To edit behavior tree in the frontend, click on Process -> Load -> From executive.")
+		if args[0] == "" {
+			fmt.Println("BT loaded successfully to the executive. To edit behavior tree in the frontend: Process -> Load -> From executive")
+		} else {
+			fmt.Println("BT added to the solution. To edit and execute the process in the frontend: Process -> Load -> <process name>")
+		}
 
 		return nil
 	},
