@@ -38,6 +38,7 @@
 #include "intrinsic/math/gaussian_noise.h"
 #include "intrinsic/util/proto_time.h"
 #include "intrinsic/util/status/status_macros.h"
+#include "intrinsic/util/thread/rt_thread.h"
 #include "intrinsic/util/thread/thread.h"
 #include "intrinsic/util/thread/thread_options.h"
 #include "intrinsic/world/robot_payload/robot_payload_base.h"
@@ -162,11 +163,12 @@ absl::Status LoopbackHardwareModule::Init(
     thread_options.SetName("LoopbackHardwareModuleThread");
 
     absl::Notification runtime_loop_running;
-    INTR_RETURN_IF_ERROR(runtime_loop_thread_.Start(
-        thread_options, [this, &runtime_loop_running]() {
-          runtime_loop_running.Notify();
-          RuntimeLoop();
-        }));
+    INTR_ASSIGN_OR_RETURN(runtime_loop_thread_,
+                          CreateRealtimeCapableThread(
+                              thread_options, [this, &runtime_loop_running]() {
+                                runtime_loop_running.Notify();
+                                RuntimeLoop();
+                              }));
     // Wait until the thread is running.
     if (!runtime_loop_running.WaitForNotificationWithTimeout(
             absl::Seconds(1))) {
