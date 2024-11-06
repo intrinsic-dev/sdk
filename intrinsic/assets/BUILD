@@ -185,3 +185,14 @@ go_library(
         "@org_golang_google_protobuf//proto",
     ],
 )
+
+go_library(
+    name = "listutils",
+    srcs = ["listutils.go"],
+    visibility = ["//intrinsic:internal_api_users"],
+    deps = [
+        "//intrinsic/assets/catalog/proto/v1:asset_catalog_go_grpc_proto",
+        "//intrinsic/assets/proto:view_go_proto",
+        "@org_golang_google_grpc//:go_default_library",
+    ],
+)

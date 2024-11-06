@@ -9,6 +9,9 @@ import (
 	deletecmd "intrinsic/assets/services/inctl/delete"
 	"intrinsic/assets/services/inctl/install"
 	"intrinsic/assets/services/inctl/list"
+	"intrinsic/assets/services/inctl/listreleased"
+	"intrinsic/assets/services/inctl/listreleasedversions"
+	"intrinsic/assets/services/inctl/release"
 	"intrinsic/assets/services/inctl/uninstall"
 	"intrinsic/tools/inctl/cmd/root"
 )
@@ -25,6 +28,9 @@ func init() {
 	serviceCmd.AddCommand(deletecmd.GetCommand())
 	serviceCmd.AddCommand(install.GetCommand())
 	serviceCmd.AddCommand(list.GetCommand())
+	serviceCmd.AddCommand(listreleased.GetCommand())
+	serviceCmd.AddCommand(listreleasedversions.GetCommand())
+	serviceCmd.AddCommand(release.GetCommand())
 	serviceCmd.AddCommand(uninstall.GetCommand())
 
 	root.RootCmd.AddCommand(serviceCmd)
