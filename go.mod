@@ -7,6 +7,7 @@ go 1.22
 require (
 	cloud.google.com/go/bigquery v1.59.1
 	cloud.google.com/go/firestore v1.14.0
+	cloud.google.com/go/logging v1.9.0
 	cloud.google.com/go/longrunning v0.5.5
 	cloud.google.com/go/storage v1.37.0
 	contrib.go.opencensus.io/exporter/ocagent v0.7.0
