@@ -27,6 +27,15 @@ py_proto_library(
     deps = [":axis_aligned_bounding_box_proto"],
 )
 
+go_proto_library(
+    name = "axis_aligned_bounding_box_go_proto",
+    go_deps = [
+        "//intrinsic/math/proto:vector2_go_proto",
+        "//intrinsic/math/proto:vector3_go_proto",
+    ],
+    deps = [":axis_aligned_bounding_box_proto"],
+)
+
 proto_library(
     name = "oriented_bounding_box_proto",
     srcs = ["oriented_bounding_box.proto"],
@@ -66,6 +75,15 @@ py_proto_library(
     deps = [":geometry_proto"],
 )
 
+go_proto_library(
+    name = "geometry_go_proto",
+    go_deps = [
+        ":lazy_exact_geometry_go_proto",
+        ":renderable_go_proto",
+    ],
+    deps = [":geometry_proto"],
+)
+
 proto_library(
     name = "lazy_exact_geometry_proto",
     srcs = ["lazy_exact_geometry.proto"],
@@ -86,6 +104,16 @@ py_proto_library(
     deps = [":lazy_exact_geometry_proto"],
 )
 
+go_proto_library(
+    name = "lazy_exact_geometry_go_proto",
+    go_deps = [
+        ":mesh_octree_wrapping_go_proto",
+        ":primitives_go_proto",
+        ":triangle_mesh_go_proto",
+    ],
+    deps = [":lazy_exact_geometry_proto"],
+)
+
 proto_library(
     name = "mesh_octree_wrapping_proto",
     srcs = ["mesh_octree_wrapping.proto"],
@@ -102,6 +130,14 @@ py_proto_library(
     deps = [":mesh_octree_wrapping_proto"],
 )
 
+go_proto_library(
+    name = "mesh_octree_wrapping_go_proto",
+    go_deps = [
+        ":octree_go_proto",
+    ],
+    deps = [":mesh_octree_wrapping_proto"],
+)
+
 proto_library(
     name = "octree_proto",
     srcs = ["octree.proto"],
@@ -115,6 +151,14 @@ cc_proto_library(
 
 py_proto_library(
     name = "octree_py_pb2",
+    deps = [":octree_proto"],
+)
+
+go_proto_library(
+    name = "octree_go_proto",
+    go_deps = [
+        ":axis_aligned_bounding_box_go_proto",
+    ],
     deps = [":octree_proto"],
 )
 
@@ -157,6 +201,11 @@ py_proto_library(
     deps = [":renderable_proto"],
 )
 
+go_proto_library(
+    name = "renderable_go_proto",
+    deps = [":renderable_proto"],
+)
+
 proto_library(
     name = "triangle_mesh_proto",
     srcs = ["triangle_mesh.proto"],
@@ -169,5 +218,10 @@ cc_proto_library(
 
 py_proto_library(
     name = "triangle_mesh_py_pb2",
+    deps = [":triangle_mesh_proto"],
+)
+
+go_proto_library(
+    name = "triangle_mesh_go_proto",
     deps = [":triangle_mesh_proto"],
 )
