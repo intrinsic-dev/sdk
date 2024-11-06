@@ -10,12 +10,15 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoregistry"
 	btpb "intrinsic/executive/proto/behavior_tree_go_proto"
+	execgrpcpb "intrinsic/executive/proto/executive_service_go_grpc_proto"
+	sgrpcpb "intrinsic/frontend/solution_service/proto/solution_service_go_grpc_proto"
+	spb "intrinsic/frontend/solution_service/proto/solution_service_go_grpc_proto"
+	skillregistrygrpcpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
 	"intrinsic/solutions/tools/pythonserializer"
 	"intrinsic/tools/inctl/util/orgutil"
 	"intrinsic/util/proto/registryutil"
@@ -119,8 +122,8 @@ func (t *textSerializer) Serialize(bt *btpb.BehaviorTree) ([]byte, error) {
 	return []byte(s), nil
 }
 
-func newTextSerializer(ctx context.Context, conn *grpc.ClientConn) (*textSerializer, error) {
-	skills, err := getSkills(ctx, conn)
+func newTextSerializer(ctx context.Context, srC skillregistrygrpcpb.SkillRegistryClient) (*textSerializer, error) {
+	skills, err := getSkills(ctx, srC)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not list skills")
 	}
@@ -160,19 +163,19 @@ func newBinarySerializer() *binarySerializer {
 	return &binarySerializer{}
 }
 
-func serializeBT(ctx context.Context, conn *grpc.ClientConn, bt *btpb.BehaviorTree, format string) ([]byte, error) {
+func serializeBT(ctx context.Context, srC skillregistrygrpcpb.SkillRegistryClient, bt *btpb.BehaviorTree, format string) ([]byte, error) {
 	var s serializer
 	var err error
 	switch format {
 	case TextProtoFormat:
-		s, err = newTextSerializer(ctx, conn)
+		s, err = newTextSerializer(ctx, srC)
 		if err != nil {
 			return nil, errors.Wrapf(err, "could not create textproto serializer")
 		}
 	case BinaryProtoFormat:
 		s = newBinarySerializer()
 	case PythonScriptFormat, PythonMinimalFormat, PythonNotebookFormat:
-		sk, err := getSkills(ctx, conn)
+		sk, err := getSkills(ctx, srC)
 		if err != nil {
 			return nil, errors.Wrapf(err, "could not list skills")
 		}
@@ -206,27 +209,58 @@ func serializeBT(ctx context.Context, conn *grpc.ClientConn, bt *btpb.BehaviorTr
 	return data, nil
 }
 
-func getProcess(ctx context.Context, conn *grpc.ClientConn, format string, clearTreeID bool, clearNodeIDs bool) ([]byte, error) {
-	bt, err := getBT(ctx, conn)
-	if err != nil {
-		return nil, errors.Wrapf(err, "could not get behavior tree")
+type getProcessParams struct {
+	exC          execgrpcpb.ExecutiveServiceClient
+	soC          sgrpcpb.SolutionServiceClient
+	srC          skillregistrygrpcpb.SkillRegistryClient
+	name         string
+	format       string
+	clearTreeID  bool
+	clearNodeIDs bool
+}
+
+func getProcess(ctx context.Context, params *getProcessParams) ([]byte, error) {
+	var bt *btpb.BehaviorTree
+	if params.name == "" {
+		activeBT, err := getActiveBT(ctx, params.exC)
+		if err != nil {
+			return nil, errors.Wrap(err, "could not get active behavior tree")
+		}
+		bt = activeBT
+	} else {
+		namedBT, err := params.soC.GetBehaviorTree(ctx, &spb.GetBehaviorTreeRequest{
+			Name: params.name,
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "could not get named behavior tree")
+		}
+		bt = namedBT
 	}
 
-	clearTree(bt, clearTreeID, clearNodeIDs)
+	clearTree(bt, params.clearTreeID, params.clearNodeIDs)
 
-	return serializeBT(ctx, conn, bt, format)
+	return serializeBT(ctx, params.srC, bt, params.format)
 }
 
 var processGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get process (behavior tree) of a solution. ",
-	Long: `Get the active process (behavior tree) of a currently deployed solution.
+	Long: `Get the process (behavior tree) of a currently deployed solution.
 
-Example:
+There are two main operation modes. The first one is to get the "active" process
+in the executive. This is the default behavior if no name is provided as the
+first argument.
+
 inctl process get --solution my-solution-id --cluster my-cluster [--output_file /tmp/process.textproto] [--process_format textproto|binaryproto]
 
-	`,
-	Args: cobra.ExactArgs(0),
+---
+
+Alternatively, the process can be retrieved from the solution. The command will
+do this if you specify the name of the process as the first argument. The
+process must already exist in the solution.
+
+inctl process get my_process --solution my-solution-id --cluster my-cluster [--output_file /tmp/process.textproto] [--process_format textproto|binaryproto]`,
+	Args: cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectName := viperLocal.GetString(orgutil.KeyProject)
 		orgName := viperLocal.GetString(orgutil.KeyOrganization)
@@ -238,7 +272,15 @@ inctl process get --solution my-solution-id --cluster my-cluster [--output_file 
 		}
 		defer conn.Close()
 
-		content, err := getProcess(ctx, conn, flagProcessFormat, flagClearTreeID, flagClearNodeIDs)
+		content, err := getProcess(ctx, &getProcessParams{
+			exC:          execgrpcpb.NewExecutiveServiceClient(conn),
+			soC:          sgrpcpb.NewSolutionServiceClient(conn),
+			srC:          skillregistrygrpcpb.NewSkillRegistryClient(conn),
+			name:         args[0],
+			format:       flagProcessFormat,
+			clearTreeID:  flagClearTreeID,
+			clearNodeIDs: flagClearNodeIDs,
+		})
 		if err != nil {
 			return errors.Wrapf(err, "could not get BT")
 		}

@@ -10,12 +10,13 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoregistry"
 	btpb "intrinsic/executive/proto/behavior_tree_go_proto"
+	execgrpcpb "intrinsic/executive/proto/executive_service_go_grpc_proto"
+	skillregistrygrpcpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
 	"intrinsic/tools/inctl/util/orgutil"
 	"intrinsic/util/proto/registryutil"
 )
@@ -23,16 +24,15 @@ import (
 var allowedSetFormats = []string{TextProtoFormat, BinaryProtoFormat}
 
 type deserializer interface {
-	deserialize([]byte) (*btpb.BehaviorTree, error)
+	deserialize(ctx context.Context, content []byte) (*btpb.BehaviorTree, error)
 }
 
 type textDeserializer struct {
-	ctx  context.Context
-	conn *grpc.ClientConn
+	srC skillregistrygrpcpb.SkillRegistryClient
 }
 
-func (t *textDeserializer) deserialize(content []byte) (*btpb.BehaviorTree, error) {
-	skills, err := getSkills(t.ctx, t.conn)
+func (t *textDeserializer) deserialize(ctx context.Context, content []byte) (*btpb.BehaviorTree, error) {
+	skills, err := getSkills(ctx, t.srC)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not list skills")
 	}
@@ -66,14 +66,14 @@ func (t *textDeserializer) deserialize(content []byte) (*btpb.BehaviorTree, erro
 	return bt, nil
 }
 
-func newTextDeserializer(ctx context.Context, conn *grpc.ClientConn) *textDeserializer {
-	return &textDeserializer{ctx: ctx, conn: conn}
+func newTextDeserializer(srC skillregistrygrpcpb.SkillRegistryClient) *textDeserializer {
+	return &textDeserializer{srC: srC}
 }
 
 type binaryDeserializer struct {
 }
 
-func (b *binarySerializer) deserialize(content []byte) (*btpb.BehaviorTree, error) {
+func (b *binarySerializer) deserialize(ctx context.Context, content []byte) (*btpb.BehaviorTree, error) {
 	bt := &btpb.BehaviorTree{}
 	if err := proto.Unmarshal(content, bt); err != nil {
 		return nil, errors.Wrapf(err, "could not parse input file")
@@ -86,39 +86,41 @@ func newBinaryDeserializer() *binarySerializer {
 }
 
 type setProcessParams struct {
+	exC          execgrpcpb.ExecutiveServiceClient
+	srC          skillregistrygrpcpb.SkillRegistryClient
 	format       string
 	content      []byte
 	clearTreeID  bool
 	clearNodeIDs bool
 }
 
-func deserializeBT(ctx context.Context, conn *grpc.ClientConn, format string, content []byte) (*btpb.BehaviorTree, error) {
+func deserializeBT(ctx context.Context, srC skillregistrygrpcpb.SkillRegistryClient, format string, content []byte) (*btpb.BehaviorTree, error) {
 	var d deserializer
 	switch format {
 	case TextProtoFormat:
-		d = newTextDeserializer(ctx, conn)
+		d = newTextDeserializer(srC)
 	case BinaryProtoFormat:
 		d = newBinaryDeserializer()
 	default:
 		return nil, fmt.Errorf("unknown format %s", format)
 	}
 
-	bt, err := d.deserialize(content)
+	bt, err := d.deserialize(ctx, content)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not serialize BT")
 	}
 	return bt, nil
 }
 
-func setProcess(ctx context.Context, conn *grpc.ClientConn, params *setProcessParams) error {
-	bt, err := deserializeBT(ctx, conn, params.format, params.content)
+func setProcess(ctx context.Context, params *setProcessParams) error {
+	bt, err := deserializeBT(ctx, params.srC, params.format, params.content)
 	if err != nil {
 		return errors.Wrapf(err, "could not deserialize BT")
 	}
 
 	clearTree(bt, params.clearTreeID, params.clearNodeIDs)
 
-	if err := setBT(ctx, conn, bt); err != nil {
+	if err := setBT(ctx, params.exC, bt); err != nil {
 		return errors.Wrapf(err, "could not set behavior tree")
 	}
 
@@ -154,7 +156,9 @@ inctl process set --solution my-solution --cluster my-cluster --input_file /tmp/
 			return errors.Wrapf(err, "could not read input file")
 		}
 
-		if err = setProcess(ctx, conn, &setProcessParams{
+		if err = setProcess(ctx, &setProcessParams{
+			exC:          execgrpcpb.NewExecutiveServiceClient(conn),
+			srC:          skillregistrygrpcpb.NewSkillRegistryClient(conn),
 			content:      content,
 			format:       flagProcessFormat,
 			clearTreeID:  flagClearTreeID,

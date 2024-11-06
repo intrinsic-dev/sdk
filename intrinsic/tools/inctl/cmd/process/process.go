@@ -148,9 +148,8 @@ func connectToCluster(ctx context.Context, projectName string, orgName string, a
 	return ctx, conn, nil
 }
 
-func getBT(ctx context.Context, conn *grpc.ClientConn) (*btpb.BehaviorTree, error) {
-	client := execgrpcpb.NewExecutiveServiceClient(conn)
-	listOpResp, err := client.ListOperations(ctx, &lrpb.ListOperationsRequest{})
+func getActiveBT(ctx context.Context, exC execgrpcpb.ExecutiveServiceClient) (*btpb.BehaviorTree, error) {
+	listOpResp, err := exC.ListOperations(ctx, &lrpb.ListOperationsRequest{})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to list executive operations")
 	}
@@ -172,10 +171,8 @@ func getBT(ctx context.Context, conn *grpc.ClientConn) (*btpb.BehaviorTree, erro
 	return metadata.GetBehaviorTree(), nil
 }
 
-func setBT(ctx context.Context, conn *grpc.ClientConn, bt *btpb.BehaviorTree) error {
-	client := execgrpcpb.NewExecutiveServiceClient(conn)
-
-	listOpResp, err := client.ListOperations(ctx, &lrpb.ListOperationsRequest{})
+func setBT(ctx context.Context, exC execgrpcpb.ExecutiveServiceClient, bt *btpb.BehaviorTree) error {
+	listOpResp, err := exC.ListOperations(ctx, &lrpb.ListOperationsRequest{})
 	if err != nil {
 		return errors.Wrap(err, "unable to list executive operations")
 	}
@@ -186,7 +183,7 @@ func setBT(ctx context.Context, conn *grpc.ClientConn, bt *btpb.BehaviorTree) er
 
 	if len(listOpResp.Operations) == 1 {
 		operationToDelete := listOpResp.Operations[0]
-		if _, err = client.DeleteOperation(ctx, &lrpb.DeleteOperationRequest{
+		if _, err = exC.DeleteOperation(ctx, &lrpb.DeleteOperationRequest{
 			Name: operationToDelete.Name,
 		}); err != nil {
 			return errors.Wrap(err, "unable to delete operation")
@@ -196,21 +193,20 @@ func setBT(ctx context.Context, conn *grpc.ClientConn, bt *btpb.BehaviorTree) er
 	req := &execgrpcpb.CreateOperationRequest{}
 	req.RunnableType = &execgrpcpb.CreateOperationRequest_BehaviorTree{BehaviorTree: bt}
 
-	if _, err = client.CreateOperation(ctx, req); err != nil {
+	if _, err = exC.CreateOperation(ctx, req); err != nil {
 		return errors.Wrap(err, "unable to create executive operation")
 	}
 
 	return nil
 }
 
-func getSkills(ctx context.Context, conn *grpc.ClientConn) ([]*skillspb.Skill, error) {
-	client := skillregistrygrpcpb.NewSkillRegistryClient(conn)
+func getSkills(ctx context.Context, srC skillregistrygrpcpb.SkillRegistryClient) ([]*skillspb.Skill, error) {
 	var (
 		skills        []*skillspb.Skill
 		nextPageToken string
 	)
 	for {
-		resp, err := client.ListSkills(ctx, &srpb.ListSkillsRequest{
+		resp, err := srC.ListSkills(ctx, &srpb.ListSkillsRequest{
 			PageToken: nextPageToken,
 		})
 		if err != nil {
