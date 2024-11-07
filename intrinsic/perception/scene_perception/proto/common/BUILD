@@ -14,7 +14,9 @@ proto_library(
     srcs = ["camera.proto"],
     deps = [
         ":r3_proto",
-        "//intrinsic/perception/proto:frame_proto",
+        "//intrinsic/perception/proto:camera_params_proto",
+        "//intrinsic/perception/proto:image_buffer_proto",
+        "@com_google_protobuf//:timestamp_proto",
     ],
 )
 

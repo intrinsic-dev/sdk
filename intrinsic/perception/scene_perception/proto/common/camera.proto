@@ -4,7 +4,9 @@ syntax = "proto3";
 
 package intrinsic_proto.perception;
 
-import "intrinsic/perception/proto/frame.proto";
+import "google/protobuf/timestamp.proto";
+import "intrinsic/perception/proto/camera_params.proto";
+import "intrinsic/perception/proto/image_buffer.proto";
 import "intrinsic/perception/scene_perception/proto/common/r3.proto";
 
 /*
@@ -12,8 +14,30 @@ import "intrinsic/perception/scene_perception/proto/common/r3.proto";
 */
 message SituatedFrame {
   /* The frame. */
-  Frame frame = 1;
+  ScenePerceptionFrame frame = 1;
 
   /* The extrinsics of the associated camera. */
   intrinsic_proto.SituatedPose extrinsics = 2;
+}
+
+/*
+  A scene perception version of the Frame class.
+  To replace the soon to be deprecated perception.Frame.
+*/
+message ScenePerceptionFrame {
+  google.protobuf.Timestamp acquisition_time = 1;
+
+  // For uncalibrated frames, the camera parameters are not present.
+  // The frame is undistorted if the camera_params contain only intrinsic
+  // parameters. Correspondingly, if the camera_params contain distortion
+  // parameters, the frame is distorted (and the distortion parameters can be
+  // used to undistort it).
+  optional CameraParams camera_params = 2;
+
+  ImageBuffer rgb8u = 3;
+  ImageBuffer gray32f = 4;
+  ImageBuffer depth32f = 5;
+  ImageBuffer point32f = 6;
+  ImageBuffer normal32f = 7;
+  ImageBuffer gray8u = 8;
 }
