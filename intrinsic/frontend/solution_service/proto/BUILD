@@ -1,5 +1,6 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
+load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 
@@ -13,6 +14,11 @@ proto_library(
         "//intrinsic/executive/proto:behavior_tree_proto",
         "@com_google_protobuf//:empty_proto",
     ],
+)
+
+py_proto_library(
+    name = "solution_service_py_pb2",
+    deps = [":solution_service_proto"],
 )
 
 go_proto_library(
