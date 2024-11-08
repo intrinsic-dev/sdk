@@ -11,6 +11,9 @@ import "intrinsic/perception/proto/camera_drivers.proto";
 // Each driver uses a different underlying implementation and within each driver
 // a specific hardware ID binds the identifier to a single physical camera.
 message CameraIdentifier {
+  reserved 4;
+  reserved "v4l";
+
   oneof drivers {
     CameraDrivers.GenICam genicam = 2;
     CameraDrivers.Photoneo photoneo = 5;
