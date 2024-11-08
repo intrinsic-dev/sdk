@@ -14,6 +14,7 @@ proto_library(
     name = "motion_planner_service_proto",
     srcs = ["motion_planner_service.proto"],
     deps = [
+        ":compute_ik_proto",
         ":motion_planner_config_proto",
         ":motion_specification_proto",
         ":robot_specification_proto",
@@ -119,6 +120,34 @@ proto_library(
         "//intrinsic/icon/proto:joint_space_proto",
         "//intrinsic/world/proto:object_world_refs_proto",
     ],
+)
+
+proto_library(
+    name = "compute_ik_proto",
+    srcs = ["compute_ik.proto"],
+    deps = [
+        "//intrinsic/icon/proto:joint_space_proto",
+        "//intrinsic/world/proto:collision_settings_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "compute_ik_cc_proto",
+    deps = [":compute_ik_proto"],
+)
+
+go_proto_library(
+    name = "compute_ik_go_proto",
+    go_deps = [
+        "//intrinsic/icon/proto:joint_space_go_proto",
+        "//intrinsic/world/proto:collision_settings_go_proto",
+    ],
+    deps = [":compute_ik_proto"],
+)
+
+py_proto_library(
+    name = "compute_ik_py_pb2",
+    deps = [":compute_ik_proto"],
 )
 
 cc_proto_library(

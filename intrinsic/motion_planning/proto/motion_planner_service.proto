@@ -9,6 +9,7 @@ import "intrinsic/geometry/service/transformed_geometry_storage_refs.proto";
 import "intrinsic/icon/proto/joint_space.proto";
 import "intrinsic/logging/proto/context.proto";
 import "intrinsic/math/proto/pose.proto";
+import "intrinsic/motion_planning/proto/compute_ik.proto";
 import "intrinsic/motion_planning/proto/motion_planner_config.proto";
 import "intrinsic/motion_planning/proto/motion_specification.proto";
 import "intrinsic/motion_planning/proto/robot_specification.proto";
@@ -117,6 +118,14 @@ message IkResponse {
   // solution will correspond to the soluiton on the same branch, if such
   // solution exists.
   repeated intrinsic_proto.icon.JointVec solutions = 1;
+
+  // Contains the debug information from the IK call. This includes all
+  // solutions generated from the IK solver and their validation results. It
+  // informs a user why specific configurations were excluded from the results.
+  // In case of collision, it also provides the collision information to
+  // identify the objects in collision.
+  intrinsic_proto.motion_planning.ComputeIkDebugInformation
+      ik_debug_information = 2;
 }
 
 message FkRequest {

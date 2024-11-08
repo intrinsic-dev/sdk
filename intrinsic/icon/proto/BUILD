@@ -262,6 +262,15 @@ py_proto_library(
     deps = [":joint_space_proto"],
 )
 
+go_proto_library(
+    name = "joint_space_go_proto",
+    go_deps = [
+        "//intrinsic/kinematics/types:dynamic_limits_check_mode_go_proto",
+        "//intrinsic/skills/proto:skill_parameter_metadata_go_proto",
+    ],
+    deps = [":joint_space_proto"],
+)
+
 proto_library(
     name = "ik_options_proto",
     srcs = ["ik_options.proto"],
