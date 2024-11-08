@@ -84,6 +84,7 @@ class ExecutiveTest(parameterized.TestCase):
       self,
       state: behavior_tree_pb2.BehaviorTree.State = behavior_tree_pb2.BehaviorTree.RUNNING,
       bt_proto: behavior_tree_pb2.BehaviorTree = behavior_tree_pb2.BehaviorTree(),
+      name: str = _OPERATION_NAME,
   ):
     metadata = run_metadata_pb2.RunMetadata(behavior_tree_state=state)
     metadata.behavior_tree.CopyFrom(bt_proto)
@@ -95,7 +96,7 @@ class ExecutiveTest(parameterized.TestCase):
     ]:
       done = True
     return operations_pb2.Operation(
-        name=_OPERATION_NAME,
+        name=name,
         done=done,
         metadata=_to_any(metadata),
     )
@@ -179,6 +180,22 @@ class ExecutiveTest(parameterized.TestCase):
         '.*violates uniqueness.*',
     ):
       self._executive.load(my_bt)
+
+  def test_unload_deletes_operation(self):
+    """Tests if executive.unload() deletes the current operation."""
+    operation = self._create_operation_proto(
+        name=_OPERATION_NAME,
+        state=behavior_tree_pb2.BehaviorTree.SUCCEEDED,
+    )
+    self._executive_service_stub.ListOperations.return_value = (
+        operations_pb2.ListOperationsResponse(operations=[operation])
+    )
+
+    self._executive.unload()
+
+    self._executive_service_stub.DeleteOperation.assert_called_with(
+        operations_pb2.DeleteOperationRequest(name=_OPERATION_NAME)
+    )
 
   def test_run_async_works(self):
     """Tests if executive.run_async() calls start in the executive service."""

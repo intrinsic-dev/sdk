@@ -741,6 +741,13 @@ class Executive:
 
     self._create_with_retry(request)
 
+  def unload(self) -> None:
+    """Unload current behavior tree from the executive."""
+    try:
+      self._delete_with_retry()
+    except OperationNotFoundError:
+      pass
+
   def start(
       self,
       blocking: bool = True,
