@@ -1,0 +1,49 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.motion_planning;
+
+import "intrinsic/icon/proto/joint_space.proto";
+import "intrinsic/world/proto/collision_settings.proto";
+
+// Encapsulates all validation results that can be used to validate a joint
+// configuration.
+message JointConfigurationValidationResult {
+  enum ValidationStatus {
+    UNKNOWN = 0;  // Means validation test was not performed and is unknown.
+    VIOLATED = 1;
+    VALID = 2;
+  }
+
+  // Defines the result of a collision check. VIOLATED means that a collision
+  // was detected. VALID means that no collision was detected.
+  ValidationStatus collision_validity_check = 1;
+  // Defines the result of a joint limit validation check. VIOLATED means that
+  // the joint configuration was outside the defined joint limits.
+  ValidationStatus limit_validity_check = 2;
+  // Defines the result of a geometric constraint validation check. VIOLATED
+  // means that the joint configuration did not satisfy the defined constraints.
+  ValidationStatus constraint_validatity_check = 3;
+}
+
+// Contains debug information from inverse kinematics (IK) computations. Each
+// message consist of a set of ik solution and each ik solution contains a joint
+// configuration and the validation result that details which tests failed. If
+// configuration were rejected due to collision, the collision pairs will be
+// contained in the collision_checking_debug_info.
+// If no ik solution are contained in the message, it usually means that no ik
+// solution for the defined problem exist and the Cartesian pose was not
+// reachable.
+message ComputeIkDebugInformation {
+  message IkSolution {
+    intrinsic_proto.icon.JointVec joint_configuration = 1;
+    JointConfigurationValidationResult validation_result = 2;
+    intrinsic_proto.world.CollisionCheckingDebugInformation
+        collision_checking_debug_info = 3;
+  }
+
+  // All joint configuration of an IK computation and their respective
+  // validation results.
+  repeated IkSolution ik_solutions = 1;
+}
