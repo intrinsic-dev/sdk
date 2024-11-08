@@ -82,11 +82,7 @@ absl::Status SkillOperation::Start(
   {
     absl::MutexLock lock(&thread_mutex_);
 
-    if (thread_ != nullptr) {
-      return absl::FailedPreconditionError(
-          "An execution thread already exists.");
-    }
-    thread_ = std::make_unique<Thread>(
+    thread_ = Thread(
         [this,
          op = std::make_unique<absl::AnyInvocable<
              absl::StatusOr<std::unique_ptr<::google::protobuf::Message>>()>>(
@@ -166,11 +162,10 @@ void SkillOperation::WaitOperation(absl::string_view caller_name) {
   // last step of execution.
   {
     absl::MutexLock lock(&thread_mutex_);
-    if (thread_ != nullptr && thread_->Joinable()) {
+    if (thread_.Joinable()) {
       LOG(INFO) << caller_name << " joining operation thread: \"" << name()
                 << "\".";
-      thread_->Join();
-      thread_.reset();
+      thread_.Join();
     }
   }
 
@@ -197,7 +192,7 @@ absl::Status SkillOperationCleaner::Watch(
       absl::MutexLock lock(&thread_mutex_);
 
       WaitThread();
-      thread_ = std::make_unique<Thread>([this]() { ProcessQueue(); });
+      thread_ = Thread([this]() { ProcessQueue(); });
     }
   }
 
@@ -244,12 +239,11 @@ void SkillOperationCleaner::ProcessQueue() {
 }
 
 void SkillOperationCleaner::WaitThread(const std::string& caller_name) {
-  if (thread_ != nullptr) {
-    if (!caller_name.empty()) {
-      LOG(INFO) << caller_name << " joining cleaner thread.";
-    }
-    thread_->Join();
-    thread_.reset();
+  if (!caller_name.empty()) {
+    LOG(INFO) << caller_name << " joining cleaner thread.";
+  }
+  if (thread_.Joinable()) {
+    thread_.Join();
   }
 }
 

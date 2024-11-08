@@ -163,14 +163,16 @@ absl::Status SetAffinity(const ThreadOptions& options,
 absl::Status SetName(const ThreadOptions& options,
                      std::thread::native_handle_type thread_handle) {
   if (!options.GetName().has_value()) return absl::OkStatus();
+  return SetThreadName(*options.GetName(), thread_handle);
+}
 
-  if (int errnum = pthread_setname_np(thread_handle,
-                                      ShortName(*options.GetName()).data());
+absl::Status SetThreadName(absl::string_view name,
+                           std::thread::native_handle_type thread_handle) {
+  if (int errnum = pthread_setname_np(thread_handle, ShortName(name).data());
       errnum != 0) {
     return absl::InternalError(absl::StrCat(
         "Failed to set thread name. errnum: ", std::strerror(errnum)));
   }
-
   return absl::OkStatus();
 }
 

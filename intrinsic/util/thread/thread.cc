@@ -100,6 +100,8 @@ bool Thread::RequestStop() noexcept { return stop_source_.request_stop(); }
 
 Thread::Id Thread::GetId() const noexcept { return thread_impl_.get_id(); }
 
+Thread::Handle Thread::NativeHandle() { return thread_impl_.native_handle(); }
+
 void Thread::SaveStopToken() noexcept {
   thread_id_ = thread_impl_.get_id();
   GetPerThreadStopState().EmplaceStopToken(thread_id_,

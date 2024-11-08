@@ -123,7 +123,7 @@ class SkillOperation {
   absl::Notification finished_notification_;
 
   absl::Mutex thread_mutex_;
-  std::unique_ptr<Thread> thread_ ABSL_GUARDED_BY(thread_mutex_);
+  Thread thread_ ABSL_GUARDED_BY(thread_mutex_);
 };
 
 // Cleans up skill execution operations once they are finished.
@@ -163,7 +163,7 @@ class SkillOperationCleaner {
       ABSL_GUARDED_BY(queue_mutex_);
 
   absl::Mutex thread_mutex_;
-  std::unique_ptr<Thread> thread_ ABSL_GUARDED_BY(thread_mutex_);
+  Thread thread_ ABSL_GUARDED_BY(thread_mutex_);
 };
 
 // A collection of skill operations.

@@ -30,6 +30,14 @@ absl::Status SetAffinity(const ThreadOptions& options,
 absl::Status SetName(const ThreadOptions& options,
                      std::thread::native_handle_type thread_handle);
 
+// Sets the name of the thread if possible and logs a warning otherwise.
+// For intrinsic::Thread, the native handle can be obtained via
+// Thread::NativeHandle().
+absl::Status SetThreadName(absl::string_view name,
+                           std::thread::native_handle_type thread_handle);
+
+// For intrinsic::Thread, the native handle can be obtained via
+// Thread::NativeHandle().
 absl::Status SetThreadOptions(const ThreadOptions& options,
                               std::thread::native_handle_type thread_handle);
 

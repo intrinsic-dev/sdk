@@ -9,7 +9,6 @@
 
 #include "absl/base/attributes.h"
 #include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "intrinsic/icon/utils/realtime_guard.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/thread/stop_token.h"
@@ -25,6 +24,7 @@ class Thread {
   // This definition prevents the need for client code to include <thread>
   // directly.
   using Id = std::thread::id;
+  using Handle = std::thread::native_handle_type;
 
   // Default constructs a Thread object, no new thread of execution is created
   // at this time.
@@ -100,6 +100,12 @@ class Thread {
 
   // Returns this thread's id.
   Id GetId() const noexcept;
+
+  // Returns the underlying thread's native handle.
+  // The NativeHandle can be used to enable realtime scheduling of C++ threads
+  // on a POSIX system. It can also be used to set other thread attributes such
+  // as the thread name.
+  Handle NativeHandle();
 
  private:
   template <typename Function, typename... Args>
