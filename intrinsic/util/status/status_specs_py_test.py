@@ -31,14 +31,14 @@ class StatusSpecsTest(absltest.TestCase):
     with self.subTest(name="Create status for declared code"):
       compare.assertProto2Equal(
           self,
-          status_specs.create(10001, "ext message").proto,
+          status_specs.create(10001, "user message").proto,
           extended_status_pb2.ExtendedStatus(
               status_code=extended_status_pb2.StatusCode(
                   component=_COMPONENT, code=10001
               ),
               title="Error 1",
-              external_report=extended_status_pb2.ExtendedStatus.Report(
-                  message="ext message", instructions="Test instructions 1"
+              user_report=extended_status_pb2.ExtendedStatus.UserReport(
+                  message="user message", instructions="Test instructions 1"
               ),
           ),
           ignored_fields=["timestamp"],
@@ -46,14 +46,14 @@ class StatusSpecsTest(absltest.TestCase):
 
       compare.assertProto2Equal(
           self,
-          status_specs.create(10002, "ext message").proto,
+          status_specs.create(10002, "user message").proto,
           extended_status_pb2.ExtendedStatus(
               status_code=extended_status_pb2.StatusCode(
                   component=_COMPONENT, code=10002
               ),
               title="Error 2",
-              external_report=extended_status_pb2.ExtendedStatus.Report(
-                  message="ext message", instructions="Test instructions 2"
+              user_report=extended_status_pb2.ExtendedStatus.UserReport(
+                  message="user message", instructions="Test instructions 2"
               ),
           ),
           ignored_fields=["timestamp"],
@@ -62,14 +62,14 @@ class StatusSpecsTest(absltest.TestCase):
     with self.subTest(name="Create status for undeclared code"):
       compare.assertProto2Equal(
           self,
-          status_specs.create(99999, "ext message").proto,
+          status_specs.create(99999, "user message").proto,
           extended_status_pb2.ExtendedStatus(
               status_code=extended_status_pb2.StatusCode(
                   component=_COMPONENT, code=99999
               ),
               title=f"Undeclared error {_COMPONENT}:99999",
-              external_report=extended_status_pb2.ExtendedStatus.Report(
-                  message="ext message"
+              user_report=extended_status_pb2.ExtendedStatus.UserReport(
+                  message="user message"
               ),
               context=[
                   extended_status_pb2.ExtendedStatus(
@@ -78,7 +78,7 @@ class StatusSpecsTest(absltest.TestCase):
                       ),
                       title="Error code not declared",
                       severity=extended_status_pb2.ExtendedStatus.Severity.WARNING,
-                      external_report=extended_status_pb2.ExtendedStatus.Report(
+                      user_report=extended_status_pb2.ExtendedStatus.UserReport(
                           message=(
                               f"The code {_COMPONENT}:99999 has not been"
                               " declared by the component."

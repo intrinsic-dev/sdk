@@ -45,8 +45,8 @@ class ExtendedStatusError(Exception, grpc.Status):
       code: int,
       *,
       title: str = "",
-      external_report_message: str = "",
-      internal_report_message: str = "",
+      user_message: str = "",
+      debug_message: str = "",
       timestamp: datetime.datetime | None = None,
       grpc_code: grpc.StatusCode | None = None,
   ):
@@ -57,11 +57,11 @@ class ExtendedStatusError(Exception, grpc.Status):
       code: Numeric code specific to component for StatusCode.
       title: brief title of the error, make this meaningful and keep to a length
         of 75 characters if possible.
-      external_report_message: if non-empty, set extended status external report
-        message to this string.
-      internal_report_message: if non-empty, set extended status internal report
-        message to this string. Only set this in an environment where the data
-        may be shared.
+      user_message: if non-empty, set extended status user report message to
+        this string.
+      debug_message: if non-empty, set extended status debug report message to
+        this string. Only set this in an environment where the data may be
+        shared.
       timestamp: The time of the error. If None sets current time.
       grpc_code: Optional gRPC status code, you may set this to the desired
         general error code when using the instance as a gRPC status.
@@ -76,12 +76,12 @@ class ExtendedStatusError(Exception, grpc.Status):
     self._grpc_code = grpc_code
     if title:
       self.set_title(title)
-    if external_report_message:
-      self.set_external_report_message(external_report_message)
-    if internal_report_message:
-      self.set_internal_report_message(internal_report_message)
+    if user_message:
+      self.set_user_message(user_message)
+    if debug_message:
+      self.set_debug_message(debug_message)
     self.set_timestamp(timestamp or datetime.datetime.now())
-    super().__init__(external_report_message)
+    super().__init__(user_message)
 
   @classmethod
   def create_from_proto(
@@ -99,14 +99,9 @@ class ExtendedStatusError(Exception, grpc.Status):
   def proto(self) -> extended_status_pb2.ExtendedStatus:
     """Retrieves extended status encoded as ExtendedStatus proto."""
     if self._emit_traceback:
-      message_parts: list[str] = []
-      if self._extended_status.internal_report.message:
-        message_parts.append(self._extended_status.internal_report.message)
-        message_parts.append("\n\n")
-
-      message_parts.extend(traceback.format_exception(self))
-
-      self._extended_status.internal_report.message = "".join(message_parts)
+      self._extended_status.debug_report.stack_trace = "".join(
+          traceback.format_exception(self)
+      )
 
     return self._extended_status
 
@@ -183,27 +178,29 @@ class ExtendedStatusError(Exception, grpc.Status):
     self._extended_status.context.append(context_status)
     return self
 
-  def set_internal_report_message(self, message: str) -> ExtendedStatusError:
-    """Sets internal report message.
+  def set_debug_message(self, message: str) -> ExtendedStatusError:
+    """Sets debug report message.
 
     Call this function only if you intend for the receiver of the status to see
     it. An indicator could be running in the context of specific organizations.
 
     Args:
-      message: human-readable error message intended for internal developers
+      message: human-readable debug message intended for developers
 
     Returns:
       self
     """
-    self._extended_status.internal_report.message = message
+    self._extended_status.debug_report.message = message
     return self
 
   @property
-  def internal_report(self) -> extended_status_pb2.ExtendedStatus.Report | None:
-    return self._extended_status.internal_report
+  def debug_report(
+      self,
+  ) -> extended_status_pb2.ExtendedStatus.DebugReport | None:
+    return self._extended_status.debug_report
 
-  def set_external_report_message(self, message: str) -> ExtendedStatusError:
-    """Sets external report message.
+  def set_user_message(self, message: str) -> ExtendedStatusError:
+    """Sets user report message.
 
     This is the main error message and should almost always be set.
 
@@ -213,12 +210,12 @@ class ExtendedStatusError(Exception, grpc.Status):
     Returns:
       self
     """
-    self._extended_status.external_report.message = message
+    self._extended_status.user_report.message = message
     return self
 
   @property
-  def external_report(self) -> extended_status_pb2.ExtendedStatus.Report | None:
-    return self._extended_status.external_report
+  def user_report(self) -> extended_status_pb2.ExtendedStatus.UserReport | None:
+    return self._extended_status.user_report
 
   def set_log_context(
       self, context: context_pb2.Context
@@ -237,8 +234,8 @@ class ExtendedStatusError(Exception, grpc.Status):
     self._extended_status.related_to.log_context.CopyFrom(context)
     return self
 
-  def emit_traceback_to_internal_report(self) -> ExtendedStatusError:
-    """Enables emitting a traceback to internal report when proto is retrieved."""
+  def emit_traceback_to_debug_report(self) -> ExtendedStatusError:
+    """Enables emitting a traceback to debug report when proto is retrieved."""
     # We cannot directly add the traceback, as that is only created when the
     # error is raised (which also performs useful depth limitations on the
     # traceback).
@@ -264,15 +261,15 @@ class ExtendedStatusError(Exception, grpc.Status):
           "Timestamp: "
           f" {self._extended_status.timestamp.ToDatetime().strftime('%c')}\n"
       )
-    if self._extended_status.HasField("external_report"):
+    if self._extended_status.HasField("user_report"):
       strs.append(
-          "External"
-          f" Report:\n{textwrap.indent(self._extended_status.external_report.message, '  ')}\n"
+          "User"
+          f" Report:\n{textwrap.indent(self._extended_status.user_report.message, '  ')}\n"
       )
-    if self._extended_status.HasField("internal_report"):
+    if self._extended_status.HasField("debug_report"):
       strs.append(
-          "Internal"
-          f" Report:\n{textwrap.indent(self._extended_status.internal_report.message, '  ')}\n"
+          "Debug"
+          f" Report:\n{textwrap.indent(self._extended_status.debug_report.message, '  ')}\n"
       )
 
     if self._extended_status.context:

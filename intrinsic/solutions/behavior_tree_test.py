@@ -1496,8 +1496,8 @@ class BehaviorTreeNodeOnFailureTest(absltest.TestCase):
     node.on_failure.emit_extended_status(
         'ai.intrinsic.testing',
         4567,
-        external_report_message='ext message',
-        internal_report_message='int message',
+        user_message='ext message',
+        debug_message='int message',
         title='My title',
         to_blackboard_key='blackboard_foo',
     )
@@ -1514,10 +1514,10 @@ class BehaviorTreeNodeOnFailureTest(absltest.TestCase):
                   code: 4567
                 }
                 title: "My title"
-                external_report {
+                user_report {
                   message: "ext message"
                 }
-                internal_report {
+                debug_report {
                   message: "int message"
                 }
               }
@@ -1545,10 +1545,10 @@ class BehaviorTreeNodeOnFailureTest(absltest.TestCase):
                   code: 4567
                 }
                 title: "My title"
-                external_report {
+                user_report {
                   message: "ext message"
                 }
-                internal_report {
+                debug_report {
                   message: "int message"
                 }
               }

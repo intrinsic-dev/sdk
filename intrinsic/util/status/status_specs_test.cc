@@ -91,39 +91,35 @@ TEST_P(StatusSpecsTest, LoadedSpecs) {
   absl::Time t = absl::FromCivil(absl::CivilSecond(2024, 3, 26, 11, 51, 13),
                                  absl::UTCTimeZone());
 
-  EXPECT_THAT(CreateExtendedStatus(10001, "error 1", {.timestamp = t}),
-              EqualsProto(R"pb(
-                status_code { component: "ai.intrinsic.test" code: 10001 }
-                timestamp { seconds: 1711453873 }
-                title: "Error 1"
-                external_report {
-                  message: "error 1"
-                  instructions: "Test instructions 1"
-                }
-              )pb"));
+  EXPECT_THAT(
+      CreateExtendedStatus(10001, "error 1", {.timestamp = t}),
+      EqualsProto(R"pb(
+        status_code { component: "ai.intrinsic.test" code: 10001 }
+        timestamp { seconds: 1711453873 }
+        title: "Error 1"
+        user_report { message: "error 1" instructions: "Test instructions 1" }
+      )pb"));
 
-  EXPECT_THAT(CreateExtendedStatus(10002, "error 2", {.timestamp = t}),
-              EqualsProto(R"pb(
-                status_code { component: "ai.intrinsic.test" code: 10002 }
-                timestamp { seconds: 1711453873 }
-                title: "Error 2"
-                external_report {
-                  message: "error 2"
-                  instructions: "Test instructions 2"
-                }
-              )pb"));
+  EXPECT_THAT(
+      CreateExtendedStatus(10002, "error 2", {.timestamp = t}),
+      EqualsProto(R"pb(
+        status_code { component: "ai.intrinsic.test" code: 10002 }
+        timestamp { seconds: 1711453873 }
+        title: "Error 2"
+        user_report { message: "error 2" instructions: "Test instructions 2" }
+      )pb"));
 
   EXPECT_THAT(
       CreateExtendedStatus(666, "does not exist", {.timestamp = t}),
       EqualsProto(R"pb(
         status_code { component: "ai.intrinsic.test" code: 666 }
         timestamp { seconds: 1711453873 }
-        external_report { message: "does not exist" }
+        user_report { message: "does not exist" }
         context {
           status_code { component: "ai.intrinsic.errors" code: 604 }
           title: "Error code not declared"
           severity: WARNING
-          external_report {
+          user_report {
             message: "The code ai.intrinsic.test:666 has not been declared by the component."
             instructions: "Inform the owner of ai.intrinsic.test to add error 666 to the status specs file."
           }
@@ -148,22 +144,15 @@ TEST_P(StatusSpecsTest, AllOptionsAreSet) {
   EXPECT_THAT(
       CreateExtendedStatus(10001, "error 1",
                            {.timestamp = t,
-                            .internal_report_message = "Int message",
-                            .internal_report_instructions = "Int instructions",
+                            .debug_message = "Int message",
                             .log_context = log_context,
                             .context = {context_status_1, context_status_2}}),
       EqualsProto(R"pb(
         status_code { component: "ai.intrinsic.test" code: 10001 }
         timestamp { seconds: 1711453873 }
         title: "Error 1"
-        external_report {
-          message: "error 1"
-          instructions: "Test instructions 1"
-        }
-        internal_report {
-          message: "Int message"
-          instructions: "Int instructions"
-        }
+        user_report { message: "error 1" instructions: "Test instructions 1" }
+        debug_report { message: "Int message" }
         related_to { log_context { executive_plan_id: 3354 } }
         context { status_code { component: "Context" code: 123 } }
         context { status_code { component: "Context" code: 234 } }
@@ -175,41 +164,40 @@ TEST_P(StatusSpecsTest, CreateStatus) {
                                  absl::UTCTimeZone());
   EXPECT_THAT(
       CreateStatus(10001, "error 1", absl::StatusCode::kInvalidArgument,
-                   {.timestamp = t, .internal_report_message = "Internal"}),
+                   {.timestamp = t, .debug_message = "Internal"}),
       AllOf(StatusIs(absl::StatusCode::kInvalidArgument),
             StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
                 EqualsProto(R"pb(
                   status_code { component: "ai.intrinsic.test" code: 10001 }
                   timestamp { seconds: 1711453873 }
                   title: "Error 1"
-                  external_report {
+                  user_report {
                     message: "error 1"
                     instructions: "Test instructions 1"
                   }
-                  internal_report { message: "Internal" }
+                  debug_report { message: "Internal" }
                 )pb"))));
 }
 
 TEST_P(StatusSpecsTest, AttachExtendedStatus) {
   absl::Time t = absl::FromCivil(absl::CivilSecond(2024, 3, 26, 11, 51, 13),
                                  absl::UTCTimeZone());
-  EXPECT_THAT(
-      static_cast<absl::Status>(
-          StatusBuilder(absl::StatusCode::kInternal)
-              .With(AttachExtendedStatus(
-                  10001, "error 1",
-                  {.timestamp = t, .internal_report_message = "Internal"}))),
-      StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
-          EqualsProto(R"pb(
-            status_code { component: "ai.intrinsic.test" code: 10001 }
-            timestamp { seconds: 1711453873 }
-            title: "Error 1"
-            external_report {
-              message: "error 1"
-              instructions: "Test instructions 1"
-            }
-            internal_report { message: "Internal" }
-          )pb")));
+  EXPECT_THAT(static_cast<absl::Status>(
+                  StatusBuilder(absl::StatusCode::kInternal)
+                      .With(AttachExtendedStatus(
+                          10001, "error 1",
+                          {.timestamp = t, .debug_message = "Internal"}))),
+              StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
+                  EqualsProto(R"pb(
+                    status_code { component: "ai.intrinsic.test" code: 10001 }
+                    timestamp { seconds: 1711453873 }
+                    title: "Error 1"
+                    user_report {
+                      message: "error 1"
+                      instructions: "Test instructions 1"
+                    }
+                    debug_report { message: "Internal" }
+                  )pb")));
 }
 
 TEST(StatusSpecsInvalidTest, DuplicateFails) {
@@ -237,8 +225,7 @@ TEST_P(StatusSpecsTest, AttachExtendedStatusInReturnMacro) {
                                    absl::UTCTimeZone());
     INTR_RETURN_IF_ERROR(erroring_func())
         .With(AttachExtendedStatus(
-            10001, "error 1",
-            {.timestamp = t, .internal_report_message = "Internal"}));
+            10001, "error 1", {.timestamp = t, .debug_message = "Internal"}));
     return "";
   };
 
@@ -248,11 +235,11 @@ TEST_P(StatusSpecsTest, AttachExtendedStatusInReturnMacro) {
                     status_code { component: "ai.intrinsic.test" code: 10001 }
                     timestamp { seconds: 1711453873 }
                     title: "Error 1"
-                    external_report {
+                    user_report {
                       message: "error 1"
                       instructions: "Test instructions 1"
                     }
-                    internal_report { message: "Internal" }
+                    debug_report { message: "Internal" }
                   )pb")));
 }
 
@@ -266,8 +253,7 @@ TEST_P(StatusSpecsTest, AttachExtendedStatusInAssignMacro) {
     INTR_ASSIGN_OR_RETURN(
         std::string s, erroring_func(),
         std::move(_).With(AttachExtendedStatus(
-            10001, "error 1",
-            {.timestamp = t, .internal_report_message = "Internal"})));
+            10001, "error 1", {.timestamp = t, .debug_message = "Internal"})));
     return "";
   };
 
@@ -277,11 +263,11 @@ TEST_P(StatusSpecsTest, AttachExtendedStatusInAssignMacro) {
                     status_code { component: "ai.intrinsic.test" code: 10001 }
                     timestamp { seconds: 1711453873 }
                     title: "Error 1"
-                    external_report {
+                    user_report {
                       message: "error 1"
                       instructions: "Test instructions 1"
                     }
-                    internal_report { message: "Internal" }
+                    debug_report { message: "Internal" }
                   )pb")));
 }
 

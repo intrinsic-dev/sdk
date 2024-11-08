@@ -40,42 +40,42 @@ func TestInitFromList(t *testing.T) {
 		want *espb.ExtendedStatus
 	}{
 		{"Create10001",
-			Create(10001, "Ext 1", WithTimestamp(timestamp)),
+			Create(10001, "User 1", WithTimestamp(timestamp)),
 			&espb.ExtendedStatus{
 				StatusCode: &espb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 10001,
 				},
 				Title:     "Error 1",
 				Timestamp: &timestamppb.Timestamp{Seconds: 1711453873},
-				ExternalReport: &espb.ExtendedStatus_Report{
-					Message:      "Ext 1",
+				UserReport: &espb.ExtendedStatus_UserReport{
+					Message:      "User 1",
 					Instructions: "Test instructions 1",
 				},
 			},
 		},
 		{"Create10002",
-			Create(10002, "Ext 2", WithTimestamp(timestamp)),
+			Create(10002, "User 2", WithTimestamp(timestamp)),
 			&espb.ExtendedStatus{
 				StatusCode: &espb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 10002,
 				},
 				Title:     "Error 2",
 				Timestamp: &timestamppb.Timestamp{Seconds: 1711453873},
-				ExternalReport: &espb.ExtendedStatus_Report{
-					Message:      "Ext 2",
+				UserReport: &espb.ExtendedStatus_UserReport{
+					Message:      "User 2",
 					Instructions: "Test instructions 2",
 				},
 			},
 		},
 		{"Create20001NotDeclared",
-			Create(20001, "Ext 2", WithTimestamp(timestamp)),
+			Create(20001, "User 2", WithTimestamp(timestamp)),
 			&espb.ExtendedStatus{
 				StatusCode: &espb.StatusCode{
 					Component: "ai.intrinsic.test", Code: 20001,
 				},
 				Timestamp: &timestamppb.Timestamp{Seconds: 1711453873},
-				ExternalReport: &espb.ExtendedStatus_Report{
-					Message: "Ext 2",
+				UserReport: &espb.ExtendedStatus_UserReport{
+					Message: "User 2",
 				},
 				Title: "Undeclared error ai.intrinsic.test:20001",
 				Context: []*espb.ExtendedStatus{
@@ -85,7 +85,7 @@ func TestInitFromList(t *testing.T) {
 						},
 						Title:    "Error code not declared",
 						Severity: espb.ExtendedStatus_WARNING,
-						ExternalReport: &espb.ExtendedStatus_Report{
+						UserReport: &espb.ExtendedStatus_UserReport{
 							Message:      "The code ai.intrinsic.test:20001 has not been declared by the component.",
 							Instructions: "Inform the owner of ai.intrinsic.test to add error 20001 to the status specs file.",
 						},
@@ -123,10 +123,9 @@ func TestCreateOptions(t *testing.T) {
 		ExecutivePlanActionId: 3,
 	}
 
-	got := Create(10001, "Ext 1",
+	got := Create(10001, "User 1",
 		WithTimestamp(timestamp),
-		WithInternalReportMessage("Int message"),
-		WithInternalReportInstructions("Int instructions"),
+		WithDebugMessage("Debug message"),
 		WithLogContext(logContext),
 		WithContext(extstatus.New("ai.intrinsic.context1", 1234,
 			extstatus.WithTitle("Foo"),
@@ -145,13 +144,12 @@ func TestCreateOptions(t *testing.T) {
 		},
 		Title:     "Error 1",
 		Timestamp: &timestamppb.Timestamp{Seconds: 1711453873},
-		ExternalReport: &espb.ExtendedStatus_Report{
-			Message:      "Ext 1",
+		UserReport: &espb.ExtendedStatus_UserReport{
+			Message:      "User 1",
 			Instructions: "Test instructions 1",
 		},
-		InternalReport: &espb.ExtendedStatus_Report{
-			Message:      "Int message",
-			Instructions: "Int instructions",
+		DebugReport: &espb.ExtendedStatus_DebugReport{
+			Message: "Debug message",
 		},
 		RelatedTo: &espb.ExtendedStatus_Relations{
 			LogContext: &ctxpb.Context{

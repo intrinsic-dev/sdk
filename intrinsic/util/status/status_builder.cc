@@ -222,10 +222,9 @@ absl::Status StatusBuilder::CreateStatusAndConditionallyLog() && {
       rep_->extended_status =
           std::make_unique<intrinsic_proto::status::ExtendedStatus>();
     }
-    rep_->extended_status->mutable_internal_report()->set_message(
-        absl::StrCat(rep_->extended_status->internal_report().message(), "\n",
-                     GetSymbolizedStackTraceAsString(
-                         /*max_depth=*/50, /*skip_count=*/1)));
+    rep_->extended_status->mutable_debug_report()->set_stack_trace(
+        GetSymbolizedStackTraceAsString(
+            /*max_depth=*/50, /*skip_count=*/1));
   }
   if (rep_ != nullptr && rep_->extended_status != nullptr) {
     SetPayload(AddTypeUrlPrefix<intrinsic_proto::status::ExtendedStatus>(),

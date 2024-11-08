@@ -94,7 +94,7 @@ absl::Status UpdateExtendedStatusOnError(
     es.set_title(absl::StrFormat("Skill %s %s (generic code %s)",
                                  ErrorToSkillAction(status), op_name,
                                  absl::StatusCodeToString(status.code())));
-    es.mutable_external_report()->set_message(status.message());
+    es.mutable_user_report()->set_message(status.message());
   }
 
   if (!es.has_status_code() || es.status_code().component().empty()) {
@@ -121,9 +121,8 @@ absl::Status UpdateExtendedStatusOnError(
         status_specs.GetSpecForCode(es.status_code().code());
     if (status_spec.ok()) {
       es.set_title(status_spec->title());
-    } else if (es.has_external_report() &&
-               !es.external_report().message().empty()) {
-      es.set_title(EllipsizeString(es.external_report().message()));
+    } else if (es.has_user_report() && !es.user_report().message().empty()) {
+      es.set_title(EllipsizeString(es.user_report().message()));
     } else if (es.has_status_code()) {
       es.set_title(absl::StrFormat("%s:%d", es.status_code().component(),
                                    es.status_code().code()));

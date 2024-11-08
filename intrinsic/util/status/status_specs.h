@@ -63,29 +63,27 @@ void ClearExtendedStatusSpecs();
 
 struct ExtendedStatusOptions {
   std::optional<absl::Time> timestamp;
-  std::optional<std::string_view> internal_report_message;
-  std::optional<std::string_view> internal_report_instructions;
+  std::optional<std::string_view> debug_message;
   std::optional<intrinsic_proto::data_logger::Context> log_context;
   std::vector<intrinsic_proto::status::ExtendedStatus> context;
 };
 
-// Creates an extended status for the given code. This will retrieve
-// information from the status specs when available. Provide an external
-// report message with as much detail as useful to a user, e.g., add specific
-// values (example: "value 34 is too large, must be smaller than 20", where 34
-// and 20 would be values that occurred during execution). Typical would be a
-// format string using absl::StrFormat(). You can provide additional options
-// with additional information, in particular context (upstream errors in the
-// form of ExtendedStatus protos).
-// If no information is available in the specs file, this will still emit the
-// extended status with the given information, but also add a context extended
-// status with a warning that the declaration is missing.
+// Creates an extended status for the given code. This will retrieve information
+// from the status specs when available. Provide a user report message with as
+// much detail as useful to a user, e.g., add specific values (example: "value
+// 34 is too large, must be smaller than 20", where 34 and 20 would be values
+// that occurred during execution). Typical would be a format string using
+// absl::StrFormat(). You can provide additional options with additional
+// information, in particular context (upstream errors in the form of
+// ExtendedStatus protos).  If no information is available in the specs file,
+// this will still emit the extended status with the given information, but also
+// add a context extended status with a warning that the declaration is missing.
 intrinsic_proto::status::ExtendedStatus CreateExtendedStatus(
-    uint32_t code, std::string_view external_report_message,
+    uint32_t code, std::string_view user_message,
     const ExtendedStatusOptions& options = {});
 
 absl::Status CreateStatus(
-    uint32_t code, std::string_view external_report_message,
+    uint32_t code, std::string_view user_message,
     absl::StatusCode generic_code = absl::StatusCode::kUnknown,
     const ExtendedStatusOptions& options = {});
 
@@ -101,7 +99,7 @@ absl::Status CreateStatus(
 // Then where an error may occur:
 // INTR_RETURN_IF_ERROR(MyFunction())
 //   .With(AttachExtendedStatus(23488, "While ... MyFunction failed",
-//                              {.internal_report_message="Some debug info"}));
+//                              {.debug_message="Some debug info"}));
 //
 // Note that for INTR_ASSIGN_OR_RETURN you must move the status builder to
 // properly apply the policy:
@@ -109,13 +107,13 @@ absl::Status CreateStatus(
 // INTR_ASSIGN_OR_RETURN(std::string s, ComputeValue(),
 //                       std::move(_).With(AttacheExtendedStatus(
 //                           23488, "While ... ComputeValue failed",
-//                           {.internal_report_message="Some debug info"})));
+//                           {.debug_message="Some debug info"})));
 //
 // This invokes CreateExtendedStatus() and then attaches that status to the
 // given StatusBuilder. This is a pure policy for the StatusBuilder that may
 // be chained (see StatusBuilder documentation).
 std::function<StatusBuilder && (StatusBuilder&&)> AttachExtendedStatus(
-    uint32_t code, std::string_view external_report_message,
+    uint32_t code, std::string_view user_message,
     const ExtendedStatusOptions& options = {});
 
 }  // namespace intrinsic

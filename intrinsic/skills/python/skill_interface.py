@@ -44,7 +44,7 @@ class SkillError(status_exception.ExtendedStatusError):
   field. It is preferred to add a title to the manifest, then you can leave this
   out when raising the exception.
 
-  The message becomes the external report message, it will be directly visible
+  The message becomes the user report message, it will be directly visible
   to the user. Pass an internal report message if you want to give more in-depth
   information (and potentially more targeted to a skill developer when
   investigating an error). It is expected that this is not immediately visible
@@ -67,7 +67,7 @@ class SkillError(status_exception.ExtendedStatusError):
       message: str,
       *,
       title: str | None = None,
-      internal_report_message: str | None = None,
+      debug_message: str | None = None,
   ):
     """Creates a skill error.
 
@@ -75,25 +75,25 @@ class SkillError(status_exception.ExtendedStatusError):
       code: Numeric error code.
       message: Error message, should be a string with concise and specific
         information about the error, e.g., a formatted string including useful
-        data. Pass longer or internal data as internal_report_message. The
-        message is set on the external report.
+        data. Pass longer or internal data as debug_message. The message is set
+        on the user report.
       title: Optional title, if not given, will use title provided for the given
         code in the skill's manifest (preferred).
-      internal_report_message: Set a message with additional information. This
-        will be not be immediately displayed when showing the error. Provide in
-        internal environments.
+      debug_message: Set a message with additional information. This will be not
+        be immediately displayed when showing the error. Provide in internal
+        environments.
     """
     super().__init__(
         component='',  # will be automatically set by skill framework
         code=code,
-        external_report_message=message,
+        user_message=message,
     )
 
     if title is not None:
       self.set_title(title)
 
-    if internal_report_message is not None:
-      self.set_internal_report_message(internal_report_message)
+    if debug_message is not None:
+      self.set_debug_message(debug_message)
 
 
 class SkillCancelledError(SkillError):

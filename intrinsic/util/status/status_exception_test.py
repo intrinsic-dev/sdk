@@ -25,11 +25,11 @@ class StatusExceptionTest(absltest.TestCase):
             component="Cannot Overwrite", code=222
         ),
         title="Title",
-        internal_report=extended_status_pb2.ExtendedStatus.Report(
-            message="Ext Message"
+        debug_report=extended_status_pb2.ExtendedStatus.DebugReport(
+            message="User Message"
         ),
-        external_report=extended_status_pb2.ExtendedStatus.Report(
-            message="Int Message"
+        user_report=extended_status_pb2.ExtendedStatus.UserReport(
+            message="Debug Message"
         ),
     )
 
@@ -52,8 +52,8 @@ class StatusExceptionTest(absltest.TestCase):
         "ai.testing.my_component",
         123,
         title="Title",
-        external_report_message="Ext message",
-        internal_report_message="Int message",
+        user_message="User message",
+        debug_message="Debug message",
         timestamp=datetime.datetime.fromtimestamp(
             1711552798.1, datetime.timezone.utc
         ),
@@ -64,11 +64,11 @@ class StatusExceptionTest(absltest.TestCase):
             component="ai.testing.my_component", code=123
         ),
         title="Title",
-        external_report=extended_status_pb2.ExtendedStatus.Report(
-            message="Ext message"
+        user_report=extended_status_pb2.ExtendedStatus.UserReport(
+            message="User message"
         ),
-        internal_report=extended_status_pb2.ExtendedStatus.Report(
-            message="Int message"
+        debug_report=extended_status_pb2.ExtendedStatus.DebugReport(
+            message="Debug message"
         ),
         timestamp=timestamp_pb2.Timestamp(seconds=1711552798, nanos=100000000),
     )
@@ -81,11 +81,11 @@ class StatusExceptionTest(absltest.TestCase):
             component="ai.intrinsic.testing", code=2223
         ),
         title="Title",
-        internal_report=extended_status_pb2.ExtendedStatus.Report(
-            message="Ext Message"
+        debug_report=extended_status_pb2.ExtendedStatus.DebugReport(
+            message="User Message"
         ),
-        external_report=extended_status_pb2.ExtendedStatus.Report(
-            message="Int Message"
+        user_report=extended_status_pb2.ExtendedStatus.UserReport(
+            message="Debug Message"
         ),
     )
 
@@ -94,12 +94,8 @@ class StatusExceptionTest(absltest.TestCase):
     compare.assertProto2Equal(self, status, error.proto)
     self.assertEqual(error.status_code, ("ai.intrinsic.testing", 2223))
     self.assertEqual(error.title, "Title")
-    compare.assertProto2Equal(
-        self, error.external_report, status.external_report
-    )
-    compare.assertProto2Equal(
-        self, error.internal_report, status.internal_report
-    )
+    compare.assertProto2Equal(self, error.user_report, status.user_report)
+    compare.assertProto2Equal(self, error.debug_report, status.debug_report)
 
   def test_default_timestamp(self):
     start = datetime.datetime.now()
@@ -191,12 +187,12 @@ class StatusExceptionTest(absltest.TestCase):
   def test_set_internal_report_message(self):
     error = status_exception.ExtendedStatusError(
         "ai.testing.my_component", 123
-    ).set_internal_report_message("Foo")
+    ).set_debug_message("Foo")
     expected_status = extended_status_pb2.ExtendedStatus(
         status_code=extended_status_pb2.StatusCode(
             component="ai.testing.my_component", code=123
         ),
-        internal_report=extended_status_pb2.ExtendedStatus.Report(
+        debug_report=extended_status_pb2.ExtendedStatus.DebugReport(
             message="Foo"
         ),
     )
@@ -209,22 +205,24 @@ class StatusExceptionTest(absltest.TestCase):
     error = status_exception.ExtendedStatusError(
         "ai.testing.my_component",
         123,
-        internal_report_message="Foo",
+        debug_message="Foo",
     )
 
-    expected_report = extended_status_pb2.ExtendedStatus.Report(message="Foo")
+    expected_report = extended_status_pb2.ExtendedStatus.DebugReport(
+        message="Foo"
+    )
 
-    compare.assertProto2Equal(self, error.internal_report, expected_report)
+    compare.assertProto2Equal(self, error.debug_report, expected_report)
 
-  def test_set_external_report_message(self):
+  def test_set_user_message(self):
     error = status_exception.ExtendedStatusError(
         "ai.testing.my_component", 123
-    ).set_external_report_message("Bar")
+    ).set_user_message("Bar")
     expected_status = extended_status_pb2.ExtendedStatus(
         status_code=extended_status_pb2.StatusCode(
             component="ai.testing.my_component", code=123
         ),
-        external_report=extended_status_pb2.ExtendedStatus.Report(
+        user_report=extended_status_pb2.ExtendedStatus.UserReport(
             message="Bar"
         ),
     )
@@ -233,18 +231,20 @@ class StatusExceptionTest(absltest.TestCase):
         self, error.proto, expected_status, ignored_fields=["timestamp"]
     )
 
-  def test_get_external_report_message(self):
+  def test_get_user_message(self):
     error = status_exception.ExtendedStatusError(
         "ai.testing.my_component",
         123,
-        external_report_message="Foo",
+        user_message="Foo",
     )
 
-    expected_report = extended_status_pb2.ExtendedStatus.Report(message="Foo")
+    expected_report = extended_status_pb2.ExtendedStatus.UserReport(
+        message="Foo"
+    )
 
-    compare.assertProto2Equal(self, error.external_report, expected_report)
+    compare.assertProto2Equal(self, error.user_report, expected_report)
 
-  def test_emit_traceback_to_internal_report(self):
+  def test_emit_traceback_to_debug_report(self):
     expected_status = extended_status_pb2.ExtendedStatus(
         status_code=extended_status_pb2.StatusCode(
             component="ai.intrinsic.my_skill", code=2342
@@ -254,7 +254,7 @@ class StatusExceptionTest(absltest.TestCase):
     def _function_raising_extended_status_error():
       raise status_exception.ExtendedStatusError(
           "ai.intrinsic.my_skill", 2342
-      ).emit_traceback_to_internal_report()
+      ).emit_traceback_to_debug_report()
 
     # cannot use self.assertRaises as that loses the __traceback__ field
     error: Optional[status_exception.ExtendedStatusError] = None
@@ -267,43 +267,11 @@ class StatusExceptionTest(absltest.TestCase):
         self,
         error.proto,
         expected_status,
-        ignored_fields=["internal_report", "timestamp"],
+        ignored_fields=["debug_report", "timestamp"],
     )
     self.assertIn(
         "Traceback (most recent call last):",
-        error.proto.internal_report.message,
-    )
-
-  def test_emit_traceback_to_internal_report_appends(self):
-    expected_status = extended_status_pb2.ExtendedStatus(
-        status_code=extended_status_pb2.StatusCode(
-            component="ai.intrinsic.my_skill", code=2342
-        ),
-    )
-
-    def _function_raising_extended_status_error():
-      raise status_exception.ExtendedStatusError(
-          "ai.intrinsic.my_skill", 2342
-      ).set_internal_report_message(
-          "Prior message"
-      ).emit_traceback_to_internal_report()
-
-    # cannot use self.assertRaises as that loses the __traceback__ field
-    error: Optional[status_exception.ExtendedStatusError] = None
-    try:
-      _function_raising_extended_status_error()
-    except status_exception.ExtendedStatusError as e:
-      error = e
-
-    compare.assertProto2Equal(
-        self,
-        error.proto,
-        expected_status,
-        ignored_fields=["internal_report", "timestamp"],
-    )
-    self.assertRegex(
-        error.proto.internal_report.message,
-        r"Prior message\s*Traceback \(most recent call last\):.*",
+        error.proto.debug_report.stack_trace,
     )
 
   def test_add_context(self):
@@ -353,8 +321,8 @@ class StatusExceptionTest(absltest.TestCase):
   def test_to_string(self):
     error = (
         status_exception.ExtendedStatusError("ai.testing.my_component", 123)
-        .set_external_report_message("external message")
-        .set_internal_report_message("internal message")
+        .set_user_message("user message")
+        .set_debug_message("debug message")
         .set_timestamp(
             datetime.datetime.fromtimestamp(1711552798.1, datetime.timezone.utc)
         )
@@ -362,10 +330,10 @@ class StatusExceptionTest(absltest.TestCase):
 
     expected_str = """StatusCode: ai.testing.my_component:123
 Timestamp:  Wed Mar 27 15:19:58 2024
-External Report:
-  external message
-Internal Report:
-  internal message
+User Report:
+  user message
+Debug Report:
+  debug message
 """
 
     self.assertEqual(str(error), expected_str)
@@ -374,7 +342,7 @@ Internal Report:
     error = status_exception.ExtendedStatusError(
         "ai.testing.my_component",
         123,
-        external_report_message="external message",
+        user_message="user message",
     )
 
     self.assertEqual(error.code, grpc.StatusCode.UNKNOWN)

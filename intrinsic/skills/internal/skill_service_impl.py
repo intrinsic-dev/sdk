@@ -594,7 +594,7 @@ class SkillExecutorServicer(skill_service_pb2_grpc.ExecutorServicer):
           status_exception.ExtendedStatusError(
               error_bindings.SKILL_SERVICE_COMPONENT,
               error_bindings.SKILL_SERVICE_WAIT_TIMEOUT_CODE,
-              external_report_message=str(err),
+              user_message=str(err),
               title='Waiting for skill to finish timed out',
               grpc_code=grpc.StatusCode.DEADLINE_EXCEEDED,
           ).add_rpc_detail(
@@ -1025,7 +1025,7 @@ def _handle_skill_error(
             component=skill_id, code=status.StatusCodeAsInt(code)
         ),
         title=f'Skill {action} {op_name}',
-        external_report=extended_status_pb2.ExtendedStatus.Report(
+        user_report=extended_status_pb2.ExtendedStatus.UserReport(
             message=str(err)
         ),
     )
@@ -1062,12 +1062,9 @@ def _handle_skill_error(
           and es_proto.status_code.code in status_specs.specs
       ):
         es_proto.title = status_specs.specs[es_proto.status_code.code].title
-      elif (
-          es_proto.HasField('external_report')
-          and es_proto.external_report.message
-      ):
+      elif es_proto.HasField('user_report') and es_proto.user_report.message:
         es_proto.title = textwrap.shorten(
-            es_proto.external_report.message,
+            es_proto.user_report.message,
             EXTENDED_STATUS_TITLE_SHORTEN_TO_LENGTH,
             placeholder='...',
         )

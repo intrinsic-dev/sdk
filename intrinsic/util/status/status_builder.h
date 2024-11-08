@@ -52,11 +52,11 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   struct ExtendedStatusOptions {
     std::optional<std::string> title;
     std::optional<absl::Time> timestamp;
-    std::optional<std::string> external_report_message;
-    std::optional<std::string> internal_report_message;
+    std::optional<std::string> user_message;
+    std::optional<std::string> debug_message;
     std::optional<intrinsic_proto::data_logger::Context> log_context;
     std::vector<intrinsic_proto::status::ExtendedStatus> context;
-    std::optional<bool> emit_stacktrace_to_internal_report;
+    std::optional<bool> emit_stacktrace_to_debug_report;
     // This can be set for compatibility with legacy client code, i.e., code
     // that only looks for the general status code and not extended status.
     // Note: this option is only observed by the respective constructor, not by
@@ -204,15 +204,11 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   StatusBuilder& SetExtendedStatusTimestamp(absl::Time t = absl::Now()) &;
   StatusBuilder&& SetExtendedStatusTimestamp(absl::Time t = absl::Now()) &&;
 
-  StatusBuilder& SetExtendedStatusInternalReportMessage(
-      std::string_view message) &;
-  StatusBuilder&& SetExtendedStatusInternalReportMessage(
-      std::string_view message) &&;
+  StatusBuilder& SetExtendedStatusDebugMessage(std::string_view message) &;
+  StatusBuilder&& SetExtendedStatusDebugMessage(std::string_view message) &&;
 
-  StatusBuilder& SetExtendedStatusExternalReportMessage(
-      std::string_view message) &;
-  StatusBuilder&& SetExtendedStatusExternalReportMessage(
-      std::string_view message) &&;
+  StatusBuilder& SetExtendedStatusUserMessage(std::string_view message) &;
+  StatusBuilder&& SetExtendedStatusUserMessage(std::string_view message) &&;
 
   StatusBuilder& AddExtendedStatusContext(
       const intrinsic_proto::status::ExtendedStatus& context_status) &;
@@ -224,10 +220,10 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
   StatusBuilder&& SetExtendedStatusLogContext(
       const intrinsic_proto::data_logger::Context& log_context) &&;
 
-  // Mutates the builder so that a stack trace will be appended to the internal
+  // Mutates the builder so that a stack trace will be appended to the debug
   // report message when converting to status.
-  StatusBuilder& EmitStackTraceToExtendedStatusInternalReport() &;
-  StatusBuilder&& EmitStackTraceToExtendedStatusInternalReport() &&;
+  StatusBuilder& EmitStackTraceToExtendedStatusDebugReport() &;
+  StatusBuilder&& EmitStackTraceToExtendedStatusDebugReport() &&;
 
   ///////////////////////////////// Adaptors /////////////////////////////////
   //
@@ -817,11 +813,11 @@ inline void FillExtendedStatusProtoFromOptions(
   if (options.timestamp.has_value()) {
     FromAbslTime(*options.timestamp, es.mutable_timestamp()).IgnoreError();
   }
-  if (options.external_report_message.has_value()) {
-    es.mutable_external_report()->set_message(*options.external_report_message);
+  if (options.user_message.has_value()) {
+    es.mutable_user_report()->set_message(*options.user_message);
   }
-  if (options.internal_report_message.has_value()) {
-    es.mutable_internal_report()->set_message(*options.internal_report_message);
+  if (options.debug_message.has_value()) {
+    es.mutable_debug_report()->set_message(*options.debug_message);
   }
   if (options.log_context.has_value()) {
     *es.mutable_related_to()->mutable_log_context() = *options.log_context;
@@ -848,9 +844,9 @@ inline StatusBuilder& StatusBuilder::WrapExtendedStatus(
   intrinsic_proto::status::ExtendedStatus es;
   FillExtendedStatusProtoFromOptions(component, code, options, es);
 
-  if (options.emit_stacktrace_to_internal_report.has_value()) {
+  if (options.emit_stacktrace_to_debug_report.has_value()) {
     rep_->extended_status_emit_stacktrace =
-        *options.emit_stacktrace_to_internal_report;
+        *options.emit_stacktrace_to_debug_report;
   }
 
   if (rep_->extended_status) {
@@ -869,8 +865,8 @@ inline StatusBuilder& StatusBuilder::WrapExtendedStatus(
       context_es.set_title(
           absl::StrFormat("Generic failure (code %s)",
                           absl::StatusCodeToString(status_.code())));
-      context_es.mutable_external_report()->set_message(status_.message());
-      context_es.mutable_internal_report()->set_message(absl::StrFormat(
+      context_es.mutable_user_report()->set_message(status_.message());
+      context_es.mutable_debug_report()->set_message(absl::StrFormat(
           "Error source location: %s:%u", loc_.file_name(), loc_.line()));
     }
     *es.add_context() = std::move(context_es);
@@ -902,9 +898,9 @@ inline StatusBuilder& StatusBuilder::SetExtendedStatus(
   }
   FillExtendedStatusProtoFromOptions(component, code, options,
                                      *rep_->extended_status);
-  if (options.emit_stacktrace_to_internal_report.has_value()) {
+  if (options.emit_stacktrace_to_debug_report.has_value()) {
     rep_->extended_status_emit_stacktrace =
-        *options.emit_stacktrace_to_internal_report;
+        *options.emit_stacktrace_to_debug_report;
   }
   return *this;
 }
@@ -988,7 +984,7 @@ inline StatusBuilder&& StatusBuilder::SetExtendedStatusTimestamp(
   return std::move(SetExtendedStatusTimestamp(t));
 }
 
-inline StatusBuilder& StatusBuilder::SetExtendedStatusExternalReportMessage(
+inline StatusBuilder& StatusBuilder::SetExtendedStatusUserMessage(
     std::string_view message) & {
   if (rep_ == nullptr) {
     rep_ = std::make_unique<Rep>();
@@ -997,16 +993,16 @@ inline StatusBuilder& StatusBuilder::SetExtendedStatusExternalReportMessage(
     rep_->extended_status =
         std::make_unique<intrinsic_proto::status::ExtendedStatus>();
   }
-  rep_->extended_status->mutable_external_report()->set_message(message);
+  rep_->extended_status->mutable_user_report()->set_message(message);
   return *this;
 }
 
-inline StatusBuilder&& StatusBuilder::SetExtendedStatusExternalReportMessage(
+inline StatusBuilder&& StatusBuilder::SetExtendedStatusUserMessage(
     std::string_view message) && {
-  return std::move(SetExtendedStatusExternalReportMessage(message));
+  return std::move(SetExtendedStatusUserMessage(message));
 }
 
-inline StatusBuilder& StatusBuilder::SetExtendedStatusInternalReportMessage(
+inline StatusBuilder& StatusBuilder::SetExtendedStatusDebugMessage(
     std::string_view message) & {
   if (rep_ == nullptr) {
     rep_ = std::make_unique<Rep>();
@@ -1015,13 +1011,13 @@ inline StatusBuilder& StatusBuilder::SetExtendedStatusInternalReportMessage(
     rep_->extended_status =
         std::make_unique<intrinsic_proto::status::ExtendedStatus>();
   }
-  rep_->extended_status->mutable_internal_report()->set_message(message);
+  rep_->extended_status->mutable_debug_report()->set_message(message);
   return *this;
 }
 
-inline StatusBuilder&& StatusBuilder::SetExtendedStatusInternalReportMessage(
+inline StatusBuilder&& StatusBuilder::SetExtendedStatusDebugMessage(
     std::string_view message) && {
-  return std::move(SetExtendedStatusInternalReportMessage(message));
+  return std::move(SetExtendedStatusDebugMessage(message));
 }
 
 inline StatusBuilder& StatusBuilder::AddExtendedStatusContext(
@@ -1062,7 +1058,7 @@ inline StatusBuilder&& StatusBuilder::SetExtendedStatusLogContext(
 }
 
 inline StatusBuilder&
-StatusBuilder::EmitStackTraceToExtendedStatusInternalReport() & {
+StatusBuilder::EmitStackTraceToExtendedStatusDebugReport() & {
   if (rep_ == nullptr) {
     rep_ = std::make_unique<Rep>();
   }
@@ -1071,8 +1067,8 @@ StatusBuilder::EmitStackTraceToExtendedStatusInternalReport() & {
 }
 
 inline StatusBuilder&&
-StatusBuilder::EmitStackTraceToExtendedStatusInternalReport() && {
-  return std::move(EmitStackTraceToExtendedStatusInternalReport());
+StatusBuilder::EmitStackTraceToExtendedStatusDebugReport() && {
+  return std::move(EmitStackTraceToExtendedStatusDebugReport());
 }
 
 }  // namespace intrinsic

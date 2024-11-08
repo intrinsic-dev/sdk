@@ -13,10 +13,10 @@ def matches(
     title: str | None = None,
     component: str | None = None,
     code: int | None = None,
-    external_report_message: str | None = None,
-    external_report_message_regex: str | None = None,
-    internal_report_message: str | None = None,
-    internal_report_message_regex: str | None = None,
+    user_message: str | None = None,
+    user_message_regex: str | None = None,
+    debug_message: str | None = None,
+    debug_message_regex: str | None = None,
 ) -> Callable[[status_exception.ExtendedStatusError], bool]:
   """Creates a test matcher for ExtendedStatusError.
 
@@ -32,14 +32,14 @@ def matches(
     component: if not None, exact status code component match with raised
       exception required
     code: if not None, exact status code match with raised exception required
-    external_report_message: if not None, exact external report message match
-      with raised exception required
-    external_report_message_regex: if not None, regex must match external report
-      message match of raised exception required
-    internal_report_message: if not None, exact internal report message match
-      with raised exception required
-    internal_report_message_regex: if not None, regex must match internal report
-      message match of raised exception required
+    user_message: if not None, exact external report message match with raised
+      exception required
+    user_message_regex: if not None, regex must match external report message
+      match of raised exception required
+    debug_message: if not None, exact internal report message match with raised
+      exception required
+    debug_message_regex: if not None, regex must match internal report message
+      match of raised exception required
 
   Returns:
     Predicate function to be used with assertRaisesWithPredicateMatch.
@@ -57,25 +57,22 @@ def matches(
     if code is not None and code != proto.status_code.code:
       return False
 
-    if (
-        external_report_message is not None
-        and external_report_message != proto.external_report.message
-    ):
+    if user_message is not None and user_message != proto.user_report.message:
       return False
 
-    if external_report_message_regex is not None and not re.match(
-        external_report_message_regex, proto.external_report.message
+    if user_message_regex is not None and not re.match(
+        user_message_regex, proto.user_report.message
     ):
       return False
 
     if (
-        internal_report_message is not None
-        and internal_report_message != proto.internal_report.message
+        debug_message is not None
+        and debug_message != proto.debug_report.message
     ):
       return False
 
-    if internal_report_message_regex is not None and not re.match(
-        internal_report_message_regex, proto.internal_report.message
+    if debug_message_regex is not None and not re.match(
+        debug_message_regex, proto.debug_report.message
     ):
       return False
 

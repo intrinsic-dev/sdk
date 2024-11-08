@@ -95,32 +95,32 @@ def _create_extended_status_widget(
     )
 
   if (
-      extended_status_error.external_report is not None
-      and extended_status_error.external_report.message
+      extended_status_error.user_report is not None
+      and extended_status_error.user_report.message
   ):
     box_children.append(
         widgets.HTML(
             '<div><b>External'
             ' Report</b><br'
-            f' /><pre><samp>\n{textwrap.indent(extended_status_error.external_report.message, "  ")}</samp></pre></div>\n'
+            f' /><pre><samp>\n{textwrap.indent(extended_status_error.user_report.message, "  ")}</samp></pre></div>\n'
         )
     )
 
   if (
-      extended_status_error.internal_report is not None
-      and extended_status_error.internal_report.message
+      extended_status_error.debug_report is not None
+      and extended_status_error.debug_report.message
   ):
-    internal_report_widget = widgets.Accordion(
+    debug_report_widget = widgets.Accordion(
         children=[
             widgets.HTML(
-                f'<div><pre><samp>{textwrap.indent(extended_status_error.internal_report.message, "  ")}<br'
+                f'<div><pre><samp>{textwrap.indent(extended_status_error.debug_report.message, "  ")}<br'
                 ' /></samp></pre></div>\n'
             )
         ],
         selected_index=None,
     )
-    internal_report_widget.set_title(0, 'Internal Report')
-    box_children.append(internal_report_widget)
+    debug_report_widget.set_title(0, 'Internal Report')
+    box_children.append(debug_report_widget)
 
   if extended_status_error.proto.context:
     context_children = []

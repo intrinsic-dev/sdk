@@ -51,7 +51,7 @@ def _create_undeclared_warning(
       severity=extended_status_pb2.ExtendedStatus.Severity.WARNING,
       title="Error code not declared",
       timestamp=timestamp_pb2.Timestamp().GetCurrentTime(),
-      external_report=extended_status_pb2.ExtendedStatus.Report(
+      user_report=extended_status_pb2.ExtendedStatus.UserReport(
           message=(
               f"The code {component}:{code} has not been declared by the"
               " component."
@@ -107,16 +107,16 @@ def init_once(
 
 def create(
     code: int,
-    external_report_message: str,
+    user_message: str,
     *,
-    internal_report_message: str = "",
+    debug_message: str = "",
     timestamp: datetime.datetime | None = None,
     grpc_code: grpc.StatusCode | None = None,
 ) -> status_exception.ExtendedStatusError:
   """Creates an extended status error from specs for the given code.
 
   This will retrieve information from the status specs when available. Provide
-  an external report message with as much detail as useful to a user, e.g., add
+  a user report message with as much detail as useful to a user, e.g., add
   specific values (example: "value 34 is too large, must be smaller than 20",
   where 34 and 20 would be values that occurred during execution). Typical would
   be a format string using format-string. You can provide additional options
@@ -129,9 +129,9 @@ def create(
 
   Args:
     code: Numeric error code to reference information in the spec file.
-    external_report_message: Information for the user to analyze the error. Be
-      as specific as possible, typically this would be a formatted string.
-    internal_report_message: An optional message to put in the internal report.
+    user_message: Information for the user to analyze the error. Be as specific
+      as possible, typically this would be a formatted string.
+    debug_message: An optional message to put in the debug report.
     timestamp: A timestamp to associate with the extended status, defaults to
       the current time. Set this if a more precise time is available and could
       help during debugging, e.g., for data association.
@@ -147,8 +147,8 @@ def create(
   ese = status_exception.ExtendedStatusError(
       _component,
       code,
-      external_report_message=external_report_message,
-      internal_report_message=internal_report_message,
+      user_message=user_message,
+      debug_message=debug_message,
       timestamp=timestamp,
       grpc_code=grpc_code,
   )
@@ -158,7 +158,7 @@ def create(
 
     ese.set_title(spec.title)
     if spec.recovery_instructions:
-      ese.external_report.instructions = spec.recovery_instructions
+      ese.user_report.instructions = spec.recovery_instructions
 
   else:
     ese.set_title(f"Undeclared error {_component}:{code}")

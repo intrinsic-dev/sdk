@@ -50,90 +50,90 @@ class StatusMatcherTest(absltest.TestCase):
         )
     )
 
-  def test_matcher_external_report_message(self):
+  def test_matcher_user_message(self):
     with self.assertRaisesWithPredicateMatch(
         status_exception.ExtendedStatusError,
-        status_matcher.matches(external_report_message="Ext message"),
+        status_matcher.matches(user_message="Ext message"),
     ):
       raise status_exception.ExtendedStatusError(
-          "ai.testing.my_component", 123, external_report_message="Ext message"
+          "ai.testing.my_component", 123, user_message="Ext message"
       )
 
-  def test_matcher_external_report_message_mismatch(self):
+  def test_matcher_user_message_mismatch(self):
     self.assertFalse(
         status_matcher.matches(
-            external_report_message="Ext message",
+            user_message="Ext message",
         )(
             status_exception.ExtendedStatusError(
                 "ai.testing.my_component",
                 123,
-                external_report_message="Other message",
+                user_message="Other message",
             )
         )
     )
 
-  def test_matcher_external_report_message_regex(self):
+  def test_matcher_user_message_regex(self):
     with self.assertRaisesWithPredicateMatch(
         status_exception.ExtendedStatusError,
-        status_matcher.matches(external_report_message_regex=r"Ext \d+"),
+        status_matcher.matches(user_message_regex=r"Ext \d+"),
     ):
       raise status_exception.ExtendedStatusError(
-          "ai.testing.my_component", 123, external_report_message="Ext 353"
+          "ai.testing.my_component", 123, user_message="Ext 353"
       )
 
-  def test_matcher_external_report_message_regex_mismatch(self):
+  def test_matcher_user_message_regex_mismatch(self):
     self.assertFalse(
         status_matcher.matches(
-            external_report_message_regex=r"Ext \d+",
+            user_message_regex=r"Ext \d+",
         )(
             status_exception.ExtendedStatusError(
                 "ai.testing.my_component",
                 123,
-                external_report_message="Ext message",
+                user_message="Ext message",
             )
         )
     )
 
-  def test_matcher_internal_report_message(self):
+  def test_matcher_debug_message(self):
     with self.assertRaisesWithPredicateMatch(
         status_exception.ExtendedStatusError,
-        status_matcher.matches(internal_report_message="Int message"),
+        status_matcher.matches(debug_message="Int message"),
     ):
       raise status_exception.ExtendedStatusError(
-          "ai.testing.my_component", 123, internal_report_message="Int message"
+          "ai.testing.my_component", 123, debug_message="Int message"
       )
 
-  def test_matcher_internal_report_message_mismatch(self):
+  def test_matcher_debug_message_mismatch(self):
     self.assertFalse(
         status_matcher.matches(
-            internal_report_message="Int message",
+            debug_message="Int message",
         )(
             status_exception.ExtendedStatusError(
                 "ai.testing.my_component",
                 123,
-                internal_report_message="Other message",
+                debug_message="Other message",
             )
         )
     )
 
-  def test_matcher_internal_report_message_regex(self):
+  def test_matcher_debug_message_regex(self):
     with self.assertRaisesWithPredicateMatch(
         status_exception.ExtendedStatusError,
-        status_matcher.matches(internal_report_message_regex=r"Int \d+"),
+        status_matcher.matches(debug_message_regex=r"Int \d+"),
     ):
       raise status_exception.ExtendedStatusError(
-          "ai.testing.my_component", 123, internal_report_message="Int 353"
+          "ai.testing.my_component", 123, debug_message="Int 353"
       )
 
-  def test_matcher_internal_report_message_regex_mismatch(self):
+  def test_matcher_debug_message_regex_mismatch(self):
     self.assertFalse(
         status_matcher.matches(
-            internal_report_message_regex=r"Int \d+",
+            debug_message_regex=r"Int \d+",
         )(
             status_exception.ExtendedStatusError(
                 "ai.testing.my_component",
                 123,
-                internal_report_message="Int message",
+                debug_message="Int message",
             )
         )
     )

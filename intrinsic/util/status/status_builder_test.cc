@@ -711,8 +711,8 @@ TEST(StatusBuilderTest, SetExtendedStatus) {
   extended_status.mutable_status_code()->set_component("Comp");
   extended_status.mutable_status_code()->set_code(123);
   extended_status.set_title("Title");
-  extended_status.mutable_external_report()->set_message("Ext Message");
-  extended_status.mutable_internal_report()->set_message("Int Message");
+  extended_status.mutable_user_report()->set_message("Ext Message");
+  extended_status.mutable_debug_report()->set_message("Int Message");
   StatusBuilder builder(absl::StatusCode::kInvalidArgument);
   ASSERT_FALSE(builder.ok());
   builder.SetExtendedStatus(extended_status);
@@ -776,42 +776,42 @@ TEST(StatusBuilderTest, SetExtendedStatusTimestamp) {
                   )pb")));
 }
 
-TEST(StatusBuilderTest, SetExtendedStatusInternalReportMessage) {
+TEST(StatusBuilderTest, SetExtendedStatusDebugMessage) {
   StatusBuilder builder(absl::StatusCode::kInvalidArgument);
   ASSERT_FALSE(builder.ok());
-  builder.SetExtendedStatusInternalReportMessage("internal message");
+  builder.SetExtendedStatusDebugMessage("internal message");
   absl::Status result = builder;
   EXPECT_THAT(result,
               StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
                   EqualsProto(R"pb(
-                    internal_report { message: "internal message" }
+                    debug_report { message: "internal message" }
                   )pb")));
 }
 
-TEST(StatusBuilderTest, SetExtendedStatusExternalReportMessage) {
+TEST(StatusBuilderTest, SetExtendedStatusUserMessage) {
   StatusBuilder builder(absl::StatusCode::kInvalidArgument);
   ASSERT_FALSE(builder.ok());
-  builder.SetExtendedStatusExternalReportMessage("external message");
+  builder.SetExtendedStatusUserMessage("external message");
   absl::Status result = builder;
   EXPECT_THAT(result,
               StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
                   EqualsProto(R"pb(
-                    external_report { message: "external message" }
+                    user_report { message: "external message" }
                   )pb")));
 }
 
-TEST(StatusBuilderTest, EmitStackTraceToExtendedStatusInternalReport) {
+TEST(StatusBuilderTest, EmitStackTraceToExtendedStatusDebugReport) {
   StatusBuilder builder(absl::StatusCode::kInvalidArgument);
   ASSERT_FALSE(builder.ok());
-  builder.EmitStackTraceToExtendedStatusInternalReport();
+  builder.EmitStackTraceToExtendedStatusDebugReport();
   absl::Status result = builder;
   std::optional<absl::Cord> result_payload = result.GetPayload(AddTypeUrlPrefix(
       intrinsic_proto::status::ExtendedStatus::descriptor()->full_name()));
   ASSERT_TRUE(result_payload.has_value());
   intrinsic_proto::status::ExtendedStatus result_proto;
   ASSERT_TRUE(result_proto.ParseFromCord(*result_payload));
-  EXPECT_THAT(result_proto.internal_report().message(),
-              HasSubstr("EmitStackTraceToExtendedStatusInternalReport"));
+  EXPECT_THAT(result_proto.debug_report().stack_trace(),
+              HasSubstr("EmitStackTraceToExtendedStatusDebugReport"));
 }
 
 TEST(StatusBuilderTest, ChainExtendedStatusCalls) {
@@ -819,14 +819,14 @@ TEST(StatusBuilderTest, ChainExtendedStatusCalls) {
   ASSERT_FALSE(builder.ok());
   builder.SetExtendedStatusCode("component", 2345)
       .SetExtendedStatusTitle("My title")
-      .SetExtendedStatusExternalReportMessage("Foo");
+      .SetExtendedStatusUserMessage("Foo");
   absl::Status result = builder;
   EXPECT_THAT(result,
               StatusHasProtoPayload<intrinsic_proto::status::ExtendedStatus>(
                   EqualsProto(R"pb(
                     status_code { component: "component" code: 2345 }
                     title: "My title"
-                    external_report { message: "Foo" }
+                    user_report { message: "Foo" }
                   )pb")));
 }
 
@@ -877,8 +877,8 @@ TEST(StatusBuilderTest, ExtendedStatusConstructor) {
   StatusBuilder builder("ai.intrinsic.test", 2345,
                         {.title = "Test title",
                          .timestamp = t,
-                         .external_report_message = "Ext message",
-                         .internal_report_message = "Int message",
+                         .user_message = "User message",
+                         .debug_message = "Debug message",
                          .log_context = log_context,
                          .context = {context_status_1, context_status_2}});
   ASSERT_FALSE(builder.ok());
@@ -890,8 +890,8 @@ TEST(StatusBuilderTest, ExtendedStatusConstructor) {
                     title: "Test title"
                     timestamp { seconds: 1711453873 }
                     related_to { log_context { executive_plan_id: 3354 } }
-                    external_report { message: "Ext message" }
-                    internal_report { message: "Int message" }
+                    user_report { message: "User message" }
+                    debug_report { message: "Debug message" }
                     context { status_code { component: "Context" code: 123 } }
                     context { status_code { component: "Context" code: 234 } }
                   )pb")));
@@ -914,8 +914,8 @@ TEST(StatusBuilderTest, SetExtendedStatusFromOptions) {
   builder.SetExtendedStatus("ai.intrinsic.test", 2345,
                             {.title = "Test title",
                              .timestamp = t,
-                             .external_report_message = "Ext message",
-                             .internal_report_message = "Int message",
+                             .user_message = "User message",
+                             .debug_message = "Debug message",
                              .log_context = log_context,
                              .context = {context_status_1, context_status_2}});
   ASSERT_FALSE(builder.ok());
@@ -931,8 +931,8 @@ TEST(StatusBuilderTest, SetExtendedStatusFromOptions) {
                   related_to { log_context { executive_plan_id: 3354 } }
                   context { status_code { component: "Context" code: 123 } }
                   context { status_code { component: "Context" code: 234 } }
-                  external_report { message: "Ext message" }
-                  internal_report { message: "Int message" }
+                  user_report { message: "User message" }
+                  debug_report { message: "Debug message" }
                 )pb"))));
 }
 
@@ -973,21 +973,20 @@ TEST(StatusBuilderTest, WrapExtendedStatus) {
   context_status_2.mutable_status_code()->set_component("Context");
   context_status_2.mutable_status_code()->set_code(234);
 
-  absl::Status s =
-      StatusBuilder(absl::InvalidArgumentError("Foo"))
-          .SetExtendedStatus("ai.intrinsic.test", 2345,
-                             {.title = "Test title",
-                              .external_report_message = "Ext message",
-                              .internal_report_message = "Int message",
-                              .log_context = log_context});
+  absl::Status s = StatusBuilder(absl::InvalidArgumentError("Foo"))
+                       .SetExtendedStatus("ai.intrinsic.test", 2345,
+                                          {.title = "Test title",
+                                           .user_message = "User message",
+                                           .debug_message = "Debug message",
+                                           .log_context = log_context});
   StatusBuilder builder(s);
   ASSERT_FALSE(builder.ok());
   absl::Status result = builder.WrapExtendedStatus(
       "ai.intrinsic.outer", 3456,
       {.title = "Outer title",
        .timestamp = t,
-       .external_report_message = "Outer Ext message",
-       .internal_report_message = "Outer Int message",
+       .user_message = "Outer User message",
+       .debug_message = "Outer Debug message",
        .log_context = log_context,
        .context = {context_status_1, context_status_2}});
 
@@ -997,8 +996,8 @@ TEST(StatusBuilderTest, WrapExtendedStatus) {
                     status_code { component: "ai.intrinsic.outer" code: 3456 }
                     timestamp { seconds: 1711453873 }
                     title: "Outer title"
-                    external_report { message: "Outer Ext message" }
-                    internal_report { message: "Outer Int message" }
+                    user_report { message: "Outer User message" }
+                    debug_report { message: "Outer Debug message" }
                     related_to { log_context { executive_plan_id: 3354 } }
                     context { status_code { component: "Context" code: 123 } }
                     context { status_code { component: "Context" code: 234 } }
@@ -1006,8 +1005,8 @@ TEST(StatusBuilderTest, WrapExtendedStatus) {
                       status_code { component: "ai.intrinsic.test" code: 2345 }
                       title: "Test title"
                       related_to { log_context { executive_plan_id: 3354 } }
-                      external_report { message: "Ext message" }
-                      internal_report { message: "Int message" }
+                      user_report { message: "User message" }
+                      debug_report { message: "Debug message" }
                     }
                   )pb")));
 }
@@ -1031,8 +1030,8 @@ TEST(StatusBuilderTest, WrapExtendedStatusFromPlainStatus) {
       "ai.intrinsic.outer", 3456,
       {.title = "Outer title",
        .timestamp = t,
-       .external_report_message = "Outer Ext message",
-       .internal_report_message = "Outer Int message",
+       .user_message = "Outer User message",
+       .debug_message = "Outer Debug message",
        .log_context = log_context,
        .context = {context_status_1, context_status_2}});
 
@@ -1043,16 +1042,16 @@ TEST(StatusBuilderTest, WrapExtendedStatusFromPlainStatus) {
                     status_code { component: "ai.intrinsic.outer" code: 3456 }
                     timestamp { seconds: 1711453873 }
                     title: "Outer title"
-                    external_report { message: "Outer Ext message" }
-                    internal_report { message: "Outer Int message" }
+                    user_report { message: "Outer User message" }
+                    debug_report { message: "Outer Debug message" }
                     related_to { log_context { executive_plan_id: 3354 } }
                     context { status_code { component: "Context" code: 123 } }
                     context { status_code { component: "Context" code: 234 } }
                     context {
                       status_code { component: "" code: 3 }
                       title: "Generic failure (code INVALID_ARGUMENT)"
-                      external_report { message: "Plain message" }
-                      internal_report {
+                      user_report { message: "Plain message" }
+                      debug_report {
                         message: "Error source location: /bar/baz.cc:1337"
                       }
                     }

@@ -87,11 +87,10 @@ func InitFromList(component string, statusSpecs []*specpb.StatusSpec) error {
 
 // createOptions defines optional arguments to the Create call.
 type createOptions struct {
-	Timestamp                  *time.Time
-	InternalReportMessage      string
-	InternalReportInstructions string
-	LogContext                 *contextpb.Context
-	Context                    []*espb.ExtendedStatus
+	timestamp    *time.Time
+	debugMessage string
+	logContext   *contextpb.Context
+	context      []*espb.ExtendedStatus
 }
 
 // CreateOption is a function type for modifying createOptions.
@@ -100,47 +99,40 @@ type CreateOption func(*createOptions)
 // WithTimestamp returns an option function to set the timestamp on the created extended status.
 func WithTimestamp(timestamp time.Time) CreateOption {
 	return func(o *createOptions) {
-		o.Timestamp = &timestamp
+		o.timestamp = &timestamp
 	}
 }
 
-// WithInternalReportMessage returns an option function to set the internal report message on the created extended status.
-func WithInternalReportMessage(message string) CreateOption {
+// WithDebugMessage returns an option function to set the debug report message on the created extended status.
+func WithDebugMessage(message string) CreateOption {
 	return func(o *createOptions) {
-		o.InternalReportMessage = message
-	}
-}
-
-// WithInternalReportInstructions returns an option function to set the internal instructions on the created extended status.
-func WithInternalReportInstructions(instructions string) CreateOption {
-	return func(o *createOptions) {
-		o.InternalReportInstructions = instructions
+		o.debugMessage = message
 	}
 }
 
 // WithLogContext returns an option function to set the log context extended status.
 func WithLogContext(logContext *contextpb.Context) CreateOption {
 	return func(o *createOptions) {
-		o.LogContext = proto.Clone(logContext).(*contextpb.Context)
+		o.logContext = proto.Clone(logContext).(*contextpb.Context)
 	}
 }
 
 // WithContextProto returns an option function to add a context from proto to the created extended status.
 func WithContextProto(context *espb.ExtendedStatus) CreateOption {
 	return func(o *createOptions) {
-		o.Context = append(o.Context, proto.Clone(context).(*espb.ExtendedStatus))
+		o.context = append(o.context, proto.Clone(context).(*espb.ExtendedStatus))
 	}
 }
 
 // WithContext returns an option function to add a context from an ExtendedStatus wrapper to the created extended status.
 func WithContext(context *extstatus.ExtendedStatus) CreateOption {
 	return func(o *createOptions) {
-		o.Context = append(o.Context, proto.Clone(context.Proto()).(*espb.ExtendedStatus))
+		o.context = append(o.context, proto.Clone(context.Proto()).(*espb.ExtendedStatus))
 	}
 }
 
 // Create creates an ExtendedStatus based on information initialized from specs.
-func Create(code uint32, externalReportMessage string, options ...CreateOption) *extstatus.ExtendedStatus {
+func Create(code uint32, userMessage string, options ...CreateOption) *extstatus.ExtendedStatus {
 	opts := createOptions{}
 	for _, optFunc := range options {
 		optFunc(&opts)
@@ -151,22 +143,22 @@ func Create(code uint32, externalReportMessage string, options ...CreateOption) 
 	}
 
 	title := ""
-	extInstructions := ""
+	userInstructions := ""
 	spec, ok := pkgData.specs[code]
 
 	if ok {
 		title = spec.GetTitle()
-		extInstructions = spec.GetRecoveryInstructions()
+		userInstructions = spec.GetRecoveryInstructions()
 	} else {
 		title = fmt.Sprintf("Undeclared error %s:%d", pkgData.component, code)
-		opts.Context = append(opts.Context, &espb.ExtendedStatus{
+		opts.context = append(opts.context, &espb.ExtendedStatus{
 			StatusCode: &espb.StatusCode{
 				Component: "ai.intrinsic.errors",
 				Code:      604,
 			},
 			Severity: espb.ExtendedStatus_WARNING,
 			Title:    "Error code not declared",
-			ExternalReport: &espb.ExtendedStatus_Report{
+			UserReport: &espb.ExtendedStatus_UserReport{
 				Message:      fmt.Sprintf("The code %s:%d has not been declared by the component.", pkgData.component, code),
 				Instructions: fmt.Sprintf("Inform the owner of %s to add error %d to the status specs file.", pkgData.component, code),
 			},
@@ -175,13 +167,12 @@ func Create(code uint32, externalReportMessage string, options ...CreateOption) 
 	}
 
 	return extstatus.New(pkgData.component, code,
-		extstatus.WithTimestamp(*opts.Timestamp),
+		extstatus.WithTimestamp(*opts.timestamp),
 		extstatus.WithTitle(title),
-		extstatus.WithExternalMessage(externalReportMessage),
-		extstatus.WithExternalInstructions(extInstructions),
-		extstatus.WithInternalMessage(opts.InternalReportMessage),
-		extstatus.WithInternalInstructions(opts.InternalReportInstructions),
-		extstatus.WithContextProtos(opts.Context),
-		extstatus.WithLogContext(opts.LogContext),
+		extstatus.WithUserMessage(userMessage),
+		extstatus.WithUserInstructions(userInstructions),
+		extstatus.WithDebugMessage(opts.debugMessage),
+		extstatus.WithContextProtos(opts.context),
+		extstatus.WithLogContext(opts.logContext),
 	)
 }

@@ -578,8 +578,8 @@ class Node(abc.ABC):
         code: int,
         *,
         title: str = '',
-        external_report_message: str = '',
-        internal_report_message: str = '',
+        user_message: str = '',
+        debug_message: str = '',
         to_blackboard_key: str = '',
     ) -> Node:
       """Causes an extended status to be emitted on node failure.
@@ -589,11 +589,11 @@ class Node(abc.ABC):
         code: Numeric code specific to component for StatusCode.
         title: brief title of the error, make this meaningful and keep to a
           length of 75 characters if possible.
-        external_report_message: if non-empty, set extended status external
-          report message to this string.
-        internal_report_message: if non-empty, set extended status internal
-          report message to this string. Only set this in an environment where
-          the data may be shared.
+        user_message: if non-empty, set extended status external report message
+          to this string.
+        debug_message: if non-empty, set extended status internal report message
+          to this string. Only set this in an environment where the data may be
+          shared.
         to_blackboard_key: the blackboard key to also write the extended status
           to. If empty, will not write extended status to a blackboard key
           (cannot be used for status matches), but status will still be
@@ -609,10 +609,10 @@ class Node(abc.ABC):
       )
       if title:
         es.title = title
-      if external_report_message:
-        es.external_report.message = external_report_message
-      if internal_report_message:
-        es.internal_report.message = internal_report_message
+      if user_message:
+        es.user_report.message = user_message
+      if debug_message:
+        es.debug_report.message = debug_message
 
       self.emit_extended_status_proto(es, to_blackboard_key)
       return self._parent_node

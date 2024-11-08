@@ -24,9 +24,9 @@ import (
 //
 // Example:
 //
-//	return nil, extstatus.NewError("ai.intrinsic.my_service", 2343,
-//	              &extstatus.Info{Title: "Failed to ...",
-//	                              ExternalMessage: "External report"})
+//		return nil, extstatus.NewError("ai.intrinsic.my_service", 2343,
+//		              WithTitle("Failed to ..."),
+//	                   WithUserMessage("External report"))
 type ExtendedStatus struct {
 	s        *espb.ExtendedStatus
 	grpcCode codes.Code
@@ -36,21 +36,20 @@ type ExtendedStatus struct {
 //
 // It is strongly advised to always set Title and ExternalMessage if the error
 // is expected to reach an end user (really, just always set this to something
-// legible). The InternalMessage can contain more detailed information which
+// legible). The debugMessage can contain more detailed information which
 // potentially only developers require to analyze an error. Whenever you have
 // access to a LogContext add it to the status to enable querying additional
 // data. You may use the GrpcCode in the context of a GrpcCall, i.e., if the
 // exxtended status is expected to be converted to a GRPCStatus eventually.
 type newOptions struct {
-	timestamp            *time.Time
-	title                string
-	internalMessage      string
-	internalInstructions string
-	externalMessage      string
-	externalInstructions string
-	context              []*espb.ExtendedStatus
-	logContext           *contextpb.Context
-	grpcCode             codes.Code
+	timestamp        *time.Time
+	title            string
+	debugMessage     string
+	userMessage      string
+	userInstructions string
+	context          []*espb.ExtendedStatus
+	logContext       *contextpb.Context
+	grpcCode         codes.Code
 }
 
 // NewOption is a function type for modifying newOptions.
@@ -70,31 +69,24 @@ func WithTitle(title string) NewOption {
 	}
 }
 
-// WithInternalMessage returns an option function to set the internal report message on the created extended status.
-func WithInternalMessage(message string) NewOption {
+// WithDebugMessage returns an option function to set the debug report message on the created extended status.
+func WithDebugMessage(message string) NewOption {
 	return func(o *newOptions) {
-		o.internalMessage = message
+		o.debugMessage = message
 	}
 }
 
-// WithInternalInstructions returns an option function to set the internal instructions on the created extended status.
-func WithInternalInstructions(instructions string) NewOption {
+// WithUserMessage returns an option function to set the user report message on the created extended status.
+func WithUserMessage(message string) NewOption {
 	return func(o *newOptions) {
-		o.internalInstructions = instructions
+		o.userMessage = message
 	}
 }
 
-// WithExternalMessage returns an option function to set the external report message on the created extended status.
-func WithExternalMessage(message string) NewOption {
+// WithUserInstructions returns an option function to set the user instructions on the created extended status.
+func WithUserInstructions(instructions string) NewOption {
 	return func(o *newOptions) {
-		o.externalMessage = message
-	}
-}
-
-// WithExternalInstructions returns an option function to set the external instructions on the created extended status.
-func WithExternalInstructions(instructions string) NewOption {
-	return func(o *newOptions) {
-		o.externalInstructions = instructions
+		o.userInstructions = instructions
 	}
 }
 
@@ -186,16 +178,15 @@ func New(component string, code uint32, options ...NewOption) *ExtendedStatus {
 	}
 
 	p.Title = opts.title
-	if opts.internalMessage != "" || opts.internalInstructions != "" {
-		p.InternalReport = &espb.ExtendedStatus_Report{
-			Message:      opts.internalMessage,
-			Instructions: opts.internalInstructions,
+	if opts.debugMessage != "" {
+		p.DebugReport = &espb.ExtendedStatus_DebugReport{
+			Message: opts.debugMessage,
 		}
 	}
-	if opts.externalMessage != "" || opts.externalInstructions != "" {
-		p.ExternalReport = &espb.ExtendedStatus_Report{
-			Message:      opts.externalMessage,
-			Instructions: opts.externalInstructions,
+	if opts.userMessage != "" || opts.userInstructions != "" {
+		p.UserReport = &espb.ExtendedStatus_UserReport{
+			Message:      opts.userMessage,
+			Instructions: opts.userInstructions,
 		}
 	}
 	if opts.timestamp != nil {

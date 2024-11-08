@@ -46,19 +46,6 @@ message ExtendedStatus {
 
   repeated ExtendedStatus context = 5;
 
-  // An actionable report of the error, intended for either the
-  // developers/owners (internal) or the user of a component (external).
-  //
-  // More guidance:
-  // https://flowstate.intrinsic.ai/docs/guides/build_with_code/extended_status_guide/
-  message Report {
-    string message = 1;
-    string instructions = 2;
-
-    // To be extended later, e.g., machine-readable interactive instructions,
-    // images, links etc.
-  }
-
   message Relations {
     message BehaviorTreeNodeReference {
       string tree_id = 1;
@@ -70,14 +57,37 @@ message ExtendedStatus {
 
   optional Relations related_to = 6;
 
+  // An actionable report of the error to be read by the user of the system.
+  //
+  // More guidance:
+  // https://flowstate.intrinsic.ai/docs/guides/build_with_code/extended_status_guide/
+  message UserReport {
+    string message = 1;
+    string instructions = 2;
+
+    // To be extended later, e.g., machine-readable interactive instructions,
+    // images, links etc.
+  }
+
+  // Additional information for debugging by the component owner. This
+  // information can be passed on by the system user to investigate an
+  // error. This is publicly visible, but is not necessarily expected to be
+  // digestible to the user.
+  message DebugReport {
+    string message = 1;
+
+    // Optionally a stack trace of an error if useful and not confidential.
+    optional string stack_trace = 2;
+  }
+
   // Internal report intended for developers/owners of the component, but
   // visible to all if they expand it in the UI. It is the responsibility of the
   // emitter of the extended status to determine when to include an internal
   // report. A criterion could be, for example, that the component is run in one
   // of the component's vendor's orgs.
-  optional Report internal_report = 10;
+  optional UserReport user_report = 12;
 
   // This report is shown to external users, e.g., callers of a component even
   // if they are from a different org.
-  optional Report external_report = 11;
+  optional DebugReport debug_report = 13;
 }
