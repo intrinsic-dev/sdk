@@ -24,24 +24,6 @@ import (
 	"intrinsic/skills/tools/skill/cmd/directupload"
 )
 
-const (
-	policyList = "\"add_new_only\", \"update_unused\", and \"update_compatible\""
-)
-
-func asPolicy(value string) (iapb.UpdatePolicy, error) {
-	switch value {
-	case "":
-		return iapb.UpdatePolicy_UPDATE_POLICY_UNSPECIFIED, nil
-	case "add_new_only":
-		return iapb.UpdatePolicy_UPDATE_POLICY_ADD_NEW_ONLY, nil
-	case "update_unused":
-		return iapb.UpdatePolicy_UPDATE_POLICY_UPDATE_UNUSED, nil
-	case "update_compatible":
-		return iapb.UpdatePolicy_UPDATE_POLICY_UPDATE_COMPATIBLE, nil
-	}
-	return iapb.UpdatePolicy_UPDATE_POLICY_UNSPECIFIED, fmt.Errorf("%q provided for --%v is invalid; valid values are %v", value, cmdutils.KeyPolicy, policyList)
-}
-
 // GetCommand returns a command to install (sideload) the service bundle.
 func GetCommand() *cobra.Command {
 	flags := cmdutils.NewCmdFlags()
@@ -67,7 +49,7 @@ func GetCommand() *cobra.Command {
 			ctx := cmd.Context()
 			target := args[0]
 
-			policy, err := asPolicy(flags.GetFlagPolicy())
+			policy, err := flags.GetFlagPolicy()
 			if err != nil {
 				return err
 			}
@@ -157,11 +139,11 @@ func GetCommand() *cobra.Command {
 
 	flags.SetCommand(cmd)
 	flags.AddFlagsAddressClusterSolution()
+	flags.AddFlagPolicy("service")
 	flags.AddFlagsProjectOrg()
 	flags.AddFlagRegistry()
 	flags.AddFlagsRegistryAuthUserPassword()
 	flags.AddFlagSkipDirectUpload("service")
-	flags.OptionalString(cmdutils.KeyPolicy, "", fmt.Sprintf("The update policy to be used to install the provided asset. Can be %v", policyList))
 
 	return cmd
 }

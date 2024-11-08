@@ -15,8 +15,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/exp/maps"
 	"intrinsic/assets/imagetransfer"
 	"intrinsic/assets/imageutils"
+	iapb "intrinsic/assets/proto/installed_assets_go_grpc_proto"
 	"intrinsic/tools/inctl/util/orgutil"
 )
 
@@ -80,6 +82,15 @@ const (
 	KeyVersion = "version"
 
 	envPrefix = "intrinsic"
+)
+
+var (
+	policyMap = map[string]iapb.UpdatePolicy{
+		"":                  iapb.UpdatePolicy_UPDATE_POLICY_UNSPECIFIED,
+		"add_new_only":      iapb.UpdatePolicy_UPDATE_POLICY_ADD_NEW_ONLY,
+		"update_unused":     iapb.UpdatePolicy_UPDATE_POLICY_UPDATE_UNUSED,
+		"update_compatible": iapb.UpdatePolicy_UPDATE_POLICY_UPDATE_COMPATIBLE,
+	}
 )
 
 // CmdFlags abstracts interaction with inctl command flags.
@@ -234,10 +245,20 @@ func (cf *CmdFlags) GetFlagOrgPrivate() bool {
 	return cf.GetBool(KeyOrgPrivate)
 }
 
+// AddFlagPolicy adds a flag for the update policy.
+func (cf *CmdFlags) AddFlagPolicy(assetType string) {
+	cf.OptionalString(KeyPolicy, "", fmt.Sprintf("The update policy to be used to install the %s. Can be: %v", assetType, maps.Keys(policyMap)))
+}
+
 // GetFlagPolicy gets the value of the policy flag.  This flag must be added manually by the
 // utility.
-func (cf *CmdFlags) GetFlagPolicy() string {
-	return cf.GetString(KeyPolicy)
+func (cf *CmdFlags) GetFlagPolicy() (iapb.UpdatePolicy, error) {
+	policy := cf.GetString(KeyPolicy)
+	if value, ok := policyMap[policy]; ok {
+		return value, nil
+	}
+
+	return iapb.UpdatePolicy_UPDATE_POLICY_UNSPECIFIED, fmt.Errorf("%q provided for --%v is invalid; valid values are: %v", policy, KeyPolicy, maps.Keys(policyMap))
 }
 
 // AddFlagsProjectOrg adds both the project and org flag, including the necessary handling.
