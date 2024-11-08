@@ -48,6 +48,7 @@
 #include "intrinsic/platform/common/buffers/rt_queue.h"
 #include "intrinsic/platform/common/buffers/rt_queue_multi_writer.h"
 #include "intrinsic/util/status/status_macros.h"
+#include "intrinsic/util/thread/rt_thread.h"
 #include "intrinsic/util/thread/thread.h"
 #include "intrinsic/util/thread/thread_options.h"
 
@@ -893,10 +894,18 @@ absl::Status HardwareModuleRuntime::Run(grpc::ServerBuilder& server_builder,
     }
   };
 
-  INTR_RETURN_IF_ERROR(set_init_failed_on_error(state_change_thread_.Start(
-      state_change_thread_options, state_change_query, stop_requested_.get(),
-      prepare_server_.get(), enable_motion_server_.get(),
-      disable_motion_server_.get(), clear_faults_server_.get())));
+  if (auto thread = CreateRealtimeCapableThread(
+          state_change_thread_options, state_change_query,
+          stop_requested_.get(), prepare_server_.get(),
+          enable_motion_server_.get(), disable_motion_server_.get(),
+          clear_faults_server_.get());
+      thread.ok()) {
+    state_change_thread_ = *std::move(thread);
+    INTR_RETURN_IF_ERROR(set_init_failed_on_error(absl::OkStatus()));
+  } else {
+    INTR_RETURN_IF_ERROR(set_init_failed_on_error(thread.status()));
+  }
+
   INTR_RETURN_IF_ERROR(set_init_failed_on_error(
       activate_server_->StartAsync(activate_thread_options)));
   INTR_RETURN_IF_ERROR(set_init_failed_on_error(

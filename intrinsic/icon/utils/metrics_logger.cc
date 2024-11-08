@@ -14,6 +14,7 @@
 #include "intrinsic/performance/analysis/proto/performance_metrics.pb.h"
 #include "intrinsic/platform/common/buffers/realtime_write_queue.h"
 #include "intrinsic/util/status/status_macros.h"
+#include "intrinsic/util/thread/rt_thread.h"
 #include "intrinsic/util/thread/thread.h"
 #include "intrinsic/util/thread/thread_options.h"
 
@@ -41,9 +42,9 @@ absl::Status MetricsLogger::Start() {
   options.SetNormalPriorityAndScheduler();
   options.SetName("metrics_publisher_thread_");
   shutdown_requested_.store(false);
-  INTR_RETURN_IF_ERROR(
-      metrics_publisher_thread_.Start(options, [this]() { LoggerFunction(); }));
-
+  INTR_ASSIGN_OR_RETURN(
+      metrics_publisher_thread_,
+      CreateRealtimeCapableThread(options, [this]() { LoggerFunction(); }));
   return absl::OkStatus();
 }
 void MetricsLogger::LoggerFunction() {

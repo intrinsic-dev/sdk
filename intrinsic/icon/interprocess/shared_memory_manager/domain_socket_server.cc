@@ -31,6 +31,7 @@
 #include "intrinsic/icon/interprocess/shared_memory_manager/segment_info.fbs.h"
 #include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
 #include "intrinsic/util/status/status_macros.h"
+#include "intrinsic/util/thread/rt_thread.h"
 #include "intrinsic/util/thread/thread.h"
 #include "intrinsic/util/thread/thread_options.h"
 #include "ortools/base/filesystem.h"
@@ -376,66 +377,72 @@ absl::Status DomainSocketServer::ServeShmDescriptors(
   request_handler_ = std::make_unique<intrinsic::Thread>();
 
   // Accepts a connection, sends the prepared message and closes the connection.
-  INTR_RETURN_IF_ERROR(request_handler_->Start(
-      ThreadOptions().SetName("DSHandler"), [this, &handler_started]() -> void {
-        handler_started.Notify();
-        while (!ThisThreadStopRequested()) {
-          LOG(INFO) << "Waiting for new connection.";
+  INTR_ASSIGN_OR_RETURN(
+      *request_handler_,
+      CreateRealtimeCapableThread(
+          ThreadOptions().SetName("DSHandler"),
+          [this, &handler_started]() -> void {
+            handler_started.Notify();
+            while (!ThisThreadStopRequested()) {
+              LOG(INFO) << "Waiting for new connection.";
 
-          // Accept all new connections.
-          // A blocking socket is fine, because closing the socket unblocks.
-          int to_client_sock = accept(socket_fd_, nullptr, nullptr);
-          if (to_client_sock == -1) {
-            LOG(ERROR) << "Error while calling accept on '"
-                       << absolute_socket_path_ << "': " << strerror(errno)
-                       << ". Exiting. This is expected during shutdown.";
-            return;
-          }
-          LOG(INFO) << "Accepted new connection on '" << absolute_socket_path_
-                    << "'.";
-          // Timeout stops rogue clients from blocking the server.
-          // One second is more than enough time to send a message.
-          struct timeval tv = absl::ToTimeval(absl::Seconds(1));
-          if (setsockopt(to_client_sock, SOL_SOCKET, SO_SNDTIMEO,
-                         (const char*)&tv, sizeof tv) == -1) {
-            LOG(ERROR) << "Failed to set socket timeout with error: "
-                       << strerror(errno);
-          }
+              // Accept all new connections.
+              // A blocking socket is fine, because closing the socket unblocks.
+              int to_client_sock = accept(socket_fd_, nullptr, nullptr);
+              if (to_client_sock == -1) {
+                LOG(ERROR) << "Error while calling accept on '"
+                           << absolute_socket_path_ << "': " << strerror(errno)
+                           << ". Exiting. This is expected during shutdown.";
+                return;
+              }
+              LOG(INFO) << "Accepted new connection on '"
+                        << absolute_socket_path_ << "'.";
+              // Timeout stops rogue clients from blocking the server.
+              // One second is more than enough time to send a message.
+              struct timeval tv = absl::ToTimeval(absl::Seconds(1));
+              if (setsockopt(to_client_sock, SOL_SOCKET, SO_SNDTIMEO,
+                             (const char*)&tv, sizeof tv) == -1) {
+                LOG(ERROR) << "Failed to set socket timeout with error: "
+                           << strerror(errno);
+              }
 
-          for (const auto& message : messages_) {
-            // Only sending a single message without an explicit protocol.
-            ssize_t bytes_sent = sendmsg(to_client_sock, &message->msgh, 0);
-            if (bytes_sent == -1) {
-              LOG(ERROR) << "sendmsg failed with error: " << strerror(errno)
-                         << ".";
-              continue;
+              for (const auto& message : messages_) {
+                // Only sending a single message without an explicit protocol.
+                ssize_t bytes_sent = sendmsg(to_client_sock, &message->msgh, 0);
+                if (bytes_sent == -1) {
+                  LOG(ERROR) << "sendmsg failed with error: " << strerror(errno)
+                             << ".";
+                  continue;
+                }
+
+                if (size_t expected_bytes =
+                        sizeof(message->descriptors.transfer_data);
+                    bytes_sent != expected_bytes) {
+                  LOG(ERROR)
+                      << "Expected to send " << expected_bytes
+                      << "bytes, but only sent " << bytes_sent << "bytes.";
+                }
+
+                LOG(INFO)
+                    << "Sent "
+                    << message->descriptors.file_descriptors_in_order.size()
+                    << " file descriptors and " << bytes_sent
+                    << " bytes of TransferData in message "
+                    << message->descriptors.transfer_data.message_index
+                    << " of " << messages_.size() << ".";
+              }
+
+              LOG(INFO) << "Finished sending " << messages_.size()
+                        << " messages.";
+
+              // Close the socket to the client.
+              if (close(to_client_sock) == -1) {
+                LOG(ERROR) << "Failed to close socket to client with error: "
+                           << strerror(errno) << ".";
+                continue;
+              }
             }
-
-            if (size_t expected_bytes =
-                    sizeof(message->descriptors.transfer_data);
-                bytes_sent != expected_bytes) {
-              LOG(ERROR) << "Expected to send " << expected_bytes
-                         << "bytes, but only sent " << bytes_sent << "bytes.";
-            }
-
-            LOG(INFO) << "Sent "
-                      << message->descriptors.file_descriptors_in_order.size()
-                      << " file descriptors and " << bytes_sent
-                      << " bytes of TransferData in message "
-                      << message->descriptors.transfer_data.message_index
-                      << " of " << messages_.size() << ".";
-          }
-
-          LOG(INFO) << "Finished sending " << messages_.size() << " messages.";
-
-          // Close the socket to the client.
-          if (close(to_client_sock) == -1) {
-            LOG(ERROR) << "Failed to close socket to client with error: "
-                       << strerror(errno) << ".";
-            continue;
-          }
-        }
-      }));
+          }));
 
   if (!handler_started.WaitForNotificationWithTimeout(absl::Seconds(10))) {
     return absl::InternalError(

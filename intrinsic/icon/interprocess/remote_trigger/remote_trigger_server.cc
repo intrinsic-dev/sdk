@@ -18,6 +18,7 @@
 #include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
 #include "intrinsic/icon/utils/log.h"
 #include "intrinsic/util/status/status_macros.h"
+#include "intrinsic/util/thread/rt_thread.h"
 #include "intrinsic/util/thread/thread.h"
 #include "intrinsic/util/thread/thread_options.h"
 
@@ -117,12 +118,15 @@ absl::Status RemoteTriggerServer::StartAsync(
     return absl::OkStatus();
   }
 
-  auto ret =
-      async_thread_.Start(thread_options, &RemoteTriggerServer::Run, this);
-  if (!ret.ok()) {
+  if (auto thread = CreateRealtimeCapableThread(
+          thread_options, &RemoteTriggerServer::Run, this);
+      thread.ok()) {
+    async_thread_ = *std::move(thread);
+    return absl::OkStatus();
+  } else {
     Stop();
+    return thread.status();
   }
-  return ret;
 }
 
 bool RemoteTriggerServer::IsStarted() const { return is_running_.load(); }
