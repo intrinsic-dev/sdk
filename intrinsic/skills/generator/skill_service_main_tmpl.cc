@@ -28,15 +28,18 @@ ABSL_FLAG(std::string, skill_service_config_filename, "",
           "registry queries this server to get information about this skill.");
 ABSL_FLAG(std::string, data_logger_grpc_service_address, "",
           "(optional) Address of the Intrinsic DataLogger gRPC service.");
-ABSL_FLAG(std::string, world_service_address, "world:8080",
+ABSL_FLAG(std::string, world_service_address,
+          "world.app-intrinsic-app-chart.svc.cluster.local:8080",
           "gRpc target for the World service");
 ABSL_FLAG(std::string, geometry_service_address,
-          "geomservice.app-intrinsic-base:8080",
+          "geomservice.app-intrinsic-base.svc.cluster.local:8080",
           "gRpc target for the geometry service");
 ABSL_FLAG(std::string, motion_planner_service_address,
-          "motion-planner-service:8080",
+          "motion-planner-service.app-intrinsic-app-chart.svc.cluster.local:"
+          "8080",
           "gRpc target for the motion planner service");
-ABSL_FLAG(std::string, skill_registry_service_address, "skill-registry:8080",
+ABSL_FLAG(std::string, skill_registry_service_address,
+          "skill-registry.app-intrinsic-app-chart.svc.cluster.local:8080",
           "gRpc target for the skill registry service");
 ABSL_FLAG(int32_t, grpc_connect_timeout_secs,
           absl::ToInt64Seconds(intrinsic::kGrpcClientConnectDefaultTimeout),

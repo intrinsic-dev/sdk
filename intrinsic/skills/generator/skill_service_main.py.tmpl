@@ -33,22 +33,24 @@ _SKILL_SERVICE_CONFIG_FILENAME = flags.DEFINE_string(
     ),
 )
 _WORLD_SERVICE_ADDRESS = flags.DEFINE_string(
-    "world_service_address", "world:8080", "gRPC target for the World service"
+    "world_service_address",
+    "world.app-intrinsic-app-chart.svc.cluster.local:8080",
+    "gRPC target for the World service"
 )
 
 _MOTION_PLANNER_SERVICE_ADDRESS = flags.DEFINE_string(
     "motion_planner_service_address",
-    "motion-planner-service:8080",
+    "motion-planner-service.app-intrinsic-app-chart.svc.cluster.local:8080",
     "gRPC target for the MotionPlanner service",
 )
 _GEOMETRY_SERVICE_ADDRESS = flags.DEFINE_string(
     "geometry_service_address",
-    "geomservice.app-intrinsic-base:8080",
+    "geomservice.app-intrinsic-base.svc.cluster.local:8080",
     "gRPC target for the Geometry service",
 )
 _SKILL_REGISTRY_SERVICE_ADDRESS = flags.DEFINE_string(
     "skill_registry_service_address",
-    "skill-registry:8080",
+    "skill-registry.app-intrinsic-app-chart.svc.cluster.local:8080",
     "gRPC target for the skill registry service. (deprecated, present to match"
     " cpp skill service)",
 )
