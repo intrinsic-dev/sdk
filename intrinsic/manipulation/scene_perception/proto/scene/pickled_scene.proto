@@ -1,0 +1,17 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+/*
+  Python-specific scene message, represented as a pickled byte string.
+
+  Using this message type rather than the structured Scene message ensures that
+  the python object from which it is derived is represented faithfully, but it
+  can only be unpickled by the receiver if they use python and have access to
+  the same python class.
+*/
+message PickledScene {
+  bytes data = 1;
+}

@@ -1,0 +1,24 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "intrinsic/math/proto/array.proto";
+
+/*
+  An image-space map of per-pixel graspability scores.
+*/
+message GraspabilityMap {
+  /* An H x W float array of values in [0, 1] denoting the graspability of each
+  pixel. */
+  intrinsic_proto.Array graspability_map = 1;
+
+  /* An H x W float array of values in [0, 1] that represent a unitless
+  "quality" of each graspability estimate. */
+  intrinsic_proto.Array qualities = 2;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the graspability
+  map estimate as a whole. */
+  float quality = 3;
+}

@@ -10,9 +10,9 @@ from typing import Optional, Sequence
 
 from intrinsic.icon.proto import joint_space_pb2
 from intrinsic.manipulation.grasping import grasp_pb2
+from intrinsic.manipulation.scene_perception.proto.scene import scene_container_pb2
 from intrinsic.math.proto import pose_pb2
 from intrinsic.motion_planning import motion_planner_client
-from intrinsic.perception.scene_perception.proto.scene import scene_container_pb2
 from intrinsic.world.proto import geometric_constraints_pb2
 from intrinsic.world.proto import object_world_refs_pb2
 from intrinsic.world.python import object_world_client

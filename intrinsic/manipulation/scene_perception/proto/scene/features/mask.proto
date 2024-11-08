@@ -1,0 +1,60 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "intrinsic/math/proto/array.proto";
+
+/*
+  An image-space boolean amodal mask.
+*/
+message AmodalMask {
+  /* An H x W boolean array representing the mask. */
+  intrinsic_proto.Array mask = 1;
+
+  /* An H x W float array of values in [0, 1] that represent a unitless
+  "quality" of each estimated mask value. */
+  intrinsic_proto.Array qualities = 2;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the mask estimate
+  as a whole. */
+  float quality = 3;
+}
+
+/*
+  An image-space boolean modal mask.
+*/
+message ModalMask {
+  /* An H x W boolean array representing the mask. */
+  intrinsic_proto.Array mask = 1;
+
+  /* An H x W float array of values in [0, 1] that represent a unitless
+  "quality" of each estimated mask value. */
+  intrinsic_proto.Array qualities = 2;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the mask estimate
+  as a whole. */
+  float quality = 3;
+}
+
+/*
+  An image-space boolean mask with information about visibility and occlusion.
+*/
+message OcclusionMask {
+  /* An H x W boolean mask of the occluded part of the entity in the image. Must
+  not overlap with `visible`. */
+  intrinsic_proto.Array occluded = 1;
+
+  /* An H x W float array of values in [0, 1] that represent a unitless
+  "quality" of each estimated mask value. */
+  intrinsic_proto.Array qualities = 2;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the mask estimate
+  as a whole. */
+  float quality = 3;
+
+  /* An H x W boolean mask of the visible part of the entity in the image. Must
+  not overlap with `occluded`. */
+  intrinsic_proto.Array visible = 4;
+}

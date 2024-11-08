@@ -1,0 +1,19 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+/*
+  The visibility of an entity, either in the image associated with the detection
+  of the entity, or from an implicitly understood viewing perspective.
+*/
+message Visibility {
+  /* A value in [0, 1] that represents a unitless "quality" of the visibility
+  estimate. */
+  float quality = 1;
+
+  /* A value in [0, 1] representing the visibility of the entity. 0 means "fully
+  occluded" and 1 means "fully visible". */
+  float visibility = 2;
+}

@@ -1,0 +1,31 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.scene_perception;
+
+import "intrinsic/math/proto/array.proto";
+
+/*
+  A set of image-space keypoint locations, in pixels.
+*/
+message ImageKeypoints {
+  /* An N x <num tags> boolean array indicating whether each keypoint is tagged
+  with each tag. I.e., has_tag[3, 4] indicates whether the keypoint with index 3
+  is tagged with tag_names[4]. */
+  intrinsic_proto.Array has_tag = 1;
+
+  /* An N x 2 float array of (row, col) image keypoint locations, in pixels. */
+  intrinsic_proto.Array points = 2;
+
+  /* An N-length float array of values in [0, 1] that represent a unitless
+  "quality" of each keypoint location estimate. */
+  intrinsic_proto.Array qualities = 3;
+
+  /* A value in [0, 1] that represents a unitless "quality" of the keypoint
+  location estimates as a whole. */
+  float quality = 4;
+
+  /* The names of the keypoint tags referenced by `has_tag`. */
+  repeated string tag_names = 5;
+}
