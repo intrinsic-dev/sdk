@@ -39,12 +39,8 @@ cc_library(
 
 cc_library(
     name = "shared_memory_manager",
-    srcs = [
-        "shared_memory_manager.cc",
-    ],
-    hdrs = [
-        "shared_memory_manager.h",
-    ],
+    srcs = ["shared_memory_manager.cc"],
+    hdrs = ["shared_memory_manager.h"],
     # With gcc we explicitly have to link against librt,
     # providing POSIX functions for shared memory, such as shm_open.
     # Clang automatically links against it,
@@ -72,12 +68,8 @@ cc_library(
 
 cc_library(
     name = "memory_segment",
-    srcs = [
-        "memory_segment.cc",
-    ],
-    hdrs = [
-        "memory_segment.h",
-    ],
+    srcs = ["memory_segment.cc"],
+    hdrs = ["memory_segment.h"],
     deps = [
         ":domain_socket_utils",
         ":segment_header",
