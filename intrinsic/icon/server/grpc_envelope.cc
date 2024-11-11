@@ -396,6 +396,12 @@ GrpcEnvelope::~GrpcEnvelope() {
   if (server_) {
     server_->Shutdown();
   }
+  // `icon_impl_` gets destroyed implicitly after this destructor
+  // returns.
+  // Note: It's important for the order to be correct here:
+  // 1. Shut down the gRPC server to prevent any new requests from coming in and
+  //    wrap up in-flight ones.
+  // 2. Now that there's no more gRPC requests using it, destroy `icon_impl_`.
 }
 
 absl::StatusOr<absl::Nonnull<IconApiService*>> GrpcEnvelope::IconService() {
