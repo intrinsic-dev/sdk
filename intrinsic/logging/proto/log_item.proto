@@ -101,7 +101,8 @@ message LogItem {
           [deprecated = true];
 
       // ===== Executive =====
-      intrinsic_proto.executive.ExecutiveState executive_state = 13;
+      intrinsic_proto.executive.ExecutiveState executive_state = 13
+          [deprecated = true];
       intrinsic_proto.executive.LoggedOperation executive_operation = 58;
       intrinsic_proto.status.ExtendedStatus executive_process_status = 54;
 
