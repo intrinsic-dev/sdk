@@ -86,11 +86,16 @@ bazel_dep(name = "pybind11_abseil", version = "202402.0")
 bazel_dep(name = "pybind11_protobuf", version = "0.0.0-20240524-1d7a729")
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
-pip.parse(
-    hub_name = "ai_intrinsic_sdks_pip_deps",
-    python_version = "3.11",
-    requirements_lock = "//:requirements.txt",
-)
+
+[
+    pip.parse(
+        hub_name = "ai_intrinsic_sdks_pip_deps",
+        python_version = python_version,
+        requirements_lock = "//:requirements.txt",
+    )
+    for python_version in PYTHON_VERSIONS
+]
+
 use_repo(pip, "ai_intrinsic_sdks_pip_deps")
 
 ##########
