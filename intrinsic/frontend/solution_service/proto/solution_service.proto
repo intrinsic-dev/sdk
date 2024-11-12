@@ -42,6 +42,9 @@ message GetStatusRequest {
 message GetBehaviorTreeRequest {
   // The name of the behavior tree to retrieve.
   string name = 1;
+
+  // The view of the behavior tree to return. Defaults to the FULL view.
+  BehaviorTreeView view = 2;
 }
 
 message ListBehaviorTreesRequest {
@@ -69,7 +72,8 @@ message ListBehaviorTreesResponse {
 }
 
 enum BehaviorTreeView {
-  // The default/unset value. The API will default to the BASIC view.
+  // The default/unset value. The default depends on the RPC and is documented
+  // individually where relevant.
   BEHAVIOR_TREE_VIEW_UNSPECIFIED = 0;
 
   // Include basic metadata about the behavior tree (`name` and `tree_id`). This
