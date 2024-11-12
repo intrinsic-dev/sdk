@@ -67,14 +67,6 @@ class Thread {
   Thread(const Thread&) = delete;
   Thread& operator=(const Thread&) = delete;
 
-  // Starts a thread of execution with the specified `options`. The function `f`
-  // is run in the created thread of execution with the arguments `args...`. The
-  // function 'f' and the provided `args...` must be bind-able to an
-  // absl::AnyInvocable<void()>.
-  template <typename Function, typename... Args>
-  absl::Status Start(const ThreadOptions& options, Function&& f,
-                     Args&&... args);
-
   // Blocks the current thread until `this` Thread finishes its execution.
   // As a post condition of calling Join(), the thread is no longer Joinable().
   // The thread Id is set to the default Id() value after joining.
@@ -136,21 +128,6 @@ class Thread {
   // have been finished or joined.
   Id thread_id_;
 };
-
-template <typename Function, typename... Args>
-ABSL_DEPRECATED("Use CreateRealtimeCapableThread() instead.")
-absl::Status Thread::Start(const ThreadOptions& options, Function&& f,
-                           Args&&... args) {
-  INTRINSIC_ASSERT_NON_REALTIME();
-  if (thread_impl_.joinable()) {
-    return absl::FailedPreconditionError("Thread can only be Start()ed once.");
-  }
-  INTR_ASSIGN_OR_RETURN(std::thread thread,
-                        CreateThread(options, std::forward<Function>(f),
-                                     std::forward<Args>(args)...));
-  *this = Thread(std::move(thread));
-  return absl::OkStatus();
-}
 
 // Allows client code which is executed in a thread to call
 //   while (!ThisThreadStopRequested()) {
