@@ -302,7 +302,7 @@ func init() {
 	processGetCmd.Flags().StringVar(
 		&flagProcessFormat, "process_format", TextProtoFormat,
 		fmt.Sprintf("(optional) output format. One of: (%s)", strings.Join(allowedGetFormats, ", ")))
-	processGetCmd.Flags().StringVar(&flagSolutionName, "solution", "", "Solution to get the process from. For example, use `inctl solutions list --project intrinsic-workcells --output json [--filter running_in_sim]` to see the list of solutions.")
+	processGetCmd.Flags().StringVar(&flagSolutionName, "solution", "", "Solution to get the process from. For example, use `inctl solutions list --org orgname@projectname --output json [--filter running_in_sim]` to see the list of solutions.")
 	processGetCmd.Flags().StringVar(&flagClusterName, "cluster", "", "Cluster to get the process from.")
 	processGetCmd.Flags().StringVar(&flagOutputFile, "output_file", "", "If set, writes the process to the given file instead of stdout.")
 	processCmd.AddCommand(processGetCmd)

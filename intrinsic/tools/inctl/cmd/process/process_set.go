@@ -212,7 +212,7 @@ func init() {
 	processSetCmd.Flags().StringVar(
 		&flagProcessFormat, "process_format", TextProtoFormat,
 		fmt.Sprintf("(optional) input format. One of: (%s)", strings.Join(allowedSetFormats, ", ")))
-	processSetCmd.Flags().StringVar(&flagSolutionName, "solution", "", "Solution to set the process on. For example, use `inctl solutions list --project intrinsic-workcells --output json [--filter running_in_sim]` to see the list of solutions.")
+	processSetCmd.Flags().StringVar(&flagSolutionName, "solution", "", "Solution to set the process on. For example, use `inctl solutions list --org orgname@projectname --output json [--filter running_in_sim]` to see the list of solutions.")
 	processSetCmd.Flags().StringVar(&flagClusterName, "cluster", "", "Cluster to set the process on.")
 	processSetCmd.Flags().StringVar(&flagInputFile, "input_file", "", "File from which to read the process.")
 	processCmd.AddCommand(processSetCmd)
