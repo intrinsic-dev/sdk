@@ -11,9 +11,7 @@ skill_manifest(
     name = "no_op_skill_cc_manifest",
     src = "no_op_skill_manifest_cc.textproto",
     # Allow use of this image in tests of skill tooling.
-    visibility = [
-        "//intrinsic/skills:__subpackages__",
-    ],
+    visibility = ["//intrinsic/skills:__subpackages__"],
     deps = ["//intrinsic/skills/testing:no_op_skill_proto"],
 )
 
@@ -34,6 +32,7 @@ cc_skill(
 skill_manifest(
     name = "no_op_skill_py_manifest",
     src = "no_op_skill_manifest_py.textproto",
+    visibility = ["//intrinsic/skills:__subpackages__"],
     deps = ["//intrinsic/skills/testing:no_op_skill_proto"],
 )
 

@@ -237,74 +237,39 @@ _skill_service_config_manifest = rule(
     },
 )
 
-SkillIdInfo = provider(
-    "Id for a skill",
-    fields = {
-        "id_filename": "The path to the file containing the skill ID.",
-    },
-)
-
-def _skill_id_impl(ctx):
+def _skill_labels_impl(ctx):
     manifest_pbbin_file = ctx.attr.manifest[SkillManifestInfo].manifest_binary_file
 
+    outputfile = ctx.actions.declare_file(ctx.label.name + ".labels")
+
     arguments = ctx.actions.args().add(
-        "--manifest_pbbin_filename",
+        "--manifest",
         manifest_pbbin_file,
     ).add(
-        "--out_id_filename",
-        ctx.outputs.id_filename,
+        "--output",
+        outputfile.path,
     )
 
     ctx.actions.run(
-        outputs = [ctx.outputs.id_filename],
+        outputs = [outputfile],
         inputs = [manifest_pbbin_file],
-        executable = ctx.executable._skill_id_gen,
+        executable = ctx.executable._skill_labels_gen,
         arguments = [arguments],
     )
 
-    return SkillIdInfo(id_filename = ctx.outputs.id_filename)
-
-_skill_id = rule(
-    implementation = _skill_id_impl,
-    attrs = {
-        "_skill_id_gen": attr.label(
-            default = Label("//intrinsic/skills/build_defs:gen_skill_id"),
-            executable = True,
-            cfg = "exec",
-        ),
-        "manifest": attr.label(
-            mandatory = True,
-            providers = [SkillManifestInfo],
-        ),
-        "id_filename": attr.output(
-            mandatory = True,
-            doc = "The path to the file containing the skill ID.",
-        ),
-    },
-    provides = [SkillIdInfo],
-)
-
-def _skill_labels_impl(ctx):
-    skill_id = ctx.attr.skill_id[SkillIdInfo]
-    outputfile = ctx.actions.declare_file(ctx.label.name + ".labels")
-    cmd = """
-    echo "ai.intrinsic.asset-id=$(cat {id_filename})" > {output}""".format(
-        id_filename = skill_id.id_filename.path,
-        output = outputfile.path,
-    )
-    ctx.actions.run_shell(
-        inputs = [skill_id.id_filename],
-        outputs = [outputfile],
-        command = cmd,
-    )
     return DefaultInfo(files = depset([outputfile]))
 
 _skill_labels = rule(
     implementation = _skill_labels_impl,
     attrs = {
-        "skill_id": attr.label(
+        "manifest": attr.label(
             mandatory = True,
-            providers = [SkillIdInfo],
+            providers = [SkillManifestInfo],
+        ),
+        "_skill_labels_gen": attr.label(
+            default = Label("//intrinsic/skills/build_defs:skilllabelsgen_main"),
+            executable = True,
+            cfg = "exec",
         ),
     },
 )
@@ -404,20 +369,10 @@ def _intrinsic_skill(name, image, manifest, **kwargs):
         tags = ["manual", "avoid_dep"],
     )
 
-    skill_id_name = "_%s_id" % name
-    _skill_id(
-        name = skill_id_name,
-        manifest = manifest,
-        id_filename = skill_id_name + ".id.txt",
-        testonly = kwargs.get("testonly"),
-        visibility = ["//visibility:private"],
-        tags = ["manual", "avoid_dep"],
-    )
-
     labels = "_%s_labels" % name
     _skill_labels(
         name = labels,
-        skill_id = skill_id_name,
+        manifest = manifest,
         testonly = kwargs.get("testonly"),
         visibility = ["//visibility:private"],
         tags = ["manual", "avoid_dep"],

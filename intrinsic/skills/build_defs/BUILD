@@ -2,7 +2,7 @@
 
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
-load("//bazel:go_macros.bzl", "go_library")
+load("//bazel:go_macros.bzl", "go_library", "go_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -21,19 +21,6 @@ bzl_library(
         ":manifest_bzl",
         "//bazel:container_bzl",
         "//bazel:python_oci_image_bzl",
-    ],
-)
-
-go_binary(
-    name = "gen_skill_id",
-    srcs = ["gen_skill_id.go"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//intrinsic/assets:idutils",
-        "//intrinsic/production:intrinsic",
-        "//intrinsic/skills/proto:skill_manifest_go_proto",
-        "//intrinsic/util/proto:protoio",
-        "@com_github_golang_glog//:go_default_library",
     ],
 )
 
@@ -93,5 +80,43 @@ go_binary(
         ":skillserviceconfiggen",
         "//intrinsic/production:intrinsic",
         "@com_github_golang_glog//:go_default_library",
+    ],
+)
+
+go_library(
+    name = "skilllabelsgen",
+    srcs = ["skilllabelsgen.go"],
+    deps = [
+        "//intrinsic/assets:idutils",
+        "//intrinsic/skills/proto:skill_manifest_go_proto",
+        "@com_github_golang_glog//:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "skilllabelsgen_main",
+    srcs = ["skilllabelsgen_main.go"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":skilllabelsgen",
+        "//intrinsic/production:intrinsic",
+        "//intrinsic/skills/proto:skill_manifest_go_proto",
+        "//intrinsic/util/proto:protoio",
+        "@com_github_golang_glog//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "skilllabelsgen_test",
+    srcs = ["skilllabelsgen_test.go"],
+    data = [
+        "//intrinsic/skills/build_defs/tests:no_op_skill_cc_manifest",
+        "//intrinsic/skills/build_defs/tests:no_op_skill_py_manifest",
+    ],
+    deps = [
+        ":skilllabelsgen",
+        "//intrinsic/skills/proto:skill_manifest_go_proto",
+        "//intrinsic/util:runfiles",
+        "//intrinsic/util/proto:protoio",
     ],
 )
