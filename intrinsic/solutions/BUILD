@@ -81,31 +81,6 @@ py_library(
 )
 
 py_library(
-    name = "camera_utils",
-    srcs = ["camera_utils.py"],
-    srcs_version = "PY3",
-    deps = [
-        "//intrinsic/perception/proto:frame_py_pb2",
-        "//intrinsic/perception/proto:image_buffer_py_pb2",
-        "//intrinsic/perception/python:image_utils",
-        "@ai_intrinsic_sdks_pip_deps//matplotlib",
-    ],
-)
-
-py_test(
-    name = "camera_utils_external_test",
-    srcs = ["camera_utils_external_test.py"],
-    deps = [
-        ":camera_utils",
-        "//intrinsic/perception/proto:frame_py_pb2",
-        "//intrinsic/perception/proto:image_buffer_py_pb2",
-        "//intrinsic/solutions/testing:compare",
-        "@ai_intrinsic_sdks_pip_deps//numpy",
-        "@com_google_absl_py//absl/testing:absltest",
-    ],
-)
-
-py_library(
     name = "cel",
     srcs = ["cel.py"],
 )
@@ -198,13 +173,11 @@ py_library(
     srcs = ["error_processing.py"],
     srcs_version = "PY3",
     deps = [
-        ":camera_utils",
         ":errors",
         ":ipython",
         "//intrinsic/kubernetes/workcell_spec/proto:installer_py_pb2",
         "//intrinsic/kubernetes/workcell_spec/proto:installer_py_pb2_grpc",
         "//intrinsic/logging/errors/proto:error_report_py_pb2",
-        "//intrinsic/perception/proto:frame_py_pb2",
         requirement("grpcio"),  # buildcleaner: keep
         "@com_google_googleapis//google/longrunning:operations_py_proto",
         "@com_google_googleapis//google/rpc:code_py_proto",
@@ -344,7 +317,6 @@ py_library(
     srcs = ["perception.py"],
     srcs_version = "PY3",
     deps = [
-        ":camera_utils",
         ":deployments",
         ":execution",
         ":utils",
@@ -359,7 +331,6 @@ py_library(
         "//intrinsic/util/grpc:error_handling",
         "//intrinsic/util/grpc:interceptor",
         "@ai_intrinsic_sdks_pip_deps//matplotlib",
-        "@ai_intrinsic_sdks_pip_deps//numpy",
         requirement("grpcio"),
     ],
 )

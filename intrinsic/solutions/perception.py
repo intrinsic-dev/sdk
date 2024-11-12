@@ -15,7 +15,6 @@ from intrinsic.perception.service.proto import camera_server_pb2
 from intrinsic.perception.service.proto import camera_server_pb2_grpc
 from intrinsic.resources.client import resource_registry_client
 from intrinsic.resources.proto import resource_handle_pb2
-from intrinsic.solutions import camera_utils
 from intrinsic.solutions import deployments
 from intrinsic.solutions import execution
 from intrinsic.solutions import utils
@@ -23,7 +22,6 @@ from intrinsic.util.grpc import connection
 from intrinsic.util.grpc import error_handling
 from intrinsic.util.grpc import interceptor
 import matplotlib.pyplot as plt
-import numpy as np
 
 
 # On the guitar cluster grabbing a frame can take more than 7s; if another
@@ -34,8 +32,6 @@ import numpy as np
 _MAX_FRAME_WAIT_TIME_SECONDS = 120
 _CONFIG_RESOURCE_IDENTIFIER_DEPRECATED = 'Config'
 _CONFIG_RESOURCE_IDENTIFIER = 'CameraConfig'
-_MIN_DEPTH_METERS = 0.0
-_MAX_DEPTH_METERS = 2.0  # Reasonable assumption for our current depth cameras.
 _PLOT_WIDTH_INCHES = 40
 _PLOT_HEIGHT_INCHES = 20
 
@@ -114,82 +110,13 @@ class Camera:
     self._executive = executive
     self._is_simulated = is_simulated
 
-  def get_frame(
-      self,
-      timeout: datetime.timedelta = datetime.timedelta(
-          seconds=_MAX_FRAME_WAIT_TIME_SECONDS
-      ),
-      skip_undistortion: bool = False,
-      encoding: Optional[ImageEncoding] = None,
-  ) -> camera_utils.Frame:
-    """Performs grpc request to retrieve a frame from the camera.
-
-    If the camera handle is no longer valid (eg, if the server returns a
-    NOT_FOUND status), the camera will be reopened (once) on the camera server;
-    if re-opening the camera fails an exception is raised.
-
-    Args:
-      timeout: Timeout duration for GetFrame() service calls.
-      skip_undistortion: If set to true the returned frame will be distorted.
-      encoding: The encoding of the image (UNSPECIFIED, PNG, JPEG, WEPB). If not
-        set defaults to uncompressed.
-
-    Returns:
-      The acquired frame.
-
-    Raises:
-      grpc.RpcError from the camera or resource service.
-    """
-    if self._is_simulated:
-      try:
-        _ = self._executive.operation
-      except execution.OperationNotFoundError:
-        print(
-            'Note: The image could be showing an outdated simulation state. Run'
-            ' `simulation.reset()` to resolve this.'
-        )
-
-    deadline = datetime.datetime.now() + timeout
-    if not self._handle:
-      self._reinitialize_from_resources(deadline)
-
-    get_frame_func = lambda: self._get_frame(
-        deadline,
-        skip_undistortion,
-        encoding,
-    )
-    try:
-      response = get_frame_func()
-    except grpc.RpcError as e:
-      if cast(grpc.Call, e).code() != grpc.StatusCode.NOT_FOUND:
-        raise
-      # If the camera was not found, recreate the camera. This can happen when
-      # switching between sim/real or when a service restarts.
-      self._reinitialize_from_resources(deadline)
-      response = get_frame_func()
-    return camera_utils.Frame(response.frame)
-
-  def show_rgb_frame(self) -> None:
-    """Acquires and plots frame."""
-    frame = self.get_frame()
-    plt.imshow(frame.rgb8u)
-    plt.axis('off')
-
-  def show_depth_frame(self) -> None:
-    """Acquires and plots depth frame."""
-    frame = self.get_frame()
-    img = np.squeeze(frame.depth32f)
-    plt.imshow(
-        img, cmap='copper', vmin=_MIN_DEPTH_METERS, vmax=_MAX_DEPTH_METERS
-    )
-    plt.axis('off')
-
   def capture(
       self,
       timeout: datetime.timedelta = datetime.timedelta(
           seconds=_MAX_FRAME_WAIT_TIME_SECONDS
       ),
       sensor_ids: Optional[list[int]] = None,
+      skip_undistortion: bool = False,
   ) -> data_classes.CaptureResult:
     """Performs grpc request to capture sensor images from the camera.
 
@@ -201,6 +128,7 @@ class Camera:
       timeout: Timeout duration for Capture() service calls.
       sensor_ids: List of selected sensor identifiers for Capture() service
         calls.
+      skip_undistortion: Whether to skip undistortion.
 
     Returns:
       The acquired list of sensor images.
@@ -224,14 +152,14 @@ class Camera:
 
     sensor_ids = sensor_ids or []
     try:
-      response = self._capture(deadline, sensor_ids)
+      response = self._capture(deadline, sensor_ids, skip_undistortion)
     except grpc.RpcError as e:
       if cast(grpc.Call, e).code() != grpc.StatusCode.NOT_FOUND:
         raise
       # If the camera was not found, recreate the camera. This can happen when
       # switching between sim/real or when a service restarts.
       self._reinitialize_from_resources(deadline)
-      response = self._capture(deadline, sensor_ids)
+      response = self._capture(deadline, sensor_ids, skip_undistortion)
     return data_classes.CaptureResult(response.capture_result)
 
   def show_capture(
@@ -280,31 +208,11 @@ class Camera:
     self._handle = response.camera_handle
 
   @error_handling.retry_on_grpc_unavailable
-  def _get_frame(
+  def _capture(
       self,
       deadline: datetime.datetime,
+      sensor_ids: list[int],
       skip_undistortion: bool,
-      encoding: Optional[ImageEncoding] = None,
-  ) -> camera_server_pb2.GetFrameResponse:
-    """Grabs and returns frame from camera service."""
-    timeout = deadline - datetime.datetime.now()
-    if timeout <= datetime.timedelta(seconds=0):
-      raise grpc.RpcError(grpc.StatusCode.DEADLINE_EXCEEDED)
-    request = camera_server_pb2.GetFrameRequest()
-    request.camera_handle = self._handle
-    request.timeout.FromTimedelta(timeout)
-    if skip_undistortion:
-      request.post_processing.skip_undistortion = True
-    if encoding is not None:
-      request.post_processing.image_encoding = encoding.value
-    response, _ = self._stub.GetFrame.with_call(
-        request, timeout=timeout.seconds
-    )
-    return response
-
-  @error_handling.retry_on_grpc_unavailable
-  def _capture(
-      self, deadline: datetime.datetime, sensor_ids: list[int]
   ) -> camera_server_pb2.CaptureResponse:
     """Grabs and returns frame from camera service."""
     timeout = deadline - datetime.datetime.now()
@@ -314,6 +222,7 @@ class Camera:
     request.camera_handle = self._handle
     request.timeout.FromTimedelta(timeout)
     request.sensor_ids[:] = sensor_ids
+    request.post_processing.skip_undistortion = skip_undistortion
     response, _ = self._stub.Capture.with_call(request, timeout=timeout.seconds)
     return response
 

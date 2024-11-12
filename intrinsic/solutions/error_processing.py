@@ -12,15 +12,12 @@ from google.rpc import code_pb2
 from intrinsic.kubernetes.workcell_spec.proto import installer_pb2
 from intrinsic.kubernetes.workcell_spec.proto import installer_pb2_grpc
 from intrinsic.logging.errors.proto import error_report_pb2
-from intrinsic.perception.proto import frame_pb2
-from intrinsic.solutions import camera_utils
 from intrinsic.solutions import errors as solutions_errors
 from intrinsic.solutions import ipython
 
 
 ERROR_SEPARATOR = '\n\n========\n'
 NO_ERROR_FOUND_MSG = 'No error data found.'
-_ERROR_REPORT_EVENT_SOURCE = 'error_report'
 _COLLAPSIBLE_ERROR_HEADER_HTML = """<head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -138,20 +135,10 @@ def _error_recovery_instructions_list_html(err: 'ErrorInstance') -> str:
     recovery_instructions += f'<li>{instruction.human_readable}</li>'
   recovery_instructions += '</ul>'
 
-  images = ''
-
-  for d in err.data:
-    if d.data and d.data.type_url:
-      if frame_pb2.Frame.DESCRIPTOR.full_name in d.data.type_url:
-        frame = camera_utils.get_frame_from_any(d.data)
-        img = camera_utils.get_encoded_frame(frame)
-        images += f"<img src='data:image/png;base64,{img}'/>"
-
   return (
       '<br>'
       '  <strong>Recovery Instructions:</strong>'
       f'     {recovery_instructions}'
-      f'     {images}'
   )
 
 

@@ -363,38 +363,6 @@ class ErrorProcessingTest(absltest.TestCase):
         html_text, '<div class="error-header">  <strong>subskill error summary'
     )
 
-  def test_html_for_camera_frame(self):
-    """Tests that expected HTML code is generated for camera frames."""
-    error_report = text_format.Parse(
-        """
-        description {
-            status: {
-              message: "foo"
-            }
-            human_readable_summary: "skill error summary"
-          }
-          instructions {
-            items {
-              human_readable: "some specific helpful text"
-            }
-          }
-          data {
-            items {
-              data {
-                type_url: "type.googleapis.com/intrinsic_proto.perception.Frame"
-                value: ""
-              }
-            }
-          }""",
-        error_report_pb2.ErrorReport(),
-    )
-    operation = self._create_failed_operation([error_report])
-    error_group = self._error_module.extract_error_data(operation)
-
-    html_text = error_group._repr_html_()
-
-    self.assertRegex(html_text, "<img src='data:image/png;base64")
-
   def test_additional_information_filter(self):
     """Tests that error messages are filtered by the information they provide."""
     skill_error = error_processing.ErrorInstance(
