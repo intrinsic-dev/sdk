@@ -4,6 +4,7 @@ package resolvercache
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	descriptorpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -36,27 +37,20 @@ var (
 			protodesc.ToFileDescriptorProto((&bpb.B{}).ProtoReflect().Descriptor().ParentFile()),
 		},
 	}
+	errSpecific = errors.New("specific error")
 )
-
-type specificError struct{}
-
-func (*specificError) Error() string {
-	return "specific error"
-}
-
-var specificErr = new(specificError)
 
 func TestGetPropagatesFetchError(t *testing.T) {
 	ctx := context.Background()
 	rc := NewResolverCache(
 		FetchForFileDescriptorSet(func(_ context.Context, _ string) (*descriptorpb.FileDescriptorSet, error) {
-			return nil, specificErr
+			return nil, errSpecific
 		}),
 	)
 
 	value := "nothing really matters"
 	_, err := rc.Get(ctx, value)
-	if diff := cmp.Diff(specificErr, err, cmpopts.EquateErrors()); diff != "" {
+	if diff := cmp.Diff(errSpecific, err, cmpopts.EquateErrors()); diff != "" {
 		t.Errorf("rc.Get(ctx, %v) returned unexpected error, diff (-want +got):\n%s", value, diff)
 	}
 }
@@ -127,7 +121,7 @@ func TestGetUsesFetchedValueBasedOnId(t *testing.T) {
 			case "incomplete":
 				return incompleteSet, nil
 			case "error":
-				return nil, specificErr
+				return nil, errSpecific
 			default:
 				t.Fatalf("Unexpected id of %q.  The test case should request known value.", id)
 				return nil, nil
@@ -155,7 +149,7 @@ func TestGetUsesFetchedValueBasedOnId(t *testing.T) {
 		{
 			desc:    "get returns error provided by fetch function",
 			id:      "error",
-			wantErr: specificErr,
+			wantErr: errSpecific,
 		},
 		{
 			desc: "an encosing message resolves with correct descriptors",
