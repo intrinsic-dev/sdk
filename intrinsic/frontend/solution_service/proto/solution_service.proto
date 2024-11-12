@@ -94,6 +94,9 @@ message UpdateBehaviorTreeRequest {
   // The updated behavior tree. The `name` field is used to identify the
   // behavior tree to update.
   intrinsic_proto.executive.BehaviorTree behavior_tree = 1;
+
+  // If set to `true`, a new behavior tree will be created if it does not exist.
+  bool allow_missing = 2;
 }
 
 message DeleteBehaviorTreeRequest {
