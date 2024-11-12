@@ -13,11 +13,8 @@ import (
 	atpb "intrinsic/assets/proto/asset_type_go_proto"
 	iagrpcpb "intrinsic/assets/proto/installed_assets_go_grpc_proto"
 	iapb "intrinsic/assets/proto/installed_assets_go_grpc_proto"
+	"intrinsic/util/go/pointer"
 )
-
-func ptr[T any](value T) *T {
-	return &value
-}
 
 // GetCommand returns the command to list installed services in a cluster.
 func GetCommand() *cobra.Command {
@@ -47,7 +44,7 @@ func GetCommand() *cobra.Command {
 				client := iagrpcpb.NewInstalledAssetsClient(conn)
 				resp, err := client.ListInstalledAssets(ctx, &iapb.ListInstalledAssetsRequest{
 					StrictFilter: &iapb.ListInstalledAssetsRequest_Filter{
-						AssetType: ptr(atpb.AssetType_ASSET_TYPE_SERVICE),
+						AssetType: pointer.To(atpb.AssetType_ASSET_TYPE_SERVICE),
 					},
 					PageToken: pageToken,
 				})

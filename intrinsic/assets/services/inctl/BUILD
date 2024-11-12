@@ -79,6 +79,7 @@ go_library(
         "//intrinsic/assets:idutils",
         "//intrinsic/assets/proto:asset_type_go_proto",
         "//intrinsic/assets/proto:installed_assets_go_grpc_proto",
+        "//intrinsic/util/go:pointer",
         "@com_github_spf13_cobra//:go_default_library",
     ],
 )
