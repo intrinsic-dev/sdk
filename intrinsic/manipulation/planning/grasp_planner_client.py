@@ -10,8 +10,11 @@ from intrinsic.manipulation.grasping import grasp_execution_planner_params_pb2
 from intrinsic.manipulation.grasping import grasp_pb2
 from intrinsic.manipulation.grasping import grasp_planner_params_pb2
 from intrinsic.manipulation.grasping import grasp_planning_interfaces
+from intrinsic.manipulation.grasping import grasp_ranker_params_pb2
 from intrinsic.manipulation.service import grasp_planner_service_pb2
 from intrinsic.manipulation.service import grasp_planner_service_pb2_grpc
+from intrinsic.world.proto import object_world_refs_pb2
+import numpy as np
 
 DEFAULT_GRASP_PLANNER_SERVICE_ADDRESS = (
     "istio-ingressgateway.app-ingress.svc.cluster.local:80"
@@ -197,3 +200,49 @@ class GraspPlannerClient:
     )
     logging.info("Planning successful: %r.", bool(planning_result.success))
     return planning_result
+
+  def rank_grasps(
+      self,
+      grasps: Sequence[grasp_pb2.Grasp],
+      robot_name: str,
+      tool_frame: object_world_refs_pb2.TransformNodeReference,
+      rankers_params: grasp_ranker_params_pb2.GraspRankersParams,
+      world_id: str,
+      score_threshold: float,
+      recent_grasps: Sequence[grasp_pb2.AttemptedGrasp] | None = None,
+      max_num_grasps: int | None = None,
+      grasp_ranking_soft_timeout_in_sec: float = np.inf,
+  ) -> grasp_pb2.GraspPlan:
+    """Rank grasps.
+
+    Args:
+      grasps: The grasps to rank.
+      robot_name: The name of the robot.
+      tool_frame: The reference to the tool frame.
+      rankers_params: The parameters used to construct the grasp rankers.
+      world_id: The id of the world.
+      score_threshold: The threshold to filter out low scored grasps.
+      recent_grasps: The recently executed grasps. If None, use an empty list.
+      max_num_grasps: The maximum number of grasps to return.
+      grasp_ranking_soft_timeout_in_sec: The soft timeout to return early if at
+        least one valid grasp is found.
+
+    Returns:
+      The ranked grasps.
+    """
+    logging.info("Ranking %d grasps.", len(grasps))
+
+    return self._stub.RankGrasps(
+        grasp_planner_service_pb2.RankGraspsRequest(
+            grasps=grasps,
+            robot_name=robot_name,
+            tool_frame=tool_frame,
+            rankers_params=rankers_params,
+            world_id=world_id,
+            score_threshold=score_threshold,
+            max_num_grasps=max_num_grasps,
+            grasp_ranking_soft_timeout_in_sec=grasp_ranking_soft_timeout_in_sec,
+            recent_grasps=recent_grasps,
+        ),
+        **self._connection_params,
+    )

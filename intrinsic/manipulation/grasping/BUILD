@@ -8,6 +8,12 @@ load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_python//python:defs.bzl", "py_library")
 
+py_proto_library(
+    name = "grasp_ranker_params_py_pb2",
+    visibility = ["//intrinsic:internal_api_users"],
+    deps = [":grasp_ranker_params_proto"],
+)
+
 cc_proto_library(
     name = "grasp_cc_proto",
     visibility = ["//intrinsic:public_api_users"],

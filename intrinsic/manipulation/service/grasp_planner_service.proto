@@ -133,6 +133,8 @@ message RankGraspsRequest {
   string world_id = 6;
   // Grasps with a score lower than this are filtered
   float score_threshold = 7;
+  // Ranking returns early if these number of grasps have been found. Defaults
+  // to inf if not specified.
   optional int32 max_num_grasps = 8;
   // Returns if at least one valid grasp is found among the input grasps and the
   // timeout has reached. Note that this is not a hard time constraint - for
