@@ -38,6 +38,7 @@ import grpc
 from intrinsic.icon.proto import part_status_pb2
 from intrinsic.icon.proto import streaming_output_pb2
 from intrinsic.icon.python import icon_logging
+from intrinsic.logging.proto import bag_metadata_pb2
 from intrinsic.logging.proto import log_item_pb2
 from intrinsic.logging.proto import logger_service_pb2
 from intrinsic.logging.proto import logger_service_pb2_grpc
@@ -841,23 +842,94 @@ class StructuredLogs:
 
   @error_handling.retry_on_grpc_unavailable
   def sync_and_rotate_logs(
-      self, *event_sources: str
-  ) -> 'logger_service_pb2.SyncResponse':
+      self, event_sources: Optional[List[str]] = None
+  ) -> logger_service_pb2.SyncResponse:
     """Syncs remaining logs to GCS and rotates log files.
 
     If no event source is specified, all logs should be synced and rotated.
 
     Args:
-      *event_sources: event sources to sync.
+      event_sources: event sources to sync, as a list of regex patterns.
 
     Returns:
       A SyncAndRotateLogsResponse instance representing the response.
     """
     sync_request = logger_service_pb2.SyncRequest()
-    if not event_sources:
+    if event_sources is None:
       sync_request.sync_all = True
     else:
       sync_request.sync_all = False
       for event_source in event_sources:
         sync_request.event_sources.append(event_source)
     return self._stub.SyncAndRotateLogs(sync_request)
+
+  @error_handling.retry_on_grpc_unavailable
+  def create_local_recording(
+      self,
+      start_time: datetime.datetime,
+      end_time: datetime.datetime,
+      description: str,
+      event_sources_to_record: List[str],
+  ) -> bag_metadata_pb2.BagMetadata:
+    """Starts a local recording in the logging service.
+
+    This invokes CreateLocalRecording on the on-prem logging service, which
+    creates a local recording that is tracked and robustly uploaded to the
+    cloud.
+
+    Args:
+      start_time: Beginning of window to record data for.
+      end_time: End of window to record data for.
+      description: A human-readable description of the recording.
+      event_sources_to_record: Event sources to include in the recording, as a
+        list of regex patterns.
+
+    Returns:
+      A CreateLocalRecordingResponse instance representing the response from
+      calling the on-prem logging service, which contains the metadata of the
+      created recording.
+    """
+    create_request = logger_service_pb2.CreateLocalRecordingRequest(
+        description=description,
+    )
+    create_request.start_time.FromDatetime(start_time)
+    create_request.end_time.FromDatetime(end_time)
+    for event_source in event_sources_to_record:
+      create_request.event_sources_to_record.append(event_source)
+    return self._stub.CreateLocalRecording(create_request).bag
+
+  @error_handling.retry_on_grpc_unavailable
+  def list_local_recordings(
+      self,
+      start_time: Optional[datetime.datetime],
+      end_time: Optional[datetime.datetime],
+      only_summary_metadata: bool,
+      bag_ids: List[str],
+  ) -> List[bag_metadata_pb2.BagMetadata]:
+    """Calls ListLocalRecordings on the on-prem logging service.
+
+    This lists local recordings from structured logging data that were
+    previously created with CreateLocalRecording.
+
+    Args:
+      start_time: Beginning of window to record data for. If None, defaults to
+        the beginning of time.
+      end_time: End of window to record data for. If None, defaults to the
+        current time.
+      only_summary_metadata: Whether to only return summary metadata.
+      bag_ids: Bag IDs to filter by, if empty, all bags in query range are
+        returned.
+
+    Returns:
+      A ListLocalRecordingsgResponse instance representing the response.
+    """
+    list_request = logger_service_pb2.ListLocalRecordingsRequest(
+        only_summary_metadata=only_summary_metadata,
+    )
+    if start_time is not None:
+      list_request.start_time.FromDatetime(start_time)
+    if end_time is not None:
+      list_request.end_time.FromDatetime(end_time)
+    for bag_id in bag_ids:
+      list_request.bag_ids.append(bag_id)
+    return list(self._stub.ListLocalRecordings(list_request).bags)

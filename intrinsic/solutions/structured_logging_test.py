@@ -12,6 +12,7 @@ from google.protobuf import empty_pb2
 from google.protobuf import message as proto_message
 from google.protobuf import text_format
 from intrinsic.icon.proto import streaming_output_pb2
+from intrinsic.logging.proto import bag_metadata_pb2
 from intrinsic.logging.proto import log_item_pb2
 from intrinsic.logging.proto import logger_service_pb2
 from intrinsic.math.proto import pose_pb2
@@ -299,6 +300,8 @@ payload <
             'query_for_time_range',
             'set_log_options',
             'sync_and_rotate_logs',
+            'create_local_recording',
+            'list_local_recordings',
         ],
     )
 
@@ -1247,6 +1250,82 @@ payload:<
 
     with self.assertRaisesRegex(ValueError, expected_error):
       robot_status_logs.get_single_ft_sensor_part()
+
+  def test_create_local_recording(self):
+    stub = mock.MagicMock()
+    response = logger_service_pb2.CreateLocalRecordingResponse()
+    response.bag.bag_id = 'test-bag-id'
+    stub.CreateLocalRecording.return_value = response
+
+    start_time = datetime.datetime.now()
+    end_time = start_time + datetime.timedelta(seconds=10)
+    description = 'test-description'
+    event_sources_to_record = ['test-event-source']
+
+    logs = structured_logging.StructuredLogs(stub)
+    result = logs.create_local_recording(
+        start_time=start_time,
+        end_time=end_time,
+        description=description,
+        event_sources_to_record=event_sources_to_record,
+    )
+
+    stub.CreateLocalRecording.assert_called_once()
+    self.assertEqual(
+        stub.CreateLocalRecording.call_args.args[0].start_time.ToDatetime(),
+        start_time,
+    )
+    self.assertEqual(
+        stub.CreateLocalRecording.call_args.args[0].end_time.ToDatetime(),
+        end_time,
+    )
+    self.assertEqual(
+        stub.CreateLocalRecording.call_args.args[0].description, description
+    )
+    self.assertEqual(
+        stub.CreateLocalRecording.call_args.args[0].event_sources_to_record,
+        event_sources_to_record,
+    )
+    self.assertEqual(
+        result,
+        response.bag,
+    )
+
+  def test_list_local_recordings(self):
+    stub = mock.MagicMock()
+    response = logger_service_pb2.ListLocalRecordingsResponse()
+    response.bags.append(bag_metadata_pb2.BagMetadata(bag_id='test-bag-id'))
+    response.bags.append(bag_metadata_pb2.BagMetadata(bag_id='test-bag-id-2'))
+    stub.ListLocalRecordings.return_value = response
+
+    start_time = datetime.datetime.now()
+    end_time = start_time + datetime.timedelta(seconds=10)
+    only_summary_metadata = True
+    bag_ids = ['test-bag-id']
+
+    logs = structured_logging.StructuredLogs(stub)
+    result = logs.list_local_recordings(
+        start_time, end_time, only_summary_metadata, bag_ids
+    )
+
+    stub.ListLocalRecordings.assert_called_once()
+    self.assertEqual(
+        stub.ListLocalRecordings.call_args.args[0].start_time.ToDatetime(),
+        start_time,
+    )
+    self.assertEqual(
+        stub.ListLocalRecordings.call_args.args[0].end_time.ToDatetime(),
+        end_time,
+    )
+    self.assertEqual(
+        stub.ListLocalRecordings.call_args.args[0].only_summary_metadata,
+        only_summary_metadata,
+    )
+    self.assertEqual(
+        stub.ListLocalRecordings.call_args.args[0].bag_ids,
+        bag_ids,
+    )
+    self.assertListEqual(result, list(response.bags))
 
 
 if __name__ == '__main__':
