@@ -27,6 +27,7 @@ from google.protobuf import empty_pb2
 import grpc
 from intrinsic.frontend.cloud.api import solutiondiscovery_api_pb2
 from intrinsic.frontend.cloud.api import solutiondiscovery_api_pb2_grpc
+from intrinsic.frontend.solution_service.proto import solution_service_pb2_grpc
 from intrinsic.kubernetes.workcell_spec.proto import installer_pb2
 from intrinsic.kubernetes.workcell_spec.proto import installer_pb2_grpc
 from intrinsic.resources.client import resource_registry_client
@@ -45,6 +46,7 @@ from intrinsic.solutions import providers
 from intrinsic.solutions import simulation
 from intrinsic.solutions import userconfig
 from intrinsic.solutions import worlds
+from intrinsic.solutions.internal import behavior_tree_providing
 from intrinsic.solutions.internal import products as products_mod
 from intrinsic.solutions.internal import resources as resources_mod
 from intrinsic.solutions.internal import skill_providing
@@ -84,6 +86,7 @@ class Solution:
     is_simulated: Whether the solution is deployed on a simulated workcell
       rather than on a physical workcell.
     executive: Executive instance to communicate with executive.
+    behavior_trees: Behavior trees stored on the solution.
     skills: Wrapper to easily access skills.
     resources: Provides access to resources.
     products: Provides access to products.
@@ -113,9 +116,11 @@ class Solution:
   products: providers.ProductProvider
   world: worlds.ObjectWorld
   simulator: Optional[simulation.Simulation]
+  behavior_trees: providers.BehaviorTreeProvider
   skills: providers.SkillProvider
   errors: error_processing.ErrorsLoader
   pose_estimators: Optional[pose_estimation.PoseEstimators]
+  _solution_service: solution_service_pb2_grpc.SolutionServiceStub
   _skill_registry: skill_registry_client.SkillRegistryClient
   _resource_registry: resource_registry_client.ResourceRegistryClient
   _installer_service_stub: installer_pb2_grpc.InstallerServiceStub
@@ -127,6 +132,7 @@ class Solution:
       grpc_channel: grpc.Channel,
       is_simulated: bool,
       executive: execution.Executive,
+      solution_service: solution_service_pb2_grpc.SolutionServiceStub,
       skill_registry: skill_registry_client.SkillRegistryClient,
       resource_registry: resource_registry_client.ResourceRegistryClient,
       product_client: product_client_mod.ProductClient,
@@ -142,6 +148,7 @@ class Solution:
     self.is_simulated: bool = is_simulated
 
     self.executive = executive
+    self._solution_service = solution_service
     self._skill_registry = skill_registry
     self._resource_registry = resource_registry
     self._product_client = product_client
@@ -152,6 +159,9 @@ class Solution:
     self.simulator: Optional[simulation.Simulation] = simulator
     self._installer_service_stub = installer
 
+    self.behavior_trees = behavior_tree_providing.BehaviorTrees(
+        self._solution_service
+    )
     self.skills = skill_providing.Skills(
         self._skill_registry,
         self._resource_registry,
@@ -228,6 +238,10 @@ class Solution:
         grpc_channel
     )
 
+    # Remaining backends.
+    solution_service = solution_service_pb2_grpc.SolutionServiceStub(
+        grpc_channel
+    )
     product_client = product_client_mod.ProductClient.connect(grpc_channel)
 
     object_world = worlds.ObjectWorld.connect(_WORLD_ID, grpc_channel)
@@ -249,6 +263,7 @@ class Solution:
         grpc_channel,
         solution_status.simulated,
         executive,
+        solution_service,
         skill_registry,
         resource_registry,
         product_client,

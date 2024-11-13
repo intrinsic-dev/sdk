@@ -298,6 +298,7 @@ class SolutionTest(absltest.TestCase):
 
     executive = execution.Executive(self._executive_stub, errors, simulation)
 
+    self._solution_service = mock.MagicMock()
     self._skill_registry_stub = mock.MagicMock()
     skill_registry_response = skill_registry_pb2.GetSkillsResponse()
     skill_registry_response.skills.add().id = "ai.intrinsic.my_skill"
@@ -328,6 +329,7 @@ class SolutionTest(absltest.TestCase):
         self._mock_channel,
         is_simulated,
         self._executive,
+        self._solution_service,
         self._skill_registry,
         self._resource_registry,
         self._product_client,

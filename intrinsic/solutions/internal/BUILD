@@ -16,6 +16,18 @@ package(default_visibility = [
 ])
 
 py_library(
+    name = "behavior_tree_providing",
+    srcs = ["behavior_tree_providing.py"],
+    deps = [
+        "//intrinsic/frontend/solution_service/proto:solution_service_py_pb2",
+        "//intrinsic/frontend/solution_service/proto:solution_service_py_pb2_grpc",
+        "//intrinsic/solutions:behavior_tree",
+        "//intrinsic/solutions:providers",
+        requirement("grpcio"),
+    ],
+)
+
+py_library(
     name = "actions",
     srcs = ["actions.py"],
     srcs_version = "PY3",

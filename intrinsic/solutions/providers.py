@@ -3,9 +3,10 @@
 """Abstract base classes for skill and resource providers."""
 
 import abc
-from typing import Any, Iterable, List, Type, Union
+from typing import Any, Iterable, Type, Union
 
 from intrinsic.resources.proto import resource_handle_pb2
+from intrinsic.solutions import behavior_tree
 from intrinsic.solutions import provided
 
 
@@ -89,6 +90,39 @@ class ProductProvider(abc.ABC):
     ...
 
 
+class BehaviorTreeProvider(abc.ABC):
+  """A container that provides access to the behavior trees of a solution."""
+
+  @abc.abstractmethod
+  def keys(self) -> list[str]:
+    """Returns the names of available behavior trees."""
+    ...
+
+  @abc.abstractmethod
+  def __getitem__(self, name: str) -> behavior_tree.BehaviorTree:
+    """Returns the behavior tree with the given behavior tree id.
+
+    Args:
+      name: The name of the behavior tree.
+    """
+    ...
+
+  @abc.abstractmethod
+  def __setitem__(self, name: str, value: behavior_tree.BehaviorTree) -> None:
+    """Updates the behavior tree with the given name in the solution.
+
+    Args:
+      name: The name to assign the behavior tree.
+      value: The behavior tree to set.  If None, it is deleted.
+    """
+    ...
+
+  @abc.abstractmethod
+  def __delitem__(self, name: str):
+    """Deletes the behavior tree with the given name from the solution."""
+    ...
+
+
 class SkillProvider(abc.ABC):
   """A container that provides access to the skills of a solution.
 
@@ -107,7 +141,7 @@ class SkillProvider(abc.ABC):
     ...
 
   @abc.abstractmethod
-  def __dir__(self) -> List[str]:
+  def __dir__(self) -> list[str]:
     """Returns the names of available skills."""
     ...
 
