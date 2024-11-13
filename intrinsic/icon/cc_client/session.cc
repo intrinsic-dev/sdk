@@ -37,10 +37,12 @@
 #include "intrinsic/icon/proto/service.grpc.pb.h"
 #include "intrinsic/icon/proto/service.pb.h"
 #include "intrinsic/icon/proto/types.pb.h"
+#include "intrinsic/icon/release/grpc_time_support.h"
 #include "intrinsic/icon/release/source_location.h"
 #include "intrinsic/logging/proto/context.pb.h"
 #include "intrinsic/platform/common/buffers/realtime_write_queue.h"
 #include "intrinsic/util/grpc/channel_interface.h"
+#include "intrinsic/util/grpc/grpc.h"
 #include "intrinsic/util/proto_time.h"
 #include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_conversion_rpc.h"
@@ -286,6 +288,8 @@ absl::StatusOr<std::unique_ptr<Session>> Session::StartImpl(
     std::optional<absl::Time> deadline) {
   std::unique_ptr<grpc::ClientContext> start_session_context =
       client_context_factory();
+  // Streaming call that requires indefinite deadline
+  start_session_context->set_deadline(absl::InfiniteFuture());
   std::unique_ptr<grpc::ClientReaderWriterInterface<
       intrinsic_proto::icon::OpenSessionRequest,
       intrinsic_proto::icon::OpenSessionResponse>>
@@ -300,6 +304,8 @@ absl::StatusOr<std::unique_ptr<Session>> Session::StartImpl(
   // i.e. when the watcher loop is run.
   std::unique_ptr<grpc::ClientContext> watcher_context =
       client_context_factory();
+  // Streaming call that requires indefinite deadline
+  watcher_context->set_deadline(absl::InfiniteFuture());
   intrinsic_proto::icon::WatchReactionsRequest watch_reactions_request;
   watch_reactions_request.set_session_id(session_id.value());
   std::unique_ptr<grpc::ClientReaderInterface<
@@ -583,6 +589,8 @@ Session::GetLatestOutput(ActionInstanceId id, absl::Time deadline) {
 absl::StatusOr<::intrinsic_proto::icon::JointTrajectoryPVA>
 Session::GetPlannedTrajectory(ActionInstanceId id) {
   std::unique_ptr<grpc::ClientContext> context = client_context_factory_();
+  // Streaming call that requires indefinite deadline
+  context->set_deadline(absl::InfiniteFuture());
   ::intrinsic_proto::icon::GetPlannedTrajectoryRequest request;
   request.set_session_id(session_id_.value());
   request.set_action_id(id.value());

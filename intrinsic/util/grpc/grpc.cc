@@ -105,6 +105,11 @@ void ConfigureClientContext(::grpc::ClientContext* client_context) {
   // Expect that gRPC service calls will block/retry if the other end isn't
   // ready yet.
   client_context->set_wait_for_ready(true);
+
+  // Avoid indefinitely blocking service calls by default. Override separately
+  // if necessary.
+  client_context->set_deadline(absl::Now() +
+                               kGrpcClientServiceCallDefaultTimeout);
 }
 
 absl::Status WaitForChannelConnected(absl::string_view address,

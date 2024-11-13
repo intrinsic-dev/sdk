@@ -11,11 +11,13 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 #include "grpcpp/client_context.h"
 #include "grpcpp/support/sync_stream.h"
 #include "intrinsic/icon/common/id_types.h"
 #include "intrinsic/icon/proto/service.grpc.pb.h"
 #include "intrinsic/icon/proto/service.pb.h"
+#include "intrinsic/icon/release/grpc_time_support.h"
 #include "intrinsic/util/grpc/channel_interface.h"
 #include "intrinsic/util/status/status_macros.h"
 
@@ -82,6 +84,8 @@ class StreamWriter : public StreamWriterInterface<T> {
     } else {
       context = std::make_unique<::grpc::ClientContext>();
     }
+    // Streaming call that requires indefinite deadline
+    context->set_deadline(absl::InfiniteFuture());
     auto grpc_stream = stub->OpenWriteStream(context.get());
     auto generic_stream_writer = std::make_unique<GenericStreamWriter>(
         std::move(context), std::move(grpc_stream));

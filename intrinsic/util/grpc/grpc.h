@@ -17,9 +17,13 @@
 
 namespace intrinsic {
 
-// Constant `kGrpcClientConnectDefaultTimeout` is the default timeout for the
-// initial GRPC connection made by client libraries.
+// Default timeout for the initial GRPC connection made by client libraries.
 constexpr absl::Duration kGrpcClientConnectDefaultTimeout = absl::Seconds(5);
+
+// Default client-side timeout for invoking services (when configuring the
+// client context with ConfigureClientContext().
+constexpr absl::Duration kGrpcClientServiceCallDefaultTimeout =
+    absl::Seconds(60);
 
 /**
  * Create a grpc server using the listen port on the default interface
@@ -30,6 +34,14 @@ absl::StatusOr<std::unique_ptr<::grpc::Server>> CreateServer(
 
 /**
  * Apply the default configuration of our project to the given ClientContext.
+ *
+ * Configurations set on the context:
+ * - enable initial waiting for a connection to the service
+ * - set a fixed maximum deadline (see kGrpcClientServiceCallDefaultTimeout),
+ *   override if you know that this can be shorter, or if it needs to be
+ *   longer. In particular mind deadlines for wait calls (e.g., long-running
+ *   operations) and streaming calls which often need to be increased or be
+ *   set to absl::InfiniteFuture().
  */
 void ConfigureClientContext(::grpc::ClientContext* client_context);
 
