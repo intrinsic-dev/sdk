@@ -319,6 +319,7 @@ class Executive:
 
   @property
   def operation(self) -> Operation:
+    """Returns the current operation, or raises OperationNotFoundError if there is none."""
     self._update_operation()
 
     # Still no operation, none available in executive
@@ -326,6 +327,12 @@ class Executive:
       raise OperationNotFoundError("No active operation")
 
     return self._operation
+
+  @property
+  def has_operation(self) -> bool:
+    """Returns true if there is an active operation."""
+    self._update_operation()
+    return self._operation is not None
 
   @error_handling.retry_on_grpc_unavailable
   def _update_operation(self) -> None:

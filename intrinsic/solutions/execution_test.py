@@ -401,6 +401,21 @@ class ExecutiveTest(parameterized.TestCase):
         start_request
     )
 
+  def test_has_operation_true(self):
+    """Tests if executive.has_operation returns true for an operation loaded."""
+    response = operations_pb2.ListOperationsResponse()
+    response.operations.append(
+        self._create_operation_proto(behavior_tree_pb2.BehaviorTree.ACCEPTED)
+    )
+    self._executive_service_stub.ListOperations.return_value = response
+    self.assertTrue(self._executive.has_operation)
+
+  def test_has_operation_false(self):
+    """Tests if executive.has_operation returns false for no operation loaded."""
+    response = operations_pb2.ListOperationsResponse()
+    self._executive_service_stub.ListOperations.return_value = response
+    self.assertFalse(self._executive.has_operation)
+
   def test_operation_done(self):
     """Tests if executive.operation.done works."""
     self._setup_create_operation()
