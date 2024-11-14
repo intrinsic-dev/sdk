@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <cstring>
 #include <ctime>
+#include <optional>
 
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
@@ -150,8 +151,16 @@ RealtimeStatus BinaryFutex::WaitFor(absl::Duration timeout) const {
   return WaitUntil(absl::Now() + timeout);
 }
 
-bool BinaryFutex::TryWait() const {
-  return icon::TryWait(val_) == BinaryFutex::kPosted;
+std::optional<bool> BinaryFutex::TryWait() const {
+  switch (icon::TryWait(val_)) {
+    case BinaryFutex::kReady:
+      return false;
+    case BinaryFutex::kPosted:
+      return true;
+    case BinaryFutex::kClosed:
+    default:
+      return std::nullopt;
+  }
 }
 
 uint32_t BinaryFutex::Value() const { return val_; }

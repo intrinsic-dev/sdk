@@ -5,6 +5,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <optional>
 
 #include "absl/time/time.h"
 #include "intrinsic/icon/utils/realtime_status.h"
@@ -142,14 +143,20 @@ class BinaryFutex {
 
   // Checks (without blocking) whether the current value of the futex indicates
   // that it has been `Post()`ed.
-  // If it does, this function (atomically!) resets the futex value.
+  // If it does, this function (atomically!) resets the futex value to `kReady`.
+  //
+  // NOTE: If the code calling TryWait() owns the BinaryFutex, you can often be
+  // certain that the BinaryFutex is not closed. In this case, it's safe to mask
+  // the `nullopt` case by using `value_or(false)`. On the other hand, if you
+  // call this in a tight loop until it returns true, it's definitely a good
+  // idea to break from that loop on `nullopt`.
   //
   // Returns true if the futex was `Post()`ed (and this function subsequently
   // reset the value).
-  // Returns false if the futex wasn't `Post()`ed. This can happen for two
-  // reasons: Either the futex wasn't `Post()`ed _yet_, or it is closed (see
-  // `Close()` below) and never will be `Post()`ed.
-  bool TryWait() const;
+  // Returns false if the futex wasn't `Post()`ed, but is still active.
+  // Returns nullopt if the futex is closed (see `Close()` below) and never will
+  // be `Post()`ed.
+  std::optional<bool> TryWait() const;
 
   // Returns the current value of the futex.
   // This can either be kReady, kPosted or kClosed. The returned value might be

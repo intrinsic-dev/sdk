@@ -4,6 +4,7 @@
 #define INTRINSIC_ICON_INTERPROCESS_LOCKABLE_BINARY_FUTEX_H_
 
 #include <cstddef>
+#include <optional>
 
 #include "absl/base/attributes.h"
 #include "absl/base/thread_annotations.h"
@@ -62,10 +63,13 @@ class ABSL_LOCKABLE LockableBinaryFutex {
 
   // If the mutex can be acquired without blocking, does so exclusively and
   // returns `true`. Otherwise, returns `false`.
-  // Forwards error of BinaryFutex::TryWait().
   ABSL_MUST_USE_RESULT bool TryLock() INTRINSIC_CHECK_REALTIME_SAFE
       ABSL_EXCLUSIVE_TRYLOCK_FUNCTION(true) {
-    return futex_.TryWait();
+    // There's no reason why `futex_` would be closed (this class is fully in
+    // control of `futex_` and doesn't close it until it's destroyed), so treat
+    // a std::nullopt return as `false` (if it ever happens, this is correct –
+    // we did not lock the futex in this case).
+    return futex_.TryWait().value_or(false);
   }
 
   // Returns if the `BinaryFutex` is held.

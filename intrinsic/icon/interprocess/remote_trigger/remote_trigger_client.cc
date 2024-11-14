@@ -3,6 +3,7 @@
 #include "intrinsic/icon/interprocess/remote_trigger/remote_trigger_client.h"
 
 #include <atomic>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -177,7 +178,10 @@ RemoteTriggerClient::TriggerAsync() {
   // In case the response is already set before we do the request, it is a left
   // over from a previous call. TryWait resets the futex state to 0 in case it
   // was already 1.
-  response_futex_.GetValue().TryWait();
+  if (response_futex_.GetValue().TryWait() == std::nullopt) {
+    return FailedPreconditionError(
+        "The server is gone, cannot trigger any more requests");
+  }
 
   INTRINSIC_RT_RETURN_IF_ERROR(request_futex_.GetValue().Post());
   return AsyncRequest(&response_futex_, &request_started_);
