@@ -98,6 +98,12 @@ RemoteTriggerServer::~RemoteTriggerServer() {
   if (async_thread_.Joinable()) {
     async_thread_.Join();
   }
+  // Close `response_futex_`, but only if it's still there (if we're currently
+  // destroying a moved-out-of RemoteTriggerServer, `response_futex_` is
+  // nullptr)
+  if (response_futex_.GetRawValue() != nullptr) {
+    response_futex_.GetValue().Close();
+  }
 }
 
 void RemoteTriggerServer::Start() {
