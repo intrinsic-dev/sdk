@@ -61,7 +61,8 @@ If --realtime is specified, the update loop runs in a thread with realtime
 priority. Otherwise, it runs in a normal thread.
 )";
 
-constexpr char kLoggerAddress[] = "logger.app-intrinsic-base:8080";
+constexpr char kLoggerAddress[] =
+    "logger.app-intrinsic-base.svc.cluster.local:8080";
 static constexpr absl::Duration kLoggerConnectionTimeout = absl::Seconds(1);
 
 absl::StatusOr<HardwareModuleExitCode> ModuleMain(int argc, char** argv) {
