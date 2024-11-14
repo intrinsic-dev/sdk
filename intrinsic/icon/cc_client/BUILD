@@ -74,6 +74,7 @@ cc_library(
         "//intrinsic/util:proto_time",
         "//intrinsic/util/grpc",
         "//intrinsic/util/grpc:channel_interface",
+        "//intrinsic/util/status:status_builder",
         "//intrinsic/util/status:status_conversion_grpc",
         "//intrinsic/util/status:status_conversion_rpc",
         "//intrinsic/util/status:status_macros",

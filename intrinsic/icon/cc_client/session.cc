@@ -44,6 +44,7 @@
 #include "intrinsic/util/grpc/channel_interface.h"
 #include "intrinsic/util/grpc/grpc.h"
 #include "intrinsic/util/proto_time.h"
+#include "intrinsic/util/status/status_builder.h"
 #include "intrinsic/util/status/status_conversion_grpc.h"
 #include "intrinsic/util/status/status_conversion_rpc.h"
 #include "intrinsic/util/status/status_macros.h"
@@ -784,7 +785,7 @@ void Session::CleanUpWatcherCall() {
 }
 
 absl::Status Session::EndAndLogOnAbort(const ::google::rpc::Status& status) {
-  absl::Status absl_status = intrinsic::MakeStatusFromRpcStatus(status);
+  absl::Status absl_status = ToAbslStatus(status);
   if (absl_status.ok() || absl_status.code() != absl::StatusCode::kAborted) {
     return absl_status;
   }
@@ -793,7 +794,11 @@ absl::Status Session::EndAndLogOnAbort(const ::google::rpc::Status& status) {
   if (absl::Status call_status = End(); !call_status.ok()) {
     LOG(ERROR) << "Session ended with call status: " << call_status;
   }
-  return absl::AbortedError("Session ended");
+
+  // Prepend to make clear that the Session has ended.
+  StatusBuilder aborted_status_builder(absl_status);
+  aborted_status_builder.SetPrepend() << "Session ended. ";
+  return aborted_status_builder;
 }
 
 void Session::WatchReactionsThreadBody() {
