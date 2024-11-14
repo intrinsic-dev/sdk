@@ -43,10 +43,12 @@ py_library(
     srcs = ["default_parameters.py"],
     data = [
         ":error_bindings.so",
-        "@pybind11_abseil//pybind11_abseil:status.so",
     ],
     srcs_version = "PY3",
-    deps = ["@com_google_protobuf//:protobuf_python"],
+    deps = [
+        "@com_google_protobuf//:protobuf_python",
+        "@pybind11_abseil//pybind11_abseil:import_status_module",
+    ],
 )
 
 cc_library(
@@ -95,12 +97,12 @@ cc_library(
 py_library(
     name = "error_utils_py",
     srcs = ["error_utils.py"],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
     srcs_version = "PY3",
     deps = [
         "//intrinsic/skills/proto:error_py_pb2",
         requirement("grpcio"),
         "@com_google_googleapis//google/rpc:status_py_proto",
+        "@pybind11_abseil//pybind11_abseil:import_status_module",
     ],
 )
 
@@ -254,10 +256,7 @@ py_library(
 py_library(
     name = "skill_service_impl_py",
     srcs = ["skill_service_impl.py"],
-    data = [
-        ":error_bindings.so",
-        "@pybind11_abseil//pybind11_abseil:status.so",
-    ],
+    data = [":error_bindings.so"],
     srcs_version = "PY3",
     deps = [
         ":default_parameters_py",
@@ -291,6 +290,7 @@ py_library(
         "@com_google_googleapis//google/longrunning:operations_py_proto",
         "@com_google_googleapis//google/rpc:status_py_proto",
         "@com_google_protobuf//:protobuf_python",
+        "@pybind11_abseil//pybind11_abseil:import_status_module",
     ],
 )
 

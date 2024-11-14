@@ -460,7 +460,6 @@ py_test(
 py_test(
     name = "status_exception_test",
     srcs = ["status_exception_test.py"],
-    data = ["@pybind11_abseil//pybind11_abseil:status.so"],
     deps = [
         ":extended_status_py_pb2",
         ":status_exception",
@@ -471,6 +470,7 @@ py_test(
         "@com_google_googleapis//google/rpc:code_py_proto",
         "@com_google_googleapis//google/rpc:status_py_proto",
         "@com_google_protobuf//:protobuf_python",
+        "@pybind11_abseil//pybind11_abseil:import_status_module",
     ],
 )
 
