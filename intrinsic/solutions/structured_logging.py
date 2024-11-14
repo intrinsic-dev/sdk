@@ -29,7 +29,7 @@ import dataclasses
 import datetime
 import logging
 import re
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, Optional, Type, Union
 
 from google.protobuf import empty_pb2
 from google.protobuf import json_format
@@ -88,11 +88,11 @@ def _interpret_as_utc(dt: datetime.datetime) -> datetime.datetime:
 class DataSource:
   """Provides an API for interacting with LogItem payloads of a given type."""
 
-  def __init__(self, log_items: List[log_item_pb2.LogItem]):
-    self._log_items: List[log_item_pb2.LogItem] = log_items
+  def __init__(self, log_items: list[log_item_pb2.LogItem]):
+    self._log_items: list[log_item_pb2.LogItem] = log_items
 
   @property
-  def log_items(self) -> List[log_item_pb2.LogItem]:
+  def log_items(self) -> list[log_item_pb2.LogItem]:
     """The list of log items backing this source."""
     return self._log_items
 
@@ -143,7 +143,7 @@ class PartStatusSource(DataSource):
   simple.
   """
 
-  def __init__(self, log_items: List[log_item_pb2.LogItem], part_name: str):
+  def __init__(self, log_items: list[log_item_pb2.LogItem], part_name: str):
     """Init the PartStatusSource.
 
     Args:
@@ -153,7 +153,7 @@ class PartStatusSource(DataSource):
     super().__init__(log_items)
     self._part_name = part_name
 
-  def _get_used_fields(self) -> List[str]:
+  def _get_used_fields(self) -> list[str]:
     """Returns all used fields in the part_status payload."""
     first_item = _get_part_status(self._log_items[0], self._part_name)
     return [
@@ -170,10 +170,10 @@ class PartStatusSource(DataSource):
 
     def __init__(
         self,
-        log_items: List[log_item_pb2.LogItem],
+        log_items: list[log_item_pb2.LogItem],
         payload_accessor: Callable[
             [part_status_pb2.PartStatus],
-            Union[proto_message.Message, List[proto_message.Message]],
+            Union[proto_message.Message, list[proto_message.Message]],
         ],
         part_name: str,
     ):
@@ -193,7 +193,7 @@ class PartStatusSource(DataSource):
         self,
         payload_accessor: Callable[
             [part_status_pb2.PartStatus],
-            Union[proto_message.Message, List[proto_message.Message]],
+            Union[proto_message.Message, list[proto_message.Message]],
         ],
         every_n: int = 1,
     ) -> pd.DataFrame:
@@ -232,7 +232,7 @@ class PartStatusSource(DataSource):
         self,
         payload_accessor: Callable[
             [part_status_pb2.PartStatus],
-            Union[proto_message.Message, List[proto_message.Message]],
+            Union[proto_message.Message, list[proto_message.Message]],
         ],
         every_n: int = 1,
     ) -> pd.DataFrame:
@@ -409,7 +409,7 @@ class StreamingOutputSource(DataSource):
     return df
 
 
-def _data_source_factory(data: List[log_item_pb2.LogItem]) -> DataSource:
+def _data_source_factory(data: list[log_item_pb2.LogItem]) -> DataSource:
   """Create a DataSource given a list of LogItems.
 
   Depending on payload type, instantiate different classes with different
@@ -472,7 +472,7 @@ class EventSourceReader:
   ):
     self._stub: logger_service_pb2_grpc.DataLoggerStub = stub
     self._event_source: str = event_source
-    self._data: List[log_item_pb2.LogItem] = []
+    self._data: list[log_item_pb2.LogItem] = []
     self._cursor: str = None
 
   # The "*," makes the parameters keyword-only, which improves
@@ -609,7 +609,7 @@ class EventSourceReader:
     return response.item
 
 
-def _list_public_methods(instance: object) -> List[str]:
+def _list_public_methods(instance: object) -> list[str]:
   """Returns all public methods of the given instance.
 
   Args:
@@ -696,7 +696,7 @@ class StructuredLogs:
         f' ["{event_sources}"]'
     )
 
-  def __dir__(self) -> List[str]:
+  def __dir__(self) -> list[str]:
     return [
         format_event_source(source) for source in self.get_event_sources()
     ] + _list_public_methods(self)
@@ -728,7 +728,7 @@ class StructuredLogs:
     return cls.connect(solution.grpc_channel)
 
   @error_handling.retry_on_grpc_unavailable
-  def get_event_sources(self) -> List[str]:
+  def get_event_sources(self) -> list[str]:
     """Returns all event sources logged. Mainly useful for debugging."""
     return list(self._stub.ListLogSources(empty_pb2.Empty()).event_sources)
 
@@ -776,7 +776,7 @@ class StructuredLogs:
       event_source: str,
       seconds_to_read: int = 1200,
       max_num_items: int = 10000,
-  ) -> List[log_item_pb2.LogItem]:
+  ) -> list[log_item_pb2.LogItem]:
     """Queries the data logs.
 
     Args:
@@ -807,7 +807,7 @@ class StructuredLogs:
       start_time: datetime.datetime,
       end_time: datetime.datetime,
       max_num_items: int = 10000,
-  ) -> List[log_item_pb2.LogItem]:
+  ) -> list[log_item_pb2.LogItem]:
     """Queries the data logs for a given time range.
 
     Args:
@@ -842,7 +842,7 @@ class StructuredLogs:
 
   @error_handling.retry_on_grpc_unavailable
   def sync_and_rotate_logs(
-      self, event_sources: Optional[List[str]] = None
+      self, event_sources: Optional[list[str]] = None
   ) -> logger_service_pb2.SyncResponse:
     """Syncs remaining logs to GCS and rotates log files.
 
@@ -869,7 +869,7 @@ class StructuredLogs:
       start_time: datetime.datetime,
       end_time: datetime.datetime,
       description: str,
-      event_sources_to_record: List[str],
+      event_sources_to_record: list[str],
   ) -> bag_metadata_pb2.BagMetadata:
     """Starts a local recording in the logging service.
 
@@ -904,8 +904,8 @@ class StructuredLogs:
       start_time: Optional[datetime.datetime],
       end_time: Optional[datetime.datetime],
       only_summary_metadata: bool,
-      bag_ids: List[str],
-  ) -> List[bag_metadata_pb2.BagMetadata]:
+      bag_ids: list[str],
+  ) -> list[bag_metadata_pb2.BagMetadata]:
     """Calls ListLocalRecordings on the on-prem logging service.
 
     This lists local recordings from structured logging data that were
