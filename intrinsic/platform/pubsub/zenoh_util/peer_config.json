@@ -2,7 +2,7 @@
   "mode": "peer",
   "connect": {
     "endpoints": [
-      "tcp/zenoh-router.app-intrinsic-base:7447"
+      "tcp/zenoh-router.app-intrinsic-base.svc.cluster.local:7447"
     ]
   },
   "imw": {

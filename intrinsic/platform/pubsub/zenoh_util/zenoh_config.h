@@ -72,7 +72,8 @@ inline std::string GetZenohPeerConfig() {
   // If requested by the zenoh_router flag, try to alter the default router
   // connection provided in peer_config.json
   if (!absl::GetFlag(FLAGS_zenoh_router).empty()) {
-    std::string router_endpoint("tcp/zenoh-router.app-intrinsic-base:7447");
+    std::string router_endpoint(
+        "tcp/zenoh-router.app-intrinsic-base.svc.cluster.local:7447");
     size_t pos = config.find(router_endpoint);
     if (pos != std::string::npos) {
       config.replace(pos, router_endpoint.length(),
