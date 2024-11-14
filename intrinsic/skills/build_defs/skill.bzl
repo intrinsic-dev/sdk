@@ -403,10 +403,12 @@ def _intrinsic_skill(name, image, manifest, **kwargs):
         testonly = kwargs.get("testonly"),
     )
 
+def package_path():
+    return native.package_name() + "/" if native.package_name() else ""
+
 def build_symlinks(skill_service_name):
-    package_path = native.package_name() + "/" if native.package_name() else ""
     return {
-        "/skills/skill_service": package_path + skill_service_name,
+        "/skills/skill_service": package_path() + skill_service_name,
     }
 
 def cc_skill(
@@ -497,7 +499,9 @@ def py_skill(
         binary = binary_name,
         directory = "/skills",
         data_path = "/",
-        symlinks = build_symlinks(binary_name),
+        symlinks = build_symlinks(binary_name) | {
+            "/skills/skill_service.runfiles": "/skills/" + native.repository_name()[1:] + "/" + package_path() + binary_name + ".runfiles",
+        },
         workdir = "/",
         compatible_with = kwargs.get("compatible_with"),
         visibility = ["//visibility:private"],
