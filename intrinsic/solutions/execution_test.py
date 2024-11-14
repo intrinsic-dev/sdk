@@ -20,11 +20,13 @@ from intrinsic.executive.proto import executive_service_pb2
 from intrinsic.executive.proto import executive_service_pb2_grpc
 from intrinsic.executive.proto import run_metadata_pb2
 from intrinsic.logging.errors.proto import error_report_pb2
+from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.solutions import behavior_tree as bt
 from intrinsic.solutions import blackboard_value
 from intrinsic.solutions import error_processing
 from intrinsic.solutions import errors as solutions_errors
 from intrinsic.solutions import execution
+from intrinsic.solutions import provided
 from intrinsic.solutions import simulation as simulation_mod
 from intrinsic.solutions.internal import behavior_call
 from intrinsic.solutions.testing import test_skill_params_pb2
@@ -415,6 +417,96 @@ class ExecutiveTest(parameterized.TestCase):
     response = operations_pb2.ListOperationsResponse()
     self._executive_service_stub.ListOperations.return_value = response
     self.assertFalse(self._executive.has_operation)
+
+  @parameterized.named_parameters(
+      dict(
+          testcase_name='param_message',
+          parameters=test_skill_params_pb2.TestMessage(my_double=1.1),
+          expected_parameters=_to_any(
+              test_skill_params_pb2.TestMessage(my_double=1.1)
+          ),
+      ),
+      dict(
+          testcase_name='param_any',
+          parameters=_to_any(test_skill_params_pb2.TestMessage(my_double=1.1)),
+          expected_parameters=_to_any(
+              test_skill_params_pb2.TestMessage(my_double=1.1)
+          ),
+      ),
+  )
+  def test_run_start_parameters_any_works(
+      self, parameters, expected_parameters
+  ):
+    """Tests if executive.run(..., parameters=params) passes parameters."""
+    self._setup_create_operation()
+    self._setup_start_operation()
+    self._setup_get_operation_sequence([
+        behavior_tree_pb2.BehaviorTree.RUNNING,
+        behavior_tree_pb2.BehaviorTree.RUNNING,
+        behavior_tree_pb2.BehaviorTree.SUCCEEDED,
+        behavior_tree_pb2.BehaviorTree.SUCCEEDED,
+    ])
+
+    tree = bt.BehaviorTree()
+    tree.set_root(bt.Sequence())
+
+    # It is possible to directly pass the Any for starting.
+    # This must not be wrapped in an Any again.
+    self._executive.run(tree, parameters=parameters)
+
+    start_request = executive_service_pb2.StartOperationRequest(
+        name=_OPERATION_NAME
+    )
+    start_request.skill_trace_handling = (
+        run_metadata_pb2.RunMetadata.TracingInfo.SKILL_TRACES_LINK
+    )
+    start_request.parameters.CopyFrom(expected_parameters)
+    self._executive_service_stub.StartOperation.assert_called_once_with(
+        start_request
+    )
+
+  @parameterized.named_parameters(
+      dict(
+          # A user would usually have a provided.ResourceHandle as that is what
+          # solution.resources returns
+          testcase_name='resource_handle_object',
+          resources={
+              'robot': provided.ResourceHandle(
+                  resource_handle_pb2.ResourceHandle(name='my_robot')
+              )
+          },
+      ),
+      dict(
+          testcase_name='resource_handle_string',
+          resources={'robot': 'my_robot'},
+      ),
+  )
+  def test_run_start_resources_works(self, resources):
+    """Tests if executive.run(..., resources=assignments) passes resources."""
+    self._setup_create_operation()
+    self._setup_start_operation()
+    self._setup_get_operation_sequence([
+        behavior_tree_pb2.BehaviorTree.RUNNING,
+        behavior_tree_pb2.BehaviorTree.RUNNING,
+        behavior_tree_pb2.BehaviorTree.SUCCEEDED,
+        behavior_tree_pb2.BehaviorTree.SUCCEEDED,
+    ])
+
+    tree = bt.BehaviorTree()
+    tree.set_root(bt.Sequence())
+
+    self._executive.run(tree, resources=resources)
+
+    start_request = executive_service_pb2.StartOperationRequest(
+        name=_OPERATION_NAME
+    )
+    start_request.skill_trace_handling = (
+        run_metadata_pb2.RunMetadata.TracingInfo.SKILL_TRACES_LINK
+    )
+    start_request.resources['robot'] = 'my_robot'
+    self._executive_service_stub.StartOperation.assert_called_once_with(
+        start_request
+    )
 
   def test_operation_done(self):
     """Tests if executive.operation.done works."""

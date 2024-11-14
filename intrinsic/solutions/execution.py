@@ -21,9 +21,11 @@ my_executive.reset()
 import datetime
 import enum
 import time
-from typing import Any, List, Optional, Union, cast
+from typing import Any, List, Mapping, Optional, Union, cast
 
 from google.longrunning import operations_pb2
+from google.protobuf import any_pb2
+from google.protobuf import message as protobuf_message
 import grpc
 from intrinsic.executive.proto import behavior_tree_pb2
 from intrinsic.executive.proto import blackboard_service_pb2
@@ -37,6 +39,7 @@ from intrinsic.solutions import blackboard_value
 from intrinsic.solutions import error_processing
 from intrinsic.solutions import errors as solutions_errors
 from intrinsic.solutions import ipython
+from intrinsic.solutions import provided
 from intrinsic.solutions import simulation as simulation_mod
 from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
@@ -520,6 +523,8 @@ class Executive:
       self,
       plan_or_action: Optional[BehaviorTreeOrActionType] = None,
       *,
+      parameters: protobuf_message.Message | None = None,
+      resources: Mapping[str, str | provided.ResourceHandle] | None = None,
       silence_outputs: bool = False,
       step_wise: bool = False,
       start_node: Optional[bt.NodeIdentifierType] = None,
@@ -541,6 +546,10 @@ class Executive:
     Args:
       plan_or_action: A behavior tree, list of actions, or a single action or
         skill.
+      parameters: Parameter proto if the operation's behavior tree is
+        parameterizable.
+      resources: Maps from resource references in a PBT to the actual resource
+        handles that should be used.
       silence_outputs: If true, do not show success or error outputs of the
         execution in Jupyter.
       step_wise: Execute step-wise, i.e., suspend after each node of the tree.
@@ -558,6 +567,8 @@ class Executive:
     """
     self._run(
         plan_or_action,
+        parameters=parameters,
+        resources=resources,
         blocking=False,
         silence_outputs=silence_outputs,
         step_wise=step_wise,
@@ -570,6 +581,8 @@ class Executive:
       self,
       plan_or_action: Optional[BehaviorTreeOrActionType],
       *,
+      parameters: protobuf_message.Message | None = None,
+      resources: Mapping[str, str | provided.ResourceHandle] | None = None,
       silence_outputs: bool = False,
       step_wise: bool = False,
       start_node: Optional[bt.NodeIdentifierType] = None,
@@ -593,6 +606,10 @@ class Executive:
     Args:
       plan_or_action: A behavior tree, a list of actions (can be nested one
         level), or a single action.
+      parameters: Parameter proto if the operation's behavior tree is
+        parameterizable.
+      resources: Maps from resource references in a PBT to the actual resource
+        handles that should be used.
       silence_outputs: If true, do not show success or error outputs of the
         execution in Jupyter.
       step_wise: Execute step-wise, i.e., suspend after each node of the tree.
@@ -617,6 +634,8 @@ class Executive:
         plan_or_action,
         blocking=True,
         silence_outputs=silence_outputs,
+        parameters=parameters,
+        resources=resources,
         step_wise=step_wise,
         start_node=start_node,
         simulation_mode=simulation_mode,
@@ -633,6 +652,8 @@ class Executive:
       plan_or_action: Union[BehaviorTreeOrActionType],
       blocking: bool,
       silence_outputs: bool,
+      parameters: protobuf_message.Message | None,
+      resources: Mapping[str, str | provided.ResourceHandle] | None,
       step_wise: bool,
       simulation_mode: "Executive.SimulationMode",
       embed_skill_traces: bool,
@@ -647,6 +668,10 @@ class Executive:
         immediately after starting.
       silence_outputs: If true, do not show success or error outputs of the
         execution in Jupyter.
+      parameters: Parameter proto if the operation's behavior tree is
+        parameterizable.
+      resources: Maps from resource references in a PBT to the actual resource
+        handles that should be used.
       step_wise: Execute step-wise, i.e., suspend after each node of the tree.
       simulation_mode: Set the simulation mode on the start request. If None
         will execute in whatever mode is currently set in the executive.
@@ -689,12 +714,16 @@ class Executive:
           step_wise=step_wise,
           start_node=start_node,
           embed_skill_traces=embed_skill_traces,
+          parameters=None,
+          resources=None,
       )
       return
 
     self.load(plan_or_action)
     self.start(
         blocking,
+        parameters=parameters,
+        resources=resources,
         step_wise=step_wise,
         start_node=start_node,
         simulation_mode=simulation_mode,
@@ -760,6 +789,8 @@ class Executive:
       blocking: bool = True,
       silence_outputs: bool = False,
       *,
+      parameters: protobuf_message.Message | None = None,
+      resources: Mapping[str, str | provided.ResourceHandle] | None = None,
       step_wise: bool = False,
       start_node: Optional[bt.NodeIdentifierType] = None,
       simulation_mode: Optional["Executive.SimulationMode"] = None,
@@ -772,6 +803,10 @@ class Executive:
         immediately after starting.
       silence_outputs: If true, do not show success or error outputs of the
         execution in Jupyter.
+      parameters: Parameter proto if the operation's behavior tree is
+        parameterizable.
+      resources: Maps from resource references in a PBT to the actual resource
+        handles that should be used.
       step_wise: Execute step-wise, i.e., suspend after each node of the tree.
       start_node: Start only the specified node instead of the complete tree.
       simulation_mode: Set the simulation mode on the start request. If None
@@ -785,7 +820,29 @@ class Executive:
       grpc.RpcError: On any other gRPC error.
     """
 
+    # The StartRequest requires an Any proto. For convenience also accept a
+    # generic proto message and pack that here.
+    if (
+        parameters is not None
+        and parameters.DESCRIPTOR.full_name != any_pb2.Any.DESCRIPTOR.full_name
+    ):
+      params_any = any_pb2.Any()
+      params_any.Pack(parameters)
+      parameters = params_any
+    # The StartRequest accepts a map to str for the resource handles. For
+    # convenience here also accept the python class ResourceHandle.
+    resource_map: Mapping[str, str] = None
+    if resources is not None:
+      resource_map = dict()
+      for reference, handle in resources.items():
+        if isinstance(handle, provided.ResourceHandle):
+          resource_map[reference] = handle.name
+        else:
+          resource_map[reference] = handle
+
     self._start_with_retry(
+        parameters=parameters,
+        resources=resource_map,
         step_wise=step_wise,
         start_node=start_node,
         simulation_mode=simulation_mode,
@@ -997,6 +1054,8 @@ class Executive:
   def _start_with_retry(
       self,
       *,
+      parameters: any_pb2.Any | None,
+      resources: Mapping[str, str] | None,
       step_wise: bool = False,
       start_node: Optional[bt.NodeIdentifierType] = None,
       simulation_mode: Optional["Executive.SimulationMode"] = None,
@@ -1027,6 +1086,11 @@ class Executive:
     if start_node is not None:
       request.start_tree_id = start_node.tree_id
       request.start_node_id = start_node.node_id
+    if parameters is not None:
+      request.parameters.CopyFrom(parameters)
+    if resources is not None:
+      for reference, handle in resources.items():
+        request.resources[reference] = handle
     self._operation.update_from_proto(self._stub.StartOperation(request))
 
   @error_handling.retry_on_grpc_unavailable

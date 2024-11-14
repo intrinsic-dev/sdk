@@ -69,6 +69,7 @@ proto_library(
         ":run_metadata_proto",
         "@com_google_googleapis//google/api:annotations_proto",
         "@com_google_googleapis//google/longrunning:operations_proto",
+        "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:empty_proto",
         "@com_google_protobuf//:field_mask_proto",
     ],

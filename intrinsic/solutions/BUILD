@@ -213,6 +213,7 @@ py_library(
         ":error_processing",
         ":errors",
         ":ipython",
+        ":provided",
         ":simulation",
         ":utils",
         "//intrinsic/executive/proto:behavior_tree_py_pb2",
@@ -228,6 +229,7 @@ py_library(
         "//intrinsic/util/status:status_exception",
         requirement("grpcio"),
         "@com_google_googleapis//google/longrunning:operations_py_proto",
+        "@com_google_protobuf//:protobuf_python",
     ],
 )
 
@@ -245,6 +247,7 @@ py_test(
         ":error_processing",
         ":errors",
         ":execution",
+        ":provided",
         ":simulation",
         "//intrinsic/executive/proto:behavior_tree_py_pb2",
         "//intrinsic/executive/proto:blackboard_service_py_pb2",
@@ -254,6 +257,7 @@ py_test(
         "//intrinsic/executive/proto:executive_service_py_pb2_grpc",
         "//intrinsic/executive/proto:run_metadata_py_pb2",
         "//intrinsic/logging/errors/proto:error_report_py_pb2",
+        "//intrinsic/resources/proto:resource_handle_py_pb2",
         "//intrinsic/solutions/internal:behavior_call",
         "//intrinsic/solutions/testing:test_skill_params_py_pb2",
         requirement("grpcio"),
