@@ -53,6 +53,11 @@ proto_library(
     srcs = ["status.proto"],
 )
 
+py_proto_library(
+    name = "status_py_pb2",
+    deps = [":status_proto"],
+)
+
 go_proto_library(
     name = "status_go_proto",
     deps = [":status_proto"],
