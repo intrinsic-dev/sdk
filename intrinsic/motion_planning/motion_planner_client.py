@@ -92,12 +92,10 @@ class MotionPlanningOptions:
   skip_fuzzy_cache_check: bool = False
 
 
-class MotionPlannerClient:
-  """Helper class for calling the rpcs in the MotionPlannerService.
+class MotionPlannerClientBase:
+  """The base client for the MotionPlannerService.
 
-  Provides additional computations on top of the world.
-    * IK/FK
-    * Path planning
+  The class includes the externalized functionality of the MotionPlannerClient.
   """
 
   def __init__(
@@ -107,6 +105,19 @@ class MotionPlannerClient:
   ):
     self._world_id: str = world_id
     self._stub: motion_planner_service_pb2_grpc.MotionPlannerServiceStub = stub
+
+  def clear_cache(self) -> empty_pb2.Empty:
+    """Calls the ClearCache rpc."""
+    return self._stub.ClearCache(empty_pb2.Empty())
+
+
+class MotionPlannerClient(MotionPlannerClientBase):
+  """Helper class for calling the rpcs in the MotionPlannerService.
+
+  Provides additional computations on top of the world.
+    * IK/FK
+    * Path planning
+  """
 
   def plan_trajectory(
       self,
@@ -276,7 +287,3 @@ class MotionPlannerClient:
     request.robot_reference.object_id.by_name.object_name = robot_name
     response = self._stub.CheckCollisions(request)
     return response
-
-  def clear_cache(self) -> empty_pb2.Empty:
-    """Calls the ClearCache rpc."""
-    return self._stub.ClearCache(empty_pb2.Empty())
