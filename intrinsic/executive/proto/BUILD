@@ -155,6 +155,9 @@ go_proto_library(
 proto_library(
     name = "run_response_proto",
     srcs = ["run_response.proto"],
+    deps = [
+        "@com_google_protobuf//:any_proto",
+    ],
 )
 
 py_proto_library(

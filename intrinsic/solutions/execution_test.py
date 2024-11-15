@@ -19,6 +19,7 @@ from intrinsic.executive.proto import executive_execution_mode_pb2
 from intrinsic.executive.proto import executive_service_pb2
 from intrinsic.executive.proto import executive_service_pb2_grpc
 from intrinsic.executive.proto import run_metadata_pb2
+from intrinsic.executive.proto import run_response_pb2
 from intrinsic.logging.errors.proto import error_report_pb2
 from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.solutions import behavior_tree as bt
@@ -29,6 +30,7 @@ from intrinsic.solutions import execution
 from intrinsic.solutions import provided
 from intrinsic.solutions import simulation as simulation_mod
 from intrinsic.solutions.internal import behavior_call
+from intrinsic.solutions.testing import compare
 from intrinsic.solutions.testing import test_skill_params_pb2
 
 
@@ -87,6 +89,7 @@ class ExecutiveTest(parameterized.TestCase):
       state: behavior_tree_pb2.BehaviorTree.State = behavior_tree_pb2.BehaviorTree.RUNNING,
       bt_proto: behavior_tree_pb2.BehaviorTree = behavior_tree_pb2.BehaviorTree(),
       name: str = _OPERATION_NAME,
+      response: run_response_pb2.RunResponse | None = None,
   ):
     metadata = run_metadata_pb2.RunMetadata(behavior_tree_state=state)
     metadata.behavior_tree.CopyFrom(bt_proto)
@@ -101,6 +104,7 @@ class ExecutiveTest(parameterized.TestCase):
         name=name,
         done=done,
         metadata=_to_any(metadata),
+        response=_to_any(response) if response is not None else None,
     )
 
   def _setup_create_operation(self, setup_empty_list_operations: bool = True):
@@ -137,9 +141,12 @@ class ExecutiveTest(parameterized.TestCase):
       self,
       state: behavior_tree_pb2.BehaviorTree.State = behavior_tree_pb2.BehaviorTree.RUNNING,
       bt_proto: behavior_tree_pb2.BehaviorTree = behavior_tree_pb2.BehaviorTree(),
+      operation_response: run_response_pb2.RunResponse | None = None,
   ):
     """Makes a create call to prime the executive client with an operation."""
-    response = self._create_operation_proto(state, bt_proto)
+    response = self._create_operation_proto(
+        state, bt_proto, response=operation_response
+    )
     self._executive_service_stub.GetOperation.return_value = response
 
   def _setup_get_operation_sequence(
@@ -535,6 +542,40 @@ class ExecutiveTest(parameterized.TestCase):
     self._executive_service_stub.GetOperation.assert_called_with(
         operations_pb2.GetOperationRequest(name=_OPERATION_NAME)
     )
+
+  def test_operation_result(self):
+    """Tests if executive.operation.result works."""
+    tree = bt.BehaviorTree(root=bt.Sequence())
+    tree.initialize_pbt_with_protos(
+        skill_id='test_skill',
+        display_name='Test PBT',
+        return_value_proto=test_skill_params_pb2.TestMessage,
+    )
+    tree_proto = tree.proto
+
+    expected_result = test_skill_params_pb2.TestMessage(my_uint64=42)
+    response = run_response_pb2.RunResponse()
+    response.result.Pack(expected_result)
+
+    self._setup_get_operation(
+        state=behavior_tree_pb2.BehaviorTree.SUCCEEDED,
+        bt_proto=tree_proto,
+        operation_response=response,
+    )
+
+    # The first call to self._executive.operation will call ListOperations and
+    # take its first Operation. Subsequent calls will call GetOperation to
+    # update that. Thus also setup ListOperations and call that once before
+    # retrieving the result.
+    response = operations_pb2.ListOperationsResponse()
+    response.operations.append(
+        self._create_operation_proto(behavior_tree_pb2.BehaviorTree.SUCCEEDED)
+    )
+    self._executive_service_stub.ListOperations.return_value = response
+    self.assertTrue(self._executive.operation.done)
+
+    result = self._executive.operation.result
+    compare.assertProto2Equal(self, result, expected_result)
 
   def test_run_sends_stepwise_mode(self):
     """Tests that executive.run(action, stepwise=True) sends expected mode."""

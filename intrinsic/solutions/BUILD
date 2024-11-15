@@ -223,8 +223,10 @@ py_library(
         "//intrinsic/executive/proto:executive_service_py_pb2",
         "//intrinsic/executive/proto:executive_service_py_pb2_grpc",
         "//intrinsic/executive/proto:run_metadata_py_pb2",
+        "//intrinsic/executive/proto:run_response_py_pb2",
         "//intrinsic/solutions/internal:actions",
         "//intrinsic/util/grpc:error_handling",
+        "//intrinsic/util/proto:descriptors_py",
         "//intrinsic/util/status:extended_status_py_pb2",
         "//intrinsic/util/status:status_exception",
         requirement("grpcio"),
@@ -236,9 +238,6 @@ py_library(
 py_test(
     name = "execution_test",
     srcs = ["execution_test.py"],
-    data = [
-        "//intrinsic/solutions/testing:test_skill_params_proto_descriptors",
-    ],
     python_version = "PY3",
     srcs_version = "PY3",
     deps = [
@@ -256,9 +255,11 @@ py_test(
         "//intrinsic/executive/proto:executive_service_py_pb2",
         "//intrinsic/executive/proto:executive_service_py_pb2_grpc",
         "//intrinsic/executive/proto:run_metadata_py_pb2",
+        "//intrinsic/executive/proto:run_response_py_pb2",
         "//intrinsic/logging/errors/proto:error_report_py_pb2",
         "//intrinsic/resources/proto:resource_handle_py_pb2",
         "//intrinsic/solutions/internal:behavior_call",
+        "//intrinsic/solutions/testing:compare",
         "//intrinsic/solutions/testing:test_skill_params_py_pb2",
         requirement("grpcio"),
         "@com_google_absl_py//absl/testing:absltest",

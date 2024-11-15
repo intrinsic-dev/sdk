@@ -26,6 +26,7 @@ from typing import Any, List, Mapping, Optional, Union, cast
 from google.longrunning import operations_pb2
 from google.protobuf import any_pb2
 from google.protobuf import message as protobuf_message
+from google.protobuf import message_factory
 import grpc
 from intrinsic.executive.proto import behavior_tree_pb2
 from intrinsic.executive.proto import blackboard_service_pb2
@@ -34,6 +35,7 @@ from intrinsic.executive.proto import executive_execution_mode_pb2
 from intrinsic.executive.proto import executive_service_pb2
 from intrinsic.executive.proto import executive_service_pb2_grpc
 from intrinsic.executive.proto import run_metadata_pb2
+from intrinsic.executive.proto import run_response_pb2
 from intrinsic.solutions import behavior_tree as bt
 from intrinsic.solutions import blackboard_value
 from intrinsic.solutions import error_processing
@@ -44,6 +46,7 @@ from intrinsic.solutions import simulation as simulation_mod
 from intrinsic.solutions import utils
 from intrinsic.solutions.internal import actions
 from intrinsic.util.grpc import error_handling
+from intrinsic.util.proto import descriptors
 from intrinsic.util.status import extended_status_pb2
 from intrinsic.util.status import status_exception
 
@@ -115,11 +118,15 @@ class Operation:
     proto: Proto representation.
     metadata: RunMetadata for an active operation containing more state
       information.
+    response: RunResponse for an operation. Only expected to be available when
+      the operation is done and successful.
+    result: Result proto of a successful operation that returned a result.
   """
 
   _stub: executive_service_pb2_grpc.ExecutiveServiceStub
   _operation_proto: operations_pb2.Operation
   _metadata: run_metadata_pb2.RunMetadata
+  _response: run_response_pb2.RunResponse | None
 
   def __init__(
       self,
@@ -127,9 +134,17 @@ class Operation:
       operation_proto: operations_pb2.Operation,
   ):
     self._stub = stub
-    self._operation_proto = operation_proto
+    self.update_from_proto(operation_proto)
+
+  def update_from_proto(self, proto: operations_pb2.Operation) -> None:
+    """Update information from a proto."""
+    self._operation_proto = proto
     self._metadata = run_metadata_pb2.RunMetadata()
     self._operation_proto.metadata.Unpack(self._metadata)
+    self._response = None
+    if self._operation_proto.HasField("response"):
+      self._response = run_response_pb2.RunResponse()
+      self._operation_proto.response.Unpack(self._response)
 
   @property
   def name(self) -> str:
@@ -146,6 +161,48 @@ class Operation:
   @property
   def metadata(self) -> run_metadata_pb2.RunMetadata:
     return self._metadata
+
+  @property
+  def response(self) -> run_response_pb2.RunResponse | None:
+    return self._response
+
+  @property
+  def result(self) -> Any | None:
+    """Returns the result of the operation if one was returned.
+
+    The result is automatically unpacked to the proto message specified as the
+    return value message in the operation's behavior tree return value
+    description.
+    """
+    if self._response is None or not self._response.HasField("result"):
+      return None
+
+    return_value_description = (
+        self._metadata.behavior_tree.description.return_value_description
+    )
+    if (
+        not return_value_description.HasField("descriptor_fileset")
+        or not return_value_description.return_value_message_full_name
+    ):
+      # Return the Any result, but warn the user that it could not be unpacked
+      print(
+          "Could not unpack the operation result as the operation's behavior"
+          " tree description did not contain a file descriptor set or return"
+          " value message name."
+      )
+      return self._response.result
+
+    return_value_pool = descriptors.create_descriptor_pool(
+        return_value_description.descriptor_fileset
+    )
+    message_type = return_value_pool.FindMessageTypeByName(
+        return_value_description.return_value_message_full_name
+    )
+    assert message_type is not None
+
+    result_message = message_factory.GetMessageClass(message_type)()
+    self._response.result.Unpack(result_message)
+    return result_message
 
   @property
   def extended_status(self) -> status_exception.ExtendedStatusError | None:
@@ -222,11 +279,6 @@ class Operation:
       raise solutions_errors.NotFoundError("No behavior tree in operation.")
     tree = bt.BehaviorTree.create_from_proto(self.metadata.behavior_tree)
     return tree.find_tree_and_node_ids(node_name)
-
-  def update_from_proto(self, proto: operations_pb2.Operation) -> None:
-    """Update information from a proto."""
-    self._operation_proto = proto
-    self._operation_proto.metadata.Unpack(self._metadata)
 
 
 class Executive:
