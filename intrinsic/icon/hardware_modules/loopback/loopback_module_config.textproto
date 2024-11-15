@@ -1,0 +1,22 @@
+# Copyright 2023 Intrinsic Innovation LLC
+
+# proto-file: google/protobuf/any.proto
+# proto-message: google.protobuf.Any
+
+[type.googleapis.com/intrinsic_proto.icon.HardwareModuleConfig] {
+  module_config {
+    [type.googleapis.com/intrinsic_proto.icon.LoopbackConfig] {
+      cycle_duration: {
+        seconds: 0
+        nanos: 4000000
+      }
+    }
+  }
+  drives_realtime_clock: false
+  simulation_module_config {
+    cycle_duration: {
+      seconds: 0
+      nanos: 4000000
+    }
+  }
+}
