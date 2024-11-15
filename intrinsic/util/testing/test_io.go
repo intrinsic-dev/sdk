@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/bazelbuild/rules_go/go/tools/bazel"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
+	"intrinsic/util/path_resolver/pathresolver"
 )
 
 // MustCreateParentDirectory creates the full file path to a specified file
@@ -59,10 +59,10 @@ func MustCreateTextProto(t *testing.T, p proto.Message, path string) {
 // directory.
 func MustCreateRunfilePath(t *testing.T, path string) string {
 	t.Helper()
-	root, err := bazel.RunfilesPath()
+	rp, err := pathresolver.ResolveRunfilesPath(path)
 	if err != nil {
-		t.Fatalf("bazel.RunfilesPath() failed: %v", err)
+		t.Fatalf("pathresolver.ResolveRunfilesPath(%v) failed: %v", path, err)
 	}
 
-	return filepath.Join(root, path)
+	return rp
 }
