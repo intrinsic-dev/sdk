@@ -638,7 +638,45 @@ class StructuredLogs:
     def set_event_source(
         self, event_source: str
     ) -> 'StructuredLogs.LogOptions':
+      """Sets the event source for the log options.
+
+      Args:
+        event_source: The event source to set the log options for, must be a
+          valid regex. Used to determine which event sources the options should
+          be applied to.
+
+      Returns:
+        The log options object.
+      """
       self._log_options.event_source = event_source
+      return self
+
+    def set_log_options_precedence_value(
+        self, log_options_precedence_value: int
+    ) -> 'StructuredLogs.LogOptions':
+      """Sets the log options precedence value for the log options.
+
+      If there are multiple log options that match a given event source,
+      the log options with the highest precedence value is used by the logging
+      service.
+
+      If there are multiple log options with the same precedence value, then a
+      random one amongst the equals is used.
+
+      It is generally recommended to have higher precedence value for more
+      specific regexes, and lower precedence value for more general regexes.
+
+      The larger the value, higher in the precedence order.
+
+      Args:
+        log_options_precedence_value: The log options precedence value to set.
+
+      Returns:
+        The log options object.
+      """
+      self._log_options.log_options_precedence_value = (
+          log_options_precedence_value
+      )
       return self
 
     def set_sync_active(self, sync_active: bool) -> 'StructuredLogs.LogOptions':
@@ -746,12 +784,34 @@ class StructuredLogs:
   @error_handling.retry_on_grpc_unavailable
   def get_log_options(
       self,
-      event_source: str,
+      *,
+      event_source: Optional[str] = None,
+      key: Optional[str] = None,
   ) -> LogOptions:
-    """Returns the log options for an event source."""
+    """Returns the log options for an event source.
+
+    Args:
+      event_source: The event source to get the log options for.
+      key: The key to get the log options for in log options map. This is used
+        to identify the log options for setting/overwriting and fetching, and is
+        not used for matching against event sources.
+
+    Returns:
+      The log options for the event source or key.
+
+    Raises:
+      ValueError: If neither event_source nor key is provided, or both are
+      provided.
+    """
+    if event_source is None and key is None:
+      raise ValueError('Either event_source or key must be provided.')
+    if event_source is not None and key is not None:
+      raise ValueError('Only one of event_source or key can be provided.')
+
     log_options_request: logger_service_pb2.GetLogOptionsRequest = (
         logger_service_pb2.GetLogOptionsRequest(
             event_source=event_source,
+            key=key,
         )
     )
 
@@ -759,6 +819,7 @@ class StructuredLogs:
     return (
         self.LogOptions()
         .set_event_source(ret.event_source)
+        .set_log_options_precedence_value(ret.log_options_precedence_value)
         .set_sync_active(ret.sync_active)
         .set_max_buffer_byte_size(ret.max_buffer_byte_size)
         .set_token_bucket_options(

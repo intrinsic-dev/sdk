@@ -25,7 +25,33 @@ message TokenBucketOptions {
 
 message LogOptions {
   // The event source to set the log options for.
+  // This must be a valid RE2 regex string, and will be used as such.
+  // Note there is an edge case where "." will match anything, so handle it
+  // accordingly.
+  //
+  // For example:
+  //   - "foo" will match "foo".
+  //   - ".*" will match all event sources.
+  //   - "foo|bar" will match "foo" and "bar".
+  //   - "foo.*" will match "foo" and "foobar".
+  //   - "foo|bar|baz" will match "foo", "bar", and "baz".
   string event_source = 1;
+
+  // The precedence value of this instance of log options to apply.
+  //
+  // This is different from the `priority` field below, which is used to
+  // determine the order in which log items are uploaded.
+  //
+  // If there are multiple log options that match a given event source, the
+  // log options with the highest precedence value is used by the logging
+  // service. If there are multiple log options with the same precedence value,
+  // then a random one amongst the equals is used.
+  //
+  // It is generally recommended to have higher precedence value for more
+  // specific regexes, and lower precedence value for more general regexes.
+  //
+  // The larger the value, higher in the precedence order.
+  int32 log_options_precedence_value = 8;
 
   // If set to 'true', logs are synced to the cloud.
   optional bool sync_active = 2;
@@ -43,7 +69,7 @@ message LogOptions {
   // can potentially lead to starvation as we don't upload lower priority items
   // until all higher priority items are uploaded.
   //
-  // Larger the value, higher the priority.
+  // The larger the value, higher the priority.
   optional int32 priority = 5;
 
   // If set to `true`, logs are retained on disk via timescaledb.
@@ -134,25 +160,50 @@ message GetMostRecentItemResponse {
 }
 
 message SetLogOptionsRequest {
-  // A map of event source regex to the actual log options which are being set.
+  // A map of log options keys to the actual log options which are being set.
   //
-  // This RPC will set the log options for all current and future event sources
-  // matching the map key (which should be a regex string).
+  // This RPC will upsert the map of log options to be applied to all current
+  // and future event sources matching the regex string in the values.
   //
-  // A single event source should only have one set of log items. Overwriting of
-  // log options will occur if they were previously set.
+  // Log Options Matching:
+  // - The key of the map here is just used to identify the log options for
+  //   setting/overwriting and fetching, and is not used for matching against
+  //   event sources.
+  // - Instead, the LogOptions message in the value contains an event source
+  //   field which should be a regex string that is used to determine which
+  //   event sources the options should be applied to.
+  //
+  // Log Option Precedence:
+  // - There might be multiple matching log options for a single event source.
+  //   In that case, use the options with the highest precedence, see the
+  //   `log_options_precedence_value` field in the LogOptions message.
+  //
+  // Default Log Options:
+  // - Finally, if no log options are found for a given event source, then the
+  //   log options for the `default_event_source` key if it exists are used.
+  //
+  // - You can use this to set default log options for all event sources that
+  //   don't have any specific log options set.
   map<string, LogOptions> log_options = 1;
 }
 
 message SetLogOptionsResponse {}
 
 message GetLogOptionsRequest {
-  // The event source to look up the options for.
-  string event_source = 1;
+  oneof query {
+    // Look up the log options for the given event source.
+    // Will return the first matching log options in the precedence order.
+    string event_source = 1;
+
+    // Look up the log options for the given key.
+    //
+    // The key is just used to identify the log options for setting/overwriting
+    // and fetching, and is not used for matching against event sources.
+    string key = 2;
+  }
 }
 
 message GetLogOptionsResponse {
-  // The log options of the requested event source.
   LogOptions log_options = 1;
 }
 
@@ -258,7 +309,8 @@ service DataLogger {
   // Sets the LogOptions for matching event sources in the request.
   //
   // This RPC supports matching event sources via regex, and will apply the log
-  // options to all current and future event sources that match the request.
+  // options to all current and future event sources that match the request
+  // (with caveat, see request proto).
   rpc SetLogOptions(SetLogOptionsRequest) returns (SetLogOptionsResponse) {}
 
   // Returns the LogOptions for a specific `event_source`. If no user defined

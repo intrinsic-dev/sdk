@@ -118,14 +118,44 @@ blob_payload <
     # Receives the expected return value
     self.assertIsNone(result)
 
-  def test_get_log_options(self):
+  def test_get_log_options_fails_if_no_key_or_event_source(self):
+    stub = mock.MagicMock()
+    logs = structured_logging.StructuredLogs(stub)
+
+    with self.assertRaisesRegex(
+        ValueError, 'Either event_source or key must be provided.'
+    ):
+      logs.get_log_options(event_source=None, key=None)
+
+  def test_get_log_options_fails_if_both_key_or_event_source(self):
+    stub = mock.MagicMock()
+    logs = structured_logging.StructuredLogs(stub)
+
+    with self.assertRaisesRegex(
+        ValueError, 'Only one of event_source or key can be provided.'
+    ):
+      logs.get_log_options(event_source='ev1', key='ev1')
+
+  @parameterized.named_parameters(
+      dict(
+          testcase_name='event_source',
+          event_source='ev1',
+          key=None,
+      ),
+      dict(
+          testcase_name='key',
+          event_source=None,
+          key='ev1',
+      ),
+  )
+  def test_get_log_options(self, event_source, key):
     stub = mock.MagicMock()
     log_options = logger_service_pb2.LogOptions(max_buffer_byte_size=10)
     response = logger_service_pb2.GetLogOptionsResponse(log_options=log_options)
     stub.GetLogOptions.return_value = response
     logs = structured_logging.StructuredLogs(stub)
 
-    result = logs.get_log_options('ev1')
+    result = logs.get_log_options(event_source=event_source, key=key)
 
     stub.GetLogOptions.assert_called_once()
     # At least sends the expected argument type
