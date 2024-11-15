@@ -18,6 +18,8 @@ from intrinsic.skills.client import skill_registry_client
 from intrinsic.skills.proto import skill_registry_pb2
 from intrinsic.skills.proto import skills_pb2
 from intrinsic.solutions.testing import test_skill_params_pb2
+from intrinsic.util.path_resolver import path_resolver
+
 
 FLAGS = flags.FLAGS
 
@@ -42,17 +44,9 @@ def _get_test_message_file_descriptor_set(
   Returns:
     The file descriptor set.
   """
-  test_data_path = os.path.join(
-      FLAGS.test_srcdir,
-      os.environ.get('TEST_WORKSPACE'),
-      'intrinsic/solutions',
+  test_data_path = path_resolver.resolve_runfiles_path(
+      'intrinsic/solutions'
   )
-  if not os.path.exists(test_data_path):
-    test_data_path = os.path.join(
-        FLAGS.test_srcdir,
-        os.environ.get('TEST_WORKSPACE'),
-        'external/ai_intrinsic_sdks~override/intrinsic/solutions',
-    )
   file_descriptor_set_pbbin_filename = os.path.join(
       test_data_path,
       file_descriptor_set_pbbin_relative_filename,

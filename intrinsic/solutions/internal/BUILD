@@ -61,7 +61,6 @@ py_test(
         ":behavior_call",
         "//intrinsic/executive/proto:behavior_call_py_pb2",
         "//intrinsic/solutions/testing:compare",
-        "@com_google_absl_py//absl/flags",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_protobuf//:protobuf_python",
     ],

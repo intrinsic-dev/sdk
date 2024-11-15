@@ -3,11 +3,8 @@
 """Tests for intrinsic.executive.workcell.public.plan."""
 
 import datetime
-import os
 
-from absl import flags
 from absl.testing import absltest
-from google.protobuf import descriptor_pb2
 from google.protobuf import text_format
 from intrinsic.executive.proto import behavior_call_pb2
 from intrinsic.solutions.internal import actions
@@ -18,22 +15,6 @@ from intrinsic.solutions.testing import compare
 def _create_behavior_call_proto(index: int) -> behavior_call_pb2.BehaviorCall:
   proto = behavior_call_pb2.BehaviorCall(skill_id=f'ai.intrinsic.skill-{index}')
   return proto
-
-
-def _get_file_descriptor_set():
-  test_data_path = os.path.join(
-      flags.FLAGS.test_srcdir,
-      os.environ.get('TEST_WORKSPACE'),
-      'external/ai_intrinsic_sdks~override/intrinsic/solutions',
-  )
-
-  test_data_filename = os.path.join(
-      test_data_path,
-      'testing/test_skill_params_proto_descriptors_transitive_set_sci.proto.bin',
-  )
-
-  with open(test_data_filename, 'rb') as fileobj:
-    return descriptor_pb2.FileDescriptorSet.FromString(fileobj.read())
 
 
 class BehaviorCallActionTest(absltest.TestCase):

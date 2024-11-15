@@ -78,6 +78,7 @@ py_library(
         "//intrinsic/skills/client:skill_registry_client",
         "//intrinsic/skills/proto:skill_registry_py_pb2",
         "//intrinsic/skills/proto:skills_py_pb2",
+        "//intrinsic/util/path_resolver:path_resolver_py",
         "@com_google_absl_py//absl/flags",
         "@com_google_absl_py//absl/testing:absltest",
         "@com_google_protobuf//:protobuf_python",
