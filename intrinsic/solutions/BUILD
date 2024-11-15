@@ -310,6 +310,7 @@ py_library(
         ":deployments",
         ":errors",
         ":execution",
+        ":motion_planning",
         ":perception",
         ":pose_estimation",
         ":providers",
@@ -551,6 +552,27 @@ py_library(
         "//intrinsic/world/python:object_world_client",
         "//intrinsic/world/python:object_world_resources",
         requirement("grpcio"),
+    ],
+)
+
+py_library(
+    name = "motion_planning",
+    srcs = ["motion_planning.py"],
+    deps = [
+        ":deployments",
+        "//intrinsic/motion_planning:motion_planner_client_py",
+        "//intrinsic/motion_planning/proto:motion_planner_service_py_pb2_grpc",
+    ],
+)
+
+py_test(
+    name = "motion_planning_external_test",
+    srcs = ["motion_planning_external_test.py"],
+    deps = [
+        ":motion_planning",
+        "//intrinsic/motion_planning/proto:motion_planner_service_py_pb2_grpc",
+        "@com_google_absl_py//absl/testing:absltest",
+        "@com_google_protobuf//:protobuf_python",
     ],
 )
 
