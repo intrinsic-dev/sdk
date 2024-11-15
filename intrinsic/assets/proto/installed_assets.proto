@@ -10,6 +10,7 @@ import "intrinsic/assets/proto/id.proto";
 import "intrinsic/assets/proto/metadata.proto";
 import "intrinsic/assets/scene_objects/proto/scene_object_manifest.proto";
 import "intrinsic/assets/services/proto/service_manifest.proto";
+import "intrinsic/skills/proto/processed_skill_manifest.proto";
 
 // Service to manage the installation of assets.
 service InstalledAssets {
@@ -104,6 +105,7 @@ message CreateInstalledAssetRequest {
       intrinsic_proto.services.ProcessedServiceManifest service = 2;
       intrinsic_proto.scene_objects.ProcessedSceneObjectManifest scene_object =
           3;
+      intrinsic_proto.skills.ProcessedSkillManifest skill = 4;
     }
   }
 
@@ -120,6 +122,7 @@ message CreateInstalledAssetsRequest {
       intrinsic_proto.services.ProcessedServiceManifest service = 2;
       intrinsic_proto.scene_objects.ProcessedSceneObjectManifest scene_object =
           3;
+      intrinsic_proto.skills.ProcessedSkillManifest skill = 4;
     }
   }
 

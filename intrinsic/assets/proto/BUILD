@@ -274,6 +274,7 @@ proto_library(
         ":metadata_proto",
         "//intrinsic/assets/scene_objects/proto:scene_object_manifest_proto",
         "//intrinsic/assets/services/proto:service_manifest_proto",
+        "//intrinsic/skills/proto:processed_skill_manifest_proto",
         "@com_google_googleapis//google/longrunning:operations_proto",
     ],
 )
@@ -287,6 +288,7 @@ go_proto_library(
         "@com_google_cloud_go_longrunning//autogen/longrunningpb",
         "//intrinsic/assets/scene_objects/proto:scene_object_manifest_go_proto",
         "//intrinsic/assets/services/proto:service_manifest_go_proto",
+        "//intrinsic/skills/proto:processed_skill_manifest_go_proto",
     ],
     visibility = ["//intrinsic:__subpackages__"],
     deps = [":installed_assets_proto"],
@@ -302,6 +304,7 @@ go_grpc_library(
         ":metadata_go_proto",
         "//intrinsic/assets/scene_objects/proto:scene_object_manifest_go_proto",
         "//intrinsic/assets/services/proto:service_manifest_go_proto",
+        "//intrinsic/skills/proto:processed_skill_manifest_go_proto",
         "@com_google_cloud_go_longrunning//autogen/longrunningpb",
     ],
 )
