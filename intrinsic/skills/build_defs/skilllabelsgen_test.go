@@ -11,8 +11,8 @@ import (
 
 	slg "intrinsic/skills/build_defs/skilllabelsgen"
 	smpb "intrinsic/skills/proto/skill_manifest_go_proto"
+	"intrinsic/util/path_resolver/pathresolver"
 	"intrinsic/util/proto/protoio"
-	runfiles2 "intrinsic/util/runfiles"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 
 func mustHaveRunfile(t *testing.T, p string) string {
 	t.Helper()
-	rp, err := runfiles2.Rlocation(p)
+	rp, err := pathresolver.ResolveRunfilesPath(p)
 	if err != nil {
 		t.Fatalf("Unable to access runfile %v: %v", p, err)
 	}
