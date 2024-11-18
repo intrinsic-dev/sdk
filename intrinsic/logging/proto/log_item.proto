@@ -109,7 +109,8 @@ message LogItem {
       // ===== Perception =====
       intrinsic_proto.perception.PoseEstimationResult pose_estimation_result =
           10;
-      intrinsic_proto.perception.Frame perception_frame = 11;
+      intrinsic_proto.perception.Frame perception_frame = 11
+          [deprecated = true];
       intrinsic_proto.perception.HandEyeCalibrationResult
           hand_eye_calibration_result = 26;
       intrinsic_proto.perception.HandEyeCalibrationRequest
