@@ -1,7 +1,5 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
-"""Tests for intrinsic.solutions.structured_logging."""
-
 import datetime
 from typing import Optional
 from unittest import mock
@@ -537,6 +535,10 @@ payload:<
     items = logs.robot_status.read(seconds_to_read=10)
     joint_states = items.my_robot.get_joint_states()
     joint_state_from_part = items.get_single_arm_part().get_joint_states()
+    joint_state_from_part_by_name = items['my_robot'].get_joint_states()
+
+    self.assertTrue(items.my_robot.has_field('joint_states'))
+    self.assertFalse(items.my_robot.has_field('base_t_tip_sensed'))
 
     pd.testing.assert_frame_equal(
         joint_states['position_sensed'],
@@ -573,6 +575,7 @@ payload:<
     )
 
     pd.testing.assert_frame_equal(joint_states, joint_state_from_part)
+    pd.testing.assert_frame_equal(joint_states, joint_state_from_part_by_name)
 
   def test_get_event_source(self):
     data = [
@@ -1080,6 +1083,7 @@ payload:<
             'get_wrench_at_tip',
             'log_items',
             'num_events',
+            'has_field',
         ],
     )
 
@@ -1185,6 +1189,46 @@ payload:<
 
     with self.assertRaisesRegex(ValueError, expected_error):
       robot_status_logs.get_single_arm_part()
+
+  def test_get_non_existing_part_fails(self):
+    item = text_format.Parse(
+        """
+metadata <
+  event_source: "robot_status"
+>
+payload:<
+  icon_robot_status: <
+    status_map: <
+        key: 'my_robot'
+        value: <
+            timestamp_ns: 1200000000
+            joint_states: <
+              position_commanded_last_cycle: 1.0
+              position_sensed: 1.1
+            >
+        >
+    >
+  >
+>
+""",
+        log_item_pb2.LogItem(),
+    )
+
+    stub = self._create_mock_stub('robot_status', [item])
+    logs = structured_logging.StructuredLogs(stub)
+    robot_status_logs = logs.robot_status.read(seconds_to_read=10)
+
+    with self.assertRaisesRegex(
+        AttributeError,
+        'my_other_robot is not a valid part name',
+    ):
+      _ = robot_status_logs.my_other_robot
+
+    with self.assertRaisesRegex(
+        KeyError,
+        'my_other_robot is not a valid part name',
+    ):
+      _ = robot_status_logs['my_other_robot']
 
   @parameterized.named_parameters(
       dict(

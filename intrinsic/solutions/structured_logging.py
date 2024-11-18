@@ -296,6 +296,10 @@ class PartStatusSource(DataSource):
         self._log_items, payload_accessor, self._part_name
     )
 
+  def has_field(self, field_name: str) -> bool:
+    """Checks if the PartStatus usues the given field."""
+    return field_name in self._get_used_fields()
+
 
 class RobotStatusSource(DataSource):
   """Data source for the ICON robot status.
@@ -309,7 +313,13 @@ class RobotStatusSource(DataSource):
   def __getattr__(self, part_name: str) -> PartStatusSource:
     if part_name in self._part_names():
       return PartStatusSource(self._log_items, part_name)
-    raise ValueError(part_name + ' is not a valid part name.')
+    raise AttributeError(part_name + ' is not a valid part name.')
+
+  def __getitem__(self, part_name: str) -> PartStatusSource:
+    try:
+      return self.__getattr__(part_name)
+    except AttributeError as e:
+      raise KeyError(str(e)) from None
 
   def __dir__(self):
     return self._part_names()
