@@ -1,6 +1,0 @@
-{{/*
-Copyright 2023 Intrinsic Innovation LLC
-*/ -}}
-
-# This marks the root of the repository.
-# TODO(b/353693343) Remove after upgrading to Bazel 7.1
