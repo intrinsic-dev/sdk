@@ -1,0 +1,53 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.any_conversion_service.v1;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/descriptor.proto";
+
+service AnyConversionService {
+  // Converts an Any proto to a JSON string.
+  rpc ConvertToJson(ConvertToJsonRequest) returns (ConvertToJsonResponse) {}
+
+  // Converts a JSON encoded Any proto to an Any proto.
+  rpc ConvertFromJson(ConvertFromJsonRequest)
+      returns (ConvertFromJsonResponse) {}
+}
+
+message DescriptorSource {
+  oneof source {
+    // Skill ID used to look up the file descriptor set in the skill registry.
+    string skill_id = 1;
+
+    // File descriptor set to use for resolving types.
+    google.protobuf.FileDescriptorSet file_descriptor_set = 2;
+  }
+}
+
+message ConvertToJsonRequest {
+  // The Any proto to convert to JSON.
+  google.protobuf.Any any = 1;
+
+  // The descriptor source to use for resolving types.
+  DescriptorSource descriptor_source = 2;
+}
+
+message ConvertToJsonResponse {
+  // The JSON string representation of the Any proto.
+  string json = 1;
+}
+
+message ConvertFromJsonRequest {
+  // The JSON encoded Any proto to convert to an Any proto.
+  string json = 1;
+
+  // The descriptor source to use for resolving types.
+  DescriptorSource descriptor_source = 2;
+}
+
+message ConvertFromJsonResponse {
+  // The Any proto representation of the JSON encoded Any proto.
+  google.protobuf.Any any = 1;
+}
