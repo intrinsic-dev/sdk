@@ -30,7 +30,7 @@ message ServiceMetadata {
 message ServiceDef {
   // The list of gRPC service names that this service will expose.
   //
-  // Do not include DynamicReconfiguration in this list.
+  // Do not include DynamicReconfiguration or ServiceState in this list.
   repeated string service_proto_prefixes = 1;
   // The pod spec to be used in real environments.
   ServicePodSpec real_spec = 2;
