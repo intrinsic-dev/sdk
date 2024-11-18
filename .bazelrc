@@ -2,6 +2,7 @@
 
 # Enable Bzlmod for every Bazel command
 common --enable_bzlmod
+common --enable_workspace=false
 
 # Custom downloader configs. This makes it so that external URLs to download dependencies from
 # can be rewritten at build time and, for example, support custom mirrors.

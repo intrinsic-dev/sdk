@@ -125,7 +125,6 @@ func RunInitCmd(params *InitCmdParams) (InitSuccessMessage, error) {
 
 	moduleFile := filepath.Join(workspaceRoot, "MODULE.bazel")
 	bazelVersionFile := filepath.Join(workspaceRoot, ".bazelversion")
-	workspaceFile := filepath.Join(workspaceRoot, "WORKSPACE")
 	bazelrcFile := filepath.Join(workspaceRoot, ".bazelrc")
 	permissiveContentMirrorFile := filepath.Join(workspaceRoot, "bazel/content_mirror/permissive.cfg")
 	createdFiles := []string{bazelrcFile}
@@ -133,7 +132,6 @@ func RunInitCmd(params *InitCmdParams) (InitSuccessMessage, error) {
 	if !params.BazelrcOnly {
 		createdFiles = append(createdFiles, moduleFile)
 		createdFiles = append(createdFiles, bazelVersionFile)
-		createdFiles = append(createdFiles, workspaceFile)
 		createdFiles = append(createdFiles, permissiveContentMirrorFile)
 	}
 

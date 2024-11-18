@@ -7,7 +7,6 @@ exports_files(
     srcs = [
         "BUILD",
         "MODULE.bazel.template",
-        "WORKSPACE.template",
     ],
     visibility = [
         "//intrinsic/tools/inctl/cmd/bazel:__subpackages__",
