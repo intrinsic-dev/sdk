@@ -40,7 +40,7 @@ inline std::string GetZenohPeerConfig() {
   if (!file.is_open()) {
     runfiles_path =
         bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation(
-            "ai_intrinsic_sdks~override");
+            "ai_intrinsic_sdks~");
     file = std::ifstream(runfiles_path + config_path);
   }
 

@@ -110,7 +110,7 @@ void ZenohHandle::Initialize() {
   }
   if (handle == nullptr) {
     runfiles_dir = bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation(
-        "ai_intrinsic_sdks~override");
+        "ai_intrinsic_sdks~");
 #if defined(MEMORY_SANITIZER) || defined(THREAD_SANITIZER) || \
     defined(ADDRESS_SANITIZER)
     handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY);
