@@ -158,6 +158,13 @@ message SimBusModuleConfig {
   // testing!
   optional string world_server_address_testonly = 8;
 
-  // Configuration values that are exclusive to GazeboHwm
+  // Configuration values that are exclusive to GazeboHwm. If this is present,
+  // GazeboHwm will *not* attempt to deduce anything about what it should
+  // simulate and how.
+  //
+  // If this is *not* present, GazeboHwm will deduce parameters by looking up
+  // the Gazebo SDF model corresponding to the Intrinsic World object for this
+  // HWM. <joint> tags automatically become controllable joints, force/torque
+  // sensors are made available, and so on.
   optional intrinsic_proto.sim.SimHardwareModuleConfig new_sim_api_config = 9;
 }
