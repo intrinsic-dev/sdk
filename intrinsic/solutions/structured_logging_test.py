@@ -177,7 +177,14 @@ blob_payload <
     stub.GetMostRecentItem.return_value = response
     logs = structured_logging.StructuredLogs(stub)
     item = logs.ev1.peek()
+    self.assertEqual(stub.ListLogSources.call_count, 1)
     self.assertEqual(item.metadata.event_source, 'ev1')
+
+    # On second call, we should not call ListLogSources again, since we have
+    # cached the event source name.
+    item = logs.ev1.peek()
+    self.assertEqual(item.metadata.event_source, 'ev1')
+    self.assertEqual(stub.ListLogSources.call_count, 1)
 
   def test_query(self):
     """Tests that a simple query requests to the logger works."""

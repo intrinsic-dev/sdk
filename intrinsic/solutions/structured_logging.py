@@ -730,11 +730,62 @@ class StructuredLogs:
 
   def __init__(self, stub: logger_service_pb2_grpc.DataLoggerStub):
     self._stub: logger_service_pb2_grpc.DataLoggerStub = stub
+    self._cached_event_sources: list[str] = []
 
   def __getattr__(self, event_source: str) -> EventSourceReader:
     return self.get_event_source(event_source)
 
   def get_event_source(self, event_source: str) -> EventSourceReader:
+    """Gets an EventSourceReader for the given event source.
+
+    Will first check the cached event sources, and if the event source is not
+    found there, will query the logger service for the list of event sources and
+    refresh the cache.
+
+    Args:
+      event_source: The event source to get.
+
+    Returns:
+      An EventSourceReader for the given event source.
+
+    Raises:
+      AttributeError: If the event source is not found.
+    """
+    # The user might have specified a differently formatted event source, even
+    # though we need an exact match with the event source to build a reader so
+    # we need to handle that case by checking against the list of "true" event
+    # sources obtained from the logger service.
+    #
+    # The most common occurrence of this is from the fact that this method is
+    # called from __getattr__, which cannot support some expressions of event
+    # sources, such as "event_sources.foo".
+    #
+    # e.g.: "event_sources.foo" would become "event_sources_foo", breaking the
+    # match.
+    #
+    # Since listing event sources is expensive, we first check against the
+    # cached list of event sources.
+    for source in self._cached_event_sources:
+      # We do our comparison by re-creating the mangling.
+      if format_event_source(source) == event_source:
+        try:
+          # The event source string to use for the reader must be an exact match
+          # of the event source name in the logger service.
+          event_source_reader = EventSourceReader(self._stub, source)
+          # We peek to check if the event source exists, since the cache might
+          # have gotten stale.
+          #
+          # We peek instead of listing the event sources because it is cheaper.
+          event_source_reader.peek()
+          return event_source_reader
+        except grpc.RpcError as exc:
+          logging.warning(
+              'Failed to read from event source %s: %s, refreshing event source'
+              ' cache',
+              source,
+              exc,
+          )
+
     event_sources = self.get_event_sources()
     for source in event_sources:
       if format_event_source(source) == event_source:
@@ -778,7 +829,10 @@ class StructuredLogs:
   @error_handling.retry_on_grpc_unavailable
   def get_event_sources(self) -> list[str]:
     """Returns all event sources logged. Mainly useful for debugging."""
-    return list(self._stub.ListLogSources(empty_pb2.Empty()).event_sources)
+    self._cached_event_sources = list(
+        self._stub.ListLogSources(empty_pb2.Empty()).event_sources
+    )
+    return self._cached_event_sources
 
   @error_handling.retry_on_grpc_unavailable
   def set_log_options(
