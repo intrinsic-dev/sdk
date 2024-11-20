@@ -487,6 +487,7 @@ class EventSourceReader:
 
   # The "*," makes the parameters keyword-only, which improves
   # Jupyter discoverability.
+  @error_handling.retry_on_grpc_transient_errors
   def read(
       self,
       *,
@@ -610,6 +611,7 @@ class EventSourceReader:
     del self._data[:first_item_index]
     return _data_source_factory(self._data)
 
+  @error_handling.retry_on_grpc_transient_errors
   def peek(self) -> log_item_pb2.LogItem:
     """Returns the most recent LogItem for this event source."""
     request = logger_service_pb2.GetMostRecentItemRequest(
@@ -826,7 +828,7 @@ class StructuredLogs:
     """
     return cls.connect(solution.grpc_channel)
 
-  @error_handling.retry_on_grpc_unavailable
+  @error_handling.retry_on_grpc_transient_errors
   def get_event_sources(self) -> list[str]:
     """Returns all event sources logged. Mainly useful for debugging."""
     self._cached_event_sources = list(
@@ -834,7 +836,7 @@ class StructuredLogs:
     )
     return self._cached_event_sources
 
-  @error_handling.retry_on_grpc_unavailable
+  @error_handling.retry_on_grpc_transient_errors
   def set_log_options(
       self,
       log_options: Dict[str, LogOptions],
@@ -845,7 +847,7 @@ class StructuredLogs:
     )
     self._stub.SetLogOptions(log_options_request)
 
-  @error_handling.retry_on_grpc_unavailable
+  @error_handling.retry_on_grpc_transient_errors
   def get_log_options(
       self,
       *,
@@ -895,7 +897,7 @@ class StructuredLogs:
         .set_retain_buffer_on_disk(ret.retain_buffer_on_disk)
     )
 
-  @error_handling.retry_on_grpc_unavailable
+  @error_handling.retry_on_grpc_transient_errors
   def query(
       self,
       event_source: str,
@@ -925,7 +927,7 @@ class StructuredLogs:
       logging.warning(get_response.truncation_cause)
     return get_response.log_items
 
-  @error_handling.retry_on_grpc_unavailable
+  @error_handling.retry_on_grpc_transient_errors
   def query_for_time_range(
       self,
       event_source: str,
@@ -955,7 +957,7 @@ class StructuredLogs:
       logging.warning(get_response.truncation_cause)
     return get_response.log_items
 
-  @error_handling.retry_on_grpc_unavailable
+  @error_handling.retry_on_grpc_transient_errors
   def log(self, request: logger_service_pb2.LogRequest) -> None:
     """Logs a LogRequest to the cloud.
 
@@ -965,7 +967,7 @@ class StructuredLogs:
 
     self._stub.Log(request)
 
-  @error_handling.retry_on_grpc_unavailable
+  @error_handling.retry_on_grpc_transient_errors
   def sync_and_rotate_logs(
       self, event_sources: Optional[list[str]] = None
   ) -> logger_service_pb2.SyncResponse:
