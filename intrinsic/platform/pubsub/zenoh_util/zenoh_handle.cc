@@ -12,22 +12,22 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "intrinsic/platform/pubsub/zenoh_util/zenoh_helpers.h"
-#include "tools/cpp/runfiles/runfiles.h"
+#include "intrinsic/util/path_resolver/path_resolver.h"
 
 #define GET_FUNCTION_PTR(handle, func) GetFunctionHandle(handle, #func, &func);
 
 namespace intrinsic {
 
-constexpr char libZenohPath[] = "/intrinsic/insrc/middleware/libimw_zenoh.so.1";
+constexpr char libZenohPath[] = "intrinsic/insrc/middleware/libimw_zenoh.so.1";
 // NOLINTBEGIN(clang-diagnostic-unused-const-variable)
 constexpr char libTestAsanZenohPath[] =
-    "/intrinsic/insrc/middleware/"
+    "intrinsic/insrc/middleware/"
     "libimw_intraprocess_only_asan.so.1";
 constexpr char libTestMsanZenohPath[] =
-    "/intrinsic/insrc/middleware/"
+    "intrinsic/insrc/middleware/"
     "libimw_intraprocess_only_msan.so.1";
 constexpr char libTestTsanZenohPath[] =
-    "/intrinsic/insrc/middleware/"
+    "intrinsic/insrc/middleware/"
     "libimw_intraprocess_only_tsan.so.1";
 // NOLINTEND(clang-diagnostic-unused-const-variable)
 
@@ -51,27 +51,32 @@ ZenohHandle* ZenohHandle::CreateZenohHandle() {
 }
 
 void ZenohHandle::Initialize() {
-  std::string runfiles_dir;
-  std::string path;
+  std::string library_path;
   if (!RunningInKubernetes()) {
-    runfiles_dir = bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation(
-        "ai_intrinsic_sdks");
-
 #if defined(MEMORY_SANITIZER)
-    path = libTestMsanZenohPath;
+    library_path = libTestMsanZenohPath;
 #elif defined(THREAD_SANITIZER)
-    path = libTestTsanZenohPath;
+    library_path = libTestTsanZenohPath;
 #elif defined(ADDRESS_SANITIZER)
-    path = libTestAsanZenohPath;
+    library_path = libTestAsanZenohPath;
 #else
-    path = libZenohPath;
+    library_path = libZenohPath;
 #endif
   } else {
     // These are here to avoid any unused variable linter warnings.
     (void)libTestAsanZenohPath;
     (void)libTestMsanZenohPath;
     (void)libTestTsanZenohPath;
-    path = libZenohPath;
+    library_path = libZenohPath;
+  }
+
+  std::string path;
+  if (RunningUnderTest()) {
+    path = PathResolver::ResolveRunfilesPathForTest(library_path);
+  } else if (!RunningInKubernetes()) {
+    path = PathResolver::ResolveRunfilesPath(library_path);
+  } else {
+    path = "/" + library_path;
   }
 
 #if defined(MEMORY_SANITIZER) || defined(THREAD_SANITIZER) || \
@@ -83,7 +88,7 @@ void ZenohHandle::Initialize() {
   // built from the same source tree as the parent process. For complex
   // reasons, setting RTLD_DEEPBIND here causes the sanitizers to fail with
   // many false-alarms.
-  handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY);
+  handle = dlopen(path.c_str(), RTLD_LAZY);
 #else
   // The "full" externally-built IMW implementation links against the external
   // absl::log implementation (among other libraries), which is different from
@@ -94,33 +99,11 @@ void ZenohHandle::Initialize() {
   // executable with symbols it finds in the shared-object, so LOG() calls in
   // the shared-object will use the absl::log implementation and globals that
   // it was built against.
-  handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY | RTLD_DEEPBIND);
+  handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_DEEPBIND);
 #endif
 
-  // MODULE.bazel
   if (handle == nullptr) {
-    runfiles_dir =
-        bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation("_main");
-#if defined(MEMORY_SANITIZER) || defined(THREAD_SANITIZER) || \
-    defined(ADDRESS_SANITIZER)
-    handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY);
-#else
-    handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY | RTLD_DEEPBIND);
-#endif
-  }
-  if (handle == nullptr) {
-    runfiles_dir = bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation(
-        "ai_intrinsic_sdks~");
-#if defined(MEMORY_SANITIZER) || defined(THREAD_SANITIZER) || \
-    defined(ADDRESS_SANITIZER)
-    handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY);
-#else
-    handle = dlopen((runfiles_dir + path).c_str(), RTLD_LAZY | RTLD_DEEPBIND);
-#endif
-  }
-
-  if (handle == nullptr) {
-    LOG(FATAL) << "Cannot open the shared library at: " << runfiles_dir + path;
+    LOG(FATAL) << "Cannot open the shared library at: " << path;
   }
   GET_FUNCTION_PTR(handle, imw_init);
   GET_FUNCTION_PTR(handle, imw_fini);

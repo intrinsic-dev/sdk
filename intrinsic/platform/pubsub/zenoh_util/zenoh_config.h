@@ -12,7 +12,7 @@
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "intrinsic/platform/pubsub/zenoh_util/zenoh_helpers.h"
-#include "tools/cpp/runfiles/runfiles.h"
+#include "intrinsic/util/path_resolver/path_resolver.h"
 
 ABSL_DECLARE_FLAG(std::string, zenoh_router);
 
@@ -20,30 +20,18 @@ namespace intrinsic {
 
 inline std::string GetZenohPeerConfig() {
   std::string config;
+  const std::string config_path =
+      "intrinsic/platform/pubsub/zenoh_util/peer_config.json";
 
-  std::string config_path =
-      "/intrinsic/platform/pubsub/zenoh_util/peer_config.json";
-  std::string runfiles_path;
-
-  if (!RunningInKubernetes()) {
-    runfiles_path =
-        bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation(
-            "ai_intrinsic_sdks");
+  std::string path;
+  if (RunningUnderTest()) {
+    path = PathResolver::ResolveRunfilesPathForTest(config_path);
+  } else if (!RunningInKubernetes()) {
+    path = PathResolver::ResolveRunfilesPath(config_path);
+  } else {
+    path = "/" + config_path;
   }
-  std::ifstream file(runfiles_path + config_path);
-  // MODULE.bazel
-  if (!file.is_open()) {
-    runfiles_path =
-        bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation("_main");
-    file = std::ifstream(runfiles_path + config_path);
-  }
-  if (!file.is_open()) {
-    runfiles_path =
-        bazel::tools::cpp::runfiles::Runfiles::Create("")->Rlocation(
-            "ai_intrinsic_sdks~");
-    file = std::ifstream(runfiles_path + config_path);
-  }
-
+  std::ifstream file(path);
   if (file.is_open()) {
     // Read the entire file into a string
     file.seekg(0, std::ios::end);
@@ -52,7 +40,7 @@ inline std::string GetZenohPeerConfig() {
     file.read(&config[0], config.size());
     file.close();
   } else {
-    LOG(ERROR) << "Could not open config file: " << runfiles_path + config_path;
+    LOG(ERROR) << "Could not open config file: " << config_path;
   }
 
   if (!config.empty()) {
