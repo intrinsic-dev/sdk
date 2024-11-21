@@ -50,7 +50,7 @@ func CreateNewFileFromTemplate(path string, templateName string, data any, templ
 	if err := os.MkdirAll(filepath.Dir(path), 0770 /*rwxrwx---*/); err != nil {
 		return fmt.Errorf("creating directory %s: %w", filepath.Dir(path), err)
 	}
-	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0660 /*rw-rw----*/)
+	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0660 /*rw-rw----*/)
 	if err != nil {
 		return fmt.Errorf("creating file %s: %w", path, err)
 	}
