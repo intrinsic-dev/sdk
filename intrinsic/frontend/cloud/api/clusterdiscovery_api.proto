@@ -64,9 +64,7 @@ message ListClusterDescriptionsResponse {
 service ClusterDiscoveryService {
 
   // Returns a list of clusters registered to the org which is provided via the
-  // gRPC context (as the value of an HTTP cookie with name "org-id"). If no org
-  // is provided, the defaultorg will be used. In multi-tenant projects, this is
-  // an empty org, and no cluster will be returned.
+  // gRPC context (as the value of an HTTP cookie with name "org-id").
   rpc ListClusterDescriptions(ListClusterDescriptionsRequest)
       returns (ListClusterDescriptionsResponse) {}
 }
