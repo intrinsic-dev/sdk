@@ -7,7 +7,7 @@ package intrinsic_proto.skills;
 import "intrinsic/perception/proto/hand_eye_calibration.proto";
 import "intrinsic/perception/proto/pattern_detection_config.proto";
 import "intrinsic/perception/proto/pose_estimator_id.proto";
-import "intrinsic/skills/apps/calibration/sample_calibration_poses.proto";
+import "intrinsic/perception/skills/calibration/sample_calibration_poses.proto";
 import "intrinsic/skills/proto/skill_parameter_metadata.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 
