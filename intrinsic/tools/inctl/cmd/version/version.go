@@ -34,6 +34,7 @@ var (
 	//       ...
 	//   See https://github.com/bazelbuild/rules_go/blob/master/docs/go/core/defines_and_stamping.md#defines-and-stamping.
 	SDKVersion string = SDKVersionDefaultValue
+
 )
 
 type versionInfo struct {
