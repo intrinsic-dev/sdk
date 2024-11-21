@@ -7,7 +7,6 @@
 
 #include <atomic>
 #include <string>
-
 #include "absl/status/status.h"
 #include "intrinsic/icon/testing/realtime_annotations.h"
 #include "intrinsic/logging/proto/log_item.pb.h"
@@ -32,7 +31,6 @@ class MetricsLogger {
 
   // Starts the metrics logger thread
   absl::Status Start();
-
  private:
   // Thread function
   void LoggerFunction();

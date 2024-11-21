@@ -6,9 +6,9 @@
 #include <string>
 #include <utility>
 
+#include "google/protobuf/struct.pb.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "google/protobuf/struct.pb.h"
 #include "intrinsic/logging/data_logger_client.h"
 #include "intrinsic/logging/proto/log_item.pb.h"
 #include "intrinsic/performance/analysis/proto/performance_metrics.pb.h"
@@ -52,6 +52,7 @@ void MetricsLogger::LoggerFunction() {
   while (!shutdown_requested_.load()) {
     // Build performance metrics log
     LogItem log_item = BuildMetricsLog();
+
   }
 }
 
@@ -72,6 +73,7 @@ void InsertStringField(PerformanceMetrics& perf_metrics, std::string field_name,
       std::make_pair(field_name, field_value_proto));
 }
 
-LogItem MetricsLogger::BuildMetricsLog() {}
+LogItem MetricsLogger::BuildMetricsLog() {
+}
 
 }  // namespace intrinsic::icon
