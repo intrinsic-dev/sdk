@@ -113,3 +113,20 @@ proto_library(
     srcs = ["grasp_adapter_params.proto"],
     visibility = ["//intrinsic:public_api_users"],
 )
+
+py_proto_library(
+    name = "grasp_annotator_py_pb2",
+    visibility = ["//intrinsic:public_api_users"],
+    deps = [":grasp_annotator_proto"],
+)
+
+proto_library(
+    name = "grasp_annotator_proto",
+    srcs = ["grasp_annotator.proto"],
+    visibility = ["//intrinsic:public_api_users"],
+    deps = [
+        "//intrinsic/geometry/proto:triangle_mesh_proto",
+        "//intrinsic/math/proto:pose_proto",
+        "//intrinsic/math/proto:vector2_proto",
+    ],
+)

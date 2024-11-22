@@ -1,0 +1,34 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.grasping.service;
+
+import "intrinsic/manipulation/grasping/grasp_annotations.proto";
+import "intrinsic/manipulation/grasping/grasp_annotator.proto";
+
+message GraspAnnotatorConfig {
+  string ingress_address = 1;
+}
+
+message GraspAnnotatorRequest {
+  // The mesh data as a path, bytes, or triangle mesh to annotate on.
+  MeshData mesh_data = 1;
+  // The specifications for a parameterized gripper to use for annotation.
+  ParameterizedGripperSpecs gripper_specs = 2;
+  // The number of samples to query on the mesh.
+  int64 num_samples = 3;
+  // The metrics weights to score annotation with. If not provided, the
+  // annotation are not scored and the default score will be set to 1.0.
+  optional MetricWeights annotation_metrics_weights = 4;
+}
+
+message GraspAnnotatorResponse {
+  // Annotated grasps.
+  GraspAnnotations annotations = 1;
+}
+
+service GraspAnnotator {
+  // Annotate grasps.
+  rpc Annotate(GraspAnnotatorRequest) returns (GraspAnnotatorResponse) {}
+}

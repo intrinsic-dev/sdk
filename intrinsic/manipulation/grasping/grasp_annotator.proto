@@ -1,0 +1,86 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.grasping;
+
+import "intrinsic/geometry/proto/triangle_mesh.proto";
+import "intrinsic/math/proto/pose.proto";
+import "intrinsic/math/proto/vector2.proto";
+
+message MeshData {
+  message MeshBytesData {
+    // The mesh data as bytes.
+    bytes mesh_bytes = 1;
+    // The file type of the mesh bytes, e.g.: "glb", "obj", "stl".
+    string file_type = 2;
+  }
+  oneof mesh_data {
+    // The triangle mesh with of the part with both faces and vertices specified
+    // within. The expectation is three dimensional vertices and triangles for
+    // the faces. Specified in row major order.
+    intrinsic_proto.geometry.TriangleMesh triangle_mesh = 1;
+    // The path to a mesh.
+    string mesh_path = 2;
+    // The mesh bytes with the file type.
+    MeshBytesData mesh_bytes = 3;
+  }
+}
+
+message ParameterizedGripperSpecs {
+  oneof gripper_specs {
+    // The specifications for a parameterized suction type gripper.
+    ParameterizedSuctionGripperSpecs suction_gripper_specs = 1;
+    // The specifications for a parameterized pinch type gripper.
+    ParameterizedPinchGripperSpecs pinch_gripper_specs = 2;
+  }
+}
+
+message ParameterizedSuctionGripperSpecs {
+  // The radius of the suction cup in meters.
+  float radius_in_meters = 1;
+  // The surface roughness threshold of the suction cup in meters.
+  optional float surface_roughness_threshold_in_meters = 2;
+  // The 2D coordinates of the suction cup locations in meters in the x-y plane
+  // of the tool frame where z = 0.
+  repeated Vector2 suction_cup_coordinates = 3;
+  // The rotation increment to search for grasp annotations in radians.
+  // The default value is pi/4 radians.
+  optional float rotation_increment_in_radians = 4;
+  // The maximum rotation to stop searching for grasp annotations in radians.
+  // The default value is pi radians.
+  optional float max_rotation_in_radians = 5;
+  // The transform to apply to the suction gripper relative to its origin.
+  // By default, the gripper z-axis points towards the object.
+  optional Pose gripper_origin_t_tool_frame = 6;
+}
+
+message ParameterizedPinchGripperSpecs {
+  // The opening of the gripper in meters.
+  float opening_in_meters = 1;
+  // The width of the finger in meters.
+  float finger_width_in_meters = 2;
+  // The length of the finger in meters.
+  float finger_length_in_meters = 3;
+  // The antipodal threshold in radians. If the two surface normals on the
+  // object is larger than the threshold, the pose is considered as antipodal.
+  // The default value is 3.0 radians.
+  optional float antipodal_threshold_in_radians = 4;
+  // The transform to apply to the pinch gripper relative to its origin.
+  // By default, the gripper z-axis points towards the object, y-axis is algined
+  // to the gripper opening direction, and x-axis is aligned to the gripper
+  // finger width.
+  optional Pose gripper_origin_t_tool_frame = 5;
+}
+
+// The weights of the metrics to use for scoring annotation. Weights should be
+// non-negative, and are used to compute the weighted geometric mean of the
+// respective metrics. Only specified metrics are used for scoring annotation.
+message MetricWeights {
+  // The weight of the distance to center of mass metric. When unspecified, the
+  // metric is not used for scoring annotation.
+  optional float distance_to_center_of_mass_weight = 1;
+  // The weight of the distance to bounding box corner metric. When unspecified,
+  // the metric is not used for scoring annotation.
+  optional float distance_to_bounding_box_corner_weight = 2;
+}
