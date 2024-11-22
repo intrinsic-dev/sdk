@@ -42,7 +42,7 @@ service ExecutiveService {
   // changes for every operation, cannot be reused, and is independent of any
   // Behavior Tree ID or name. Treat it as an opaque random string.
   //
-  // Operations follow the log-running operations specification in
+  // Operations follow the long-running operations specification in
   // https://google.aip.dev/151.
   //
   // At this time, the executive only supports a single active operation. The
