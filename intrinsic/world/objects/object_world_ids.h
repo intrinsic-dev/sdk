@@ -82,9 +82,6 @@ struct FrameReferenceByName {
   }
 };
 
-constexpr absl::string_view kProductNameUserDataKey = "FLOWSTATE_product_name";
-constexpr absl::string_view kProductMetadataUserDataKey =
-    "FLOWSTATE_product_metadata";
 }  // namespace intrinsic
 
 #endif  // INTRINSIC_WORLD_OBJECTS_OBJECT_WORLD_IDS_H_

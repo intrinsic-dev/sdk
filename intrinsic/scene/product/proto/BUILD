@@ -98,3 +98,19 @@ py_grpc_library(
     grpc_library = requirement("grpcio"),
     deps = [":product_service_py_pb2"],
 )
+
+proto_library(
+    name = "product_world_object_data_proto",
+    srcs = ["product_world_object_data.proto"],
+    deps = ["@com_google_protobuf//:struct_proto"],
+)
+
+cc_proto_library(
+    name = "product_world_object_data_cc_proto",
+    deps = [":product_world_object_data_proto"],
+)
+
+py_proto_library(
+    name = "product_world_object_data_py_pb2",
+    deps = [":product_world_object_data_proto"],
+)

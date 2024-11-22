@@ -1,0 +1,21 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.product;
+
+import "google/protobuf/struct.proto";
+
+// ProductWorldObjectData contains necessary data for a WorldObject to be
+// considered a product. Intended to be stored in the user_data of a
+// WorldObject.
+message ProductWorldObjectData {
+  // The name of the product in the solution. Used to refer back to the product
+  // in the product service.
+  string product_name = 1;
+
+  // Contains structured data that is non WorldObject specific. Copied from the
+  // original product metadata. Can be different from the metadata in the
+  // product config if the metadata is updated after the product is created.
+  google.protobuf.Struct metadata = 2;
+}

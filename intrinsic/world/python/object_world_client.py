@@ -7,10 +7,10 @@ Python.
 """
 
 from typing import Dict, List, Mapping, Optional, Tuple, Union, cast
+import warnings
 
 from google.protobuf import any_pb2
 from google.protobuf import struct_pb2
-from google.protobuf import wrappers_pb2
 import grpc
 from intrinsic.geometry.service import geometry_service_pb2
 from intrinsic.geometry.service import geometry_service_pb2_grpc
@@ -21,6 +21,7 @@ from intrinsic.kinematics.types import joint_limits_pb2
 from intrinsic.math.python import data_types
 from intrinsic.math.python import proto_conversion as math_proto_conversion
 from intrinsic.resources.proto import resource_handle_pb2
+from intrinsic.scene.product.proto import product_world_object_data_pb2
 from intrinsic.scene.proto import scene_object_pb2
 from intrinsic.util.grpc import error_handling
 from intrinsic.world.proto import geometry_component_pb2
@@ -51,8 +52,7 @@ INCLUDE_ALL_ENTITIES = object_world_refs_pb2.ObjectEntityFilter(
 
 ICON2_POSITION_PART_KEY = 'Icon2PositionPart'
 
-PRODUCT_NAME_KEY = 'FLOWSTATE_product_name'
-PRODUCT_METADATA_KEY = 'FLOWSTATE_product_metadata'
+PRODUCT_USER_DATA_KEY = 'FLOWSTATE_product'
 
 class ProductPartDoesNotExistError(ValueError):
   """A non-existent product part was specified."""
@@ -1331,19 +1331,29 @@ class ObjectWorldClient:
     Raises:
       CreateObjectError: If the call to the ObjectWorldService fails.
     """
-    metadata_any = any_pb2.Any()
-    metadata_any.Pack(product_metadata or struct_pb2.Struct())
-    product_name_any = any_pb2.Any()
-    product_name_any.Pack(wrappers_pb2.StringValue(value=product_name))
+    world_object_data = product_world_object_data_pb2.ProductWorldObjectData(
+        product_name=product_name, metadata=product_metadata
+    )
+    world_object_data_any = any_pb2.Any()
+    world_object_data_any.Pack(world_object_data)
+    user_data = {PRODUCT_USER_DATA_KEY: world_object_data_any}
+
+    product_utils_path = 'intrinsic.scene.product.object_world.python.product_utils.create_object_from_product'  # pylint: disable=line-too-long
+
+    warnings.warn(
+        'ObjectWorldClient.create_object_from_product is deprecated. This'
+        ' method will be removed in the future. Please use'
+        f' `ObjectWorldClient.create_object` or `{product_utils_path}`'
+        ' instead.',
+        DeprecationWarning,
+    )
+
     self.create_object(
         object_name=object_name,
+        geometry_spec=scene_object,
         parent=parent,
         parent_object_t_created_object=parent_object_t_created_object,
-        geometry_spec=scene_object,
-        user_data={
-            PRODUCT_NAME_KEY: product_name_any,
-            PRODUCT_METADATA_KEY: metadata_any,
-        },
+        user_data=user_data,
     )
 
   def register_geometry(
