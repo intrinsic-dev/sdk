@@ -263,19 +263,13 @@ var releaseCmd = &cobra.Command{
 		targetType := cmdFlags.GetFlagSkillReleaseType()
 		project := clientutils.ResolveCatalogProjectFromInctl(cmdFlags)
 
-
 		useDirectUpload := true
-		needConn := true
 
-		var conn *grpc.ClientConn
-		if needConn {
-			var err error
-			conn, err = clientutils.DialCatalogFromInctl(cmd, cmdFlags)
-			if err != nil {
-				return fmt.Errorf("failed to create client connection: %v", err)
-			}
-			defer conn.Close()
+		conn, err := clientutils.DialCatalogFromInctl(cmd, cmdFlags)
+		if err != nil {
+			return fmt.Errorf("failed to create client connection: %v", err)
 		}
+		defer conn.Close()
 
 		var transferer imagetransfer.Transferer
 		if targetType != "pbt" {
