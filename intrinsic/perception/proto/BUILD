@@ -419,9 +419,19 @@ py_proto_library(
     deps = [":pose_estimator_id_proto"],
 )
 
+go_proto_library(
+    name = "pose_estimator_id_go_proto",
+    deps = [":pose_estimator_id_proto"],
+)
+
 proto_library(
     name = "image_processing_proto",
     srcs = ["image_processing.proto"],
+)
+
+go_proto_library(
+    name = "image_processing_go_proto",
+    deps = [":image_processing_proto"],
 )
 
 proto_library(
