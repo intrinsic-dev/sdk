@@ -3,7 +3,7 @@
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
-load("//bazel:go_macros.bzl", "go_proto_library")
+load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -77,4 +77,15 @@ cc_grpc_library(
     grpc_only = True,
     visibility = ["//intrinsic:__subpackages__"],
     deps = [":gpio_service_cc_proto"],
+)
+
+go_grpc_library(
+    name = "gpio_service_go_grpc_proto",
+    srcs = [":gpio_service_proto"],
+    visibility = ["//intrinsic:__subpackages__"],
+    deps = [
+        ":gpio_service_go_proto",
+        "//intrinsic/hardware/gpio:signal_go_proto",
+        "@org_golang_google_genproto_googleapis_rpc//status",
+    ],
 )

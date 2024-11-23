@@ -62,11 +62,3 @@ go_proto_library(
     name = "status_go_proto",
     deps = [":status_proto"],
 )
-
-go_grpc_library(
-    name = "status_go_grpc_proto",
-    srcs = [":status_proto"],
-    deps = [
-        "@org_golang_google_protobuf//types/known/timestamppb",
-    ],
-)

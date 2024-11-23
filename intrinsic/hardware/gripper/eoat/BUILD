@@ -22,7 +22,7 @@ proto_library(
 go_proto_library(
     name = "eoat_service_go_proto",
     go_deps = [
-        "//intrinsic/hardware/gpio:gpio_service_go_proto",
+        "//intrinsic/hardware/gpio:gpio_service_go_grpc_proto",
         "//intrinsic/hardware/gripper/eoat:gripper_config_go_proto",
     ],
     deps = [":eoat_service_proto"],
