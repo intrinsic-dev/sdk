@@ -25,6 +25,8 @@ import (
 )
 
 const (
+	// AssetsCmdName is the name of the `inctl assets` command.
+	AssetsCmdName = "assets"
 	// ClusterCmdName is the name of the `inctl cluster` command.
 	ClusterCmdName = "cluster"
 	// DataCmdName is the name of the `inctl data` command.
