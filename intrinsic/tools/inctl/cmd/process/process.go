@@ -23,6 +23,7 @@ import (
 	apb "intrinsic/executive/proto/annotations_go_proto"
 	btpb "intrinsic/executive/proto/behavior_tree_go_proto"
 	execgrpcpb "intrinsic/executive/proto/executive_service_go_grpc_proto"
+	exsvcpb "intrinsic/executive/proto/executive_service_go_grpc_proto"
 	rmdpb "intrinsic/executive/proto/run_metadata_go_proto"
 	skillregistrygrpcpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
 	srpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
@@ -190,8 +191,8 @@ func setBT(ctx context.Context, exC execgrpcpb.ExecutiveServiceClient, bt *btpb.
 		}
 	}
 
-	req := &execgrpcpb.CreateOperationRequest{}
-	req.RunnableType = &execgrpcpb.CreateOperationRequest_BehaviorTree{BehaviorTree: bt}
+	req := &exsvcpb.CreateOperationRequest{}
+	req.RunnableType = &exsvcpb.CreateOperationRequest_BehaviorTree{BehaviorTree: bt}
 
 	if _, err = exC.CreateOperation(ctx, req); err != nil {
 		return errors.Wrap(err, "unable to create executive operation")

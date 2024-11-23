@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	fileuploadgrpcpb "intrinsic/platform/file_upload/file_upload_service_go_grpc_proto"
+	fileuploadpb "intrinsic/platform/file_upload/file_upload_service_go_grpc_proto"
 )
 
 type fileServiceClient struct {
@@ -44,8 +45,8 @@ func (c *fileServiceClient) close() error {
 	return err
 }
 
-func (c *fileServiceClient) listFiles(ctx context.Context) ([]*fileuploadgrpcpb.FileInfo, error) {
-	resp, err := c.client.ListFiles(ctx, &fileuploadgrpcpb.ListFilesRequest{})
+func (c *fileServiceClient) listFiles(ctx context.Context) ([]*fileuploadpb.FileInfo, error) {
+	resp, err := c.client.ListFiles(ctx, &fileuploadpb.ListFilesRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +54,7 @@ func (c *fileServiceClient) listFiles(ctx context.Context) ([]*fileuploadgrpcpb.
 }
 
 func (c *fileServiceClient) removeFiles(ctx context.Context, files []string) error {
-	req := &fileuploadgrpcpb.RemoveFilesRequest{Filenames: files}
+	req := &fileuploadpb.RemoveFilesRequest{Filenames: files}
 	_, err := c.client.RemoveFiles(ctx, req)
 	return err
 }
@@ -63,7 +64,7 @@ func (c *fileServiceClient) uploadFile(ctx context.Context, localFilePath string
 	if err != nil {
 		return fmt.Errorf("unable to read file %q: %w", localFilePath, err)
 	}
-	req := &fileuploadgrpcpb.UploadFileRequest{
+	req := &fileuploadpb.UploadFileRequest{
 		Filename: remoteFileName,
 		Contents: contents,
 	}

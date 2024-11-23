@@ -10,9 +10,6 @@ import (
 	"strings"
 
 
-	"intrinsic/assets/baseclientutils"
-	"intrinsic/assets/cmdutils"
-
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -22,8 +19,11 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-	clusterdiscoverygrpcpb "intrinsic/frontend/cloud/api/clusterdiscovery_api_go_grpc_proto"
+	"intrinsic/assets/baseclientutils"
+	"intrinsic/assets/cmdutils"
+	clusterdiscoverypb "intrinsic/frontend/cloud/api/clusterdiscovery_api_go_grpc_proto"
 	solutiondiscoverygrpcpb "intrinsic/frontend/cloud/api/solutiondiscovery_api_go_grpc_proto"
+	solutiondiscoverypb "intrinsic/frontend/cloud/api/solutiondiscovery_api_go_grpc_proto"
 	"intrinsic/tools/inctl/auth"
 )
 
@@ -345,7 +345,7 @@ func getClusterNameFromSolution(ctx context.Context, conn *grpc.ClientConn, solu
 	if err != nil {
 		return "", fmt.Errorf("failed to get solution: %w", err)
 	}
-	if solution.GetState() == clusterdiscoverygrpcpb.SolutionState_SOLUTION_STATE_NOT_RUNNING {
+	if solution.GetState() == clusterdiscoverypb.SolutionState_SOLUTION_STATE_NOT_RUNNING {
 		return "", fmt.Errorf("solution is not running")
 	}
 	if solution.GetClusterName() == "" {
@@ -355,9 +355,9 @@ func getClusterNameFromSolution(ctx context.Context, conn *grpc.ClientConn, solu
 }
 
 // getSolution gets solution data by name
-func getSolution(ctx context.Context, conn *grpc.ClientConn, solutionName string) (*solutiondiscoverygrpcpb.SolutionDescription, error) {
+func getSolution(ctx context.Context, conn *grpc.ClientConn, solutionName string) (*solutiondiscoverypb.SolutionDescription, error) {
 	client := solutiondiscoverygrpcpb.NewSolutionDiscoveryServiceClient(conn)
-	req := &solutiondiscoverygrpcpb.GetSolutionDescriptionRequest{Name: solutionName}
+	req := &solutiondiscoverypb.GetSolutionDescriptionRequest{Name: solutionName}
 	resp, err := client.GetSolutionDescription(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get solution description: %w", err)

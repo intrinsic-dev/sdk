@@ -10,8 +10,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	clusterdiscoverygrpcpb "intrinsic/frontend/cloud/api/clusterdiscovery_api_go_grpc_proto"
+	clusterdiscoverypb "intrinsic/frontend/cloud/api/clusterdiscovery_api_go_grpc_proto"
 	solutiondiscoverygrpcpb "intrinsic/frontend/cloud/api/solutiondiscovery_api_go_grpc_proto"
+	solutiondiscoverypb "intrinsic/frontend/cloud/api/solutiondiscovery_api_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/orgutil"
@@ -28,9 +29,9 @@ type listSolutionsParams struct {
 	printer printer.Printer
 }
 
-// ListSolutionDescriptionsResponse embeds solutiondiscoverygrpcpb.ListSolutionDescriptionsResponse.
+// ListSolutionDescriptionsResponse embeds solutiondiscoverypb.ListSolutionDescriptionsResponse.
 type ListSolutionDescriptionsResponse struct {
-	m *solutiondiscoverygrpcpb.ListSolutionDescriptionsResponse
+	m *solutiondiscoverypb.ListSolutionDescriptionsResponse
 }
 
 // MarshalJSON converts a ListSolutionDescriptionsResponse to a byte slice.
@@ -80,21 +81,21 @@ func (res *ListSolutionDescriptionsResponse) String() string {
 	return strings.Join(lines, "\n")
 }
 
-func validateAndGetFilters(filterNames []string) ([]clusterdiscoverygrpcpb.SolutionState, error) {
-	filters := []clusterdiscoverygrpcpb.SolutionState{}
+func validateAndGetFilters(filterNames []string) ([]clusterdiscoverypb.SolutionState, error) {
+	filters := []clusterdiscoverypb.SolutionState{}
 
 	if len(filterNames) == 0 {
 		return filters, nil
 	}
 
 	for _, filterName := range filterNames {
-		filter, ok := clusterdiscoverygrpcpb.SolutionState_value["SOLUTION_STATE_"+strings.ToUpper(filterName)]
+		filter, ok := clusterdiscoverypb.SolutionState_value["SOLUTION_STATE_"+strings.ToUpper(filterName)]
 		if !ok {
 			return filters,
 				fmt.Errorf("Filter needs to be one of %s but is %s",
 					strings.Join(allowedFilters, ", "), filterName)
 		}
-		filters = append(filters, clusterdiscoverygrpcpb.SolutionState(filter))
+		filters = append(filters, clusterdiscoverypb.SolutionState(filter))
 	}
 
 	return filters, nil
@@ -109,7 +110,7 @@ func listSolutions(ctx context.Context, conn *grpc.ClientConn, params *listSolut
 
 	client := solutiondiscoverygrpcpb.NewSolutionDiscoveryServiceClient(conn)
 	resp, err := client.ListSolutionDescriptions(
-		ctx, &solutiondiscoverygrpcpb.ListSolutionDescriptionsRequest{Filters: filters})
+		ctx, &solutiondiscoverypb.ListSolutionDescriptionsRequest{Filters: filters})
 
 	if err != nil {
 		return fmt.Errorf("request to list solutions failed: %w", err)

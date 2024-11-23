@@ -15,7 +15,6 @@ go_library(
         "//intrinsic/executive/proto:annotations_go_proto",
         "//intrinsic/executive/proto:behavior_tree_go_proto",
         "//intrinsic/executive/proto:executive_service_go_grpc_proto",
-        "//intrinsic/executive/proto:executive_service_go_proto",
         "//intrinsic/executive/proto:run_metadata_go_proto",
         "//intrinsic/frontend/solution_service/proto:solution_service_go_grpc_proto",
         "//intrinsic/skills/proto:skill_registry_go_grpc_proto",

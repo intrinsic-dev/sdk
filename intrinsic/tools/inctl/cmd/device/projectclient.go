@@ -13,9 +13,9 @@ import (
 	"os"
 	"path/filepath"
 
-	clustermanagergrpcpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
-
 	"google.golang.org/grpc"
+	clustermanagergrpcpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
+	clustermanagerpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
 	"intrinsic/frontend/cloud/devicemanager/shared"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/auth"
@@ -106,7 +106,7 @@ func (c *authedClient) close() error {
 }
 
 func (c *authedClient) getStatusNetwork(ctx context.Context, clusterName, deviceID string) (map[string]shared.StatusInterface, error) {
-	req := &clustermanagergrpcpb.GetStatusRequest{
+	req := &clustermanagerpb.GetStatusRequest{
 		Project:   c.projectName,
 		Org:       c.organization,
 		ClusterId: clusterName,
@@ -125,7 +125,7 @@ func (c *authedClient) getStatusNetwork(ctx context.Context, clusterName, device
 	return statusNetwork, nil
 }
 
-func translateNetworkConfig(n *clustermanagergrpcpb.IntOSNetworkConfig) map[string]shared.Interface {
+func translateNetworkConfig(n *clustermanagerpb.IntOSNetworkConfig) map[string]shared.Interface {
 	configMap := map[string]shared.Interface{}
 	for name, inf := range n.GetInterfaces() {
 		ns := inf.GetNameservers()
@@ -147,22 +147,22 @@ func translateNetworkConfig(n *clustermanagergrpcpb.IntOSNetworkConfig) map[stri
 	return configMap
 }
 
-func translateToNetworkConfig(n map[string]shared.Interface) *clustermanagergrpcpb.IntOSNetworkConfig {
-	c := &clustermanagergrpcpb.IntOSNetworkConfig{
-		Interfaces: make(map[string]*clustermanagergrpcpb.IntOSInterfaceConfig),
+func translateToNetworkConfig(n map[string]shared.Interface) *clustermanagerpb.IntOSNetworkConfig {
+	c := &clustermanagerpb.IntOSNetworkConfig{
+		Interfaces: make(map[string]*clustermanagerpb.IntOSInterfaceConfig),
 	}
 	for name, inf := range n {
 		dhcp6 := false
 		if inf.DHCP6 != nil {
 			dhcp6 = *inf.DHCP6
 		}
-		conf := &clustermanagergrpcpb.IntOSInterfaceConfig{
+		conf := &clustermanagerpb.IntOSInterfaceConfig{
 			Dhcp4:    inf.DHCP4,
 			Gateway4: inf.Gateway4,
 			Dhcp6:    dhcp6,
 			Gateway6: inf.Gateway6,
 			Mtu:      int32(inf.MTU),
-			Nameservers: &clustermanagergrpcpb.NameserverConfig{
+			Nameservers: &clustermanagerpb.NameserverConfig{
 				Search:    inf.Nameservers.Search,
 				Addresses: inf.Nameservers.Addresses,
 			},
@@ -171,9 +171,9 @@ func translateToNetworkConfig(n map[string]shared.Interface) *clustermanagergrpc
 		}
 		switch inf.EtherType {
 		default:
-			conf.EtherType = clustermanagergrpcpb.IntOSInterfaceConfig_ETHER_TYPE_UNSPECIFIED
+			conf.EtherType = clustermanagerpb.IntOSInterfaceConfig_ETHER_TYPE_UNSPECIFIED
 		case 1:
-			conf.EtherType = clustermanagergrpcpb.IntOSInterfaceConfig_ETHER_TYPE_ETHERCAT
+			conf.EtherType = clustermanagerpb.IntOSInterfaceConfig_ETHER_TYPE_ETHERCAT
 		}
 		c.Interfaces[name] = conf
 	}
@@ -181,7 +181,7 @@ func translateToNetworkConfig(n map[string]shared.Interface) *clustermanagergrpc
 }
 
 func (c *authedClient) getNetworkConfig(ctx context.Context, clusterName, deviceID string) (map[string]shared.Interface, error) {
-	req := &clustermanagergrpcpb.GetNetworkConfigRequest{
+	req := &clustermanagerpb.GetNetworkConfigRequest{
 		Project: c.projectName,
 		Org:     c.organization,
 		Cluster: clusterName,

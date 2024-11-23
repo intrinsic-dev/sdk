@@ -33,7 +33,7 @@ go_proto_library(
     go_deps = [
         "@org_golang_google_genproto_googleapis_api//annotations",
         "@com_google_cloud_go_longrunning//autogen/longrunningpb",
-        "//intrinsic/frontend/cloud/api:clusterdeletion_api_go_proto",
+        "//intrinsic/frontend/cloud/api:clusterdeletion_api_go_grpc_proto",
         "//intrinsic/util/status:extended_status_go_proto",
         "@com_github_grpc_ecosystem_grpc_gateway_v2//protoc-gen-openapiv2/options:options",
     ],

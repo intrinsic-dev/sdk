@@ -15,15 +15,16 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	clusterdiscoverygrpcpb "intrinsic/frontend/cloud/api/clusterdiscovery_api_go_grpc_proto"
+	clusterdiscoverypb "intrinsic/frontend/cloud/api/clusterdiscovery_api_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/orgutil"
 	"intrinsic/tools/inctl/util/printer"
 )
 
-// ListClusterDescriptionsResponse embeds clusterdiscoverygrpcpb.ListClusterDescriptionsResponse.
+// ListClusterDescriptionsResponse embeds clusterdiscoverypb.ListClusterDescriptionsResponse.
 type ListClusterDescriptionsResponse struct {
-	m *clusterdiscoverygrpcpb.ListClusterDescriptionsResponse
+	m *clusterdiscoverypb.ListClusterDescriptionsResponse
 }
 
 // MarshalJSON converts a ListClusterDescriptionsResponse to a byte slice.
@@ -57,9 +58,9 @@ func (res *ListClusterDescriptionsResponse) MarshalJSON() ([]byte, error) {
 // String converts a ListClusterDescriptionsResponse to a string
 func (res *ListClusterDescriptionsResponse) String() string {
 	// Sort by display name to match IPC managers's default sort.
-	clusters := make([]*clusterdiscoverygrpcpb.ClusterDescription, len(res.m.Clusters))
+	clusters := make([]*clusterdiscoverypb.ClusterDescription, len(res.m.Clusters))
 	copy(clusters, res.m.Clusters)
-	slices.SortFunc(clusters, func(a, b *clusterdiscoverygrpcpb.ClusterDescription) int {
+	slices.SortFunc(clusters, func(a, b *clusterdiscoverypb.ClusterDescription) int {
 		return cmp.Compare(a.GetDisplayName(), b.GetDisplayName())
 	})
 
@@ -78,7 +79,7 @@ func (res *ListClusterDescriptionsResponse) String() string {
 func fetchAndPrintClusters(ctx context.Context, conn *grpc.ClientConn, prtr printer.Printer) error {
 	client := clusterdiscoverygrpcpb.NewClusterDiscoveryServiceClient(conn)
 	resp, err := client.ListClusterDescriptions(
-		ctx, &clusterdiscoverygrpcpb.ListClusterDescriptionsRequest{})
+		ctx, &clusterdiscoverypb.ListClusterDescriptionsRequest{})
 	if err != nil {
 		return fmt.Errorf("request to list clusters failed: %w", err)
 	}

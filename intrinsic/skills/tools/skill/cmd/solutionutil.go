@@ -9,7 +9,7 @@ import (
 	"fmt"
 
 	"google.golang.org/grpc"
-	clusterdiscoverygrpcpb "intrinsic/frontend/cloud/api/clusterdiscovery_api_go_grpc_proto"
+	clusterdiscoverypb "intrinsic/frontend/cloud/api/clusterdiscovery_api_go_grpc_proto"
 	"intrinsic/tools/inctl/cmd/solution"
 )
 
@@ -19,7 +19,7 @@ func GetClusterNameFromSolution(ctx context.Context, conn *grpc.ClientConn, solu
 	if err != nil {
 		return "", fmt.Errorf("failed to get solution: %w", err)
 	}
-	if solution.GetState() == clusterdiscoverygrpcpb.SolutionState_SOLUTION_STATE_NOT_RUNNING {
+	if solution.GetState() == clusterdiscoverypb.SolutionState_SOLUTION_STATE_NOT_RUNNING {
 		return "", fmt.Errorf("solution is not running")
 	}
 	if solution.GetClusterName() == "" {

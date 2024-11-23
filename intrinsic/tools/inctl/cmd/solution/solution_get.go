@@ -7,14 +7,14 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"intrinsic/tools/inctl/util/orgutil"
-
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	clusterdiscoverygrpcpb "intrinsic/frontend/cloud/api/clusterdiscovery_api_go_grpc_proto"
+	clusterdiscoverypb "intrinsic/frontend/cloud/api/clusterdiscovery_api_go_grpc_proto"
 	solutiondiscoverygrpcpb "intrinsic/frontend/cloud/api/solutiondiscovery_api_go_grpc_proto"
+	solutiondiscoverypb "intrinsic/frontend/cloud/api/solutiondiscovery_api_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/cmd/root"
+	"intrinsic/tools/inctl/util/orgutil"
 	"intrinsic/tools/inctl/util/printer"
 )
 
@@ -28,13 +28,13 @@ type GetSolutionParams struct {
 
 type getSolutionDescriptionWrapper struct {
 	solutionName string
-	solution     *solutiondiscoverygrpcpb.SolutionDescription
+	solution     *solutiondiscoverypb.SolutionDescription
 }
 
 // MarshalJSON converts a getSolutionDescriptionWrapper to a byte slice.
 func (wrapper *getSolutionDescriptionWrapper) MarshalJSON() ([]byte, error) {
 	var stateStr string
-	if wrapper.solution.GetState() == clusterdiscoverygrpcpb.SolutionState_SOLUTION_STATE_UNSPECIFIED {
+	if wrapper.solution.GetState() == clusterdiscoverypb.SolutionState_SOLUTION_STATE_UNSPECIFIED {
 		stateStr = ""
 	} else {
 		stateStr = wrapper.solution.GetState().String()
@@ -57,14 +57,14 @@ func (wrapper *getSolutionDescriptionWrapper) MarshalJSON() ([]byte, error) {
 // String converts a getSolutionDescriptionWrapper into a human-readable string
 func (wrapper *getSolutionDescriptionWrapper) String() string {
 	switch wrapper.solution.GetState() {
-	case clusterdiscoverygrpcpb.SolutionState_SOLUTION_STATE_NOT_RUNNING:
+	case clusterdiscoverypb.SolutionState_SOLUTION_STATE_NOT_RUNNING:
 		return fmt.Sprintf("Solution %q is currently not running.",
 			wrapper.solution.GetName())
-	case clusterdiscoverygrpcpb.SolutionState_SOLUTION_STATE_RUNNING_ON_HW:
+	case clusterdiscoverypb.SolutionState_SOLUTION_STATE_RUNNING_ON_HW:
 		return fmt.Sprintf("Solution %q (%s) is running on hardware cluster %q.",
 			wrapper.solution.GetDisplayName(), wrapper.solution.GetName(),
 			wrapper.solution.GetClusterName())
-	case clusterdiscoverygrpcpb.SolutionState_SOLUTION_STATE_RUNNING_IN_SIM:
+	case clusterdiscoverypb.SolutionState_SOLUTION_STATE_RUNNING_IN_SIM:
 		return fmt.Sprintf("Solution %q (%s) is running in simulation on cluster %q.",
 			wrapper.solution.GetDisplayName(), wrapper.solution.GetName(),
 			wrapper.solution.GetClusterName())
@@ -74,9 +74,9 @@ func (wrapper *getSolutionDescriptionWrapper) String() string {
 }
 
 // GetSolution gets solution data by name
-func GetSolution(ctx context.Context, conn *grpc.ClientConn, solutionName string) (*solutiondiscoverygrpcpb.SolutionDescription, error) {
+func GetSolution(ctx context.Context, conn *grpc.ClientConn, solutionName string) (*solutiondiscoverypb.SolutionDescription, error) {
 	client := solutiondiscoverygrpcpb.NewSolutionDiscoveryServiceClient(conn)
-	req := &solutiondiscoverygrpcpb.GetSolutionDescriptionRequest{Name: solutionName}
+	req := &solutiondiscoverypb.GetSolutionDescriptionRequest{Name: solutionName}
 	resp, err := client.GetSolutionDescription(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get solution description: %w", err)

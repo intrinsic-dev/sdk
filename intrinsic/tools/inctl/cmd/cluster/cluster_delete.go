@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	clusterdeletiongrpcpb "intrinsic/frontend/cloud/api/clusterdeletion_api_go_grpc_proto"
+	clusterdeletionpb "intrinsic/frontend/cloud/api/clusterdeletion_api_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/util/orgutil"
 )
@@ -16,7 +17,7 @@ import (
 func deleteCluster(ctx context.Context, conn *grpc.ClientConn, cluster string) error {
 	client := clusterdeletiongrpcpb.NewClusterDeletionServiceClient(conn)
 	if _, err := client.DeleteCluster(
-		ctx, &clusterdeletiongrpcpb.DeleteClusterRequest{ClusterName: cluster}); err != nil {
+		ctx, &clusterdeletionpb.DeleteClusterRequest{ClusterName: cluster}); err != nil {
 		return fmt.Errorf("request to delete cluster: %w", err)
 	}
 

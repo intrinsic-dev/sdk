@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"time"
 
-	srgrpcpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	srgrpcpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
+	srpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
 )
 
 // Params holds parameters for waitForSkill.
@@ -59,7 +59,7 @@ func WaitForSkill(ctx context.Context, params *Params) error {
 	}
 	start := time.Now()
 	for {
-		res, err := client.GetSkill(ctx, &srgrpcpb.GetSkillRequest{
+		res, err := client.GetSkill(ctx, &srpb.GetSkillRequest{
 			Id: params.SkillID,
 		})
 		if err == nil {
