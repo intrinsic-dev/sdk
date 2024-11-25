@@ -415,6 +415,7 @@ def cc_skill(
         name,
         deps,
         manifest,
+        base_image = Label("@distroless_base"),
         **kwargs):
     """Creates cpp skill targets.
 
@@ -429,6 +430,7 @@ def cc_skill(
             which is specified in the skill's manifest.
       manifest: A target that provides a SkillManifestInfo provider for the skill. This is normally
                 a skill_manifest() target.
+      base_image: The base container_image target to use for the skill service image.
       **kwargs: additional arguments passed to the container_image rule, such as visibility.
     """
     skill_service_name = "_%s_service" % name
@@ -444,7 +446,7 @@ def cc_skill(
     service_image_name = "_%s_service_image" % name
     container_image(
         name = service_image_name,
-        base = Label("@distroless_base"),
+        base = base_image,
         directory = "/skills",
         files = [
             skill_service_name,
@@ -467,6 +469,7 @@ def py_skill(
         name,
         manifest,
         deps,
+        base_image = "@distroless_python3",
         **kwargs):
     """Creates python skill targets.
 
@@ -479,6 +482,7 @@ def py_skill(
                 a skill_manifest() target.
       deps: The Python library dependencies of the skill. This is normally at least the python
             proto library for the skill and the skill implementation.
+      base_image: The base container_image target to use for the skill service image.
       **kwargs: additional arguments passed to the container_image rule, such as visibility.
     """
     binary_name = "_%s_binary" % name
@@ -495,7 +499,7 @@ def py_skill(
     service_image_name = "_%s_service_image" % name
     python_oci_image(
         name = service_image_name,
-        base = "@distroless_python3",
+        base = base_image,
         binary = binary_name,
         directory = "/skills",
         data_path = "/",
