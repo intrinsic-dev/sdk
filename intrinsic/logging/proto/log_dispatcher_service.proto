@@ -14,6 +14,12 @@ import "intrinsic/logging/proto/log_item.proto";
 // A batch of LogItems to be sent to the LogDispatcher, to be PUT into storage
 // on the cloud.
 message PutLogItemsRequest {
+  // The log items to be uploaded.
+  //
+  // The first item in the batch sets the event source and workcell name to use,
+  // and all subsequent items must have matching event source and workcell name.
+  //
+  // Event source and workcell name cannot be empty.
   repeated intrinsic_proto.data_logger.LogItem items = 1;
 
   // The cluster the logs originated from.
@@ -32,6 +38,9 @@ message PutLogItemsResponse {
   int32 log_items_dropped = 2;
 
   // log items in request == (log_items_ingested + log_items_dropped)
+
+  // The unordered unique errors for the dropped log items.
+  repeated string dropped_log_item_errors = 3;
 }
 
 /// PutBlob.
