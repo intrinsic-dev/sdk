@@ -184,6 +184,7 @@ use_repo(non_module_deps, "com_google_xls_strong_int_h")
 bazel_dep(name = "abseil-cpp", version = "20240722.0", repo_name = "com_google_absl")
 bazel_dep(name = "abseil-py", version = "2.1.0", repo_name = "com_google_absl_py")
 bazel_dep(name = "boringssl", version = "0.0.0-20240530-2db0eb3")
+bazel_dep(name = "eigen", version = "4.0.0-20241125", repo_name = "com_gitlab_libeigen_eigen")
 bazel_dep(name = "flatbuffers", version = "24.3.7", repo_name = "com_github_google_flatbuffers")
 bazel_dep(name = "fuzztest", version = "20240813.0", repo_name = "com_google_fuzztest")
 bazel_dep(name = "googleapis", version = "0.0.0-20240819-fe8ba054a", repo_name = "com_google_googleapis")
@@ -198,7 +199,6 @@ bazel_dep(name = "rules_license", version = "0.0.8")
 use_repo(
     non_module_deps,
     # go/keep-sorted start
-    "com_gitlab_libeigen_eigen",
     "com_google_cel_cpp",
     "io_opencensus_cpp",
     "or_tools",

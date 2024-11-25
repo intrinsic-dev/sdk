@@ -31,18 +31,6 @@ def _non_module_deps_impl(ctx):  # @unused
         sha256 = "d56e8c15b55240c92143ee3ed717956c67961a24f97711ca410030de92633288",
     )
 
-    # Last released version 3.4.0 has been released 2 years ago
-    EIGEN_COMMIT = "38b9cc263bbaeb03ce408a4e26084543a6c0dedb"  # 2024-05-30
-    http_archive(
-        name = "com_gitlab_libeigen_eigen",
-        build_file = Label("//intrinsic/production/external:BUILD.eigen"),
-        sha256 = "136102d1241eb73f0ed3e1f47830707d1e40016ef61ed2d682c1398392879401",
-        strip_prefix = "eigen-%s" % EIGEN_COMMIT,
-        urls = [
-            "https://gitlab.com/libeigen/eigen/-/archive/%s/eigen-%s.zip" % (EIGEN_COMMIT, EIGEN_COMMIT),
-        ],
-    )
-
     http_archive(
         name = "io_opencensus_cpp",
         sha256 = "e3857e1267cb6329a7b23209ce8a2108b8f264e4adf336776323fb163fa23f9a",
