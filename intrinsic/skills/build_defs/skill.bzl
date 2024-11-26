@@ -469,7 +469,7 @@ def py_skill(
         name,
         manifest,
         deps,
-        base_image = "@distroless_python3",
+        base_image = Label("@distroless_python3"),
         **kwargs):
     """Creates python skill targets.
 
