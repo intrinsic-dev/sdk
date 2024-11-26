@@ -170,6 +170,10 @@ inctl process set name_to_store_with --solution my-solution --cluster my-cluster
 			return fmt.Errorf("--input_file must be specified")
 		}
 
+		name := ""
+		if len(args) == 1 {
+			name = args[0]
+		}
 		projectName := viperLocal.GetString(orgutil.KeyProject)
 		orgName := viperLocal.GetString(orgutil.KeyOrganization)
 		ctx, conn, err := connectToCluster(cmd.Context(), projectName,
@@ -190,7 +194,7 @@ inctl process set name_to_store_with --solution my-solution --cluster my-cluster
 			srC:          skillregistrygrpcpb.NewSkillRegistryClient(conn),
 			soC:          sgrpcpb.NewSolutionServiceClient(conn),
 			content:      content,
-			name:         args[0],
+			name:         name,
 			format:       flagProcessFormat,
 			clearTreeID:  flagClearTreeID,
 			clearNodeIDs: flagClearNodeIDs,
@@ -198,7 +202,7 @@ inctl process set name_to_store_with --solution my-solution --cluster my-cluster
 			return errors.Wrapf(err, "could not set BT")
 		}
 
-		if args[0] == "" {
+		if name == "" {
 			fmt.Println("BT loaded successfully to the executive. To edit behavior tree in the frontend: Process -> Load -> From executive")
 		} else {
 			fmt.Println("BT added to the solution. To edit and execute the process in the frontend: Process -> Load -> <process name>")

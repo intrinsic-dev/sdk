@@ -262,6 +262,10 @@ process must already exist in the solution.
 inctl process get my_process --solution my-solution-id --cluster my-cluster [--output_file /tmp/process.textproto] [--process_format textproto|binaryproto]`,
 	Args: cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		name := ""
+		if len(args) == 1 {
+			name = args[0]
+		}
 		projectName := viperLocal.GetString(orgutil.KeyProject)
 		orgName := viperLocal.GetString(orgutil.KeyOrganization)
 		ctx, conn, err := connectToCluster(cmd.Context(), projectName,
@@ -276,7 +280,7 @@ inctl process get my_process --solution my-solution-id --cluster my-cluster [--o
 			exC:          execgrpcpb.NewExecutiveServiceClient(conn),
 			soC:          sgrpcpb.NewSolutionServiceClient(conn),
 			srC:          skillregistrygrpcpb.NewSkillRegistryClient(conn),
-			name:         args[0],
+			name:         name,
 			format:       flagProcessFormat,
 			clearTreeID:  flagClearTreeID,
 			clearNodeIDs: flagClearNodeIDs,
@@ -306,5 +310,4 @@ func init() {
 	processGetCmd.Flags().StringVar(&flagClusterName, "cluster", "", "Cluster to get the process from.")
 	processGetCmd.Flags().StringVar(&flagOutputFile, "output_file", "", "If set, writes the process to the given file instead of stdout.")
 	processCmd.AddCommand(processGetCmd)
-
 }
