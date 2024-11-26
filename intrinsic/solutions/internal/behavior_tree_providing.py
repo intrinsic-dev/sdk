@@ -2,11 +2,16 @@
 
 """Provides behavior trees from a solution."""
 
+from typing import Iterator
 import grpc
+from intrinsic.executive.proto import behavior_tree_pb2
 from intrinsic.frontend.solution_service.proto import solution_service_pb2
 from intrinsic.frontend.solution_service.proto import solution_service_pb2_grpc
 from intrinsic.solutions import behavior_tree
 from intrinsic.solutions import providers
+
+
+_DEFAULT_PAGE_SIZE = 50
 
 
 class BehaviorTrees(providers.BehaviorTreeProvider):
@@ -17,20 +22,42 @@ class BehaviorTrees(providers.BehaviorTreeProvider):
   def __init__(self, solution: solution_service_pb2_grpc.SolutionServiceStub):
     self._solution = solution
 
-  def keys(self) -> list[str]:
-    """Returns the names of available behavior trees."""
+  def _list_all_behavior_trees(self) -> list[behavior_tree_pb2.BehaviorTree]:
     response = self._solution.ListBehaviorTrees(
-        solution_service_pb2.ListBehaviorTreesRequest(page_size=50)
+        solution_service_pb2.ListBehaviorTreesRequest(
+            page_size=_DEFAULT_PAGE_SIZE
+        )
     )
-    keys = [bt.name for bt in response.behavior_trees]
+    bts = []
+    bts.extend(response.behavior_trees)
     while response.next_page_token:
       response = self._solution.ListBehaviorTrees(
           solution_service_pb2.ListBehaviorTreesRequest(
-              page_size=50, page_token=response.next_page_token
+              page_size=_DEFAULT_PAGE_SIZE,
+              page_token=response.next_page_token,
           )
       )
-      keys.extend([bt.name for bt in response.behavior_trees])
-    return keys
+      bts.extend(response.behavior_trees)
+    return bts
+
+  def keys(self) -> list[str]:
+    """Returns the names of available behavior trees."""
+    return [bt.name for bt in self._list_all_behavior_trees()]
+
+  def __iter__(self) -> Iterator[str]:
+    """Returns an iterator over the names of available behavior trees."""
+    for bt in self._list_all_behavior_trees():
+      yield bt.name
+
+  def items(self) -> Iterator[tuple[str, behavior_tree.BehaviorTree]]:
+    """Returns an iterator over the names and behavior trees."""
+    for bt in self._list_all_behavior_trees():
+      yield bt.name, behavior_tree.BehaviorTree(bt=bt)
+
+  def values(self) -> Iterator[behavior_tree.BehaviorTree]:
+    """Returns an iterator over the names and behavior trees."""
+    for bt in self._list_all_behavior_trees():
+      yield behavior_tree.BehaviorTree(bt=bt)
 
   def __contains__(self, name: str) -> bool:
     """Returns whether the behavior tree with the given name is available.
