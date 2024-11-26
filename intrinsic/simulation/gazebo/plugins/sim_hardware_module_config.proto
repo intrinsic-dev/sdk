@@ -36,7 +36,8 @@ message JointGroup {
 // Accepts joint position commands (aka setpoints) and applies them to the
 // simulated joints in the group `joint_group_name`. If your HWM has this, it
 // should probably also have JointPositionStateInterface,
-// JointVelocityStateInterface and JointAccelerationStateInterface!
+// JointVelocityStateInterface, JointAccelerationStateInterface and
+// JointLimitsCommandInterface!
 //
 // The most common name for this interface on real robots is
 // "joint_position_command". The simulated hardware module uses this name when
@@ -227,6 +228,16 @@ message ForceTorqueStatusInterface {
   optional string ft_sensor_name = 2;
 }
 
+// Accepts joint limits from ICON and applies them to the simulated joints in
+// the group `joint_group_name`.
+//
+// The most common name for this interface on real robots is
+// "joint_system_limits". The simulated hardware module uses this name when
+// `manual_hardware_interfaces` is unset.
+message JointLimitsCommandInterface {
+  string joint_group_name = 1;
+}
+
 message SimHardwareInterface {
   oneof interface {
     JointPositionCommandInterface joint_position_command = 1;
@@ -245,6 +256,7 @@ message SimHardwareInterface {
     AnalogOutputInterface analog_output = 13;
     ForceTorqueCommandInterface force_torque_command = 14;
     ForceTorqueStatusInterface force_torque_status = 15;
+    JointLimitsCommandInterface joint_limits_command = 16;
   }
 }
 
