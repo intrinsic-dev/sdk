@@ -137,33 +137,32 @@ class StructuredLoggingClient {
   //
   // Returns absl::ResourceExhaustedError if any sync for any event source was
   // throttled.
-  absl::StatusOr<std::vector<std::string>> ABSL_MUST_USE_RESULT
-  SyncAndRotateLogs(absl::Span<const absl::string_view> event_sources) const;
+  absl::StatusOr<std::vector<std::string>> SyncAndRotateLogs(
+      absl::Span<const absl::string_view> event_sources) const;
 
   // Writes all log files to GCS.
   // Might be throttled per-event-source if called too frequently.
   //
   // Returns absl::ResourceExhaustedError if any sync for any event source was
   // throttled.
-  absl::StatusOr<std::vector<std::string>> ABSL_MUST_USE_RESULT
-  SyncAndRotateLogs() const;
+  absl::StatusOr<std::vector<std::string>> SyncAndRotateLogs() const;
 
   // Creates a local recording from structured logging data.
   //
   // The data will be copied to its own table for safekeeping, to ensure
   // that it does not get deleted from the rolling-buffer TimescaleDB tables if
   // the upload process is very slow due to limited internet connectivity.
-  absl::StatusOr<intrinsic_proto::data_logger::BagMetadata> ABSL_MUST_USE_RESULT
+  absl::StatusOr<intrinsic_proto::data_logger::BagMetadata>
   CreateLocalRecording(
       absl::Time start_time, absl::Time end_time, absl::string_view description,
       absl::Span<const absl::string_view> event_sources_to_record) const;
 
   // List recordings stored locally.
   absl::StatusOr<std::vector<intrinsic_proto::data_logger::BagMetadata>>
-      ABSL_MUST_USE_RESULT ListLocalRecordings(
-          std::optional<absl::Time> start_time,
-          std::optional<absl::Time> end_time, bool only_summary_metadata,
-          absl::Span<const absl::string_view> bag_ids) const;
+  ListLocalRecordings(std::optional<absl::Time> start_time,
+                      std::optional<absl::Time> end_time,
+                      bool only_summary_metadata,
+                      absl::Span<const absl::string_view> bag_ids) const;
 
  private:
   // Use of pimpl / firewall idiom to hide gRPC details.

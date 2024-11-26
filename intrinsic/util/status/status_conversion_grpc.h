@@ -13,7 +13,7 @@ namespace intrinsic {
 ABSL_MUST_USE_RESULT grpc::Status ToGrpcStatus(const absl::Status& status);
 ABSL_MUST_USE_RESULT grpc::Status ToGrpcStatus(
     const google::rpc::Status& status);
-ABSL_MUST_USE_RESULT absl::Status ToAbslStatus(const grpc::Status& status);
+absl::Status ToAbslStatus(const grpc::Status& status);
 
 }  // namespace intrinsic
 
