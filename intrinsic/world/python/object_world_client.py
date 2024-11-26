@@ -6,7 +6,7 @@ The ObjectWorldClient is used to access all elements in the object world in
 Python.
 """
 
-from typing import Dict, List, Mapping, Optional, Tuple, Union, cast
+from typing import Dict, Iterable, List, Mapping, Optional, Tuple, Union, cast
 import warnings
 
 from google.protobuf import any_pb2
@@ -696,6 +696,34 @@ class ObjectWorldClient:
             joint_application_limits=joint_limits,
             view=object_world_updates_pb2.ObjectView.BASIC,
         )
+    )
+
+  @error_handling.retry_on_grpc_unavailable
+  def update_kinematic_object_joint_configurations(
+      self,
+      kinematic_object: object_world_resources.KinematicObject,
+      named_joint_configurations_to_remove: Iterable[str] | None = None,
+      named_joint_configurations_to_set: (
+          Iterable[object_world_updates_pb2.NamedJointConfiguration] | None
+      ) = None,
+  ):
+    """Updates the named joint configurations of the kinematic object.
+
+    Args:
+      kinematic_object: The kinematic object that should be changed.
+      named_joint_configurations_to_remove: A list of named joint configurations
+        to remove.
+      named_joint_configurations_to_set: A list of named joint configurations to
+        update. Overrides existing named joint configurations. Creates new
+        configurations if the name is not already in use.
+    """
+    self._stub.UpdateKinematicObjectProperties(
+        object_world_updates_pb2.UpdateKinematicObjectPropertiesRequest(
+            world_id=self._world_id,
+            object=kinematic_object.reference,
+            named_joint_configurations_to_remove=named_joint_configurations_to_remove,
+            named_joint_configurations_to_set=named_joint_configurations_to_set,
+        ),
     )
 
   @error_handling.retry_on_grpc_unavailable
