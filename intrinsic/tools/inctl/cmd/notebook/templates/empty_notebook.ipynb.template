@@ -26,7 +26,8 @@ Copyright 2023 Intrinsic Innovation LLC
    "outputs": [],
    "source": [
     "# List skills available in the solution\n",
-    "print(dir(skills))"
+    "for id in skills.get_skill_ids():\n",
+    "    print(id)"
    ]
   }
  ],
