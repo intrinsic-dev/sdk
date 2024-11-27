@@ -8,6 +8,7 @@
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "absl/log/log.h"
 #include "absl/status/status.h"
@@ -126,6 +127,10 @@ class KeyValueStore {
 
   // Deletes the key from the KVStore.
   absl::Status Delete(absl::string_view key, const NamespaceConfig& config);
+
+  // Lists all keys in the KVStore.
+  absl::StatusOr<std::vector<std::string>> ListAllKeys(
+      absl::Duration timeout = kDefaultGetTimeout);
 
  private:
   KeyValueStore() = default;
