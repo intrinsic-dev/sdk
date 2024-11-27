@@ -35,11 +35,25 @@ typedef void imw_query_callback_fn(const char *keyexpr,
                                    const size_t response_bytes_len,
                                    void *user_context);
 
+typedef void imw_query_on_done_fn(const char *keyexpr, void *query_context);
+
 typedef std::function<void(const char *, const void *, const size_t)>
     imw_callback_functor_t;
 
+typedef std::function<void(const char *)> imw_on_done_functor_t;
+
+struct QueryContext {
+  imw_callback_functor_t *callback;
+  imw_on_done_functor_t *on_done;
+};
+
 void zenoh_static_callback(const char *keyexpr, const void *blob,
                            size_t blob_len, void *fptr);
+
+void zenoh_query_static_callback(const char *keyexpr, const void *blob,
+                                 size_t blob_len, void *fptr);
+
+void zenoh_query_static_on_done(const char *keyexpr, void *fptr);
 
 // ZenohHandle loads the zenoh shared library and provides an interface for
 // necessary PubSub calls to the shared library.
@@ -99,8 +113,8 @@ struct ZenohHandle {
 
   std::add_pointer_t<imw_ret_t(
       const char *keyexpr, imw_query_callback_fn *callback,
-      const void *query_payload, const size_t query_payload_len,
-      void *user_context)>
+      imw_query_on_done_fn *on_done, const void *query_payload,
+      const size_t query_payload_len, void *user_context)>
       imw_query;
 
   std::add_pointer_t<imw_ret_t(const char *keyexp)> imw_delete_keyexpr;

@@ -44,6 +44,17 @@ void zenoh_static_callback(const char* keyexpr, const void* blob,
   (*static_cast<imw_callback_functor_t*>(fptr))(keyexpr, blob, blob_len);
 }
 
+void zenoh_query_static_callback(const char* keyexpr, const void* blob,
+                                 const size_t blob_len, void* fptr) {
+  QueryContext* query_context = static_cast<QueryContext*>(fptr);
+  (*(query_context->callback))(keyexpr, blob, blob_len);
+}
+
+void zenoh_query_static_on_done(const char* keyexpr, void* fptr) {
+  QueryContext* query_context = static_cast<QueryContext*>(fptr);
+  (*(query_context->on_done))(keyexpr);
+}
+
 ZenohHandle* ZenohHandle::CreateZenohHandle() {
   auto* zenoh = new ZenohHandle();
   zenoh->Initialize();

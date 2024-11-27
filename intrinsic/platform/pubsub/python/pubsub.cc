@@ -82,6 +82,13 @@ absl::StatusOr<KeyValueStore> CreateKeyValueStore(PubSub* self) {
   return self->KeyValueStore();
 }
 
+absl::StatusOr<KVQuery> GetAll(KeyValueStore* self, const std::string& key,
+                               const WildcardQueryConfig& config,
+                               KeyValueCallback callback,
+                               OnDoneCallback on_done) {
+  return self->GetAll(key, config, callback, on_done);
+}
+
 absl::StatusOr<google::protobuf::Any> Get(KeyValueStore* self,
                                           const std::string& key,
                                           const NamespaceConfig& config,
@@ -175,9 +182,7 @@ PYBIND11_MODULE(pubsub, m) {
       .def("Get", &Get, pybind11::arg("key"),
            pybind11::arg("config") = NamespaceConfig{},
            pybind11::arg("timeout") = 10)
-      .def("GetAll", &KeyValueStore::GetAll, pybind11::arg("key"),
-           pybind11::arg("config") = WildcardQueryConfig{},
-           pybind11::arg("callback") = nullptr)
+      .def("GetAll", &GetAll)
       .def("Delete", &KeyValueStore::Delete, pybind11::arg("key"),
            pybind11::arg("config") = NamespaceConfig{});
 

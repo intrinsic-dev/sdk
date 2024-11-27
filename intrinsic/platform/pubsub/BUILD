@@ -73,6 +73,7 @@ cc_library(
         "//intrinsic/platform/pubsub/zenoh_util:zenoh_handle",
         "//intrinsic/platform/pubsub/zenoh_util:zenoh_helpers",
         "//intrinsic/util/status:status_macros",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",

@@ -7,7 +7,9 @@
 #include <memory>
 #include <string>
 #include <type_traits>
+#include <utility>
 
+#include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -15,6 +17,7 @@
 #include "absl/time/time.h"
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/message.h"
+#include "intrinsic/platform/pubsub/zenoh_util/zenoh_handle.h"
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic {
@@ -46,6 +49,27 @@ struct WildcardQueryConfig {
 
 using KeyValueCallback =
     std::function<void(std::unique_ptr<google::protobuf::Any> value)>;
+
+// Callback invoked when the KeyValueCallback is called for all keys that match.
+// Make sure to keep this callback lightweight.
+using OnDoneCallback = std::function<void(absl::string_view key)>;
+
+class KVQuery {
+ public:
+  explicit KVQuery(std::unique_ptr<imw_callback_functor_t> callback,
+                   std::unique_ptr<imw_on_done_functor_t> on_done)
+      : callback_(std::move(callback)),
+        on_done_(std::move(on_done)),
+        context_(
+            std::make_unique<QueryContext>(callback_.get(), on_done_.get())) {}
+
+  QueryContext* GetContext() { return context_.get(); }
+
+ private:
+  std::unique_ptr<imw_callback_functor_t> callback_;
+  std::unique_ptr<imw_on_done_functor_t> on_done_;
+  std::unique_ptr<QueryContext> context_;
+};
 
 class KeyValueStore {
  public:
@@ -93,9 +117,12 @@ class KeyValueStore {
   }
 
   // For a given key and WildcardQueryConfig, the KeyValueCallback will be
-  // invoked for each key that matches the expression.
-  absl::Status GetAll(absl::string_view key, const WildcardQueryConfig& config,
-                      KeyValueCallback callback);
+  // invoked for each key that matches the expression. The caller is expected to
+  // keep the Query object alive until the OnDoneCallback is called.
+  absl::StatusOr<KVQuery> GetAll(
+      absl::string_view key, const WildcardQueryConfig& config,
+      KeyValueCallback callback,
+      OnDoneCallback on_done = [](absl::string_view key) {});
 
   // Deletes the key from the KVStore.
   absl::Status Delete(absl::string_view key, const NamespaceConfig& config);

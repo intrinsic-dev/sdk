@@ -62,7 +62,7 @@ absl::StatusOr<google::protobuf::Any> KeyValueStore::GetAny(
         notif.Notify();
       });
   imw_ret ret = Zenoh().imw_query(prefixed_name->c_str(), zenoh_static_callback,
-                                  nullptr, 0, callback.get());
+                                  nullptr, nullptr, 0, callback.get());
   if (ret != IMW_OK) {
     return absl::InternalError(
         absl::StrFormat("Error getting a key, return code: %d", ret));
@@ -78,9 +78,10 @@ absl::StatusOr<google::protobuf::Any> KeyValueStore::GetAny(
   return std::move(value);
 }
 
-absl::Status KeyValueStore::GetAll(absl::string_view keyexpr,
-                                   const WildcardQueryConfig& config,
-                                   KeyValueCallback callback) {
+absl::StatusOr<KVQuery> KeyValueStore::GetAll(absl::string_view keyexpr,
+                                              const WildcardQueryConfig& config,
+                                              KeyValueCallback callback,
+                                              OnDoneCallback on_done) {
   INTR_RETURN_IF_ERROR(intrinsic::ValidZenohKey(keyexpr));
   INTR_ASSIGN_OR_RETURN(absl::StatusOr<std::string> prefixed_name,
                         ZenohHandle::add_key_prefix(keyexpr));
@@ -93,14 +94,20 @@ absl::Status KeyValueStore::GetAll(absl::string_view keyexpr,
             static_cast<const char*>(response_bytes), response_bytes_len));
         callback(std::move(value));
       });
+  auto on_done_functor = std::make_unique<imw_on_done_functor_t>(
+      [on_done = std::move(on_done)](const char* keyexpr) {
+        on_done(absl::string_view(keyexpr));
+      });
+  KVQuery query(std::move(functor), std::move(on_done_functor));
   imw_ret_t ret = Zenoh().imw_query(
-      prefixed_name->c_str(), zenoh_static_callback, nullptr, 0, functor.get());
+      prefixed_name->c_str(), zenoh_query_static_callback,
+      zenoh_query_static_on_done, nullptr, 0, query.GetContext());
   if (ret != IMW_OK) {
     return absl::InternalError(
         absl::StrFormat("Error getting a key, return code: %d", ret));
   }
 
-  return absl::OkStatus();
+  return std::move(query);
 }
 
 absl::Status KeyValueStore::Delete(absl::string_view key,
