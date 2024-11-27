@@ -20,7 +20,7 @@ import (
 	fmpb "google.golang.org/protobuf/types/known/fieldmaskpb"
 	clustermanagergrpcpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
 
-	clustermanagercpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
+	clustermanagerpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
 	"intrinsic/frontend/cloud/devicemanager/info"
 	"intrinsic/frontend/cloud/devicemanager/messages"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
@@ -95,13 +95,13 @@ func (c *client) status(ctx context.Context) (*info.Info, error) {
 // setMode runs a request to set the update mode
 func (c *client) setMode(ctx context.Context, mode string) error {
 	pbm := encodeUpdateMode(mode)
-	if pbm == clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_UNSPECIFIED {
+	if pbm == clustermanagerpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_UNSPECIFIED {
 		return fmt.Errorf("invalid mode: %s", mode)
 	}
-	req := clustermanagercpb.UpdateClusterRequest{
+	req := clustermanagerpb.UpdateClusterRequest{
 		Project: c.project,
 		Org:     c.org,
-		Cluster: &clustermanagercpb.Cluster{
+		Cluster: &clustermanagerpb.Cluster{
 			ClusterName: c.cluster,
 			UpdateMode:  pbm,
 		},
@@ -114,37 +114,41 @@ func (c *client) setMode(ctx context.Context, mode string) error {
 	return nil
 }
 
+// This is copied from clustermanager.go, but we could diverge from the strings used by
+// Inversion if we prefer a different UX.
+var updateModeMap = map[string]clustermanagerpb.PlatformUpdateMode{
+	"off":              clustermanagerpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_OFF,
+	"on":               clustermanagerpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_ON,
+	"automatic":        clustermanagerpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_AUTOMATIC,
+	"on+accept":        clustermanagerpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_MANUAL_WITH_ACCEPT,
+	"automatic+accept": clustermanagerpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_AUTOMATIC_WITH_ACCEPT,
+}
+
 // encodeUpdateMode encodes a mode string to a proto definition
-func encodeUpdateMode(mode string) clustermanagercpb.PlatformUpdateMode {
-	switch mode {
-	case "off":
-		return clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_OFF
-	case "on":
-		return clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_ON
-	case "automatic":
-		return clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_AUTOMATIC
-	default:
-		return clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_UNSPECIFIED
+func encodeUpdateMode(mode string) clustermanagerpb.PlatformUpdateMode {
+	return updateModeMap[mode]
+}
+
+var updateModeReverseMap map[clustermanagerpb.PlatformUpdateMode]string
+
+func init() {
+	updateModeReverseMap = make(map[clustermanagerpb.PlatformUpdateMode]string, len(updateModeMap))
+	for k, v := range updateModeMap {
+		updateModeReverseMap[v] = k
 	}
 }
 
 // decodeUpdateMode decodes a mode proto definition into a string
-func decodeUpdateMode(mode clustermanagercpb.PlatformUpdateMode) string {
-	switch mode {
-	case clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_OFF:
-		return "off"
-	case clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_ON:
-		return "on"
-	case clustermanagercpb.PlatformUpdateMode_PLATFORM_UPDATE_MODE_AUTOMATIC:
-		return "automatic"
-	default:
-		return "unknown"
+func decodeUpdateMode(mode clustermanagerpb.PlatformUpdateMode) string {
+	if m, ok := updateModeReverseMap[mode]; ok {
+		return m
 	}
+	return "unknown"
 }
 
 // getMode runs a request to read the update mode
 func (c *client) getMode(ctx context.Context) (string, error) {
-	req := clustermanagercpb.GetClusterRequest{
+	req := clustermanagerpb.GetClusterRequest{
 		Project:   c.project,
 		Org:       c.org,
 		ClusterId: c.cluster,
@@ -247,10 +251,15 @@ func newClient(ctx context.Context, org, project, cluster string) (context.Conte
 const modeCmdDesc = `
 Read/Write the current update mechanism mode
 
-There are 3 modes on the system
+There are 3 modes on the system:
+
 - 'off': no updates can run
-- 'on': updates run on demand, when triggered by the user
-- 'automatic': updates run as soon as they are available
+- 'on': updates go to the IPC when triggered with inctl or the IPC manager
+- 'automatic': updates go to the IPC as soon as they are available
+
+You can add the "+accept" suffix to require acceptance of the update on the
+IPC. Acceptance is normally performed through the HMI, although for testing
+you can also use "inctl cluster upgrade accept".
 `
 
 var modeCmd = &cobra.Command{
