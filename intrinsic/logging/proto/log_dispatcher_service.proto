@@ -22,8 +22,8 @@ message PutLogItemsRequest {
   // Event source and workcell name cannot be empty.
   repeated intrinsic_proto.data_logger.LogItem items = 1;
 
-  // The cluster the logs originated from.
-  string workcell_name = 2;
+  reserved 2;
+  reserved "workcell_name";
 
   // The organization ID prefixes the bucket that logs are uploaded into.
   string organization_id = 3;
