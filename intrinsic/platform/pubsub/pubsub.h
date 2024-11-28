@@ -25,6 +25,7 @@
 #include "intrinsic/platform/pubsub/queryable.h"
 #include "intrinsic/platform/pubsub/subscription.h"
 #include "intrinsic/util/status/status_conversion_rpc.h"
+#include "intrinsic/util/status/status_macros.h"
 
 // The PubSub class implements an interface to a publisher-subscriber
 // system, a one-to-many communication bus that allows sending protocol buffers
@@ -233,7 +234,7 @@ class PubSub {
                 std::is_base_of_v<google::protobuf::Message, RequestT>>,
             typename = std::enable_if_t<
                 std::is_base_of_v<google::protobuf::Message, ResponseT>>>
-  absl::StatusOr<std::unique_ptr<Queryable>> CreateQueryable(
+  absl::StatusOr<Queryable> CreateQueryable(
       absl::string_view key, QueryableCallback<RequestT, ResponseT> callback) {
     auto inner_callback =
         [callback, key = std::string(key)](
@@ -265,7 +266,13 @@ class PubSub {
           return response_packet;
         };
 
-    return CreateQueryableImpl(key, inner_callback);
+    INTR_ASSIGN_OR_RETURN(Queryable queryable,
+                          CreateQueryableImpl(key, inner_callback));
+    LOG(INFO) << absl::StrFormat(
+        "Queryable listening for '%s' (request: %s, response: %s)", key,
+        RequestT::descriptor()->full_name(),
+        ResponseT::descriptor()->full_name());
+    return queryable;
   }
 
   struct QueryOptions {
@@ -332,7 +339,7 @@ class PubSub {
       const intrinsic_proto::pubsub::PubSubQueryRequest& request,
       const QueryOptions& options);
 
-  absl::StatusOr<std::unique_ptr<Queryable>> CreateQueryableImpl(
+  absl::StatusOr<Queryable> CreateQueryableImpl(
       absl::string_view key, internal::GeneralQueryableCallback callback);
 
   // We use a shared_ptr here because it allows us to auto generate the

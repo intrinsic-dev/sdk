@@ -1,7 +1,5 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-#include "intrinsic/platform/pubsub/zenoh_queryable.h"
-
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -31,9 +29,10 @@ static void ZenohQueryableCallback(const char* key, const void* query_bytes,
     return;
   }
 
-  ZenohQueryable* queryable = static_cast<ZenohQueryable*>(user_context);
+  internal::QueryableLink* link =
+      static_cast<internal::QueryableLink*>(user_context);
   intrinsic_proto::pubsub::PubSubQueryResponse response_packet =
-      queryable->Invoke(request_packet);
+      link->queryable->Invoke(request_packet);
 
   // Encode and send response
   std::string reply_message;
@@ -51,11 +50,12 @@ static void ZenohQueryableCallback(const char* key, const void* query_bytes,
 
 }  // namespace
 
-absl::StatusOr<std::unique_ptr<ZenohQueryable>> ZenohQueryable::Create(
+absl::StatusOr<Queryable> Queryable::Create(
     std::string_view key, internal::GeneralQueryableCallback callback) {
-  auto queryable = std::make_unique<ZenohQueryable>(key, callback);
-  if (imw_ret_t rv = Zenoh().imw_create_queryable(
-          queryable->GetKey(), &ZenohQueryableCallback, queryable.get());
+  Queryable queryable(key, callback);
+  if (imw_ret_t rv = Zenoh().imw_create_queryable(queryable.GetKey().data(),
+                                                  &ZenohQueryableCallback,
+                                                  queryable.link_.get());
       rv != IMW_OK) {
     return absl::InvalidArgumentError(absl::StrFormat(
         "Failed to create queryable for key '%s' (code %d)", key, rv));
@@ -63,14 +63,21 @@ absl::StatusOr<std::unique_ptr<ZenohQueryable>> ZenohQueryable::Create(
   return queryable;
 }
 
-ZenohQueryable::~ZenohQueryable() {
-  if (Zenoh().imw_destroy_queryable(GetKey(), &ZenohQueryableCallback, this) !=
-      IMW_OK) {
-    LOG(ERROR) << absl::StrFormat("Failed to destroy queryable for '%s'", key_);
+Queryable::~Queryable() {
+  // link_ may be nullptr when this is the left-over shell of a moved object
+  if (link_) {
+    // If this is NOT_INITIALIZED it means that the pubsub system has already
+    // been finalized and the queryable is gone anyway
+    if (imw_ret_t rv = Zenoh().imw_destroy_queryable(
+            GetKey().data(), &ZenohQueryableCallback, link_.get());
+        rv != IMW_OK && rv != IMW_NOT_INITIALIZED) {
+      LOG(ERROR) << absl::StrFormat(
+          "Failed to destroy queryable for '%s' (code %d)", key_, rv);
+    }
   }
 }
 
-intrinsic_proto::pubsub::PubSubQueryResponse ZenohQueryable::Invoke(
+intrinsic_proto::pubsub::PubSubQueryResponse Queryable::Invoke(
     const intrinsic_proto::pubsub::PubSubQueryRequest& request_packet) {
   return callback_(request_packet);
 }

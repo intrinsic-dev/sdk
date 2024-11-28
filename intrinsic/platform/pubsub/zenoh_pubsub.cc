@@ -19,7 +19,6 @@
 #include "intrinsic/platform/pubsub/subscription.h"
 #include "intrinsic/platform/pubsub/zenoh_publisher_data.h"
 #include "intrinsic/platform/pubsub/zenoh_pubsub_data.h"
-#include "intrinsic/platform/pubsub/zenoh_queryable.h"
 #include "intrinsic/platform/pubsub/zenoh_subscription_data.h"
 #include "intrinsic/platform/pubsub/zenoh_util/zenoh_config.h"
 #include "intrinsic/platform/pubsub/zenoh_util/zenoh_handle.h"
@@ -237,9 +236,9 @@ void QueryOnDoneCallback(const char *key, void *user_context) {
 
 bool PubSub::SupportsQueryables() const { return true; }
 
-absl::StatusOr<std::unique_ptr<Queryable>> PubSub::CreateQueryableImpl(
+absl::StatusOr<Queryable> PubSub::CreateQueryableImpl(
     absl::string_view key, internal::GeneralQueryableCallback callback) {
-  return ZenohQueryable::Create(key, callback);
+  return Queryable::Create(key, callback);
 }
 
 absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse> PubSub::QueryImpl(
