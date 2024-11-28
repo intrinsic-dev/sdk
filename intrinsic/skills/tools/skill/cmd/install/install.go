@@ -35,7 +35,6 @@ func installRequest(ps *skillio.ProcessedSkill, version string) (*installerpb.In
 			},
 		}, nil
 	}
-
 	if ps.Image != nil {
 		return &installerpb.InstallContainerAddonRequest{
 			Id:      ps.ID,
@@ -46,7 +45,6 @@ func installRequest(ps *skillio.ProcessedSkill, version string) (*installerpb.In
 			},
 		}, nil
 	}
-
 	return nil, fmt.Errorf("could not build a complete install skill request for %q: missing required information", ps.ID)
 }
 
@@ -54,10 +52,10 @@ var installCmd = &cobra.Command{
 	Use:   "install --type=TYPE TARGET",
 	Short: "Install a skill",
 	Example: `Upload skill image to a container registry, and install the skill
-$ inctl skill install --type=archive abc/skill.bundle.tar --registry=gcr.io/my-registry --cluster=my_cluster
+$ inctl skill install abc/skill.bundle.tar --registry=gcr.io/my-registry --cluster=my_cluster
 
 Use the solution flag to automatically resolve the cluster (requires the solution to run)
-$ inctl skill install --type=archive abc/skill.bundle.tar --solution=my-solution
+$ inctl skill install abc/skill.bundle.tar --solution=my-solution
 `,
 	Args: cobra.ExactArgs(1),
 	Aliases: []string{
@@ -67,11 +65,6 @@ $ inctl skill install --type=archive abc/skill.bundle.tar --solution=my-solution
 	RunE: func(command *cobra.Command, args []string) error {
 		ctx := command.Context()
 		target := args[0]
-
-		targetType := imageutils.TargetType(cmdFlags.GetFlagSideloadStartType())
-		if targetType != imageutils.Archive {
-			return fmt.Errorf("type must be %s", imageutils.Archive)
-		}
 
 		timeout, timeoutStr, err := cmdFlags.GetFlagSideloadStartTimeout()
 		if err != nil {
@@ -115,7 +108,7 @@ $ inctl skill install --type=archive abc/skill.bundle.tar --solution=my-solution
 		version := fmt.Sprintf("0.0.1+%s", uuid.New())
 
 		authUser, authPwd := cmdFlags.GetFlagsRegistryAuthUserPassword()
-		psOpts := skillio.ProcessSkillOpts{
+		ps, err := skillio.ProcessFile(skillio.ProcessSkillOpts{
 			Target:  target,
 			Version: version,
 			RegistryOpts: imageutils.RegistryOptions{
@@ -128,39 +121,14 @@ $ inctl skill install --type=archive abc/skill.bundle.tar --solution=my-solution
 			},
 			AllowMissingManifest: true,
 			DryRun:               false,
-		}
-
-		// Functions to prepare each install type.
-		archivePreparer := func() (*installerpb.InstallContainerAddonRequest, error) {
-			ps, err := skillio.ProcessFile(psOpts)
-			if err != nil {
-				return nil, err
-			}
-			return installRequest(ps, version)
-		}
-		buildPreparer := func() (*installerpb.InstallContainerAddonRequest, error) {
-			ps, err := skillio.ProcessBuildTarget(psOpts)
-			if err != nil {
-				return nil, err
-			}
-			return installRequest(ps, version)
-		}
-
-		installPreparers := map[string]func() (*installerpb.InstallContainerAddonRequest, error){
-			"archive": archivePreparer,
-			"build":   buildPreparer,
-		}
-
-		// Prepare the install based on the specified install type.
-		prepareInstall, ok := installPreparers[cmdFlags.GetFlagSideloadStartType()]
-		if !ok {
-			return fmt.Errorf("unknown install type %q", targetType)
-		}
-		req, err := prepareInstall()
+		})
 		if err != nil {
 			return err
 		}
-
+		req, err := installRequest(ps, version)
+		if err != nil {
+			return fmt.Errorf("could not generate installer request: %w", err)
+		}
 		pkg, err := idutils.PackageFrom(req.GetId())
 		if err != nil {
 			return fmt.Errorf("could not parse package from ID: %w", err)
@@ -214,6 +182,5 @@ func init() {
 	cmdFlags.AddFlagRegistry()
 	cmdFlags.AddFlagsRegistryAuthUserPassword()
 	cmdFlags.AddFlagSideloadStartTimeout("skill")
-	cmdFlags.AddFlagSideloadStartType("skill")
 	cmdFlags.AddFlagSkipDirectUpload("skill")
 }
