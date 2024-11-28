@@ -12,6 +12,7 @@ proto_library(
     name = "pubsub_proto",
     srcs = ["pubsub.proto"],
     deps = [
+        "@com_google_googleapis//google/rpc:status_proto",
         "@com_google_protobuf//:any_proto",
         "@com_google_protobuf//:timestamp_proto",
     ],
@@ -24,6 +25,10 @@ cc_proto_library(
 
 go_proto_library(
     name = "pubsub_go_proto",
+    go_deps = [
+        "@org_golang_google_genproto_googleapis_rpc//status",
+        "//intrinsic/logging/proto:context_go_proto",
+    ],
     deps = [":pubsub_proto"],
 )
 

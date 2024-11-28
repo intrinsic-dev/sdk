@@ -3,8 +3,12 @@
 #ifndef INTRINSIC_PLATFORM_PUBSUB_PUBSUB_H_
 #define INTRINSIC_PLATFORM_PUBSUB_PUBSUB_H_
 
+#include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
+#include <string>
+#include <type_traits>
 #include <utility>
 
 #include "absl/log/log.h"
@@ -14,10 +18,13 @@
 #include "absl/strings/string_view.h"
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/message.h"
+#include "google/rpc/status.pb.h"
 #include "intrinsic/platform/pubsub/adapters/pubsub.pb.h"
 #include "intrinsic/platform/pubsub/kvstore.h"
 #include "intrinsic/platform/pubsub/publisher.h"
+#include "intrinsic/platform/pubsub/queryable.h"
 #include "intrinsic/platform/pubsub/subscription.h"
+#include "intrinsic/util/status/status_conversion_rpc.h"
 
 // The PubSub class implements an interface to a publisher-subscriber
 // system, a one-to-many communication bus that allows sending protocol buffers
@@ -211,6 +218,98 @@ class PubSub {
   // building with Zenoh. See go/intrinsic-kv-store for more details.
   absl::StatusOr<intrinsic::KeyValueStore> KeyValueStore() const;
 
+  // Returns if the enabled pubsub implementation supports queryables.
+  bool SupportsQueryables() const;
+
+  // Creates a new typed Queryable.  The callback is invoked for requests to the
+  // queryable and expects a proto of the given request type and response with a
+  // Status (indiciating an error and ideally containing an ExtendedStatus) or a
+  // response proto of the specified type.
+  //
+  // Note: If SupportsQueryable() returns false this will return an
+  // absl::UnimplementedError.
+  template <typename RequestT, typename ResponseT,
+            typename = std::enable_if_t<
+                std::is_base_of_v<google::protobuf::Message, RequestT>>,
+            typename = std::enable_if_t<
+                std::is_base_of_v<google::protobuf::Message, ResponseT>>>
+  absl::StatusOr<std::unique_ptr<Queryable>> CreateQueryable(
+      absl::string_view key, QueryableCallback<RequestT, ResponseT> callback) {
+    auto inner_callback =
+        [callback, key = std::string(key)](
+            const intrinsic_proto::pubsub::PubSubQueryRequest& request_packet) {
+          std::shared_ptr<RequestT> request(RequestT::default_instance().New());
+          intrinsic_proto::pubsub::PubSubQueryResponse response_packet;
+
+          if (!request_packet.request().UnpackTo(request.get())) {
+            *response_packet.mutable_error() =
+                ToGoogleRpcStatus(absl::InternalError(absl::StrFormat(
+                    "Failed to deserialize query message for key '%s' "
+                    "(got type URL: %s, expected message type: %s)",
+                    key, request_packet.request().type_url(),
+                    request->GetDescriptor()->full_name())));
+            return response_packet;
+          }
+
+          QueryableContext context{.trace_id = request_packet.trace_id(),
+                                   .span_id = request_packet.span_id()};
+
+          absl::StatusOr<ResponseT> response = callback(context, *request);
+
+          if (!response.ok()) {
+            *response_packet.mutable_error() =
+                ToGoogleRpcStatus(response.status());
+          } else {
+            response_packet.mutable_response()->PackFrom(*response);
+          }
+          return response_packet;
+        };
+
+    return CreateQueryableImpl(key, inner_callback);
+  }
+
+  struct QueryOptions {
+    std::optional<uint64_t> trace_id;
+    std::optional<uint64_t> span_id;
+  };
+
+  // Queries a queryable.
+  // Calls the queryable with the given request. This will block until a reply
+  // is received. Returns the response or a status on error.
+  //
+  // Note: If SupportsQueryable() returns false this will return an
+  // absl::UnimplementedError.
+  template <typename RequestT, typename ResponseT,
+            typename = std::enable_if_t<
+                std::is_base_of_v<google::protobuf::Message, RequestT>>,
+            typename = std::enable_if_t<
+                std::is_base_of_v<google::protobuf::Message, ResponseT>>>
+  absl::StatusOr<ResponseT> Query(absl::string_view key,
+                                  const RequestT& request,
+                                  const QueryOptions& options) {
+    intrinsic_proto::pubsub::PubSubQueryRequest request_packet;
+    if (options.trace_id.has_value()) {
+      request_packet.set_trace_id(*options.trace_id);
+    }
+    if (options.span_id.has_value()) {
+      request_packet.set_span_id(*options.span_id);
+    }
+    request_packet.mutable_request()->PackFrom(request);
+
+    absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse>
+        response_packet = QueryImpl(key, request_packet, options);
+
+    if (response_packet->has_error()) {
+      return ToAbslStatus(response_packet->error());
+    }
+
+    ResponseT response;
+    if (!response_packet->response().UnpackTo(&response)) {
+      return absl::InvalidArgumentError("Failed to unpack response");
+    }
+    return response;
+  }
+
  private:
   static void HandleError(const SubscriptionErrorCallback& error_callback,
                           const intrinsic_proto::pubsub::PubSubPacket& packet,
@@ -227,6 +326,14 @@ class PubSub {
                        "Expected payload of type ", payload.GetTypeName(),
                        " but got ", packet.payload().type_url())));
   }
+
+  absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse> QueryImpl(
+      absl::string_view key,
+      const intrinsic_proto::pubsub::PubSubQueryRequest& request,
+      const QueryOptions& options);
+
+  absl::StatusOr<std::unique_ptr<Queryable>> CreateQueryableImpl(
+      absl::string_view key, internal::GeneralQueryableCallback callback);
 
   // We use a shared_ptr here because it allows us to auto generate the
   // destructor even when PubSubData is an incomplete type.

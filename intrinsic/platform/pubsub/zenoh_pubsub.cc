@@ -10,13 +10,16 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/notification.h"
 #include "intrinsic/platform/pubsub/adapters/pubsub.pb.h"
 #include "intrinsic/platform/pubsub/kvstore.h"
 #include "intrinsic/platform/pubsub/publisher.h"
 #include "intrinsic/platform/pubsub/pubsub.h"
+#include "intrinsic/platform/pubsub/queryable.h"
 #include "intrinsic/platform/pubsub/subscription.h"
 #include "intrinsic/platform/pubsub/zenoh_publisher_data.h"
 #include "intrinsic/platform/pubsub/zenoh_pubsub_data.h"
+#include "intrinsic/platform/pubsub/zenoh_queryable.h"
 #include "intrinsic/platform/pubsub/zenoh_subscription_data.h"
 #include "intrinsic/platform/pubsub/zenoh_util/zenoh_config.h"
 #include "intrinsic/platform/pubsub/zenoh_util/zenoh_handle.h"
@@ -137,9 +140,8 @@ absl::StatusOr<Subscription> PubSub::CreateSubscription(
         intrinsic_proto::pubsub::PubSubPacket msg;
         bool success = msg.ParseFromArray(blob, blob_len);
         if (!success) {
-          LOG_EVERY_N(ERROR, 1)
-              << absl::StrFormat("Deserializing message failed. Topic: ")
-              << keyexpr;
+          LOG_EVERY_N(ERROR, 1) << absl::StrFormat(
+              "Deserializing message failed. Topic: %s", keyexpr);
           return;
         }
         auto topic_name = ZenohHandle::remove_topic_prefix(keyexpr);
@@ -205,6 +207,57 @@ absl::StatusOr<bool> PubSub::KeyexprIncludes(absl::string_view left,
 
 absl::StatusOr<intrinsic::KeyValueStore> PubSub::KeyValueStore() const {
   return intrinsic::KeyValueStore();
+}
+
+namespace {
+struct QueryData {
+  absl::Notification notification;
+  absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse> response_packet;
+};
+
+void QueryCallback(const char *key, const void *response_bytes,
+                   const size_t response_bytes_len, void *user_context) {
+  QueryData *query_data = static_cast<QueryData *>(user_context);
+  std::string_view response_str(static_cast<const char *>(response_bytes),
+                                response_bytes_len);
+  intrinsic_proto::pubsub::PubSubQueryResponse response_packet;
+  if (!response_packet.ParseFromString(response_str)) {
+    query_data->response_packet =
+        absl::InvalidArgumentError("Failed to parse response packet");
+  }
+  query_data->response_packet = std::move(response_packet);
+}
+
+void QueryOnDoneCallback(const char *key, void *user_context) {
+  QueryData *query_data = static_cast<QueryData *>(user_context);
+  query_data->notification.Notify();
+}
+
+}  // namespace
+
+bool PubSub::SupportsQueryables() const { return true; }
+
+absl::StatusOr<std::unique_ptr<Queryable>> PubSub::CreateQueryableImpl(
+    absl::string_view key, internal::GeneralQueryableCallback callback) {
+  return ZenohQueryable::Create(key, callback);
+}
+
+absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse> PubSub::QueryImpl(
+    absl::string_view key,
+    const intrinsic_proto::pubsub::PubSubQueryRequest &request,
+    const QueryOptions &options) {
+  std::string serialized_request = request.SerializeAsString();
+  QueryData query_data;
+  if (Zenoh().imw_query(key.data(), &QueryCallback, &QueryOnDoneCallback,
+                        serialized_request.c_str(), serialized_request.size(),
+                        &query_data) != IMW_OK) {
+    return absl::InternalError(
+        absl::StrFormat("Executing query for key '%s' failed", key));
+  }
+
+  query_data.notification.WaitForNotification();
+
+  return query_data.response_packet;
 }
 
 }  // namespace intrinsic

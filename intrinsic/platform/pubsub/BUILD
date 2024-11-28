@@ -44,13 +44,17 @@ cc_library(
     deps = [
         ":kvstore",
         ":publisher",
+        ":queryable",
         ":subscription",
         ":zenoh_publisher_data",
         ":zenoh_pubsub_data",
+        ":zenoh_queryable",
         ":zenoh_subscription_data",
+        "//intrinsic/logging/proto:context_cc_proto",
         "//intrinsic/platform/pubsub/adapters:pubsub_cc_proto",
         "//intrinsic/platform/pubsub/zenoh_util:zenoh_config",
         "//intrinsic/platform/pubsub/zenoh_util:zenoh_handle",
+        "//intrinsic/util/status:status_conversion_rpc",
         "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:core_headers",
@@ -61,6 +65,21 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
+        "@com_google_googleapis//google/rpc:status_cc_proto",
+        "@com_google_protobuf//:protobuf",
+    ],
+)
+
+# PubSub API library. The user-facing API providing access to
+# publish-subscribe system.
+cc_library(
+    name = "queryable",
+    hdrs = [
+        "queryable.h",
+    ],
+    deps = [
+        "//intrinsic/platform/pubsub/adapters:pubsub_cc_proto",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_protobuf//:protobuf",
     ],
 )
@@ -173,9 +192,11 @@ cc_library(
         ":kvstore",
         ":publisher",
         ":pubsub",
+        ":queryable",
         ":subscription",
         ":zenoh_publisher_data",
         ":zenoh_pubsub_data",
+        ":zenoh_queryable",
         ":zenoh_subscription_data",
         "//intrinsic/platform/pubsub/adapters:pubsub_cc_proto",
         "//intrinsic/platform/pubsub/zenoh_util:zenoh_config",
@@ -184,6 +205,23 @@ cc_library(
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+cc_library(
+    name = "zenoh_queryable",
+    srcs = ["zenoh_queryable.cc"],
+    hdrs = ["zenoh_queryable.h"],
+    deps = [
+        ":queryable",
+        "//intrinsic/logging/proto:context_cc_proto",
+        "//intrinsic/platform/pubsub/adapters:pubsub_cc_proto",
+        "//intrinsic/platform/pubsub/zenoh_util:zenoh_handle",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
     ],
 )

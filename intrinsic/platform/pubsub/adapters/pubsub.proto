@@ -6,6 +6,7 @@ package intrinsic_proto.pubsub;
 
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
+import "google/rpc/status.proto";
 
 message NewPublisher {
   string topic = 1;
@@ -27,4 +28,20 @@ message PubSubPacket {
   uint64 span_id = 5;
 
   reserved 3;
+}
+
+message PubSubQueryRequest {
+  google.protobuf.Any request = 1;
+
+  // The following two fields represent the OpenCensus trace context that this
+  // request was sent from. It is populated automatically in pubsub::Query.
+  optional uint64 trace_id = 2;
+  optional uint64 span_id = 3;
+}
+
+message PubSubQueryResponse {
+  oneof result {
+    google.protobuf.Any response = 1;
+    google.rpc.Status error = 2;
+  }
 }
