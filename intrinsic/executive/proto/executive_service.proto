@@ -81,7 +81,7 @@ service ExecutiveService {
   // Get a particular operation by name.
   // The returned operation can be used to:
   // - check whether it has completed (the `done` field will be true)
-  // - access the result when done done (`error` or `response` field set)
+  // - access the result when done (`error` or `response` field set)
   // - inspect the detailed state in the operation's metadata.
   rpc GetOperation(google.longrunning.GetOperationRequest)
       returns (google.longrunning.Operation) {
@@ -98,6 +98,10 @@ service ExecutiveService {
   }
 
   // Get a particular operation by name with configurable metadata.
+  //
+  // Prefer to use this call over GetOperation when only a small subset of the
+  // operation proto is of interest. In particular when just checking on the
+  // state of the operation.
   rpc GetOperationView(GetOperationViewRequest)
       returns (google.longrunning.Operation) {
     option (google.api.http) = {
@@ -178,7 +182,12 @@ service ExecutiveService {
   }
 
   // Resets an operation and its associated behavior tree. This resets the
-  // behavior tree to a state as if it had just been created.
+  // operation into a state as if it had just been created. If the reset
+  // procedure succeeds, the operation will eventually be ready to be started
+  // again.
+  //
+  // Clients must ensure GetOperation shows an ACCEPTED state before calling
+  // StartOperation after a reset.
   //
   // Returns an error if the behavior tree is not in a WAITING state.
   rpc ResetOperation(ResetOperationRequest) returns (google.protobuf.Empty) {
