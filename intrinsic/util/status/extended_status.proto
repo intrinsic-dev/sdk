@@ -80,14 +80,13 @@ message ExtendedStatus {
     optional string stack_trace = 2;
   }
 
-  // Internal report intended for developers/owners of the component, but
-  // visible to all if they expand it in the UI. It is the responsibility of the
-  // emitter of the extended status to determine when to include an internal
-  // report. A criterion could be, for example, that the component is run in one
-  // of the component's vendor's orgs.
+  // This report is shown to users. It is intended to be helpful to analyze a
+  // run-time problem by the caller of the component.
   optional UserReport user_report = 12;
 
-  // This report is shown to external users, e.g., callers of a component even
-  // if they are from a different org.
+  // Debug report intended for developers/owners of the component, but visible
+  // to all if they expand it in the UI. This information may not necessarily be
+  // helpful to the user to investigate an issue, but to the component developer
+  // to investigate a reported issue.
   optional DebugReport debug_report = 13;
 }
