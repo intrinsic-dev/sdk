@@ -102,6 +102,6 @@ cc_test(
     deps = [
         ":flatbuffer_utils",
         "//intrinsic/icon/interprocess/shared_memory_manager:segment_info_fbs_cc",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:gtest_wrapper_main",
     ],
 )

@@ -79,7 +79,7 @@ cc_test(
     deps = [
         ":rt_queue",
         ":rt_queue_multi_writer",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:gtest_wrapper_main",
         "//intrinsic/util/thread",
         "@com_google_absl//absl/status",
     ],

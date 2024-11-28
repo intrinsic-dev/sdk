@@ -25,6 +25,16 @@ cc_library(
         "@com_github_inazarenko_protobuf_matchers//protobuf-matchers",
         "@com_google_absl//absl/status:status_matchers",
         "@com_google_cel_cpp//internal:testing",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "gtest_wrapper_main",
+    testonly = 1,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gtest_wrapper",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -51,7 +61,7 @@ cc_test(
     deps = [
         ":status_payload_matchers",
         "//intrinsic/util/proto:type_url",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:gtest_wrapper_main",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:cord",

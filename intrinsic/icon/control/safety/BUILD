@@ -52,7 +52,7 @@ cc_test(
         ":safety_messages_fbs_cc",
         ":safety_messages_fbs_utils",
         "//intrinsic/icon/control/safety/extern:safety_status_fbs_cc",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:gtest_wrapper_main",
         "@com_github_google_flatbuffers//:flatbuffers",
     ],
 )

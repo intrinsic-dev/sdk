@@ -164,7 +164,7 @@ cc_test(
         ":eigen_conversion",
         ":matrix_cc_proto",
         "//intrinsic/eigenmath",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:gtest_wrapper_main",
         "@com_google_absl//absl/status",
         "@com_google_protobuf//:protobuf_lite",
     ],

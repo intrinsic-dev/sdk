@@ -186,7 +186,7 @@ cc_test(
         "//intrinsic/icon/control/c_api/external_action_api/testing:action_test_helper",
         "//intrinsic/icon/control/c_api/external_action_api/testing:loopback_fake_arm",
         "//intrinsic/icon/utils:realtime_status_or",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:gtest_wrapper_main",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_protobuf//:protobuf",

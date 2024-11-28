@@ -69,7 +69,7 @@ cc_test(
     srcs = ["stop_token_test.cc"],
     deps = [
         ":stop_token",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:gtest_wrapper_main",
     ],
 )
 
@@ -94,7 +94,7 @@ cc_test(
     srcs = ["periodic_test.cc"],
     deps = [
         ":periodic",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:gtest_wrapper_main",
         "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",

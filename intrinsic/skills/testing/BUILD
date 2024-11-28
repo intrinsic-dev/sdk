@@ -181,7 +181,7 @@ cc_test(
         "//intrinsic/skills/cc:skill_interface",
         "//intrinsic/skills/cc:skill_logging_context",
         "//intrinsic/skills/proto:skill_manifest_cc_proto",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:gtest_wrapper_main",
         "//intrinsic/world/objects:object_world_client",
         "//intrinsic/world/proto:object_world_service_cc_grpc_proto",
         "@com_github_grpc_grpc//:grpc++",

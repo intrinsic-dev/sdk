@@ -17,7 +17,7 @@ cc_test(
     deps = [
         ":aggregate_type",
         "//intrinsic/eigenmath",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:gtest_wrapper_main",
     ],
 )
 
@@ -76,7 +76,7 @@ cc_test(
         "//intrinsic/eigenmath",
         "//intrinsic/eigenmath:rotation_utils",
         "//intrinsic/math:pose3",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:gtest_wrapper_main",
     ],
 )
 

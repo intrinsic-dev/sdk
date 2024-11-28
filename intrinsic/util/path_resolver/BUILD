@@ -42,7 +42,7 @@ cc_test(
     data = ["path_resolver_test.cc"],
     deps = [
         ":path_resolver",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:gtest_wrapper_main",
     ],
 )
 

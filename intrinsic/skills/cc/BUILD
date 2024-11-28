@@ -216,7 +216,7 @@ cc_test(
         "//intrinsic/skills/testing:echo_skill_cc_proto",
         "//intrinsic/skills/testing:skill_test_utils_cc",
         "//intrinsic/util/status:status_macros",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:gtest_wrapper_main",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

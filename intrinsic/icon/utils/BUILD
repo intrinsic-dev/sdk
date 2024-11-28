@@ -300,7 +300,7 @@ cc_test(
     deps = [
         ":async_buffer",
         "//intrinsic/icon/release:source_location",
-        "//intrinsic/util/testing:gtest_wrapper",
+        "//intrinsic/util/testing:gtest_wrapper_main",
         "@com_google_absl//absl/strings",
     ],
 )
