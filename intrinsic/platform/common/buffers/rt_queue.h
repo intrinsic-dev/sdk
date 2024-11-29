@@ -104,6 +104,18 @@ class RealtimeQueue : public RealtimeQueueBase {
     // KeepFront, or DropFront, must be called before another call to Front is
     // allowed.
     ABSL_MUST_USE_RESULT T* Front() { return buffer_.Front(); }
+    // Moves the front element. Returns nullopt if empty. DropFront must be
+    // called after this. KeepFront does not work for moveable types.
+    //
+    // After calling MoveFront(), the object returned by PrepareInsert() must
+    // not be reused but an object must be assigned to it using the assignment
+    // operator.
+    ABSL_MUST_USE_RESULT std::optional<T> MoveFront() {
+      if (Empty()) {
+        return std::nullopt;
+      }
+      return std::move(*Front());
+    }
     // Keeps the front element. This signals that leaving that element in place
     // is deliberate, and allows Front to be called again.
     void KeepFront() { buffer_.KeepFront(); }
