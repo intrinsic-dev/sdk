@@ -287,7 +287,7 @@ class PubSub {
     std::optional<uint64_t> span_id;
   };
 
-  // Queries a queryable.
+  // Gets from one specific queryable (identified by key, NOT key expr).
   // Calls the queryable with the given request. This will block until a reply
   // is received. Returns the response or a status on error.
   //
@@ -299,9 +299,9 @@ class PubSub {
   // Note: If SupportsQueryable() returns false this will return an
   // absl::UnimplementedError.
   template <typename ResponseT, typename RequestT>
-  absl::StatusOr<ResponseT> Query(absl::string_view key,
-                                  const RequestT& request,
-                                  const QueryOptions& options) {
+  absl::StatusOr<ResponseT> GetOne(absl::string_view key,
+                                   const RequestT& request,
+                                   const QueryOptions& options = {}) {
     static_assert(std::is_base_of_v<google::protobuf::Message, RequestT>,
                   "Request must be a proto message");
     static_assert(std::is_base_of_v<google::protobuf::Message, ResponseT>,
@@ -317,7 +317,7 @@ class PubSub {
     request_packet.mutable_request()->PackFrom(request);
 
     absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse>
-        response_packet = QueryImpl(key, request_packet, options);
+        response_packet = GetOneImpl(key, request_packet, options);
 
     if (response_packet->has_error()) {
       return ToAbslStatus(response_packet->error());
@@ -347,7 +347,7 @@ class PubSub {
                        " but got ", packet.payload().type_url())));
   }
 
-  absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse> QueryImpl(
+  absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse> GetOneImpl(
       absl::string_view key,
       const intrinsic_proto::pubsub::PubSubQueryRequest& request,
       const QueryOptions& options);

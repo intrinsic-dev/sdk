@@ -209,14 +209,14 @@ absl::StatusOr<intrinsic::KeyValueStore> PubSub::KeyValueStore() const {
 }
 
 namespace {
-struct QueryData {
+struct GetOneData {
   absl::Notification notification;
   absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse> response_packet;
 };
 
-void QueryCallback(const char *key, const void *response_bytes,
-                   const size_t response_bytes_len, void *user_context) {
-  QueryData *query_data = static_cast<QueryData *>(user_context);
+void GetOneCallbackFn(const char *key, const void *response_bytes,
+                      const size_t response_bytes_len, void *user_context) {
+  GetOneData *query_data = static_cast<GetOneData *>(user_context);
   std::string_view response_str(static_cast<const char *>(response_bytes),
                                 response_bytes_len);
   intrinsic_proto::pubsub::PubSubQueryResponse response_packet;
@@ -227,8 +227,8 @@ void QueryCallback(const char *key, const void *response_bytes,
   query_data->response_packet = std::move(response_packet);
 }
 
-void QueryOnDoneCallback(const char *key, void *user_context) {
-  QueryData *query_data = static_cast<QueryData *>(user_context);
+void GetOneOnDoneCallbackFn(const char *key, void *user_context) {
+  GetOneData *query_data = static_cast<GetOneData *>(user_context);
   query_data->notification.Notify();
 }
 
@@ -241,13 +241,13 @@ absl::StatusOr<Queryable> PubSub::CreateQueryableImpl(
   return Queryable::Create(key, callback);
 }
 
-absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse> PubSub::QueryImpl(
+absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse> PubSub::GetOneImpl(
     absl::string_view key,
     const intrinsic_proto::pubsub::PubSubQueryRequest &request,
     const QueryOptions &options) {
   std::string serialized_request = request.SerializeAsString();
-  QueryData query_data;
-  if (Zenoh().imw_query(key.data(), &QueryCallback, &QueryOnDoneCallback,
+  GetOneData query_data;
+  if (Zenoh().imw_query(key.data(), &GetOneCallbackFn, &GetOneOnDoneCallbackFn,
                         serialized_request.c_str(), serialized_request.size(),
                         &query_data) != IMW_OK) {
     return absl::InternalError(
