@@ -22,7 +22,16 @@ config_setting(
 
 cc_library(
     name = "zenoh_pubsub_data",
+    srcs = ["zenoh_pubsub_data.cc"],
     hdrs = ["zenoh_pubsub_data.h"],
+    deps = [
+        "//intrinsic/platform/pubsub/zenoh_util:zenoh_config",
+        "//intrinsic/platform/pubsub/zenoh_util:zenoh_handle",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/base:no_destructor",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/synchronization",
+    ],
 )
 
 # PubSub API library. The user-facing API providing access to

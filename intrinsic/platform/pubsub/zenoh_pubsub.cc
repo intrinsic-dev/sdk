@@ -32,33 +32,15 @@ std::string PubSubQoSToZenohQos(const TopicConfig::TopicQoS &qos) {
   return qos == TopicConfig::TopicQoS::Sensor ? "Sensor" : "HighReliability";
 }
 
-std::unique_ptr<PubSubData> MakePubSubData(
-    absl::string_view config_param = absl::string_view()) {
-  auto data = std::make_unique<PubSubData>();
-  std::string config(config_param);
-  if (config.empty()) {
-    config = intrinsic::GetZenohPeerConfig();
-    if (config.empty()) {
-      LOG(FATAL) << "Could not get PubSub peer config";
-    }
-  }
-  imw_ret_t ret = Zenoh().imw_init(config.c_str());
-  if (ret != IMW_OK) {
-    LOG(FATAL) << "Error creating a zenoh session with config " << config;
-  }
-  LOG(INFO) << "Created a zenoh session with libimw_zenoh version: "
-            << Zenoh().imw_version();
-  return data;
-}
+PubSub::PubSub() : data_(std::make_shared<PubSubData>()) {}
 
-PubSub::PubSub() : data_(MakePubSubData()) {}
-
-PubSub::PubSub(absl::string_view participant_name) : data_(MakePubSubData()) {}
+PubSub::PubSub(absl::string_view participant_name)
+    : data_(std::make_shared<PubSubData>()) {}
 
 PubSub::PubSub(absl::string_view participant_name, absl::string_view config)
-    : data_(MakePubSubData(config)) {}
+    : data_(std::make_shared<PubSubData>(config)) {}
 
-PubSub::~PubSub() { Zenoh().imw_fini(); }
+PubSub::~PubSub() = default;
 
 absl::StatusOr<Publisher> PubSub::CreatePublisher(
     absl::string_view topic_name, const TopicConfig &config) const {
