@@ -10,6 +10,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "google/protobuf/message.h"
 #include "intrinsic/platform/pubsub/adapters/pubsub.pb.h"
@@ -71,18 +72,33 @@ class Queryable {
   std::unique_ptr<internal::QueryableLink> link_;
 };
 
+// This struct is passed to Queryable callbacks as first argument to pass
+// additional context, e.g., tracing information.
 struct QueryableContext {
   uint64_t trace_id;  // This can be used to keep tracing in a request
   uint64_t span_id;  // The parent span ID to associate calls in this request to
 };
 
-template <typename RequestT, typename ResponseT,
-          typename = std::enable_if_t<
-              std::is_base_of_v<google::protobuf::Message, RequestT>>,
-          typename = std::enable_if_t<
-              std::is_base_of_v<google::protobuf::Message, ResponseT>>>
-using QueryableCallback = std::function<absl::StatusOr<ResponseT>(
-    const QueryableContext& context, const RequestT& request)>;
+// Helper struct to deduce the types from the QueryableCallback lambda.
+template <typename CallbackType>
+struct QueryableCallbackTraits
+    : public QueryableCallbackTraits<decltype(&CallbackType::operator())> {};
+
+template <typename ClassType, typename RequestT, typename ResponseT>
+struct QueryableCallbackTraits<absl::Status (ClassType::*)(
+    const QueryableContext&, RequestT, ResponseT) const> {
+  using RequestType = std::remove_cvref_t<RequestT>;
+  using ResponseType = std::remove_cvref_t<ResponseT>;
+  static_assert(std::is_const_v<std::remove_reference_t<RequestT>> &&
+                    std::is_reference_v<RequestT>,
+                "The request parameter needs to be a const reference.");
+  static_assert(std::is_reference_v<ResponseT>,
+                "The response parameter needs to be a reference.");
+  static_assert(!std::is_const_v<std::remove_reference_t<ResponseT>>,
+                "The response parameter needs cannot be a const argument.");
+  static_assert(std::is_base_of_v<google::protobuf::Message, RequestType>,
+                "First argument must be a proto message type");
+};
 
 }  // namespace intrinsic
 

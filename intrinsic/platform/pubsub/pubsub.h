@@ -227,41 +227,48 @@ class PubSub {
   // Status (indiciating an error and ideally containing an ExtendedStatus) or a
   // response proto of the specified type.
   //
+  // The queryable callback must adhere to the following signature:
+  // std::function<absl::Status(const QueryableContext&,
+  //                            const RequestType&,
+  //                            ResponseType&)>
+  // where RequestType and ResponseType must be proto message types.
+  //
   // Note: If SupportsQueryable() returns false this will return an
   // absl::UnimplementedError.
-  template <typename RequestT, typename ResponseT,
-            typename = std::enable_if_t<
-                std::is_base_of_v<google::protobuf::Message, RequestT>>,
-            typename = std::enable_if_t<
-                std::is_base_of_v<google::protobuf::Message, ResponseT>>>
-  absl::StatusOr<Queryable> CreateQueryable(
-      absl::string_view key, QueryableCallback<RequestT, ResponseT> callback) {
+  template <typename CallbackType>
+  absl::StatusOr<Queryable> CreateQueryable(absl::string_view key,
+                                            CallbackType callback) {
+    using RequestT =
+        typename QueryableCallbackTraits<CallbackType>::RequestType;
+    using ResponseT =
+        typename QueryableCallbackTraits<CallbackType>::ResponseType;
     auto inner_callback =
         [callback, key = std::string(key)](
             const intrinsic_proto::pubsub::PubSubQueryRequest& request_packet) {
-          std::shared_ptr<RequestT> request(RequestT::default_instance().New());
+          RequestT request;
           intrinsic_proto::pubsub::PubSubQueryResponse response_packet;
 
-          if (!request_packet.request().UnpackTo(request.get())) {
+          if (!request_packet.request().UnpackTo(&request)) {
             *response_packet.mutable_error() =
                 ToGoogleRpcStatus(absl::InternalError(absl::StrFormat(
                     "Failed to deserialize query message for key '%s' "
                     "(got type URL: %s, expected message type: %s)",
                     key, request_packet.request().type_url(),
-                    request->GetDescriptor()->full_name())));
+                    RequestT::descriptor()->full_name())));
             return response_packet;
           }
 
-          QueryableContext context{.trace_id = request_packet.trace_id(),
-                                   .span_id = request_packet.span_id()};
+          const QueryableContext context{.trace_id = request_packet.trace_id(),
+                                         .span_id = request_packet.span_id()};
 
-          absl::StatusOr<ResponseT> response = callback(context, *request);
+          ResponseT response;
+          absl::Status response_status = callback(context, request, response);
 
-          if (!response.ok()) {
+          if (!response_status.ok()) {
             *response_packet.mutable_error() =
-                ToGoogleRpcStatus(response.status());
+                ToGoogleRpcStatus(response_status);
           } else {
-            response_packet.mutable_response()->PackFrom(*response);
+            response_packet.mutable_response()->PackFrom(response);
           }
           return response_packet;
         };
@@ -284,16 +291,22 @@ class PubSub {
   // Calls the queryable with the given request. This will block until a reply
   // is received. Returns the response or a status on error.
   //
+  // Invoke with the expected response type as template argument like this:
+  // INTR_ASSIGN_OR_RETURN(auto response,
+  //                       pubsub.Query<my_package::MyResponse>("some/key",
+  //                                                            request));
+  //
   // Note: If SupportsQueryable() returns false this will return an
   // absl::UnimplementedError.
-  template <typename RequestT, typename ResponseT,
-            typename = std::enable_if_t<
-                std::is_base_of_v<google::protobuf::Message, RequestT>>,
-            typename = std::enable_if_t<
-                std::is_base_of_v<google::protobuf::Message, ResponseT>>>
+  template <typename ResponseT, typename RequestT>
   absl::StatusOr<ResponseT> Query(absl::string_view key,
                                   const RequestT& request,
                                   const QueryOptions& options) {
+    static_assert(std::is_base_of_v<google::protobuf::Message, RequestT>,
+                  "Request must be a proto message");
+    static_assert(std::is_base_of_v<google::protobuf::Message, ResponseT>,
+                  "Response must be a proto message");
+
     intrinsic_proto::pubsub::PubSubQueryRequest request_packet;
     if (options.trace_id.has_value()) {
       request_packet.set_trace_id(*options.trace_id);

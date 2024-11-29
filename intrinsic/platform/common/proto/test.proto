@@ -25,3 +25,11 @@ message PingPongMessage {
   int64 iteration_id = 4;
   bytes payload = 5;
 }
+
+message TestRequest {
+  repeated int64 values = 1;
+}
+
+message TestResponse {
+  int64 value = 1;
+}
