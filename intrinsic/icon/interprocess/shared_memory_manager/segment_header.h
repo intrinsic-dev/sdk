@@ -131,7 +131,7 @@ class alignas(64) SegmentHeader final {
     // of the members changes.
     // Is static to compare the expected version to the version in the shared
     // memory segment.
-    return 3;
+    return 4;
   }
 
   // The version of the SegmentHeader as stored in shared memory.
