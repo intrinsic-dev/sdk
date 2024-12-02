@@ -16,7 +16,6 @@ proto_library(
         ":context_proto",
         ":critical_event_log",
         ":flowstate_event",
-        "//intrinsic/executive/proto:executive_state_proto",
         "//intrinsic/executive/proto:log_items_proto",
         "//intrinsic/icon/proto:cart_space_proto",
         "//intrinsic/icon/proto:joint_space_proto",

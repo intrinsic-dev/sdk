@@ -244,20 +244,6 @@ go_proto_library(
     deps = [":executive_execution_mode_proto"],
 )
 
-# executive_state
-proto_library(
-    name = "executive_state_proto",
-    srcs = ["executive_state.proto"],
-    deps = [
-        "@com_google_googleapis//google/longrunning:operations_proto",
-    ],
-)
-
-py_proto_library(
-    name = "executive_state_py_pb2",
-    deps = [":executive_state_proto"],
-)
-
 # log_items
 proto_library(
     name = "log_items_proto",
