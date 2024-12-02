@@ -142,6 +142,7 @@ class Frame(TransformNode):
 
   @property
   def object_id(self) -> object_world_ids.ObjectWorldResourceId:
+    """Returns the id of the object the frame is attached to."""
     return object_world_ids.ObjectWorldResourceId(self._proto.object.id)
 
   @property
@@ -197,15 +198,59 @@ class Frame(TransformNode):
         )
     )
 
+  def _parent_object(self) -> 'WorldObject':
+    get_object_request = object_world_service_pb2.GetObjectRequest(
+        world_id=self._proto.world_id,
+        # `object_id` is the id of the object the frame is attached to.
+        object=object_world_refs_pb2.ObjectReference(id=self.object_id),
+        view=object_world_updates_pb2.ObjectView.BASIC,
+    )
+    object_proto = self._stub.GetObject(get_object_request)
+    return WorldObject(object_proto, self._stub)
+
   @property
   def reference(self) -> object_world_refs_pb2.FrameReference:
+    """Returns a FrameReference that uniquely identifies the frame in the world."""
+    # Return a named reference if the frame is parented to a globally unique
+    # object.
+    transform_node_reference = self.transform_node_reference
+    if transform_node_reference.HasField(
+        'by_name'
+    ) and transform_node_reference.by_name.HasField('frame'):
+      return object_world_refs_pb2.FrameReference(
+          by_name=transform_node_reference.by_name.frame,
+          debug_hint=transform_node_reference.debug_hint,
+      )
+
+    # Otherwise, fallback to refer to the frame by its id.
     return object_world_refs_pb2.FrameReference(
         id=self.id, debug_hint=self._debug_hint()
     )
+
   @property
   def transform_node_reference(
       self,
   ) -> object_world_refs_pb2.TransformNodeReference:
+    """Returns a TransformNodeReference that uniquely identifies the frame in the world.
+
+    The frame may be referred to by its name or its id, and the user should not
+    assume that only a particular type of reference will be returned.
+    """
+    parent_object = self._parent_object()
+
+    # Return a named reference if the frame is parented to a globally unique
+    # object.
+    if parent_object.name_is_global_alias:
+      return object_world_refs_pb2.TransformNodeReference(
+          by_name=object_world_refs_pb2.TransformNodeReferenceByName(
+              frame=object_world_refs_pb2.FrameReferenceByName(
+                  object_name=parent_object.name, frame_name=self.name
+              )
+          ),
+          debug_hint=self._debug_hint(),
+      )
+
+    # Otherwise, fallback to refer to the frame by its id.
     return object_world_refs_pb2.TransformNodeReference(
         id=self.id, debug_hint=self._debug_hint()
     )
@@ -220,20 +265,14 @@ class Frame(TransformNode):
       frame_proto = self._stub.GetFrame(get_frame_request)
       return Frame(frame_proto, self._stub)
 
-    get_object_request = object_world_service_pb2.GetObjectRequest(
-        world_id=self._proto.world_id,
-        object=object_world_refs_pb2.ObjectReference(id=self.object_id),
-        view=object_world_updates_pb2.ObjectView.FULL,
-    )
-    object_proto = self._stub.GetObject(get_object_request)
-    return WorldObject(object_proto, self._stub)
+    return self._parent_object()
 
   @property
   def parent_t_this(self) -> data_types.Pose3:
     return math_proto_conversion.pose_from_proto(self._proto.parent_t_this)
 
   def __getattr__(self, name: str) -> TransformNode:
-    raise NotImplementedError()
+    raise NotImplementedError(f'Frame does not support attribute {name}.')
 
   @property
   def proto(self) -> object_world_service_pb2.Frame:

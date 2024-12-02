@@ -590,7 +590,12 @@ my_object: WorldObject(id=15)
         ),
     )
 
-  def test_frame_to_transform_node_reference(self):
+  def test_frame_to_transform_node_reference_without_global_object_name(self):
+    object_proto = self._create_world_object_proto(
+        name='my_object', object_id='15'
+    )
+    object_proto.name_is_global_alias = False
+    self._stub.GetObject.return_value = object_proto
     frame_proto_string = """
       name: 'my_frame'
       id: 'my_id'
@@ -617,7 +622,80 @@ my_object: WorldObject(id=15)
         ),
     )
 
-  def test_frame_to_frame_reference(self):
+  def test_frame_to_transform_node_reference_with_global_object_name(self):
+    object_proto = self._create_world_object_proto(
+        name='my_object', object_id='15'
+    )
+    object_proto.name_is_global_alias = True
+    self._stub.GetObject.return_value = object_proto
+    frame_proto_string = """
+      name: 'my_frame'
+      id: 'my_id'
+      object: {name: 'my_object'}
+      object_full_path: {
+          object_names: 'my_object'
+      }
+    """
+    transform_node_reference = object_world_resources.Frame(
+        text_format.Parse(frame_proto_string, object_world_service_pb2.Frame()),
+        self._stub,
+    ).transform_node_reference
+
+    transform_node_proto_string = """
+      by_name {
+        frame {
+          object_name: 'my_object'
+          frame_name: 'my_frame'
+        }
+      }
+      debug_hint: "Created from path world.my_object.my_frame"
+    """
+    compare.assertProto2Equal(
+        self,
+        transform_node_reference,
+        text_format.Parse(
+            transform_node_proto_string,
+            object_world_refs_pb2.TransformNodeReference(),
+        ),
+    )
+
+  def test_frame_reference_with_global_object_name(self):
+    object_proto = self._create_world_object_proto(
+        name='my_object', object_id='15'
+    )
+    object_proto.name_is_global_alias = True
+    self._stub.GetObject.return_value = object_proto
+
+    frame_proto_string = """
+      name: 'my_frame'
+      id: 'my_id'
+      object: {name: 'my_object'}
+      object_full_path: {
+          object_names: 'my_object'
+      }
+    """
+    frame_reference = object_world_resources.Frame(
+        text_format.Parse(frame_proto_string, object_world_service_pb2.Frame()),
+        self._stub,
+    ).reference
+
+    self.assertEqual(
+        frame_reference,
+        object_world_refs_pb2.FrameReference(
+            by_name=object_world_refs_pb2.FrameReferenceByName(
+                frame_name='my_frame', object_name='my_object'
+            ),
+            debug_hint='Created from path world.my_object.my_frame',
+        ),
+    )
+
+  def test_frame_reference_without_global_object_name(self):
+    object_proto = self._create_world_object_proto(
+        name='my_object', object_id='15'
+    )
+    object_proto.name_is_global_alias = False
+    self._stub.GetObject.return_value = object_proto
+
     frame_proto_string = """
       name: 'my_frame'
       id: 'my_id'
@@ -741,17 +819,30 @@ my_object: WorldObject(id=15)
         np.array([0, 0, 0, 1]),
     )
 
-  def test_object_reference(self):
+  def test_object_reference_without_global_name(self):
     my_object = self._create_world_object(
         self._create_world_object_proto(object_id='15')
     )
 
+    self.assertFalse(my_object.name_is_global_alias)
     self.assertEqual(my_object.reference.id, '15')
 
-  def test_frame_reference(self):
-    my_frame = self._create_frame(object_world_service_pb2.Frame(id='17'))
+  def test_object_reference_with_global_name(self):
+    object_proto = self._create_world_object_proto(
+        name='my_object', object_id='15'
+    )
+    object_proto.name_is_global_alias = True
+    my_object = self._create_world_object(object_proto)
 
-    self.assertEqual(my_frame.reference.id, '17')
+    self.assertTrue(my_object.name_is_global_alias)
+    self.assertEqual(
+        my_object.reference,
+        object_world_refs_pb2.ObjectReference(
+            by_name=object_world_refs_pb2.ObjectReferenceByName(
+                object_name='my_object'
+            ),
+        ),
+    )
 
   def test_frames_equal_raises_error(self):
     my_frame = self._create_frame(object_world_service_pb2.Frame(id='17'))

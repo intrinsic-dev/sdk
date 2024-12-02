@@ -255,7 +255,7 @@ def _field_to_transform_node_reference(
     A TransformNodeReference with an object or frame reference.
   """
   if isinstance(field_value, object_world_resources.TransformNode):
-    return object_world_refs_pb2.TransformNodeReference(id=field_value.id)
+    return field_value.transform_node_reference
   raise TypeError(
       f"Value: {field_value} is not convertible to a TransformNodeReference."
   )

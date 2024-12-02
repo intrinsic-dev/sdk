@@ -3466,10 +3466,17 @@ class BehaviorTreeLoopTest(absltest.TestCase):
         ),
         stub=stub,
     )
+    stub.GetObject.return_value = object_world_service_pb2.Object(
+        name='n4',
+        object_component=object_world_service_pb2.ObjectComponent(),
+        name_is_global_alias=True,
+        id='4',
+    )
     w3 = object_world_resources.Frame(
         world_frame=object_world_service_pb2.Frame(
             name='n3',
             id='3',
+            object=object_world_service_pb2.IdAndName(id='4', name='n4'),
         ),
         stub=stub,
     )
@@ -3502,7 +3509,10 @@ class BehaviorTreeLoopTest(absltest.TestCase):
           }
           items {
             [type.googleapis.com/intrinsic_proto.world.FrameReference] {
-              id: "3"
+              by_name {
+                object_name: "n4"
+                frame_name: "n3"
+              }
               debug_hint: "Created from path world.n3"
             }
           }
