@@ -866,7 +866,7 @@ def _ast_class_def_for_message_wrapper_namespace(
       value=ast.Constant(value=message_wrapper_namespace.__doc__)
   )
 
-  return ast.ClassDef(
+  return ast.ClassDef(  # pytype: disable=wrong-arg-types
       name=message_wrapper_namespace.__name__,
       # Don't declare skill_utils.MessageWrapperNamespace as base class in the
       # stub. This class is an internal implementation helper and does not
