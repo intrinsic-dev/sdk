@@ -54,10 +54,12 @@ func ResolveRunfilesOrLocalPath(p string) (string, error) {
 	if errRunfile == nil {
 		return resolvedPath, nil
 	}
-	resolvedRepo := "ai_intrinsic_sdks~"
-	resolvedPath = filepath.Join(".", resolvedRepo, p)
-	if _, err := os.Stat(resolvedPath); err != nil {
-		return "", fmt.Errorf("unable to resolve path %q:\n  Not available as runfile: %v\n  Not available as local file: %v", p, errRunfile, err)
+	resolvedRepos := []string{"ai_intrinsic_sdks~", "."}
+	for _, resolvedRepo := range resolvedRepos {
+		resolvedPath = filepath.Join(".", resolvedRepo, p)
+		if _, err := os.Stat(resolvedPath); err == nil {
+			return resolvedPath, nil
+		}
 	}
-	return resolvedPath, nil
+	return "", fmt.Errorf("unable to resolve path %q:\n  Not available as runfile: %v\n  Not available as local file", p, errRunfile)
 }
