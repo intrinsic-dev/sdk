@@ -71,11 +71,10 @@ void AddErrorToSummary(const absl::Status& absl_status, T& summary) {
   std::optional<intrinsic_proto::status::ExtendedStatus> extended_status =
       GetExtendedStatus(absl_status);
 
+  summary.set_error_code(absl_status.raw_code());
+  summary.set_error_message(std::string(absl_status.message()));
   if (extended_status.has_value()) {
     *summary.mutable_extended_status() = std::move(*extended_status);
-  } else {
-    summary.set_error_code(absl_status.raw_code());
-    summary.set_error_message(std::string(absl_status.message()));
   }
   *summary.mutable_error_info() = GetErrorInfo(absl_status);
 }
