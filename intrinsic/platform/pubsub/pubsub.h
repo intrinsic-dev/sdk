@@ -95,7 +95,7 @@ using SubscriptionOkExpandedCallback =
 using SubscriptionErrorCallback =
     std::function<void(absl::string_view packet, absl::Status error)>;
 
-struct PubSubData;
+class PubSubData;
 
 // This class is thread-safe.
 class PubSub {
