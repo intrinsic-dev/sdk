@@ -18,15 +18,19 @@ message EventSourceWithTypeHints {
 }
 
 // Status to indicate an event source inputs upload progress.
+// Event source statuses are expected to be unidirectional (increasing)
+// transitions only, with numbers matching the bag status enum values.
 message EventSourceStatus {
   enum EventSourceStatusEnum {
     UNSET = 0;
     UPLOAD_PENDING = 1;
     UPLOADING = 2;
     UPLOADED = 3;
-    // reserved 4;
-    UNCOMPLETABLE = 5;
-    FAILED = 6;
+    UNCOMPLETABLE = 4;
+
+    reserved 5;  // COMPLETED.
+    reserved 6;  // UNCOMPLETABLE_COMPLETED.
+    FAILED = 7;
   }
 
   EventSourceStatusEnum status = 1;  // Unidirectional transitions only.
@@ -56,15 +60,20 @@ message EventSourceMetadata {
 }
 
 // Status to indicate overall bag input upload progress.
+// Bag statuses are expected to be unidirectional (increasing) transitions only,
+// with numbers matching the event source status enum values.
 message BagStatus {
   enum BagStatusEnum {
     UNSET = 0;
     UPLOAD_PENDING = 1;
     UPLOADING = 2;
     UPLOADED = 3;
-    COMPLETED = 4;
-    UNCOMPLETABLE = 5;
-    FAILED = 6;
+    UNCOMPLETABLE = 4;
+
+    COMPLETED = 5;
+    // Uncompletable bag was completed with missing items (best-effort).
+    UNCOMPLETABLE_COMPLETED = 6;
+    FAILED = 7;
   }
 
   BagStatusEnum status = 1;  // Unidirectional transitions only.
