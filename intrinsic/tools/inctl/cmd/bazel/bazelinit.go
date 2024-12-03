@@ -210,7 +210,7 @@ var initCmd = &cobra.Command{
 	Short: "Initialize a Bazel workspace",
 	Long:  "Initialize a Bazel workspace for use with the Intrinsic SDK.",
 	Example: `Initialize a Bazel workspace in the current working directory using the given SDK repository:
-$ inctl bazel init --sdk_repository=https://github.com/intrinsic-dev/sdk.git
+$ inctl bazel init --sdk_repository=https://github.com/intrinsic-ai/sdk.git
 
 Initialize a Bazel workspace in the folder "/src/skill_workspace":
 $ inctl bazel init --workspace_root /src/skill_workspace --sdk_repository=<repo url>
@@ -260,7 +260,7 @@ func init() {
 		"path. Non-existing folders will be created automatically.")
 	initCmd.Flags().StringVar(&flagSDKRepository, keySDKRepository, "", "Git repository from which "+
 		"to fetch the Intrinsic SDK, e.g., "+
-		"\"https://github.com/intrinsic-dev/sdk.git\".")
+		"\"https://github.com/intrinsic-ai/sdk.git\".")
 
 	// In the case that a development version of the SDK is used, we want to pin the workspace to the
 	// latest version of the SDK.  In released versions, the version.SDKVersion is set to the
