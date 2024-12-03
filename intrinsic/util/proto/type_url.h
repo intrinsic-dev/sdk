@@ -17,11 +17,51 @@ constexpr std::string_view kIntrinsicTypeUrlPrefix = "type.intrinsic.ai/";
 constexpr std::string_view kTypeUrlPrefix = "type.googleapis.com/";
 constexpr std::string_view kTypeUrlSeparator = "/";
 
+namespace internal {
+template <typename T>
+std::string PrefixWithSeparator(T&& p) {
+  return absl::StrCat(kTypeUrlSeparator, p);
+}
+}  // namespace internal
+
 inline std::string AddTypeUrlPrefix(std::string_view proto_type) {
   if (proto_type.find(kTypeUrlPrefix) == 0) {
     return std::string(proto_type);
   }
   return absl::StrCat(kTypeUrlPrefix, proto_type);
+}
+
+// Generate an Intrinsic-style type URL for protos.
+// The general pattern is: type.intrinsic.ai/<area>/<path>/<message type>
+// Example:
+// GenerateIntrinsicTypeUrl("skills", skill_id, skill_version,
+//                          parameter_descriptor->full_name());
+// Could result in
+// type.intrinsic.ai/skills/ai.intrinsic.my_skill/1.0.0/proto_package.Params
+template <typename... T>
+std::string GenerateIntrinsicTypeUrl(std::string_view area,
+                                     T&&... path_elements) {
+  return absl::StrCat(
+      kIntrinsicTypeUrlPrefix, area,
+      internal::PrefixWithSeparator(std::forward<T>(path_elements))...);
+}
+
+// Similar as above, but extract the message full name from the given proto
+// message type's descriptor.
+// Example:
+// GenerateIntrinsicTypeUrl<proto_package::Params>("skills", skill_id,
+//                                                 skill_version);
+// Could result in:
+// type.intrinsic.ai/skills/ai.intrinsic.my_skill/1.0.0/proto_package.Params
+template <typename M, typename... T,
+          typename =
+              std::enable_if_t<std::is_base_of_v<google::protobuf::Message, M>>>
+std::string GenerateIntrinsicTypeUrlForMessage(std::string_view area,
+                                               T&&... path_elements) {
+  return absl::StrCat(
+      kIntrinsicTypeUrlPrefix, area,
+      internal::PrefixWithSeparator(std::forward<T>(path_elements))...,
+      kTypeUrlSeparator, M::descriptor()->full_name());
 }
 
 inline std::string_view StripTypeUrlPrefix(

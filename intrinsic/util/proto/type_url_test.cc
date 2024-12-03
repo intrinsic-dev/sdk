@@ -52,5 +52,18 @@ TEST(TypeUrl, StripPrefixIdempotent) {
   EXPECT_EQ(StripTypeUrlPrefix(proto_type), proto_type);
 }
 
+TEST(TypeUrl, GenerateIntrinsicTypeUrl) {
+  std::string proto_type = "google.protobuf.Int64Value";
+  EXPECT_EQ(GenerateIntrinsicTypeUrl("area", "foo", "bar", proto_type),
+            "type.intrinsic.ai/area/foo/bar/google.protobuf.Int64Value");
+  EXPECT_EQ(GenerateIntrinsicTypeUrl("foo", 25), "type.intrinsic.ai/foo/25");
+}
+
+TEST(TypeUrl, GenerateIntrinsicTypeUrlForMessage) {
+  EXPECT_EQ(GenerateIntrinsicTypeUrlForMessage<google::protobuf::Int64Value>(
+                "area", "foo", "bar"),
+            "type.intrinsic.ai/area/foo/bar/google.protobuf.Int64Value");
+}
+
 }  // namespace
 }  // namespace intrinsic
