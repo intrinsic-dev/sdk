@@ -8,40 +8,41 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/proto"
+	"intrinsic/assets/catalog/assetdescriptions"
+	acgrpcpb "intrinsic/assets/catalog/proto/v1/asset_catalog_go_grpc_proto"
+	acpb "intrinsic/assets/catalog/proto/v1/asset_catalog_go_grpc_proto"
 	"intrinsic/assets/clientutils"
 	"intrinsic/assets/cmdutils"
-	releasetagpb "intrinsic/assets/proto/release_tag_go_proto"
+	"intrinsic/assets/listutils"
+	atpb "intrinsic/assets/proto/asset_type_go_proto"
 	viewpb "intrinsic/assets/proto/view_go_proto"
-	skillcataloggrpcpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
-	skillcatalogpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillCmd "intrinsic/skills/tools/skill/cmd"
-	"intrinsic/skills/tools/skill/cmd/listutil"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/printer"
 )
 
-var cmdFlags = cmdutils.NewCmdFlags()
+const pageSize int64 = 50
 
-// listAllSkills retrieves skills by pagination
-func listAllSkills(ctx context.Context, client skillcataloggrpcpb.SkillCatalogClient, prtr printer.Printer, pageSize int64) error {
-	req := &skillcatalogpb.ListSkillsRequest{
-		View:      viewpb.AssetViewType_ASSET_VIEW_TYPE_BASIC,
-		PageToken: "",
-		PageSize:  pageSize,
-		StrictFilter: &skillcatalogpb.ListSkillsRequest_Filter{
-			ReleaseTag: releasetagpb.ReleaseTag_RELEASE_TAG_DEFAULT.Enum(),
-		}}
-	skills, err := listutil.ListWithCatalogClient(ctx, client, req)
+// listAllSkills retrieves skills by pagination.
+func listAllSkills(ctx context.Context, client acgrpcpb.AssetCatalogClient, prtr printer.Printer) error {
+	filter := &acpb.ListAssetsRequest_AssetFilter{
+		AssetTypes:  []atpb.AssetType{atpb.AssetType_ASSET_TYPE_SKILL},
+		OnlyDefault: proto.Bool(true),
+	}
+	skills, err := listutils.ListAllAssets(ctx, client, pageSize, viewpb.AssetViewType_ASSET_VIEW_TYPE_BASIC, filter)
 	if err != nil {
 		return err
 	}
-	sd, err := listutil.SkillDescriptionsFromCatalogSkills(skills)
+	ad, err := assetdescriptions.FromCatalogAssets(skills)
 	if err != nil {
 		return err
 	}
-	prtr.Print(sd)
+	prtr.Print(assetdescriptions.IDVersionsStringView{Descriptions: ad})
 	return nil
 }
+
+var cmdFlags = cmdutils.NewCmdFlags()
 
 var listReleasedCmd = &cobra.Command{
 	Use:   "list_released",
@@ -53,18 +54,12 @@ var listReleasedCmd = &cobra.Command{
 			return fmt.Errorf("failed to create client connection: %v", err)
 		}
 		defer conn.Close()
-
+		client := acgrpcpb.NewAssetCatalogClient(conn)
 		prtr, err := printer.NewPrinter(root.FlagOutput)
 		if err != nil {
 			return err
 		}
-		client := skillcataloggrpcpb.NewSkillCatalogClient(conn)
-		var pageSize int64 = 50
-		if err := listAllSkills(cmd.Context(), client, prtr, pageSize); err != nil {
-			return err
-		}
-
-		return nil
+		return listAllSkills(cmd.Context(), client, prtr)
 	},
 }
 

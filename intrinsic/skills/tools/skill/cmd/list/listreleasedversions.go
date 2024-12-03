@@ -4,22 +4,44 @@
 package listreleasedversions
 
 import (
-	"fmt"
+	"context"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
+	"intrinsic/assets/catalog/assetdescriptions"
+	acgrpcpb "intrinsic/assets/catalog/proto/v1/asset_catalog_go_grpc_proto"
+	acpb "intrinsic/assets/catalog/proto/v1/asset_catalog_go_grpc_proto"
 	"intrinsic/assets/clientutils"
 	"intrinsic/assets/cmdutils"
+	"intrinsic/assets/listutils"
+	atpb "intrinsic/assets/proto/asset_type_go_proto"
 	viewpb "intrinsic/assets/proto/view_go_proto"
-	skillcataloggrpcpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
-	skillcatalogpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	skillCmd "intrinsic/skills/tools/skill/cmd"
-	"intrinsic/skills/tools/skill/cmd/listutil"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/printer"
 )
 
+const pageSize int64 = 50
+
 var cmdFlags = cmdutils.NewCmdFlags()
+
+func listReleasedVersions(ctx context.Context, client acgrpcpb.AssetCatalogClient, skillID string, prtr printer.Printer) error {
+	filter := &acpb.ListAssetsRequest_AssetFilter{
+		Id:         proto.String(skillID),
+		AssetTypes: []atpb.AssetType{atpb.AssetType_ASSET_TYPE_SKILL},
+	}
+	skills, err := listutils.ListAllAssets(ctx, client, pageSize, viewpb.AssetViewType_ASSET_VIEW_TYPE_VERSIONS, filter)
+	if err != nil {
+		return errors.Wrap(err, "could not list skill versions")
+	}
+	ad, err := assetdescriptions.FromCatalogAssets(skills)
+	if err != nil {
+		return err
+	}
+	prtr.Print(assetdescriptions.IDVersionsStringView{Descriptions: ad})
+	return nil
+}
 
 var listReleasedVersionsCmd = &cobra.Command{
 	Use:   "list_released_versions [skill_id]",
@@ -28,37 +50,15 @@ var listReleasedVersionsCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		conn, err := clientutils.DialCatalogFromInctl(cmd, cmdFlags)
 		if err != nil {
-			return fmt.Errorf("failed to create client connection: %v", err)
+			return errors.Wrap(err, "failed to create client connection")
 		}
 		defer conn.Close()
-
-		client := skillcataloggrpcpb.NewSkillCatalogClient(conn)
-		skillID := args[0]
-		req := &skillcatalogpb.ListSkillsRequest{
-			View:      viewpb.AssetViewType_ASSET_VIEW_TYPE_VERSIONS,
-			PageToken: "",
-			PageSize:  50,
-			StrictFilter: &skillcatalogpb.ListSkillsRequest_Filter{
-				Id: proto.String(skillID),
-			}}
-		skills, err := listutil.ListWithCatalogClient(cmd.Context(), client, req)
-		if err != nil {
-			return fmt.Errorf("could not list skill versions: %w", err)
-		}
-
+		client := acgrpcpb.NewAssetCatalogClient(conn)
 		prtr, err := printer.NewPrinter(root.FlagOutput)
 		if err != nil {
 			return err
 		}
-
-		sd, err := listutil.SkillDescriptionsFromCatalogSkills(skills)
-		if err != nil {
-			return err
-		}
-
-		prtr.Print(sd)
-
-		return nil
+		return listReleasedVersions(cmd.Context(), client, args[0], prtr)
 	},
 }
 

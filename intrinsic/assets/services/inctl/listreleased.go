@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
+	"intrinsic/assets/catalog/assetdescriptions"
 	acgrpcpb "intrinsic/assets/catalog/proto/v1/asset_catalog_go_grpc_proto"
 	acpb "intrinsic/assets/catalog/proto/v1/asset_catalog_go_grpc_proto"
 	"intrinsic/assets/clientutils"
@@ -16,14 +17,12 @@ import (
 	"intrinsic/assets/listutils"
 	atpb "intrinsic/assets/proto/asset_type_go_proto"
 	viewpb "intrinsic/assets/proto/view_go_proto"
-	"intrinsic/assets/services/inctl/servicedescriptions"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/printer"
 )
 
 const pageSize int64 = 50
 
-// listAllServices retrieves services by pagination.
 func listAllServices(ctx context.Context, client acgrpcpb.AssetCatalogClient, prtr printer.Printer) error {
 	filter := &acpb.ListAssetsRequest_AssetFilter{
 		AssetTypes:  []atpb.AssetType{atpb.AssetType_ASSET_TYPE_SERVICE},
@@ -33,11 +32,11 @@ func listAllServices(ctx context.Context, client acgrpcpb.AssetCatalogClient, pr
 	if err != nil {
 		return err
 	}
-	sd, err := servicedescriptions.FromCatalogServices(services)
+	ad, err := assetdescriptions.FromCatalogAssets(services)
 	if err != nil {
 		return err
 	}
-	prtr.Print(sd.IDVersionsString())
+	prtr.Print(assetdescriptions.IDVersionsStringView{Descriptions: ad})
 	return nil
 }
 

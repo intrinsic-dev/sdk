@@ -1,16 +1,16 @@
 // Copyright 2023 Intrinsic Innovation LLC
 
-// Package servicedescriptions contains utils for commands that list released services.
-package servicedescriptions
+// Package assetdescriptions contains utils for commands that list released assets.
+package assetdescriptions
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 
 	acpb "intrinsic/assets/catalog/proto/v1/asset_catalog_go_grpc_proto"
 	"intrinsic/assets/idutils"
-	atpb "intrinsic/assets/proto/asset_type_go_proto"
 )
 
 // Description has custom proto->json conversion to handle fields like the update timestamp.
@@ -26,21 +26,24 @@ type Description struct {
 	Description  string `json:"description,omitempty"`
 }
 
-// Descriptions wraps the required data for the output of service list commands.
+// Descriptions wraps the required data for the output of asset list commands.
 type Descriptions struct {
-	Services []Description `json:"services"`
+	Assets []Description `json:"assets"`
 }
 
-// FromCatalogServices creates a Descriptions instance from catalog.v1.Asset protos.
-func FromCatalogServices(assets []*acpb.Asset) (*Descriptions, error) {
-	out := Descriptions{Services: make([]Description, len(assets))}
+// IDVersionsStringView wraps a Descriptions and defines String() which returns
+// one asset IDVersion per line. It also defines MarshalJSON() which just
+// marshals the wrapped Descriptions (unlike String this includes all fields).
+type IDVersionsStringView struct {
+	Descriptions *Descriptions
+}
+
+// FromCatalogAssets creates a Descriptions instance from catalog.v1.Asset protos.
+func FromCatalogAssets(assets []*acpb.Asset) (*Descriptions, error) {
+	out := Descriptions{Assets: make([]Description, len(assets))}
 
 	for i, asset := range assets {
 		metadata := asset.GetMetadata()
-		if metadata.GetAssetType() != atpb.AssetType_ASSET_TYPE_SERVICE {
-			return nil, fmt.Errorf("assets list must only contain services, found %v", asset.GetMetadata().GetAssetType())
-		}
-
 		idVersion, err := idutils.IDVersionFromProto(metadata.GetIdVersion())
 		if err != nil {
 			return nil, err
@@ -50,7 +53,7 @@ func FromCatalogServices(assets []*acpb.Asset) (*Descriptions, error) {
 			return nil, err
 		}
 
-		out.Services[i] = Description{
+		out.Assets[i] = Description{
 			Name:         ivp.Name(),
 			Vendor:       metadata.GetVendor().GetDisplayName(),
 			PackageName:  ivp.Package(),
@@ -66,11 +69,16 @@ func FromCatalogServices(assets []*acpb.Asset) (*Descriptions, error) {
 	return &out, nil
 }
 
-// IDVersionsString converts a Description to a string with one IDVersion per line.
-func (sd Descriptions) IDVersionsString() string {
-	lines := make([]string, len(sd.Services))
-	for i, service := range sd.Services {
-		lines[i] = fmt.Sprintf("%s", service.IDVersion)
+// MarshalJSON marshals the underlying asset descriptions.
+func (v IDVersionsStringView) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.Descriptions)
+}
+
+// String returns a string with one IDVersion per line.
+func (v IDVersionsStringView) String() string {
+	var lines []string
+	for _, asset := range v.Descriptions.Assets {
+		lines = append(lines, fmt.Sprintf("%s", asset.IDVersion))
 	}
 	sort.Strings(lines)
 	return strings.Join(lines, "\n")

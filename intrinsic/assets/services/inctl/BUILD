@@ -100,25 +100,15 @@ go_library(
 )
 
 go_library(
-    name = "servicedescriptions",
-    srcs = ["servicedescriptions.go"],
-    deps = [
-        "//intrinsic/assets:idutils",
-        "//intrinsic/assets/catalog/proto/v1:asset_catalog_go_grpc_proto",
-        "//intrinsic/assets/proto:asset_type_go_proto",
-    ],
-)
-
-go_library(
     name = "listreleased",
     srcs = [
         "listreleased.go",
     ],
     deps = [
-        ":servicedescriptions",
         "//intrinsic/assets:clientutils",
         "//intrinsic/assets:cmdutils",
         "//intrinsic/assets:listutils",
+        "//intrinsic/assets/catalog:assetdescriptions",
         "//intrinsic/assets/catalog/proto/v1:asset_catalog_go_grpc_proto",
         "//intrinsic/assets/proto:asset_type_go_proto",
         "//intrinsic/assets/proto:view_go_proto",
@@ -136,10 +126,10 @@ go_library(
         "listreleasedversions.go",
     ],
     deps = [
-        ":servicedescriptions",
         "//intrinsic/assets:clientutils",
         "//intrinsic/assets:cmdutils",
         "//intrinsic/assets:listutils",
+        "//intrinsic/assets/catalog:assetdescriptions",
         "//intrinsic/assets/catalog/proto/v1:asset_catalog_go_grpc_proto",
         "//intrinsic/assets/proto:asset_type_go_proto",
         "//intrinsic/assets/proto:view_go_proto",
