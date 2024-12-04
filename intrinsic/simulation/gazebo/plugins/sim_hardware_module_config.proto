@@ -264,28 +264,64 @@ message SimHardwareInterface {
 // should be empty for most hardware modules, since the simulated HWM can infer
 // much of this information.
 message SimHardwareModuleConfig {
-  // A map from JointGroup name to JointGroup. The elements of
-  // `manual_hardware_interfaces` can refer to the entries in this map, so that
-  // users can be sure that different hardware interfaces that are supposed to
-  // act on the same set of joints actually do.
-  map<string, JointGroup> joint_groups = 9;
+  message InferInterfacesFromSelf {}
+  message NoInterfaces {}
+  message ManualInterfaceMap {
+    // A map from JointGroup name to JointGroup. The SimHardwareInterface
+    // definitions in `name_to_interface` can refer to the keys in this map.
+    // That way, individual hardware interface definitions don't have to repeat
+    // the joint group definition.
+    // It's very common to have many interfaces that refer to the same joint
+    // group, so this makes configuration much shorter.
+    map<string, JointGroup> joint_groups = 1;
 
-  // In many cases, a simulated hardware module (HWM) can infer what hardware
-  // interfaces it should expose and what names those interfaces should have.
-  //
-  // In some situations (like when simulating an EtherCAT bus with many
-  // SubordinateDevices), the simulated HWM needs additional information. In
-  // those situations, users should set `manual_hardware_interfaces`. This
-  // disables any automatic configuration, so that the interface names in
-  // `manual_hardware_interfaces` are the only ones that exist, and there are no
-  // name collisions.
-  //
-  //
-  // The keys in this map are the hardware interface names that the HWM exposes
-  // to ICON. Note that each hardware interface name must be unique (at least
-  // within a single HWM), *regardless of the type of the interface*. That is,
-  // it is not possible to, for example, have both a JointPositionCommand and
-  // DigitalOutputCommand interface called "default", hence this mixed-type map
-  // container.
-  map<string, SimHardwareInterface> manual_hardware_interfaces = 10;
+    // The keys in this map are the hardware interface names that the HWM
+    // exposes to ICON. Note that each hardware interface name must be unique
+    // (at least within a single HWM), *regardless of the type of the
+    // interface*. That is, it is not possible to, for example, have both a
+    // JointPositionCommand and DigitalOutputCommand interface called "default",
+    // hence this mixed-type map container.
+    map<string, SimHardwareInterface> name_to_interface = 2;
+  }
+
+  // This determines how the simulated HWM decides which interfaces to expose.
+  oneof hardware_interfaces {
+    // Infer hardware interfaces based on a SceneObject bundled with the HWM
+    // asset itself.
+    //
+    // Use this when a single asset contains both geometry and the hardware
+    // module code.
+    //
+    // NOTE: If the `hardware_interfaces` oneof has no value at all, the
+    // simulated HWM treats that as if `from_self` was set. This is the default.
+    InferInterfacesFromSelf from_self = 1;
+    // The name of an Intrinsic World asset that has information about the
+    // control frequency, kinematic model, sensors, actuators and other I/O of
+    // this HWM.
+    //
+    // Use this when the geometry data lives in a different asset from the HWM
+    // one, for example when sideloading HWM or geometry assets.
+    string geometry_asset_name = 2;
+    // No hardware interfaces beyond the ones required for basic HWM operation.
+    // Helpful for tests.
+    NoInterfaces no_interfaces = 3;
+    // In many cases, a simulated hardware module (HWM) can infer what hardware
+    // interfaces it should expose and what names those interfaces should have,
+    // either from itself (`from_self` above) or from a single other asset
+    // (`geometry_asset_name`).
+    //
+    // In some situations (like when simulating an EtherCAT bus with many
+    // SubordinateDevices), the simulated HWM needs additional information. In
+    // those situations, users should set `manual_hardware_interfaces`. This
+    // disables any automatic configuration, so that the interface names in
+    // `manual_hardware_interfaces` are the *only* ones that exist, and there
+    // are no name collisions.
+    ManualInterfaceMap manual_hardware_interfaces = 4;
+  }
+
+  // If present, look up the control frequency for this HWM in the Gazebo
+  // entity data for this asset.
+  // If not present, try to look up control frequency in the Gazebo entity
+  // data for the HWM itself, or for `geometry_asset_name` if that is set.
+  optional string control_frequency_asset_name = 5;
 }
