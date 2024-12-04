@@ -22,6 +22,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":status_payload_matchers",
+        "@com_github_google_benchmark//:benchmark",
         "@com_github_inazarenko_protobuf_matchers//protobuf-matchers",
         "@com_google_absl//absl/status:status_matchers",
         "@com_google_cel_cpp//internal:testing",
@@ -32,10 +33,11 @@ cc_library(
 cc_library(
     name = "gtest_wrapper_main",
     testonly = 1,
+    srcs = ["gtest_wrapper_main.cc"],
     visibility = ["//visibility:public"],
     deps = [
         ":gtest_wrapper",
-        "@com_google_googletest//:gtest_main",
+        "@com_google_absl//absl/flags:parse",
     ],
 )
 
