@@ -31,6 +31,7 @@ cc_library(
     ],
     deps = [
         "@bazel_tools//tools/cpp/runfiles",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/strings",
         "@or_tools//ortools/base:path",
     ],
