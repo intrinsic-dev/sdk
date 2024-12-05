@@ -23,13 +23,11 @@ inline std::string GetZenohPeerConfig() {
   const std::string config_path =
       "intrinsic/platform/pubsub/zenoh_util/peer_config.json";
 
-  std::string path;
+  std::string path = config_path;
   if (RunningUnderTest()) {
     path = PathResolver::ResolveRunfilesPathForTest(config_path);
   } else if (!RunningInKubernetes()) {
     path = PathResolver::ResolveRunfilesPath(config_path);
-  } else {
-    path = "/" + config_path;
   }
   std::ifstream file(path);
   if (file.is_open()) {
@@ -40,7 +38,7 @@ inline std::string GetZenohPeerConfig() {
     file.read(&config[0], config.size());
     file.close();
   } else {
-    LOG(ERROR) << "Could not open config file: " << config_path;
+    LOG(ERROR) << "Could not open config file: " << path;
   }
 
   if (!config.empty()) {

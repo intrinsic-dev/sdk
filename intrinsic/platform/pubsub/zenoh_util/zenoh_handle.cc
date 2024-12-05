@@ -81,13 +81,11 @@ void ZenohHandle::Initialize() {
     library_path = libZenohPath;
   }
 
-  std::string path;
+  std::string path = library_path;
   if (RunningUnderTest()) {
     path = PathResolver::ResolveRunfilesPathForTest(library_path);
   } else if (!RunningInKubernetes()) {
     path = PathResolver::ResolveRunfilesPath(library_path);
-  } else {
-    path = "/" + library_path;
   }
 
 #if defined(MEMORY_SANITIZER) || defined(THREAD_SANITIZER) || \
