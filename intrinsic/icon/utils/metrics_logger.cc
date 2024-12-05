@@ -26,14 +26,14 @@ namespace intrinsic::icon {
 static constexpr std::size_t kRtQueueSize = 1000;
 
 MetricsLogger::~MetricsLogger() {
-  if (metrics_publisher_thread_.Joinable()) {
+  if (metrics_publisher_thread_.joinable()) {
     shutdown_requested_.store(true);
-    metrics_publisher_thread_.Join();
+    metrics_publisher_thread_.join();
   }
 }
 
 absl::Status MetricsLogger::Start() {
-  if (metrics_publisher_thread_.Joinable()) {
+  if (metrics_publisher_thread_.joinable()) {
     return absl::FailedPreconditionError(
         "Metrics publisher thread is already running");
   }

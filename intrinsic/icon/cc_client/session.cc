@@ -654,7 +654,7 @@ absl::Status Session::End() {
   // Ensure that we've stopped reading reactions from the `watcher_stream_`
   // before finishing the watch reactions call to avoid calling
   // watcher_stream_.Read() concurrently from multiple threads.
-  watcher_read_thread_.Join();
+  watcher_read_thread_.join();
   CleanUpWatcherCall();
   return session_call_status;
 }

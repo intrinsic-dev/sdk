@@ -106,8 +106,8 @@ TEST(IconUtilsLogTest, DefaultLoggerIsThreadSafe) {
   };
   intrinsic::Thread worker1_thread{worker};
   intrinsic::Thread worker2_thread{worker};
-  worker1_thread.Join();
-  worker2_thread.Join();
+  worker1_thread.join();
+  worker2_thread.join();
 }
 
 TEST(IconUtilsLogTest, LogFirstWorks) {

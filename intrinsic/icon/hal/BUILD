@@ -198,6 +198,7 @@ cc_library(
         "//intrinsic/util/status:status_macros",
         "//intrinsic/util/thread",
         "//intrinsic/util/thread:thread_options",
+        "//intrinsic/util/thread:thread_utils",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log",

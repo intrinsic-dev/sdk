@@ -21,6 +21,8 @@
 #include "intrinsic/icon/utils/realtime_guard.h"
 #include "intrinsic/icon/utils/realtime_stack_trace.h"
 #include "intrinsic/util/status/status_macros.h"
+#include "intrinsic/util/thread/stop_token.h"
+#include "intrinsic/util/thread/thread.h"
 #include "intrinsic/util/thread/thread_options.h"
 
 namespace intrinsic {
@@ -36,7 +38,8 @@ struct ThreadSetup {
 // A helper thread body which takes care that `f` is only executed when the
 // thread is fully set up. In case of setup failure, the function `f` is not
 // executed and the body returns immediately.
-void ThreadBody(absl::AnyInvocable<void()> f, const ThreadOptions& options,
+void ThreadBody(StopToken stop_token, absl::AnyInvocable<void(StopToken)> f,
+                const ThreadOptions& options,
                 std::unique_ptr<const ThreadSetup> thread_setup) {
   // Don't do work that can fail here, since we can't return a status from
   // a thread of execution.
@@ -57,7 +60,7 @@ void ThreadBody(absl::AnyInvocable<void()> f, const ThreadOptions& options,
   RtLogInitForThisThread();
   icon::InitRtStackTrace();
 
-  f();
+  f(stop_token);
 }
 
 }  // namespace
@@ -191,14 +194,18 @@ absl::Status SetThreadOptions(const ThreadOptions& options,
   return absl::OkStatus();
 }
 
-absl::StatusOr<std::thread> CreateThreadFromInvocable(
-    const ThreadOptions& options, absl::AnyInvocable<void()> f) {
+absl::StatusOr<Thread> CreateThreadFromInvocable(
+    const ThreadOptions& options, absl::AnyInvocable<void(StopToken)> f) {
   INTRINSIC_ASSERT_NON_REALTIME();
 
   auto thread_setup = std::make_unique<ThreadSetup>();
   auto thread_setup_ptr = thread_setup.get();
-  std::thread thread(ThreadBody, std::move(f), options,
-                     std::move(thread_setup));
+  auto call_thread_body_with_stop_token =
+      [f = std::move(f), options,
+       thread_setup = std::move(thread_setup)](StopToken st) mutable {
+        ThreadBody(st, std::move(f), options, std::move(thread_setup));
+      };
+  Thread thread(std::move(call_thread_body_with_stop_token));
   const absl::Status setup_status =
       SetThreadOptions(options, thread.native_handle());
   {

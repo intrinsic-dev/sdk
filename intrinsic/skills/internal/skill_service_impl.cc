@@ -162,10 +162,10 @@ void SkillOperation::WaitOperation(absl::string_view caller_name) {
   // last step of execution.
   {
     absl::MutexLock lock(&thread_mutex_);
-    if (thread_.Joinable()) {
+    if (thread_.joinable()) {
       LOG(INFO) << caller_name << " joining operation thread: \"" << name()
                 << "\".";
-      thread_.Join();
+      thread_.join();
     }
   }
 
@@ -242,8 +242,8 @@ void SkillOperationCleaner::WaitThread(const std::string& caller_name) {
   if (!caller_name.empty()) {
     LOG(INFO) << caller_name << " joining cleaner thread.";
   }
-  if (thread_.Joinable()) {
-    thread_.Join();
+  if (thread_.joinable()) {
+    thread_.join();
   }
 }
 

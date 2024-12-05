@@ -54,9 +54,9 @@ static PerThreadStopToken& GetPerThreadStopState() {
 Thread::Thread() = default;
 
 Thread::~Thread() {
-  if (Joinable()) {
-    RequestStop();
-    Join();
+  if (joinable()) {
+    request_stop();
+    join();
   }
   EraseStopToken();
 }
@@ -69,9 +69,9 @@ Thread::Thread(Thread&& other)
 
 Thread& Thread::operator=(Thread&& other) {
   if (this != &other) {
-    if (Joinable()) {
-      RequestStop();
-      Join();
+    if (joinable()) {
+      request_stop();
+      join();
     }
     stop_source_ = std::move(other.stop_source_);
     thread_impl_ = std::move(other.thread_impl_);
@@ -83,24 +83,26 @@ Thread& Thread::operator=(Thread&& other) {
   return *this;
 }
 
-void Thread::Join() {
+void Thread::join() {
   INTRINSIC_ASSERT_NON_REALTIME();
   thread_impl_.join();
 }
 
-bool Thread::Joinable() const { return thread_impl_.joinable(); }
+bool Thread::joinable() const { return thread_impl_.joinable(); }
 
-StopSource Thread::GetStopSource() noexcept { return stop_source_; }
+StopSource Thread::get_stop_source() noexcept { return stop_source_; }
 
-StopToken Thread::GetStopToken() const noexcept {
+StopToken Thread::get_stop_token() const noexcept {
   return stop_source_.get_token();
 }
 
-bool Thread::RequestStop() noexcept { return stop_source_.request_stop(); }
+bool Thread::request_stop() noexcept { return stop_source_.request_stop(); }
 
-Thread::Id Thread::GetId() const noexcept { return thread_impl_.get_id(); }
+Thread::id Thread::get_id() const noexcept { return thread_impl_.get_id(); }
 
-Thread::Handle Thread::NativeHandle() { return thread_impl_.native_handle(); }
+Thread::native_handle_type Thread::native_handle() {
+  return thread_impl_.native_handle();
+}
 
 void Thread::SaveStopToken() noexcept {
   thread_id_ = thread_impl_.get_id();
@@ -111,14 +113,6 @@ void Thread::SaveStopToken() noexcept {
 void Thread::EraseStopToken() noexcept {
   // This call may be a no-op if the thread has not yet started.
   GetPerThreadStopState().EraseStopToken(thread_id_);
-}
-
-bool ThisThreadStopRequested() {
-  // We tried thread_local storage here, but it did not work and lead to
-  // spurious crashes.
-  const StopToken kStopToken =
-      GetPerThreadStopState().GetStopToken(std::this_thread::get_id());
-  return kStopToken.stop_requested();
 }
 
 }  // namespace intrinsic

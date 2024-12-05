@@ -444,8 +444,8 @@ absl::Status GrpcEnvelope::RebuildIconImpl() {
   // process.
   absl::MutexLock l(&icon_impl_mutex_);
   // Got the mutex, time to disarm our time bomb.
-  kill_if_mutex_is_blocked_thread.RequestStop();
-  kill_if_mutex_is_blocked_thread.Join();
+  kill_if_mutex_is_blocked_thread.request_stop();
+  kill_if_mutex_is_blocked_thread.join();
   // First destroy the old ICON implementation (to make sure old and new don't
   // overlap).
   icon_impl_ = absl::UnavailableError("Restarting ICON service...");

@@ -32,6 +32,7 @@
 #include "intrinsic/icon/interprocess/shared_memory_manager/shared_memory_manager.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/thread/rt_thread.h"
+#include "intrinsic/util/thread/stop_token.h"
 #include "intrinsic/util/thread/thread.h"
 #include "intrinsic/util/thread/thread_options.h"
 #include "ortools/base/filesystem.h"
@@ -381,9 +382,9 @@ absl::Status DomainSocketServer::ServeShmDescriptors(
       *request_handler_,
       CreateRealtimeCapableThread(
           ThreadOptions().SetName("DSHandler"),
-          [this, &handler_started]() -> void {
+          [this, &handler_started](StopToken stop_token) -> void {
             handler_started.Notify();
-            while (!ThisThreadStopRequested()) {
+            while (!stop_token.stop_requested()) {
               LOG(INFO) << "Waiting for new connection.";
 
               // Accept all new connections.
@@ -471,11 +472,7 @@ DomainSocketServer::~DomainSocketServer() {
                    << "'. with error: " << strerror(errno) << ".";
     }
   }
-
-  if (request_handler_ != nullptr && request_handler_->Joinable()) {
-    request_handler_->RequestStop();
-    request_handler_->Join();
-  }
+  request_handler_.reset();
 
   if (const auto& status = UnlockPathCloseLockfile(flock_fd_); !status.ok()) {
     LOG(ERROR) << "Failed to unlock lock '" << absolute_lock_path_

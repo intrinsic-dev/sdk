@@ -41,7 +41,7 @@ namespace intrinsic {
 //                           }));
 // // Wait for the `rt_thread` to set the value on the promise.
 // ASSIGN_OR_RETURN(bool job_result, rt_job_result.Get());
-// rt_thread.Join();
+// rt_thread.join();
 //
 // General notes:
 // * The promise can only be moved, but not copied.

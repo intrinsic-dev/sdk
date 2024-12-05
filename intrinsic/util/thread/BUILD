@@ -15,11 +15,14 @@ cc_library(
         "thread_utils.cc",
     ],
     hdrs = [
+        "rt_thread.h",
         "thread_utils.h",
     ],
     copts = ["-D_GNU_SOURCE"],
     deps = [
+        ":stop_token",
         ":sysinfo",
+        ":thread",
         ":thread_options",
         "//intrinsic/icon/testing:realtime_annotations",
         "//intrinsic/icon/utils:log",  # buildcleaner: keep
@@ -35,23 +38,32 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "thread_utils_test",
+    srcs = ["thread_utils_test.cc"],
+    deps = [
+        ":stop_token",
+        ":thread",
+        ":thread_options",
+        ":thread_utils",
+        "//intrinsic/util/testing:gtest_wrapper_main",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
+    ],
+)
+
 cc_library(
     name = "thread",
     srcs = ["thread.cc"],
     hdrs = [
-        "rt_thread.h",
         "thread.h",
     ],
     deps = [
         ":stop_token",
-        ":thread_options",
-        ":thread_utils",
         "//intrinsic/icon/utils:realtime_guard",
         "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -59,9 +71,7 @@ cc_library(
 cc_library(
     name = "stop_token",
     hdrs = ["stop_token.h"],
-    deps = [
-        "@com_google_absl//absl/base:core_headers",
-    ],
+    deps = ["@com_google_absl//absl/base:core_headers"],
 )
 
 cc_test(
@@ -80,6 +90,7 @@ cc_library(
     deps = [
         ":thread",
         ":thread_options",
+        ":thread_utils",
         "//intrinsic/util/status:status_macros",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/functional:any_invocable",

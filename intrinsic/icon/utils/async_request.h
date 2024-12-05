@@ -35,7 +35,7 @@ namespace intrinsic::icon {
 //   request.SetResponse(true);
 // });
 // INTR_RETURN_IF_ERROR(bool job_result, rt_job_result.Get());
-// rt_thread.Join();
+// rt_thread.join();
 template <typename RequestDataType, typename ResponseDataType>
 class AsyncRequest {
  public:

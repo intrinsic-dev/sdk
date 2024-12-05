@@ -667,11 +667,11 @@ HardwareModuleRuntime::~HardwareModuleRuntime() {
   if (stop_requested_) {
     stop_requested_->store(true);
   }
-  if (state_change_thread_.Joinable()) {
+  if (state_change_thread_.joinable()) {
     LOG(INFO)
         << "Joining state change thread - this could be blocked by frozen "
            "callbacks such as EnableMotion";
-    state_change_thread_.Join();
+    state_change_thread_.join();
   }
 }
 
@@ -924,14 +924,14 @@ absl::Status HardwareModuleRuntime::Stop() {
   read_status_server_->Stop();
   stop_requested_->store(true);
   auto status = hardware_module_.instance->Shutdown();
-  if (state_change_thread_.Joinable()) {
-    state_change_thread_.Join();
+  if (state_change_thread_.joinable()) {
+    state_change_thread_.join();
   }
   return status;
 }
 
 bool HardwareModuleRuntime::IsStarted() const {
-  bool started = state_change_thread_.Joinable();
+  bool started = state_change_thread_.joinable();
   started &= read_status_server_->IsStarted();
   started &= apply_command_server_->IsStarted();
 

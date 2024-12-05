@@ -119,7 +119,7 @@ absl::Status PreviewSkill(SkillExecuteInterface& skill,
 //      });
 //
 //      auto result = skill->Execute(request, *context);
-//      cancel_skill.Join();
+//      cancel_skill.join();
 //
 //      EXPECT_TRUE(absl::IsCancelled(result.status()));
 //    }

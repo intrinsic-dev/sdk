@@ -287,7 +287,7 @@ absl::Status RegisterSignalHandlerAndWait(
     shutdown_requested.notify_all();
   }
 
-  shutdown.Join();
+  shutdown.join();
   return absl::OkStatus();
 }
 

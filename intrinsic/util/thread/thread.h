@@ -8,12 +8,9 @@
 #include <utility>
 
 #include "absl/base/attributes.h"
-#include "absl/status/status.h"
 #include "intrinsic/icon/utils/realtime_guard.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/thread/stop_token.h"
-#include "intrinsic/util/thread/thread_options.h"
-#include "intrinsic/util/thread/thread_utils.h"
 
 namespace intrinsic {
 
@@ -23,8 +20,8 @@ class Thread {
  public:
   // This definition prevents the need for client code to include <thread>
   // directly.
-  using Id = std::thread::id;
-  using Handle = std::thread::native_handle_type;
+  using id = std::thread::id;
+  using native_handle_type = std::thread::native_handle_type;
 
   // Default constructs a Thread object, no new thread of execution is created
   // at this time.
@@ -70,34 +67,38 @@ class Thread {
   // Blocks the current thread until `this` Thread finishes its execution.
   // As a post condition of calling Join(), the thread is no longer Joinable().
   // The thread Id is set to the default Id() value after joining.
-  void Join();
+  void join();
+
+  // Deprecated alias for join().
+  // Note: We need this temporarily during the migration.
+  ABSL_DEPRECATED("Use join() instead.") void Join() { join(); }
 
   // Returns `true` if `this` is an active thread of execution. Note that a
   // default constructed `Thread` that has not been Start()ed successfully is
   // not Joinable(). A `Thread` that is finished executing code, but has not yet
   // been Join()ed is still considered an active thread of execution.
-  bool Joinable() const;
+  bool joinable() const;
 
   // Returns a StopSource associated with the same shared stop-state as held
   // internally by the Thread object.
-  StopSource GetStopSource() noexcept;
+  StopSource get_stop_source() noexcept;
 
   // Returns a StopToken associated with the same shared stop-state held
   // internally by the Thread object.
-  StopToken GetStopToken() const noexcept;
+  StopToken get_stop_token() const noexcept;
 
   // Issues a stop request to the internal stop-state, if it has not yet already
   // had stop requested.
-  bool RequestStop() noexcept;
+  bool request_stop() noexcept;
 
   // Returns this thread's id.
-  Id GetId() const noexcept;
+  id get_id() const noexcept;
 
   // Returns the underlying thread's native handle.
   // The NativeHandle can be used to enable realtime scheduling of C++ threads
   // on a POSIX system. It can also be used to set other thread attributes such
   // as the thread name.
-  Handle NativeHandle();
+  native_handle_type native_handle();
 
  private:
   template <typename Function, typename... Args>
@@ -126,17 +127,8 @@ class Thread {
 
   // We cannot rely on using the thread_impl_.get_id() because the thread may
   // have been finished or joined.
-  Id thread_id_;
+  id thread_id_;
 };
-
-// Allows client code which is executed in a thread to call
-//   while (!ThisThreadStopRequested()) {
-//     // do something
-//   }
-// IMPORTANT: This function allocates a reader mutex in each call. Do not use it
-// in hot loops. Instead, use a StopToken and check the stop_requested() state
-// directly.
-bool ThisThreadStopRequested();
 
 }  // namespace intrinsic
 

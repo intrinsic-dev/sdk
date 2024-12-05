@@ -27,7 +27,7 @@ namespace intrinsic::icon {
 //   }
 // }));
 // t.Start("my thread");
-// t.Join();
+// t.join();
 //
 // RealTimeGuard is nestable.
 //

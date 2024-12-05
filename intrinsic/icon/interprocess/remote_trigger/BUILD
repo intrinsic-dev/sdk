@@ -21,6 +21,7 @@ cc_library(
         "//intrinsic/util/status:status_macros",
         "//intrinsic/util/thread",
         "//intrinsic/util/thread:thread_options",
+        "//intrinsic/util/thread:thread_utils",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",

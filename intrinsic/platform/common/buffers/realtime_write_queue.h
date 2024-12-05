@@ -48,8 +48,8 @@ enum class ReadResult {
 //   while (queue.Reader().Read(num) == ReadResult::kConsumed) {
 //   }
 // });
-// reader.Join();
-// writer.Join();
+// reader.join();
+// writer.join();
 template <typename T>
 class RealtimeWriteQueue {
  public:

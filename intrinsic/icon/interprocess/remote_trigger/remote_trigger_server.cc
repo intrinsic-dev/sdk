@@ -95,8 +95,8 @@ RemoteTriggerServer& RemoteTriggerServer::operator=(
 RemoteTriggerServer::~RemoteTriggerServer() {
   Stop();
 
-  if (async_thread_.Joinable()) {
-    async_thread_.Join();
+  if (async_thread_.joinable()) {
+    async_thread_.join();
   }
   // Close `response_futex_`, but only if it's still there (if we're currently
   // destroying a moved-out-of RemoteTriggerServer, `response_futex_` is
@@ -140,8 +140,8 @@ bool RemoteTriggerServer::IsStarted() const { return is_running_.load(); }
 void RemoteTriggerServer::Stop() {
   is_running_.store(false);
 
-  if (async_thread_.Joinable()) {
-    async_thread_.Join();
+  if (async_thread_.joinable()) {
+    async_thread_.join();
   }
 }
 

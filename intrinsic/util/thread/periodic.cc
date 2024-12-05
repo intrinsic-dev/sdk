@@ -37,7 +37,7 @@ PeriodicOperation::PeriodicOperation(const ThreadOptions& options,
 absl::Status PeriodicOperation::Start() {
   absl::MutexLock l(&mutex_);
   // Executor already started?
-  if (operation_executor_.Joinable()) {
+  if (operation_executor_.joinable()) {
     return absl::OkStatus();
   }
   run_executor_thread_ = true;
@@ -68,14 +68,14 @@ absl::Status PeriodicOperation::Start() {
 absl::Status PeriodicOperation::Stop() {
   absl::MutexLock l(&mutex_);
   // Executor not running?
-  if (!operation_executor_.Joinable()) {
+  if (!operation_executor_.joinable()) {
     return absl::OkStatus();
   }
 
   run_executor_thread_ = false;
   mutex_.Unlock();
-  operation_executor_.RequestStop();
-  operation_executor_.Join();
+  operation_executor_.request_stop();
+  operation_executor_.join();
   mutex_.Lock();
   return absl::OkStatus();
 }
@@ -101,7 +101,7 @@ void PeriodicOperation::RunNow() {
 
   absl::Condition wait_until_ran(
       +[](WaitUntilRanProps* props) ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_) {
-        return !props->op->operation_executor_.Joinable() ||
+        return !props->op->operation_executor_.joinable() ||
                props->op->last_operation_start_time_ > props->last_op_time;
       },
       &props);

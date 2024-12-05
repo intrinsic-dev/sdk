@@ -63,8 +63,8 @@ TEST(RealtimeQueueMultiWriterTest, ConcurrentInsert) {
     }
   });
 
-  write_thread_1.Join();
-  write_thread_2.Join();
+  write_thread_1.join();
+  write_thread_2.join();
 
   // Now the queue should be full. Assert this because otherwise the final
   // expectation has no hope of being met.

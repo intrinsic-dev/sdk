@@ -55,6 +55,7 @@ cc_library(
         "//intrinsic/util/status:status_macros",
         "//intrinsic/util/thread",
         "//intrinsic/util/thread:thread_options",
+        "//intrinsic/util/thread:thread_utils",
         "//intrinsic/world/robot_payload:robot_payload_base",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/random",

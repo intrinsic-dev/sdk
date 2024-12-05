@@ -226,8 +226,8 @@ absl::Status LoopbackHardwareModule::ClearFaults() {
 
 absl::Status LoopbackHardwareModule::Shutdown() {
   module_state_ = ModuleState::kShutdown;
-  if (runtime_loop_thread_.Joinable()) {
-    runtime_loop_thread_.Join();
+  if (runtime_loop_thread_.joinable()) {
+    runtime_loop_thread_.join();
   }
   return absl::OkStatus();
 }
