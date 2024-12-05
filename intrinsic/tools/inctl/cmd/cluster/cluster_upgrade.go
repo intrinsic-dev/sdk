@@ -3,6 +3,7 @@
 package cluster
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -12,20 +13,25 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	fmpb "google.golang.org/protobuf/types/known/fieldmaskpb"
+	"intrinsic/assets/baseclientutils"
 	clustermanagergrpcpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
-
-	clustermanagerpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
 	"intrinsic/frontend/cloud/devicemanager/info"
 	"intrinsic/frontend/cloud/devicemanager/messages"
+	inversiongrpcpb "intrinsic/kubernetes/inversion/v1/inversion_go_grpc_proto"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/tools/inctl/auth"
 	"intrinsic/tools/inctl/util/orgutil"
+
+	clustermanagerpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
+	inversionpb "intrinsic/kubernetes/inversion/v1/inversion_go_grpc_proto"
 )
 
 var (
@@ -399,6 +405,88 @@ var clusterUpgradeCmd = &cobra.Command{
 	},
 }
 
+// acceptCmd is the command to accept an update on the IPC in the '+accept' modes.
+var acceptCmd = &cobra.Command{
+	Use:   "accept",
+	Short: "Accept an upgraded Intrinsic software on target cluster",
+	Long:  "Accept an upgraded Intrinsic software (OS and intrinsic-base) on target cluster.",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		ctx := cmd.Context()
+
+		consoleIO := bufio.NewReadWriter(
+			bufio.NewReader(cmd.InOrStdin()),
+			bufio.NewWriter(cmd.OutOrStdout()))
+
+		projectName := ClusterCmdViper.GetString(orgutil.KeyProject)
+		orgName := ClusterCmdViper.GetString(orgutil.KeyOrganization)
+
+		ctx, conn, err := newIPCGRPCClient(ctx, projectName, orgName, clusterName)
+		if err != nil {
+			return fmt.Errorf("cluster upgrade client:\n%w", err)
+		}
+		defer conn.Close()
+
+		client := inversiongrpcpb.NewIpcUpdaterClient(conn)
+		uir, err := client.ReportUpdateInfo(ctx, &inversionpb.GetUpdateInfoRequest{})
+		if err != nil {
+			return fmt.Errorf("update info request: %w", err)
+		}
+		if uir.GetState() != inversionpb.UpdateInfo_STATE_UPDATE_AVAILABLE {
+			return fmt.Errorf("update not available")
+		}
+
+		fmt.Fprintf(consoleIO,
+			"Update from %s to %s is available.\nAre you sure you want to accept the update? [y/n] ",
+			uir.GetCurrent().GetVersionId(), uir.GetAvailable().GetVersionId())
+		consoleIO.Flush()
+		response, err := consoleIO.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("read response: %w", err)
+		}
+		response = strings.ToLower(strings.TrimSpace(response))
+		if response != "y" {
+			return fmt.Errorf("user did not confirm: %q", response)
+		}
+
+		if _, err := client.ApproveUpdate(ctx, &inversionpb.ApproveUpdateRequest{
+			Approved: &inversionpb.IntrinsicVersion{
+				VersionId: uir.GetAvailable().GetVersionId(),
+			},
+		}); err != nil {
+			return fmt.Errorf("accept update: %w", err)
+		}
+		return nil
+	},
+}
+
+func newIPCGRPCClient(ctx context.Context, projectName, orgName, clusterName string) (context.Context, *grpc.ClientConn, error) {
+	address := fmt.Sprintf("dns:///www.endpoints.%s.cloud.goog:443", projectName)
+	configuration, err := auth.NewStore().GetConfiguration(projectName)
+	if err != nil {
+		return ctx, nil, fmt.Errorf("credentials not found: %w", err)
+	}
+	creds, err := configuration.GetDefaultCredentials()
+	if err != nil {
+		return ctx, nil, fmt.Errorf("get default credentials: %w", err)
+	}
+	tcOption, err := baseclientutils.GetTransportCredentialsDialOption()
+	if err != nil {
+		return ctx, nil, fmt.Errorf("cannot retrieve transport credentials: %w", err)
+	}
+	dialerOpts := append(baseclientutils.BaseDialOptions(),
+		grpc.WithPerRPCCredentials(creds),
+		tcOption,
+	)
+	conn, err := grpc.NewClient(address, dialerOpts...)
+	if err != nil {
+		return ctx, nil, fmt.Errorf("dialing context: %w", err)
+	}
+	ctx = metadata.AppendToOutgoingContext(ctx, auth.OrgIDHeader, orgName)
+	ctx = metadata.AppendToOutgoingContext(ctx, "x-server-name", clusterName)
+	return ctx, conn, nil
+}
+
 func init() {
 	ClusterCmd.AddCommand(clusterUpgradeCmd)
 	clusterUpgradeCmd.PersistentFlags().StringVar(&clusterName, "cluster", "", "Name of cluster to upgrade.")
@@ -407,4 +495,5 @@ func init() {
 	runCmd.PersistentFlags().BoolVar(&rollbackFlag, "rollback", false, "Whether to trigger a rollback update instead")
 	clusterUpgradeCmd.AddCommand(modeCmd)
 	clusterUpgradeCmd.AddCommand(showTargetCmd)
+	clusterUpgradeCmd.AddCommand(acceptCmd)
 }

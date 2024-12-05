@@ -1,0 +1,47 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.inversion.v1;
+
+// IpcUpdater is a service run by a pod on the IPC.
+service IpcUpdater {
+  // ReportUpdateInfo reports the current status regarding the installed version
+  // and available updates.
+  rpc ReportUpdateInfo(GetUpdateInfoRequest) returns (UpdateInfo) {}
+  // ApproveUpdate approves the update to the given version.
+  rpc ApproveUpdate(ApproveUpdateRequest) returns (ApproveUpdateResponse) {}
+}
+
+message IntrinsicVersion {
+  string version_id = 1;
+}
+
+message Progress {
+  optional uint32 current_step = 1;
+  optional uint32 total_steps = 2;
+  optional string description = 3;
+}
+
+message GetUpdateInfoRequest {}
+
+message UpdateInfo {
+  enum State {
+    STATE_UNSPECIFIED = 0;
+    STATE_UPDATE_AVAILABLE = 1;
+    STATE_UPDATE_RUNNING = 2;
+    STATE_UP_TO_DATE = 3;
+    STATE_FAULT = 4;
+  }
+
+  State state = 1;
+  IntrinsicVersion current = 2;
+  IntrinsicVersion available = 3;
+  Progress progress = 4;
+}
+
+message ApproveUpdateRequest {
+  IntrinsicVersion approved = 1;
+}
+
+message ApproveUpdateResponse {}
