@@ -90,9 +90,6 @@ func (p *ProjectToken) Validate() error {
 	if p.APIKey == "" {
 		return fmt.Errorf("missing api key")
 	}
-	if p.APIKey == "not-a-valid-key" {
-		return fmt.Errorf("'not-a-valid-key' api key is not allowed")
-	}
 
 	return nil
 }
