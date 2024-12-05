@@ -1,0 +1,72 @@
+{{/*
+Copyright 2023 Intrinsic Innovation LLC
+*/ -}}
+
+#include "{{.SkillNameSnakeCase}}.h"
+
+#include <gtest/gtest.h>
+
+#include "intrinsic/skills/testing/skill_test_utils.h"
+#include "{{strJoin .BazelPackage "/"}}{{if .BazelPackage}}/{{end}}{{.SkillNameSnakeCase}}.pb.h"
+
+using ::intrinsic::skills::ExecuteContext;
+using ::intrinsic::skills::ExecuteRequest;
+using ::intrinsic::skills::GetFootprintContext;
+using ::intrinsic::skills::GetFootprintRequest;
+using ::intrinsic::skills::PreviewContext;
+using ::intrinsic::skills::PreviewRequest;
+using ::intrinsic::skills::SkillTestFactory;
+
+using ::{{strJoin .ProtoPackage "::"}}::{{.SkillNameUpperCamelCase}}Params;
+{{if .BazelPackage }}
+using {{strJoin .BazelPackage "::"}}::{{.SkillNameUpperCamelCase}};
+{{end}}
+
+TEST(SaySkillTest, GetFootprint) {
+  auto skill = {{.SkillNameUpperCamelCase}}::CreateSkill();
+
+  // Set parameters
+  {{.SkillNameUpperCamelCase}}Params params;
+  params.set_text("hello world");
+
+  auto skill_test_factory = SkillTestFactory();
+  GetFootprintRequest request = skill_test_factory.MakeGetFootprintRequest(params);
+  std::unique_ptr<GetFootprintContext> context = skill_test_factory.MakeGetFootprintContext({});
+
+  auto result = skill->GetFootprint(request, *context);
+
+  ASSERT_TRUE(result.ok());
+  EXPECT_TRUE(result->lock_the_universe());
+}
+
+TEST(SaySkillTest, Preview) {
+  auto skill = {{.SkillNameUpperCamelCase}}::CreateSkill();
+
+  // Set parameters
+  {{.SkillNameUpperCamelCase}}Params params;
+  params.set_text("hello world");
+
+  auto skill_test_factory = SkillTestFactory();
+  PreviewRequest request = skill_test_factory.MakePreviewRequest(params);
+  std::unique_ptr<PreviewContext> context = skill_test_factory.MakePreviewContext({});
+
+  auto result = skill->Preview(request, *context);
+
+  ASSERT_TRUE(absl::IsUnimplemented(result.status()));
+}
+
+TEST(SaySkillTest, Execute) {
+  auto skill = {{.SkillNameUpperCamelCase}}::CreateSkill();
+
+  // Set parameters
+  {{.SkillNameUpperCamelCase}}Params params;
+  params.set_text("hello world");
+
+  auto skill_test_factory = SkillTestFactory();
+  ExecuteRequest request = skill_test_factory.MakeExecuteRequest(params);
+  std::unique_ptr<ExecuteContext> context = skill_test_factory.MakeExecuteContext({});
+
+  auto result = skill->Execute(request, *context);
+
+  ASSERT_TRUE(result.ok());
+}

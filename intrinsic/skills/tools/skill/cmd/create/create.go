@@ -86,6 +86,10 @@ var projectLayouts = map[string]projectFolder{
 				templateFilename: "skill_cc.template",
 			},
 			projectFile{
+				extension:        "_test.cc",
+				templateFilename: "skill_cc_test.template",
+			},
+			projectFile{
 				extension:        ".proto",
 				templateFilename: "skill_params_proto.template",
 			},

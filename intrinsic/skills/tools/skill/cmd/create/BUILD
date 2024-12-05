@@ -12,6 +12,7 @@ go_library(
         "templates/BUILD_py_fragment.template",  #keep
         "templates/skill_cc.template",  #keep
         "templates/skill_cc_manifest.template",  #keep
+        "templates/skill_cc_test.template",  #keep
         "templates/skill_h.template",  #keep
         "templates/skill_params_proto.template",  #keep
         "templates/skill_py.template",  #keep

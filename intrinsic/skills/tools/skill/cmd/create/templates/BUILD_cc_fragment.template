@@ -37,6 +37,17 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "{{.SkillNameSnakeCase}}_test",
+    srcs = ["{{.SkillNameSnakeCase}}_test.cc"],
+    deps = [
+        ":{{.SkillNameSnakeCase}}_cc",
+        "@ai_intrinsic_sdks//intrinsic/skills/testing:skill_test_utils_cc",
+        "@com_google_googletest//:gtest_main",
+    ],
+    size = "small",
+)
+
 cc_skill(
     name = "{{.SkillNameSnakeCase}}",
     manifest = ":{{.SkillNameSnakeCase}}_cc_manifest",
