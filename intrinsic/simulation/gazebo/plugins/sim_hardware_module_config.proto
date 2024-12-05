@@ -238,6 +238,25 @@ message JointLimitsCommandInterface {
   string joint_group_name = 1;
 }
 
+// Reports the current sensor value from the rangefinder sensor
+// `rangefinder_name` on the (Intrinsic World) object
+// `name_of_object_with_rangefinder`.
+//
+// In most cases, the interface name should match `rangefinder_name` (or
+// `name_of_object_with_rangefinder` if that object only has a single
+// rangefinder), but double-check the real HWM configuration to make sure the
+// simulated interface has the same name as the real one.
+//
+// The most common name for this interface on real robots is
+// "rangefinder_status". The simulated hardware module uses this name when
+// `manual_hardware_interfaces` is unset.
+message RangefinderStatusInterface {
+  string name_of_object_with_rangefinder = 1;
+  // You can omit this if `name_of_object_with_rangefinder` only has a
+  // single rangefinder.
+  optional string rangefinder_name = 2;
+}
+
 message SimHardwareInterface {
   oneof interface {
     JointPositionCommandInterface joint_position_command = 1;
@@ -257,6 +276,7 @@ message SimHardwareInterface {
     ForceTorqueCommandInterface force_torque_command = 14;
     ForceTorqueStatusInterface force_torque_status = 15;
     JointLimitsCommandInterface joint_limits_command = 16;
+    RangefinderStatusInterface rangefinder_status = 17;
   }
 }
 
