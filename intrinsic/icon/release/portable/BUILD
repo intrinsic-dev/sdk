@@ -10,10 +10,13 @@ cc_library(
     hdrs = ["init_xfa.h"],
     deps = [
         "//intrinsic/icon/utils:log",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:globals",
         "@com_google_absl//absl/log:initialize",
+        "@com_google_absl//absl/time",
     ],
 )
 
