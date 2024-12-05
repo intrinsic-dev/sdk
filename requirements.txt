@@ -175,6 +175,10 @@ fonttools==4.54.1 \
     --hash=sha256:fda582236fee135d4daeca056c8c88ec5f6f6d88a004a79b84a02547c8f57386 \
     --hash=sha256:fdb062893fd6d47b527d39346e0c5578b7957dcea6d6a3b6794569370013d9ac
     # via matplotlib
+googleapis-common-protos==1.66.0 \
+    --hash=sha256:c3e7b33d15fdca5374cc0a7346dd92ffa847425cc4ea941d970f13680052ec8c \
+    --hash=sha256:d7abcd75fabb2e0ec9f74466401f6c119a0b498e27370e9be4c94cb7e382b8ed
+    # via grpcio-status
 graphviz==0.20.3 \
     --hash=sha256:09d6bc81e6a9fa392e7ba52135a9d49f1ed62526f96499325930e87ca1b5925d \
     --hash=sha256:81f848f2904515d8cd359cc611faba817598d2feaac4027b266aa3eda7b3dde5
@@ -226,6 +230,12 @@ grpcio==1.66.0 \
     --hash=sha256:de9e20a0acb709dcfa15a622c91f584f12c9739a79c47999f73435d2b3cc8a3b \
     --hash=sha256:e36fa838ac1d6c87198ca149cbfcc92e1af06bb8c8cd852622f8e58f33ea3324 \
     --hash=sha256:e8d20308eeae15b3e182f47876f05acbdec1eebd9473a9814a44e46ec4a84c04
+    # via
+    #   -r requirements.in
+    #   grpcio-status
+grpcio-status==1.66.0 \
+    --hash=sha256:c246b46c15295068fa36fc4b0b4a43f9463b75967b5a8d053f5e1d56e7c94b6e \
+    --hash=sha256:fd89c8ebcb87eea743327b24e31abb1b4e758cd6e6ede15bfb334c33e661384d
     # via -r requirements.in
 hypothesis==6.112.2 \
     --hash=sha256:90cd62d9487eaf294bf0dceb47dbaca6432408b2e9417cfa6e3409313dbde95b \
@@ -619,6 +629,21 @@ prompt-toolkit==3.0.48 \
     --hash=sha256:d6623ab0477a80df74e646bdbc93621143f5caf104206aa29294d53de1a03d90 \
     --hash=sha256:f49a827f90062e411f1ce1f854f2aedb3c23353244f8108b89283587397ac10e
     # via ipython
+protobuf==5.29.1 \
+    --hash=sha256:012ce28d862ff417fd629285aca5d9772807f15ceb1a0dbd15b88f58c776c98c \
+    --hash=sha256:027fbcc48cea65a6b17028510fdd054147057fa78f4772eb547b9274e5219331 \
+    --hash=sha256:1fc55267f086dd4050d18ef839d7bd69300d0d08c2a53ca7df3920cc271a3c34 \
+    --hash=sha256:22c1f539024241ee545cbcb00ee160ad1877975690b16656ff87dde107b5f110 \
+    --hash=sha256:32600ddb9c2a53dedc25b8581ea0f1fd8ea04956373c0c07577ce58d312522e0 \
+    --hash=sha256:50879eb0eb1246e3a5eabbbe566b44b10348939b7cc1b267567e8c3d07213853 \
+    --hash=sha256:5a41deccfa5e745cef5c65a560c76ec0ed8e70908a67cc8f4da5fce588b50d57 \
+    --hash=sha256:683be02ca21a6ffe80db6dd02c0b5b2892322c59ca57fd6c872d652cb80549cb \
+    --hash=sha256:8ee1461b3af56145aca2800e6a3e2f928108c749ba8feccc6f5dd0062c410c0d \
+    --hash=sha256:b5ba1d0e4c8a40ae0496d0e2ecfdbb82e1776928a205106d14ad6985a09ec155 \
+    --hash=sha256:d473655e29c0c4bbf8b69e9a8fb54645bc289dead6d753b952e7aa660254ae18
+    # via
+    #   googleapis-common-protos
+    #   grpcio-status
 ptyprocess==0.7.0 \
     --hash=sha256:4b41f3967fce3af57cc7e94b888626c18bf37a083e3651ca8feeb66d492fef35 \
     --hash=sha256:5c5d0a3b48ceee0b48485e0c26037c0acd7d29765ca3fbb5cb3831d347423220
