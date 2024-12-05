@@ -2,6 +2,15 @@
 
 # Provides the bindings and other utility with externally built zenoh pubsub
 
+exports_files(
+    [
+        "peer_config.json",
+    ],
+    visibility = [
+        "//intrinsic:__subpackages__",
+    ],
+)
+
 cc_library(
     name = "zenoh_handle",
     srcs = ["zenoh_handle.cc"],
