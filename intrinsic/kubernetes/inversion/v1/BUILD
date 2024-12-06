@@ -2,15 +2,9 @@
 
 load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
+load("//intrinsic/util/proto/build_defs:descriptor_set.bzl", "proto_source_code_info_transitive_descriptor_set")
 
-package(default_visibility = [
-    "//intrinsic/frontend/cloud/api:__subpackages__",
-    "//intrinsic/frontend/cloud/devicemanager:__subpackages__",
-    "//intrinsic/kubernetes/api_relay/cloud:__subpackages__",
-    "//intrinsic/kubernetes/intrinsic_base:__subpackages__",
-    "//intrinsic/production:__subpackages__",
-    "//intrinsic/tools/inctl/cmd:__subpackages__",
-])
+package(default_visibility = ["//intrinsic:public_api_users"])
 
 proto_library(
     name = "inversion_proto",
@@ -25,4 +19,9 @@ go_proto_library(
 go_grpc_library(
     name = "inversion_go_grpc_proto",
     srcs = [":inversion_proto"],
+)
+
+proto_source_code_info_transitive_descriptor_set(
+    name = "inversion_proto_descriptor_set",
+    deps = [":inversion_proto"],
 )

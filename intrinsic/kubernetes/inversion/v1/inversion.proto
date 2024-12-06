@@ -4,22 +4,41 @@ syntax = "proto3";
 
 package intrinsic_proto.inversion.v1;
 
-// IpcUpdater is a service run by a pod on the IPC.
+// The IpcUpdater service manages updates of a single IPC. It is intended for
+// use by an HMI or similar so that updates will not be applied until they are
+// approved by an operator.
+//
+// It can also be used the command `inctl cluster upgrade approve`.
+//
+// This document is based on the [protobuf
+// definition](https://github.com/intrinsic-ai/sdk/blob/main/intrinsic/kubernetes/inversion/v1/inversion.proto).
 service IpcUpdater {
   // ReportUpdateInfo reports the current status regarding the installed version
   // and available updates.
   rpc ReportUpdateInfo(GetUpdateInfoRequest) returns (UpdateInfo) {}
   // ApproveUpdate approves the update to the given version.
+  //
+  // It must be called with a version_id that matches the available version
+  // reported by ReportUpdateInfo, otherwise it will return the
+  // FAILED_PRECONDITION error code. This ensures that the process only
+  // completes for the version the user has approved.
+  //
+  // Note that approval is only required when the IPC is configured to require
+  // it. By default, the IPC applies updates as soon as they are available.
   rpc ApproveUpdate(ApproveUpdateRequest) returns (ApproveUpdateResponse) {}
 }
 
 message IntrinsicVersion {
+  // An opaque string that identifies the version.
   string version_id = 1;
 }
 
 message Progress {
+  // The current step of the update, starting at 0.
   optional uint32 current_step = 1;
+  // The total number of steps in the update.
   optional uint32 total_steps = 2;
+  // An English-language description of the current step.
   optional string description = 3;
 }
 
@@ -27,20 +46,36 @@ message GetUpdateInfoRequest {}
 
 message UpdateInfo {
   enum State {
+    // Placeholder, unused.
     STATE_UNSPECIFIED = 0;
+    // A new update is available. No update is current in-progress.
     STATE_UPDATE_AVAILABLE = 1;
+    // An update is currently in-progress.
     STATE_UPDATE_RUNNING = 2;
+    // No update is in-progress or available.
     STATE_UP_TO_DATE = 3;
+    // The previous update failed and the IPC has returned to the previous
+    // version. This requires user intervention to retry or resolve. Possible
+    // causes include incompatibility between the new version and the IPC, or
+    // power loss during the update process.
     STATE_FAULT = 4;
   }
 
+  // Indicates whether an update in available or in-progress.
   State state = 1;
+  // Indicates the running version of the Intrinsic software.
   IntrinsicVersion current = 2;
-  IntrinsicVersion available = 3;
-  Progress progress = 4;
+  // If an update is available, this will be populated to indicate the version.
+  optional IntrinsicVersion available = 3;
+  // If an update is in-progress, this will be populated to indicate the current
+  // progress.
+  optional Progress progress = 4;
 }
 
 message ApproveUpdateRequest {
+  // The version to approve. The version_id should be copied from the
+  // available version reported by ReportUpdateInfo. If any other fields are
+  // provided, they are ignored.
   IntrinsicVersion approved = 1;
 }
 
