@@ -6,7 +6,6 @@ package install
 import (
 	"fmt"
 	"log"
-	"time"
 
 	lrogrpcpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	lropb "cloud.google.com/go/longrunning/autogen/longrunningpb"
@@ -83,10 +82,9 @@ func GetCommand() *cobra.Command {
 				transfer = directupload.NewTransferer(ctx, opts...)
 			}
 
-			opts := bundleio.ProcessServiceOpts{
+			manifest, err := bundleio.ProcessService(target, bundleio.ProcessServiceOpts{
 				ImageProcessor: bundleimages.CreateImageProcessor(flags.CreateRegistryOptsWithTransferer(ctx, transfer, registry)),
-			}
-			manifest, err := bundleio.ProcessService(target, opts)
+			})
 			if err != nil {
 				return fmt.Errorf("could not read bundle file %q: %v", target, err)
 			}
@@ -101,13 +99,11 @@ func GetCommand() *cobra.Command {
 			authCtx := clientutils.AuthInsecureConn(ctx, address, flags.GetFlagProject())
 
 			// This needs an authorized context to pull from the catalog if not available.
-			op, err := client.CreateInstalledAssets(authCtx, &iapb.CreateInstalledAssetsRequest{
+			op, err := client.CreateInstalledAsset(authCtx, &iapb.CreateInstalledAssetRequest{
 				Policy: policy,
-				Assets: []*iapb.CreateInstalledAssetsRequest_Asset{
-					&iapb.CreateInstalledAssetsRequest_Asset{
-						Variant: &iapb.CreateInstalledAssetsRequest_Asset_Service{
-							Service: manifest,
-						},
+				Asset: &iapb.CreateInstalledAssetRequest_Asset{
+					Variant: &iapb.CreateInstalledAssetRequest_Asset_Service{
+						Service: manifest,
 					},
 				},
 			})
@@ -118,8 +114,7 @@ func GetCommand() *cobra.Command {
 			log.Printf("Awaiting completion of the installation")
 			lroClient := lrogrpcpb.NewOperationsClient(conn)
 			for !op.GetDone() {
-				time.Sleep(15 * time.Millisecond)
-				op, err = lroClient.GetOperation(ctx, &lropb.GetOperationRequest{
+				op, err = lroClient.WaitOperation(ctx, &lropb.WaitOperationRequest{
 					Name: op.GetName(),
 				})
 				if err != nil {
