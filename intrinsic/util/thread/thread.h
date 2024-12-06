@@ -62,10 +62,6 @@ class Thread {
   // The thread Id is set to the default Id() value after joining.
   void join();
 
-  // Deprecated alias for join().
-  // Note: We need this temporarily during the migration.
-  ABSL_DEPRECATED("Use join() instead.") void Join() { join(); }
-
   // Returns `true` if `this` is an active thread of execution. Note that a
   // default constructed `Thread` that has not been Start()ed successfully is
   // not Joinable(). A `Thread` that is finished executing code, but has not yet
