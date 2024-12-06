@@ -31,6 +31,11 @@ std::string PathResolver::ResolveRunfilesPath(absl::string_view path) {
 }
 
 std::string PathResolver::ResolveRunfilesPathForTest(absl::string_view path) {
+  // If this is not actually executed as a `bazel test`, use it as a regular
+  // binary.
+  if (!getenv("TEST_SRCDIR")) {
+    return ResolveRunfilesPath(path);
+  }
   std::string error;
   auto runfiles = Runfiles::CreateForTest(BAZEL_CURRENT_REPOSITORY, &error);
   if (runfiles == nullptr) {
