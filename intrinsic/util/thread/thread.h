@@ -8,7 +8,6 @@
 #include <utility>
 
 #include "absl/base/attributes.h"
-#include "intrinsic/icon/utils/realtime_guard.h"
 #include "intrinsic/util/status/status_macros.h"
 #include "intrinsic/util/thread/stop_token.h"
 
@@ -40,16 +39,10 @@ class Thread {
     requires(!std::is_same_v<std::remove_cvref_t<Function>, Thread>)
       : stop_source_{StopSource{}},
         thread_impl_(InitThread(stop_source_, std::forward<Function>(f),
-                                std::forward<Args>(args)...)) {
-    INTRINSIC_ASSERT_NON_REALTIME();
-    SaveStopToken();
-  }
+                                std::forward<Args>(args)...)) {}
 
   explicit Thread(std::thread&& thread) noexcept
-      : stop_source_{StopSource{}}, thread_impl_(std::move(thread)) {
-    INTRINSIC_ASSERT_NON_REALTIME();
-    SaveStopToken();
-  }
+      : stop_source_{StopSource{}}, thread_impl_(std::move(thread)) {}
 
   // Movable.
   Thread(Thread&&);
@@ -114,13 +107,6 @@ class Thread {
                          std::forward<Args>(args)...);
     }
   }
-
-  void SaveStopToken() noexcept;
-
-  // Explicit erase of the stop token. This is necessary to prevent a new thread
-  // starting and a client calling ThisThreadStopRequested() before the
-  // StopToken is associated with the thread.
-  void EraseStopToken() noexcept;
 
   StopSource stop_source_{detail::NoState};
   std::thread thread_impl_;
