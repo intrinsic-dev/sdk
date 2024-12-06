@@ -48,8 +48,8 @@ struct WildcardQueryConfig {
   bool version;
 };
 
-using KeyValueCallback =
-    std::function<void(std::unique_ptr<google::protobuf::Any> value)>;
+using KeyValueCallback = std::function<void(
+    absl::string_view key, std::unique_ptr<google::protobuf::Any> value)>;
 
 // Callback invoked when the KeyValueCallback is called for all keys that match.
 // Make sure to keep this callback lightweight.

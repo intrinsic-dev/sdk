@@ -87,13 +87,13 @@ absl::StatusOr<KVQuery> KeyValueStore::GetAll(absl::string_view keyexpr,
   INTR_ASSIGN_OR_RETURN(absl::StatusOr<std::string> prefixed_name,
                         ZenohHandle::add_key_prefix(keyexpr));
   auto functor = std::make_unique<imw_callback_functor_t>(
-      [callback = std::move(callback)](const char* keyexpr,
+      [callback = std::move(callback)](const char* key,
                                        const void* response_bytes,
                                        const size_t response_bytes_len) {
         auto value = std::make_unique<google::protobuf::Any>();
         value->ParseFromString(absl::string_view(
             static_cast<const char*>(response_bytes), response_bytes_len));
-        callback(std::move(value));
+        callback(key, std::move(value));
       });
   auto on_done_functor = std::make_unique<imw_on_done_functor_t>(
       [on_done = std::move(on_done)](const char* keyexpr) {
