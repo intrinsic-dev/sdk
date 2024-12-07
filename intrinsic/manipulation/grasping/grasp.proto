@@ -8,6 +8,7 @@ import "intrinsic/hardware/gripper/eoat/eoat_service.proto";
 import "intrinsic/hardware/gripper/gripper.proto";
 import "intrinsic/icon/proto/joint_space.proto";
 import "intrinsic/math/proto/pose.proto";
+import "intrinsic/perception/proto/pose_estimate_in_root.proto";
 import "intrinsic/world/proto/geometric_constraints.proto";
 import "intrinsic/world/proto/object_world_refs.proto";
 
@@ -115,6 +116,7 @@ message GraspTarget {
   oneof target_type {
     string object_category = 1;
     intrinsic_proto.world.ObjectReference object_reference = 2;
+    PoseEstimatesTarget pose_estimates = 4;
   }
   optional GraspConstraint grasp_constraint = 3;
 }
@@ -182,4 +184,12 @@ message AttemptedGrasp {
   Grasp grasp = 1;
   // Whether the grasp successfully picked up an object.
   bool success = 2;
+}
+
+message PoseEstimatesTarget {
+  // Pose estimates for objects in the scene.
+  repeated perception.PoseEstimateInRoot estimates = 1;
+  // The object category of the estimates. This is used to spawn objects
+  // in the scene corresponding to the estimates.
+  string category = 2;
 }

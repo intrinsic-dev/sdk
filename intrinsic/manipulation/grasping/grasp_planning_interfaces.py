@@ -34,12 +34,34 @@ class GraspTarget:
         b/268223585.
   """
 
-  object_category_or_reference: str | object_world_refs_pb2.ObjectReference
+  object_category_or_reference: (
+      str | object_world_refs_pb2.ObjectReference | None
+  ) = None
+  pose_estimates: grasp_pb2.PoseEstimatesTarget | None = None
   grasp_constraint: (
       Sequence[pose_pb2.Pose]
       | geometric_constraints_pb2.GeometricConstraint
       | None
   ) = None
+
+  def __post_init__(self):
+    """Checks that exactly one of `object_category_or_reference` and `pose_estimates` is set."""
+    if (
+        self.object_category_or_reference is None
+        and self.pose_estimates is None
+    ):
+      raise ValueError(
+          "GraspTarget must have an `object_category_or_reference` or"
+          " `pose_estimates`."
+      )
+    if (
+        self.object_category_or_reference is not None
+        and self.pose_estimates is not None
+    ):
+      raise ValueError(
+          "GraspTarget must have either `object_category_or_reference` or"
+          " `pose_estimates`, but not both."
+      )
 
   def to_proto(self) -> grasp_pb2.GraspTarget:
     """Convert this GraspTarget to a proto."""
@@ -61,6 +83,8 @@ class GraspTarget:
         self.object_category_or_reference, object_world_refs_pb2.ObjectReference
     ):
       params["object_reference"] = self.object_category_or_reference
+    elif isinstance(self.pose_estimates, grasp_pb2.PoseEstimatesTarget):
+      params["pose_estimates"] = self.pose_estimates
     return grasp_pb2.GraspTarget(**params)
 
   @classmethod
@@ -73,10 +97,17 @@ class GraspTarget:
           if proto.grasp_constraint.HasField("poses")
           else proto.grasp_constraint.geometric_constraint
       )
+    object_category_or_reference = None
+    pose_estimates = None
+    if proto.HasField("object_category"):
+      object_category_or_reference = proto.object_category
+    elif proto.HasField("object_reference"):
+      object_category_or_reference = proto.object_reference
+    else:
+      pose_estimates = proto.pose_estimates
     return cls(
-        object_category_or_reference=proto.object_category
-        if proto.HasField("object_category")
-        else proto.object_reference,
+        object_category_or_reference=object_category_or_reference,
+        pose_estimates=pose_estimates,
         grasp_constraint=grasp_constraint,
     )
 
@@ -89,6 +120,8 @@ class GraspTarget:
       if self.object_category_or_reference.HasField("id"):
         return hash(self.object_category_or_reference.id)
       return hash(self.object_category_or_reference.by_name.object_name)
+    else:
+      return hash(str(self.pose_estimates))
 
 
 class GraspPlanner(metaclass=abc.ABCMeta):

@@ -39,6 +39,7 @@ proto_library(
         "//intrinsic/hardware/gripper/eoat:eoat_service_proto",
         "//intrinsic/icon/proto:joint_space_proto",
         "//intrinsic/math/proto:pose_proto",
+        "//intrinsic/perception/proto:pose_estimate_in_root_proto",
         "//intrinsic/world/proto:geometric_constraints_proto",
         "//intrinsic/world/proto:object_world_refs_proto",
     ],
