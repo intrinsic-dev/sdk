@@ -108,7 +108,8 @@ GetSkillServiceConfigFromManifest(
 
   INTR_ASSIGN_OR_RETURN(*service_config.mutable_skill_description(),
                         BuildSkillProto(manifest, parameter_descriptor_set,
-                                        return_type_descriptor_set, version));
+                                        return_type_descriptor_set,
+                                        version));
 
   return service_config;
 }

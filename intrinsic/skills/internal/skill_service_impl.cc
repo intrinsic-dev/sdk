@@ -502,7 +502,8 @@ grpc::Status SkillExecutorServiceImpl::StartExecute(
   }
 
   INTR_RETURN_IF_ERROR_GRPC(operation->Start(
-      [skill = std::move(skill), skill_request = std::move(skill_request),
+      [skill = std::move(skill),
+       skill_request = std::move(skill_request),
        skill_context = std::move(skill_context), request = *request]()
           -> absl::StatusOr<
               std::unique_ptr<intrinsic_proto::skills::ExecuteResult>> {
@@ -581,7 +582,8 @@ grpc::Status SkillExecutorServiceImpl::StartPreview(
   }
 
   INTR_RETURN_IF_ERROR_GRPC(operation->Start(
-      [skill = std::move(skill), skill_request = std::move(skill_request),
+      [skill = std::move(skill),
+       skill_request = std::move(skill_request),
        skill_context = std::move(skill_context)]()
           -> absl::StatusOr<
               std::unique_ptr<intrinsic_proto::skills::PreviewResult>> {

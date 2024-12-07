@@ -83,6 +83,7 @@ class StatusSpecs:
   specs: Mapping[int, status_spec_pb2.StatusSpec]
 
 
+
 @dataclasses.dataclass(frozen=True)
 class SkillRuntimeData:
   """Data about skills that are relevant to the skills services.
@@ -123,7 +124,6 @@ def get_runtime_data_from(
     Constructed SkillRuntimeData from given args.
   """
   # pyformat: enable
-
   execution_service_options_kwargs = {}
   if skill_service_config.execution_service_options.HasField(
       'cancellation_ready_timeout'
@@ -188,3 +188,4 @@ def get_runtime_data_from(
       status_specs=StatusSpecs(status_specs),
       skill_id=skill_service_config.skill_description.id,
   )
+

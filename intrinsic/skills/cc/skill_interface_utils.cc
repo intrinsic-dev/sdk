@@ -30,8 +30,11 @@ absl::StatusOr<std::unique_ptr<::google::protobuf::Message>> PreviewViaExecute(
 
   INTR_ASSIGN_OR_RETURN(ExecuteRequest execute_request,
                         PreviewToExecuteRequest(request));
-  INTR_ASSIGN_OR_RETURN(ExecuteContextView execute_context,
-                        PreviewToExecuteContext(context, equipment));
+  INTR_ASSIGN_OR_RETURN(
+      ExecuteContextView execute_context,
+      PreviewToExecuteContext(context,
+                              equipment
+                              ));
 
   return skill.Execute(execute_request, execute_context);
 }
@@ -44,7 +47,9 @@ absl::StatusOr<ExecuteRequest> PreviewToExecuteRequest(
 }
 
 absl::StatusOr<ExecuteContextView> PreviewToExecuteContext(
-    PreviewContext& context, const EquipmentPack& equipment) {
+    PreviewContext& context,
+    const EquipmentPack& equipment
+) {
   return ExecuteContextView(context.canceller(), equipment,
                             context.logging_context(), context.motion_planner(),
                             context.object_world()

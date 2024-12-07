@@ -28,7 +28,8 @@
 #include "intrinsic/util/status/status_macros.h"
 
 namespace intrinsic::skills::internal {
-namespace {}  // namespace
+namespace {
+}  // namespace
 
 ParameterData::ParameterData(const google::protobuf::Any& default_value)
     : default_(default_value) {}
@@ -60,12 +61,11 @@ StatusSpecs::StatusSpecs(
                     });
 }
 
-SkillRuntimeData::SkillRuntimeData(const ParameterData& parameter_data,
-                                   const ReturnTypeData& return_type_data,
-                                   const ExecutionOptions& execution_options,
-                                   const ResourceData& resource_data,
-                                   const StatusSpecs& status_specs,
-                                   absl::string_view id)
+SkillRuntimeData::SkillRuntimeData(
+    const ParameterData& parameter_data, const ReturnTypeData& return_type_data,
+    const ExecutionOptions& execution_options,
+    const ResourceData& resource_data, const StatusSpecs& status_specs,
+    absl::string_view id)
     : parameter_data_(parameter_data),
       return_type_data_(return_type_data),
       execution_options_(execution_options),

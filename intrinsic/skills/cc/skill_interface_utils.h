@@ -46,7 +46,9 @@ absl::StatusOr<ExecuteRequest> PreviewToExecuteRequest(
 // NOTE that the returned execute context will only be valid as long as the
 // input preview context exists.
 absl::StatusOr<ExecuteContextView> PreviewToExecuteContext(
-    PreviewContext& context, const EquipmentPack& equipment);
+    PreviewContext& context,
+    const EquipmentPack& equipment
+);
 
 }  // namespace skills
 }  // namespace intrinsic

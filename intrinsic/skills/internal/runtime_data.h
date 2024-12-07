@@ -7,6 +7,7 @@
 #ifndef INTRINSIC_SKILLS_INTERNAL_RUNTIME_DATA_H_
 #define INTRINSIC_SKILLS_INTERNAL_RUNTIME_DATA_H_
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -132,11 +133,12 @@ class StatusSpecs {
 class SkillRuntimeData {
  public:
   SkillRuntimeData() = default;
-  SkillRuntimeData(const ParameterData& parameter_data,
-                   const ReturnTypeData& return_type_data,
-                   const ExecutionOptions& execution_options,
-                   const ResourceData& resource_data,
-                   const StatusSpecs& status_specs, absl::string_view id);
+  SkillRuntimeData(
+      const ParameterData& parameter_data,
+      const ReturnTypeData& return_type_data,
+      const ExecutionOptions& execution_options,
+      const ResourceData& resource_data, const StatusSpecs& status_specs,
+      absl::string_view id);
 
   SkillRuntimeData(const SkillRuntimeData& other) = default;
   SkillRuntimeData& operator=(const SkillRuntimeData& other) = default;

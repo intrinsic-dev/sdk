@@ -2,11 +2,7 @@
 
 #include "intrinsic/skills/internal/skill_proto_utils.h"
 
-#include <memory>
 #include <optional>
-#include <string>
-#include <utility>
-#include <vector>
 
 #include "absl/log/log.h"
 #include "absl/status/status.h"
@@ -152,7 +148,6 @@ absl::StatusOr<intrinsic_proto::skills::Skill> BuildSkillProto(
         CreateReturnDescription(manifest.return_type(),
                                 return_value_file_descriptor_set));
   }
-
   return skill;
 }
 
