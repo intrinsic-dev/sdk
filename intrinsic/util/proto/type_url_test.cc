@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "google/protobuf/wrappers.pb.h"
 
 namespace intrinsic {
@@ -13,7 +14,7 @@ namespace intrinsic {
 namespace {
 
 TEST(TypeUrl, AddPrefix) {
-  std::string proto_type =
+  absl::string_view proto_type =
       google::protobuf::Int64Value::descriptor()->full_name();
   EXPECT_EQ(AddTypeUrlPrefix(proto_type),
             "type.googleapis.com/google.protobuf.Int64Value");

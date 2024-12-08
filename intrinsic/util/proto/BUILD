@@ -146,6 +146,7 @@ cc_test(
     deps = [
         ":type_url",
         "//intrinsic/util/testing:gtest_wrapper_main",
+        "@com_google_absl//absl/strings:string_view",
         "@com_google_protobuf//:protobuf",
     ],
 )
