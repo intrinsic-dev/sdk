@@ -13,6 +13,11 @@ load(
 
 skill_manifest = _skill_manifest
 
+# Directory in container where user code is put.
+# Use ':' in directory name so that it can't match a Bazel packagage to workaround
+# https://github.com/bazelbuild/rules_pkg/issues/905
+_SKILL_USER_DIR = "/::skills::"
+
 def _gen_cc_skill_service_main_impl(ctx):
     output_file = ctx.actions.declare_file(ctx.label.name + ".cc")
     manifest_pbbin_file = ctx.attr.manifest[SkillManifestInfo].manifest_binary_file
@@ -379,18 +384,17 @@ def _intrinsic_skill(name, image, manifest, **kwargs):
     )
 
     image_name = "%s_image" % name
-    package_path = native.package_name() + "/" if native.package_name() else ""
     container_image(
         name = image_name,
         base = image,
-        directory = "/skills",
+        directory = _SKILL_USER_DIR,
         files = [
             skill_service_config_name,
         ],
         data_path = "/",
         labels = labels,
         symlinks = {
-            "/skills/skill_service_config.proto.bin": package_path + skill_service_config_name + ".pbbin",
+            "/skills/skill_service_config.proto.bin": _SKILL_USER_DIR + "/" + package_path() + skill_service_config_name + ".pbbin",
         },
         **kwargs
     )
@@ -408,7 +412,7 @@ def package_path():
 
 def build_symlinks(skill_service_name):
     return {
-        "/skills/skill_service": package_path() + skill_service_name,
+        "/skills/skill_service": _SKILL_USER_DIR + "/" + package_path() + skill_service_name,
     }
 
 def cc_skill(
@@ -447,7 +451,7 @@ def cc_skill(
     container_image(
         name = service_image_name,
         base = base_image,
-        directory = "/skills",
+        directory = _SKILL_USER_DIR,
         files = [
             skill_service_name,
         ],
@@ -501,10 +505,10 @@ def py_skill(
         name = service_image_name,
         base = base_image,
         binary = binary_name,
-        directory = "/skills",
+        directory = _SKILL_USER_DIR,
         data_path = "/",
         symlinks = build_symlinks(binary_name) | {
-            "/skills/skill_service.runfiles": "/skills/" + native.repository_name()[1:] + "/" + package_path() + binary_name + ".runfiles",
+            "/skills/skill_service.runfiles": _SKILL_USER_DIR + "/" + native.repository_name()[1:] + "/" + package_path() + binary_name + ".runfiles",
         },
         workdir = "/",
         compatible_with = kwargs.get("compatible_with"),
