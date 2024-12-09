@@ -4,6 +4,7 @@
 
 This includes grasping related protos, grasp planning service and grasp skills."""
 
+load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library")
 load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_python//python:defs.bzl", "py_library")
@@ -18,6 +19,15 @@ cc_proto_library(
     name = "grasp_cc_proto",
     visibility = ["//intrinsic:public_api_users"],
     deps = [":grasp_proto"],
+)
+
+py_proto_library(
+    name = "grasp_annotations_py_pb2",
+    visibility = [
+        "//intrinsic:internal_api_users",
+        "//intrinsic/apps:__subpackages__",
+    ],
+    deps = [":grasp_annotations_proto"],
 )
 
 proto_library(
@@ -129,5 +139,17 @@ proto_library(
         "//intrinsic/geometry/proto:triangle_mesh_proto",
         "//intrinsic/math/proto:pose_proto",
         "//intrinsic/math/proto:vector2_proto",
+    ],
+)
+
+py_library(
+    name = "grasp_annotator_client",
+    srcs = ["grasp_annotator_client.py"],
+    deps = [
+        ":grasp_annotations_py_pb2",
+        "//intrinsic/manipulation/service:grasp_annotator_service_py_pb2",
+        "//intrinsic/manipulation/service:grasp_annotator_service_py_pb2_grpc",
+        requirement("grpcio"),
+        "@com_google_absl_py//absl/logging",
     ],
 )
