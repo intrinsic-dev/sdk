@@ -6,21 +6,6 @@ load("//bazel:go_macros.bzl", "go_library", "go_test")
 
 package(default_visibility = ["//visibility:private"])
 
-exports_files(
-    srcs = [
-        # go/keep-sorted start
-        "BUILD",
-        "tartooling.go",
-        "tartooling_test.go",
-        "untar.cc",
-        "untar.go",
-        "untar.h",
-        "untar_test.cc",
-        # go/keep-sorted end
-    ],
-    visibility = ["//visibility:public"],
-)
-
 go_library(
     name = "tartooling",
     srcs = ["tartooling.go"],
