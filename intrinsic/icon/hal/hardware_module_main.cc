@@ -40,6 +40,9 @@ ABSL_FLAG(std::string, module_config_file, "",
           "Module prototext configuration file path.");
 ABSL_FLAG(bool, realtime, false,
           "Indicating whether we run on a privileged RTPC.");
+ABSL_FLAG(std::string, runtime_context_file, "/etc/intrinsic/runtime_config.pb",
+          "The path to the runtime context file containing "
+          "intrinsic_proto.config.RuntimeContext binary proto.");
 ABSL_FLAG(std::optional<int>, realtime_core, std::nullopt,
           "The CPU core for all realtime threads. Is read from /proc/cmdline "
           "if not defined.");
@@ -79,7 +82,7 @@ absl::StatusOr<HardwareModuleExitCode> ModuleMain(int argc, char** argv) {
                     "be published. Error: "
                  << status;
   }
-  std::string runtime_context_file;
+  std::string runtime_context_file = absl::GetFlag(FLAGS_runtime_context_file);
   absl::StatusOr<HardwareModuleMainConfig> hwm_main_config =
       LoadConfig(absl::GetFlag(FLAGS_module_config_file), runtime_context_file,
                  absl::GetFlag(FLAGS_realtime));
