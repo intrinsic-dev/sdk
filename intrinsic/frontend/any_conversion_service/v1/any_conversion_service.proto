@@ -8,12 +8,11 @@ import "google/protobuf/any.proto";
 import "google/protobuf/descriptor.proto";
 
 service AnyConversionService {
-  // Converts an Any proto to a JSON string.
-  rpc ConvertToJson(ConvertToJsonRequest) returns (ConvertToJsonResponse) {}
+  // Encodes an Any proto to the specified encoding.
+  rpc Encode(EncodeRequest) returns (EncodeResponse) {}
 
-  // Converts a JSON encoded Any proto to an Any proto.
-  rpc ConvertFromJson(ConvertFromJsonRequest)
-      returns (ConvertFromJsonResponse) {}
+  // Decodes an Any proto from the specified encoding.
+  rpc Decode(DecodeRequest) returns (DecodeResponse) {}
 }
 
 message DescriptorSource {
@@ -26,28 +25,40 @@ message DescriptorSource {
   }
 }
 
-message ConvertToJsonRequest {
-  // The Any proto to convert to JSON.
+enum Encoding {
+  // Unspecified/default encoding is treated the same as `ENCODING_JSON`.
+  ENCODING_UNSPECIFIED = 0;
+  ENCODING_JSON = 1;
+}
+
+message EncodeRequest {
+  // The Any proto to encode.
   google.protobuf.Any any = 1;
 
   // The descriptor source to use for resolving types.
   DescriptorSource descriptor_source = 2;
+
+  // The encoding to use.
+  Encoding encoding = 3;
 }
 
-message ConvertToJsonResponse {
-  // The JSON string representation of the Any proto.
-  string json = 1;
+message EncodeResponse {
+  // The encoded string representation of the Any proto.
+  string encoded_any = 1;
 }
 
-message ConvertFromJsonRequest {
-  // The JSON encoded Any proto to convert to an Any proto.
-  string json = 1;
+message DecodeRequest {
+  // The encoded string representation of the Any proto to code.
+  string encoded_any = 1;
 
   // The descriptor source to use for resolving types.
   DescriptorSource descriptor_source = 2;
+
+  // The encoding of the `encoded_any` string.
+  Encoding encoding = 3;
 }
 
-message ConvertFromJsonResponse {
-  // The Any proto representation of the JSON encoded Any proto.
+message DecodeResponse {
+  // The decoded Any proto.
   google.protobuf.Any any = 1;
 }
