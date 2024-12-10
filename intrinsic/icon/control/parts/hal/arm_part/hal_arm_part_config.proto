@@ -80,9 +80,17 @@ message HalArmPartConfig {
       mode_of_safe_operation_limits_config = 15;
 
   // If present, then the joint velocity state feature interface velocity
-  // measurement values will be low-pass filtered using a 2nd Order Butterworth
-  // filter with the configured cutoff frequency.
+  // estimate values will be low-pass filtered using a 2nd Order Butterworth
+  // filter with the configured cutoff frequency. This is applied to both the
+  // velocity state from the hardware interface and the velocity state
+  // calculated from the position state.
   optional double velocity_filter_cutoff_frequency = 16;
+
+  // If present, then the joint velocity state feature interface will be
+  // configured to calculate the velocity state from the position state. Only
+  // one of joint_velocity_state and calculate_velocity_state_from_position can
+  // be set.
+  optional bool calculate_velocity_state_from_position = 24;
 
   reserved 8, 9, 17;
 }
