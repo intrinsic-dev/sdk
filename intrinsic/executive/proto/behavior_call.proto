@@ -6,6 +6,7 @@ package intrinsic_proto.executive;
 
 import "google/protobuf/any.proto";
 import "google/protobuf/duration.proto";
+import "intrinsic/executive/proto/annotations.proto";
 import "intrinsic/skills/proto/footprint.proto";
 
 // A BehaviorCall is a reference to a fully configured behavior to execute.
@@ -47,6 +48,10 @@ message BehaviorCall {
   // The name can then be used to retrieve a resource handle.
   // The reference will be instantiated from a BehaviorCall.
   map<string, ResourceSpecification> resources = 5;
+
+  // Current resources for a BehaviorCall that is executing. All references in
+  // the ResourceSpecification have been replaced with the actual handles.
+  map<string, string> resources_current = 9 [(output_only) = true];
 
   // This is the key for accessing the return value of the behavior call on
   // the blackboard.
