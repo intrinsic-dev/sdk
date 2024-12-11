@@ -37,13 +37,13 @@ class Queryable {
   Queryable(const Queryable&) = delete;
   Queryable& operator=(const Queryable&) = delete;
 
-  Queryable(Queryable&& other)
+  Queryable(Queryable&& other) noexcept
       : key_(std::move(other.key_)),
         callback_(std::move(other.callback_)),
         link_(std::move(other.link_)) {
     link_->queryable = this;
   }
-  Queryable& operator=(Queryable&& other) {
+  Queryable& operator=(Queryable&& other) noexcept {
     key_ = std::move(other.key_);
     callback_ = std::move(other.callback_);
     link_ = std::move(other.link_);
