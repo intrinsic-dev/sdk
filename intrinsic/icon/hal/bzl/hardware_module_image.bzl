@@ -15,16 +15,20 @@ def _path_in_container(target):
         The absolute path to the executable.
     """
 
-    if target.startswith("@"):
-        # External workspace target
-        workspace_name = target.split("/")[0][1:]
+    target = str(target)
+    if target.startswith("@@//"):
+        # Absolute target within the main workspace (remove the @@/, then replace : with /)
+        path = target[3:].replace(":", "/")
+    elif target.startswith("//"):
+        # Absolute target within the main bazel workspace (remove the first /, then replace : with /)
+        path = target[1:].replace(":", "/")
+    elif target.startswith("@"):
+        # Absolute target within an external workspace (remove all leading @, prefix with /external/, then replace : with /)
+        workspace_name = target.split("/")[0].replace("@", "")
         path = "/external/%s/%s" % (workspace_name, target.split("//")[1])
         path = path.replace(":", "/")
-    elif target.startswith("//"):
-        # Absolute target within the main workspace
-        path = target[1:].replace(":", "/")
     else:
-        # Target within the current package
+        # Relative target (prefix with the package name, then replace : with /)
         package_path = native.package_name() + "/"
         if target.startswith(":"):
             path = package_path + target[1:]
@@ -89,7 +93,7 @@ def hardware_module_image(
     resource_entrypoint = [
         init_hwm_path,
         "--",
-        _path_in_container(hardware_module_binary),
+        _path_in_container(native.package_relative_label(hardware_module_binary)),
     ]
 
     layers = kwargs.get("layers", [])
