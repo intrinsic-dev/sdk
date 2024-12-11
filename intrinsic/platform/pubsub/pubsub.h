@@ -3,18 +3,23 @@
 #ifndef INTRINSIC_PLATFORM_PUBSUB_PUBSUB_H_
 #define INTRINSIC_PLATFORM_PUBSUB_PUBSUB_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "google/protobuf/any.pb.h"
@@ -25,6 +30,7 @@
 #include "intrinsic/platform/pubsub/publisher.h"
 #include "intrinsic/platform/pubsub/queryable.h"
 #include "intrinsic/platform/pubsub/subscription.h"
+#include "intrinsic/util/proto/type_url.h"
 #include "intrinsic/util/status/status_conversion_rpc.h"
 #include "intrinsic/util/status/status_macros.h"
 
@@ -309,14 +315,8 @@ class PubSub {
     static_assert(std::is_base_of_v<google::protobuf::Message, ResponseT>,
                   "Response must be a proto message");
 
-    intrinsic_proto::pubsub::PubSubQueryRequest request_packet;
-    if (options.trace_id.has_value()) {
-      request_packet.set_trace_id(*options.trace_id);
-    }
-    if (options.span_id.has_value()) {
-      request_packet.set_span_id(*options.span_id);
-    }
-    request_packet.mutable_request()->PackFrom(request);
+    intrinsic_proto::pubsub::PubSubQueryRequest request_packet =
+        PrepareRequestPacket(request, options);
 
     INTR_ASSIGN_OR_RETURN(
         intrinsic_proto::pubsub::PubSubQueryResponse response_packet,
@@ -332,6 +332,13 @@ class PubSub {
     }
     return response;
   }
+
+  using GetResult = absl::StatusOr<std::unique_ptr<google::protobuf::Message>>;
+
+  template <typename RequestT, typename... ResponseT>
+  absl::StatusOr<std::vector<GetResult>> Get(absl::string_view keyexpr,
+                                             const RequestT& request,
+                                             const QueryOptions& options = {});
 
  private:
   static void HandleError(const SubscriptionErrorCallback& error_callback,
@@ -350,10 +357,28 @@ class PubSub {
                        " but got ", packet.payload().type_url())));
   }
 
+  static intrinsic_proto::pubsub::PubSubQueryRequest PrepareRequestPacket(
+      const google::protobuf::Message& request, const QueryOptions& options) {
+    intrinsic_proto::pubsub::PubSubQueryRequest request_packet;
+    if (options.trace_id.has_value()) {
+      request_packet.set_trace_id(*options.trace_id);
+    }
+    if (options.span_id.has_value()) {
+      request_packet.set_span_id(*options.span_id);
+    }
+    request_packet.mutable_request()->PackFrom(request);
+    return request_packet;
+  }
+
   absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse> GetOneImpl(
       absl::string_view key,
       const intrinsic_proto::pubsub::PubSubQueryRequest& request,
       const QueryOptions& options);
+
+  absl::StatusOr<std::vector<intrinsic_proto::pubsub::PubSubQueryResponse>>
+  GetImpl(absl::string_view keyexpr,
+          const intrinsic_proto::pubsub::PubSubQueryRequest& request,
+          const QueryOptions& options);
 
   absl::StatusOr<Queryable> CreateQueryableImpl(
       absl::string_view key, internal::GeneralQueryableCallback callback);
@@ -362,6 +387,88 @@ class PubSub {
   // destructor even when PubSubData is an incomplete type.
   std::shared_ptr<PubSubData> data_;
 };
+
+template <typename TupleType, size_t... I>
+PubSub::GetResult TryConvertResponseProtoForTypes(
+    const intrinsic_proto::pubsub::PubSubQueryResponse& response_packet,
+    std::index_sequence<I...> /* unused */) {
+  // On error, just return an error result
+  if (response_packet.has_error()) {
+    return ToAbslStatus(response_packet.error());
+  }
+
+  bool converted_ok = false;
+  std::unique_ptr<google::protobuf::Message> response;
+
+  // This is a fold expression "(lambda, ...)" that is expanded once for each I
+  // (template argument). What we do is get the type at position I and then see
+  // if we can unpack the response Any proto into that message type. If we can,
+  // we mark conversion as ok and the remaining tries will just bail out
+  // immediately.
+  (
+      [&] {
+        if (converted_ok) return;
+        // Try to convert Any proto to given message, if this fails, recurse
+        TupleType args;
+        using M = std::remove_reference_t<decltype(std::get<I>(args))>;
+
+        std::unique_ptr<M> response_candidate =
+            absl::WrapUnique(M::default_instance().New());
+        if (response_packet.response().UnpackTo(response_candidate.get())) {
+          response = std::move(response_candidate);
+          converted_ok = true;
+        }
+      }(),
+      ...);
+
+  if (converted_ok) {
+    return response;
+  }
+
+  // Conversion didn't work, we got a proto of a type we didn't expect. Return
+  // an error.
+
+  // This fold expression goes over the expected types to note the proto's full
+  // name, just to show it to the user.
+  std::vector<std::string> expected_types;
+  (
+      [&] {
+        TupleType args;
+        using M = std::remove_reference_t<decltype(std::get<I>(args))>;
+        expected_types.push_back(M::descriptor()->full_name());
+      }(),
+      ...);
+
+  return absl::InvalidArgumentError(
+      absl::StrFormat("Received message type %s, but expected any of [%s]",
+                      StripTypeUrlPrefix(response_packet.response().type_url()),
+                      absl::StrJoin(expected_types, ", ")));
+}
+
+template <typename RequestT, typename... ResponseT>
+absl::StatusOr<std::vector<PubSub::GetResult>> PubSub::Get(
+    absl::string_view keyexpr, const RequestT& request,
+    const PubSub::QueryOptions& options) {
+  intrinsic_proto::pubsub::PubSubQueryRequest request_packet =
+      PrepareRequestPacket(request, options);
+
+  INTR_ASSIGN_OR_RETURN(
+      const std::vector<intrinsic_proto::pubsub::PubSubQueryResponse>
+          response_packets,
+      GetImpl(keyexpr, request_packet, options));
+
+  // This tries to convert each of the received responses into one of the types
+  // passed as template arguments.
+  std::vector<PubSub::GetResult> results;
+  results.reserve(response_packets.size());
+  for (const auto& response : response_packets) {
+    results.push_back(std::move(
+        TryConvertResponseProtoForTypes<std::tuple<std::decay_t<ResponseT>...>>(
+            response, std::index_sequence_for<std::decay_t<ResponseT>...>{})));
+  }
+
+  return results;
+}
 
 }  // namespace intrinsic
 

@@ -4,12 +4,15 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
+#include "absl/base/thread_annotations.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
 #include "absl/synchronization/notification.h"
 #include "absl/time/time.h"
 #include "intrinsic/platform/pubsub/adapters/pubsub.pb.h"
@@ -192,32 +195,38 @@ absl::StatusOr<intrinsic::KeyValueStore> PubSub::KeyValueStore() const {
 }
 
 namespace {
-struct GetOneData {
+struct GetData {
   absl::Notification notification;
-  absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse> response_packet;
+  absl::Mutex responses_mutex;
+  struct Response {
+    std::string key;
+    intrinsic_proto::pubsub::PubSubQueryResponse proto;
+  };
+  absl::StatusOr<std::vector<Response>> responses
+      ABSL_GUARDED_BY(responses_mutex) = std::vector<Response>{};
 };
 
-void GetOneCallbackFn(const char *key, const void *response_bytes,
-                      const size_t response_bytes_len, void *user_context) {
-  GetOneData *query_data = static_cast<GetOneData *>(user_context);
+void GetCallbackFn(const char *key, const void *response_bytes,
+                   const size_t response_bytes_len, void *user_context) {
+  GetData *query_data = static_cast<GetData *>(user_context);
+  absl::MutexLock lock(&query_data->responses_mutex);
+  if (!query_data->responses.ok()) {
+    // There was already an error, return immediately
+    return;
+  }
   std::string_view response_str(static_cast<const char *>(response_bytes),
                                 response_bytes_len);
   intrinsic_proto::pubsub::PubSubQueryResponse response_packet;
   if (!response_packet.ParseFromString(response_str)) {
-    query_data->response_packet =
+    query_data->responses =
         absl::InvalidArgumentError("Failed to parse response packet");
   }
-  query_data->response_packet = std::move(response_packet);
+  query_data->responses->push_back(
+      {.key = key, .proto = std::move(response_packet)});
 }
 
-void GetOneOnDoneCallbackFn(const char *key, void *user_context) {
-  GetOneData *query_data = static_cast<GetOneData *>(user_context);
-  if (!query_data->response_packet.ok() &&
-      query_data->response_packet.status().code() ==
-          absl::StatusCode::kUnknown) {
-    query_data->response_packet =
-        absl::DeadlineExceededError("Get operation timed out");
-  }
+void GetOnDoneCallbackFn(const char *key, void *user_context) {
+  GetData *query_data = static_cast<GetData *>(user_context);
   query_data->notification.Notify();
 }
 
@@ -235,12 +244,12 @@ absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse> PubSub::GetOneImpl(
     const intrinsic_proto::pubsub::PubSubQueryRequest &request,
     const QueryOptions &options) {
   std::string serialized_request = request.SerializeAsString();
-  GetOneData query_data;
+  GetData query_data;
   imw_query_options_t query_options;
   if (options.timeout.has_value()) {
     query_options.timeout_ms = *options.timeout / absl::Milliseconds(1);
   }
-  if (Zenoh().imw_query(key.data(), &GetOneCallbackFn, &GetOneOnDoneCallbackFn,
+  if (Zenoh().imw_query(key.data(), &GetCallbackFn, &GetOnDoneCallbackFn,
                         serialized_request.c_str(), serialized_request.size(),
                         &query_data, &query_options) != IMW_OK) {
     return absl::InternalError(
@@ -249,7 +258,59 @@ absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse> PubSub::GetOneImpl(
 
   query_data.notification.WaitForNotification();
 
-  return query_data.response_packet;
+  absl::MutexLock lock(&query_data.responses_mutex);
+  if (!query_data.responses.ok()) {
+    return query_data.responses.status();
+  }
+  if (query_data.responses->empty()) {
+    return absl::DeadlineExceededError("Get operation timed out");
+  }
+
+  if (query_data.responses->empty()) {
+    return absl::NotFoundError(
+        absl::StrFormat("When calling GetOne for queryable '%s' received %d "
+                        "no results",
+                        key, query_data.responses->size()));
+  }
+
+  if (query_data.responses->size() > 1) {
+    return absl::FailedPreconditionError(
+        absl::StrFormat("When calling GetOne for queryable '%s' received %d "
+                        "results, expected exactly one",
+                        key, query_data.responses->size()));
+  }
+  return std::move(query_data.responses->at(0).proto);
+}
+
+absl::StatusOr<std::vector<intrinsic_proto::pubsub::PubSubQueryResponse>>
+PubSub::GetImpl(absl::string_view key,
+                const intrinsic_proto::pubsub::PubSubQueryRequest &request,
+                const QueryOptions &options) {
+  std::string serialized_request = request.SerializeAsString();
+  GetData query_data;
+  imw_query_options_t query_options;
+  if (options.timeout.has_value()) {
+    query_options.timeout_ms = *options.timeout / absl::Milliseconds(1);
+  }
+  if (Zenoh().imw_query(key.data(), &GetCallbackFn, &GetOnDoneCallbackFn,
+                        serialized_request.c_str(), serialized_request.size(),
+                        &query_data, &query_options) != IMW_OK) {
+    return absl::InternalError(
+        absl::StrFormat("Executing query for key '%s' failed", key));
+  }
+
+  query_data.notification.WaitForNotification();
+
+  absl::MutexLock lock(&query_data.responses_mutex);
+  if (!query_data.responses.ok()) {
+    return query_data.responses.status();
+  }
+
+  std::vector<intrinsic_proto::pubsub::PubSubQueryResponse> results;
+  for (auto response : *query_data.responses) {
+    results.push_back(std::move(response.proto));
+  }
+  return results;
 }
 
 }  // namespace intrinsic
