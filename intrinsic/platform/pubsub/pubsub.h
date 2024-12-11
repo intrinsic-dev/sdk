@@ -16,6 +16,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 #include "google/protobuf/any.pb.h"
 #include "google/protobuf/message.h"
 #include "google/rpc/status.pb.h"
@@ -285,6 +286,7 @@ class PubSub {
   struct QueryOptions {
     std::optional<uint64_t> trace_id;
     std::optional<uint64_t> span_id;
+    std::optional<absl::Duration> timeout;
   };
 
   // Gets from one specific queryable (identified by key, NOT key expr).
@@ -316,15 +318,16 @@ class PubSub {
     }
     request_packet.mutable_request()->PackFrom(request);
 
-    absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse>
-        response_packet = GetOneImpl(key, request_packet, options);
+    INTR_ASSIGN_OR_RETURN(
+        intrinsic_proto::pubsub::PubSubQueryResponse response_packet,
+        GetOneImpl(key, request_packet, options));
 
-    if (response_packet->has_error()) {
-      return ToAbslStatus(response_packet->error());
+    if (response_packet.has_error()) {
+      return ToAbslStatus(response_packet.error());
     }
 
     ResponseT response;
-    if (!response_packet->response().UnpackTo(&response)) {
+    if (!response_packet.response().UnpackTo(&response)) {
       return absl::InvalidArgumentError("Failed to unpack response");
     }
     return response;

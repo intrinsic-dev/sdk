@@ -10,6 +10,7 @@
 
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 
 namespace intrinsic {
 
@@ -41,6 +42,10 @@ typedef std::function<void(const char *, const void *, const size_t)>
     imw_callback_functor_t;
 
 typedef std::function<void(const char *)> imw_on_done_functor_t;
+
+struct imw_query_options_t {
+  uint64_t timeout_ms = 0;
+};
 
 struct QueryContext {
   imw_callback_functor_t *callback;
@@ -114,7 +119,8 @@ struct ZenohHandle {
   std::add_pointer_t<imw_ret_t(
       const char *keyexpr, imw_query_callback_fn *callback,
       imw_query_on_done_fn *on_done, const void *query_payload,
-      const size_t query_payload_len, void *user_context)>
+      const size_t query_payload_len, void *user_context,
+      imw_query_options_t *options)>
       imw_query;
 
   std::add_pointer_t<imw_ret_t(const char *keyexp)> imw_delete_keyexpr;

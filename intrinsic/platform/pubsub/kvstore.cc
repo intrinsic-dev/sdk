@@ -3,6 +3,7 @@
 #include "intrinsic/platform/pubsub/kvstore.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -46,6 +47,9 @@ absl::StatusOr<google::protobuf::Any> KeyValueStore::GetAny(
   INTR_RETURN_IF_ERROR(intrinsic::ValidZenohKey(key));
   INTR_ASSIGN_OR_RETURN(absl::StatusOr<std::string> prefixed_name,
                         ZenohHandle::add_key_prefix(key));
+  if (timeout < absl::ZeroDuration()) {
+    return absl::InvalidArgumentError("Timeout must be zero or positive");
+  }
   google::protobuf::Any value;
   absl::Notification notif;
   absl::Status lambda_status = absl::OkStatus();
@@ -62,8 +66,11 @@ absl::StatusOr<google::protobuf::Any> KeyValueStore::GetAny(
         }
         notif.Notify();
       });
-  imw_ret ret = Zenoh().imw_query(prefixed_name->c_str(), zenoh_static_callback,
-                                  nullptr, nullptr, 0, callback.get());
+  imw_query_options_t query_options{
+      .timeout_ms = static_cast<uint64_t>(timeout / absl::Milliseconds(1))};
+  imw_ret ret =
+      Zenoh().imw_query(prefixed_name->c_str(), zenoh_static_callback, nullptr,
+                        nullptr, 0, callback.get(), &query_options);
   if (ret != IMW_OK) {
     return absl::InternalError(
         absl::StrFormat("Error getting a key, return code: %d", ret));
@@ -102,7 +109,7 @@ absl::StatusOr<KVQuery> KeyValueStore::GetAll(absl::string_view keyexpr,
   KVQuery query(std::move(functor), std::move(on_done_functor));
   imw_ret_t ret = Zenoh().imw_query(
       prefixed_name->c_str(), zenoh_query_static_callback,
-      zenoh_query_static_on_done, nullptr, 0, query.GetContext());
+      zenoh_query_static_on_done, nullptr, 0, query.GetContext(), nullptr);
   if (ret != IMW_OK) {
     return absl::InternalError(
         absl::StrFormat("Error getting a key, return code: %d", ret));
@@ -130,9 +137,12 @@ absl::StatusOr<std::vector<std::string>> KeyValueStore::ListAllKeys(
   auto on_done_functor = std::make_unique<imw_on_done_functor_t>(
       [&notif](const char* unused_keyexpr) { notif.Notify(); });
   KVQuery query(std::move(callback), std::move(on_done_functor));
-  imw_ret ret = Zenoh().imw_query(
-      prefixed_name->c_str(), zenoh_query_static_callback,
-      zenoh_query_static_on_done, nullptr, 0, query.GetContext());
+  imw_query_options_t query_options{
+      .timeout_ms = static_cast<uint64_t>(timeout / absl::Milliseconds(1))};
+  imw_ret ret =
+      Zenoh().imw_query(prefixed_name->c_str(), zenoh_query_static_callback,
+                        zenoh_query_static_on_done, nullptr, 0,
+                        query.GetContext(), &query_options);
   if (ret != IMW_OK) {
     return absl::InternalError(
         absl::StrFormat("Error getting a key, return code: %d", ret));

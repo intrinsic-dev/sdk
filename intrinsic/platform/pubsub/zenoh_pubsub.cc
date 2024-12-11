@@ -11,6 +11,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/notification.h"
+#include "absl/time/time.h"
 #include "intrinsic/platform/pubsub/adapters/pubsub.pb.h"
 #include "intrinsic/platform/pubsub/kvstore.h"
 #include "intrinsic/platform/pubsub/publisher.h"
@@ -211,6 +212,12 @@ void GetOneCallbackFn(const char *key, const void *response_bytes,
 
 void GetOneOnDoneCallbackFn(const char *key, void *user_context) {
   GetOneData *query_data = static_cast<GetOneData *>(user_context);
+  if (!query_data->response_packet.ok() &&
+      query_data->response_packet.status().code() ==
+          absl::StatusCode::kUnknown) {
+    query_data->response_packet =
+        absl::DeadlineExceededError("Get operation timed out");
+  }
   query_data->notification.Notify();
 }
 
@@ -229,9 +236,13 @@ absl::StatusOr<intrinsic_proto::pubsub::PubSubQueryResponse> PubSub::GetOneImpl(
     const QueryOptions &options) {
   std::string serialized_request = request.SerializeAsString();
   GetOneData query_data;
+  imw_query_options_t query_options;
+  if (options.timeout.has_value()) {
+    query_options.timeout_ms = *options.timeout / absl::Milliseconds(1);
+  }
   if (Zenoh().imw_query(key.data(), &GetOneCallbackFn, &GetOneOnDoneCallbackFn,
                         serialized_request.c_str(), serialized_request.size(),
-                        &query_data) != IMW_OK) {
+                        &query_data, &query_options) != IMW_OK) {
     return absl::InternalError(
         absl::StrFormat("Executing query for key '%s' failed", key));
   }
