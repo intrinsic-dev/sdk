@@ -35,6 +35,8 @@ func init() {
 var domains = []string{
 	"flowstate.intrinsic.ai",
 	"accounts.intrinsic.ai",
+	"edge.intrinsic.ai",
+	"ghcr.io",
 }
 
 var printDebugInfoCmdHelp = `
