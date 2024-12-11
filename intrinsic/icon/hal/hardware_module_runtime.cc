@@ -952,8 +952,9 @@ HardwareModuleRuntime::GetHardwareModuleState() const {
   return callback_handler_->GetHardwareModuleState();
 }
 
-void HardwareModuleRuntime::SetStateTestOnly(intrinsic_fbs::StateCode state) {
-  callback_handler_->SetStateDirectly(state, "", /*force=*/true);
+void HardwareModuleRuntime::SetStateTestOnly(intrinsic_fbs::StateCode state,
+                                             std::string_view fault_reason) {
+  callback_handler_->SetStateDirectly(state, fault_reason, /*force=*/true);
 }
 
 }  // namespace intrinsic::icon

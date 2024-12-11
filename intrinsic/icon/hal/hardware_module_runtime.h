@@ -5,6 +5,7 @@
 
 #include <atomic>
 #include <memory>
+#include <string_view>
 #include <vector>
 
 #include "absl/status/status.h"
@@ -88,7 +89,8 @@ class HardwareModuleRuntime final {
 
   // Sets the state of the hardware module. Make sure nothing is reading the
   // state at the same time.
-  void SetStateTestOnly(intrinsic_fbs::StateCode state);
+  void SetStateTestOnly(intrinsic_fbs::StateCode state,
+                        std::string_view fault_reason = "");
 
   absl::StatusOr<const intrinsic_fbs::HardwareModuleState>
   GetHardwareModuleState() const;
