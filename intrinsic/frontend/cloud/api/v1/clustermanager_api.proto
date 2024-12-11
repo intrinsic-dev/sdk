@@ -242,6 +242,8 @@ message IntOSInterfaceConfig {
   // a different device driver).
   // This can be extended if other protocols need special handling as well.
   EtherType ether_type = 9 [(google.api.field_behavior) = OPTIONAL];
+  // The display name of the interface.
+  string display_name = 10 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // IntOSNetworkConfig represents the full network configuration for a device
@@ -303,6 +305,12 @@ message IntOSInterfaceStatus {
   // Depending on the other end, this can also require that it's turned on.
   // I.e. a UR being off (or unpowered) can lead to no-carrier.
   bool has_carrier = 7 [(google.api.field_behavior) = REQUIRED];
+  // This will be True when the device has a default route.
+  // This indicates that the interface can be used to reach the internet.
+  // It does not tester whether any firewalls are blocking the connection.
+  bool has_default_route = 8 [(google.api.field_behavior) = OPTIONAL];
+  // The display name of the interface.
+  string display_name = 9 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // The image type specifies which features (like SSH server) are compiled into
