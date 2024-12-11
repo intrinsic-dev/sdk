@@ -1,9 +1,8 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
+load("@com_google_protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 load("//bazel:go_macros.bzl", "go_proto_library")
-
-# Libraries related to Realtime Control Layer Parts.
 
 package(default_visibility = [
     "//visibility:public",
