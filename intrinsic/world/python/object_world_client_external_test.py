@@ -8,7 +8,7 @@ from absl.testing import absltest
 from google.protobuf import any_pb2
 from google.protobuf import struct_pb2
 from google.protobuf import wrappers_pb2
-from intrinsic.scene.proto import scene_object_pb2
+from intrinsic.scene.proto.v1 import scene_object_pb2
 from intrinsic.world.proto import geometry_component_pb2
 from intrinsic.world.proto import object_world_service_pb2
 from intrinsic.world.python import object_world_client

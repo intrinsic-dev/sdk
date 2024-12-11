@@ -461,7 +461,7 @@ py_library(
         ":cel",
         ":utils",
         "//intrinsic/resources/proto:resource_handle_py_pb2",
-        "//intrinsic/scene/proto:scene_object_py_pb2",
+        "//intrinsic/scene/proto/v1:scene_object_py_pb2",
         "//intrinsic/skills/proto:skills_py_pb2",
         "//intrinsic/solutions/internal:actions",
         "@com_google_protobuf//:protobuf_python",

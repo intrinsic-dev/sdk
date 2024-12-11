@@ -6,7 +6,7 @@ package intrinsic_proto.services;
 
 import "google/protobuf/struct.proto";
 import "intrinsic/scene/product/proto/product.proto";
-import "intrinsic/scene/proto/scene_object.proto";
+import "intrinsic/scene/proto/v1/scene_object.proto";
 
 service ProductReader {
   // Gets the product data necessary to create a WorldObject in a skill.

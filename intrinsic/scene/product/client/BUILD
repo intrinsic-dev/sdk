@@ -12,7 +12,7 @@ py_library(
         "//intrinsic/scene/product/proto:product_py_pb2",
         "//intrinsic/scene/product/proto:product_service_py_pb2",
         "//intrinsic/scene/product/proto:product_service_py_pb2_grpc",
-        "//intrinsic/scene/proto:scene_object_py_pb2",
+        "//intrinsic/scene/proto/v1:scene_object_py_pb2",
         "//intrinsic/util/grpc:error_handling",
         requirement("grpcio"),
     ],

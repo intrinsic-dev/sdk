@@ -6,7 +6,7 @@ package intrinsic_proto.scene_object.v1;
 
 import "intrinsic/kinematics/types/joint_limits.proto";
 import "intrinsic/math/proto/pose.proto";
-import "intrinsic/scene/proto/object_properties.proto";
+import "intrinsic/scene/proto/v1/object_properties.proto";
 
 // Similar to SceneObjectUpdate but restricted in the types of updates that can
 // be performed.

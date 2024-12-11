@@ -8,7 +8,7 @@ import "intrinsic/assets/proto/asset_tag.proto";
 import "intrinsic/assets/proto/documentation.proto";
 import "intrinsic/assets/proto/id.proto";
 import "intrinsic/assets/proto/vendor.proto";
-import "intrinsic/scene/proto/scene_object.proto";
+import "intrinsic/scene/proto/v1/scene_object.proto";
 
 message SceneObjectMetadata {
   // The scene object's id.

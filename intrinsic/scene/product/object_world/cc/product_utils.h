@@ -11,7 +11,7 @@
 #include "absl/strings/string_view.h"
 #include "google/protobuf/struct.pb.h"
 #include "intrinsic/scene/product/proto/product_world_object_data.pb.h"
-#include "intrinsic/scene/proto/scene_object.pb.h"
+#include "intrinsic/scene/proto/v1/scene_object.pb.h"
 #include "intrinsic/world/objects/object_world_client.h"
 #include "intrinsic/world/objects/object_world_ids.h"
 #include "intrinsic/world/objects/world_object.h"

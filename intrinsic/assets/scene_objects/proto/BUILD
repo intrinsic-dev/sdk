@@ -16,7 +16,7 @@ proto_library(
         "//intrinsic/assets/proto:documentation_proto",
         "//intrinsic/assets/proto:id_proto",
         "//intrinsic/assets/proto:vendor_proto",
-        "//intrinsic/scene/proto:scene_object_proto",
+        "//intrinsic/scene/proto/v1:scene_object_proto",
     ],
 )
 
@@ -32,7 +32,7 @@ go_proto_library(
         "//intrinsic/assets/proto:documentation_go_proto",
         "//intrinsic/assets/proto:id_go_proto",
         "//intrinsic/assets/proto:vendor_go_proto",
-        "//intrinsic/scene/proto:scene_object_go_proto",
+        "//intrinsic/scene/proto/v1:scene_object_go_proto",
     ],
     deps = [":scene_object_manifest_proto"],
 )

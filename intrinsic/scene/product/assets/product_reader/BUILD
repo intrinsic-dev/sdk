@@ -12,7 +12,7 @@ proto_library(
     srcs = ["product_reader.proto"],
     deps = [
         "//intrinsic/scene/product/proto:product_proto",
-        "//intrinsic/scene/proto:scene_object_proto",
+        "//intrinsic/scene/proto/v1:scene_object_proto",
         "@com_google_protobuf//:struct_proto",
     ],
 )

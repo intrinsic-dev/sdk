@@ -8,7 +8,7 @@ from google.protobuf import any_pb2
 from google.protobuf import struct_pb2
 from intrinsic.math.python import data_types
 from intrinsic.scene.product.proto import product_world_object_data_pb2
-from intrinsic.scene.proto import scene_object_pb2
+from intrinsic.scene.proto.v1 import scene_object_pb2
 from intrinsic.world.python import object_world_client
 from intrinsic.world.python import object_world_ids
 from intrinsic.world.python import object_world_resources

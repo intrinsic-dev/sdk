@@ -88,9 +88,9 @@ cc_proto_library(
 go_proto_library(
     name = "scene_object_go_proto",
     go_deps = [
-        "//intrinsic/scene/proto:entity_go_proto",
-        "//intrinsic/scene/proto:object_properties_go_proto",
-        "//intrinsic/scene/proto:simulation_spec_go_proto",
+        "//intrinsic/scene/proto/v1:entity_go_proto",
+        "//intrinsic/scene/proto/v1:object_properties_go_proto",
+        "//intrinsic/scene/proto/v1:simulation_spec_go_proto",
     ],
     deps = [":scene_object_proto"],
 )

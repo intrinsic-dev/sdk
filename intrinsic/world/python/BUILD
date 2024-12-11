@@ -82,7 +82,7 @@ py_library(
         "//intrinsic/math/python:proto_conversion",
         "//intrinsic/resources/proto:resource_handle_py_pb2",
         "//intrinsic/scene/product/proto:product_world_object_data_py_pb2",
-        "//intrinsic/scene/proto:scene_object_py_pb2",
+        "//intrinsic/scene/proto/v1:scene_object_py_pb2",
         "//intrinsic/util/grpc:error_handling",
         "//intrinsic/world/proto:geometry_component_py_pb2",
         "//intrinsic/world/proto:object_world_refs_py_pb2",
@@ -101,7 +101,7 @@ py_test(
     deps = [
         ":object_world_client",
         ":object_world_ids",
-        "//intrinsic/scene/proto:scene_object_py_pb2",
+        "//intrinsic/scene/proto/v1:scene_object_py_pb2",
         "//intrinsic/world/proto:geometry_component_py_pb2",
         "//intrinsic/world/proto:object_world_service_py_pb2",
         "@com_google_absl_py//absl/testing:absltest",

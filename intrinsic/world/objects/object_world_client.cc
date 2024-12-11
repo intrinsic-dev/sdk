@@ -27,7 +27,7 @@
 #include "intrinsic/math/proto/pose.pb.h"
 #include "intrinsic/math/proto_conversion.h"
 #include "intrinsic/resources/proto/resource_handle.pb.h"
-#include "intrinsic/scene/proto/scene_object.pb.h"
+#include "intrinsic/scene/proto/v1/scene_object.pb.h"
 #include "intrinsic/skills/proto/equipment.pb.h"
 #include "intrinsic/util/eigen.h"
 #include "intrinsic/util/status/status_conversion_grpc.h"

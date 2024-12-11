@@ -12,7 +12,7 @@ py_library(
     deps = [
         "//intrinsic/math/python:data_types",
         "//intrinsic/scene/product/proto:product_world_object_data_py_pb2",
-        "//intrinsic/scene/proto:scene_object_py_pb2",
+        "//intrinsic/scene/proto/v1:scene_object_py_pb2",
         "//intrinsic/world/python:object_world_client",
         "//intrinsic/world/python:object_world_ids",
         "//intrinsic/world/python:object_world_resources",

@@ -4,9 +4,9 @@ syntax = "proto3";
 
 package intrinsic_proto.scene_object.v1;
 
-import "intrinsic/scene/proto/entity.proto";
-import "intrinsic/scene/proto/object_properties.proto";
-import "intrinsic/scene/proto/simulation_spec.proto";
+import "intrinsic/scene/proto/v1/entity.proto";
+import "intrinsic/scene/proto/v1/object_properties.proto";
+import "intrinsic/scene/proto/v1/simulation_spec.proto";
 
 // SceneObject is the physical building block for the world modeled as a tree of
 // entities, each with a specific set of properties.

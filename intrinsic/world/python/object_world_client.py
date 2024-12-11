@@ -22,7 +22,7 @@ from intrinsic.math.python import data_types
 from intrinsic.math.python import proto_conversion as math_proto_conversion
 from intrinsic.resources.proto import resource_handle_pb2
 from intrinsic.scene.product.proto import product_world_object_data_pb2
-from intrinsic.scene.proto import scene_object_pb2
+from intrinsic.scene.proto.v1 import scene_object_pb2
 from intrinsic.util.grpc import error_handling
 from intrinsic.world.proto import geometry_component_pb2
 from intrinsic.world.proto import object_world_refs_pb2

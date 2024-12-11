@@ -5,7 +5,7 @@ from unittest import mock
 from absl.testing import absltest
 from google.protobuf import struct_pb2
 from intrinsic.scene.product.proto import product_pb2
-from intrinsic.scene.proto import scene_object_pb2
+from intrinsic.scene.proto.v1 import scene_object_pb2
 from intrinsic.solutions.internal import products as products_mod
 
 

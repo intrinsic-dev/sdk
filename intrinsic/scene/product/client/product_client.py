@@ -10,7 +10,7 @@ import grpc
 from intrinsic.scene.product.proto import product_pb2
 from intrinsic.scene.product.proto import product_service_pb2
 from intrinsic.scene.product.proto import product_service_pb2_grpc
-from intrinsic.scene.proto import scene_object_pb2
+from intrinsic.scene.proto.v1 import scene_object_pb2
 from intrinsic.util.grpc import error_handling
 
 

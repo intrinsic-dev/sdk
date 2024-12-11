@@ -6,7 +6,7 @@ import re
 
 from google.protobuf import struct_pb2
 from intrinsic.scene.product.client import product_client as product_client_mod
-from intrinsic.scene.proto import scene_object_pb2
+from intrinsic.scene.proto.v1 import scene_object_pb2
 from intrinsic.solutions import provided
 from intrinsic.solutions import providers
 
