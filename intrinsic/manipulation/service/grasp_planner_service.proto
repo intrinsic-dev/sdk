@@ -18,14 +18,13 @@ message GPSPlanGraspsParams {
   // The world used to plan grasps.
   string world_id = 1;
 
-  // The ID of the grasp workspace.
-  string workspace_id = 2;
-
   // A list of annotated grasp targets.
   repeated intrinsic_proto.grasping.GraspTarget grasp_targets = 3;
 
   // The start robot joint positions when executing this grasp.
   intrinsic_proto.icon.JointVec start_robot_joint_positions = 4;
+
+  reserved 2;
 }
 
 // Parameters to plan a grasp execution by the GraspPlannerService

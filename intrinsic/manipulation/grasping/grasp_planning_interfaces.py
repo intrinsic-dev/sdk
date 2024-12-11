@@ -137,7 +137,6 @@ class GraspPlanner(metaclass=abc.ABCMeta):
       self,
       world: object_world_client.ObjectWorldClient,
       motion_planner: motion_planner_client.MotionPlannerClient,
-      workspace_id: str,
       grasp_targets: Sequence[GraspTarget],
       scene: Optional[scene_container_pb2.SceneContainer] = None,
       recent_grasps: Optional[Sequence[grasp_pb2.AttemptedGrasp]] = None,
@@ -152,7 +151,6 @@ class GraspPlanner(metaclass=abc.ABCMeta):
     Args:
       world: The object world for getting poses of objects/frames.
       motion_planner: The motion planner for collision, IK checking.
-      workspace_id: The ID of the target grasp workspace.
       grasp_targets: A list of grasp targets. If there are multiple, grasping
         any one is allowed.
       scene: The scene associated with the planning event. If None, the planner
@@ -194,7 +192,6 @@ class GraspProposer(metaclass=abc.ABCMeta):
       self,
       world: object_world_client.ObjectWorldClient,
       motion_planner: motion_planner_client.MotionPlannerClient,
-      workspace_id: str,
       grasp_targets: Sequence[GraspTarget],
       scene: Optional[scene_container_pb2.SceneContainer] = None,
   ) -> list[grasp_pb2.Grasp]:
@@ -207,7 +204,6 @@ class GraspProposer(metaclass=abc.ABCMeta):
     Args:
       world: See GraspPlanner.plan_grasps.
       motion_planner: See GraspPlanner.plan_grasps.
-      workspace_id: See GraspPlanner.plan_grasps.
       grasp_targets: See GraspPlanner.plan_grasps.
       scene: See GraspPlanner.plan_grasps.
 
@@ -228,8 +224,6 @@ class GraspAdapter(metaclass=abc.ABCMeta):
       grasps: Sequence[grasp_pb2.Grasp],
       world: object_world_client.ObjectWorldClient,
       motion_planner: motion_planner_client.MotionPlannerClient,
-      workspace_id: str,
-      scene: Optional[scene_container_pb2.SceneContainer] = None,
   ) -> list[grasp_pb2.Grasp]:
     """Adapts grasps according to a heuristic or an algorithm.
 
@@ -242,8 +236,6 @@ class GraspAdapter(metaclass=abc.ABCMeta):
       grasps: The candidate grasps.
       world: See GraspPlanner.plan_grasps.
       motion_planner: See GraspPlanner.plan_grasps.
-      workspace_id: See GraspPlanner.plan_grasps.
-      scene: See GraspPlanner.plan_grasps.
 
     Returns:
       The adapted grasps.
