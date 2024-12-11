@@ -79,6 +79,9 @@ type Interface struct {
 
 	// EtherType specifies the protocol used on this interface.
 	EtherType int64 `json:"ether_type"`
+
+	// DisplayName is a pretty name set by the user.
+	DisplayName string `json:"display_name"`
 }
 
 // String implements fmt.Stringer for logging purposes.
@@ -106,13 +109,15 @@ type Status struct {
 
 // StatusInterface represents a network interface.
 type StatusInterface struct {
-	Up         bool     `json:"up"`
-	MacAddress string   `json:"hwaddr"`
-	MTU        int      `json:"mtu"`
-	IPAddress  []string `json:"addresses"`
-	Speed      int      `json:"speed,omitempty"`
-	Realtime   bool     `json:"realtime"`
-	HasCarrier bool     `json:"carrier"`
+	Up              bool     `json:"up"`
+	MacAddress      string   `json:"hwaddr"`
+	MTU             int      `json:"mtu"`
+	IPAddress       []string `json:"addresses"`
+	Speed           int      `json:"speed,omitempty"`
+	Realtime        bool     `json:"realtime"`
+	HasCarrier      bool     `json:"carrier"`
+	HasDefaultRoute bool     `json:"has_default_route"`
+	DisplayName     string   `json:"display_name"`
 }
 
 // PingCommand allows to trigger an ICMP ping from the device.
