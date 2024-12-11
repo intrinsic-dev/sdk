@@ -84,20 +84,25 @@ class SensorInformation:
     return self._proto.display_name
 
   @property
+  def factory_camera_params(self) -> Optional[CameraParams]:
+    """Sensor factory camera params."""
+    if self._proto.factory_camera_params is None:
+      return None
+    return CameraParams(self._proto.factory_camera_params)
+
+  @property
   def factory_intrinsic_matrix(self) -> Optional[np.ndarray]:
     """Sensor factory intrinsic matrix."""
-    ip = self._proto.factory_intrinsic_params
-    if ip is None:
+    if self.factory_camera_params is None:
       return None
-    return _camera_utils.extract_intrinsic_matrix(ip)
+    return self.factory_camera_params.intrinsic_matrix
 
   @property
   def factory_distortion_params(self) -> Optional[np.ndarray]:
     """Sensor factory distortion params; (k1, k2, p1, p2, k3, [k4, k5, k6]) or None."""
-    dp = self._proto.factory_distortion_params
-    if dp is None:
+    if self.factory_camera_params is None:
       return None
-    return _camera_utils.extract_distortion_params(dp)
+    return self.factory_camera_params.distortion_params
 
   @property
   def camera_t_sensor(self) -> Optional[pose3.Pose3]:
@@ -142,28 +147,32 @@ class SensorConfig:
     return math_proto_conversion.pose_from_proto(self._proto.camera_t_sensor)
 
   @property
+  def camera_params(self) -> Optional[CameraParams]:
+    """Sensor camera params."""
+    if self._proto.camera_params is None:
+      return None
+    return CameraParams(self._proto.camera_params)
+
+  @property
   def dimensions(self) -> Optional[Tuple[int, int]]:
     """Sensor intrinsic dimensions (width, height)."""
-    ip = self._proto.intrinsic_params
-    if ip is None:
+    if self.camera_params is None:
       return None
-    return _camera_utils.extract_intrinsic_dimensions(ip)
+    return self.camera_params.dimensions
 
   @property
   def intrinsic_matrix(self) -> Optional[np.ndarray]:
     """Sensor intrinsic matrix."""
-    ip = self._proto.intrinsic_params
-    if ip is None:
+    if self.camera_params is None:
       return None
-    return _camera_utils.extract_intrinsic_matrix(ip)
+    return self.camera_params.intrinsic_matrix
 
   @property
   def distortion_params(self) -> Optional[np.ndarray]:
     """Sensor distortion params; (k1, k2, p1, p2, k3, [k4, k5, k6]) or None."""
-    dp = self._proto.distortion_params
-    if dp is None:
+    if self.camera_params is None:
       return None
-    return _camera_utils.extract_distortion_params(dp)
+    return self.camera_params.distortion_params
 
 
 class CameraConfig:
@@ -281,6 +290,11 @@ class SensorImage:
     if self._world_t_camera is None or self.camera_t_sensor is None:
       return None
     return self._world_t_camera.multiply(self.camera_t_sensor)
+
+  @property
+  def camera_params(self) -> Optional[CameraParams]:
+    """Sensor camera params."""
+    return self.config.camera_params
 
   @property
   def dimensions(self) -> Optional[Tuple[int, int]]:

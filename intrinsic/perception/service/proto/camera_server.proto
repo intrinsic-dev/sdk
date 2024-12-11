@@ -8,13 +8,12 @@ import "google/protobuf/duration.proto";
 import "intrinsic/math/proto/pose.proto";
 import "intrinsic/perception/proto/camera_config.proto";
 import "intrinsic/perception/proto/camera_identifier.proto";
+import "intrinsic/perception/proto/camera_params.proto";
 import "intrinsic/perception/proto/camera_settings.proto";
 import "intrinsic/perception/proto/capture_result.proto";
 import "intrinsic/perception/proto/dimensions.proto";
-import "intrinsic/perception/proto/distortion_params.proto";
 import "intrinsic/perception/proto/frame.proto";
 import "intrinsic/perception/proto/image_buffer.proto";
-import "intrinsic/perception/proto/intrinsic_params.proto";
 import "intrinsic/perception/proto/post_processing.proto";
 
 service CameraServer {
@@ -240,14 +239,15 @@ message DescribeCameraResponse {
 }
 
 message SensorInformation {
+  reserved 2, 3;
+  reserved "factory_intrinsic_params", "factory_distortion_params";
+
   // SourceIDValue for Genicam, sensor number for other cameras (e.g. IPS PU)
   int64 id = 1;
   // A human readable display name.
   string display_name = 7;
-  // Sensor intrinsic calibration parameters from factory
-  optional IntrinsicParams factory_intrinsic_params = 2;
-  // Sensor distortion parameters from factory
-  optional DistortionParams factory_distortion_params = 3;
+  // Sensor camera parameters from factory
+  optional CameraParams factory_camera_params = 9;
   // Transforms the sensor data into the reference coordinate system of the
   // camera.
   optional intrinsic_proto.Pose camera_t_sensor = 4;

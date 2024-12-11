@@ -5,6 +5,7 @@ syntax = "proto3";
 package intrinsic_proto.perception;
 
 import "intrinsic/math/proto/pose.proto";
+import "intrinsic/perception/proto/camera_params.proto";
 import "intrinsic/perception/proto/camera_settings.proto";
 import "intrinsic/perception/proto/distortion_params.proto";
 import "intrinsic/perception/proto/intrinsic_params.proto";
@@ -19,10 +20,14 @@ message SensorConfig {
   // Transforms the sensor data into the reference coordinate system of the
   // camera.
   optional intrinsic_proto.Pose camera_t_sensor = 2;
-  // Sensor intrinsic calibration parameters
-  optional IntrinsicParams intrinsic_params = 3;
-  // Sensor distortion parameters
-  optional DistortionParams distortion_params = 4;
+  // Sensor intrinsic calibration parameters.
+  // Deprecated, please use camera_params instead.
+  optional IntrinsicParams intrinsic_params = 3 [deprecated = true];
+  // Sensor distortion parameters.
+  // Deprecated, please use camera_params instead.
+  optional DistortionParams distortion_params = 4 [deprecated = true];
+  // Sensor camera parameters.
+  optional CameraParams camera_params = 6;
   // A list of camera settings applied to this sensor after the global settings
   // have been applied.
   repeated CameraSetting settings = 5;

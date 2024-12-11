@@ -217,6 +217,7 @@ proto_library(
     name = "sensor_config",
     srcs = ["sensor_config.proto"],
     deps = [
+        ":camera_params_proto",
         ":camera_settings_proto",
         ":distortion_params_proto",
         ":intrinsic_params_proto",
@@ -237,6 +238,7 @@ cc_proto_library(
 go_proto_library(
     name = "sensor_config_go_proto",
     go_deps = [
+        ":camera_params_go_proto",
         ":camera_settings_go_proto",
         ":distortion_params_go_proto",
         ":intrinsic_params_go_proto",
@@ -349,6 +351,20 @@ proto_library(
 py_proto_library(
     name = "vector_py_pb2",
     deps = [":vector_proto"],
+)
+
+cc_proto_library(
+    name = "camera_params_cc_proto",
+    deps = [":camera_params_proto"],
+)
+
+go_proto_library(
+    name = "camera_params_go_proto",
+    go_deps = [
+        ":distortion_params_go_proto",
+        ":intrinsic_params_go_proto",
+    ],
+    deps = [":camera_params_proto"],
 )
 
 proto_library(

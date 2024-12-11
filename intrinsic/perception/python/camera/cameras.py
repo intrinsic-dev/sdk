@@ -292,15 +292,13 @@ class Camera:
         else None
     )
 
-    if sensor_config is not None and sensor_config.intrinsic_matrix is not None:
-      return sensor_config.intrinsic_matrix
-    elif (
-        sensor_info is not None
-        and sensor_info.factory_intrinsic_matrix is not None
-    ):
-      return sensor_info.factory_intrinsic_matrix
-    else:
-      return self.config.intrinsic_matrix
+    if sensor_config is not None and sensor_config.camera_params is not None:
+      return sensor_config.camera_params.intrinsic_matrix
+    if sensor_info is not None:
+      factory_camera_params = sensor_info.factory_camera_params
+      if factory_camera_params is not None:
+        return factory_camera_params.intrinsic_matrix
+    return self.config.intrinsic_matrix
 
   def distortion_params(
       self, sensor_name: Optional[str] = None
@@ -329,18 +327,13 @@ class Camera:
         else None
     )
 
-    if (
-        sensor_config is not None
-        and sensor_config.distortion_params is not None
-    ):
-      return sensor_config.distortion_params
-    elif (
-        sensor_info is not None
-        and sensor_info.factory_distortion_params is not None
-    ):
-      return sensor_info.factory_distortion_params
-    else:
-      return self.config.distortion_params
+    if sensor_config is not None and sensor_config.camera_params is not None:
+      return sensor_config.camera_params.distortion_params
+    if sensor_info is not None:
+      factory_camera_params = sensor_info.factory_camera_params
+      if factory_camera_params is not None:
+        return factory_camera_params.distortion_params
+    return self.config.distortion_params
 
   @property
   def world_object(self) -> Optional[object_world_resources.WorldObject]:
