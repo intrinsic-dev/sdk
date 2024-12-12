@@ -5,8 +5,10 @@
 
 #include <type_traits>
 
+#include "absl/status/status.h"
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/descriptor.pb.h"
+#include "google/protobuf/descriptor_database.h"
 #include "google/protobuf/message.h"
 
 namespace intrinsic {
@@ -23,6 +25,12 @@ template <class ProtoT, typename = std::enable_if_t<std::is_base_of_v<
 google::protobuf::FileDescriptorSet GenFileDescriptorSet() {
   return GenFileDescriptorSet(*ProtoT::GetDescriptor());
 }
+
+// Populates the given descriptor database with all file descriptors in the
+// given FileDescriptorSet.
+absl::Status PopulateDescriptorDatabase(
+    google::protobuf::SimpleDescriptorDatabase* db,
+    const google::protobuf::FileDescriptorSet& file_descriptor_set);
 
 }  // namespace intrinsic
 
