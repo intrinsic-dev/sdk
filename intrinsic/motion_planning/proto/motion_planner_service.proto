@@ -109,6 +109,13 @@ message IkRequest {
   // kinematic branch over those close to the `starting_joints` configuration.
   // Defaults to false.
   optional bool prefer_same_branch = 9;
+
+  // Optional flag to disable setting the error status when there are no valid
+  // solutions due to collisions. When false, the request will fail if no
+  // collision free solution is found. When true, the request will succeed even
+  // if no collision free solution is found. This is useful when accessing the
+  // collision debug information. Defaults to false.
+  optional bool disable_error_on_collisions = 10;
 }
 
 message IkResponse {
