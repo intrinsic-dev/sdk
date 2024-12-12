@@ -89,6 +89,57 @@ message PositionEquality {
   optional intrinsic_proto.Point target_frame_offset = 4;
 }
 
+// Constrains a point and axis attached to `moving_frame` to point at target
+// point.
+// Increase `tolerance` to reduce the required precision. This may increase the
+// number of possible solutions. This is especially useful if the constraint is
+// used as a path constraint.
+message PointAt {
+  // Frame for `moving_frame_offset`, which will be constrained to point at the
+  // target point.
+  TransformNodeReference moving_frame = 1;
+
+  // Frame for `target_frame_offset`, which will be pointed at.
+  TransformNodeReference target_frame = 2;
+
+  // Axis used as direction from `moving_frame` to point at `target_frame`.
+  // If unset, defaults to the z-axis of `moving_frame`. Does not need to be
+  // normalized.
+  optional intrinsic_proto.Point moving_axis = 3;
+
+  // The point defined relative to `moving_frame` that will be constrained
+  // together with `moving_axis` to point at the target point. Defaults to (0,
+  // 0, 0) if unset.
+  optional intrinsic_proto.Point moving_frame_offset = 4;
+
+  // The point defined relative to `target_frame` that will be pointed at.
+  // Defaults to (0, 0, 0) if unset.
+  optional intrinsic_proto.Point target_frame_offset = 5;
+
+  // The maximum distance between the closest point of the ray and the target
+  // point represented by the `target_frame` and `target_frame_offset` that is
+  // allowed to satisfy the constraint. This can be used if it is not necessary
+  // to constrain the point exactly to the target point to give the solver some
+  // flexibility in solving the constraint. If unset, defaults to 1e-6, which is
+  // also the smallest value that can be set.
+  optional double tolerance = 6
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "m"];
+
+  // The minimum distance between the `moving_frame` plus `moving_frame_offset`
+  // and the target point represented by the `target_frame` and
+  // `target_frame_offset` that is allowed to satisfy the constraint. If unset,
+  // the moving frame can be positioned arbitrarily close to the target point.
+  optional double min_distance = 7
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "m"];
+
+  // The maximum distance between the `moving_frame` plus `moving_frame_offset`
+  // and the target point represented by the `target_frame` and
+  // `target_frame_offset` that is allowed to satisfy the constraint. If unset,
+  // the moving frame can be positioned arbitrarily far from the target point.
+  optional double max_distance = 8
+      [(intrinsic_proto.skills.skill_parameter_metadata).unit = "m"];
+}
+
 // Constrains a point attached to `moving_frame` to remain within a bounding
 // box of positions defined in the `target_frame`. This constraint does not
 // limit the rotation between the frames.
@@ -307,6 +358,7 @@ message GeometricConstraint {
     PoseEquality pose_equality = 8;
     PositionBoundingBox position_bounding_box = 9;
     JointPositionSumLimit joint_position_sum_limit = 11;
+    PointAt point_at = 12;
     ConstraintIntersection constraint_intersection = 10;
   }
 }
@@ -316,6 +368,7 @@ message UniformGeometricConstraint {
     RotationCone rotation_cone = 3;
     PositionBoundingBox position_bounding_box = 5;
     JointPositionSumLimit joint_position_sum_limit = 6;
+    PointAt point_at = 7;
     UniformGeometricConstraintIntersection
         uniform_geometric_constraint_intersection = 4;
   }
