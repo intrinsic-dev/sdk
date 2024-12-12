@@ -41,6 +41,81 @@ go_proto_library(
     deps = [":behavior_call_proto"],
 )
 
+# code_execution
+proto_library(
+    name = "code_execution_proto",
+    srcs = ["code_execution.proto"],
+    deps = [
+        ":any_with_assignments_proto",
+        "@com_google_protobuf//:descriptor_proto",
+    ],
+)
+
+py_proto_library(
+    name = "code_execution_py_pb2",
+    deps = [":code_execution_proto"],
+)
+
+cc_proto_library(
+    name = "code_execution_cc_proto",
+    deps = [":code_execution_proto"],
+)
+
+go_proto_library(
+    name = "code_execution_go_proto",
+    go_deps = [
+        ":any_with_assignments_go_proto",
+    ],
+    deps = [":code_execution_proto"],
+)
+
+# code_execution_info_service
+proto_library(
+    name = "code_execution_info_service_proto",
+    srcs = ["code_execution_info_service.proto"],
+    deps = [
+        "@com_google_protobuf//:descriptor_proto",
+    ],
+)
+
+py_proto_library(
+    name = "code_execution_info_service_py_pb2",
+    deps = [":code_execution_info_service_proto"],
+)
+
+py_grpc_library(
+    name = "code_execution_info_service_py_pb2_grpc",
+    srcs = [":code_execution_info_service_proto"],
+    grpc_library = requirement("grpcio"),
+    deps = [":code_execution_info_service_py_pb2"],
+)
+
+cc_proto_library(
+    name = "code_execution_info_service_cc_proto",
+    deps = [":code_execution_info_service_proto"],
+)
+
+cc_grpc_library(
+    name = "code_execution_info_service_cc_grpc_proto",
+    srcs = [":code_execution_info_service_proto"],
+    generate_mocks = True,
+    grpc_only = True,
+    deps = [":code_execution_info_service_cc_proto"],
+)
+
+go_proto_library(
+    name = "code_execution_info_service_go_proto",
+    deps = [":code_execution_info_service_proto"],
+)
+
+go_grpc_library(
+    name = "code_execution_info_service_go_grpc_proto",
+    srcs = [":code_execution_info_service_proto"],
+    deps = [
+        "@io_bazel_rules_go//proto/wkt:descriptor_go_proto",
+    ],
+)
+
 # domain
 proto_library(
     name = "domain_proto",
@@ -290,6 +365,7 @@ proto_library(
         ":any_list_proto",
         ":any_with_assignments_proto",
         ":behavior_call_proto",
+        ":code_execution_proto",
         ":domain_proto",
         ":executive_execution_mode_proto",
         "//intrinsic/skills/proto:skills_proto",
@@ -315,6 +391,7 @@ go_proto_library(
         "//intrinsic/executive/proto:any_list_go_proto",
         "//intrinsic/executive/proto:any_with_assignments_go_proto",
         "//intrinsic/executive/proto:behavior_call_go_proto",
+        "//intrinsic/executive/proto:code_execution_go_proto",
         "//intrinsic/executive/proto:domain_go_proto",
         "//intrinsic/executive/proto:executive_execution_mode_go_proto",
         "//intrinsic/executive/proto:world_query_go_proto",

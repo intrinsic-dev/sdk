@@ -1,0 +1,49 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+import "google/protobuf/descriptor.proto";
+import "intrinsic/executive/proto/any_with_assignments.proto";
+
+// Python code to be executed. Not a self-contained Python script - must fit
+// into the Python template provided by the code execution service.
+// The function body follows this signature:
+// def compute(
+//       params: run_python_code_pb2.Parameters,
+//       context: run_python_code.BasicComputeContext,
+//     ) -> Optional[run_python_code_pb2.ReturnValue]:
+message PythonCode {
+  string function_body = 1;
+}
+
+message CodeExecution {
+  oneof code {
+    PythonCode python_code = 1;
+  }
+
+  // Input parameters (potentially with assignments from the blackboard).
+  // Must be a message of the type specified by
+  // [parameter_message_full_name][intrinsic_proto.executive.CodeExecution.parameter_message_full_name].
+  intrinsic_proto.executive.AnyWithAssignments parameters = 2;
+
+  // Blackboard key under which to store the return value.
+  // Will be a message of type specified by
+  // [return_value_message_full_name][intrinsic_proto.executive.CodeExecution.return_value_message_full_name].
+  string return_value_key = 3;
+
+  // Full proto message name of the message specifying the input parameters.
+  string parameter_message_full_name = 4;
+
+  // Full proto message name of the message specifying the return values.
+  string return_value_message_full_name = 5;
+
+  // A file descriptor set containing the proto files with the message
+  // definitions for the parameter message (see [parameter_message_full_name])
+  // and return value message (see [return_value_message_full_name]) and all
+  // transitive dependencies. Parameter and return value message are expected to
+  // be defined in the same proto file, else the code execution will fail. The
+  // file descriptor set can be created with the proto builder service.
+  google.protobuf.FileDescriptorSet file_descriptor_set = 6;
+}
