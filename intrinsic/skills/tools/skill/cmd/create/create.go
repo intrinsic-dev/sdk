@@ -48,6 +48,8 @@ var projectLayouts = map[string]projectFolder{
 			"new_load @com_github_grpc_grpc//bazel:python_rules.bzl py_proto_library",
 			"new_load @ai_intrinsic_sdks//bazel:skills.bzl py_skill",
 			"new_load @ai_intrinsic_sdks//bazel:skills.bzl skill_manifest",
+			"fix movePackageToTop",
+			"fix unusedLoads",
 		},
 		files: []projectFile{
 			projectFile{
@@ -75,6 +77,8 @@ var projectLayouts = map[string]projectFolder{
 			"new_load @com_google_protobuf//bazel:cc_proto_library.bzl cc_proto_library",
 			"new_load @ai_intrinsic_sdks//bazel:skills.bzl cc_skill",
 			"new_load @ai_intrinsic_sdks//bazel:skills.bzl skill_manifest",
+			"fix movePackageToTop",
+			"fix unusedLoads",
 		},
 		files: []projectFile{
 			projectFile{
@@ -304,16 +308,16 @@ func createOrUpdateBuildFile(bazelWorkspaceDir string, bazelPackage []string, bu
 	}
 	file.Close()
 
-	// Add new or update existing load statements.
-	if err := executeBuildozerCommands(buildozerCmds, bazelWorkspaceDir, bazelPackage); err != nil {
-		return fmt.Errorf("updating BUILD file with buildozer: %w", err)
-	}
-
 	// Append new build targets for skill.
 	err = templateutil.AppendToExistingFileFromTemplate(
 		path, buildTemplateName, params, templateSet)
 	if err != nil {
 		return fmt.Errorf("appending to %s: %w", path, err)
+	}
+
+	// Add new or update existing load statements.
+	if err := executeBuildozerCommands(buildozerCmds, bazelWorkspaceDir, bazelPackage); err != nil {
+		return fmt.Errorf("updating BUILD file with buildozer: %w", err)
 	}
 
 	return nil

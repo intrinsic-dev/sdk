@@ -37,19 +37,19 @@ py_library(
 
 py_test(
     name = "{{.SkillNameSnakeCase}}_test",
+    size = "small",
     srcs = ["{{.SkillNameSnakeCase}}_test.py"],
+    main = "{{.SkillNameSnakeCase}}_test.py",
     deps = [
         ":{{.SkillNameSnakeCase}}_py",
     ],
-    main = "{{.SkillNameSnakeCase}}_test.py",
-    size = "small",
 )
 
 py_skill(
     name = "{{.SkillNameSnakeCase}}",
     manifest = ":{{.SkillNameSnakeCase}}_py_manifest",
     deps = [
-      ":{{.SkillNameSnakeCase}}_py",
-      ":{{.SkillNameSnakeCase}}_py_pb2",
+        ":{{.SkillNameSnakeCase}}_py",
+        ":{{.SkillNameSnakeCase}}_py_pb2",
     ]
 )
