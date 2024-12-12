@@ -79,7 +79,8 @@ absl::StatusOr<MemorySegment::SegmentDescriptor> MemorySegment::Get(
   segment_info.segment_start = static_cast<uint8_t*>(
       mmap(nullptr, segment_info.size, PROT_WRITE | PROT_READ,
            MAP_SHARED | MAP_LOCKED, shm_fd, 0));
-  if (segment_info.segment_start == nullptr) {
+  if (segment_info.segment_start == nullptr ||
+      segment_info.segment_start == MAP_FAILED) {
     return absl::InternalError(
         absl::StrCat("Unable to map shared memory segment: ", name, " [",
                      strerror(errno), "]"));

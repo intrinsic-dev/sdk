@@ -182,7 +182,7 @@ absl::Status SharedMemoryManager::InitSegment(absl::string_view name,
   auto* data =
       static_cast<uint8_t*>(mmap(nullptr, segment_size, PROT_READ | PROT_WRITE,
                                  MAP_SHARED | MAP_LOCKED, shm_fd, 0));
-  if (data == nullptr) {
+  if (data == nullptr || data == MAP_FAILED) {
     return absl::InternalError(
         absl::StrCat("Unable to map shared memory segment \"", name,
                      "\" with error: ", strerror(errno), "."));
