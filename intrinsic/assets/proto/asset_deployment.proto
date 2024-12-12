@@ -44,12 +44,6 @@ service AssetDeploymentService {
     };
   }
 
-  // Installs a skill from the skill catalog.
-  // On success, the `response` field of `Operation` is set to
-  // `CreateSkillFromCatalogResponse`.
-  rpc CreateSkillFromCatalog(CreateSkillFromCatalogRequest)
-      returns (google.longrunning.Operation) {}
-
   // Gets the latest state of a long-running operation.  Clients can use this
   // method to poll the operation result, similar to `GetOperation` in
   // `google.longrunning.Operations` service:
@@ -154,15 +148,4 @@ message UpdateResourceRequest {
   // World ID for which we will update this asset. If left unset, no world
   // operations will be performed.
   string world_id = 2;
-}
-
-message CreateSkillFromCatalogRequest {
-  // Versioned identifier of the skill to be installed. The skill should be
-  // present in the catalog.
-  string id_version = 1;
-}
-
-message CreateSkillFromCatalogResponse {
-  // Identifier of the skill that was installed.
-  string skill_id = 1;
 }
