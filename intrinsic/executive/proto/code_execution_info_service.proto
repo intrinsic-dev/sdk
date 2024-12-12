@@ -1,0 +1,47 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+
+import "google/protobuf/descriptor.proto";
+
+// Provides information on how code in task nodes gets executed.
+service CodeExecutionInfoService {
+  // Returns a Python template which is equivalent to the code being executed
+  // when a task node with Python code is processed. The template is dynamic and
+  // depends on a subset of the properties of a given
+  // [CodeExecution][intrinsic_proto.executive.CodeExecution] task.
+  // The template is suitable, e.g., for displaying the full code context in a
+  // text editor.
+  rpc GetPythonTemplate(GetPythonTemplateRequest)
+      returns (GetPythonTemplateResponse);
+}
+
+message GetPythonTemplateRequest {
+  // Full proto message name of the message specifying the input parameters.
+  // This should be the same as
+  // [CodeExecution.parameter_message_full_name][intrinsic_proto.executive.CodeExecution.parameter_message_full_name].
+  string parameter_message_full_name = 4;
+
+  // Full proto message name of the message specifying the return values. This
+  // should be the same as
+  // [CodeExecution.return_value_message_full_name][intrinsic_proto.executive.CodeExecution.return_value_message_full_name].
+  string return_value_message_full_name = 5;
+
+  // A file descriptor set containing the proto files with the message
+  // definitions for the parameter message (see [parameter_message_full_name])
+  // and return value message (see [return_value_message_full_name]) and all
+  // transitive dependencies. Parameter and return value message are
+  // expected to be defined in the same proto file, else an error will be
+  // returned. This should be the same as
+  // [CodeExecution.file_descriptor_set][intrinsic_proto.executive.CodeExecution.file_descriptor_set].
+  google.protobuf.FileDescriptorSet file_descriptor_set = 6;
+}
+
+message GetPythonTemplateResponse {
+  // A template string containing the placeholder "{compute_body}" for the
+  // user's python code. When expanded, produces a full, valid Python script
+  // Also see [PythonCode][intrinsic_proto.executive.PythonCode].
+  string code_template = 1;
+}
