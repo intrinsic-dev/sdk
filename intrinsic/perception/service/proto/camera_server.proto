@@ -12,7 +12,6 @@ import "intrinsic/perception/proto/camera_params.proto";
 import "intrinsic/perception/proto/camera_settings.proto";
 import "intrinsic/perception/proto/capture_result.proto";
 import "intrinsic/perception/proto/dimensions.proto";
-import "intrinsic/perception/proto/frame.proto";
 import "intrinsic/perception/proto/image_buffer.proto";
 import "intrinsic/perception/proto/post_processing.proto";
 
@@ -40,11 +39,6 @@ service CameraServer {
 
   // Captures image data from the requested sensors of the specified camera.
   rpc Capture(CaptureRequest) returns (CaptureResponse) {
-  }
-
-  // Returns the current frame from the specified camera.
-  rpc GetFrame(GetFrameRequest) returns (GetFrameResponse) {
-    option deprecated = true;
   }
 
   // Reads and returns the access mode of a specific setting from a camera.
@@ -133,42 +127,6 @@ message CaptureRequest {
 
 message CaptureResponse {
   CaptureResult capture_result = 1;
-}
-
-message GetFrameRequest {
-  option deprecated = true;
-
-  // The handle of the camera from which a frame is requested.
-  string camera_handle = 1;
-
-  // The timeout which is used for retrieving frames from the underlying driver
-  // implementation. If this timeout is implemented by the underlying camera
-  // driver, it will not spend more than the specified time when waiting for new
-  // frames.
-  // The timeout should be greater than the combined exposure and processing
-  // time. Processing times can be roughly estimated as a value between 10 - 50
-  // ms. The timeout just serves as an upper limit to prevent blocking calls
-  // within the camera driver. In case of intermittent network errors users can
-  // try to increase the timeout. The default timeout (if unspecified) of 500 ms
-  // works well in common setups.
-  google.protobuf.Duration timeout = 2;
-
-  // Additional post processing options on whether the image should be
-  // undistorted, cropped, resized and encoding formats.
-  optional PostProcessing post_processing = 3;
-
-  // Optional. Request data only for the following sensor ids. Empty returns
-  // data from all sensors.
-  repeated int64 sensor_ids = 4;
-
-  // Optional. For streaming `GetFrame` requests, sets the requested fps.
-  optional int32 stream_fps = 5;
-}
-
-message GetFrameResponse {
-  option deprecated = true;
-
-  Frame frame = 1;
 }
 
 message ReadCameraSettingAccessRequest {
