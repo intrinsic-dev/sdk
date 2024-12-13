@@ -255,7 +255,7 @@ class PubSub {
   // Note: If SupportsQueryable() returns false this will return an
   // absl::UnimplementedError.
   template <typename CallbackType>
-  absl::StatusOr<Queryable> CreateQueryable(absl::string_view key,
+  absl::StatusOr<Queryable> CreateQueryable(absl::string_view keyexpr,
                                             CallbackType callback) {
     using Traits = QueryableCallbackTraits<CallbackType>;
     using ResponseT = typename Traits::ResponseType;
@@ -267,7 +267,8 @@ class PubSub {
     if constexpr (Traits::kHasRequest) {
       using RequestT = typename Traits::RequestType;
       auto inner_callback =
-          [callback, key = std::string(key)](
+          [callback, registered_keyexpr = std::string(keyexpr)](
+              std::string_view callback_keyexpr,
               const intrinsic_proto::pubsub::PubSubQueryRequest&
                   request_packet) {
             RequestT request;
@@ -277,8 +278,10 @@ class PubSub {
               *response_packet.mutable_error() =
                   ToGoogleRpcStatus(absl::InternalError(absl::StrFormat(
                       "Failed to deserialize query message for key '%s' "
-                      "(got type URL: %s, expected message type: %s)",
-                      key, request_packet.request().type_url(),
+                      "(registered key expression: %s, got type URL: %s, "
+                      "expected message type: %s)",
+                      callback_keyexpr, registered_keyexpr,
+                      request_packet.request().type_url(),
                       RequestT::descriptor()->full_name())));
               return response_packet;
             }
@@ -288,7 +291,8 @@ class PubSub {
                 .span_id = request_packet.span_id()};
 
             ResponseT response;
-            absl::Status response_status = callback(context, request, response);
+            absl::Status response_status =
+                callback(callback_keyexpr, context, request, response);
 
             if (!response_status.ok()) {
               *response_packet.mutable_error() =
@@ -300,16 +304,17 @@ class PubSub {
           };
 
       INTR_ASSIGN_OR_RETURN(Queryable queryable,
-                            CreateQueryableImpl(key, inner_callback));
+                            CreateQueryableImpl(keyexpr, inner_callback));
       LOG(INFO) << absl::StrFormat(
           "Queryable (callable) listening for '%s' (request: %s, response: %s)",
-          key, RequestT::descriptor()->full_name(),
+          keyexpr, RequestT::descriptor()->full_name(),
           ResponseT::descriptor()->full_name());
       return queryable;
 
     } else {  // has no request
       auto inner_callback =
-          [callback, key = std::string(key)](
+          [callback, registered_keyexpr = std::string(keyexpr)](
+              std::string_view callback_keyexpr,
               const intrinsic_proto::pubsub::PubSubQueryRequest&
                   request_packet) {
             intrinsic_proto::pubsub::PubSubQueryResponse response_packet;
@@ -319,7 +324,8 @@ class PubSub {
                 .span_id = request_packet.span_id()};
 
             ResponseT response;
-            absl::Status response_status = callback(context, response);
+            absl::Status response_status =
+                callback(callback_keyexpr, context, response);
 
             if (!response_status.ok()) {
               *response_packet.mutable_error() =
@@ -331,9 +337,9 @@ class PubSub {
           };
 
       INTR_ASSIGN_OR_RETURN(Queryable queryable,
-                            CreateQueryableImpl(key, inner_callback));
+                            CreateQueryableImpl(keyexpr, inner_callback));
       LOG(INFO) << absl::StrFormat(
-          "Queryable (retrievable) listening for '%s' (response: %s)", key,
+          "Queryable (retrievable) listening for '%s' (response: %s)", keyexpr,
           ResponseT::descriptor()->full_name());
       return queryable;
     }
@@ -477,7 +483,7 @@ class PubSub {
           const QueryOptions& options);
 
   absl::StatusOr<Queryable> CreateQueryableImpl(
-      absl::string_view key, internal::GeneralQueryableCallback callback);
+      absl::string_view keyexpr, internal::GeneralQueryableCallback callback);
 
   // We use a shared_ptr here because it allows us to auto generate the
   // destructor even when PubSubData is an incomplete type.

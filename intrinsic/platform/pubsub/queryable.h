@@ -24,6 +24,7 @@ namespace internal {
 // Users of the PubSub API will use QueryableCallback
 using GeneralQueryableCallback =
     std::function<intrinsic_proto::pubsub::PubSubQueryResponse(
+        std::string_view keyexpr,
         const intrinsic_proto::pubsub::PubSubQueryRequest&)>;
 struct QueryableLink {
   Queryable* queryable;
@@ -38,13 +39,13 @@ class Queryable {
   Queryable& operator=(const Queryable&) = delete;
 
   Queryable(Queryable&& other) noexcept
-      : key_(std::move(other.key_)),
+      : keyexpr_(std::move(other.keyexpr_)),
         callback_(std::move(other.callback_)),
         link_(std::move(other.link_)) {
     link_->queryable = this;
   }
   Queryable& operator=(Queryable&& other) noexcept {
-    key_ = std::move(other.key_);
+    keyexpr_ = std::move(other.keyexpr_);
     callback_ = std::move(other.callback_);
     link_ = std::move(other.link_);
     link_->queryable = this;
@@ -54,19 +55,21 @@ class Queryable {
   virtual ~Queryable();
 
   static absl::StatusOr<Queryable> Create(
-      std::string_view key, internal::GeneralQueryableCallback callback);
+      std::string_view keyexpr, internal::GeneralQueryableCallback callback);
 
   virtual intrinsic_proto::pubsub::PubSubQueryResponse Invoke(
+      std::string_view keyexpr,
       const intrinsic_proto::pubsub::PubSubQueryRequest& request_packet);
 
-  std::string_view GetKey() { return key_; }
+  std::string_view GetKeyExpression() { return keyexpr_; }
 
  private:
-  Queryable(std::string_view key, internal::GeneralQueryableCallback callback)
-      : key_(key),
+  Queryable(std::string_view keyexpr,
+            internal::GeneralQueryableCallback callback)
+      : keyexpr_(keyexpr),
         callback_(callback),
         link_(new internal::QueryableLink{.queryable = this}) {}
-  std::string key_;
+  std::string keyexpr_;
   internal::GeneralQueryableCallback callback_;
 
   std::unique_ptr<internal::QueryableLink> link_;
@@ -86,7 +89,7 @@ struct QueryableCallbackTraits
 
 template <typename ClassType, typename RequestT, typename ResponseT>
 struct QueryableCallbackTraits<absl::Status (ClassType::*)(
-    const QueryableContext&, RequestT, ResponseT) const> {
+    std::string_view, const QueryableContext&, RequestT, ResponseT) const> {
   using RequestType = std::remove_cvref_t<RequestT>;
   using ResponseType = std::remove_cvref_t<ResponseT>;
   static constexpr bool kHasRequest = true;
@@ -105,7 +108,7 @@ struct QueryableCallbackTraits<absl::Status (ClassType::*)(
 
 template <typename ClassType, typename ResponseT>
 struct QueryableCallbackTraits<absl::Status (ClassType::*)(
-    const QueryableContext&, ResponseT) const> {
+    std::string_view, const QueryableContext&, ResponseT) const> {
   using ResponseType = std::remove_cvref_t<ResponseT>;
   static constexpr bool kHasRequest = false;
   static_assert(std::is_reference_v<ResponseT>,

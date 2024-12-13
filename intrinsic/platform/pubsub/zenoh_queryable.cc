@@ -17,7 +17,7 @@ namespace intrinsic {
 namespace {
 
 // imw_queryable_callback_fn
-static void ZenohQueryableCallback(const char* key, const void* query_bytes,
+static void ZenohQueryableCallback(const char* keyexpr, const void* query_bytes,
                                    const size_t query_bytes_len,
                                    const void* query_context,
                                    void* user_context) {
@@ -25,26 +25,27 @@ static void ZenohQueryableCallback(const char* key, const void* query_bytes,
   intrinsic_proto::pubsub::PubSubQueryRequest request_packet;
   if (!request_packet.ParseFromArray(query_bytes, query_bytes_len)) {
     LOG(ERROR) << absl::StrFormat(
-        "Deserializing message failed for query. Key: %s", key);
+        "Deserializing message failed for query. Key expression: %s", keyexpr);
     return;
   }
 
   internal::QueryableLink* link =
       static_cast<internal::QueryableLink*>(user_context);
   intrinsic_proto::pubsub::PubSubQueryResponse response_packet =
-      link->queryable->Invoke(request_packet);
+      link->queryable->Invoke(keyexpr, request_packet);
 
   // Encode and send response
   std::string reply_message;
   if (!response_packet.SerializeToString(&reply_message)) {
     LOG(ERROR) << absl::StrFormat(
-        "Failed to serialize response message for key '%s'", key);
+        "Failed to serialize response message for key expression '%s'",
+        keyexpr);
     return;
   }
-  if (Zenoh().imw_queryable_reply(query_context, key, reply_message.c_str(),
+  if (Zenoh().imw_queryable_reply(query_context, keyexpr, reply_message.c_str(),
                                   reply_message.size()) != IMW_OK) {
-    LOG(ERROR) << absl::StrFormat("Failed to send reply message for key '%s'",
-                                  key);
+    LOG(ERROR) << absl::StrFormat(
+        "Failed to send reply message for key expression '%s'", keyexpr);
   }
 }
 
@@ -53,9 +54,9 @@ static void ZenohQueryableCallback(const char* key, const void* query_bytes,
 absl::StatusOr<Queryable> Queryable::Create(
     std::string_view key, internal::GeneralQueryableCallback callback) {
   Queryable queryable(key, callback);
-  if (imw_ret_t rv = Zenoh().imw_create_queryable(queryable.GetKey().data(),
-                                                  &ZenohQueryableCallback,
-                                                  queryable.link_.get());
+  if (imw_ret_t rv = Zenoh().imw_create_queryable(
+          queryable.GetKeyExpression().data(), &ZenohQueryableCallback,
+          queryable.link_.get());
       rv != IMW_OK) {
     return absl::InvalidArgumentError(absl::StrFormat(
         "Failed to create queryable for key '%s' (code %d)", key, rv));
@@ -69,17 +70,18 @@ Queryable::~Queryable() {
     // If this is NOT_INITIALIZED it means that the pubsub system has already
     // been finalized and the queryable is gone anyway
     if (imw_ret_t rv = Zenoh().imw_destroy_queryable(
-            GetKey().data(), &ZenohQueryableCallback, link_.get());
+            GetKeyExpression().data(), &ZenohQueryableCallback, link_.get());
         rv != IMW_OK && rv != IMW_NOT_INITIALIZED) {
       LOG(ERROR) << absl::StrFormat(
-          "Failed to destroy queryable for '%s' (code %d)", key_, rv);
+          "Failed to destroy queryable for '%s' (code %d)", keyexpr_, rv);
     }
   }
 }
 
 intrinsic_proto::pubsub::PubSubQueryResponse Queryable::Invoke(
+    std::string_view keyexpr,
     const intrinsic_proto::pubsub::PubSubQueryRequest& request_packet) {
-  return callback_(request_packet);
+  return callback_(keyexpr, request_packet);
 }
 
 }  // namespace intrinsic
