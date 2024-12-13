@@ -59,10 +59,12 @@ inline void AssertSharedMemoryCompatibility() {
 class SharedMemoryManager final {
  public:
   struct MemorySegmentInfo {
-    uint8_t* data;
+    uint8_t* data = nullptr;
+    // Required for unmapping the segment
+    size_t length = 0;
     // A value of true indicates that this segment needs to be used
     // by ICON.
-    bool must_be_used;
+    bool must_be_used = false;
     // The file descriptor of the anonymous memory.
     int fd = -1;
   };

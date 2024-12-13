@@ -117,6 +117,13 @@ SharedMemoryManager::~SharedMemoryManager() {
                    << "'. with error: " << strerror(errno)
                    << ". Continuing anyways.";
     }
+    if (segment.second.data != nullptr) {
+      if (munmap(segment.second.data, segment.second.length) == -1) {
+        LOG(WARNING) << "Failed to unmap memory for '" << segment_name
+                     << "'. with error: " << strerror(errno)
+                     << ". Continuing anyways.";
+      }
+    }
   }
 }
 
@@ -202,8 +209,15 @@ absl::Status SharedMemoryManager::InitSegment(absl::string_view name,
   // We use a placement new operator here to initialize the "raw" segment
   // data correctly.
   new (data) SegmentHeader(type_id);
-  memory_segments_.insert(
-      {name_str, {.data = data, .must_be_used = must_be_used, .fd = shm_fd}});
+  memory_segments_.insert({
+      name_str,
+      {
+          .data = data,
+          .length = segment_size,
+          .must_be_used = must_be_used,
+          .fd = shm_fd,
+      },
+  });
   return absl::OkStatus();
 }
 
