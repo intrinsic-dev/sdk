@@ -44,6 +44,7 @@ var projectLayouts = map[string]projectFolder{
 	"python": projectFolder{
 		buildTemplateFilename: "BUILD_py_fragment.template",
 		buildozerCommands: []string{
+			"new_load @rules_python//python:defs.bzl py_binary py_test py_library",
 			"new_load @com_google_protobuf//bazel:proto_library.bzl proto_library",
 			"new_load @com_github_grpc_grpc//bazel:python_rules.bzl py_proto_library",
 			"new_load @ai_intrinsic_sdks//bazel:skills.bzl py_skill",
