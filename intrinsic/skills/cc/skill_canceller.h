@@ -34,7 +34,7 @@ class SkillCanceller {
   virtual ~SkillCanceller() = default;
 
   // True if the skill has received a cancellation request.
-  virtual bool cancelled() = 0;
+  virtual bool cancelled() const = 0;
 
   // Signals that the skill is ready to be cancelled.
   virtual void Ready() = 0;
@@ -65,7 +65,7 @@ class SkillCancellationManager : public SkillCanceller {
       absl::Duration ready_timeout,
       absl::string_view operation_name = "operation");
 
-  bool cancelled() override { return cancelled_.HasBeenNotified(); };
+  bool cancelled() const override { return cancelled_.HasBeenNotified(); };
 
   // Sets the cancelled flag and calls the callback (if set).
   absl::Status Cancel();
