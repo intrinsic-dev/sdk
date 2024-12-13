@@ -4,9 +4,8 @@
 common --enable_bzlmod
 common --enable_workspace=false
 
-# Use the new paths.
-# https://github.com/bazelbuild/bazel/issues/23127
-common --incompatible_use_plus_in_repo_names
+# Disable empty glob check
+common --incompatible_disallow_empty_glob=false
 
 # Custom downloader configs. This makes it so that external URLs to download dependencies from
 # can be rewritten at build time and, for example, support custom mirrors.
@@ -39,7 +38,6 @@ build --incompatible_strict_action_env
 
 # Silences spurious warnings like:
 # `bazel-out/k8-fastbuild/bin/external/com_github_grpc_grpc/external/com_github_grpc_grpc: warning: directory does not exist`
-build --incompatible_generated_protos_in_virtual_imports
 build --incompatible_default_to_explicit_init_py
 
 # Avoid warnings from third-party deps that we don't control.
