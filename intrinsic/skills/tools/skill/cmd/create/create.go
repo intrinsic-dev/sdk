@@ -62,6 +62,10 @@ var projectLayouts = map[string]projectFolder{
 				templateFilename: "skill_py_test.template",
 			},
 			projectFile{
+				extension:        "_integration_test.py",
+				templateFilename: "skill_integration_test.template",
+			},
+			projectFile{
 				extension:        ".proto",
 				templateFilename: "skill_params_proto.template",
 			},
@@ -93,6 +97,10 @@ var projectLayouts = map[string]projectFolder{
 			projectFile{
 				extension:        "_test.cc",
 				templateFilename: "skill_cc_test.template",
+			},
+			projectFile{
+				extension:        "_integration_test.py",
+				templateFilename: "skill_integration_test.template",
 			},
 			projectFile{
 				extension:        ".proto",

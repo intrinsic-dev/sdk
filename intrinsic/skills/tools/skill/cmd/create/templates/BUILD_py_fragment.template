@@ -53,3 +53,13 @@ py_skill(
         ":{{.SkillNameSnakeCase}}_py_pb2",
     ]
 )
+
+py_binary(
+    name = "{{.SkillNameSnakeCase}}_integration_test",
+    srcs = ["{{.SkillNameSnakeCase}}_integration_test.py"],
+    main = "{{.SkillNameSnakeCase}}_integration_test.py",
+    deps = [
+        "@ai_intrinsic_sdks//intrinsic/solutions:behavior_tree",
+        "@ai_intrinsic_sdks//intrinsic/solutions:deployments",
+    ],
+)
