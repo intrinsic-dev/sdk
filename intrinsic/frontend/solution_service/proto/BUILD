@@ -1,7 +1,9 @@
 # Copyright 2023 Intrinsic Innovation LLC
 
 load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
+load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_proto_library")
+load("@com_google_protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 load("//bazel:go_macros.bzl", "go_grpc_library", "go_proto_library")
 
@@ -15,6 +17,19 @@ proto_library(
         "//intrinsic/executive/proto:behavior_tree_proto",
         "@com_google_protobuf//:empty_proto",
     ],
+)
+
+cc_proto_library(
+    name = "solution_service_cc_proto",
+    deps = [":solution_service_proto"],
+)
+
+cc_grpc_library(
+    name = "solution_service_cc_grpc_proto",
+    srcs = [":solution_service_proto"],
+    generate_mocks = True,
+    grpc_only = True,
+    deps = [":solution_service_cc_proto"],
 )
 
 py_proto_library(
@@ -51,6 +66,11 @@ go_grpc_library(
 proto_library(
     name = "status_proto",
     srcs = ["status.proto"],
+)
+
+cc_proto_library(
+    name = "status_cc_proto",
+    deps = [":status_proto"],
 )
 
 py_proto_library(
