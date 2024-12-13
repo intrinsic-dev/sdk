@@ -4,6 +4,10 @@
 common --enable_bzlmod
 common --enable_workspace=false
 
+# Use the new paths.
+# https://github.com/bazelbuild/bazel/issues/23127
+common --incompatible_use_plus_in_repo_names
+
 # Custom downloader configs. This makes it so that external URLs to download dependencies from
 # can be rewritten at build time and, for example, support custom mirrors.
 common               --experimental_downloader_config=bazel/content_mirror/permissive.cfg

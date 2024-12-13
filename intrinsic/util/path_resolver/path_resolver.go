@@ -54,7 +54,7 @@ func ResolveRunfilesOrLocalPath(p string) (string, error) {
 	if errRunfile == nil {
 		return resolvedPath, nil
 	}
-	resolvedRepos := []string{"ai_intrinsic_sdks~", "."}
+	resolvedRepos := []string{"ai_intrinsic_sdks+", "."}
 	for _, resolvedRepo := range resolvedRepos {
 		resolvedPath = filepath.Join(".", resolvedRepo, p)
 		if _, err := os.Stat(resolvedPath); err == nil {

@@ -23,7 +23,7 @@ std::string PathResolver::ResolveRunfilesDir() {
     LOG(ERROR) << "Error creating Runfiles object: " << error;
     return "";
   }
-  return runfiles->Rlocation("ai_intrinsic_sdks~");
+  return runfiles->Rlocation("ai_intrinsic_sdks+");
 }
 
 std::string PathResolver::ResolveRunfilesPath(absl::string_view path) {
