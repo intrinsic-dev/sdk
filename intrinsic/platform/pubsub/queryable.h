@@ -89,6 +89,7 @@ struct QueryableCallbackTraits<absl::Status (ClassType::*)(
     const QueryableContext&, RequestT, ResponseT) const> {
   using RequestType = std::remove_cvref_t<RequestT>;
   using ResponseType = std::remove_cvref_t<ResponseT>;
+  static constexpr bool kHasRequest = true;
   static_assert(std::is_const_v<std::remove_reference_t<RequestT>> &&
                     std::is_reference_v<RequestT>,
                 "The request parameter needs to be a const reference.");
@@ -97,7 +98,22 @@ struct QueryableCallbackTraits<absl::Status (ClassType::*)(
   static_assert(!std::is_const_v<std::remove_reference_t<ResponseT>>,
                 "The response parameter needs cannot be a const argument.");
   static_assert(std::is_base_of_v<google::protobuf::Message, RequestType>,
-                "First argument must be a proto message type");
+                "Request argument must be a proto message type");
+  static_assert(std::is_base_of_v<google::protobuf::Message, ResponseType>,
+                "Response argument must be a proto message type");
+};
+
+template <typename ClassType, typename ResponseT>
+struct QueryableCallbackTraits<absl::Status (ClassType::*)(
+    const QueryableContext&, ResponseT) const> {
+  using ResponseType = std::remove_cvref_t<ResponseT>;
+  static constexpr bool kHasRequest = false;
+  static_assert(std::is_reference_v<ResponseT>,
+                "The response parameter needs to be a reference.");
+  static_assert(!std::is_const_v<std::remove_reference_t<ResponseT>>,
+                "The response parameter needs cannot be a const argument.");
+  static_assert(std::is_base_of_v<google::protobuf::Message, ResponseType>,
+                "Response argument must be a proto message type");
 };
 
 }  // namespace intrinsic
