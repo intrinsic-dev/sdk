@@ -20,8 +20,6 @@
 #include "intrinsic/util/grpc/channel_interface.h"
 #include "intrinsic/util/status/status_macros.h"
 
-constexpr int kNDof = 6;
-
 namespace intrinsic::icon::examples {
 
 absl::Status RunJointMove(
@@ -50,7 +48,7 @@ absl::Status RunJointMove(
     jpos_2 = center_pos;
   }
 
-  std::vector<double> zero_velocity(kNDof, 0.0);
+  std::vector<double> zero_velocity(jpos_1.size(), 0.0);
 
   INTR_ASSIGN_OR_RETURN(
       std::unique_ptr<intrinsic::icon::Session> session,

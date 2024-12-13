@@ -92,7 +92,9 @@ def main(argv: Sequence[str]) -> None:
 
   icon_client = icon_api.Client.connect_with_params(
       connection.ConnectionParams(
-          f'{_HOST.value}:{_PORT.value}', _INSTANCE.value, None
+          f'{_HOST.value}:{_PORT.value}',
+          _INSTANCE.value,
+          'x-resource-instance-name',
       )
   )
 
