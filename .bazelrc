@@ -50,6 +50,10 @@ build --remote_timeout=3600
 # on Bazel 7 or later as the default was flipped in Bazel 7.
 build --noincompatible_sandbox_hermetic_tmp
 
+# Ensure that you don't accidentally make non-hermetic actions/tests
+# which depend on remote services.
+build --sandbox_default_allow_network=false
+
 # BUG: b/375602581, https://github.com/bazelbuild/bazel/issues/24369
 # Without this flag, the test fails when `zip` is not available on the runner.
 test --nozip_undeclared_test_outputs
