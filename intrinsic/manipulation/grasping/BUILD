@@ -69,7 +69,6 @@ py_library(
     deps = [
         ":grasp_py_pb2",
         "//intrinsic/icon/proto:joint_space_py_pb2",
-        "//intrinsic/manipulation/scene_perception/proto/scene:scene_container_py_pb2",
         "//intrinsic/math/proto:pose_py_pb2",
         "//intrinsic/motion_planning:motion_planner_client_py",
         "//intrinsic/world/proto:geometric_constraints_py_pb2",

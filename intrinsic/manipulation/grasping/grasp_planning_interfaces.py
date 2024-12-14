@@ -10,7 +10,6 @@ from typing import Optional, Sequence
 
 from intrinsic.icon.proto import joint_space_pb2
 from intrinsic.manipulation.grasping import grasp_pb2
-from intrinsic.manipulation.scene_perception.proto.scene import scene_container_pb2
 from intrinsic.math.proto import pose_pb2
 from intrinsic.motion_planning import motion_planner_client
 from intrinsic.world.proto import geometric_constraints_pb2
@@ -138,7 +137,6 @@ class GraspPlanner(metaclass=abc.ABCMeta):
       world: object_world_client.ObjectWorldClient,
       motion_planner: motion_planner_client.MotionPlannerClient,
       grasp_targets: Sequence[GraspTarget],
-      scene: Optional[scene_container_pb2.SceneContainer] = None,
       recent_grasps: Optional[Sequence[grasp_pb2.AttemptedGrasp]] = None,
   ) -> GraspPlan:
     """Plans grasps.
@@ -153,11 +151,6 @@ class GraspPlanner(metaclass=abc.ABCMeta):
       motion_planner: The motion planner for collision, IK checking.
       grasp_targets: A list of grasp targets. If there are multiple, grasping
         any one is allowed.
-      scene: The scene associated with the planning event. If None, the planner
-        gets detections directly from the object world based on
-        "object_categories_or_instances"; otherwise the planner gets detections
-        from the scene based on object categories in
-        "object_categories_or_instances".
       recent_grasps: A list of recently attempted grasps and whether each one
         succeeded.
 
@@ -193,7 +186,6 @@ class GraspProposer(metaclass=abc.ABCMeta):
       world: object_world_client.ObjectWorldClient,
       motion_planner: motion_planner_client.MotionPlannerClient,
       grasp_targets: Sequence[GraspTarget],
-      scene: Optional[scene_container_pb2.SceneContainer] = None,
   ) -> list[grasp_pb2.Grasp]:
     """Proposes grasps according to the proposer algorithm.
 
@@ -205,7 +197,6 @@ class GraspProposer(metaclass=abc.ABCMeta):
       world: See GraspPlanner.plan_grasps.
       motion_planner: See GraspPlanner.plan_grasps.
       grasp_targets: See GraspPlanner.plan_grasps.
-      scene: See GraspPlanner.plan_grasps.
 
     Returns:
       The proposed grasps.
