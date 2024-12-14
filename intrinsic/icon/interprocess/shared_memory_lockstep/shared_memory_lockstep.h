@@ -3,6 +3,8 @@
 #ifndef INTRINSIC_ICON_INTERPROCESS_SHARED_MEMORY_LOCKSTEP_SHARED_MEMORY_LOCKSTEP_H_
 #define INTRINSIC_ICON_INTERPROCESS_SHARED_MEMORY_LOCKSTEP_SHARED_MEMORY_LOCKSTEP_H_
 
+#include <utility>
+
 #include "absl/log/check.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -24,8 +26,9 @@ class SharedMemoryLockstep {
 
   // Creates a SharedMemoryLockstep from a Lockstep memory segment. Prefer to
   // use CreateSharedMemoryLockstep or GetSharedMemoryLockstep instead.
-  explicit SharedMemoryLockstep(ReadWriteMemorySegment<Lockstep> segment)
-      : memory_segment_(segment), lockstep_(&memory_segment_.GetValue()) {}
+  explicit SharedMemoryLockstep(ReadWriteMemorySegment<Lockstep>&& segment)
+      : memory_segment_(std::move(segment)),
+        lockstep_(&memory_segment_.GetValue()) {}
 
   // Returns true if the lockstep is attached to two instances.
   bool Connected() const;
