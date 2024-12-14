@@ -39,6 +39,8 @@ class MemorySegment {
     size_t size;
   };
 
+  ~MemorySegment();
+
   // Returns whether the memory segment is initialized and points to a valid
   // shared memory location. Returns false if the segment class is default
   // constructed.
@@ -49,6 +51,9 @@ class MemorySegment {
 
   // Returns the header information of the shared memory segment.
   const SegmentHeader& Header() const;
+
+  // Returns the SegmentHeader of the shared memory segment. May be nullptr!
+  SegmentHeader* HeaderPointer();
 
   // Marks the time that the segment was updated.
   // 'current_cycle' is the control cycle that the segment was updated.
@@ -61,6 +66,12 @@ class MemorySegment {
   size_t ValueSize() const;
 
  protected:
+  enum class ReadWriteKind {
+    kUnknown,
+    kReadOnly,
+    kReadWrite,
+  };
+
   MemorySegment() = default;
 
   // Accesses the shared memory location with `name` and maps it into
@@ -76,18 +87,16 @@ class MemorySegment {
       const SegmentNameToFileDescriptorMap& segment_name_to_file_descriptor_map,
       absl::string_view name);
 
-  // Returns the SegmentHeader of the shared memory segment.
-  SegmentHeader* HeaderPointer();
-
   // Returns the raw, untyped value of the shared memory segment.
   uint8_t* Value();
   const uint8_t* Value() const;
 
-  MemorySegment(absl::string_view name, SegmentDescriptor segment);
-  MemorySegment(const MemorySegment& other) noexcept;
-  MemorySegment& operator=(const MemorySegment& other) noexcept = default;
+  MemorySegment(absl::string_view name, SegmentDescriptor segment,
+                ReadWriteKind kind);
+  MemorySegment(const MemorySegment& other) = delete;
+  MemorySegment& operator=(const MemorySegment& other) = delete;
   MemorySegment(MemorySegment&& other) noexcept;
-  MemorySegment& operator=(MemorySegment&& other) noexcept = default;
+  MemorySegment& operator=(MemorySegment&& other) noexcept;
 
  private:
   std::string name_ = "";
@@ -99,6 +108,9 @@ class MemorySegment {
   // The size of the shared memory segment. This is the size of the entire
   // segment, including the SegmentHeader.
   size_t size_ = 0;
+  ReadWriteKind read_write_kind_ = ReadWriteKind::kUnknown;
+
+  void CleanUpSharedMemory() noexcept;
 };
 
 // Checks that the size of the shared memory segment is big enough to
@@ -146,20 +158,12 @@ class ReadOnlyMemorySegment final : public MemorySegment {
   }
 
   ReadOnlyMemorySegment() = default;
-  ReadOnlyMemorySegment(const ReadOnlyMemorySegment& other) noexcept
-      : MemorySegment(other) {
-    HeaderPointer()->IncrementReaderRefCount();
-  }
+  ReadOnlyMemorySegment(const ReadOnlyMemorySegment& other) = delete;
   ReadOnlyMemorySegment& operator=(
-      const ReadOnlyMemorySegment& other) noexcept = default;
+      const ReadOnlyMemorySegment& other) noexcept = delete;
   ReadOnlyMemorySegment(ReadOnlyMemorySegment&& other) noexcept = default;
   ReadOnlyMemorySegment& operator=(ReadOnlyMemorySegment&& other) noexcept =
       default;
-  ~ReadOnlyMemorySegment() {
-    if (HeaderPointer()) {
-      HeaderPointer()->DecrementReaderRefCount();
-    }
-  }
 
   // Accesses the value of the shared memory segment.
   const T& GetValue() const { return *reinterpret_cast<const T*>(Value()); }
@@ -167,9 +171,7 @@ class ReadOnlyMemorySegment final : public MemorySegment {
 
  private:
   ReadOnlyMemorySegment(absl::string_view name, SegmentDescriptor segment)
-      : MemorySegment(name, segment) {
-    HeaderPointer()->IncrementReaderRefCount();
-  }
+      : MemorySegment(name, segment, MemorySegment::ReadWriteKind::kReadOnly) {}
 };
 
 // Read-Write access to a shared memory segment of type `T`.
@@ -204,20 +206,12 @@ class ReadWriteMemorySegment final : public MemorySegment {
   }
 
   ReadWriteMemorySegment() = default;
-  ReadWriteMemorySegment(const ReadWriteMemorySegment& other) noexcept
-      : MemorySegment(other) {
-    HeaderPointer()->IncrementWriterRefCount();
-  }
-  ReadWriteMemorySegment& operator=(
-      const ReadWriteMemorySegment& other) noexcept = default;
+  ReadWriteMemorySegment(const ReadWriteMemorySegment& other) = delete;
+  ReadWriteMemorySegment& operator=(const ReadWriteMemorySegment& other) =
+      delete;
   ReadWriteMemorySegment(ReadWriteMemorySegment&& other) noexcept = default;
   ReadWriteMemorySegment& operator=(ReadWriteMemorySegment&& other) noexcept =
       default;
-  ~ReadWriteMemorySegment() {
-    if (HeaderPointer()) {
-      HeaderPointer()->DecrementWriterRefCount();
-    }
-  }
 
   // Accesses the value of the shared memory segment.
   T& GetValue() { return *reinterpret_cast<T*>(Value()); }
@@ -230,8 +224,7 @@ class ReadWriteMemorySegment final : public MemorySegment {
 
  private:
   ReadWriteMemorySegment(absl::string_view name, SegmentDescriptor segment)
-      : MemorySegment(name, segment) {
-    HeaderPointer()->IncrementWriterRefCount();
+      : MemorySegment(name, segment, MemorySegment::ReadWriteKind::kReadWrite) {
   }
 };
 

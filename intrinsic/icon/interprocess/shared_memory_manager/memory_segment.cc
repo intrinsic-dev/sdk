@@ -99,23 +99,48 @@ absl::StatusOr<MemorySegment::SegmentDescriptor> MemorySegment::Get(
   return segment_info;
 }
 
-MemorySegment::MemorySegment(absl::string_view name, SegmentDescriptor segment)
+MemorySegment::~MemorySegment() { CleanUpSharedMemory(); }
+
+MemorySegment::MemorySegment(absl::string_view name, SegmentDescriptor segment,
+                             MemorySegment::ReadWriteKind kind)
     : name_(name),
       header_(reinterpret_cast<SegmentHeader*>(segment.segment_start)),
       value_(segment.segment_start + sizeof(SegmentHeader)),
-      size_(segment.size) {}
-
-MemorySegment::MemorySegment(const MemorySegment& other) noexcept
-    : name_(other.name_),
-      header_(other.header_),
-      value_(other.value_),
-      size_(other.size_) {}
+      size_(segment.size),
+      read_write_kind_(kind) {
+  if (header_ == nullptr) {
+    return;
+  }
+  switch (read_write_kind_) {
+    case ReadWriteKind::kReadOnly:
+      header_->IncrementReaderRefCount();
+      break;
+    case ReadWriteKind::kReadWrite:
+      header_->IncrementWriterRefCount();
+      break;
+    default:
+      break;
+  }
+}
 
 MemorySegment::MemorySegment(MemorySegment&& other) noexcept
     : name_(std::exchange(other.name_, "")),
       header_(std::exchange(other.header_, nullptr)),
       value_(std::exchange(other.value_, nullptr)),
-      size_(std::exchange(other.size_, 0)) {}
+      size_(std::exchange(other.size_, 0)),
+      read_write_kind_(
+          std::exchange(other.read_write_kind_, ReadWriteKind::kUnknown)) {}
+
+MemorySegment& MemorySegment::operator=(MemorySegment&& other) noexcept {
+  name_ = std::exchange(other.name_, "");
+  CleanUpSharedMemory();
+  header_ = std::exchange(other.header_, nullptr);
+  value_ = std::exchange(other.value_, nullptr);
+  size_ = std::exchange(other.size_, 0);
+  read_write_kind_ =
+      std::exchange(other.read_write_kind_, ReadWriteKind::kUnknown);
+  return *this;
+}
 
 SegmentHeader* MemorySegment::HeaderPointer() { return header_; }
 
@@ -127,6 +152,32 @@ size_t MemorySegment::ValueSize() const {
     return 0;
   }
   return size_ - sizeof(SegmentHeader);
+}
+
+void MemorySegment::CleanUpSharedMemory() noexcept {
+  if (header_ != nullptr) {
+    // We're about to drop our old header pointer, decrement its
+    // reader/writer count accordingly.
+    switch (read_write_kind_) {
+      case MemorySegment::ReadWriteKind::kReadWrite:
+        header_->DecrementWriterRefCount();
+        break;
+      case MemorySegment::ReadWriteKind::kReadOnly:
+        header_->DecrementReaderRefCount();
+        break;
+      default:
+        break;
+    }
+    // Also, unmap the memory. Since MemorySegment is move-only, nothing else
+    // should be using this particular pointer.
+    //
+    // This automatically releases the mlock on that memory too.
+    if (munmap(header_, size_) == -1) {
+      LOG(WARNING) << "Failed to unmap memory for '" << name_
+                   << "'. with error: " << strerror(errno)
+                   << ". Continuing anyways.";
+    }
+  }
 }
 
 }  // namespace intrinsic::icon
