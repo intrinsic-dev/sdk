@@ -40,6 +40,9 @@ message EncodeRequest {
 
   // The encoding to use.
   Encoding encoding = 3;
+
+  // Emit unpopulated fields. Only applicable for ENCODING_JSON.
+  bool emit_unpopulated_fields = 4;
 }
 
 message EncodeResponse {
