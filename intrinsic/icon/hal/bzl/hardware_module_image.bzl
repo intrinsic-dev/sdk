@@ -5,6 +5,11 @@
 load("//bazel:container.bzl", "container_image")
 load("//intrinsic/icon/hal/bzl:hardware_module_binary.bzl", hardware_module_binary_macro = "hardware_module_binary")
 
+def _remap(path, prefix, replacement):
+    if path.startswith(prefix):
+        return replacement + path[len(prefix):]
+    return path
+
 def _path_in_container(target):
     """Calculates the absolute path to the executable of a Bazel target.
 
@@ -14,36 +19,19 @@ def _path_in_container(target):
     Returns:
         The absolute path to the executable.
     """
-
-    target = str(target)
-    if target.startswith("@@//"):
-        # Absolute target within the main workspace (remove the @@/, then replace : with /)
-        path = target[3:].replace(":", "/")
-    elif target.startswith("//"):
-        # Absolute target within the main bazel workspace (remove the first /, then replace : with /)
-        path = target[1:].replace(":", "/")
-    elif target.startswith("@"):
-        # Absolute target within an external workspace (remove all leading @, prefix with /external/, then replace : with /)
-        workspace_name = target.split("/")[0].replace("@", "")
-        path = "/external/%s/%s" % (workspace_name, target.split("//")[1])
-        path = path.replace(":", "/")
-    else:
-        # Relative target (prefix with the package name, then replace : with /)
-        package_path = native.package_name() + "/"
-        if target.startswith(":"):
-            path = package_path + target[1:]
-        else:
-            path = package_path + target.replace(":", "/")
+    path = "/" + target.workspace_root
+    if target.package != "":
+        path = path + "/" + target.package
+    path = path + "/" + target.name
 
     return path
 
 def _build_symlink(file, path_prefix):
     """Creates a symlink from <path_prefix>/<file name> to <file>."""
     file_target = native.package_relative_label(file)
-    package_path = file_target.package
-    file_name = file_target.name
-    symlink = path_prefix + file_name
-    return {symlink: "/" + package_path + "/" + file_name}
+    file_path = _path_in_container(file_target)
+    symlink = path_prefix + file_target.name
+    return {symlink: file_path}
 
 def hardware_module_image(
         name,
@@ -58,7 +46,7 @@ def hardware_module_image(
       name: The name of the hardware module image to build, must end in "_image".
       hardware_module_lib: The C++ library that defines the hardware module to generate an image for. If this arg is set, then `hardware_module_binary` must be unset.
       hardware_module_binary: A binary that implements the hardware module to generate an image for. If this arg is set, then `hardware_module_lib` must be unset.
-      extra_files: Extra files to include in the image.
+      extra_files: Extra files to include in the image. Each file must be individually exported by its package, `filegroup`s are not supported. These files will be added to the `/data/` directory in the container.
       base_image: The base image to use for the container_image 'base'.
       **kwargs: Additional arguments to pass to container_image().
     """
