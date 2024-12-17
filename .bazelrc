@@ -53,10 +53,6 @@ build --noincompatible_sandbox_hermetic_tmp
 # which depend on remote services.
 build --sandbox_default_allow_network=false
 
-# BUG: b/375602581, https://github.com/bazelbuild/bazel/issues/24369
-# Without this flag, the test fails when `zip` is not available on the runner.
-test --nozip_undeclared_test_outputs
-
 build:remote       --remote_executor=grpcs://remotebuildexecution.googleapis.com
 build:remote_cache --remote_cache=grpcs://remotebuildexecution.googleapis.com
 
