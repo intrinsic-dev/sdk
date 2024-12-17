@@ -52,25 +52,31 @@ absl::StatusOr<google::protobuf::Any> KeyValueStore::GetAny(
   }
   google::protobuf::Any value;
   absl::Notification notif;
-  absl::Status lambda_status = absl::OkStatus();
+  absl::Status lambda_status = absl::NotFoundError("Key not found");
   // We can capture all variables by reference because we wait for the
-  // callback's termination before returning from the synchronous Get() method.
-  // This ensures that all local variables will outlive the callback.
-  auto callback = std::make_unique<imw_callback_functor_t>(
-      [&](const char* keyexpr, const void* response_bytes,
-          const size_t response_bytes_len) {
+  // imw_query() to finish before before returning. This ensures that all local
+  // variables will outlive the callback.
+  auto reply_functor = std::make_unique<imw_callback_functor_t>(
+      [&value, &lambda_status](const char* keyexpr, const void* response_bytes,
+                               const size_t response_bytes_len) {
         bool ok = value.ParseFromString(absl::string_view(
             static_cast<const char*>(response_bytes), response_bytes_len));
-        if (!ok) {
+        if (ok) {
+          lambda_status = absl::OkStatus();
+        } else {
           lambda_status = absl::InternalError("Failed to parse response");
         }
-        notif.Notify();
       });
+  auto on_done_functor = std::make_unique<imw_on_done_functor_t>(
+      [&notif](const char* unused_keyexpr) { notif.Notify(); });
+  KVQuery query(std::move(reply_functor), std::move(on_done_functor));
+
   imw_query_options_t query_options{
       .timeout_ms = static_cast<uint64_t>(timeout / absl::Milliseconds(1))};
   imw_ret ret =
-      Zenoh().imw_query(prefixed_name->c_str(), zenoh_static_callback, nullptr,
-                        nullptr, 0, callback.get(), &query_options);
+      Zenoh().imw_query(prefixed_name->c_str(), zenoh_query_static_callback,
+                        zenoh_query_static_on_done, nullptr, 0,
+                        query.GetContext(), &query_options);
   if (ret != IMW_OK) {
     return absl::InternalError(
         absl::StrFormat("Error getting a key, return code: %d", ret));
