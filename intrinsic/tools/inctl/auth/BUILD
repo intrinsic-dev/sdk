@@ -11,7 +11,6 @@ go_library(
         "token_source.go",
         "tokenshttp.go",
     ],
-    importpath_aliases = ["intrinsic/tools/inctl/auth"],
     deps = [
         "//intrinsic/kubernetes/acl:jwt",
         "@com_github_golang_glog//:go_default_library",
