@@ -16,9 +16,9 @@ import (
 	"google.golang.org/grpc"
 	clustermanagergrpcpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
 	clustermanagerpb "intrinsic/frontend/cloud/api/v1/clustermanager_api_go_grpc_proto"
-	"intrinsic/frontend/cloud/devicemanager/shared"
+	"intrinsic/frontend/cloud/devicemanager/shared/shared"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
-	"intrinsic/tools/inctl/auth"
+	"intrinsic/tools/inctl/auth/auth"
 )
 
 var (

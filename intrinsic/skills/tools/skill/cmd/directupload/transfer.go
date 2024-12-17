@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/atomic"
 	"intrinsic/assets/imagetransfer"
-	"intrinsic/storage/artifacts/client"
+	"intrinsic/storage/artifacts/client/client"
 	artifactgrpcpb "intrinsic/storage/artifacts/proto/artifact_go_grpc_proto"
 )
 

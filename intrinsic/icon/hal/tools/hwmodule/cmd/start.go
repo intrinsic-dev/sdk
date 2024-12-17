@@ -26,10 +26,10 @@ import (
 	"google.golang.org/grpc/status"
 	"intrinsic/assets/imagetransfer"
 	"intrinsic/assets/imageutils"
-	"intrinsic/icon/hal/tools/hwmodule/cmd"
+	"intrinsic/icon/hal/tools/hwmodule/cmd/cmd"
 	"intrinsic/icon/hal/tools/hwmodule/cmd/imageutil"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
-	"intrinsic/skills/tools/skill/cmd/directupload"
+	"intrinsic/skills/tools/skill/cmd/directupload/directupload"
 )
 
 var (

@@ -8,7 +8,7 @@ import (
 	"context"
 
 	"google.golang.org/grpc"
-	"intrinsic/storage/artifacts/client"
+	"intrinsic/storage/artifacts/client/client"
 	articatgrpcpb "intrinsic/storage/artifacts/proto/articat_go_grpc_proto"
 	artifactgrpcpb "intrinsic/storage/artifacts/proto/artifact_go_grpc_proto"
 )

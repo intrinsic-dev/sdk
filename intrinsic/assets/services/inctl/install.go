@@ -20,7 +20,7 @@ import (
 	iagrpcpb "intrinsic/assets/proto/installed_assets_go_grpc_proto"
 	iapb "intrinsic/assets/proto/installed_assets_go_grpc_proto"
 	"intrinsic/skills/tools/resource/cmd/bundleimages"
-	"intrinsic/skills/tools/skill/cmd/directupload"
+	"intrinsic/skills/tools/skill/cmd/directupload/directupload"
 )
 
 // GetCommand returns a command to install (sideload) the service bundle.

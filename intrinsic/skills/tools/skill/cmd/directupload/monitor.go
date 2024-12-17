@@ -7,7 +7,7 @@ import (
 	"io"
 	"strings"
 
-	"intrinsic/storage/artifacts/client"
+	"intrinsic/storage/artifacts/client/client"
 )
 
 const (

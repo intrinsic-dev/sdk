@@ -12,7 +12,7 @@ import (
 	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/imageutils"
 	installerpb "intrinsic/kubernetes/workcell_spec/proto/installer_go_grpc_proto"
-	"intrinsic/skills/tools/skill/cmd"
+	"intrinsic/skills/tools/skill/cmd/cmd"
 	"intrinsic/skills/tools/skill/cmd/skillio"
 )
 

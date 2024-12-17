@@ -15,7 +15,7 @@ import (
 
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
-	"intrinsic/tools/inctl/auth"
+	"intrinsic/tools/inctl/auth/auth"
 )
 
 const (

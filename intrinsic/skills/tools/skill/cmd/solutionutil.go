@@ -10,7 +10,7 @@ import (
 
 	"google.golang.org/grpc"
 	clusterdiscoverypb "intrinsic/frontend/cloud/api/clusterdiscovery_api_go_grpc_proto"
-	"intrinsic/tools/inctl/cmd/solution"
+	"intrinsic/tools/inctl/cmd/solution/solution"
 )
 
 // GetClusterNameFromSolution returns the cluster in which a solution currently runs.

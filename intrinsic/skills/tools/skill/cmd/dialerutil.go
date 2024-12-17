@@ -19,7 +19,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"intrinsic/assets/baseclientutils"
-	"intrinsic/tools/inctl/auth"
+	"intrinsic/tools/inctl/auth/auth"
 )
 
 // schemePattern matches a URL scheme according to https://github.com/grpc/grpc/blob/master/doc/naming.md.

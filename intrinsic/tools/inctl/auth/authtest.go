@@ -6,7 +6,7 @@ package authtest
 import (
 	"testing"
 
-	"intrinsic/tools/inctl/auth"
+	"intrinsic/tools/inctl/auth/auth"
 )
 
 // NewStoreForTest creates a new auth.Store for use in tests.

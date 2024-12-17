@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"intrinsic/icon/hal/tools/hwmodule/cmd"
+	"intrinsic/icon/hal/tools/hwmodule/cmd/cmd"
 )
 
 var (

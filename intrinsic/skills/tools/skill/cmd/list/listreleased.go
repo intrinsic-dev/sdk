@@ -17,7 +17,7 @@ import (
 	"intrinsic/assets/listutils"
 	atpb "intrinsic/assets/proto/asset_type_go_proto"
 	viewpb "intrinsic/assets/proto/view_go_proto"
-	skillCmd "intrinsic/skills/tools/skill/cmd"
+	skillCmd "intrinsic/skills/tools/skill/cmd/cmd"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/printer"
 )

@@ -20,10 +20,10 @@ import (
 	"github.com/spf13/cobra"
 	strcase "github.com/stoewer/go-strcase"
 	"intrinsic/assets/idutils"
-	skillCmd "intrinsic/skills/tools/skill/cmd"
-	"intrinsic/tools/inctl/cmd/bazel"
+	skillCmd "intrinsic/skills/tools/skill/cmd/cmd"
+	"intrinsic/tools/inctl/cmd/bazel/bazel"
 	"intrinsic/tools/inctl/cmd/root"
-	"intrinsic/tools/inctl/cmd/version"
+	"intrinsic/tools/inctl/cmd/version/version"
 	"intrinsic/tools/inctl/util/printer"
 	"intrinsic/tools/inctl/util/templateutil"
 )

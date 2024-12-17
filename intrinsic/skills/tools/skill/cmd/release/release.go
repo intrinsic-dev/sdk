@@ -28,8 +28,8 @@ import (
 	releasetagpb "intrinsic/assets/proto/release_tag_go_proto"
 	psmpb "intrinsic/skills/proto/processed_skill_manifest_go_proto"
 	"intrinsic/skills/tools/resource/cmd/bundleimages"
-	skillCmd "intrinsic/skills/tools/skill/cmd"
-	"intrinsic/skills/tools/skill/cmd/directupload"
+	skillCmd "intrinsic/skills/tools/skill/cmd/cmd"
+	"intrinsic/skills/tools/skill/cmd/directupload/directupload"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/printer"
 )

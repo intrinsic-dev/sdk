@@ -17,11 +17,11 @@ import (
 	"github.com/spf13/cobra"
 	"intrinsic/assets/cmdutils"
 	"intrinsic/assets/imageutils"
-	"intrinsic/skills/tools/skill/cmd"
+	"intrinsic/skills/tools/skill/cmd/cmd"
 	"intrinsic/skills/tools/skill/cmd/dialerutil"
 	"intrinsic/skills/tools/skill/cmd/skillio"
 	"intrinsic/skills/tools/skill/cmd/solutionutil"
-	"intrinsic/tools/inctl/auth"
+	"intrinsic/tools/inctl/auth/auth"
 )
 
 const (

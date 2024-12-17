@@ -14,7 +14,7 @@ import (
 	"intrinsic/assets/idutils"
 	scgrpcpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
 	scpb "intrinsic/skills/catalog/proto/skill_catalog_go_grpc_proto"
-	skillcmd "intrinsic/skills/tools/skill/cmd"
+	skillcmd "intrinsic/skills/tools/skill/cmd/cmd"
 )
 
 var cmdFlags = cmdutils.NewCmdFlags()

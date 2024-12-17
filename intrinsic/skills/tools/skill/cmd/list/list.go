@@ -15,7 +15,7 @@ import (
 	skillregistrygrpcpb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
 	skillregistrypb "intrinsic/skills/proto/skill_registry_go_grpc_proto"
 	spb "intrinsic/skills/proto/skills_go_proto"
-	skillCmd "intrinsic/skills/tools/skill/cmd"
+	skillCmd "intrinsic/skills/tools/skill/cmd/cmd"
 	"intrinsic/skills/tools/skill/cmd/listutil"
 	"intrinsic/tools/inctl/cmd/root"
 	"intrinsic/tools/inctl/util/printer"

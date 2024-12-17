@@ -17,7 +17,7 @@ import (
 
 	log "github.com/golang/glog"
 	"github.com/spf13/cobra"
-	"intrinsic/frontend/cloud/devicemanager/shared"
+	"intrinsic/frontend/cloud/devicemanager/shared/shared"
 	"intrinsic/tools/inctl/util/orgutil"
 )
 

@@ -24,7 +24,7 @@ import (
 	clusterdiscoverypb "intrinsic/frontend/cloud/api/clusterdiscovery_api_go_grpc_proto"
 	solutiondiscoverygrpcpb "intrinsic/frontend/cloud/api/solutiondiscovery_api_go_grpc_proto"
 	solutiondiscoverypb "intrinsic/frontend/cloud/api/solutiondiscovery_api_go_grpc_proto"
-	"intrinsic/tools/inctl/auth"
+	"intrinsic/tools/inctl/auth/auth"
 )
 
 const (
