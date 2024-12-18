@@ -1,0 +1,60 @@
+// Copyright 2023 Intrinsic Innovation LLC
+
+syntax = "proto3";
+
+package intrinsic_proto.executive;
+message ClipsTrace {
+  message RuleFireEntry {
+    int64 sequence_number = 1;
+    string rule_name = 2;
+    string facts_string = 3;
+    string line = 4;
+  }
+
+  message FactEntry {
+    enum Op {
+      OP_UNSET = 0;
+      OP_ASSERT = 1;
+      OP_RETRACT = 2;
+    }
+
+    Op op = 1;
+    int64 fact_index = 2;
+    string fact_string = 3;
+    string line = 4;
+  }
+
+  message GlobalVarEntry {
+    string global_name = 1;
+    string new_value = 2;
+    string old_value = 3;
+  }
+
+  message Entry {
+    oneof Type {
+      RuleFireEntry rule_fired_entry = 1;
+      FactEntry fact_entry = 2;
+      GlobalVarEntry global_var_entry = 3;
+    }
+  }
+
+  repeated Entry entries = 1;
+
+  // Human readable string representing 'entries'.
+  string human_readable = 2;
+}
+
+// Snapshot of the knowledge represented in a CLIPS knowledge base.
+message ClipsSnapshot {
+  // List of facts as formatted strings before the loop is executed.
+  repeated string facts_before = 1;
+
+  // List of facts as formatted strings after the loop is executed.
+  repeated string facts_after = 2;
+
+  // A list of error facts contained in 'facts' formatted to be human readable.
+  repeated string errors = 3;
+
+  // Trace of firing rules during last loop.
+  ClipsTrace trace = 4;
+}
