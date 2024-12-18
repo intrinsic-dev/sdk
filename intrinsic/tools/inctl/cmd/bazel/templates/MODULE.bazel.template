@@ -12,10 +12,10 @@ archive_override(
     # To pin a version change the following to, e.g.:
     #   urls = "{{.SDKRepository}}/archive/refs/tags/intrinsic.platform.20221231.RC00.tar.gz",
     #   strip_prefix = "sdk-intrinsic.platform.20221231.RC00/"
-    urls = "{{.SDKRepository}}/archive/refs/heads/main.tar.gz",
+    urls = ["{{.SDKRepository}}/archive/refs/heads/main.tar.gz"],
     strip_prefix = "sdk-main/"
         {{- else -}}
-    urls = "{{.SDKRepository}}/archive/refs/tags/{{.SDKVersion}}.tar.gz",
+    urls = ["{{.SDKRepository}}/archive/refs/tags/{{.SDKVersion}}.tar.gz"],
     strip_prefix = "{{.SDKStripPrefix}}"
     {{- end}}
 )
