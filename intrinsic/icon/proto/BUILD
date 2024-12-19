@@ -29,6 +29,12 @@ cc_proto_library(
     deps = [":types_proto"],
 )
 
+go_proto_library(
+    name = "types_go_proto",
+    go_deps = [":generic_part_config_go_proto"],
+    deps = [":types_proto"],
+)
+
 py_proto_library(
     name = "types_py_pb2",
     deps = [":types_proto"],
@@ -75,6 +81,17 @@ cc_proto_library(
     deps = [":generic_part_config_proto"],
 )
 
+go_proto_library(
+    name = "generic_part_config_go_proto",
+    go_deps = [
+        ":cart_space_go_proto",
+        "//intrinsic/kinematics/proto:skeleton_go_proto",
+        "//intrinsic/kinematics/types:joint_limits_go_proto",
+        "//intrinsic/math/proto:pose_go_proto",
+    ],
+    deps = [":generic_part_config_proto"],
+)
+
 py_proto_library(
     name = "generic_part_config_py_pb2",
     deps = [":generic_part_config_proto"],
@@ -106,6 +123,20 @@ py_proto_library(
 
 py_proto_library(
     name = "part_status_py_pb2",
+    deps = [":part_status_proto"],
+)
+
+go_proto_library(
+    name = "part_status_go_proto",
+    go_deps = [
+        ":types_go_proto",
+        ":cart_space_go_proto",
+        "//intrinsic/math/proto:quaternion_go_proto",
+        "//intrinsic/math/proto:pose_go_proto",
+        "//intrinsic/math/proto:vector3_go_proto",
+        ":io_block_go_proto",
+        ":safety_status_go_proto",
+    ],
     deps = [":part_status_proto"],
 )
 
@@ -297,6 +328,11 @@ py_proto_library(
     deps = [":io_block_proto"],
 )
 
+go_proto_library(
+    name = "io_block_go_proto",
+    deps = [":io_block_proto"],
+)
+
 cc_proto_library(
     name = "io_block_cc_proto",
     deps = [":io_block_proto"],
@@ -377,6 +413,11 @@ cc_proto_library(
 
 py_proto_library(
     name = "safety_status_py_pb2",
+    deps = [":safety_status_proto"],
+)
+
+go_proto_library(
+    name = "safety_status_go_proto",
     deps = [":safety_status_proto"],
 )
 

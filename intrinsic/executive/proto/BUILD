@@ -334,6 +334,14 @@ py_proto_library(
     deps = [":log_items_proto"],
 )
 
+go_proto_library(
+    name = "log_items_go_proto",
+    go_deps = [
+        "@com_google_cloud_go_longrunning//autogen/longrunningpb",
+    ],
+    deps = [":log_items_proto"],
+)
+
 # annotations
 proto_library(
     name = "annotations_proto",
@@ -500,6 +508,21 @@ cc_proto_library(
 py_proto_library(
     name = "test_message_py_pb2",
     deps = [":test_message_proto"],
+)
+
+proto_library(
+    name = "clips_snapshot_proto",
+    srcs = ["clips_snapshot.proto"],
+)
+
+cc_proto_library(
+    name = "clips_snapshot_cc_proto",
+    deps = [":clips_snapshot_proto"],
+)
+
+go_proto_library(
+    name = "clips_snapshot_go_proto",
+    deps = [":clips_snapshot_proto"],
 )
 
 proto_library(

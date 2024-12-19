@@ -38,5 +38,8 @@ py_proto_library(
 
 go_proto_library(
     name = "settings_go_proto",
+    visibility = [
+        "//intrinsic:__subpackages__",
+    ],
     deps = [":settings_proto"],
 )

@@ -318,6 +318,12 @@ py_proto_library(
     deps = [":image_buffer_proto"],
 )
 
+go_proto_library(
+    name = "image_buffer_go_proto",
+    go_deps = [":dimensions_go_proto"],
+    deps = [":image_buffer_proto"],
+)
+
 proto_library(
     name = "intrinsic_calibration_proto",
     srcs = ["intrinsic_calibration.proto"],
@@ -401,9 +407,33 @@ py_proto_library(
     deps = [":pattern_detection_config"],
 )
 
+go_proto_library(
+    name = "pattern_detection_result_go_proto",
+    go_deps = [":vector_go_proto"],
+    deps = [":pattern_detection_result"],
+)
+
+go_proto_library(
+    name = "pose_estimation_result_go_proto",
+    go_deps = [
+        ":image_buffer_go_proto",
+        "//intrinsic/math/proto:pose_go_proto",
+    ],
+    deps = [":pose_estimation_result"],
+)
+
 py_proto_library(
     name = "dimensions_py_pb2",
     deps = [":dimensions_proto"],
+)
+
+go_proto_library(
+    name = "frame_go_proto",
+    go_deps = [
+        ":camera_params_go_proto",
+        ":image_buffer_go_proto",
+    ],
+    deps = [":frame_proto"],
 )
 
 cc_proto_library(
@@ -419,6 +449,33 @@ cc_proto_library(
 py_proto_library(
     name = "hand_eye_calibration_py_pb2",
     deps = [":hand_eye_calibration"],
+)
+
+go_proto_library(
+    name = "hand_eye_calibration_go_proto",
+    go_deps = [
+        ":intrinsic_calibration_go_proto",
+        "//intrinsic/math/proto:pose_go_proto",
+        "//intrinsic/math/proto:point_go_proto",
+        "//intrinsic/math/proto:quaternion_go_proto",
+        "//intrinsic/perception/proto:pattern_detection_result_go_proto",
+    ],
+    deps = [":hand_eye_calibration"],
+)
+
+go_proto_library(
+    name = "intrinsic_calibration_go_proto",
+    go_deps = [
+        "//intrinsic/perception/proto:camera_params_go_proto",
+        "//intrinsic/perception/proto:dimensions_go_proto",
+        "//intrinsic/perception/proto:pattern_detection_result_go_proto",
+    ],
+    deps = [":intrinsic_calibration_proto"],
+)
+
+go_proto_library(
+    name = "vector_go_proto",
+    deps = [":vector_proto"],
 )
 
 proto_library(

@@ -6,7 +6,12 @@ load("@ai_intrinsic_sdks_pip_deps//:requirements.bzl", "requirement")
 load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_grpc_library", "py_proto_library")
 load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 
-package(default_visibility = ["//intrinsic/manipulation:__subpackages__"])
+package(
+    default_visibility = [
+        "//intrinsic/logging:__subpackages__",
+        "//intrinsic/manipulation:__subpackages__",
+    ],
+)
 
 proto_library(
     name = "grasp_planner_service_proto",

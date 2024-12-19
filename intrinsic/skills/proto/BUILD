@@ -198,6 +198,34 @@ py_grpc_library(
     deps = [":skill_service_py_pb2"],
 )
 
+go_proto_library(
+    name = "skill_service_go_proto",
+    go_deps = [
+        ":error_go_proto",
+        ":footprint_go_proto",
+        ":prediction_go_proto",
+        ":skills_go_proto",
+        "//intrinsic/logging/proto:context_go_proto",
+        "//intrinsic/util/status:extended_status_go_proto",
+        "@com_google_cloud_go_longrunning//autogen/longrunningpb",
+    ],
+    deps = [":skill_service_proto"],
+)
+
+go_grpc_library(
+    name = "skill_service_go_grpc_proto",
+    srcs = [":skill_service_proto"],
+    deps = [
+        ":error_go_proto",
+        ":footprint_go_proto",
+        ":prediction_go_proto",
+        ":skills_go_proto",
+        "//intrinsic/logging/proto:context_go_proto",
+        "//intrinsic/util/status:extended_status_go_proto",
+        "@com_google_cloud_go_longrunning//autogen/longrunningpb",
+    ],
+)
+
 proto_library(
     name = "skill_service_config_proto",
     srcs = ["skill_service_config.proto"],
@@ -300,6 +328,14 @@ py_proto_library(
     deps = [":prediction_proto"],
 )
 
+go_proto_library(
+    name = "prediction_go_proto",
+    go_deps = [
+        "//intrinsic/world/proto:object_world_updates_go_proto",
+    ],
+    deps = [":prediction_proto"],
+)
+
 cc_proto_library(
     name = "prediction_cc_proto",
     deps = [":prediction_proto"],
@@ -326,6 +362,11 @@ py_proto_library(
 
 cc_proto_library(
     name = "error_cc_proto",
+    deps = [":error_proto"],
+)
+
+go_proto_library(
+    name = "error_go_proto",
     deps = [":error_proto"],
 )
 

@@ -57,6 +57,19 @@ cc_proto_library(
     deps = [":oriented_bounding_box_proto"],
 )
 
+go_proto_library(
+    name = "oriented_bounding_box_go_proto",
+    go_deps = [
+        "//intrinsic/math/proto:vector2_go_proto",
+        "//intrinsic/math/proto:vector3_go_proto",
+        ":axis_aligned_bounding_box_go_proto",
+        "//intrinsic/math/proto:point_go_proto",
+        "//intrinsic/math/proto:quaternion_go_proto",
+        "//intrinsic/math/proto:pose_go_proto",
+    ],
+    deps = [":oriented_bounding_box_proto"],
+)
+
 proto_library(
     name = "geometry_proto",
     srcs = ["geometry.proto"],

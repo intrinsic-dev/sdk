@@ -33,6 +33,16 @@ const (
 	keyOnpremAddress = "onprem_address"
 )
 
+const (
+	// The port through which the simulation service can be reached.
+	ingressPort = 17080
+)
+
+var (
+	flagContext      string
+	flagUseLocalhost bool
+)
+
 var (
 	showLogs = &cobra.Command{
 		Use:        "logs",
