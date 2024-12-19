@@ -6,7 +6,6 @@ package intrinsic_proto.perception;
 
 import "intrinsic/math/proto/pose.proto";
 import "intrinsic/perception/proto/camera_params.proto";
-import "intrinsic/perception/proto/camera_settings.proto";
 import "intrinsic/perception/proto/distortion_params.proto";
 import "intrinsic/perception/proto/intrinsic_params.proto";
 
@@ -28,9 +27,6 @@ message SensorConfig {
   optional DistortionParams distortion_params = 4 [deprecated = true];
   // Sensor camera parameters.
   optional CameraParams camera_params = 6;
-  // A list of camera settings applied to this sensor after the global settings
-  // have been applied.
-  repeated CameraSetting settings = 5;
 }
 
 message SensorConfigs {
