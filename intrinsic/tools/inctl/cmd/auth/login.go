@@ -110,6 +110,12 @@ func queryForAPIKey(ctx context.Context, writer io.Writer, in *bufio.Reader, org
 	if err != nil {
 		return "", fmt.Errorf("cannot read from input device: %w", err)
 	}
+
+	// Move the cursor back to the beginning of the line and clear the line
+	fmt.Fprintf(writer, "\033[1A\033[2K")
+	// Overwrite the line with a placeholder
+	fmt.Fprintf(writer, "Paste access token from website: [redacted]\n")
+
 	return strings.TrimSpace(apiKey), nil
 }
 
