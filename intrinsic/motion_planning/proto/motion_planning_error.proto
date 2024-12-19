@@ -35,9 +35,12 @@ message ErrorContext {
     FINE_PATH_IK_ERROR = 7;
     // Linear Cartesian Path planner
     LINEAR_CARTESIAN_PATH_PLANNER_ERROR = 8;
-    // Traj
+    // Trajectory Planning Error
+    // Error when initial state is in collision.
     TRAJECTORY_PLANNING_INITIAL_STATE_COLLISION = 9;
+    // Error when goal state is in collision.
     TRAJECTORY_PLANNING_GOAL_STATE_COLLISION = 10;
+    // Error when a joint configuration (state) is in collision.
     TRAJECTORY_PLANNING_STATE_COLLISION = 11;
     // Initial configuration validation
     INITIAL_CONF_VALIDATION = 12;
