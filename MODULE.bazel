@@ -192,6 +192,7 @@ bazel_dep(name = "googleapis", version = "0.0.0-20240819-fe8ba054a", repo_name =
 bazel_dep(name = "googletest", version = "1.15.2", repo_name = "com_google_googletest")
 bazel_dep(name = "grpc", version = "1.66.0.bcr.2", repo_name = "com_github_grpc_grpc")
 bazel_dep(name = "jsonnet", version = "0.20.0.bcr.1")
+bazel_dep(name = "opencensus-cpp", version = "0.0.0-20230502-50eb5de", repo_name = "io_opencensus_cpp")
 bazel_dep(name = "protobuf", version = "29.0", repo_name = "com_google_protobuf")
 bazel_dep(name = "protobuf-matchers", version = "0.0.0-20240603-9f688b0", repo_name = "com_github_inazarenko_protobuf_matchers")
 bazel_dep(name = "re2", version = "2021-09-01", repo_name = "com_github_google_re2")
@@ -202,7 +203,6 @@ use_repo(
     non_module_deps,
     # go/keep-sorted start
     "com_google_cel_cpp",
-    "io_opencensus_cpp",
     "or_tools",
     # go/keep-sorted end
 )

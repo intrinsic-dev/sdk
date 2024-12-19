@@ -31,13 +31,6 @@ def _non_module_deps_impl(ctx):  # @unused
         sha256 = "d56e8c15b55240c92143ee3ed717956c67961a24f97711ca410030de92633288",
     )
 
-    http_archive(
-        name = "io_opencensus_cpp",
-        sha256 = "e3857e1267cb6329a7b23209ce8a2108b8f264e4adf336776323fb163fa23f9a",
-        strip_prefix = "opencensus-cpp-50eb5de762e5f87e206c011a4f930adb1a1775b1",
-        url = "https://github.com/census-instrumentation/opencensus-cpp/archive/50eb5de762e5f87e206c011a4f930adb1a1775b1.tar.gz",  # 2024-03-25
-    )
-
     OR_TOOLS_COMMIT = "ed94162b910fa58896db99191378d3b71a5313af"  # v9.11
     http_archive(
         name = "or_tools",
